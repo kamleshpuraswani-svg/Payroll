@@ -528,8 +528,8 @@ const HRDashboard: React.FC = () => {
         {
             title: 'Total Employees',
             value: '452',
-            trend: '+12 new joinees',
-            trendUp: true,
+            trend: '',
+            trendUp: false,
             icon: <Users />,
             colorClass: 'text-indigo-600 bg-indigo-100',
         },
