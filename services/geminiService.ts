@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 let genAI: any = null;
 
 export const generateAiInsight = async (prompt: string, contextData: string): Promise<string> => {
