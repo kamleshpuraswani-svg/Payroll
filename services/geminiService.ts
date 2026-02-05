@@ -1,11 +1,20 @@
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+let genAI: any = null;
 
 export const generateAiInsight = async (prompt: string, contextData: string): Promise<string> => {
   try {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+    if (!apiKey || apiKey === 'PLACEHOLDER_API_KEY') {
+      console.warn("Gemini API Key is missing or placeholder. Skipping AI insights.");
+      return "AI insights are currently unavailable. Please configure VITE_GEMINI_API_KEY.";
+    }
+
+    if (!genAI) {
+      genAI = new GoogleGenAI({ apiKey });
+    }
+
     // Fixed: Updated model to gemini-3-flash-preview for Basic Text Tasks per guidelines
-    const model = 'gemini-3-flash-preview';
+    const modelName = 'gemini-3-flash-preview';
     const fullPrompt = `
       You are an AI assistant for the Super Admin of CollabCRM, a payroll software.
       
@@ -20,12 +29,12 @@ export const generateAiInsight = async (prompt: string, contextData: string): Pr
       Keep it under 150 words unless specified otherwise.
     `;
 
-    const response = await ai.models.generateContent({
-      model,
-      contents: fullPrompt,
+    const model = genAI.models.get(modelName);
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
     });
 
-    return response.text || "No insights generated.";
+    return result.response.text() || "No insights generated.";
   } catch (error) {
     console.error("Gemini API Error:", error);
     return "Sorry, I encountered an error while processing your request.";
