@@ -550,10 +550,9 @@ const HRDashboard: React.FC = () => {
             icon: <FileText />,
             colorClass: 'text-emerald-600 bg-emerald-100',
             extraDetails: [
+                { label: 'Current Cycle', value: 'January, 2026' },
                 { label: 'Pay Frequency', value: 'Monthly' },
                 { label: 'Pay Day', value: 'Last Working Day' },
-                { label: 'Processing Date', value: '28th - 30th Nov' },
-                { label: 'Bank Transfer Date', value: '30th Nov 2025', color: 'text-emerald-600' },
             ]
         },
     ];
