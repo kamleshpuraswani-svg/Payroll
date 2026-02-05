@@ -31,6 +31,7 @@ export interface StatMetric {
   onClick?: () => void;
   onInfoClick?: () => void;
   actions?: StatAction[];
+  extraDetails?: { label: string; value: string; color?: string }[];
 }
 
 export interface AuditLog {

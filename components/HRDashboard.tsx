@@ -551,6 +551,12 @@ const HRDashboard: React.FC = () => {
             colorClass: 'text-emerald-600 bg-emerald-100',
             // Trigger the new actions modal instead of a dropdown
             onInfoClick: () => setActivePayrollModal('ACTIONS'),
+            extraDetails: [
+                { label: 'Pay Frequency', value: 'Monthly' },
+                { label: 'Pay Day', value: 'Last Working Day' },
+                { label: 'Processing Date', value: '28th - 30th Nov' },
+                { label: 'Bank Transfer Date', value: '30th Nov 2025', color: 'text-emerald-600' },
+            ]
         },
     ];
 
@@ -662,8 +668,8 @@ const HRDashboard: React.FC = () => {
                                         key={label}
                                         onClick={() => setTdsTimeRange(label)}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${tdsTimeRange === label
-                                                ? 'bg-purple-600 text-white shadow-sm'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                            ? 'bg-purple-600 text-white shadow-sm'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                             }`}
                                     >
                                         {label}
