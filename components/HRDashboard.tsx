@@ -622,7 +622,7 @@ const HRDashboard: React.FC = () => {
                 {/* 1. Payroll KPIs */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     {[
-                        { label: 'Total Eligible', val: '450', sub: 'Employees', icon: <Users size={16} />, color: 'bg-blue-50 text-blue-700' },
+                        { label: 'Total Eligible', val: '450', sub: 'Current Month', icon: <Users size={16} />, color: 'bg-blue-50 text-blue-700' },
                         { label: 'Processed', val: '400', sub: 'Current Month', icon: <CheckCircle size={16} />, color: 'bg-emerald-50 text-emerald-700' },
                         { label: 'Pending', val: '50', sub: 'On Hold/Draft', icon: <Clock size={16} />, color: 'bg-amber-50 text-amber-700' },
                         { label: 'Total Payroll Cost', val: '₹ 1.85 Cr', sub: 'Gross Salary', icon: <DollarSign size={16} />, color: 'bg-purple-50 text-purple-700' },
