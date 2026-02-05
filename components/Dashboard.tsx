@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
-import { 
-  Building2, 
-  Users
+import {
+  Building2
 } from 'lucide-react';
 import StatCard from './StatCard';
 import EmployeePanel from './EmployeePanel';
@@ -46,16 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({ companies, auditLogs }) => {
       icon: <Building2 />,
       colorClass: 'text-emerald-600 bg-emerald-100',
       onClick: () => togglePanel('COMPANIES'),
-    },
-    {
-      title: 'Total Employees Managed',
-      value: '45,237',
-      trend: '+8.1% vs last month',
-      trendUp: true,
-      icon: <Users />,
-      colorClass: 'text-sky-600 bg-sky-100',
-      // onClick removed as requested
-    },
+    }
   ];
 
   return (
@@ -80,7 +70,7 @@ const Dashboard: React.FC<DashboardProps> = ({ companies, auditLogs }) => {
         employees={MOCK_EMPLOYEES}
       />
 
-      <CompaniesPanel 
+      <CompaniesPanel
         isOpen={isPanelOpen('COMPANIES')}
         onClose={() => closePanel('COMPANIES')}
         companies={companies}
