@@ -549,8 +549,6 @@ const HRDashboard: React.FC = () => {
             trendUp: true,
             icon: <FileText />,
             colorClass: 'text-emerald-600 bg-emerald-100',
-            // Trigger the new actions modal instead of a dropdown
-            onInfoClick: () => setActivePayrollModal('ACTIONS'),
             extraDetails: [
                 { label: 'Pay Frequency', value: 'Monthly' },
                 { label: 'Pay Day', value: 'Last Working Day' },
