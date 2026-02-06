@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import EmployeeList from './EmployeeList';
 import EditEmployeeProfile from './EditEmployeeProfile';
@@ -28,6 +29,7 @@ const Workforce: React.FC = () => {
       {view === 'EDIT' && (
         <EditEmployeeProfile 
           onBack={handleBack} 
+          onViewHistory={() => setView('VIEW_HISTORY')}
           isReadOnly={false} 
         />
       )}

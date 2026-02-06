@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -14,7 +13,8 @@ import {
   ChevronLeft,
   Image as ImageIcon,
   Check,
-  Briefcase
+  Briefcase,
+  Calculator
 } from 'lucide-react';
 
 // --- Types ---
@@ -108,6 +108,84 @@ const MOCK_FNF_TEMPLATES: FnFTemplate[] = [
 ];
 
 // --- Sub-Components ---
+
+const LeaveEncashmentModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  selectedComponents: string[];
+  onToggleComponent: (comp: string) => void;
+}> = ({ isOpen, onClose, selectedComponents, onToggleComponent }) => {
+  if (!isOpen) return null;
+
+  const options = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"];
+  
+  const getFormulaDisplay = () => {
+    const active = options.filter(opt => selectedComponents.includes(opt));
+    if (active.length === 0) return "(None Selected) / Divisor";
+    const labels = active.map(a => a.replace(" Salary", "").replace(" Allowance", ""));
+    return `(${labels.join(" + ")}) / Divisor`;
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 className="font-bold text-slate-800">Leave Encashment Settings</h3>
+          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          <div>
+            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Components for Encashment</h4>
+            <div className="space-y-2">
+              {options.map(opt => (
+                <label key={opt} className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(opt) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-300'}`}>
+                    {selectedComponents.includes(opt) && <Check size={14} className="text-white stroke-[3]" />}
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    className="hidden" 
+                    checked={selectedComponents.includes(opt)}
+                    onChange={() => onToggleComponent(opt)}
+                  />
+                  <span className={`text-sm font-semibold ${selectedComponents.includes(opt) ? 'text-purple-900' : 'text-slate-600'}`}>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3">
+             <div className="flex items-center gap-2 text-indigo-600">
+                <Calculator size={16} />
+                <h5 className="text-[10px] font-black uppercase tracking-widest">Formula Preview</h5>
+             </div>
+             <div className="space-y-2">
+                <div>
+                   <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Daily Rate Calculation</p>
+                   <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
+                      Daily Rate = {getFormulaDisplay()}
+                   </div>
+                </div>
+                <div>
+                   <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Final Amount</p>
+                   <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
+                      Encashment Amount = Daily Rate × Encashable Days
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+          <button onClick={onClose} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all text-sm">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const FnFHeaderConfigModal: React.FC<{ 
     isOpen: boolean; 
@@ -294,6 +372,10 @@ const FnFSettlementTemplate: React.FC = () => {
 
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
+  // Leave Encashment State
+  const [showLeaveEncashmentModal, setShowLeaveEncashmentModal] = useState(false);
+  const [encashmentComponents, setEncashmentComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
+
   // Editor State
   const [templateName, setTemplateName] = useState('');
   const [sections, setSections] = useState<FnFTemplate['sections']>({ earnings: [], deductions: [] });
@@ -359,6 +441,12 @@ const FnFSettlementTemplate: React.FC = () => {
       setValidationError(null);
   };
 
+  const toggleEncashmentComponent = (comp: string) => {
+    setEncashmentComponents(prev => 
+        prev.includes(comp) ? prev.filter(c => c !== comp) : [...prev, comp]
+    );
+  };
+
   const addComponent = (items: ComponentItem[]) => {
       if (!addComponentModal.section) return;
       setSections(prev => ({ 
@@ -380,13 +468,21 @@ const FnFSettlementTemplate: React.FC = () => {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
              <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
                  <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Briefcase size={20}/></div>
-                 <div>
+                 <div className="flex-1">
                      <h3 className="text-sm font-bold text-purple-900">Default Full & Final Settlement Template</h3>
                      <p className="text-xs text-purple-700 mt-1">This is the global default Full & Final Settlement template. All companies will use this for F&F unless they create a custom version.</p>
                  </div>
-                 <button onClick={handleCreate} className="ml-auto px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
-                     <Plus size={16} /> Create New Version
-                 </button>
+                 <div className="flex gap-2">
+                    <button 
+                        onClick={() => setShowLeaveEncashmentModal(true)}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-lg hover:bg-slate-50 shadow-sm flex items-center gap-2 transition-all"
+                    >
+                        <Settings size={16} /> Leave Encashment Settings
+                    </button>
+                    <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
+                        <Plus size={16} /> Create New Version
+                    </button>
+                 </div>
              </div>
 
              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -428,6 +524,13 @@ const FnFSettlementTemplate: React.FC = () => {
              <div className="text-center text-xs text-slate-400 mt-4">
                 1,156 companies are currently using this default F&F template · Last published: 03 Dec 2025
              </div>
+
+             <LeaveEncashmentModal 
+                isOpen={showLeaveEncashmentModal}
+                onClose={() => setShowLeaveEncashmentModal(false)}
+                selectedComponents={encashmentComponents}
+                onToggleComponent={toggleEncashmentComponent}
+             />
         </div>
       );
   }
@@ -766,4 +869,3 @@ const FnFSettlementTemplate: React.FC = () => {
 };
 
 export default FnFSettlementTemplate;
-    

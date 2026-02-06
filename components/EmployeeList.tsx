@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
@@ -8,26 +7,39 @@ import {
   Users,
   Calculator,
   Calendar,
-  ChevronDown,
-  X,
-  CheckCircle,
-  ArrowRight,
-  Briefcase,
-  CheckSquare,
-  Eye,
-  Clock,
-  Save,
-  MapPin,
-  Building,
-  Info,
-  ChevronLeft
+  ChevronDown, 
+  X, 
+  CheckCircle, 
+  ArrowRight, 
+  Briefcase, 
+  CheckSquare, 
+  Eye, 
+  Clock, 
+  Save, 
+  MapPin, 
+  Building, 
+  Info, 
+  ChevronLeft, 
+  Printer, 
+  Download, 
+  Share2
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
 
-interface EmployeeListProps {
-  onEdit: (id: string) => void;
-  onView: (id: string) => void;
+interface SalaryHistoryRow {
+  id: string;
+  period: string;
+  gross: number;
+  net: number;
+  status: 'Disbursed' | 'Pending' | 'Hold';
+  date: string;
+  bankAcc: string;
+  deductions: {
+    pf: number;
+    tds: number;
+    others: number;
+  };
 }
 
 const STRUCTURE_OPTIONS = [
@@ -37,6 +49,138 @@ const STRUCTURE_OPTIONS = [
   "Custom – Priya",
   "Sales Incentive Structure"
 ];
+
+// --- Sub-Component: Salary Annexure Preview Modal ---
+const SalaryAnnexureModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    employee: Employee;
+    annualCtc: number;
+    structureName: string;
+}> = ({ isOpen, onClose, employee, annualCtc, structureName }) => {
+    if (!isOpen) return null;
+
+    // Calculation logic based on provided image proportions
+    const ctc = annualCtc || 0;
+    const basicAnnual = Math.round(ctc * 0.4);
+    const hraAnnual = Math.round(basicAnnual * 0.5);
+    const ltaAnnual = ctc > 0 ? 50000 : 0;
+    const pfAnnual = ctc > 0 ? 21600 : 0;
+    const gratuityAnnual = Math.round(basicAnnual * 0.0443); // Matching ~32,800 for 7,40,000 basic
+    
+    const retiralsTotal = pfAnnual + gratuityAnnual;
+    const grossAnnual = ctc - retiralsTotal;
+    const specialAnnual = Math.max(0, grossAnnual - basicAnnual - hraAnnual - ltaAnnual);
+
+    const formatNum = (val: number) => val.toLocaleString('en-IN');
+    const formatMonthly = (val: number) => Math.round(val / 12).toLocaleString('en-IN');
+
+    return (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+                {/* Header */}
+                <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-start bg-white">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Salary Structure Annexure</h3>
+                        <p className="text-sm text-sky-600 font-medium">{employee.name} ({employee.eid})</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-8">
+                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                       <table className="w-full text-sm text-left">
+                           <thead className="bg-slate-50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">
+                               <tr>
+                                   <th className="px-6 py-4">Component</th>
+                                   <th className="px-6 py-4 text-right">Monthly (₹)</th>
+                                   <th className="px-6 py-4 text-right">Annual (₹)</th>
+                               </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                               {/* A. Earnings */}
+                               <tr className="bg-emerald-50/30">
+                                   <td colSpan={3} className="px-6 py-2.5 font-black text-emerald-800 text-[11px] uppercase tracking-wider">A. Earnings</td>
+                               </tr>
+                               <tr>
+                                   <td className="px-6 py-3.5 text-slate-700 font-medium">Basic Salary</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(basicAnnual)}</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(basicAnnual)}</td>
+                               </tr>
+                               <tr>
+                                   <td className="px-6 py-3.5 text-slate-700 font-medium">House Rent Allowance</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(hraAnnual)}</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(hraAnnual)}</td>
+                               </tr>
+                               <tr>
+                                   <td className="px-6 py-3.5 text-slate-700 font-medium">Special Allowance</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(specialAnnual)}</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(specialAnnual)}</td>
+                               </tr>
+                               <tr>
+                                   <td className="px-6 py-3.5 text-slate-700 font-medium">Leave Travel Allowance</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(ltaAnnual)}</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(ltaAnnual)}</td>
+                               </tr>
+                               <tr className="bg-slate-50 font-black">
+                                   <td className="px-6 py-4 text-slate-800">Total Gross Salary (A)</td>
+                                   <td className="px-6 py-4 text-right text-slate-900">{formatMonthly(grossAnnual)}</td>
+                                   <td className="px-6 py-4 text-right text-slate-900">{formatNum(grossAnnual)}</td>
+                               </tr>
+
+                               {/* B. Retirals */}
+                               <tr className="bg-sky-50/30">
+                                   <td colSpan={3} className="px-6 py-2.5 font-black text-sky-800 text-[11px] uppercase tracking-wider">B. Retirals (Employer)</td>
+                               </tr>
+                               <tr>
+                                   <td className="px-6 py-3.5 text-slate-700 font-medium">Provident Fund (Employer)</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(pfAnnual)}</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(pfAnnual)}</td>
+                               </tr>
+                               <tr>
+                                   <td className="px-6 py-3.5 text-slate-700 font-medium">Gratuity</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(gratuityAnnual)}</td>
+                                   <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(gratuityAnnual)}</td>
+                               </tr>
+                               <tr className="bg-slate-50 font-black">
+                                   <td className="px-6 py-4 text-slate-800">Total Retirals (B)</td>
+                                   <td className="px-6 py-4 text-right text-slate-900">{formatMonthly(retiralsTotal)}</td>
+                                   <td className="px-6 py-4 text-right text-slate-900">{formatNum(retiralsTotal)}</td>
+                               </tr>
+                           </tbody>
+                           <tfoot className="bg-slate-900 text-white font-black">
+                               <tr>
+                                   <td className="px-6 py-5 text-base">Total Cost to Company (A + B)</td>
+                                   <td className="px-6 py-5 text-right text-base">{formatMonthly(ctc)}</td>
+                                   <td className="px-6 py-5 text-right text-xl tracking-tight">{formatNum(ctc)}</td>
+                               </tr>
+                           </tfoot>
+                       </table>
+                    </div>
+                    <div className="mt-6 flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <Info size={16} className="text-slate-400 mt-0.5" />
+                        <p className="text-[11px] text-slate-500 leading-relaxed italic">
+                            * The above calculations are based on the "{structureName}" salary structure. Actual payroll amounts may vary slightly due to rounding, days worked, and prevailing statutory rules.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                    <button 
+                        onClick={onClose} 
+                        className="px-8 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const AssignStructureModal: React.FC<{
   isOpen: boolean;
@@ -54,6 +198,9 @@ const AssignStructureModal: React.FC<{
   // Step 2 Data
   const [ctcValues, setCtcValues] = useState<Record<string, string>>({});
   const [arrearsDefaults, setArrearsDefaults] = useState<Record<string, string>>({});
+
+  // Preview State
+  const [previewEmployee, setPreviewEmployee] = useState<Employee | null>(null);
 
   // Filters (Step 1)
   const [searchTerm, setSearchTerm] = useState('');
@@ -243,7 +390,8 @@ const AssignStructureModal: React.FC<{
                                   <th className="px-4 py-4 text-right">Monthly Gross</th>
                                   <th className="px-4 py-4 text-center">Proposed TDS<br/><span className="text-[9px] font-normal text-slate-400">(Old Regime)</span></th>
                                   <th className="px-4 py-4 text-center">Proposed TDS<br/><span className="text-[9px] text-purple-600 font-bold">(New Regime)</span></th>
-                                  <th className="px-4 py-4 min-w-[160px]">Arrears Payout</th>
+                                  <th className="px-4 py-4">Arrears Payout</th>
+                                  <th className="px-4 py-4 text-center">Actions</th>
                               </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -292,6 +440,15 @@ const AssignStructureModal: React.FC<{
                                               <option>Jan 2026</option>
                                           </select>
                                       </td>
+                                      <td className="px-4 py-4 text-center">
+                                          <button 
+                                            onClick={() => setPreviewEmployee(emp)}
+                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                            title="View Annexure Preview"
+                                          >
+                                              <Eye size={18} />
+                                          </button>
+                                      </td>
                                   </tr>
                               ))}
                           </tbody>
@@ -319,6 +476,17 @@ const AssignStructureModal: React.FC<{
                  </div>
               </div>
            </div>
+           
+           {/* Annexure Preview Modal */}
+           {previewEmployee && (
+               <SalaryAnnexureModal 
+                   isOpen={!!previewEmployee} 
+                   onClose={() => setPreviewEmployee(null)} 
+                   employee={previewEmployee}
+                   annualCtc={parseFloat(ctcValues[previewEmployee.id] || '0')}
+                   structureName={assignments[previewEmployee.id] || 'Standard'}
+               />
+           )}
         </div>
       );
   }
@@ -533,6 +701,12 @@ const AssignStructureModal: React.FC<{
   );
 };
 
+// Fixed: Added missing EmployeeListProps interface to resolve the "Cannot find name 'EmployeeListProps'" error.
+interface EmployeeListProps {
+  onEdit: (id: string) => void;
+  onView: (id: string) => void;
+}
+
 const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [employees] = useState<Employee[]>(MOCK_EMPLOYEES);
@@ -660,7 +834,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                         </td>
                         <td className="px-6 py-4 text-slate-600">
                             <div className="flex items-center gap-1.5">
-                                <Calendar size={14} className="text-slate-400" />
+                                <Calendar size={14} className="text-slate-300" />
                                 {emp.joinDate}
                             </div>
                         </td>

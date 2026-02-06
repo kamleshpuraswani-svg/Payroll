@@ -3,23 +3,20 @@ import React, { useState } from 'react';
 import { 
   Plus, Wallet, Clock, CheckCircle, TrendingUp, History, Search, 
   FileText, ArrowUpRight, AlertTriangle, ChevronRight, PieChart as PieChartIcon,
-  Eye, Edit2, Layers, FileWarning, X, Sigma, ChevronDown, Tag, CreditCard, Calendar, Activity
+  Eye, Edit2, Layers, FileWarning, X, Sigma, ChevronDown, Tag, CreditCard, Calendar, Activity, Banknote
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { ReimbursementCategory, BudgetCategory, WalletMetric } from '../../types';
+import { BudgetCategory, WalletMetric } from '../../types';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#0EA5E9'];
 
-export const Dashboard = ({ wallet, budgets, claims, onNewClaim, onEditClaim, onViewClaim }: any) => {
+export const Dashboard = ({ wallet, budgets, claims, onNewClaim, onEditClaim, onViewClaim, onViewLoans }: any) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showRejectedPanel, setShowRejectedPanel] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  const activeClaims = claims.filter((c: any) => c.status !== 'settled' && c.status !== 'draft');
-  // Including pending items in the table to allow for editing as requested
+  // Filter for history table
   const allHistoryClaims = claims.filter((c: any) => c.status !== 'draft');
-  const draftClaims = claims.filter((c: any) => c.status === 'draft');
-
+  
   // Mock data for the rejected claims panel
   const rejectedClaims = [
     { id: 'CLM-REJ-01', title: 'Team Dinner with Client', date: '12 Nov 2025', amount: '₹ 4,500', reason: 'Alcohol charges are not reimbursable as per company policy section 4.2. Please submit food bill only.' },
@@ -43,7 +40,7 @@ export const Dashboard = ({ wallet, budgets, claims, onNewClaim, onEditClaim, on
 
       {/* Financial Cockpit & Budgets */}
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
               <div className="flex justify-between mb-4">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Wallet size={20}/></div>
@@ -69,7 +66,7 @@ export const Dashboard = ({ wallet, budgets, claims, onNewClaim, onEditClaim, on
               <p className="text-2xl font-black text-slate-900">₹{wallet.pending.toLocaleString()}</p>
           </div>
 
-          {/* New Card: Total Claims Submitted */}
+          {/* Total Claims Submitted */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
               <div className="flex justify-between mb-4">
                 <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><Layers size={20}/></div>
@@ -78,7 +75,23 @@ export const Dashboard = ({ wallet, budgets, claims, onNewClaim, onEditClaim, on
               <p className="text-2xl font-black text-slate-900">12</p>
           </div>
 
-          {/* New Card: Rejected Claims */}
+          {/* Loans & Advances Card */}
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm group">
+              <div className="flex justify-between mb-4">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Banknote size={20}/></div>
+                <button 
+                    onClick={onViewLoans}
+                    className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                    title="View Details"
+                >
+                    <Eye size={20}/>
+                </button>
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Loans & Advances</p>
+              <p className="text-2xl font-black text-slate-900">₹0</p>
+          </div>
+
+          {/* Rejected Claims */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative group">
               <div className="flex justify-between mb-4">
                 <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileWarning size={20}/></div>
@@ -94,37 +107,22 @@ export const Dashboard = ({ wallet, budgets, claims, onNewClaim, onEditClaim, on
           </div>
         </div>
 
-        {/* Budget Progress Bars */}
-        <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Category Utilization</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+        {/* Budget Progress Bars - Compact Layout */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5">Category Utilization</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {budgets.map((b: BudgetCategory, i: number) => (
-              <div key={b.category} className="space-y-3 group">
+              <div key={b.category} className="space-y-2 group">
                   <div className="flex justify-between items-end">
                     <span className="text-xs font-black text-slate-700 capitalize">{b.category.toLowerCase()}</span>
                     <span className="text-xs font-black text-slate-900">₹{b.utilized.toLocaleString()} <span className="text-[10px] text-slate-400 font-bold">/ ₹{b.limit.toLocaleString()}</span></span>
                   </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-1000 group-hover:brightness-110" style={{ width: `${(b.utilized/b.limit)*100}%`, backgroundColor: COLORS[i % COLORS.length] }}></div>
                   </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Active Trackers */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Clock size={16}/> Active Claims Tracking
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activeClaims.map((claim: any) => (
-            <ActiveClaimCard key={claim.id} claim={claim} onEdit={() => onEditClaim(claim)} />
-          ))}
-          {draftClaims.map((claim: any) => (
-            <DraftClaimCard key={claim.id} claim={claim} onEdit={() => onEditClaim(claim)} />
-          ))}
         </div>
       </div>
 
@@ -320,6 +318,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
+// Components kept for potential future use or to avoid undefined variable errors, although unused in this specific rendering.
 const ActiveClaimCard = ({ claim, onEdit }: any) => {
   const statusColors: any = {
     pending: 'bg-amber-50 text-amber-700 border-amber-100',

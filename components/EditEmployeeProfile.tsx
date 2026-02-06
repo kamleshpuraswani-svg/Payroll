@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, 
   Camera, 
@@ -17,11 +17,14 @@ import {
   ShieldCheck, 
   Search, 
   Upload,
-  ChevronDown
+  ChevronDown,
+  Calendar,
+  Clock
 } from 'lucide-react';
 
 interface EditEmployeeProfileProps {
   onBack?: () => void;
+  onViewHistory?: () => void;
   isReadOnly?: boolean;
 }
 
@@ -33,12 +36,20 @@ const SALARY_STRUCTURES = [
     { id: 'S5', name: 'Sales Commission Based' }
 ];
 
-const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, isReadOnly = false }) => {
+const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onViewHistory, isReadOnly = false }) => {
   const [ctc, setCtc] = useState<number>(1300000);
   const [regime, setRegime] = useState('New Regime (2025)');
   const [bankVerified, setBankVerified] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedStructureId, setSelectedStructureId] = useState('S2');
+  const [effectiveFrom, setEffectiveFrom] = useState('');
+  const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
+
+  // Refs to track initial values for change detection
+  const initialValues = useRef({
+    ctc: 1300000,
+    structureId: 'S2'
+  });
 
   // Helper to calculate estimated TDS for demo purposes
   const calculateEstTax = (amount: number, regimeType: 'OLD' | 'NEW') => {
@@ -118,6 +129,17 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, isRea
   const salary = calculateSalary(ctc);
 
   const handleSave = () => {
+    // Check if critical fields changed
+    const hasChanged = ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId;
+    
+    if (hasChanged && !effectiveFrom) {
+      setErrors({ effectiveFrom: 'Effective From is mandatory when salary details are changed' });
+      // Scroll to error
+      const errorField = document.getElementById('effective-from-field');
+      errorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     setIsSaving(true);
     setTimeout(() => {
         setIsSaving(false);
@@ -237,36 +259,56 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, isRea
                   </div>
 
                   {/* Fields */}
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name { !isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <input type="text" defaultValue="Priya Sharma" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Designation</label>
-                        <input type="text" defaultValue="Senior Software Engineer" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Department</label>
-                        <select disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
-                           <option>Engineering</option>
-                           <option>Product</option>
-                           <option>Design</option>
-                           <option>Sales</option>
-                        </select>
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Date of Joining</label>
-                        <input type="date" defaultValue="2023-01-12" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Work Location</label>
-                        <select disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
-                           <option>Bangalore</option>
-                           <option>Mumbai</option>
-                           <option>Remote</option>
-                        </select>
-                     </div>
+                  <div className="flex-1 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name { !isReadOnly && <span className="text-rose-500">*</span>}</label>
+                            <input type="text" defaultValue="Priya Sharma" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Designation</label>
+                            <input type="text" defaultValue="Senior Software Engineer" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Department</label>
+                            <select disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
+                            <option>Engineering</option>
+                            <option>Product</option>
+                            <option>Design</option>
+                            <option>Sales</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Date of Joining</label>
+                            <input type="date" defaultValue="2023-01-12" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Work Location</label>
+                            <select disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
+                            <option>Bangalore</option>
+                            <option>Mumbai</option>
+                            <option>Remote</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Summary Buttons Row */}
+                    <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-100">
+                        <button 
+                            onClick={onViewHistory}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-100 transition-colors"
+                        >
+                            <FileText size={14} className="text-slate-400"/>
+                            Total Payslips: 35
+                        </button>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold text-slate-600">
+                            <Clock size={14} className="text-slate-400"/>
+                            Last Disbursal: 30 Nov 2025
+                        </div>
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 transition-colors">
+                            <FileText size={14}/> View Salary Annexure
+                        </button>
+                    </div>
                   </div>
                </div>
             </div>
@@ -406,6 +448,25 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, isRea
                         Monthly Gross: <span className="font-bold text-slate-700">₹ {formatCurrency(Math.round(salary.monthlyGross))}</span>
                     </div>
                   </div>
+
+                  {/* Effective From Date Field */}
+                  <div id="effective-from-field">
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {(ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId) && !isReadOnly && <span className="text-rose-500">*</span>}</label>
+                    <div className="relative">
+                        <input 
+                            type="date" 
+                            value={effectiveFrom}
+                            disabled={isReadOnly}
+                            onChange={(e) => {
+                                setEffectiveFrom(e.target.value);
+                                if (errors.effectiveFrom) setErrors({});
+                            }}
+                            className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all ${isReadOnly ? 'bg-slate-100 text-slate-500 border-slate-200' : errors.effectiveFrom ? 'border-rose-500' : 'border-slate-300 hover:border-slate-400'}`}
+                        />
+                        <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                    </div>
+                    {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1 animate-in fade-in slide-in-from-top-1">{errors.effectiveFrom}</p>}
+                  </div>
                </div>
 
                <div className="overflow-x-auto">
@@ -479,7 +540,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, isRea
                 <div className="p-4 bg-yellow-50 border-t border-yellow-100 flex gap-3">
                     <AlertCircle size={16} className="text-yellow-600 shrink-0 mt-0.5" />
                     <p className="text-xs text-yellow-800 leading-relaxed">
-                        Changes to CTC will be effective from <strong>01 Nov 2025</strong>. Arrears will be calculated automatically in the next payroll run.
+                        Changes to CTC will be effective from the selected date. Arrears will be calculated automatically in the corresponding payroll run.
                     </p>
                 </div>
                )}
