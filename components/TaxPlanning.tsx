@@ -84,10 +84,17 @@ interface OtherIncomeDetails {
 }
 
 interface PreviousEmploymentDetails {
-   incomeAfterExemptions: number;
+   employerName: string;
+   employerPAN: string;
+   employerAddress: string;
+   employmentFrom: string;
+   employmentTo: string;
+   lastWorkingDay: string;
+   totalTaxableSalary: number;
    professionalTax: number;
    providentFund: number;
-   incomeTaxTDS: number;
+   totalTDSDeducted: number;
+   form12B: string;
 }
 
 interface TaxPlanningData {
@@ -121,7 +128,19 @@ const DEFAULT_PLANNING_DATA: TaxPlanningData = {
    otherIncomeEnabled: false,
    otherIncomeDetails: { otherSourceIncome: 0, savingsInterest: 0, fdInterest: 0, nscInterest: 0 },
    prevEmploymentEnabled: false,
-   prevEmploymentDetails: { incomeAfterExemptions: 0, professionalTax: 0, providentFund: 0, incomeTaxTDS: 0 },
+   prevEmploymentDetails: {
+      employerName: '',
+      employerPAN: '',
+      employerAddress: '',
+      employmentFrom: '',
+      employmentTo: '',
+      lastWorkingDay: '',
+      totalTaxableSalary: 0,
+      professionalTax: 0,
+      providentFund: 0,
+      totalTDSDeducted: 0,
+      form12B: ''
+   },
    isHraSaved: false,
    isHomeLoanSaved: false,
    isLetOutSaved: false,
@@ -380,7 +399,7 @@ const TaxPlanning: React.FC = () => {
    const taxCalc = useMemo(() => {
       // 0. Total Income (Salary + Other Sources + Prev Employment)
       const totalOtherIncome = otherIncomeEnabled ? (otherIncomeDetails.otherSourceIncome + otherIncomeDetails.savingsInterest + otherIncomeDetails.fdInterest + otherIncomeDetails.nscInterest) : 0;
-      const prevEmpIncome = prevEmploymentEnabled ? prevEmploymentDetails.incomeAfterExemptions : 0;
+      const prevEmpIncome = prevEmploymentEnabled ? prevEmploymentDetails.totalTaxableSalary : 0;
       const grossTotalIncome = ANNUAL_GROSS_SALARY + totalOtherIncome + prevEmpIncome;
 
       // 1. Calculate Total 80C
@@ -1588,15 +1607,118 @@ const TaxPlanning: React.FC = () => {
                            {prevEmploymentEnabled && (
                               <div className={`p-6 space-y-6 animate-fade-in-up ${isPrevEmploymentSaved ? 'opacity-70' : ''}`}>
                                  <div className="grid grid-cols-12 gap-6">
+                                    {/* --- New Employer Fields --- */}
                                     <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Income from Salary (After Exemptions)</label>
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Name</label>
+                                       <div className="relative">
+                                          <input
+                                             type="text"
+                                             value={prevEmploymentDetails.employerName || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerName: e.target.value })}
+                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                             placeholder="Enter company name"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer PAN</label>
+                                       <div className="relative">
+                                          <input
+                                             type="text"
+                                             value={prevEmploymentDetails.employerPAN || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             maxLength={10}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerPAN: e.target.value.toUpperCase() })}
+                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 uppercase"
+                                             placeholder="ABCDE1234F"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Address</label>
+                                       <div className="relative">
+                                          <textarea
+                                             value={prevEmploymentDetails.employerAddress || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerAddress: e.target.value })}
+                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 min-h-[80px] resize-none"
+                                             placeholder="Enter full address"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment From</label>
+                                       <div className="relative">
+                                          <input
+                                             type="date"
+                                             value={prevEmploymentDetails.employmentFrom || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             min="2025-04-01"
+                                             max="2026-03-31"
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentFrom: e.target.value })}
+                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment To</label>
+                                       <div className="relative">
+                                          <input
+                                             type="date"
+                                             value={prevEmploymentDetails.employmentTo || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             min={prevEmploymentDetails.employmentFrom}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentTo: e.target.value })}
+                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Last Working Day</label>
+                                       <div className="relative">
+                                          <input
+                                             type="date"
+                                             value={prevEmploymentDetails.lastWorkingDay || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, lastWorkingDay: e.target.value })}
+                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12 h-px bg-slate-100 my-2"></div>
+
+                                    <div className="col-span-12 md:col-span-6">
+                                       <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                                          Total Taxable Salary
+                                          <div className="group relative">
+                                             <Info size={12} className="text-slate-400 cursor-help" />
+                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
+                                                Gross salary minus exemptions like HRA or LTA
+                                                <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
+                                             </div>
+                                          </div>
+                                       </label>
                                        <div className="relative">
                                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
                                           <input
                                              type="number"
-                                             value={prevEmploymentDetails.incomeAfterExemptions || ''}
+                                             value={prevEmploymentDetails.totalTaxableSalary || ''}
                                              disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, incomeAfterExemptions: Number(e.target.value) })}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTaxableSalary: Number(e.target.value) })}
+                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                          />
+                                       </div>
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Total TDS Deducted</label>
+                                       <div className="relative">
+                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                          <input
+                                             type="number"
+                                             value={prevEmploymentDetails.totalTDSDeducted || ''}
+                                             disabled={isPrevEmploymentSaved || isReadOnly}
+                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTDSDeducted: Number(e.target.value) })}
                                              className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
                                           />
                                        </div>
@@ -1615,7 +1737,16 @@ const TaxPlanning: React.FC = () => {
                                        </div>
                                     </div>
                                     <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Provident Fund (PF)</label>
+                                       <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                                          Provident Fund (PF)
+                                          <div className="group relative">
+                                             <Info size={12} className="text-slate-400 cursor-help" />
+                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
+                                                Employee’s contribution to PF
+                                                <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
+                                             </div>
+                                          </div>
+                                       </label>
                                        <div className="relative">
                                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
                                           <input
@@ -1627,17 +1758,30 @@ const TaxPlanning: React.FC = () => {
                                           />
                                        </div>
                                     </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Income Tax (TDS)</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                    <div className="col-span-12">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Form 12B (PDF Only)</label>
+                                       <div className="relative border border-slate-200 rounded-lg p-3 bg-slate-50">
                                           <input
-                                             type="number"
-                                             value={prevEmploymentDetails.incomeTaxTDS || ''}
+                                             type="file"
+                                             accept="application/pdf"
                                              disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, incomeTaxTDS: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                             onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                   if (e.target.files[0].type === 'application/pdf') {
+                                                      setPrevEmploymentDetails({ ...prevEmploymentDetails, form12B: e.target.files[0].name });
+                                                   } else {
+                                                      alert("Only PDF files are allowed");
+                                                      e.target.value = '';
+                                                   }
+                                                }
+                                             }}
+                                             className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
                                           />
+                                          {prevEmploymentDetails.form12B && (
+                                             <div className="mt-2 text-xs text-emerald-600 font-medium flex items-center gap-1 bg-emerald-50 p-1.5 rounded border border-emerald-100 w-fit">
+                                                <Check size={12} /> Selected: {prevEmploymentDetails.form12B}
+                                             </div>
+                                          )}
                                        </div>
                                     </div>
                                  </div>
