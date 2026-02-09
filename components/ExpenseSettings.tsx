@@ -51,10 +51,10 @@ const ExpenseSettings: React.FC = () => {
             // If no categories found, insert dummy data
             if (catData && catData.length === 0) {
                 const dummyCategories = [
-                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 200, pro_rata: true, status: 'Active' },
-                    { name: 'Meals & Entertainment', max_limit: 1000, receipt_threshold: 500, pro_rata: false, status: 'Active' },
-                    { name: 'Communication', max_limit: 2000, receipt_threshold: 0, pro_rata: false, status: 'Active' },
-                    { name: 'Office Supplies', max_limit: 10000, receipt_threshold: 1000, pro_rata: true, status: 'Active' }
+                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.' },
+                    { name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.' },
+                    { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.' },
+                    { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.' }
                 ];
                 await supabase.from('expense_categories').insert(dummyCategories);
                 // Re-fetch after insertion
@@ -404,7 +404,7 @@ const ExpenseSettings: React.FC = () => {
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-700">Deadline for claims</p>
+                                                    <p className="text-sm font-bold text-slate-700">Submission Deadline</p>
                                                     <p className="text-xs text-slate-500">Select cut-off date of the month</p>
                                                     <p className="text-[10px] text-slate-400 mt-2 italic leading-relaxed">
                                                         Specify the cut-off date each month after which claims will be processed in the next payroll cycle.
@@ -421,21 +421,6 @@ const ExpenseSettings: React.FC = () => {
                                                         ))}
                                                     </select>
                                                     <span className="text-[10px] font-black text-slate-400">DATE</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-700">Receipt Mandatory</p>
-                                                    <p className="text-xs text-slate-500">For amounts greater than</p>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-400 font-bold">₹</span>
-                                                    <input
-                                                        type="number"
-                                                        value={settings.receipt_mandatory_amount}
-                                                        onChange={(e) => updateSettings({ receipt_mandatory_amount: parseFloat(e.target.value) })}
-                                                        className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-sky-600 text-center focus:outline-none focus:border-sky-500 disabled:bg-white"
-                                                    />
                                                 </div>
                                             </div>
                                         </div>
