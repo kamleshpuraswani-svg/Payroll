@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
     max_limit numeric DEFAULT 0,
     status text DEFAULT 'Active', -- Active, Inactive
     description text,
+    receipt_threshold numeric DEFAULT 200,
+    pro_rata boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );
@@ -37,12 +39,12 @@ SELECT 5, 200, false
 WHERE NOT EXISTS (SELECT 1 FROM public.expense_settings);
 
 -- 6. Insert Default Categories
-INSERT INTO public.expense_categories (name, max_limit)
+INSERT INTO public.expense_categories (name, max_limit, receipt_threshold, pro_rata)
 VALUES 
-    ('Travel & Conveyance', 5000),
-    ('Meals & Entertainment', 1000),
-    ('Communication', 2000),
-    ('Office Supplies', 10000)
+    ('Travel & Conveyance', 5000, 200, true),
+    ('Meals & Entertainment', 1000, 500, false),
+    ('Communication', 2000, 0, false),
+    ('Office Supplies', 10000, 1000, true)
 ON CONFLICT (name) DO NOTHING;
 
 -- 7. Update triggers

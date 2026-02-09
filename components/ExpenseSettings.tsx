@@ -48,7 +48,24 @@ const ExpenseSettings: React.FC = () => {
                 .select('*')
                 .order('name');
 
-            if (catData) setCategories(catData);
+            // If no categories found, insert dummy data
+            if (catData && catData.length === 0) {
+                const dummyCategories = [
+                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 200, pro_rata: true, status: 'Active' },
+                    { name: 'Meals & Entertainment', max_limit: 1000, receipt_threshold: 500, pro_rata: false, status: 'Active' },
+                    { name: 'Communication', max_limit: 2000, receipt_threshold: 0, pro_rata: false, status: 'Active' },
+                    { name: 'Office Supplies', max_limit: 10000, receipt_threshold: 1000, pro_rata: true, status: 'Active' }
+                ];
+                await supabase.from('expense_categories').insert(dummyCategories);
+                // Re-fetch after insertion
+                const { data: refreshedCat } = await supabase
+                    .from('expense_categories')
+                    .select('*')
+                    .order('name');
+                if (refreshedCat) setCategories(refreshedCat);
+            } else if (catData) {
+                setCategories(catData);
+            }
 
             // Fetch settings
             const { data: settingsData, error: settingsError } = await supabase
@@ -69,27 +86,31 @@ const ExpenseSettings: React.FC = () => {
         const formData = new FormData(e.currentTarget as HTMLFormElement);
         const name = formData.get('name') as string;
         const limit = formData.get('limit') as string;
+        const threshold = formData.get('receipt_threshold') as string;
+        const proRata = formData.get('pro_rata') === 'on';
         const description = formData.get('description') as string;
 
         setIsSaving(true);
         try {
+            const categoryData = {
+                name,
+                max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
+                receipt_threshold: parseFloat(threshold),
+                pro_rata: proRata,
+                description
+            };
+
             if (editingCategory) {
                 const { error } = await supabase
                     .from('expense_categories')
-                    .update({
-                        name,
-                        max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
-                        description
-                    })
+                    .update(categoryData)
                     .eq('id', editingCategory.id);
             } else {
                 const { error } = await supabase
                     .from('expense_categories')
                     .insert([{
-                        name,
-                        max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
-                        status: 'Active',
-                        description
+                        ...categoryData,
+                        status: 'Active'
                     }]);
             }
             await fetchData();
@@ -170,40 +191,73 @@ const ExpenseSettings: React.FC = () => {
                                 </button>
                             </div>
                             <form onSubmit={handleSaveCategory} className="p-8 space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Category Name</label>
-                                    <input
-                                        name="name"
-                                        type="text"
-                                        defaultValue={editingCategory?.name || ''}
-                                        placeholder="e.g. Travel, Meals, Office Supplies"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Max Limit (Per Month)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Category Name</label>
                                         <input
-                                            name="limit"
+                                            name="name"
                                             type="text"
-                                            defaultValue={editingCategory?.max_limit || ''}
-                                            placeholder="5,000"
-                                            className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                            defaultValue={editingCategory?.name || ''}
+                                            placeholder="e.g. Travel, Meals, Office Supplies"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                             required
                                         />
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description (Optional)</label>
-                                    <textarea
-                                        name="description"
-                                        rows={3}
-                                        defaultValue={editingCategory?.description || ''}
-                                        placeholder="Describe the scope of this category..."
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"
-                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Max Limit (Per Month)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                <input
+                                                    name="limit"
+                                                    type="text"
+                                                    defaultValue={editingCategory?.max_limit || ''}
+                                                    placeholder="5,000"
+                                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Receipt Threshold</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                <input
+                                                    name="receipt_threshold"
+                                                    type="number"
+                                                    defaultValue={editingCategory?.receipt_threshold || 200}
+                                                    placeholder="200"
+                                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 italic">Claims exceeding this amount will require a mandatory bill upload from the employee.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                                        <div className="space-y-0.5">
+                                            <label className="text-sm font-bold text-slate-700">Pro-rata Calculations</label>
+                                            <p className="text-xs text-slate-500">Enable monthly limit splitting</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="pro_rata"
+                                                defaultChecked={editingCategory?.pro_rata || false}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                                        </label>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description (Optional)</label>
+                                        <textarea
+                                            name="description"
+                                            rows={2}
+                                            defaultValue={editingCategory?.description || ''}
+                                            placeholder="Describe the scope of this category..."
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex gap-3 pt-4">
                                     <button
