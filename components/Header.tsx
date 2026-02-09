@@ -48,20 +48,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, onAiClick, userRole, onR
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        {userRole !== 'SUPER_ADMIN' && (
-          <button
-            onClick={onAiClick}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-cyan-50 to-purple-50 text-purple-700 border border-purple-100 rounded-full text-xs font-semibold hover:from-cyan-100 hover:to-purple-100 transition-all shadow-sm"
-          >
-            <Sparkles size={14} className="text-yellow-500" />
-            <span>CollabAI</span>
-          </button>
-        )}
 
-        <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
+
+
 
         {/* Profile Dropdown */}
         <div className="relative">

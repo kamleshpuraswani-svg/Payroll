@@ -33,6 +33,7 @@ import IncomeTaxDeclarationSettings from './IncomeTaxDeclarationSettings';
 import TDSSettings from './TDSSettings';
 import LoanAdvancesTypes from './LoanAdvancesTypes';
 import FnFSettlementTemplate from './FnFSettlementTemplate';
+import ExpenseSettings from './ExpenseSettings';
 
 const GlobalSettings: React.FC = () => {
    const [activeModule, setActiveModule] = useState('organization');
@@ -44,6 +45,7 @@ const GlobalSettings: React.FC = () => {
       { id: 'structure', label: 'Salary Structures', icon: Briefcase },
       { id: 'tax-config', label: 'Tax Configuration', icon: Calculator },
       { id: 'loan-types', label: 'Loan & Advances Types', icon: Banknote },
+      { id: 'expenses-config', label: 'Expenses management', icon: Receipt },
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },
       { id: 'bank', label: 'Bank Disbursal Format', icon: CreditCard },
@@ -62,7 +64,9 @@ const GlobalSettings: React.FC = () => {
          case 'structure': return <HRSalaryStructure embedded={true} />;
          case 'tax-config': return <HRTaxConfiguration />;
          case 'loan-types': return <LoanAdvancesTypes />;
+         case 'expenses-config': return <ExpenseSettings />;
          case 'fnf-settlement': return <FnFSettlementTemplate />;
+
          case 'payslip': return <HRSalarySlipTemplate />;
          case 'bank': return <HRBankDisbursalTemplate />;
          case 'pf-settings': return <PFSettings />;
