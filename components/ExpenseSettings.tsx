@@ -13,19 +13,32 @@ import {
     Save,
     X,
     Info,
-    Check
+    Check,
+    Search,
+    Users,
+    UserPlus,
+    ArrowUp,
+    ArrowDown,
+    UserCircle,
+    ChevronRight
 } from 'lucide-react';
 
 const ExpenseSettings: React.FC = () => {
     const [isAddingCategory, setIsAddingCategory] = useState(false);
+    const [isAddingWorkflow, setIsAddingWorkflow] = useState(false);
     const [editingCategory, setEditingCategory] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'categories' | 'rules'>('categories');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // State for Expense Categories
     const [categories, setCategories] = useState<any[]>([]);
+
+    // State for Approval Workflow
+    const [approvers, setApprovers] = useState<any[]>([]);
+    const [allEmployees, setAllEmployees] = useState<any[]>([]);
 
     // State for Policy Settings
     const [settings, setSettings] = useState({
@@ -66,6 +79,38 @@ const ExpenseSettings: React.FC = () => {
             } else if (catData) {
                 setCategories(catData);
             }
+
+            // Fetch workflow approvers joining with employees
+            const { data: workflowData } = await supabase
+                .from('expense_workflows')
+                .select(`
+                    id,
+                    sequence_order,
+                    employees (
+                        id,
+                        name,
+                        eid,
+                        avatar_url,
+                        department
+                    )
+                `)
+                .order('sequence_order');
+
+            if (workflowData) {
+                setApprovers(workflowData.map(w => ({
+                    ...w.employees,
+                    workflowId: w.id,
+                    sequence: w.sequence_order
+                })));
+            }
+
+            // Fetch all employees for selection
+            const { data: empData } = await supabase
+                .from('employees')
+                .select('id, name, eid, avatar_url, department')
+                .eq('status', 'Active')
+                .order('name');
+            if (empData) setAllEmployees(empData);
 
             // Fetch settings
             const { data: settingsData, error: settingsError } = await supabase
@@ -118,6 +163,54 @@ const ExpenseSettings: React.FC = () => {
             setEditingCategory(null);
         } catch (error) {
             console.error('Error saving category:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const toggleApprover = (employee: any) => {
+        setApprovers(prev => {
+            const exists = prev.find(p => p.id === employee.id);
+            if (exists) {
+                return prev.filter(p => p.id !== employee.id);
+            }
+            return [...prev, employee];
+        });
+    };
+
+    const moveApprover = (index: number, direction: 'up' | 'down') => {
+        const newApprovers = [...approvers];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= newApprovers.length) return;
+
+        const temp = newApprovers[index];
+        newApprovers[index] = newApprovers[targetIndex];
+        newApprovers[targetIndex] = temp;
+        setApprovers(newApprovers);
+    };
+
+    const handleSaveWorkflow = async () => {
+        setIsSaving(true);
+        try {
+            // Delete existing workflow
+            await supabase.from('expense_workflows').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+            // Insert new sequence
+            const workflowToInsert = approvers.map((emp, index) => ({
+                approver_id: emp.id,
+                sequence_order: index + 1
+            }));
+
+            if (workflowToInsert.length > 0) {
+                await supabase.from('expense_workflows').insert(workflowToInsert);
+            }
+
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 2000);
+            setIsAddingWorkflow(false);
+            await fetchData();
+        } catch (error) {
+            console.error('Error saving workflow:', error);
         } finally {
             setIsSaving(false);
         }
@@ -279,6 +372,151 @@ const ExpenseSettings: React.FC = () => {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Setup Approval Workflow Modal */}
+                {isAddingWorkflow && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                        <ShieldCheck className="text-sky-600" size={24} />
+                                        Setup Approval Workflow
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-semibold mt-1">Define the sequence of approvers for expense claims</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsAddingWorkflow(false)}
+                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 h-[500px]">
+                                {/* Left Side: Employee List */}
+                                <div className="border-r border-slate-100 flex flex-col">
+                                    <div className="p-4 border-b border-slate-50">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Select Approvers</label>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                            <input
+                                                type="text"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                placeholder="Search employees..."
+                                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all font-semibold"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                                        {allEmployees
+                                            .filter(emp => emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.eid.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map((emp) => {
+                                                const isSelected = approvers.find(p => p.id === emp.id);
+                                                return (
+                                                    <div
+                                                        key={emp.id}
+                                                        onClick={() => toggleApprover(emp)}
+                                                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group ${isSelected ? 'bg-sky-50 border-sky-200' : 'bg-white border-slate-100 hover:border-sky-200'}`}
+                                                    >
+                                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200">
+                                                            {emp.avatar_url ? (
+                                                                <img src={emp.avatar_url} alt={emp.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold bg-slate-50">
+                                                                    {emp.name.charAt(0)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-slate-800 truncate">{emp.name}</p>
+                                                            <p className="text-[10px] text-slate-500 font-semibold">{emp.department} • {emp.eid}</p>
+                                                        </div>
+                                                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-sky-600 border-sky-600' : 'bg-slate-50 border-slate-200 group-hover:border-sky-400'}`}>
+                                                            {isSelected && <Check size={12} className="text-white" />}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Sequence Ordering */}
+                                <div className="bg-slate-50 flex flex-col">
+                                    <div className="p-4 border-b border-slate-100 bg-white">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Workflow Sequence</label>
+                                        <p className="text-[10px] text-slate-500 font-medium italic">Claims will follow this order for approval</p>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                                        {approvers.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-3">
+                                                    <Users size={24} />
+                                                </div>
+                                                <p className="text-sm font-bold text-slate-400">No approvers selected</p>
+                                                <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-black">Select from the left to build workflow</p>
+                                            </div>
+                                        ) : (
+                                            approvers.map((emp, idx) => (
+                                                <div key={emp.id} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm animate-in slide-in-from-right-4 duration-200">
+                                                    <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-black shadow-sm flex-shrink-0">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-black text-slate-800 truncate">{emp.name}</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold">Approver Level {idx + 1}</p>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); moveApprover(idx, 'up'); }}
+                                                            disabled={idx === 0}
+                                                            className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-sky-600 disabled:opacity-30 disabled:hover:bg-transparent"
+                                                        >
+                                                            <ChevronDown className="rotate-180" size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); moveApprover(idx, 'down'); }}
+                                                            disabled={idx === approvers.length - 1}
+                                                            className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-sky-600 disabled:opacity-30 disabled:hover:bg-transparent"
+                                                        >
+                                                            <ChevronDown size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                    <div className="p-6 bg-white border-t border-slate-100 space-y-3">
+                                        <button
+                                            onClick={handleSaveWorkflow}
+                                            disabled={approvers.length === 0 || isSaving}
+                                            className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-900 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            {isSaving ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    Saving Workflow...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    < ShieldCheck size={18} />
+                                                    Finalize Workflow
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => setIsAddingWorkflow(false)}
+                                            className="w-full py-2 text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-slate-600 transition-all"
+                                        >
+                                            Exit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -454,20 +692,58 @@ const ExpenseSettings: React.FC = () => {
                             </div>
 
                             {/* Approval Workflow Section */}
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 flex flex-col items-center justify-center text-center py-20 space-y-4">
-                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
-                                    <Clock size={32} />
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
+                                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Workflow Engine</h3>
+                                    <button
+                                        onClick={() => setIsAddingWorkflow(true)}
+                                        className="flex items-center gap-2 px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 transition-all shadow-md shadow-sky-100"
+                                    >
+                                        <Plus size={14} /> {approvers.length > 0 ? 'Edit' : 'Add'}
+                                    </button>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-800">Advanced Workflow Engine</h3>
-                                    <p className="text-sm text-slate-500 max-w-sm mx-auto mt-2">
-                                        Multi-level approval workflows are currently managed at the organization level.
-                                        To customize expense-specific workflows, please contact your administrator.
-                                    </p>
-                                </div>
-                                <button className="mt-4 px-6 py-2 bg-slate-800 text-white rounded-lg font-bold text-sm hover:bg-slate-900 transition-all">
-                                    Request Custom Workflow
-                                </button>
+
+                                {approvers.length > 0 ? (
+                                    <div className="flex flex-wrap gap-4 items-center py-4">
+                                        {approvers.map((emp, idx) => (
+                                            <React.Fragment key={emp.id}>
+                                                <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl group relative">
+                                                    <div className="w-10 h-10 rounded-full bg-white border border-slate-200 overflow-hidden shadow-sm">
+                                                        {emp.avatar_url ? (
+                                                            <img src={emp.avatar_url} alt={emp.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
+                                                                {emp.name.charAt(0)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-black text-slate-800">{emp.name}</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Level {idx + 1}</p>
+                                                    </div>
+                                                </div>
+                                                {idx < approvers.length - 1 && (
+                                                    <div className="text-slate-300">
+                                                        <ChevronRight size={16} />
+                                                    </div>
+                                                )}
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center text-center py-10 space-y-4">
+                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
+                                            <Clock size={32} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-slate-800">No Custom Workflow</h3>
+                                            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-2">
+                                                Multi-level approval workflows are currently managed at the organization level.
+                                                Click "+Add" to define an expense-specific approval sequence.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
