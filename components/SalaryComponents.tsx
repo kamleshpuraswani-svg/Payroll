@@ -642,7 +642,22 @@ const SalaryComponents: React.FC = () => {
     // Filter out Benefits for now
     const tabs = ['Earnings', 'Deductions', 'Reimbursements'];
 
-    const filteredData = components.filter(c => c.category === activeTab);
+    const [filterField, setFilterField] = useState<'name' | 'type' | 'status'>('name');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredData = components.filter(c => {
+        if (c.category !== activeTab) return false;
+        if (!searchQuery) return true;
+
+        const query = searchQuery.toLowerCase();
+        if (filterField === 'name') return c.name.toLowerCase().includes(query);
+        if (filterField === 'type') return c.type.toLowerCase().includes(query);
+        if (filterField === 'status') {
+            const statusText = c.status ? 'active' : 'inactive';
+            return statusText.includes(query);
+        }
+        return false;
+    });
 
     const handleEditClick = (component: SalaryComponent) => {
         setEditingComponent(component);
@@ -798,8 +813,8 @@ const SalaryComponents: React.FC = () => {
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
-                                        ? 'border-purple-600 text-purple-700 bg-purple-50/50'
-                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    ? 'border-purple-600 text-purple-700 bg-purple-50/50'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                     }`}
                             >
                                 {tab}
@@ -823,11 +838,23 @@ const SalaryComponents: React.FC = () => {
                                         <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
                                             Select Filter Field
                                         </div>
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <Tag size={16} className="text-slate-400" /> Component Name
+                                        <button
+                                            onClick={() => { setFilterField('name'); setIsFilterOpen(false); }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'name' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                        >
+                                            <Tag size={16} className={filterField === 'name' ? 'text-purple-500' : 'text-slate-400'} /> Component Name
                                         </button>
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <FileText size={16} className="text-slate-400" /> Nature of Pay
+                                        <button
+                                            onClick={() => { setFilterField('type'); setIsFilterOpen(false); }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'type' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                        >
+                                            <FileText size={16} className={filterField === 'type' ? 'text-purple-500' : 'text-slate-400'} /> Nature of Pay
+                                        </button>
+                                        <button
+                                            onClick={() => { setFilterField('status'); setIsFilterOpen(false); }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'status' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                        >
+                                            <Power size={16} className={filterField === 'status' ? 'text-purple-500' : 'text-slate-400'} /> Status
                                         </button>
                                     </div>
                                 )}
@@ -837,7 +864,9 @@ const SalaryComponents: React.FC = () => {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
                                 <input
                                     type="text"
-                                    placeholder="Filter Results..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={`Filter by ${filterField === 'name' ? 'Component Name' : filterField === 'type' ? 'Nature of Pay' : 'Status'}...`}
                                     className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-slate-400 shadow-sm"
                                 />
                             </div>
@@ -861,6 +890,7 @@ const SalaryComponents: React.FC = () => {
                             <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
                                 <tr>
                                     <th className="px-6 py-4">Component Name</th>
+                                    <th className="px-6 py-4">Name in Payslip</th>
                                     <th className="px-6 py-4">Nature of Pay</th>
 
                                     {/* Columns Specific to Earnings vs Others */}
@@ -889,6 +919,7 @@ const SalaryComponents: React.FC = () => {
                                     filteredData.map((item) => (
                                         <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
                                             <td className="px-6 py-4 font-semibold text-slate-800">{item.name}</td>
+                                            <td className="px-6 py-4 text-slate-600">{item.payslipName || '-'}</td>
                                             <td className="px-6 py-4">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
                                                     {item.type}
@@ -917,8 +948,8 @@ const SalaryComponents: React.FC = () => {
                                                 <>
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex px-2 py-0.5 rounded text-xs border ${item.taxable === 'Fully Taxable' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                                                                item.taxable === 'Fully Exempt' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                                    'bg-sky-50 text-sky-700 border-sky-100'
+                                                            item.taxable === 'Fully Exempt' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                                'bg-sky-50 text-sky-700 border-sky-100'
                                                             }`}>
                                                             {item.taxable}
                                                         </span>

@@ -38,7 +38,7 @@ const Dashboard: React.FC<DashboardProps> = ({ companies, auditLogs }) => {
 
   const stats: StatMetric[] = [
     {
-      title: 'Total Active Companies',
+      title: 'Customers',
       value: '1,284',
       trend: '+7.2% vs last month',
       trendUp: true,

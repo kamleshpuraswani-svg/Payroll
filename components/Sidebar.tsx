@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Settings, 
-  ChevronDown, 
-  ChevronRight, 
+import {
+  LayoutDashboard,
+  Settings,
+  ChevronDown,
+  ChevronRight,
   Circle,
   Users,
   Calendar,
   FileText,
-  Briefcase, 
+  Briefcase,
   ClipboardList,
   Sliders,
   ShieldAlert,
@@ -19,7 +19,9 @@ import {
   Banknote,
   PieChart,
   Receipt,
-  FileCheck
+  FileCheck,
+  MessageSquare,
+  Database
 } from 'lucide-react';
 import { ViewState, UserRole } from '../types';
 
@@ -44,23 +46,47 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['payroll-config', 'configuration', 'payroll-corner']);
 
   const toggleGroup = (id: string) => {
-    setExpandedGroups(prev => 
+    setExpandedGroups(prev =>
       prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
     );
   };
 
   // Define Menus for Super Admin
   const adminMenuItems: MenuItem[] = [
-    { 
-      id: 'dashboard', 
-      label: 'Dashboard', 
-      icon: <LayoutDashboard size={20} />, 
-      viewState: ViewState.DASHBOARD 
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: <LayoutDashboard size={20} />,
+      viewState: ViewState.DASHBOARD
     },
-    { 
-      id: 'payroll-config', 
-      label: 'Payroll Config', 
-      icon: <Settings size={20} />, 
+    {
+      id: 'customers',
+      label: 'Customers',
+      icon: <Users size={20} />,
+      viewState: ViewState.CUSTOMERS
+    },
+    {
+      id: 'support-tickets',
+      label: 'Support Tickets',
+      icon: <MessageSquare size={20} />,
+      viewState: ViewState.SUPPORT_TICKETS
+    },
+    {
+      id: 'schedulers',
+      label: 'Schedulers',
+      icon: <Calendar size={20} />,
+      viewState: ViewState.SCHEDULERS
+    },
+    {
+      id: 'portal-data',
+      label: 'Portal Data',
+      icon: <Database size={20} />,
+      subItems: []
+    },
+    {
+      id: 'payroll-config',
+      label: 'Payroll Config',
+      icon: <Settings size={20} />,
       subItems: [
         { id: 'payroll-settings', label: 'Pay Schedule', viewState: ViewState.PAYROLL },
         { id: 'tax-config', label: 'Tax Regime Configuration', viewState: ViewState.TAX },
@@ -72,58 +98,58 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
 
   // Define Menus for HR Manager
   const hrMenuItems: MenuItem[] = [
-    { 
-      id: 'hr-dash', 
-      label: 'Dashboard', 
-      icon: <LayoutDashboard size={20} />, 
-      viewState: ViewState.HR_DASHBOARD 
-    },
-    { 
-        id: 'hr-employees', 
-        label: 'Employees Payroll', 
-        icon: <Users size={20} />, 
-        viewState: ViewState.HR_EMPLOYEES 
-    },
-    { 
-        id: 'hr-tax', 
-        label: 'Tax Declarations', 
-        icon: <ShieldAlert size={20} />, 
-        viewState: ViewState.TAX_DECLARATIONS 
-    },
-    { 
-        id: 'hr-expenses', 
-        label: 'Expense Management', 
-        icon: <Wallet size={20} />, 
-        viewState: ViewState.HR_EXPENSES 
+    {
+      id: 'hr-dash',
+      label: 'Dashboard',
+      icon: <LayoutDashboard size={20} />,
+      viewState: ViewState.HR_DASHBOARD
     },
     {
-        id: 'hr-loans', 
-        label: 'Loans & Advances',
-        icon: <Banknote size={20} />,
-        viewState: ViewState.LOANS_ADVANCES
-    },
-    { 
-        id: 'hr-payroll', 
-        label: 'Run Payroll', 
-        icon: <FileText size={20} />, 
-        viewState: ViewState.HR_PAYROLL_RUN 
+      id: 'hr-employees',
+      label: 'Employees Payroll',
+      icon: <Users size={20} />,
+      viewState: ViewState.HR_EMPLOYEES
     },
     {
-        id: 'hr-approvals',
-        label: 'Payroll Approval Requests',
-        icon: <ClipboardCheck size={20} />,
-        viewState: ViewState.PAYROLL_APPROVAL
+      id: 'hr-tax',
+      label: 'Tax Declarations',
+      icon: <ShieldAlert size={20} />,
+      viewState: ViewState.TAX_DECLARATIONS
     },
-    { 
-        id: 'hr-docs', 
-        label: 'Documents', 
-        icon: <Briefcase size={20} />, 
-        viewState: ViewState.HR_DOCUMENTS 
+    {
+      id: 'hr-expenses',
+      label: 'Expense Management',
+      icon: <Wallet size={20} />,
+      viewState: ViewState.HR_EXPENSES
     },
-    { 
-      id: 'configuration', 
-      label: 'Configuration', 
-      icon: <Sliders size={20} />, 
+    {
+      id: 'hr-loans',
+      label: 'Loans & Advances',
+      icon: <Banknote size={20} />,
+      viewState: ViewState.LOANS_ADVANCES
+    },
+    {
+      id: 'hr-payroll',
+      label: 'Run Payroll',
+      icon: <FileText size={20} />,
+      viewState: ViewState.HR_PAYROLL_RUN
+    },
+    {
+      id: 'hr-approvals',
+      label: 'Payroll Approval Requests',
+      icon: <ClipboardCheck size={20} />,
+      viewState: ViewState.PAYROLL_APPROVAL
+    },
+    {
+      id: 'hr-docs',
+      label: 'Documents',
+      icon: <Briefcase size={20} />,
+      viewState: ViewState.HR_DOCUMENTS
+    },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      icon: <Sliders size={20} />,
       subItems: [
         { id: 'hr-statutory', label: 'Statutory Settings', viewState: ViewState.SETTINGS },
       ]
@@ -137,35 +163,35 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       label: 'Payroll Corner',
       icon: <Banknote size={20} />,
       subItems: [
-        { 
-          id: 'emp-overview', 
-          label: 'Overview', 
-          viewState: ViewState.EMP_OVERVIEW 
+        {
+          id: 'emp-overview',
+          label: 'Overview',
+          viewState: ViewState.EMP_OVERVIEW
         },
-        { 
-          id: 'emp-payslips', 
-          label: 'Payslips', 
-          viewState: ViewState.EMP_PAYSLIPS 
+        {
+          id: 'emp-payslips',
+          label: 'Payslips',
+          viewState: ViewState.EMP_PAYSLIPS
         },
-        { 
-          id: 'emp-tax-planning', 
-          label: 'Tax Planning', 
-          viewState: ViewState.EMP_TAX_PLANNING 
+        {
+          id: 'emp-tax-planning',
+          label: 'Tax Planning',
+          viewState: ViewState.EMP_TAX_PLANNING
         },
-        { 
-          id: 'emp-salary-breakdown', 
-          label: 'Salary Breakdown', 
-          viewState: ViewState.EMP_SALARY_BREAKDOWN 
+        {
+          id: 'emp-salary-breakdown',
+          label: 'Salary Breakdown',
+          viewState: ViewState.EMP_SALARY_BREAKDOWN
         },
-        { 
-          id: 'emp-reimbursements', 
-          label: 'Reimbursements', 
-          viewState: ViewState.EMP_REIMBURSEMENTS 
+        {
+          id: 'emp-reimbursements',
+          label: 'Reimbursements',
+          viewState: ViewState.EMP_REIMBURSEMENTS
         },
-        { 
-          id: 'emp-tax-documents', 
-          label: 'Tax Documents', 
-          viewState: ViewState.EMP_TAX_DOCUMENTS 
+        {
+          id: 'emp-tax-documents',
+          label: 'Tax Documents',
+          viewState: ViewState.EMP_TAX_DOCUMENTS
         }
       ]
     }
@@ -193,14 +219,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/50 z-20 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
-      <aside 
+      <aside
         className={`
           fixed top-0 left-0 z-30 h-full w-64 bg-white border-r border-slate-200 shadow-sm transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:h-screen lg:shrink-0
@@ -227,7 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                     className={`
                       w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                       ${isActive || (groupActive && !isExpanded)
-                        ? 'bg-sky-50 text-sky-700' 
+                        ? 'bg-sky-50 text-sky-700'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
                     `}
                   >
@@ -254,7 +280,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                           className={`
                             w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                             ${subItem.viewState === currentView
-                              ? 'bg-sky-50 text-sky-700' 
+                              ? 'bg-sky-50 text-sky-700'
                               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
                           `}
                         >

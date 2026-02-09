@@ -110,11 +110,7 @@ const TdsFullReportModal: React.FC<{ onClose: () => void; data: any[] }> = ({ on
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                    <button onClick={onClose} className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-100 transition-colors text-sm">
-                        Close Report
-                    </button>
-                </div>
+
             </div>
         </div>
     );
@@ -450,6 +446,10 @@ const HRDashboard: React.FC = () => {
     const [customTdsDates, setCustomTdsDates] = useState({ from: '', to: '' });
     const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
 
+    // Payroll Trend State
+    const [payrollTimeRange, setPayrollTimeRange] = useState('This Year');
+    const [isPayrollFilterPopoverOpen, setIsPayrollFilterPopoverOpen] = useState(false);
+
     // Full Report Modal State
     const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
 
@@ -601,9 +601,7 @@ const HRDashboard: React.FC = () => {
                     <h1 className="text-2xl font-bold text-slate-800">Hello, HR Manager 👋</h1>
                     <p className="text-slate-500 mt-1">Here's what's happening at <span className="font-semibold text-slate-700">TechFlow Systems</span> today.</p>
                 </div>
-                <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-slate-600">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                </div>
+
             </div>
 
             {/* Stats Grid */}
@@ -884,8 +882,66 @@ const HRDashboard: React.FC = () => {
                                 <h3 className="font-bold text-slate-800">Monthly Payroll Expense Trend</h3>
                                 <p className="text-xs text-slate-500">Total payroll cost over the last 6 months (in ₹ Crores)</p>
                             </div>
-                            <div className="p-2 bg-slate-50 rounded-lg text-slate-600">
-                                <TrendingUp size={18} />
+                            <div className="flex items-center gap-3">
+                                {/* Payroll Filter */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsPayrollFilterPopoverOpen(!isPayrollFilterPopoverOpen)}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm"
+                                    >
+                                        <Filter size={14} className="text-indigo-600" />
+                                        <span>{payrollTimeRange}</span>
+                                        <ChevronDown size={12} className={`text-slate-400 transition-transform ${isPayrollFilterPopoverOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isPayrollFilterPopoverOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() => setIsPayrollFilterPopoverOpen(false)}
+                                            ></div>
+                                            <div className="absolute right-0 mt-2 p-4 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 w-[300px] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                                                <p className="text-xs font-bold text-slate-400 uppercase mb-3">Date Range</p>
+                                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                                    {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
+                                                        <button
+                                                            key={label}
+                                                            onClick={() => {
+                                                                setPayrollTimeRange(label);
+                                                                setIsPayrollFilterPopoverOpen(false);
+                                                            }}
+                                                            className={`px-2 py-2 text-[10px] font-bold rounded-lg transition-all border ${payrollTimeRange === label
+                                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                                                                }`}
+                                                        >
+                                                            {label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div className="pt-3 border-t border-slate-100">
+                                                    <div className="relative">
+                                                        <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                        <input
+                                                            type="month"
+                                                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                                                            placeholder="Custom Month"
+                                                            onChange={(e) => {
+                                                                if (e.target.value) {
+                                                                    setPayrollTimeRange('Custom');
+                                                                    setIsPayrollFilterPopoverOpen(false);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="p-2 bg-slate-50 rounded-lg text-slate-600">
+                                    <TrendingUp size={18} />
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-end justify-between h-48 gap-4 px-2">

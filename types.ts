@@ -45,6 +45,10 @@ export interface AuditLog {
 export enum ViewState {
   // Super Admin Views
   DASHBOARD = 'DASHBOARD',
+  CUSTOMERS = 'CUSTOMERS',
+  SUPPORT_TICKETS = 'SUPPORT_TICKETS',
+  SCHEDULERS = 'SCHEDULERS',
+  PORTAL_DATA = 'PORTAL_DATA',
   PAYROLL = 'PAYROLL',
   TAX = 'TAX',
   SALARY = 'SALARY',
