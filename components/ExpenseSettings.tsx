@@ -61,6 +61,8 @@ const ExpenseSettings: React.FC = () => {
                 .select('*')
                 .order('name');
 
+            if (catError) throw catError;
+
             // If no categories found, insert dummy data
             if (catData && catData.length === 0) {
                 const dummyCategories = [
@@ -69,19 +71,22 @@ const ExpenseSettings: React.FC = () => {
                     { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.' },
                     { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.' }
                 ];
-                await supabase.from('expense_categories').insert(dummyCategories);
-                // Re-fetch after insertion
-                const { data: refreshedCat } = await supabase
+                const { error: insertError } = await supabase.from('expense_categories').insert(dummyCategories);
+                if (insertError) throw insertError;
+
+                // Re-fetch after insertion to get actual data with IDs
+                const { data: refreshedCat, error: refreshError } = await supabase
                     .from('expense_categories')
                     .select('*')
                     .order('name');
+                if (refreshError) throw refreshError;
                 if (refreshedCat) setCategories(refreshedCat);
             } else if (catData) {
                 setCategories(catData);
             }
 
-            // Fetch workflow approvers joining with employees
-            const { data: workflowData } = await supabase
+            // Fetch workflow approvers
+            const { data: workflowData, error: workflowError } = await supabase
                 .from('expense_workflows')
                 .select(`
                     id,
@@ -96,6 +101,11 @@ const ExpenseSettings: React.FC = () => {
                 `)
                 .order('sequence_order');
 
+            if (workflowError) {
+                console.error('Workflow error:', workflowError);
+                // Don't throw here to allow categories to still show
+            }
+
             if (workflowData) {
                 setApprovers(workflowData.map(w => ({
                     ...w.employees,
@@ -104,12 +114,13 @@ const ExpenseSettings: React.FC = () => {
                 })));
             }
 
-            // Fetch all employees for selection
-            const { data: empData } = await supabase
+            // Fetch all employees
+            const { data: empData, error: empError } = await supabase
                 .from('employees')
                 .select('id, name, eid, avatar_url, department')
                 .eq('status', 'Active')
                 .order('name');
+            if (empError) console.error('Employee fetch error:', empError);
             if (empData) setAllEmployees(empData);
 
             // Fetch settings
@@ -119,8 +130,9 @@ const ExpenseSettings: React.FC = () => {
                 .single();
 
             if (settingsData) setSettings(settingsData);
-        } catch (error) {
-            console.error('Error fetching settings:', error);
+        } catch (error: any) {
+            console.error('Error fetching data:', error);
+            alert(`Failed to load data: ${error.message || 'Unknown error'}. Please ensure your Supabase schema is up to date.`);
         } finally {
             setIsLoading(false);
         }
@@ -150,6 +162,7 @@ const ExpenseSettings: React.FC = () => {
                     .from('expense_categories')
                     .update(categoryData)
                     .eq('id', editingCategory.id);
+                if (error) throw error;
             } else {
                 const { error } = await supabase
                     .from('expense_categories')
@@ -157,12 +170,14 @@ const ExpenseSettings: React.FC = () => {
                         ...categoryData,
                         status: 'Active'
                     }]);
+                if (error) throw error;
             }
             await fetchData();
             setIsAddingCategory(false);
             setEditingCategory(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving category:', error);
+            alert(`Failed to save category: ${error.message || 'Unknown error'}. Please check your database connection and schema.`);
         } finally {
             setIsSaving(false);
         }

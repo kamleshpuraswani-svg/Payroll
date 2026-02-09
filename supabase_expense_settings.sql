@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
     updated_at timestamp with time zone DEFAULT now()
 );
 
+-- Ensure columns exist if table was already created
+ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS receipt_threshold numeric DEFAULT 200;
+ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS pro_rata boolean DEFAULT false;
+ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS description text;
+
 -- 2. Create Global Expense Settings Table
 CREATE TABLE IF NOT EXISTS public.expense_settings (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
