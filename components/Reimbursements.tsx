@@ -27,7 +27,73 @@ interface ClaimReport {
     actionNote?: string;
 }
 
-const FALLBACK_CLAIMS: ClaimReport[] = [];
+const FALLBACK_CLAIMS: ClaimReport[] = [
+    {
+        id: 'CLM-00124',
+        name: 'Client Meeting - Food & Cab',
+        category: ReimbursementCategory.TRAVEL,
+        status: 'settled',
+        submittedAt: '2025-12-05',
+        createdAt: '2025-12-05T10:00:00Z',
+        items: [
+            { merchant: 'Uber', amount: 450 },
+            { merchant: 'Starbucks', amount: 800 }
+        ]
+    },
+    {
+        id: 'CLM-00121',
+        name: 'Broadband Subscription - Dec',
+        category: ReimbursementCategory.BROADBAND,
+        status: 'approved',
+        submittedAt: '2025-12-01',
+        createdAt: '2025-12-01T09:00:00Z',
+        items: [
+            { merchant: 'Airtel', amount: 999 }
+        ]
+    }
+];
+
+const MOCK_LOANS = [
+    {
+        id: 'LN-5542',
+        type: 'Personal Loan',
+        date: '15 Oct 2025',
+        amount: 50000,
+        balance: 35000,
+        status: 'Active',
+        requestedAmount: 50000,
+        approvedAmount: 50000,
+        tenure: '12 Months',
+        interestRate: 0,
+        reason: 'Medical Emergency',
+        repaymentMonth: 'Nov 2025',
+        schedule: [
+            { emi: 'EMI 1', date: '05 Nov 2025', amount: 4167, status: 'Paid' },
+            { emi: 'EMI 2', date: '05 Dec 2025', amount: 4167, status: 'Paid' },
+            { emi: 'EMI 3', date: '05 Jan 2026', amount: 4167, status: 'Pending' }
+        ]
+    },
+    {
+        id: 'LN-4421',
+        type: 'Salary Advance',
+        date: '02 Nov 2025',
+        amount: 20000,
+        balance: 0,
+        status: 'Closed',
+        requestedAmount: 20000,
+        approvedAmount: 20000,
+        tenure: '4 Months',
+        interestRate: 0,
+        reason: 'Festival Advance',
+        repaymentMonth: 'Nov 2025',
+        schedule: [
+            { emi: 'EMI 1', date: '05 Nov 2025', amount: 5000, status: 'Paid' },
+            { emi: 'EMI 2', date: '05 Dec 2025', amount: 5000, status: 'Paid' },
+            { emi: 'EMI 3', date: '05 Jan 2026', amount: 5000, status: 'Paid' },
+            { emi: 'EMI 4', date: '05 Feb 2026', amount: 5000, status: 'Paid' }
+        ]
+    }
+];
 
 // Mock data for employee loans with details for right panel
 // Mock data removed (fetched from DB)
@@ -130,7 +196,7 @@ const LoanDetailsPanel = ({ loan, onClose }: { loan: any, onClose: () => void })
     );
 };
 
-const EmployeeLoansView = ({ onBack }: { onBack: () => void }) => {
+const EmployeeLoansView = ({ onBack, loans }: { onBack: () => void, loans: any[] }) => {
     const [selectedLoan, setSelectedLoan] = useState<any>(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filters, setFilters] = useState({
@@ -139,47 +205,9 @@ const EmployeeLoansView = ({ onBack }: { onBack: () => void }) => {
         date: ''
     });
 
-    const [loans, setLoans] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const isLoading = false;
     const EMPLOYEE_ID = '1';
 
-    useEffect(() => {
-        const fetchLoans = async () => {
-            const { data, error } = await supabase
-                .from('employee_loans')
-                .select('*')
-                .eq('employee_id', EMPLOYEE_ID)
-                .order('created_at', { ascending: false });
-
-            if (data) {
-                const mappedLoans = data.map((loan: any) => {
-                    const schedule = loan.repayment_schedule || [];
-                    const balance = schedule
-                        .filter((emi: any) => emi.status === 'Pending')
-                        .reduce((sum: number, emi: any) => sum + emi.amount, 0);
-
-                    return {
-                        id: loan.id,
-                        type: loan.loan_type,
-                        amount: loan.amount,
-                        date: new Date(loan.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                        status: loan.status.charAt(0).toUpperCase() + loan.status.slice(1),
-                        balance: balance || 0,
-                        requestedAmount: loan.amount,
-                        approvedAmount: loan.amount,
-                        tenure: `${loan.tenure_months} Months`,
-                        interestRate: loan.interest_rate || 0,
-                        reason: 'Personal Requirement',
-                        repaymentMonth: schedule.length > 0 ? schedule[0].date : '-',
-                        schedule: schedule
-                    };
-                });
-                setLoans(mappedLoans);
-            }
-            setIsLoading(false);
-        };
-        fetchLoans();
-    }, []);
 
     const loanTypes = ['All', ...Array.from(new Set(loans.map(l => l.type)))];
     const loanStatuses = ['All', ...Array.from(new Set(loans.map(l => l.status)))];
@@ -308,7 +336,8 @@ export const ReimbursementModule: React.FC = () => {
     const [isReadOnly, setIsReadOnly] = useState(false);
 
     // Persistence logic
-    const [claims, setClaims] = useState<ClaimReport[]>([]);
+    const [claims, setClaims] = useState<ClaimReport[]>(FALLBACK_CLAIMS);
+    const [loans, setLoans] = useState<any[]>(MOCK_LOANS);
     const EMPLOYEE_ID = '1'; // Hardcoded for prototype
 
     // Fetch Claims from Supabase
@@ -322,7 +351,7 @@ export const ReimbursementModule: React.FC = () => {
 
             if (error) {
                 console.error('Error fetching claims:', error);
-            } else if (data) {
+            } else if (data && data.length > 0) {
                 // Map database columns to ClaimReport interface
                 const mappedClaims: ClaimReport[] = data.map((item: any) => ({
                     id: item.id,
@@ -334,13 +363,47 @@ export const ReimbursementModule: React.FC = () => {
                     createdAt: item.created_at,
                     actionNote: item.action_note,
                     approvalHistory: item.approval_history || []
-                    // settledDate is not in main table yet, can be added or inferred
                 }));
                 setClaims(mappedClaims);
             }
         };
 
+        const fetchLoans = async () => {
+            const { data } = await supabase
+                .from('employee_loans')
+                .select('*')
+                .eq('employee_id', EMPLOYEE_ID)
+                .order('created_at', { ascending: false });
+
+            if (data && data.length > 0) {
+                const mappedLoans = data.map((loan: any) => {
+                    const schedule = loan.repayment_schedule || [];
+                    const balance = schedule
+                        .filter((emi: any) => emi.status === 'Pending')
+                        .reduce((sum: number, emi: any) => sum + emi.amount, 0);
+
+                    return {
+                        id: loan.id,
+                        type: loan.loan_type,
+                        amount: loan.amount,
+                        date: new Date(loan.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                        status: loan.status.charAt(0).toUpperCase() + loan.status.slice(1),
+                        balance: balance || 0,
+                        requestedAmount: loan.amount,
+                        approvedAmount: loan.amount,
+                        tenure: `${loan.tenure_months} Months`,
+                        interestRate: loan.interest_rate || 0,
+                        reason: 'Personal Requirement',
+                        repaymentMonth: schedule.length > 0 ? schedule[0].date : '-',
+                        schedule: schedule
+                    };
+                });
+                setLoans(mappedLoans);
+            }
+        };
+
         fetchClaims();
+        fetchLoans();
     }, []);
 
     const wallet: WalletMetric = {
@@ -404,13 +467,14 @@ export const ReimbursementModule: React.FC = () => {
                     wallet={wallet}
                     budgets={budgets}
                     claims={claims}
+                    loans={loans}
                     onNewClaim={() => { setEditingClaim(null); setIsReadOnly(false); setView('WIZARD'); }}
                     onEditClaim={(c: any) => { setEditingClaim(c); setIsReadOnly(false); setView('WIZARD'); }}
                     onViewClaim={(c: any) => { setEditingClaim(c); setIsReadOnly(true); setView('WIZARD'); }}
                     onViewLoans={() => setView('LOANS')}
                 />
             ) : view === 'LOANS' ? (
-                <EmployeeLoansView onBack={() => setView('DASHBOARD')} />
+                <EmployeeLoansView loans={loans} onBack={() => setView('DASHBOARD')} />
             ) : (
                 <ClaimWizard
                     initialData={editingClaim}

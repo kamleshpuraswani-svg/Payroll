@@ -32,6 +32,7 @@ const ExpenseSettings: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showExpenseCategoryView, setShowExpenseCategoryView] = useState(false);
 
     // State for Expense Categories
     const [categories, setCategories] = useState<any[]>([]);
@@ -270,128 +271,107 @@ const ExpenseSettings: React.FC = () => {
     return (
         <div className="h-full overflow-y-auto bg-slate-50/30">
             <div className="p-4 lg:p-8 w-full space-y-8 animate-in fade-in duration-300 pb-20 max-w-7xl mx-auto">
-                {/* Modal for Add Category */}
+
+                {/* Modal for Add Category / Override */}
                 {isAddingCategory && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                    {editingCategory ? (
-                                        <>
-                                            <Edit2 size={20} className="text-sky-600" />
-                                            Edit Category
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Plus size={20} className="text-sky-600" />
-                                            Add New Category
-                                        </>
-                                    )}
+                        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                                    {editingCategory ? 'Override Category Limits' : 'Add New Category'}
                                 </h3>
                                 <button
                                     onClick={() => {
                                         setIsAddingCategory(false);
                                         setEditingCategory(null);
                                     }}
-                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                                 >
-                                    <X size={20} />
+                                    <X size={18} />
                                 </button>
                             </div>
-                            <form onSubmit={handleSaveCategory} className="p-8 space-y-6">
+                            <form onSubmit={handleSaveCategory} className="p-6 space-y-6">
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Category Name</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</label>
                                         <input
                                             name="name"
                                             type="text"
                                             defaultValue={editingCategory?.name || ''}
-                                            placeholder="e.g. Travel, Meals, Office Supplies"
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                            placeholder="e.g. Travel, Meals"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                             required
+                                            disabled={!!editingCategory}
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Max Limit (Per Month)</label>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</label>
                                             <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
                                                 <input
                                                     name="limit"
                                                     type="text"
                                                     defaultValue={editingCategory?.max_limit || ''}
                                                     placeholder="5,000"
-                                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                                     required
                                                 />
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Receipt Threshold</label>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required limit</label>
                                             <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
                                                 <input
                                                     name="receipt_threshold"
                                                     type="number"
                                                     defaultValue={editingCategory?.receipt_threshold || 200}
                                                     placeholder="200"
-                                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                                 />
                                             </div>
-                                            <p className="text-[10px] text-slate-400 italic">Claims exceeding this amount will require a mandatory bill upload from the employee.</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                                    <div className="flex items-center justify-between p-4 bg-sky-50/50 rounded-lg border border-sky-100">
                                         <div className="space-y-0.5">
-                                            <label className="text-sm font-bold text-slate-700">Pro-rata Calculations</label>
-                                            <p className="text-xs text-slate-500">Enable monthly limit splitting</p>
+                                            <label className="text-sm font-bold text-slate-700 italic">Make description mandatory</label>
+                                            <p className="text-[10px] text-slate-500">Require justification for all claims</p>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 name="pro_rata"
-                                                defaultChecked={editingCategory?.pro_rata || false}
+                                                defaultChecked={editingCategory?.pro_rata || true}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                                            <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-sky-500"></div>
                                         </label>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description (Optional)</label>
-                                        <textarea
-                                            name="description"
-                                            rows={2}
-                                            defaultValue={editingCategory?.description || ''}
-                                            placeholder="Describe the scope of this category..."
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"
-                                        />
-                                    </div>
                                 </div>
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex gap-3 pt-2">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setIsAddingCategory(false);
                                             setEditingCategory(null);
                                         }}
-                                        className="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all"
+                                        className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSaving}
-                                        className="flex-1 px-4 py-3 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
+                                        className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
-                                        {isSaving ? 'Saving...' : (editingCategory ? 'Update Category' : 'Save Category')}
+                                        {isSaving ? 'Saving...' : (editingCategory ? 'Save Changes' : 'Add Category')}
                                     </button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 )}
-
-                {/* Setup Approval Workflow Modal */}
                 {isAddingWorkflow && (
                     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -551,74 +531,164 @@ const ExpenseSettings: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-slate-200 gap-8">
-                    {[
-                        { id: 'categories', label: 'Expense Categories', icon: Settings2 },
-                        { id: 'rules', label: 'Policy & Workflow', icon: ShieldCheck },
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={`pb-4 text-sm font-semibold flex items-center gap-2 transition-all relative ${activeTab === tab.id
-                                ? 'text-sky-600'
-                                : 'text-slate-400 hover:text-slate-600'
-                                }`}
-                        >
-                            <tab.icon size={16} />
-                            {tab.label}
-                            {activeTab === tab.id && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full animate-in fade-in slide-in-from-bottom-1" />
-                            )}
-                        </button>
-                    ))}
+                <div className="flex border-b border-slate-200 justify-between items-center pr-2">
+                    <div className="flex gap-8">
+                        {[
+                            { id: 'categories', label: 'Expense Configuration', icon: Settings2 },
+                            { id: 'rules', label: 'Policy & Workflow', icon: ShieldCheck },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => {
+                                    setActiveTab(tab.id as any);
+                                    setShowExpenseCategoryView(false);
+                                }}
+                                className={`pb-4 text-sm font-semibold flex items-center gap-2 transition-all relative ${!showExpenseCategoryView && activeTab === tab.id
+                                    ? 'text-sky-600'
+                                    : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                            >
+                                <tab.icon size={16} />
+                                {tab.label}
+                                {!showExpenseCategoryView && activeTab === tab.id && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full animate-in fade-in slide-in-from-bottom-1" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        onClick={() => {
+                            setShowExpenseCategoryView(true);
+                            setIsAddingCategory(true);
+                        }}
+                        className="mb-4 px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-sky-600 text-white border border-sky-600 shadow-md shadow-sky-100 hover:bg-sky-700"
+                    >
+                        Expense Category
+                    </button>
                 </div>
 
                 {/* Tab Content */}
                 <div>
-                    {activeTab === 'categories' && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Active Categories</h3>
+                    {showExpenseCategoryView ? (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                            {/* Header Section: Zoho Style */}
+                            <div className="flex justify-between items-end border-b border-slate-200">
+                                <div className="space-y-1">
+                                    <h3 className="text-xl font-bold text-slate-800">Sales Department Policy</h3>
+                                    <div className="flex gap-6">
+                                        {[
+                                            { id: 'policy', label: 'Policy Settings' },
+                                            { id: 'limits', label: 'Category Limits' },
+                                            { id: 'mileage', label: 'Mileage' },
+                                            { id: 'perdiem', label: 'Per Diem' },
+                                            { id: 'rules', label: 'Rules' },
+                                            { id: 'audit', label: 'Audit' },
+                                        ].map(subTab => (
+                                            <button
+                                                key={subTab.id}
+                                                className={`pb-3 text-sm font-semibold transition-all relative ${subTab.id === 'limits' ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                            >
+                                                {subTab.label}
+                                                {subTab.id === 'limits' && (
+                                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowExpenseCategoryView(false)}
+                                    className="p-2 text-slate-400 hover:text-slate-600 mb-2"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* General Limits Section */}
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                                    <h4 className="text-sm font-bold text-slate-700">General Limits</h4>
+                                    <button className="text-slate-400 hover:text-sky-600 transition-colors">
+                                        <Edit2 size={14} />
+                                    </button>
+                                </div>
+                                <div className="p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        <div className="space-y-1">
+                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</p>
+                                            <p className="text-lg font-bold text-slate-700">₹ 10,000</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Category Specific Limits Table */}
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-20">
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                                    <h4 className="text-sm font-bold text-slate-700">Category Specific Limits</h4>
                                     <button
                                         onClick={() => setIsAddingCategory(true)}
-                                        className="text-sky-600 hover:text-sky-700 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                                        className="px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 shadow-sm transition-all flex items-center gap-1.5"
                                     >
-                                        <Plus size={14} className="stroke-[3]" /> ADD CATEGORY
+                                        <Plus size={14} /> Add Category
                                     </button>
                                 </div>
                                 <table className="w-full text-left">
-                                    <thead className="bg-white border-b border-slate-100">
+                                    <thead className="bg-slate-50/50 border-b border-slate-100">
                                         <tr>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Max Limit (Per Month)</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
+                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
                                         {categories.map(cat => (
-                                            <tr key={cat.id} className="hover:bg-slate-50 transition-colors group">
-                                                <td className="px-6 py-4 font-semibold text-slate-700">{cat.name}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                                                    ₹ {cat.max_limit?.toLocaleString()}
+                                            <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="px-6 py-5">
+                                                    <div className="space-y-1">
+                                                        <p className="text-sm font-bold text-slate-700">{cat.name}</p>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-bold text-slate-400">Limit:</span>
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${cat.name === 'Travel & Conveyance' ? 'bg-sky-50 text-sky-600 border border-sky-100' : 'text-slate-500'}`}>
+                                                                    ₹ {cat.max_limit?.toLocaleString() || '∞'}
+                                                                </span>
+                                                            </div>
+                                                            {cat.receipt_threshold > 0 && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] font-bold text-slate-400">Receipt Thr:</span>
+                                                                    <span className="text-[10px] font-bold text-slate-500">₹ {cat.receipt_threshold}</span>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-bold text-slate-400">Desc Mandatory:</span>
+                                                                <span className="text-[10px] font-bold text-emerald-600">YES</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black rounded-full border border-emerald-100 uppercase tracking-wider">
-                                                        {cat.status}
-                                                    </span>
+                                                <td className="px-6 py-5">
+                                                    <label className="relative inline-flex items-center cursor-pointer">
+                                                        <input type="checkbox" className="sr-only peer" defaultChecked />
+                                                        <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
+                                                    </label>
                                                 </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex justify-end gap-2 transition-opacity">
+                                                <td className="px-6 py-5 text-right">
+                                                    <div className="flex justify-end gap-2">
                                                         <button
-                                                            onClick={() => openEditModal(cat)}
-                                                            className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingCategory(cat);
+                                                                setIsAddingCategory(true);
+                                                                setShowExpenseCategoryView(true);
+                                                            }}
+                                                            className="text-[11px] font-bold text-sky-600 hover:text-sky-700 px-3 py-1 rounded bg-sky-50 hover:bg-sky-100 transition-all"
                                                         >
-                                                            <Edit2 size={14} />
+                                                            OVERRIDE
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteCategory(cat.id)}
-                                                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                                            className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -626,141 +696,148 @@ const ExpenseSettings: React.FC = () => {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {categories.length === 0 && !isLoading && (
-                                            <tr>
-                                                <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">
-                                                    No categories found. Click "ADD CATEGORY" to create one.
-                                                </td>
-                                            </tr>
-                                        )}
-                                        {isLoading && (
-                                            <tr>
-                                                <td colSpan={4} className="px-6 py-12 text-center text-sky-600/50">
-                                                    Loading categories...
-                                                </td>
-                                            </tr>
-                                        )}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                    )}
+                    ) : (
+                        <>
+                            {activeTab === 'categories' && (
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center animate-in fade-in slide-in-from-top-2">
+                                    <div className="flex flex-col items-center justify-center space-y-4">
+                                        <div className="p-4 bg-slate-50 text-slate-400 rounded-2xl shadow-sm border border-slate-100">
+                                            <Receipt size={40} />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setShowExpenseCategoryView(true);
+                                                setIsAddingCategory(true);
+                                            }}
+                                            className="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
+                                        >
+                                            Add Configuration
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
 
-                    {activeTab === 'rules' && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-top-2">
-                            {/* Reimbursement Policy Section */}
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                    <div className="space-y-6">
-                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">Submission Rules</h3>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-700">Submission Deadline</p>
-                                                    <p className="text-xs text-slate-500">Select cut-off date of the month</p>
-                                                    <p className="text-[10px] text-slate-400 mt-2 italic leading-relaxed">
-                                                        Specify the cut-off date each month after which claims will be processed in the next payroll cycle.
-                                                    </p>
+                            {activeTab === 'rules' && (
+                                <div className="space-y-8 animate-in fade-in slide-in-from-top-2">
+                                    {/* Reimbursement Policy Section */}
+                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                            <div className="space-y-6">
+                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">Submission Rules</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-700">Submission Deadline</p>
+                                                            <p className="text-xs text-slate-500">Select cut-off date of the month</p>
+                                                            <p className="text-[10px] text-slate-400 mt-2 italic leading-relaxed">
+                                                                Specify the cut-off date each month after which claims will be processed in the next payroll cycle.
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <select
+                                                                value={settings.deadline_claims_date}
+                                                                onChange={(e) => updateSettings({ deadline_claims_date: parseInt(e.target.value) })}
+                                                                className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-sky-600 focus:outline-none focus:border-sky-500 bg-white appearance-none text-center cursor-pointer hover:border-sky-300 transition-colors"
+                                                            >
+                                                                {[...Array(31)].map((_, i) => (
+                                                                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                                                ))}
+                                                            </select>
+                                                            <span className="text-[10px] font-black text-slate-400">DATE</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <select
-                                                        value={settings.deadline_claims_date}
-                                                        onChange={(e) => updateSettings({ deadline_claims_date: parseInt(e.target.value) })}
-                                                        className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-sky-600 focus:outline-none focus:border-sky-500 bg-white appearance-none text-center cursor-pointer hover:border-sky-300 transition-colors"
-                                                    >
-                                                        {[...Array(31)].map((_, i) => (
-                                                            <option key={i + 1} value={i + 1}>{i + 1}</option>
-                                                        ))}
-                                                    </select>
-                                                    <span className="text-[10px] font-black text-slate-400">DATE</span>
+                                            </div>
+
+                                            <div className="space-y-6">
+                                                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Controls</h3>
+                                                    {saveSuccess && (
+                                                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 animate-pulse">
+                                                            <Check size={10} /> SAVED
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <label className="flex items-center justify-between cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                                                        <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Allow back-dated claims</span>
+                                                        <div className="relative inline-flex items-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only peer"
+                                                                checked={settings.allow_backdated_claims}
+                                                                onChange={(e) => updateSettings({ allow_backdated_claims: e.target.checked })}
+                                                            />
+                                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                                                        </div>
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
+                                    {/* Approval Workflow Section */}
+                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
                                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Controls</h3>
-                                            {saveSuccess && (
-                                                <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 animate-pulse">
-                                                    <Check size={10} /> SAVED
-                                                </span>
-                                            )}
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Workflow Engine</h3>
+                                            <button
+                                                onClick={() => setIsAddingWorkflow(true)}
+                                                className="flex items-center gap-2 px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 transition-all shadow-md shadow-sky-100"
+                                            >
+                                                <Plus size={14} /> {approvers.length > 0 ? 'Edit' : 'Add'}
+                                            </button>
                                         </div>
-                                        <div className="space-y-4">
-                                            <label className="flex items-center justify-between cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition-colors">
-                                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Allow back-dated claims</span>
-                                                <div className="relative inline-flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only peer"
-                                                        checked={settings.allow_backdated_claims}
-                                                        onChange={(e) => updateSettings({ allow_backdated_claims: e.target.checked })}
-                                                    />
-                                                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Approval Workflow Section */}
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
-                                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Workflow Engine</h3>
-                                    <button
-                                        onClick={() => setIsAddingWorkflow(true)}
-                                        className="flex items-center gap-2 px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 transition-all shadow-md shadow-sky-100"
-                                    >
-                                        <Plus size={14} /> {approvers.length > 0 ? 'Edit' : 'Add'}
-                                    </button>
-                                </div>
-
-                                {approvers.length > 0 ? (
-                                    <div className="flex flex-wrap gap-4 items-center py-4">
-                                        {approvers.map((emp, idx) => (
-                                            <React.Fragment key={emp.id}>
-                                                <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl group relative">
-                                                    <div className="w-10 h-10 rounded-full bg-white border border-slate-200 overflow-hidden shadow-sm">
-                                                        {emp.avatar_url ? (
-                                                            <img src={emp.avatar_url} alt={emp.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
-                                                                {emp.name.charAt(0)}
+                                        {approvers.length > 0 ? (
+                                            <div className="flex flex-wrap gap-4 items-center py-4">
+                                                {approvers.map((emp, idx) => (
+                                                    <React.Fragment key={emp.id}>
+                                                        <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl group relative">
+                                                            <div className="w-10 h-10 rounded-full bg-white border border-slate-200 overflow-hidden shadow-sm">
+                                                                {emp.avatar_url ? (
+                                                                    <img src={emp.avatar_url} alt={emp.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
+                                                                        {emp.name.charAt(0)}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-black text-slate-800">{emp.name}</p>
+                                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Level {idx + 1}</p>
+                                                            </div>
+                                                        </div>
+                                                        {idx < approvers.length - 1 && (
+                                                            <div className="text-slate-300">
+                                                                <ChevronRight size={16} />
                                                             </div>
                                                         )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-black text-slate-800">{emp.name}</p>
-                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Level {idx + 1}</p>
-                                                    </div>
+                                                    </React.Fragment>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center text-center py-10 space-y-4">
+                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
+                                                    <Clock size={32} />
                                                 </div>
-                                                {idx < approvers.length - 1 && (
-                                                    <div className="text-slate-300">
-                                                        <ChevronRight size={16} />
-                                                    </div>
-                                                )}
-                                            </React.Fragment>
-                                        ))}
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-slate-800">No Custom Workflow</h3>
+                                                    <p className="text-sm text-slate-500 max-w-sm mx-auto mt-2">
+                                                        Multi-level approval workflows are currently managed at the organization level.
+                                                        Click "+Add" to define an expense-specific approval sequence.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center text-center py-10 space-y-4">
-                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
-                                            <Clock size={32} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-bold text-slate-800">No Custom Workflow</h3>
-                                            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-2">
-                                                Multi-level approval workflows are currently managed at the organization level.
-                                                Click "+Add" to define an expense-specific approval sequence.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

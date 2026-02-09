@@ -152,6 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       icon: <Sliders size={20} />,
       subItems: [
         { id: 'hr-statutory', label: 'Statutory Settings', viewState: ViewState.SETTINGS },
+        { id: 'hr-operational', label: 'Operational Config', viewState: ViewState.HR_OPERATIONAL_CONFIG },
       ]
     }
   ];
@@ -273,21 +274,56 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                   {/* Sub-menu Items */}
                   {item.subItems && isExpanded && (
                     <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 space-y-1">
-                      {item.subItems.map((subItem) => (
-                        <button
-                          key={subItem.id}
-                          onClick={() => handleItemClick(subItem)}
-                          className={`
-                            w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                            ${subItem.viewState === currentView
-                              ? 'bg-sky-50 text-sky-700'
-                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
-                          `}
-                        >
-                          {subItem.viewState === currentView && <Circle size={6} fill="currentColor" className="text-sky-600" />}
-                          <span className={subItem.viewState === currentView ? '' : 'pl-4'}>{subItem.label}</span>
-                        </button>
-                      ))}
+                      {item.subItems.map((subItem) => {
+                        const isSubActive = subItem.viewState === currentView;
+                        const subGroupActive = isGroupActive(subItem);
+                        const isSubExpanded = expandedGroups.includes(subItem.id);
+
+                        return (
+                          <div key={subItem.id}>
+                            <button
+                              onClick={() => handleItemClick(subItem)}
+                              className={`
+                                w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                ${isSubActive || (subGroupActive && !isSubExpanded)
+                                  ? 'bg-sky-50 text-sky-700'
+                                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
+                              `}
+                            >
+                              <div className="flex items-center space-x-3">
+                                {isSubActive && <Circle size={6} fill="currentColor" className="text-sky-600" />}
+                                <span className={isSubActive ? '' : 'pl-4'}>{subItem.label}</span>
+                              </div>
+                              {subItem.subItems && (
+                                <span className="text-slate-400">
+                                  {isSubExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                </span>
+                              )}
+                            </button>
+
+                            {/* Nested Sub-menu */}
+                            {subItem.subItems && isSubExpanded && (
+                              <div className="mt-1 ml-4 space-y-1">
+                                {subItem.subItems.map((nestedItem) => (
+                                  <button
+                                    key={nestedItem.id}
+                                    onClick={() => handleItemClick(nestedItem)}
+                                    className={`
+                                      w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                      ${nestedItem.viewState === currentView
+                                        ? 'bg-sky-50 text-sky-700'
+                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
+                                    `}
+                                  >
+                                    {nestedItem.viewState === currentView && <Circle size={6} fill="currentColor" className="text-sky-600" />}
+                                    <span className={nestedItem.viewState === currentView ? '' : 'pl-8'}>{nestedItem.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

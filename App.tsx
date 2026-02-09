@@ -20,6 +20,7 @@ import TemplateSetup from './components/TemplateSetup';
 import GlobalSettings from './components/GlobalSettings';
 import PayrollCorner from './components/PayrollCorner';
 import Overview from './components/Overview';
+import OperationalConfig from './components/OperationalConfig';
 
 // New Component Imports
 import TaxPlanning from './components/TaxPlanning';
@@ -137,6 +138,7 @@ const App: React.FC = () => {
               {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances />}
               {currentView === ViewState.HR_SALARY_COMPONENTS && <SalaryComponents />}
               {currentView === ViewState.SETTINGS && <GlobalSettings />}
+              {currentView === ViewState.HR_OPERATIONAL_CONFIG && <OperationalConfig />}
             </>
           )}
 
@@ -166,7 +168,7 @@ const App: React.FC = () => {
 
           {/* Fallback for Work In Progress Views */}
           {((userRole === 'SUPER_ADMIN' && ![ViewState.DASHBOARD, ViewState.PAYROLL, ViewState.TAX, ViewState.SALARY, ViewState.TEMPLATE_SETUP].includes(currentView)) ||
-            (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS].includes(currentView)) ||
+            (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS, ViewState.HR_OPERATIONAL_CONFIG].includes(currentView)) ||
             (userRole === 'EMPLOYEE' && ![ViewState.EMP_OVERVIEW, ViewState.EMP_PAYROLL_CORNER, ViewState.EMP_TAX_PLANNING, ViewState.EMP_REIMBURSEMENTS, ViewState.EMP_PAYSLIPS, ViewState.EMP_SALARY_BREAKDOWN, ViewState.EMP_TAX_DOCUMENTS].includes(currentView))) && (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <div className="p-6 rounded-full bg-slate-100 mb-4">
