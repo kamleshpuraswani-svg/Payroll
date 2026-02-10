@@ -409,6 +409,11 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                 setInterestRate('0');
                 setMaxTenure('3');
             }
+            // Pre-populate approvers for Employee
+            setApprovers([
+                { id: 'TF001', name: 'Kamlesh Puraswani' },
+                { id: 'ADMIN', name: 'Admin' }
+            ]);
         }
     }, [loanType, userRole]);
 
@@ -417,6 +422,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
     const [selectedApproverId, setSelectedApproverId] = useState('');
 
     const handleAddApprover = () => {
+        if (userRole === 'EMPLOYEE') return;
         const emp = MOCK_EMPLOYEES.find(e => e.id === selectedApproverId);
         if (emp && !approvers.find(a => a.id === emp.id)) {
             setApprovers([...approvers, emp]);
@@ -652,27 +658,29 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                         <div>
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow (Hierarchy)</label>
                             <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/30 space-y-4">
-                                <div className="flex gap-3">
-                                    <div className="relative flex-1">
-                                        <select
-                                            value={selectedApproverId}
-                                            onChange={(e) => setSelectedApproverId(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                                {userRole !== 'EMPLOYEE' && (
+                                    <div className="flex gap-3">
+                                        <div className="relative flex-1">
+                                            <select
+                                                value={selectedApproverId}
+                                                onChange={(e) => setSelectedApproverId(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="">Select Employee to Add...</option>
+                                                {MOCK_EMPLOYEES.map(emp => (
+                                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                        </div>
+                                        <button
+                                            onClick={handleAddApprover}
+                                            className="px-6 py-3 bg-purple-400 hover:bg-purple-500 text-white font-bold rounded-xl shadow-sm transition-all flex items-center gap-2"
                                         >
-                                            <option value="">Select Employee to Add...</option>
-                                            {MOCK_EMPLOYEES.map(emp => (
-                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            <Plus size={18} /> Add
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={handleAddApprover}
-                                        className="px-6 py-3 bg-purple-400 hover:bg-purple-500 text-white font-bold rounded-xl shadow-sm transition-all flex items-center gap-2"
-                                    >
-                                        <Plus size={18} /> Add
-                                    </button>
-                                </div>
+                                )}
 
                                 {/* Approvers List Area */}
                                 <div className="min-h-[80px] border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center p-4">
@@ -684,25 +692,29 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                                 <div key={app.id} className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm group transition-all">
                                                     <span className="w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-[10px] font-black">{idx + 1}</span>
                                                     <span className="font-bold text-slate-700">{app.name}</span>
-                                                    <div className="flex items-center gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={() => moveApprover(idx, 'up')}
-                                                            disabled={idx === 0}
-                                                            title="Move Up"
-                                                            className={`text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors ${idx === 0 ? 'opacity-20 cursor-not-allowed' : ''}`}
-                                                        >
-                                                            <ChevronUp size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => moveApprover(idx, 'down')}
-                                                            disabled={idx === approvers.length - 1}
-                                                            title="Move Down"
-                                                            className={`text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors ${idx === approvers.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}`}
-                                                        >
-                                                            <ChevronDown size={14} />
-                                                        </button>
-                                                    </div>
-                                                    <button onClick={() => removeApprover(app.id)} className="text-slate-400 hover:text-rose-500 ml-1"><X size={14} /></button>
+                                                    {userRole !== 'EMPLOYEE' && (
+                                                        <div className="flex items-center gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => moveApprover(idx, 'up')}
+                                                                disabled={idx === 0}
+                                                                title="Move Up"
+                                                                className={`text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors ${idx === 0 ? 'opacity-20 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <ChevronUp size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => moveApprover(idx, 'down')}
+                                                                disabled={idx === approvers.length - 1}
+                                                                title="Move Down"
+                                                                className={`text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors ${idx === approvers.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <ChevronDown size={14} />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {userRole !== 'EMPLOYEE' && (
+                                                        <button onClick={() => removeApprover(app.id)} className="text-slate-400 hover:text-rose-500 ml-1"><X size={14} /></button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
