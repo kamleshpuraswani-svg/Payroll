@@ -715,7 +715,14 @@ const CreateLoanModal: React.FC<{ onClose: () => void; onSave: (data: any) => vo
     );
 };
 
-const LoansAdvances: React.FC = () => {
+import { ViewState, UserRole } from '../types';
+
+interface LoansAdvancesProps {
+    userRole: UserRole;
+    currentEmployeeId?: string;
+}
+
+const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployeeId }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modal States
@@ -728,11 +735,33 @@ const LoansAdvances: React.FC = () => {
 
     // Data State (Mock)
     const [loans, setLoans] = useState(MOCK_LOANS);
+    const allLoans = loans;
 
-    const filteredLoans = loans.filter(loan =>
-        loan.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        loan.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const displayLoans = useMemo(() => {
+        let filtered = allLoans;
+        if (userRole === 'EMPLOYEE' && currentEmployeeId) {
+            filtered = filtered.filter(l => l.employee.id === currentEmployeeId);
+        }
+        return filtered.filter(loan =>
+            loan.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            loan.id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [allLoans, userRole, currentEmployeeId, searchTerm]);
+
+    // Metrics calculation based on filtered data (for Employee) or all data (for HR)
+    const metricsData = useMemo(() => {
+        let baseLoans = allLoans;
+        if (userRole === 'EMPLOYEE' && currentEmployeeId) {
+            baseLoans = baseLoans.filter(l => l.employee.id === currentEmployeeId);
+        }
+
+        const activeCount = baseLoans.filter(l => ['Approved', 'Active', 'Repaying'].includes(l.status)).length;
+        const totalOutstanding = baseLoans.reduce((acc, l) => acc + (l.remainingBalance || 0), 0);
+        const requestedThisMonth = baseLoans.filter(l => l.requestDate.includes('2026') || l.requestDate.includes('Dec 2025')).length; // Mock logic
+        const overdueCount = baseLoans.filter(l => l.repaymentSchedule?.some(emi => emi.status === 'Overdue')).length;
+
+        return { activeCount, totalOutstanding, requestedThisMonth, overdueCount };
+    }, [allLoans, userRole, currentEmployeeId]);
 
     const handleUpdateLoan = (updatedLoan: LoanRequest) => {
         setLoans(prev => prev.map(l => l.id === updatedLoan.id ? updatedLoan : l));
@@ -797,19 +826,19 @@ const LoansAdvances: React.FC = () => {
             <div className="bg-white border-b border-slate-200 px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Active Loans</span>
-                    <span className="text-xl font-bold text-slate-800">142</span>
+                    <span className="text-xl font-bold text-slate-800">{metricsData.activeCount}</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Outstanding</span>
-                    <span className="text-xl font-bold text-orange-600">₹48.62L</span>
+                    <span className="text-xl font-bold text-orange-600">₹{(metricsData.totalOutstanding / 100000).toFixed(2)}L</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Requested This Month</span>
-                    <span className="text-xl font-bold text-slate-800">28</span>
+                    <span className="text-xl font-bold text-slate-800">{metricsData.requestedThisMonth}</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overdue EMIs</span>
-                    <span className="text-xl font-bold text-rose-600 flex items-center gap-1"><AlertCircle size={16} /> 12</span>
+                    <span className="text-xl font-bold text-rose-600 flex items-center gap-1"><AlertCircle size={16} /> {metricsData.overdueCount}</span>
                 </div>
             </div>
 
@@ -890,7 +919,7 @@ const LoansAdvances: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {filteredLoans.map(loan => (
+                                {displayLoans.map(loan => (
                                     <tr
                                         key={loan.id}
                                         className="hover:bg-slate-50 transition-colors group"

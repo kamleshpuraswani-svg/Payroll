@@ -135,7 +135,7 @@ const App: React.FC = () => {
               {currentView === ViewState.PAYROLL_APPROVAL && <PayrollApprovalRequests />}
               {currentView === ViewState.HR_DOCUMENTS && <DocumentsManager />}
               {currentView === ViewState.HR_EXPENSES && <ExpenseManagement />}
-              {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances />}
+              {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances userRole={userRole} />}
               {currentView === ViewState.HR_SALARY_COMPONENTS && <SalaryComponents />}
               {currentView === ViewState.SETTINGS && <GlobalSettings />}
               {currentView === ViewState.HR_OPERATIONAL_CONFIG && <OperationalConfig />}
@@ -163,7 +163,7 @@ const App: React.FC = () => {
               {currentView === ViewState.EMP_SALARY_BREAKDOWN && <SalaryBreakdown />}
               {currentView === ViewState.EMP_REIMBURSEMENTS && <Reimbursements />}
               {currentView === ViewState.EMP_TAX_DOCUMENTS && <TaxDocuments onNavigateToPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)} />}
-              {currentView === ViewState.EMP_LOANS_ADVANCES && <LoansAdvances />}
+              {currentView === ViewState.EMP_LOANS_ADVANCES && <LoansAdvances userRole={userRole} currentEmployeeId="TF00912" />}
             </div>
           )}
 
