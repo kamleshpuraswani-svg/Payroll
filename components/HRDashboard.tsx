@@ -1099,9 +1099,6 @@ const HRDashboard: React.FC = () => {
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-800">Contribution Summary (Nov)</h3>
-                            <button className="text-xs flex items-center gap-1 text-slate-500 hover:text-slate-800 transition-colors">
-                                <Download size={12} /> Export
-                            </button>
                         </div>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
