@@ -1094,12 +1094,14 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
                                 <th className="px-4 py-4 w-10 text-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedEmployeeIds.length === filteredEmployees.length && filteredEmployees.length > 0}
-                                        onChange={toggleSelectAll}
-                                        className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
-                                    />
+                                    {selectedEmployeeIds.length > 0 && (
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedEmployeeIds.length === filteredEmployees.length && filteredEmployees.length > 0}
+                                            onChange={toggleSelectAll}
+                                            className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4 animate-in fade-in duration-200"
+                                        />
+                                    )}
                                 </th>
                                 <th className="px-6 py-4">Employee</th>
                                 <th className="px-6 py-4">Joining Date</th>
@@ -1118,7 +1120,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                             type="checkbox"
                                             checked={selectedEmployeeIds.includes(emp.id)}
                                             onChange={() => toggleSelection(emp.id)}
-                                            className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
+                                            className={`rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4 transition-opacity duration-200 ${selectedEmployeeIds.includes(emp.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                         />
                                     </td>
                                     <td className="px-6 py-4">
