@@ -14,11 +14,22 @@ const ALL_EMPLOYEES: SelectedEmployee[] = [
     { id: '4', name: 'Arjun Mehta', eid: 'E004' },
 ];
 
+const DEPARTMENTS = [
+    "Digital Technology",
+    "Retail Banking",
+    "Human Resources",
+    "Finance",
+    "Sales",
+    "Marketing",
+    "Operations"
+];
+
 const OperationalConfig: React.FC = () => {
     const [isHierarchyExpanded, setIsHierarchyExpanded] = useState(true);
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
     const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
-    const [eligibleEmployees, setEligibleEmployees] = useState<SelectedEmployee[]>([]);
+    const [eligibleDepartments, setEligibleDepartments] = useState<string[]>([]);
+    const [employeeStatus, setEmployeeStatus] = useState<string[]>(['Probation', 'Confirmed']);
 
     const handleSelectEmployee = (id: string) => {
         if (!id) return;
@@ -46,29 +57,22 @@ const OperationalConfig: React.FC = () => {
     };
 
     // Eligibility Handlers
-    const handleSelectEligibleEmployee = (id: string) => {
-        if (!id) return;
-        if (eligibleEmployees.find(emp => emp.id === id)) return;
-
-        const empToAdd = ALL_EMPLOYEES.find(emp => emp.id === id);
-        if (empToAdd) {
-            setEligibleEmployees([...eligibleEmployees, empToAdd]);
-        }
+    const handleSelectDepartment = (dept: string) => {
+        if (!dept) return;
+        if (eligibleDepartments.includes(dept)) return;
+        setEligibleDepartments([...eligibleDepartments, dept]);
     };
 
-    const removeEligibleEmployee = (id: string) => {
-        setEligibleEmployees(eligibleEmployees.filter(emp => emp.id !== id));
+    const removeDepartment = (dept: string) => {
+        setEligibleDepartments(eligibleDepartments.filter(d => d !== dept));
     };
 
-    const moveEligibleEmployee = (index: number, direction: 'up' | 'down') => {
-        const newItems = [...eligibleEmployees];
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-
-        if (targetIndex < 0 || targetIndex >= newItems.length) return;
-
-        const [movedItem] = newItems.splice(index, 1);
-        newItems.splice(targetIndex, 0, movedItem);
-        setEligibleEmployees(newItems);
+    const toggleStatus = (status: string) => {
+        setEmployeeStatus(prev =>
+            prev.includes(status)
+                ? prev.filter(s => s !== status)
+                : [...prev, status]
+        );
     };
 
     return (
@@ -186,10 +190,11 @@ const OperationalConfig: React.FC = () => {
 
                 {isEligibilityExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <div className="max-w-3xl space-y-6">
+                        <div className="max-w-3xl space-y-8">
+                            {/* Department Eligibility Section */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5">
-                                    Eligible Employees <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                    Eligible Departments <span className="text-red-500">*</span>
                                     <Info size={14} className="text-slate-400 cursor-help" />
                                 </label>
                                 <div className="relative">
@@ -198,13 +203,13 @@ const OperationalConfig: React.FC = () => {
                                     </div>
                                     <select
                                         value=""
-                                        onChange={(e) => handleSelectEligibleEmployee(e.target.value)}
+                                        onChange={(e) => handleSelectDepartment(e.target.value)}
                                         className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
                                     >
-                                        <option value="" disabled>Search employee...</option>
-                                        {ALL_EMPLOYEES.filter(emp => !eligibleEmployees.find(s => s.id === emp.id)).map(emp => (
-                                            <option key={emp.id} value={emp.id}>
-                                                {emp.name} ({emp.eid})
+                                        <option value="" disabled>Search department...</option>
+                                        {DEPARTMENTS.filter(dept => !eligibleDepartments.includes(dept)).map(dept => (
+                                            <option key={dept} value={dept}>
+                                                {dept}
                                             </option>
                                         ))}
                                     </select>
@@ -214,40 +219,22 @@ const OperationalConfig: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Selected Eligible Employees Section */}
-                            {eligibleEmployees.length > 0 && (
+                            {/* Selected Eligible Departments Section */}
+                            {eligibleDepartments.length > 0 && (
                                 <div className="space-y-3">
-                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Eligible Employees List</p>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Eligible Departments List</p>
                                     <div className="space-y-2">
-                                        {eligibleEmployees.map((emp, index) => (
+                                        {eligibleDepartments.map((dept, index) => (
                                             <div
-                                                key={emp.id}
+                                                key={dept}
                                                 className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-3 rounded-lg group hover:border-sky-200 hover:bg-sky-50 transition-all"
                                             >
-                                                <div className="flex flex-col gap-0.5 text-slate-400">
-                                                    <button
-                                                        disabled={index === 0}
-                                                        onClick={() => moveEligibleEmployee(index, 'up')}
-                                                        className="hover:text-sky-600 disabled:opacity-30 p-0.5"
-                                                    >
-                                                        <ArrowUp size={14} />
-                                                    </button>
-                                                    <button
-                                                        disabled={index === eligibleEmployees.length - 1}
-                                                        onClick={() => moveEligibleEmployee(index, 'down')}
-                                                        className="hover:text-sky-600 disabled:opacity-30 p-0.5"
-                                                    >
-                                                        <ArrowDown size={14} />
-                                                    </button>
-                                                </div>
-
                                                 <div className="flex-1">
-                                                    <div className="text-sm font-medium text-slate-700">{emp.name}</div>
-                                                    <div className="text-xs text-slate-500">Employee ID: {emp.eid}</div>
+                                                    <div className="text-sm font-medium text-slate-700 font-bold">{dept}</div>
                                                 </div>
 
                                                 <button
-                                                    onClick={() => removeEligibleEmployee(emp.id)}
+                                                    onClick={() => removeDepartment(dept)}
                                                     className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-all"
                                                 >
                                                     <X size={16} />
@@ -257,6 +244,35 @@ const OperationalConfig: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Employee Status Section */}
+                            <div className="pt-4">
+                                <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                    Employee Status <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex flex-wrap gap-8 items-center">
+                                    {['Probation', 'Confirmed', 'Notice Period', 'Intern'].map((status) => (
+                                        <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={employeeStatus.includes(status)}
+                                                    onChange={() => toggleStatus(status)}
+                                                    className="peer appearance-none w-5 h-5 border-2 border-slate-200 rounded-md checked:bg-sky-500 checked:border-sky-500 transition-all cursor-pointer"
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">
+                                                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                                                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                                                {status}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
