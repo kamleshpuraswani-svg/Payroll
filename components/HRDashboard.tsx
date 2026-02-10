@@ -508,6 +508,196 @@ const ProfessionalTaxModal: React.FC<{ onClose: () => void }> = ({ onClose }) =>
     );
 };
 
+const ECRFilingModal: React.FC<{ onClose: () => void; onMarkFiled: () => void }> = ({ onClose, onMarkFiled }) => {
+    const [step, setStep] = useState(1);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const handleGenerate = () => {
+        setIsGenerating(true);
+        setTimeout(() => {
+            setIsGenerating(false);
+            setStep(2);
+        }, 2000);
+    };
+
+    const handleMarkFiled = () => {
+        setIsSuccess(true);
+        onMarkFiled();
+    };
+
+    if (isSuccess) {
+        return (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center flex flex-col items-center">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                        <CheckCircle size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">PF ECR Filed Successfully</h3>
+                    <p className="text-sm text-slate-500 mb-6">The filing status for October 2025 has been updated across the dashboard.</p>
+                    <button
+                        onClick={onClose}
+                        className="w-full py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-all shadow-lg shadow-slate-200"
+                    >
+                        Done
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <ShieldCheck size={20} className="text-rose-600" />
+                            PF ECR Filing Assistant
+                        </h3>
+                        <p className="text-xs text-slate-500">October 2025 • Filing Workflow</p>
+                    </div>
+                    <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
+                </div>
+
+                <div className="p-6">
+                    {/* Stepper */}
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 ${step >= 1 ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}>1</div>
+                            <span className="text-xs font-bold">Summary</span>
+                        </div>
+                        <div className="flex-1 h-px bg-slate-200" />
+                        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 ${step >= 2 ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}>2</div>
+                            <span className="text-xs font-bold">Filing</span>
+                        </div>
+                    </div>
+
+                    {step === 1 ? (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Members</p>
+                                    <p className="text-lg font-black text-slate-800">452 Employees</p>
+                                </div>
+                                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Contribution</p>
+                                    <p className="text-lg font-black text-emerald-700">₹ 12,45,000</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                                <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between">
+                                    <span className="text-xs font-bold text-slate-700">Wages Summary</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Oct 2025</span>
+                                </div>
+                                <div className="p-4 space-y-4">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Gross Wages</span>
+                                        <span className="font-bold text-slate-800">₹ 1,81,00,000</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">EPF Wages</span>
+                                        <span className="font-bold text-slate-800">₹ 85,00,000</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm border-t border-slate-100 pt-3">
+                                        <span className="font-bold text-slate-700">Employer Share (EPF + EPS)</span>
+                                        <span className="font-bold text-slate-800">₹ 10,20,000</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="font-bold text-slate-700">Employee Share (EPF)</span>
+                                        <span className="font-bold text-slate-800">₹ 2,25,000</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
+                                <Info size={16} className="text-amber-600 mt-0.5" />
+                                <p className="text-[11px] text-amber-800 leading-relaxed">
+                                    Please ensure all LOP days and joining/leaving dates are correctly captured before generating the ECR. Once generated, the file must be uploaded to the EPFO unified portal.
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                            <div className="text-center py-4">
+                                <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Download size={24} />
+                                </div>
+                                <h4 className="font-bold text-slate-800">ECR File Generated</h4>
+                                <p className="text-xs text-slate-500 mt-1">Ready for upload to portal</p>
+                            </div>
+
+                            <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><FileText size={20} /></div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-700">ECR_OCT_2025.txt</p>
+                                        <p className="text-[10px] text-slate-400">452 KB • Generated just now</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const element = document.createElement("a");
+                                        const file = new Blob(["Mock ECR File Content for October 2025"], { type: 'text/plain' });
+                                        element.href = URL.createObjectURL(file);
+                                        element.download = "ECR_OCT_2025.txt";
+                                        document.body.appendChild(element);
+                                        element.click();
+                                        document.body.removeChild(element);
+                                    }}
+                                    className="text-xs font-bold text-indigo-600 hover:underline"
+                                >
+                                    Download
+                                </button>
+                            </div>
+
+                            <div className="bg-indigo-900 text-white p-5 rounded-xl shadow-lg">
+                                <h5 className="text-sm font-bold mb-2 flex items-center gap-2">
+                                    <PlayCircle size={16} /> Next Steps
+                                </h5>
+                                <ol className="text-[11px] space-y-2 opacity-90 list-decimal pl-4">
+                                    <li>Upload the downloaded file to the EPFO portal.</li>
+                                    <li>Complete the payment on the portal.</li>
+                                    <li>Click <strong>"Mark as Filed"</strong> below to update records.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between gap-3">
+                    <button
+                        onClick={() => step === 2 ? setStep(1) : onClose()}
+                        className="px-6 py-2 text-slate-600 font-bold text-sm hover:bg-white rounded-lg transition-all"
+                    >
+                        {step === 2 ? 'Back' : 'Cancel'}
+                    </button>
+                    {step === 1 ? (
+                        <button
+                            onClick={handleGenerate}
+                            disabled={isGenerating}
+                            className="px-8 py-2 bg-slate-800 text-white font-bold text-sm rounded-lg hover:bg-slate-900 shadow-sm transition-all flex items-center gap-2 disabled:opacity-70"
+                        >
+                            {isGenerating ? 'Generating...' : <><Download size={16} /> Generate ECR File</>}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleMarkFiled}
+                            className="px-8 py-2 bg-emerald-600 text-white font-bold text-sm rounded-lg hover:bg-emerald-700 shadow-sm transition-all"
+                        >
+                            Mark as Filed
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const HRDashboard: React.FC = () => {
     const [isApprovalsPanelOpen, setIsApprovalsPanelOpen] = useState(false);
     const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
@@ -529,6 +719,8 @@ const HRDashboard: React.FC = () => {
     // Full Report Modal State
     const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
     const [isPTModalOpen, setIsPTModalOpen] = useState(false);
+    const [isECRModalOpen, setIsECRModalOpen] = useState(false);
+    const [isPFECRFiled, setIsPFECRFiled] = useState(false);
 
     // Mock Company for RunPayrollModal
     const currentCompany: Company = {
@@ -1213,9 +1405,20 @@ const HRDashboard: React.FC = () => {
                                 <div className="mt-0.5 p-1 bg-rose-100 rounded text-rose-600"><AlertCircle size={14} /></div>
                                 <div className="flex-1">
                                     <p className="text-sm font-medium text-slate-800">PF ECR Filing (Oct 2025)</p>
-                                    <p className="text-xs text-rose-600 font-medium">Due in 2 days (15 Nov)</p>
+                                    {isPFECRFiled ? (
+                                        <p className="text-xs text-emerald-600 font-medium">Completed on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
+                                    ) : (
+                                        <p className="text-xs text-rose-600 font-medium">Due in 2 days (15 Nov)</p>
+                                    )}
                                 </div>
-                                <button className="px-3 py-1 text-xs border border-slate-200 rounded hover:bg-slate-50">File Now</button>
+                                {!isPFECRFiled && (
+                                    <button
+                                        onClick={() => setIsECRModalOpen(true)}
+                                        className="px-3 py-1 text-xs border border-slate-200 rounded hover:bg-slate-50 transition-colors"
+                                    >
+                                        File Now
+                                    </button>
+                                )}
                             </div>
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 p-1 bg-amber-100 rounded text-amber-600"><AlertCircle size={14} /></div>
@@ -1307,6 +1510,14 @@ const HRDashboard: React.FC = () => {
             {/* 7. Professional Tax Modal */}
             {isPTModalOpen && (
                 <ProfessionalTaxModal onClose={() => setIsPTModalOpen(false)} />
+            )}
+
+            {/* PF ECR Filing Modal */}
+            {isECRModalOpen && (
+                <ECRFilingModal
+                    onClose={() => setIsECRModalOpen(false)}
+                    onMarkFiled={() => setIsPFECRFiled(true)}
+                />
             )}
 
             {/* 8. TDS Full Report Modal */}
