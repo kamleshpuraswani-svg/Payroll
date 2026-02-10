@@ -399,6 +399,19 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
     const [requestedAmount, setRequestedAmount] = useState('');
     const [reason, setReason] = useState('');
 
+    // Handle role-based defaults for Employee
+    useEffect(() => {
+        if (userRole === 'EMPLOYEE') {
+            if (loanType === 'Loan') {
+                setInterestRate('10.5');
+                setMaxTenure('12');
+            } else {
+                setInterestRate('0');
+                setMaxTenure('3');
+            }
+        }
+    }, [loanType, userRole]);
+
     // Approval Flow State
     const [approvers, setApprovers] = useState<any[]>([]);
     const [selectedApproverId, setSelectedApproverId] = useState('');
@@ -543,7 +556,8 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                     type="text"
                                     value={interestRate}
                                     onChange={(e) => setInterestRate(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                    readOnly={userRole === 'EMPLOYEE'}
+                                    className={`w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold ${userRole === 'EMPLOYEE' ? 'bg-slate-50/50 cursor-not-allowed opacity-70' : 'bg-white'}`}
                                     placeholder="e.g. 12"
                                 />
                                 <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Set 0 for interest-free advances.</p>
@@ -556,7 +570,8 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                     type="text"
                                     value={maxTenure}
                                     onChange={(e) => setMaxTenure(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                    readOnly={userRole === 'EMPLOYEE'}
+                                    className={`w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold ${userRole === 'EMPLOYEE' ? 'bg-slate-50/50 cursor-not-allowed opacity-70' : 'bg-white'}`}
                                     placeholder="e.g. 12"
                                 />
                                 <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Max tenure allowed is 3 months.</p>
