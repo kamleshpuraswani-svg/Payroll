@@ -219,7 +219,7 @@ const Form16GenerationModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
                                 onClick={handleStartGeneration}
                                 className="px-8 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95 flex items-center gap-2"
                             >
-                                <Zap size={16} /> Start Generation
+                                <Zap size={16} /> Start
                             </button>
                         </>
                     )}
@@ -243,8 +243,8 @@ const Form16GenerationModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
                 <div className="max-w-[1600px] mx-auto p-8">
 
                     {viewStep === 'SETUP' && (
-                        <div className="grid grid-cols-12 gap-8 animate-in slide-in-from-bottom-4">
-                            <div className="col-span-12 lg:col-span-9 space-y-6">
+                        <div className="grid grid-cols-1 gap-8 animate-in slide-in-from-bottom-4">
+                            <div className="col-span-1 space-y-6">
                                 {/* Top Filter Bar */}
                                 <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                     <div>
@@ -369,16 +369,6 @@ const Form16GenerationModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
                                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Employee Selection</h3>
                                             <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black">{selectedEmps.length} Selected</span>
                                         </div>
-                                        <div className="relative">
-                                            <select className="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer appearance-none outline-none">
-                                                <option>Bulk Actions</option>
-                                                <option>Generate Selected</option>
-                                                <option>Download ZIP</option>
-                                                <option>Email to Employees</option>
-                                                <option>Publish to ESS</option>
-                                            </select>
-                                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
-                                        </div>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-sm">
@@ -414,14 +404,6 @@ const Form16GenerationModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div className="col-span-12 lg:col-span-3 space-y-6">
-                                <div className="p-6 bg-indigo-50 rounded-[32px] border border-indigo-100 space-y-3">
-                                    <div className="p-2 bg-white rounded-xl w-fit text-indigo-600 shadow-sm"><Info size={18} /></div>
-                                    <h4 className="text-sm font-black text-indigo-900">Compliance Tip</h4>
-                                    <p className="text-xs text-indigo-700/80 leading-relaxed font-medium">Form 16 Part A is generated via TRACES portal. Ensure you have the .txt files ready.</p>
                                 </div>
                             </div>
                         </div>
