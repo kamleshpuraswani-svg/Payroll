@@ -22,7 +22,8 @@ import {
     ChevronLeft,
     Printer,
     Download,
-    Share2
+    Share2,
+    Plus
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -50,6 +51,15 @@ const STRUCTURE_OPTIONS = [
     "Sales Incentive Structure"
 ];
 
+export interface SalaryComponent {
+    id: string;
+    name: string;
+    monthlyAmount: number;
+    annualAmount: number;
+    type: 'earnings' | 'retirals';
+    isMandatory?: boolean;
+}
+
 // --- Sub-Component: Salary Annexure Preview Modal ---
 const SalaryAnnexureModal: React.FC<{
     isOpen: boolean;
@@ -57,20 +67,89 @@ const SalaryAnnexureModal: React.FC<{
     employee: Employee;
     annualCtc: number;
     structureName: string;
-}> = ({ isOpen, onClose, employee, annualCtc, structureName }) => {
+    initialComponents?: SalaryComponent[];
+    onSave?: (components: SalaryComponent[]) => void;
+}> = ({ isOpen, onClose, employee, annualCtc, structureName, initialComponents, onSave }) => {
     if (!isOpen) return null;
 
-    // Calculation logic based on provided image proportions
-    const ctc = annualCtc || 0;
-    const basicAnnual = Math.round(ctc * 0.4);
-    const hraAnnual = Math.round(basicAnnual * 0.5);
-    const ltaAnnual = ctc > 0 ? 50000 : 0;
-    const pfAnnual = ctc > 0 ? 21600 : 0;
-    const gratuityAnnual = Math.round(basicAnnual * 0.0443); // Matching ~32,800 for 7,40,000 basic
+    const [components, setComponents] = useState<SalaryComponent[]>([]);
+    const [isEditing, setIsEditing] = useState(false);
 
-    const retiralsTotal = pfAnnual + gratuityAnnual;
-    const grossAnnual = ctc - retiralsTotal;
-    const specialAnnual = Math.max(0, grossAnnual - basicAnnual - hraAnnual - ltaAnnual);
+    useEffect(() => {
+        if (isOpen) {
+            if (initialComponents && initialComponents.length > 0) {
+                setComponents(initialComponents);
+            } else {
+                const ctc = annualCtc || 0;
+                const basic = Math.round(ctc * 0.4);
+                const hra = Math.round(basic * 0.5);
+                const lta = ctc > 0 ? 50000 : 0;
+                const pf = ctc > 0 ? 21600 : 0;
+                const grat = Math.round(basic * 0.0443);
+                const retirals = pf + grat;
+                const gross = ctc - retirals;
+                const special = Math.max(0, gross - basic - hra - lta);
+
+                setComponents([
+                    { id: 'basic', name: 'Basic Salary', annualAmount: basic, monthlyAmount: Math.round(basic / 12), type: 'earnings', isMandatory: true },
+                    { id: 'hra', name: 'House Rent Allowance', annualAmount: hra, monthlyAmount: Math.round(hra / 12), type: 'earnings' },
+                    { id: 'special', name: 'Special Allowance', annualAmount: special, monthlyAmount: Math.round(special / 12), type: 'earnings' },
+                    { id: 'lta', name: 'Leave Travel Allowance', annualAmount: lta, monthlyAmount: Math.round(lta / 12), type: 'earnings' },
+                    { id: 'pf', name: 'Provident Fund (Employer)', annualAmount: pf, monthlyAmount: Math.round(pf / 12), type: 'retirals', isMandatory: true },
+                    { id: 'gratuity', name: 'Gratuity', annualAmount: grat, monthlyAmount: Math.round(grat / 12), type: 'retirals', isMandatory: true },
+                ]);
+            }
+        }
+    }, [isOpen, annualCtc, initialComponents]);
+
+    const calculateTotals = () => {
+        const earnings = components.filter(c => c.type === 'earnings').reduce((sum, c) => sum + c.annualAmount, 0);
+        const retirals = components.filter(c => c.type === 'retirals').reduce((sum, c) => sum + c.annualAmount, 0);
+        return { earnings, retirals, ctc: earnings + retirals };
+    };
+
+    const handleUpdateAmount = (id: string, newAnnual: number) => {
+        setComponents(prev => {
+            const newComps = prev.map(c => {
+                if (c.id === id) {
+                    return { ...c, annualAmount: newAnnual, monthlyAmount: Math.round(newAnnual / 12) };
+                }
+                return c;
+            });
+
+            // Balancing logic: If CTC should stay fixed (which is often expected in salary editing),
+            // update Special Allowance. However, for true "manual edit", we'll just update the component
+            // and let the total CTC reflect the sum unless it's a specific balancing field.
+            return newComps;
+        });
+    };
+
+    const handleRemoveComponent = (id: string) => {
+        setComponents(prev => prev.filter(c => c.id !== id || c.isMandatory));
+    };
+
+    const handleAddComponent = () => {
+        const name = prompt("Enter Component Name:");
+        if (!name) return;
+        const amount = parseInt(prompt("Enter Annual Amount:") || "0");
+        const type = confirm("Is this an Earning? (Click Cancel for Retirals)") ? 'earnings' : 'retirals';
+
+        const newComp: SalaryComponent = {
+            id: `custom-${Date.now()}`,
+            name,
+            annualAmount: amount,
+            monthlyAmount: Math.round(amount / 12),
+            type
+        };
+        setComponents([...components, newComp]);
+    };
+
+    const handleSave = () => {
+        if (onSave) onSave(components);
+        onClose();
+    };
+
+    const { earnings: totalEarnings, retirals: totalRetirals, ctc: totalCtc } = calculateTotals();
 
     const formatNum = (val: number) => val.toLocaleString('en-IN');
     const formatMonthly = (val: number) => Math.round(val / 12).toLocaleString('en-IN');
@@ -81,100 +160,177 @@ const SalaryAnnexureModal: React.FC<{
                 {/* Header */}
                 <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-start bg-white">
                     <div>
-                        <h3 className="text-xl font-bold text-slate-800">Salary Structure Annexure</h3>
-                        <p className="text-sm text-sky-600 font-medium">{employee.name} ({employee.eid})</p>
+                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Salary Structure Annexure</h3>
+                        <p className="text-sm text-sky-600 font-bold mt-0.5">{employee.name} <span className="text-slate-400 font-medium">({employee.eid})</span></p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
-                        <X size={24} />
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setIsEditing(!isEditing)}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isEditing ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            {isEditing ? 'Viewing' : 'Edit Structure'}
+                        </button>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                            <X size={24} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-8">
-                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">
+                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-sm text-left border-collapse">
+                            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Component</th>
                                     <th className="px-6 py-4 text-right">Monthly (₹)</th>
                                     <th className="px-6 py-4 text-right">Annual (₹)</th>
+                                    {isEditing && <th className="px-6 py-4 text-center w-20">Action</th>}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-50">
                                 {/* A. Earnings */}
-                                <tr className="bg-emerald-50/30">
-                                    <td colSpan={3} className="px-6 py-2.5 font-black text-emerald-800 text-[11px] uppercase tracking-wider">A. Earnings</td>
+                                <tr className="bg-emerald-50/20">
+                                    <td colSpan={isEditing ? 4 : 3} className="px-6 py-3 font-black text-emerald-800 text-[10px] uppercase tracking-widest bg-emerald-50/40 border-y border-emerald-100/50">A. Earnings</td>
                                 </tr>
-                                <tr>
-                                    <td className="px-6 py-3.5 text-slate-700 font-medium">Basic Salary</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(basicAnnual)}</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(basicAnnual)}</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-6 py-3.5 text-slate-700 font-medium">House Rent Allowance</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(hraAnnual)}</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(hraAnnual)}</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-6 py-3.5 text-slate-700 font-medium">Special Allowance</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(specialAnnual)}</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(specialAnnual)}</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-6 py-3.5 text-slate-700 font-medium">Leave Travel Allowance</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(ltaAnnual)}</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(ltaAnnual)}</td>
-                                </tr>
-                                <tr className="bg-slate-50 font-black">
-                                    <td className="px-6 py-4 text-slate-800">Total Gross Salary (A)</td>
-                                    <td className="px-6 py-4 text-right text-slate-900">{formatMonthly(grossAnnual)}</td>
-                                    <td className="px-6 py-4 text-right text-slate-900">{formatNum(grossAnnual)}</td>
+                                {components.filter(c => c.type === 'earnings').map(comp => (
+                                    <tr key={comp.id} className="group hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm font-bold text-slate-700">{comp.name}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className="text-slate-500 font-medium tracking-tight">₹ {formatMonthly(comp.annualAmount)}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            {isEditing ? (
+                                                <div className="relative inline-block w-32">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                    <input
+                                                        type="number"
+                                                        value={comp.annualAmount}
+                                                        onChange={(e) => handleUpdateAmount(comp.id, parseInt(e.target.value) || 0)}
+                                                        className="w-full pl-6 pr-2 py-1.5 bg-white border border-slate-200 rounded-md text-right font-black text-slate-800 focus:outline-none focus:border-sky-500 transition-all text-xs"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-800 font-black tracking-tight">₹ {formatNum(comp.annualAmount)}</span>
+                                            )}
+                                        </td>
+                                        {isEditing && (
+                                            <td className="px-6 py-4 text-center">
+                                                {!comp.isMandatory && (
+                                                    <button
+                                                        onClick={() => handleRemoveComponent(comp.id)}
+                                                        className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                                <tr className="bg-slate-50/50 font-black border-t border-slate-200">
+                                    <td className="px-6 py-4 text-slate-700 text-xs">Total Gross Salary (A)</td>
+                                    <td className="px-6 py-4 text-right text-slate-900 text-xs tracking-tight">₹ {formatMonthly(totalEarnings)}</td>
+                                    <td className="px-6 py-4 text-right text-slate-900 text-sm tracking-tight">₹ {formatNum(totalEarnings)}</td>
+                                    {isEditing && <td />}
                                 </tr>
 
                                 {/* B. Retirals */}
-                                <tr className="bg-sky-50/30">
-                                    <td colSpan={3} className="px-6 py-2.5 font-black text-sky-800 text-[11px] uppercase tracking-wider">B. Retirals (Employer)</td>
+                                <tr className="bg-sky-50/20">
+                                    <td colSpan={isEditing ? 4 : 3} className="px-6 py-3 font-black text-sky-800 text-[10px] uppercase tracking-widest bg-sky-50/40 border-y border-sky-100/50">B. Retirals (Employer)</td>
                                 </tr>
-                                <tr>
-                                    <td className="px-6 py-3.5 text-slate-700 font-medium">Provident Fund (Employer)</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(pfAnnual)}</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(pfAnnual)}</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-6 py-3.5 text-slate-700 font-medium">Gratuity</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-600">{formatMonthly(gratuityAnnual)}</td>
-                                    <td className="px-6 py-3.5 text-right text-slate-800 font-bold">{formatNum(gratuityAnnual)}</td>
-                                </tr>
-                                <tr className="bg-slate-50 font-black">
-                                    <td className="px-6 py-4 text-slate-800">Total Retirals (B)</td>
-                                    <td className="px-6 py-4 text-right text-slate-900">{formatMonthly(retiralsTotal)}</td>
-                                    <td className="px-6 py-4 text-right text-slate-900">{formatNum(retiralsTotal)}</td>
+                                {components.filter(c => c.type === 'retirals').map(comp => (
+                                    <tr key={comp.id} className="group hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm font-bold text-slate-700">{comp.name}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className="text-slate-500 font-medium tracking-tight">₹ {formatMonthly(comp.annualAmount)}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            {isEditing ? (
+                                                <div className="relative inline-block w-32">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                    <input
+                                                        type="number"
+                                                        value={comp.annualAmount}
+                                                        onChange={(e) => handleUpdateAmount(comp.id, parseInt(e.target.value) || 0)}
+                                                        className="w-full pl-6 pr-2 py-1.5 bg-white border border-slate-200 rounded-md text-right font-black text-slate-800 focus:outline-none focus:border-sky-500 transition-all text-xs"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-800 font-black tracking-tight">₹ {formatNum(comp.annualAmount)}</span>
+                                            )}
+                                        </td>
+                                        {isEditing && (
+                                            <td className="px-6 py-4 text-center">
+                                                {!comp.isMandatory && (
+                                                    <button
+                                                        onClick={() => handleRemoveComponent(comp.id)}
+                                                        className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                                <tr className="bg-slate-50/50 font-black border-t border-slate-200">
+                                    <td className="px-6 py-4 text-slate-700 text-xs">Total Retirals (B)</td>
+                                    <td className="px-6 py-4 text-right text-slate-900 text-xs tracking-tight">₹ {formatMonthly(totalRetirals)}</td>
+                                    <td className="px-6 py-4 text-right text-slate-900 text-sm tracking-tight">₹ {formatNum(totalRetirals)}</td>
+                                    {isEditing && <td />}
                                 </tr>
                             </tbody>
-                            <tfoot className="bg-slate-900 text-white font-black">
+                            <tfoot className="bg-slate-900 text-white font-black overflow-hidden rounded-b-2xl">
                                 <tr>
-                                    <td className="px-6 py-5 text-base">Total Cost to Company (A + B)</td>
-                                    <td className="px-6 py-5 text-right text-base">{formatMonthly(ctc)}</td>
-                                    <td className="px-6 py-5 text-right text-xl tracking-tight">{formatNum(ctc)}</td>
+                                    <td className="px-6 py-6 text-sm">Total Cost to Company (A + B)</td>
+                                    <td className="px-6 py-6 text-right text-sm border-l border-white/5">₹ {formatMonthly(totalCtc)}</td>
+                                    <td className="px-6 py-6 text-right text-2xl tracking-tighter border-l border-white/5">₹ {formatNum(totalCtc)}</td>
+                                    {isEditing && <td />}
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
-                    <div className="mt-6 flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <Info size={16} className="text-slate-400 mt-0.5" />
-                        <p className="text-[11px] text-slate-500 leading-relaxed italic">
-                            * The above calculations are based on the "{structureName}" salary structure. Actual payroll amounts may vary slightly due to rounding, days worked, and prevailing statutory rules.
+
+                    {isEditing && (
+                        <button
+                            onClick={handleAddComponent}
+                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition-all flex items-center justify-center gap-2 group"
+                        >
+                            <Plus size={18} className="group-hover:scale-110 transition-transform" />
+                            Add Salary Component
+                        </button>
+                    )}
+
+                    <div className="mt-8 flex items-start gap-4 p-5 bg-sky-50/50 rounded-2xl border border-sky-100/50 shadow-sm shadow-sky-50">
+                        <div className="p-2 bg-white rounded-xl shadow-sm border border-sky-100">
+                            <Info size={16} className="text-sky-600" />
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                            <span className="font-bold text-sky-700 uppercase tracking-widest text-[9px] block mb-1">Calculation Method: {structureName}</span>
+                            Editing components here will create a <span className="font-bold text-slate-700 italic">custom structure</span> specifically for this employee. Ensure manual edits comply with your company policy and local labor laws.
                         </p>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-8 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
+                        className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all"
                     >
-                        Close
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className="px-8 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
+                    >
+                        <Save size={18} />
+                        Update Annexure
                     </button>
                 </div>
             </div>
@@ -198,6 +354,7 @@ const AssignStructureModal: React.FC<{
     // Step 2 Data
     const [ctcValues, setCtcValues] = useState<Record<string, string>>({});
     const [arrearsDefaults, setArrearsDefaults] = useState<Record<string, string>>({});
+    const [componentOverrides, setComponentOverrides] = useState<Record<string, SalaryComponent[]>>({});
 
     // Preview State
     const [previewEmployee, setPreviewEmployee] = useState<Employee | null>(null);
@@ -485,6 +642,19 @@ const AssignStructureModal: React.FC<{
                         employee={previewEmployee}
                         annualCtc={parseFloat(ctcValues[previewEmployee.id] || '0')}
                         structureName={assignments[previewEmployee.id] || 'Standard'}
+                        initialComponents={componentOverrides[previewEmployee.id]}
+                        onSave={(newComponents) => {
+                            setComponentOverrides(prev => ({
+                                ...prev,
+                                [previewEmployee.id]: newComponents
+                            }));
+                            // Update the CTC value in the main table to reflect the sum of custom components
+                            const newTotal = newComponents.reduce((sum, c) => sum + c.annualAmount, 0);
+                            setCtcValues(prev => ({
+                                ...prev,
+                                [previewEmployee.id]: newTotal.toString()
+                            }));
+                        }}
                     />
                 )}
             </div>
