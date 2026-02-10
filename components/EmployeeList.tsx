@@ -23,7 +23,8 @@ import {
     Printer,
     Download,
     Share2,
-    Plus
+    Plus,
+    Check
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -56,7 +57,7 @@ export interface SalaryComponent {
     name: string;
     monthlyAmount: number;
     annualAmount: number;
-    type: 'earnings' | 'retirals';
+    type: 'earnings' | 'retirals' | 'deductions';
     isMandatory?: boolean;
 }
 
@@ -74,6 +75,8 @@ const SalaryAnnexureModal: React.FC<{
 
     const [components, setComponents] = useState<SalaryComponent[]>([]);
     const [isEditing, setIsEditing] = useState(false);
+    const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [pickerSearch, setPickerSearch] = useState('');
 
     useEffect(() => {
         if (isOpen) {
@@ -129,20 +132,51 @@ const SalaryAnnexureModal: React.FC<{
     };
 
     const handleAddComponent = () => {
-        const name = prompt("Enter Component Name:");
-        if (!name) return;
-        const amount = parseInt(prompt("Enter Annual Amount:") || "0");
-        const type = confirm("Is this an Earning? (Click Cancel for Retirals)") ? 'earnings' : 'retirals';
+        setIsPickerOpen(true);
+    };
+
+    const handleSelectComponent = (configComp: any) => {
+        const amount = parseInt(prompt(`Enter Annual Amount for ${configComp.name}:`) || "0");
+        if (isNaN(amount) || amount === 0) return;
+
+        let type: 'earnings' | 'retirals' | 'deductions' = 'earnings';
+        if (configComp.category === 'Deductions') type = 'deductions';
+        if (configComp.category === 'Benefits' || configComp.name.toLowerCase().includes('employer')) type = 'retirals';
 
         const newComp: SalaryComponent = {
             id: `custom-${Date.now()}`,
-            name,
+            name: configComp.name,
             annualAmount: amount,
             monthlyAmount: Math.round(amount / 12),
             type
         };
         setComponents([...components, newComp]);
+        setIsPickerOpen(false);
+        setPickerSearch('');
     };
+
+    // Load available components from config
+    const availableComponents = (() => {
+        const saved = localStorage.getItem('collab_salary_components');
+        const configComps = saved ? JSON.parse(saved) : [
+            { id: '1', name: 'Basic', category: 'Earnings' },
+            { id: '2', name: 'House Rent Allowance', category: 'Earnings' },
+            { id: '3', name: 'Fixed Allowance', category: 'Earnings' },
+            { id: '4', name: 'Commission', category: 'Earnings' },
+            { id: '14', name: 'Medical Reimbursement', category: 'Reimbursements' },
+            { id: '15', name: 'Fuel Reimbursement', category: 'Reimbursements' },
+            { id: '7', name: 'Professional Tax (PT)', category: 'Deductions' },
+            { id: '8', name: 'Provident Fund (Employee)', category: 'Deductions' },
+            { id: '9', name: 'Income Tax (TDS)', category: 'Deductions' },
+            { id: '11', name: 'Provident Fund (Employer)', category: 'Benefits' },
+        ];
+
+        // Filter out components already in the list
+        return configComps.filter((cc: any) =>
+            !components.some(c => c.name.toLowerCase() === cc.name.toLowerCase()) &&
+            (cc.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+        );
+    })();
 
     const handleSave = () => {
         if (onSave) onSave(components);
@@ -284,6 +318,50 @@ const SalaryAnnexureModal: React.FC<{
                                     <td className="px-6 py-4 text-right text-slate-900 text-sm tracking-tight">₹ {formatNum(totalRetirals)}</td>
                                     {isEditing && <td />}
                                 </tr>
+
+                                {/* C. Deductions (Only if added) */}
+                                {components.some(c => c.type === 'deductions') && (
+                                    <>
+                                        <tr className="bg-rose-50/20">
+                                            <td colSpan={isEditing ? 4 : 3} className="px-6 py-3 font-black text-rose-800 text-[10px] uppercase tracking-widest bg-rose-50/40 border-y border-rose-100/50">C. Deductions (Employee)</td>
+                                        </tr>
+                                        {components.filter(c => c.type === 'deductions').map(comp => (
+                                            <tr key={comp.id} className="group hover:bg-slate-50/50 transition-colors text-rose-600">
+                                                <td className="px-6 py-4">
+                                                    <p className="text-sm font-bold">{comp.name}</p>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <span className="font-medium tracking-tight">₹ {formatMonthly(comp.annualAmount)}</span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    {isEditing ? (
+                                                        <div className="relative inline-block w-32">
+                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-rose-300 font-bold">₹</span>
+                                                            <input
+                                                                type="number"
+                                                                value={comp.annualAmount}
+                                                                onChange={(e) => handleUpdateAmount(comp.id, parseInt(e.target.value) || 0)}
+                                                                className="w-full pl-6 pr-2 py-1.5 bg-white border border-rose-100 rounded-md text-right font-black text-rose-700 focus:outline-none focus:border-rose-300 transition-all text-xs"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <span className="font-black tracking-tight">₹ {formatNum(comp.annualAmount)}</span>
+                                                    )}
+                                                </td>
+                                                {isEditing && (
+                                                    <td className="px-6 py-4 text-center">
+                                                        <button
+                                                            onClick={() => handleRemoveComponent(comp.id)}
+                                                            className="p-1.5 text-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))}
+                                    </>
+                                )}
                             </tbody>
                             <tfoot className="bg-slate-900 text-white font-black overflow-hidden rounded-b-2xl">
                                 <tr>
@@ -297,13 +375,65 @@ const SalaryAnnexureModal: React.FC<{
                     </div>
 
                     {isEditing && (
-                        <button
-                            onClick={handleAddComponent}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition-all flex items-center justify-center gap-2 group"
-                        >
-                            <Plus size={18} className="group-hover:scale-110 transition-transform" />
-                            Add Salary Component
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={handleAddComponent}
+                                className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition-all flex items-center justify-center gap-2 group"
+                            >
+                                <Plus size={18} className="group-hover:scale-110 transition-transform" />
+                                Add Salary Component
+                            </button>
+
+                            {isPickerOpen && (
+                                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[120] animate-in slide-in-from-bottom-2 duration-300 max-h-[300px] flex flex-col">
+                                    <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                                        <div className="relative flex-1">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <input
+                                                type="text"
+                                                placeholder="Search components..."
+                                                value={pickerSearch}
+                                                onChange={(e) => setPickerSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-sky-400 transition-all"
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <button onClick={() => setIsPickerOpen(false)} className="ml-2 p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                                        {availableComponents.length > 0 ? (
+                                            <div className="grid grid-cols-1 gap-1">
+                                                {['Earnings', 'Reimbursements', 'Deductions', 'Benefits'].map(category => {
+                                                    const categoryItems = availableComponents.filter(c => c.category === category);
+                                                    if (categoryItems.length === 0) return null;
+                                                    return (
+                                                        <div key={category} className="mb-2">
+                                                            <div className="px-3 py-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">{category}</div>
+                                                            {categoryItems.map(cc => (
+                                                                <button
+                                                                    key={cc.id}
+                                                                    onClick={() => handleSelectComponent(cc)}
+                                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-sky-50 hover:text-sky-700 transition-all flex items-center justify-between group"
+                                                                >
+                                                                    <span className="text-xs font-bold text-slate-600 group-hover:text-sky-700">{cc.name}</span>
+                                                                    <Plus size={14} className="opacity-0 group-hover:opacity-100 text-sky-400" />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="p-8 text-center text-slate-400 text-xs italic">
+                                                No more components found
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     <div className="mt-8 flex items-start gap-4 p-5 bg-sky-50/50 rounded-2xl border border-sky-100/50 shadow-sm shadow-sky-50">
