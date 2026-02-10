@@ -533,11 +533,6 @@ const HRDashboard: React.FC = () => {
             trendUp: false,
             icon: <Users />,
             colorClass: 'text-indigo-600 bg-indigo-100',
-            extraDetails: [
-                { label: 'Active', value: '440', color: 'text-emerald-600' },
-                { label: 'On Leave', value: '12', color: 'text-amber-600' },
-            ],
-            detailsAtTop: true
         },
         {
             title: 'Pending Requests',
@@ -546,13 +541,7 @@ const HRDashboard: React.FC = () => {
             trendUp: false,
             icon: <Clock />,
             colorClass: 'text-amber-600 bg-amber-100',
-            onInfoClick: () => setIsApprovalsPanelOpen(true),
-            extraDetails: [
-                { label: 'Investment Proofs', value: '8' },
-                { label: 'Reimbursement Claims', value: '4' },
-                { label: 'Salary Overrides', value: '3' },
-            ],
-            detailsAtTop: true
+            onInfoClick: () => setIsApprovalsPanelOpen(true)
         },
         {
             title: 'Payroll Status',
