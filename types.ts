@@ -11,6 +11,7 @@ export interface Company {
   status: 'Active' | 'Pending' | 'Suspended';
   lastAudit: string;
   location?: string;
+  businessUnit?: string;
   lastPayrollRun?: string;
   industry?: string;
   logoUrl?: string;
@@ -99,7 +100,8 @@ export interface Employee {
   eid: string;
   company: string;
   department: string;
-  location: string;
+  location?: string;
+  businessUnit?: string;
   ctc: string;
   joinDate: string;
   status: 'Active' | 'New Joinee' | 'On Notice' | 'Relieved';

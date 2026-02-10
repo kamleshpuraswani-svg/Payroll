@@ -1,69 +1,69 @@
 import { Company, AuditLog, ApprovalItem, Employee, StatutoryReport, TaxDeclaration } from './types';
 
 export const MOCK_COMPANIES: Company[] = [
-  { 
-    id: 'TF-1024', 
-    name: 'TechFlow Systems', 
-    plan: 'Enterprise', 
-    employees: 12500, 
-    status: 'Active', 
+  {
+    id: 'TF-1024',
+    name: 'TechFlow Systems',
+    plan: 'Enterprise',
+    employees: 12500,
+    status: 'Active',
     lastAudit: '2 hours ago',
-    location: 'Bangalore',
+    businessUnit: 'Digital Technology',
     lastPayrollRun: '30 Nov 2025',
     industry: 'Technology'
   },
-  { 
-    id: 'AC-1001', 
-    name: 'Acme Corp', 
-    plan: 'Pro', 
-    employees: 4560, 
-    status: 'Active', 
+  {
+    id: 'AC-1001',
+    name: 'Acme Corp',
+    plan: 'Pro',
+    employees: 4560,
+    status: 'Active',
     lastAudit: '1 day ago',
-    location: 'Mumbai',
+    businessUnit: 'Retail Banking',
     lastPayrollRun: '28 Nov 2025',
     industry: 'Manufacturing'
   },
-  { 
-    id: 'GL-1026', 
-    name: 'Global Logistics', 
-    plan: 'Enterprise', 
-    employees: 8900, 
-    status: 'Pending', 
+  {
+    id: 'GL-1026',
+    name: 'Global Logistics',
+    plan: 'Enterprise',
+    employees: 8900,
+    status: 'Pending',
     lastAudit: '3 days ago',
-    location: 'Pune',
+    businessUnit: 'Supply Chain',
     lastPayrollRun: '29 Nov 2025',
     industry: 'Logistics'
   },
-  { 
-    id: 'SU-1027', 
-    name: 'StartUp Inc', 
-    plan: 'Basic', 
-    employees: 45, 
-    status: 'Suspended', 
+  {
+    id: 'SU-1027',
+    name: 'StartUp Inc',
+    plan: 'Basic',
+    employees: 45,
+    status: 'Suspended',
     lastAudit: '1 week ago',
-    location: 'Hyderabad',
+    businessUnit: 'Product Innovation',
     lastPayrollRun: '30 Nov 2025',
     industry: 'SaaS'
   },
-  { 
-    id: 'PX-1098', 
-    name: 'PixelCraft Studio', 
-    plan: 'Pro', 
-    employees: 180, 
-    status: 'Active', 
+  {
+    id: 'PX-1098',
+    name: 'PixelCraft Studio',
+    plan: 'Pro',
+    employees: 180,
+    status: 'Active',
     lastAudit: '5 hours ago',
-    location: 'Bangalore',
+    businessUnit: 'Digital Technology',
     lastPayrollRun: '30 Nov 2025',
     industry: 'Design'
   },
-  { 
-    id: 'IN-1156', 
-    name: 'Innovate Solutions', 
-    plan: 'Pro', 
-    employees: 2340, 
-    status: 'Active', 
+  {
+    id: 'IN-1156',
+    name: 'Innovate Solutions',
+    plan: 'Pro',
+    employees: 2340,
+    status: 'Active',
     lastAudit: '12 hours ago',
-    location: 'Chennai',
+    businessUnit: 'Strategic Consulting',
     lastPayrollRun: '30 Nov 2025',
     industry: 'Consulting'
   },
@@ -149,14 +149,14 @@ export const MOCK_APPROVALS: ApprovalItem[] = [
 ];
 
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'Priya Sharma', eid: 'TF00912', company: 'TechFlow Systems', department: 'Software Engineering', location: 'Bangalore', ctc: '₹18.5 L', joinDate: '12 Jan 2023', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '2', name: 'Arjun Mehta', eid: 'AC04567', company: 'Acme Corp', department: 'Sales', location: 'Mumbai', ctc: '₹24.0 L', joinDate: '03 Mar 2024', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '3', name: 'Neha Kapoor', eid: 'SU00234', company: 'StartUp Inc', department: 'Product', location: 'Hyderabad', ctc: '₹15.8 L', joinDate: '22 Nov 2025', status: 'New Joinee', avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '4', name: 'Rohan Desai', eid: 'GL07890', company: 'Global Logistics', department: 'DevOps', location: 'Pune', ctc: '₹21.2 L', joinDate: '17 Apr 2022', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '5', name: 'Ananya Patel', eid: 'TF01145', company: 'TechFlow Systems', department: 'QA', location: 'Chennai', ctc: '₹14.7 L', joinDate: '05 Oct 2025', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '6', name: 'Vikram Singh', eid: 'AC03987', company: 'Acme Corp', department: 'Finance', location: 'Delhi', ctc: '₹19.0 L', joinDate: '01 Dec 2021', status: 'On Notice', avatarUrl: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '7', name: 'Sneha Reddy', eid: 'PX05678', company: 'PixelCraft Studio', department: 'Design', location: 'Bangalore', ctc: '₹16.4 L', joinDate: '14 Feb 2025', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '8', name: 'Karan Malhotra', eid: 'SU00821', company: 'StartUp Inc', department: 'Marketing', location: 'Remote', ctc: '₹12.5 L', joinDate: '30 Nov 2025', status: 'Relieved', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '1', name: 'Priya Sharma', eid: 'TF00912', company: 'TechFlow Systems', department: 'Software Engineering', businessUnit: 'Digital Technology', ctc: '₹18.5 L', joinDate: '12 Jan 2023', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '2', name: 'Arjun Mehta', eid: 'AC04567', company: 'Acme Corp', department: 'Sales', businessUnit: 'Retail Banking', ctc: '₹24.0 L', joinDate: '03 Mar 2024', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '3', name: 'Neha Kapoor', eid: 'SU00234', company: 'StartUp Inc', department: 'Product', businessUnit: 'Product Management', ctc: '₹15.8 L', joinDate: '22 Nov 2025', status: 'New Joinee', avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '4', name: 'Rohan Desai', eid: 'GL07890', company: 'Global Logistics', department: 'DevOps', businessUnit: 'Digital Technology', ctc: '₹21.2 L', joinDate: '17 Apr 2022', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '5', name: 'Ananya Patel', eid: 'TF01145', company: 'TechFlow Systems', department: 'QA', businessUnit: 'Wealth Management', ctc: '₹14.7 L', joinDate: '05 Oct 2025', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '6', name: 'Vikram Singh', eid: 'AC03987', company: 'Acme Corp', department: 'Finance', businessUnit: 'Corporate Strategy', ctc: '₹19.0 L', joinDate: '01 Dec 2021', status: 'On Notice', avatarUrl: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '7', name: 'Sneha Reddy', eid: 'PX05678', company: 'PixelCraft Studio', department: 'Design', businessUnit: 'Creative Services', ctc: '₹16.4 L', joinDate: '14 Feb 2025', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '8', name: 'Karan Malhotra', eid: 'SU00821', company: 'StartUp Inc', department: 'Marketing', businessUnit: 'Brand & Growth', ctc: '₹12.5 L', joinDate: '30 Nov 2025', status: 'Relieved', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
 ];
 
 export const MOCK_STATUTORY_REPORTS: StatutoryReport[] = [
@@ -244,7 +244,7 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
     notes: '',
     ctc: '₹24.0 L',
     regime: 'Old',
-    proofs: Array.from({ length: 12 }).map((_, i) => ({ id: `h${i}`, fileName: `Rent_Receipt_Month_${i+1}.pdf`, fileType: 'pdf', size: '300 KB' })),
+    proofs: Array.from({ length: 12 }).map((_, i) => ({ id: `h${i}`, fileName: `Rent_Receipt_Month_${i + 1}.pdf`, fileType: 'pdf', size: '300 KB' })),
     breakdown: [
       { label: 'Annual Rent Paid', amount: 240000 }
     ]

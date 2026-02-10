@@ -730,7 +730,7 @@ const HRDashboard: React.FC = () => {
         employees: 452,
         status: 'Active',
         lastAudit: 'Today',
-        location: 'Bangalore',
+        businessUnit: 'Digital Technology',
         lastPayrollRun: '31 Oct 2025'
     };
 

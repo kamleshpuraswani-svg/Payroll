@@ -1106,7 +1106,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                 <th className="px-6 py-4">Employee</th>
                                 <th className="px-6 py-4">Joining Date</th>
                                 <th className="px-6 py-4">Department</th>
-                                <th className="px-6 py-4">Location</th>
+                                <th className="px-6 py-4">Business Unit</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">CTC</th>
                                 <th className="px-4 py-4 text-right">Actions</th>
@@ -1139,7 +1139,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">{emp.department}</td>
-                                    <td className="px-6 py-4">{emp.location}</td>
+                                    <td className="px-6 py-4">{emp.businessUnit}</td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                             {emp.status}
