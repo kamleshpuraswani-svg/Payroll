@@ -163,13 +163,14 @@ const App: React.FC = () => {
               {currentView === ViewState.EMP_SALARY_BREAKDOWN && <SalaryBreakdown />}
               {currentView === ViewState.EMP_REIMBURSEMENTS && <Reimbursements />}
               {currentView === ViewState.EMP_TAX_DOCUMENTS && <TaxDocuments onNavigateToPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)} />}
+              {currentView === ViewState.EMP_LOANS_ADVANCES && <LoansAdvances />}
             </div>
           )}
 
           {/* Fallback for Work In Progress Views */}
           {((userRole === 'SUPER_ADMIN' && ![ViewState.DASHBOARD, ViewState.PAYROLL, ViewState.TAX, ViewState.SALARY, ViewState.TEMPLATE_SETUP].includes(currentView)) ||
             (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS, ViewState.HR_OPERATIONAL_CONFIG].includes(currentView)) ||
-            (userRole === 'EMPLOYEE' && ![ViewState.EMP_OVERVIEW, ViewState.EMP_PAYROLL_CORNER, ViewState.EMP_TAX_PLANNING, ViewState.EMP_REIMBURSEMENTS, ViewState.EMP_PAYSLIPS, ViewState.EMP_SALARY_BREAKDOWN, ViewState.EMP_TAX_DOCUMENTS].includes(currentView))) && (
+            (userRole === 'EMPLOYEE' && ![ViewState.EMP_OVERVIEW, ViewState.EMP_PAYROLL_CORNER, ViewState.EMP_TAX_PLANNING, ViewState.EMP_REIMBURSEMENTS, ViewState.EMP_PAYSLIPS, ViewState.EMP_SALARY_BREAKDOWN, ViewState.EMP_TAX_DOCUMENTS, ViewState.EMP_LOANS_ADVANCES].includes(currentView))) && (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <div className="p-6 rounded-full bg-slate-100 mb-4">
                   <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">

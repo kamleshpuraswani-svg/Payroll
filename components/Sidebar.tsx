@@ -193,6 +193,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
           id: 'emp-tax-documents',
           label: 'Tax Documents',
           viewState: ViewState.EMP_TAX_DOCUMENTS
+        },
+        {
+          id: 'emp-loans-advances',
+          label: 'Loans & Advances',
+          viewState: ViewState.EMP_LOANS_ADVANCES
         }
       ]
     }
