@@ -441,7 +441,7 @@ const ProfessionalTaxModal: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
                             <ShieldCheck size={20} className="text-amber-600" />
-                            Professional Tax Detail (Karnataka)
+                            Professional Tax Detail (Gujarat)
                         </h3>
                         <p className="text-xs text-slate-500">Statutory breakdown for November 2025</p>
                     </div>
@@ -454,7 +454,7 @@ const ProfessionalTaxModal: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                             <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Total PT Liability</span>
                             <span className="text-xl font-bold text-amber-600">₹ 82,400</span>
                         </div>
-                        <p className="text-[10px] text-amber-700">Calculated based on Karnataka State PT Slabs</p>
+                        <p className="text-[10px] text-amber-700">Calculated based on Gujarat State PT Slabs</p>
                     </div>
 
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Employee Distribution</h4>
@@ -491,7 +491,7 @@ const ProfessionalTaxModal: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                         <div className="flex-1">
                             <h5 className="text-xs font-bold text-slate-700 mb-1">Filing Information</h5>
                             <p className="text-[11px] text-slate-500 leading-relaxed">
-                                Professional Tax is a state-level tax. In Karnataka, the deduction is ₹200/month for employees earning above ₹15,000. For the month of March, the deduction is ₹300.
+                                Professional Tax is a state-level tax. In Gujarat, the deduction is ₹200/month for employees earning above ₹15,000. For the month of March, the deduction is ₹300.
                             </p>
                         </div>
                     </div>
@@ -500,7 +500,7 @@ const ProfessionalTaxModal: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                 {/* Footer */}
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                     <button onClick={onClose} className="px-6 py-2 bg-slate-800 text-white font-bold text-sm rounded-lg hover:bg-slate-900 shadow-sm transition-all">
-                        Got it
+                        Close
                     </button>
                 </div>
             </div>
@@ -1220,7 +1220,7 @@ const HRDashboard: React.FC = () => {
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 p-1 bg-amber-100 rounded text-amber-600"><AlertCircle size={14} /></div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-800">Professional Tax (Karnataka)</p>
+                                    <p className="text-sm font-medium text-slate-800">Professional Tax (Gujarat)</p>
                                     <p className="text-xs text-amber-600 font-medium">Due in 5 days (20 Nov)</p>
                                 </div>
                                 <button
