@@ -388,7 +388,7 @@ const RejectLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onReje
 };
 
 // New Modal Component
-const CreateLoanModal: React.FC<{ onClose: () => void; onSave: (data: any) => void }> = ({ onClose, onSave }) => {
+const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSave: (data: any) => void }> = ({ userRole, onClose, onSave }) => {
     // Form State
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [loanType, setLoanType] = useState<'Salary Advance' | 'Loan'>('Salary Advance');
@@ -475,22 +475,24 @@ const CreateLoanModal: React.FC<{ onClose: () => void; onSave: (data: any) => vo
 
                 <div className="p-8 space-y-8 overflow-y-auto">
                     {/* Select Employee */}
-                    <div>
-                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">SELECT EMPLOYEE <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                            <select
-                                value={selectedEmployeeId}
-                                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
-                            >
-                                <option value="">-- Choose Employee --</option>
-                                {MOCK_EMPLOYEES.map(emp => (
-                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    {userRole !== 'EMPLOYEE' && (
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">SELECT EMPLOYEE <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <select
+                                    value={selectedEmployeeId}
+                                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="">-- Choose Employee --</option>
+                                    {MOCK_EMPLOYEES.map(emp => (
+                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="space-y-6">
                         {/* Loan Type */}
@@ -862,9 +864,11 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
                                             Select Filter Field
                                         </div>
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <User size={16} className="text-slate-400" /> Employee Name
-                                        </button>
+                                        {userRole !== 'EMPLOYEE' && (
+                                            <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
+                                                <User size={16} className="text-slate-400" /> Employee Name
+                                            </button>
+                                        )}
                                         <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
                                             <CreditCard size={16} className="text-slate-400" /> Loan Type
                                         </button>
@@ -1028,6 +1032,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
 
             {isNewRequestOpen && (
                 <CreateLoanModal
+                    userRole={userRole}
                     onClose={() => setIsNewRequestOpen(false)}
                     onSave={handleCreateRequest}
                 />
