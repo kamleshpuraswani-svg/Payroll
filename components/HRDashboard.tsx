@@ -563,7 +563,8 @@ const HRDashboard: React.FC = () => {
                 { label: 'Current Cycle', value: 'January, 2026' },
                 { label: 'Pay Frequency', value: 'Monthly' },
                 { label: 'Pay Day', value: 'Last Working Day' },
-            ]
+            ],
+            detailsAtTop: true
         },
     ];
 
