@@ -565,18 +565,20 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
 
                         {loanType === 'Loan' && (
                             <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI START DATE</label>
-                                    <div className="relative">
-                                        <input
-                                            type="date"
-                                            value={emiStartDate}
-                                            onChange={(e) => setEmiStartDate(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
-                                        />
+                                {userRole !== 'EMPLOYEE' && (
+                                    <div>
+                                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI START DATE</label>
+                                        <div className="relative">
+                                            <input
+                                                type="date"
+                                                value={emiStartDate}
+                                                onChange={(e) => setEmiStartDate(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3">
+                                )}
+                                <div className={`bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3 ${userRole === 'EMPLOYEE' ? 'col-span-2' : ''}`}>
                                     <div className="flex justify-between items-center">
                                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">MONTHLY EMI</span>
                                         <span className="text-lg font-black text-emerald-600">₹{stats.emi.toLocaleString()}</span>
@@ -601,7 +603,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                             </div>
                         )}
 
-                        {loanType === 'Salary Advance' && (
+                        {loanType === 'Salary Advance' && userRole !== 'EMPLOYEE' && (
                             <div>
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REPAYMENT MONTH</label>
                                 <div className="relative">
