@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 interface SelectedEmployee {
     id: string;
@@ -7,12 +8,12 @@ interface SelectedEmployee {
     eid: string;
 }
 
-const ALL_EMPLOYEES: SelectedEmployee[] = [
-    { id: '1', name: 'Kavita Sharma', eid: 'E001' },
-    { id: '2', name: 'Rajesh Kumar', eid: 'E002' },
-    { id: '3', name: 'Priya Sharma', eid: 'E003' },
-    { id: '4', name: 'Arjun Mehta', eid: 'E004' },
-];
+// MOCK_EMPLOYEES is kept as fallback or removed if using Supabase
+interface EmployeeData {
+    id: string;
+    name: string;
+    eid: string;
+}
 
 const DEPARTMENTS = [
     "Digital Technology",
@@ -28,14 +29,104 @@ const OperationalConfig: React.FC = () => {
     const [isHierarchyExpanded, setIsHierarchyExpanded] = useState(true);
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
     const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
+    const [allEmployees, setAllEmployees] = useState<EmployeeData[]>([]);
+
+    // Supabase state
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
     const [eligibleDepartments, setEligibleDepartments] = useState<string[]>([]);
     const [employeeStatus, setEmployeeStatus] = useState<string[]>(['Probation', 'Confirmed']);
+
+    useEffect(() => {
+        fetchConfig();
+    }, []);
+
+    const fetchConfig = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            // Fetch configuration
+            const { data, error: fetchError } = await supabase
+                .from('operational_config')
+                .select('*');
+
+            if (fetchError) throw fetchError;
+
+            // Fetch employees for selection
+            const { data: empData, error: empError } = await supabase
+                .from('employees')
+                .select('id, name, eid')
+                .eq('status', 'Active');
+
+            if (empError) console.error('Error fetching employees:', empError);
+            if (empData) setAllEmployees(empData);
+
+            if (data) {
+                const hierarchy = data.find(c => c.config_key === 'payroll_approval_hierarchy');
+                const eligibility = data.find(c => c.config_key === 'loans_advances_eligibility');
+
+                if (hierarchy && hierarchy.config_value) {
+                    setSelectedEmployees(hierarchy.config_value.approvers || []);
+                }
+
+                if (eligibility && eligibility.config_value) {
+                    setEligibleDepartments(eligibility.config_value.departments || []);
+                    setEmployeeStatus(eligibility.config_value.statuses || ['Probation', 'Confirmed']);
+                }
+            }
+        } catch (err: any) {
+            console.error('Error fetching config:', err);
+            setError('Failed to load configuration from Supabase.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSaveConfig = async () => {
+        setIsSaving(true);
+        setError(null);
+        try {
+            // Save hierarchy
+            const { error: hierarchyError } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'payroll_approval_hierarchy',
+                    config_value: { approvers: selectedEmployees }
+                }, { onConflict: 'config_key' });
+
+            if (hierarchyError) throw hierarchyError;
+
+            // Save eligibility
+            const { error: eligibilityError } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'loans_advances_eligibility',
+                    config_value: {
+                        departments: eligibleDepartments,
+                        statuses: employeeStatus
+                    }
+                }, { onConflict: 'config_key' });
+
+            if (eligibilityError) throw eligibilityError;
+
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+        } catch (err: any) {
+            console.error('Error saving config:', err);
+            setError('Failed to save configuration to Supabase.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleSelectEmployee = (id: string) => {
         if (!id) return;
         if (selectedEmployees.find(emp => emp.id === id)) return;
 
-        const empToAdd = ALL_EMPLOYEES.find(emp => emp.id === id);
+        const empToAdd = allEmployees.find(emp => emp.id === id);
         if (empToAdd) {
             setSelectedEmployees([...selectedEmployees, empToAdd]);
         }
@@ -82,7 +173,40 @@ const OperationalConfig: React.FC = () => {
                     <h1 className="text-2xl font-bold text-slate-800">Operational Config</h1>
                     <p className="text-slate-500 text-sm mt-1">Manage operational settings and notification preferences.</p>
                 </div>
+                <div className="flex items-center gap-4">
+                    {saveSuccess && (
+                        <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 animate-in fade-in zoom-in duration-300">
+                            <CheckCircle2 size={16} />
+                            <span className="text-xs font-bold">Changes Synced with Supabase</span>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
+                            <AlertCircle size={16} />
+                            <span className="text-xs font-bold">{error}</span>
+                        </div>
+                    )}
+                    <button
+                        onClick={handleSaveConfig}
+                        disabled={isSaving || isLoading}
+                        className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-sky-100 active:scale-95"
+                    >
+                        {isSaving ? (
+                            <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                            <Save size={18} />
+                        )}
+                        {isSaving ? 'Syncing...' : 'Save All Changes'}
+                    </button>
+                </div>
             </div>
+
+            {isLoading && (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm animate-pulse">
+                    <Loader2 size={32} className="text-sky-500 animate-spin mb-4" />
+                    <p className="text-slate-400 font-medium">Fetching configuration from Supabase...</p>
+                </div>
+            )}
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div
@@ -113,7 +237,7 @@ const OperationalConfig: React.FC = () => {
                                         className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="" disabled>Search employee...</option>
-                                        {ALL_EMPLOYEES.filter(emp => !selectedEmployees.find(s => s.id === emp.id)).map(emp => (
+                                        {allEmployees.filter(emp => !selectedEmployees.find(s => s.id === emp.id)).map(emp => (
                                             <option key={emp.id} value={emp.id}>
                                                 {emp.name} ({emp.eid})
                                             </option>

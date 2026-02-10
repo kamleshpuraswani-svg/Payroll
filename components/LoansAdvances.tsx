@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { supabase } from '../services/supabaseClient';
 import {
     Search,
     Filter,
@@ -401,20 +402,40 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
 
     // Handle role-based defaults for Employee
     useEffect(() => {
-        if (userRole === 'EMPLOYEE') {
-            if (loanType === 'Loan') {
-                setInterestRate('10.5');
-                setMaxTenure('12');
-            } else {
-                setInterestRate('0');
-                setMaxTenure('3');
+        const fetchDefaults = async () => {
+            if (userRole === 'EMPLOYEE') {
+                if (loanType === 'Loan') {
+                    setInterestRate('10.5');
+                    setMaxTenure('12');
+                } else {
+                    setInterestRate('0');
+                    setMaxTenure('3');
+                }
+
+                // Fetch live config from Supabase
+                try {
+                    const { data } = await supabase
+                        .from('operational_config')
+                        .select('*')
+                        .eq('config_key', 'payroll_approval_hierarchy')
+                        .single();
+
+                    if (data && data.config_value && data.config_value.approvers) {
+                        setApprovers(data.config_value.approvers);
+                    } else {
+                        // Fallback
+                        setApprovers([
+                            { id: 'TF001', name: 'Kamlesh Puraswani' },
+                            { id: 'ADMIN', name: 'Admin' }
+                        ]);
+                    }
+                } catch (err) {
+                    console.error('Error fetching loan defaults:', err);
+                }
             }
-            // Pre-populate approvers for Employee
-            setApprovers([
-                { id: 'TF001', name: 'Kamlesh Puraswani' },
-                { id: 'ADMIN', name: 'Admin' }
-            ]);
-        }
+        };
+
+        fetchDefaults();
     }, [loanType, userRole]);
 
     // Approval Flow State
