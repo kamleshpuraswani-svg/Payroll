@@ -536,7 +536,8 @@ const HRDashboard: React.FC = () => {
             extraDetails: [
                 { label: 'Active', value: '440', color: 'text-emerald-600' },
                 { label: 'On Leave', value: '12', color: 'text-amber-600' },
-            ]
+            ],
+            detailsAtTop: true
         },
         {
             title: 'Pending Requests',
@@ -550,7 +551,8 @@ const HRDashboard: React.FC = () => {
                 { label: 'Investment Proofs', value: '8' },
                 { label: 'Reimbursement Claims', value: '4' },
                 { label: 'Salary Overrides', value: '3' },
-            ]
+            ],
+            detailsAtTop: true
         },
         {
             title: 'Payroll Status',
