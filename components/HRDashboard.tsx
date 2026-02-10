@@ -27,6 +27,7 @@ import {
     Check,
     Send,
     Bell,
+    Info,
     ChevronDown,
     Filter,
     BarChart2
@@ -337,7 +338,6 @@ const SendPayslipsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </div>
     );
 };
-
 const PendingTaxProofsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [remindedList, setRemindedList] = useState<string[]>([]);
     const [remindingAll, setRemindingAll] = useState(false);
@@ -432,6 +432,82 @@ const PendingTaxProofsModal: React.FC<{ onClose: () => void }> = ({ onClose }) =
     );
 };
 
+const ProfessionalTaxModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <ShieldCheck size={20} className="text-amber-600" />
+                            Professional Tax Detail (Karnataka)
+                        </h3>
+                        <p className="text-xs text-slate-500">Statutory breakdown for November 2025</p>
+                    </div>
+                    <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
+                </div>
+
+                <div className="p-6">
+                    <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Total PT Liability</span>
+                            <span className="text-xl font-bold text-amber-600">₹ 82,400</span>
+                        </div>
+                        <p className="text-[10px] text-amber-700">Calculated based on Karnataka State PT Slabs</p>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Employee Distribution</h4>
+                    <div className="space-y-3">
+                        {/* Slab 1 */}
+                        <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 hover:border-slate-200 transition-all">
+                            <div>
+                                <h5 className="text-sm font-bold text-slate-700">Salary Below ₹15,000</h5>
+                                <p className="text-xs text-slate-400 mt-0.5">PT Rate: ₹0 (Nil)</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-black text-slate-400">40 Employees</p>
+                                <p className="text-[10px] font-bold text-slate-300">₹0 Total</p>
+                            </div>
+                        </div>
+
+                        {/* Slab 2 */}
+                        <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 hover:border-slate-200 transition-all">
+                            <div>
+                                <h5 className="text-sm font-bold text-slate-700">Salary Above ₹15,000</h5>
+                                <p className="text-xs text-slate-400 mt-0.5">PT Rate: ₹200 (Monthly)</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-black text-slate-700">412 Employees</p>
+                                <p className="text-[10px] font-bold text-amber-600">₹82,400 Total</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-4">
+                        <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+                            <Info size={18} className="text-slate-400" />
+                        </div>
+                        <div className="flex-1">
+                            <h5 className="text-xs font-bold text-slate-700 mb-1">Filing Information</h5>
+                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                                Professional Tax is a state-level tax. In Karnataka, the deduction is ₹200/month for employees earning above ₹15,000. For the month of March, the deduction is ₹300.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-6 py-2 bg-slate-800 text-white font-bold text-sm rounded-lg hover:bg-slate-900 shadow-sm transition-all">
+                        Got it
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const HRDashboard: React.FC = () => {
     const [isApprovalsPanelOpen, setIsApprovalsPanelOpen] = useState(false);
     const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
@@ -452,6 +528,7 @@ const HRDashboard: React.FC = () => {
 
     // Full Report Modal State
     const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
+    const [isPTModalOpen, setIsPTModalOpen] = useState(false);
 
     // Mock Company for RunPayrollModal
     const currentCompany: Company = {
@@ -1146,7 +1223,12 @@ const HRDashboard: React.FC = () => {
                                     <p className="text-sm font-medium text-slate-800">Professional Tax (Karnataka)</p>
                                     <p className="text-xs text-amber-600 font-medium">Due in 5 days (20 Nov)</p>
                                 </div>
-                                <button className="px-3 py-1 text-xs border border-slate-200 rounded hover:bg-slate-50">View</button>
+                                <button
+                                    onClick={() => setIsPTModalOpen(true)}
+                                    className="px-3 py-1 text-xs border border-slate-200 rounded hover:bg-slate-50 transition-colors"
+                                >
+                                    View
+                                </button>
                             </div>
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 p-1 bg-emerald-100 rounded text-emerald-600"><CheckCircle size={14} /></div>
@@ -1222,7 +1304,12 @@ const HRDashboard: React.FC = () => {
                 <PendingTaxProofsModal onClose={() => setIsTaxProofsModalOpen(false)} />
             )}
 
-            {/* 7. TDS Full Report Modal */}
+            {/* 7. Professional Tax Modal */}
+            {isPTModalOpen && (
+                <ProfessionalTaxModal onClose={() => setIsPTModalOpen(false)} />
+            )}
+
+            {/* 8. TDS Full Report Modal */}
             {isTdsReportOpen && (
                 <TdsFullReportModal onClose={() => setIsTdsReportOpen(false)} data={tdsGraphData} />
             )}
