@@ -9,7 +9,7 @@ const PFSettings: React.FC = () => {
     const [epfJoiningDate, setEpfJoiningDate] = useState('2023-01-12');
     const [showBelowLimitModal, setShowBelowLimitModal] = useState(false);
     const [showSplitupModal, setShowSplitupModal] = useState(false);
-    
+
     // Contribution Rates
     const [empRate, setEmpRate] = useState('12% of Actual PF Wage');
     const [emprRate, setEmprRate] = useState('12% of Actual PF Wage');
@@ -21,7 +21,7 @@ const PFSettings: React.FC = () => {
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
     const [overrideRate, setOverrideRate] = useState(false);
-    
+
     // LOP Configuration
     const [prorateRestricted, setProrateRestricted] = useState(false);
     const [considerComponents, setConsiderComponents] = useState(true);
@@ -67,7 +67,7 @@ const PFSettings: React.FC = () => {
         setIsEditing(false);
         // Persist logic would be here
     };
-    
+
     return (
         <div className="h-full overflow-y-auto">
             <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300 pb-20">
@@ -78,15 +78,15 @@ const PFSettings: React.FC = () => {
                     </div>
                     <div className="flex gap-3">
                         {isEditing && (
-                            <button 
+                            <button
                                 onClick={handleCancel}
                                 className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors"
                             >
                                 Cancel
                             </button>
                         )}
-                        <button 
-                            onClick={isEditing ? handleSave : handleEdit} 
+                        <button
+                            onClick={isEditing ? handleSave : handleEdit}
                             className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                         >
                             {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
@@ -120,43 +120,43 @@ const PFSettings: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">EPF Number/Establishment ID</label>
-                                        <input 
-                                            type="text" 
-                                            value={pfNumber} 
-                                            onChange={(e) => setPfNumber(e.target.value)} 
-                                            disabled={!isEditing} 
+                                        <input
+                                            type="text"
+                                            value={pfNumber}
+                                            onChange={(e) => setPfNumber(e.target.value)}
+                                            disabled={!isEditing}
                                             placeholder='AA/AAA/1234567/000'
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-500 placeholder:text-slate-300" 
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-500 placeholder:text-slate-300"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name</label>
-                                        <input 
-                                            type="text" 
-                                            value={establishmentName} 
-                                            onChange={(e) => setEstablishmentName(e.target.value)} 
-                                            disabled={!isEditing} 
+                                        <input
+                                            type="text"
+                                            value={establishmentName}
+                                            onChange={(e) => setEstablishmentName(e.target.value)}
+                                            disabled={!isEditing}
                                             placeholder='Enter Establishment Name'
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-500" 
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-500"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Joining Date under EPF</label>
-                                        <input 
-                                            type="date" 
-                                            value={epfJoiningDate} 
-                                            onChange={(e) => setEpfJoiningDate(e.target.value)} 
-                                            disabled={!isEditing} 
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-500" 
+                                        <input
+                                            type="date"
+                                            value={epfJoiningDate}
+                                            onChange={(e) => setEpfJoiningDate(e.target.value)}
+                                            disabled={!isEditing}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-500"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Deduction Cycle <Info size={14} className="inline text-slate-400 ml-1" /></label>
-                                        <input 
-                                            type="text" 
-                                            value="Monthly" 
-                                            disabled 
-                                            className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" 
+                                        <input
+                                            type="text"
+                                            value="Monthly"
+                                            disabled
+                                            className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
@@ -165,17 +165,17 @@ const PFSettings: React.FC = () => {
                                 <div>
                                     <div className="flex items-center mb-2">
                                         <label className="block text-sm font-bold text-slate-700">Employee Contribution Rate</label>
-                                        <button 
+                                        <button
                                             onClick={() => setShowBelowLimitModal(true)}
                                             className="ml-3 text-xs font-bold text-sky-600 hover:underline flex items-center gap-1"
                                         >
                                             <Calculator size={12} /> PF wages below 15000?
                                         </button>
                                     </div>
-                                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                                        <div className="relative flex-1 w-full">
-                                            <select 
-                                                disabled 
+                                    <div className="space-y-4">
+                                        <div className="relative w-full md:min-w-[240px] md:w-auto">
+                                            <select
+                                                disabled
                                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 appearance-none bg-slate-50 focus:outline-none cursor-not-allowed"
                                                 value="12% of Actual PF Wage"
                                             >
@@ -183,21 +183,21 @@ const PFSettings: React.FC = () => {
                                             </select>
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
-                                        <div className="flex items-center gap-3 w-full md:w-auto">
-                                            <span className="text-sm text-slate-600 whitespace-nowrap flex items-center gap-1">
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <span className="text-sm text-slate-600 flex items-center gap-1">
                                                 Limit employee's PF contribution amount maximum of
                                                 <div className="group relative">
                                                     <Info size={14} className="text-slate-400 cursor-help" />
                                                     <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal">
-                                                        If no capping set, then actual contribution will be deducted as Employee Contribution.
+                                                        If no capping set, then actual contribution will be deducted as Employee Contribution. If Zero, then actual deduction will be considered.
                                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
                                                     </div>
                                                 </div>
                                             </span>
                                             <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden w-32">
                                                 <div className="px-3 py-2 bg-slate-50 text-xs font-bold text-slate-500 border-r border-slate-200">INR</div>
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     value={empLimit}
                                                     onChange={(e) => setEmpLimit(e.target.value)}
                                                     disabled={!isEditing}
@@ -212,18 +212,32 @@ const PFSettings: React.FC = () => {
                                 {/* Employer Contribution */}
                                 <div>
                                     <div className="flex justify-between mb-2">
-                                        <label className="block text-sm font-bold text-slate-700">Employer Contribution Rate</label>
-                                        <button 
+                                        <div className="flex items-center gap-2">
+                                            <label className="block text-sm font-bold text-slate-700">Employer Contribution Rate</label>
+                                            <div className="group relative">
+                                                <Info size={14} className="text-slate-400 cursor-help" />
+                                                <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-left leading-relaxed font-normal normal-case whitespace-normal">
+                                                    <div className="mb-2">
+                                                        <strong>12% of Actual PF Wage</strong> - Calculates the contribution based on the employee's full Basic + DA, no matter how high it is.
+                                                    </div>
+                                                    <div>
+                                                        <strong>12% of Restricted PF Wage</strong> - Calculates the contribution based on the statutory wage ceiling. Recommended for most of the private companies.
+                                                    </div>
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
                                             onClick={() => setShowSplitupModal(true)}
                                             className="text-xs font-bold text-sky-600 hover:underline"
                                         >
                                             View Splitup
                                         </button>
                                     </div>
-                                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                                        <div className="relative flex-1 w-full">
-                                            <select 
-                                                disabled={!isEditing} 
+                                    <div className="space-y-4">
+                                        <div className="relative w-full md:min-w-[240px] md:w-auto">
+                                            <select
+                                                disabled={!isEditing}
                                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 appearance-none bg-white disabled:bg-slate-50 focus:outline-none focus:border-sky-500"
                                                 value={emprRate}
                                                 onChange={(e) => setEmprRate(e.target.value)}
@@ -233,12 +247,12 @@ const PFSettings: React.FC = () => {
                                             </select>
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
-                                        <div className="flex items-center gap-3 w-full md:w-auto">
-                                            <span className="text-sm text-slate-600 whitespace-nowrap">Limit employer's PF contribution amount maximum of</span>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <span className="text-sm text-slate-600">Limit employer's PF contribution amount maximum of</span>
                                             <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden w-32">
                                                 <div className="px-3 py-2 bg-slate-50 text-xs font-bold text-slate-500 border-r border-slate-200">INR</div>
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     value={emprLimit}
                                                     onChange={(e) => setEmprLimit(e.target.value)}
                                                     disabled={!isEditing}
@@ -312,7 +326,7 @@ const PFSettings: React.FC = () => {
                                         <AlertCircle size={16} className="text-sky-600" />
                                         PF Configuration when LOP Applied
                                     </div>
-                                    
+
                                     <label className="flex items-start gap-3 cursor-pointer group">
                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${prorateRestricted ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                             {prorateRestricted && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
@@ -334,7 +348,7 @@ const PFSettings: React.FC = () => {
                                     </label>
 
                                     <label className="flex items-start gap-3 cursor-pointer group">
-                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${considerComponents ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${considerComponents ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                             {considerComponents && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={considerComponents} onChange={() => isEditing && setConsiderComponents(!considerComponents)} disabled={!isEditing} />
@@ -405,22 +419,6 @@ const PFSettings: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Nudge Banner */}
-                            <div className="bg-amber-50 rounded-xl p-6 border border-amber-100/50 flex flex-col gap-4">
-                                <div className="flex gap-3">
-                                    <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg shrink-0">
-                                        <Lightbulb size={20} />
-                                    </div>
-                                    <p className="text-sm font-medium text-amber-900 leading-relaxed">
-                                        Do you want to preview EPF calculation for multiple cases, based on the preferences you have configured?
-                                    </p>
-                                </div>
-                                <button className="flex items-center gap-2 text-blue-600 text-sm font-bold hover:text-blue-700 transition-colors w-fit pl-11">
-                                    <Eye size={18} />
-                                    Preview EPF Calculation
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -435,14 +433,14 @@ const PFSettings: React.FC = () => {
                                 <Calculator size={20} className="text-sky-600" />
                                 <h3 className="font-bold text-lg">PF Calculation (Below ₹15,000)</h3>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowBelowLimitModal(false)}
                                 className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         <div className="p-8 space-y-6 flex-1 overflow-y-auto">
                             {/* Component Selection Section */}
                             <div className="space-y-4">
@@ -453,12 +451,12 @@ const PFSettings: React.FC = () => {
                                             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${belowLimitComponents.includes(comp) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
                                                 {belowLimitComponents.includes(comp) && <Check size={10} className="text-white stroke-[3]" />}
                                             </div>
-                                            <input 
-                                                type="checkbox" 
-                                                className="hidden" 
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
                                                 checked={belowLimitComponents.includes(comp)}
                                                 onChange={() => {
-                                                    setBelowLimitComponents(prev => 
+                                                    setBelowLimitComponents(prev =>
                                                         prev.includes(comp) ? prev.filter(c => c !== comp) : [...prev, comp]
                                                     );
                                                 }}
@@ -527,7 +525,7 @@ const PFSettings: React.FC = () => {
                         </div>
 
                         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button 
+                            <button
                                 onClick={() => setShowBelowLimitModal(false)}
                                 className="px-6 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-lg shadow-slate-100 text-sm"
                             >
@@ -544,14 +542,14 @@ const PFSettings: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col animate-in zoom-in-95 duration-300 border border-slate-200">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">CONTRIBUTION RATE</h3>
-                            <button 
+                            <button
                                 onClick={() => setShowSplitupModal(false)}
                                 className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         <div className="p-0 rounded-b-2xl">
                             <table className="w-full text-left">
                                 <thead className="bg-white border-b border-slate-100">
