@@ -2,22 +2,22 @@ import React, { useState } from 'react';
 import { Edit2, Save, Activity, Shield, Briefcase, ChevronDown, Info, AlertCircle, Check, Calendar, X, Award, Trash2, Calculator } from 'lucide-react';
 
 const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
 
 const ESI_COMPONENTS = [
-  "Basic Salary",
-  "Dearness Allowance (DA)",
-  "HRA",
-  "Conveyance Allowance"
+    "Basic Salary",
+    "Dearness Allowance (DA)",
+    "HRA",
+    "Conveyance Allowance"
 ];
 
 const GRATUITY_COMPONENTS = [
-  "Basic Salary",
-  "Dearness Allowance (DA)",
-  "House Rent Allowance (HRA)",
-  "Conveyance Allowance",
-  "Special Allowance"
+    "Basic Salary",
+    "Dearness Allowance (DA)",
+    "House Rent Allowance (HRA)",
+    "Conveyance Allowance",
+    "Special Allowance"
 ];
 
 const DEPARTMENTS = [
@@ -36,7 +36,7 @@ const DEPARTMENTS = [
 const StatutorySettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showContributionModal, setShowContributionModal] = useState(false);
-    
+
     // ESI State
     const [enableEsi, setEnableEsi] = useState(true);
     const [esiNumber, setEsiNumber] = useState('00-00-000000-000-0000');
@@ -60,17 +60,17 @@ const StatutorySettings: React.FC = () => {
     const [otherExceptionDetails, setOtherExceptionDetails] = useState('');
     const [deathDisablementServiceType, setDeathDisablementServiceType] = useState<'none' | 'minimum'>('none');
     const [deathDisablementMinYears, setDeathDisablementMinYears] = useState('0');
-    
+
     const [yearsCalculationMode, setYearsCalculationMode] = useState<'completed' | 'nearest' | 'sixMonths'>('completed');
     const [includedServicePeriods, setIncludedServicePeriods] = useState<string[]>([
-        'Actual working days', 
-        'Paid leave periods', 
-        'Maternity/Paternity leave', 
-        'Notice period served', 
+        'Actual working days',
+        'Paid leave periods',
+        'Maternity/Paternity leave',
+        'Notice period served',
         'Probation period'
     ]);
     const [lwpLimitDays, setLwpLimitDays] = useState('30');
-    
+
     const [maxGratuityType, setMaxGratuityType] = useState<'statutory' | 'none' | 'custom'>('statutory');
     const [customMaxGratuityAmount, setCustomMaxGratuityAmount] = useState('20,00,000');
 
@@ -103,9 +103,9 @@ const StatutorySettings: React.FC = () => {
 
     const toggleEsiComponent = (component: string) => {
         if (!isEditing) return;
-        setEsiMappedComponents(prev => 
-            prev.includes(component) 
-                ? prev.filter(c => c !== component) 
+        setEsiMappedComponents(prev =>
+            prev.includes(component)
+                ? prev.filter(c => c !== component)
                 : [...prev, component]
         );
     };
@@ -115,7 +115,7 @@ const StatutorySettings: React.FC = () => {
             enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents],
             enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria: [...gratuityCriteria],
             selectedGratuityDepts: [...selectedGratuityDepts], gratuityCalculationComponents: [...gratuityCalculationComponents],
-            minServicePeriod, customServiceYears, 
+            minServicePeriod, customServiceYears,
             gratuityExceptions: [...gratuityExceptions], otherExceptionDetails,
             deathDisablementServiceType, deathDisablementMinYears,
             yearsCalculationMode, includedServicePeriods: [...includedServicePeriods], lwpLimitDays,
@@ -138,7 +138,7 @@ const StatutorySettings: React.FC = () => {
             setEsiEmprRate(backupState.esiEmprRate);
             setIncludeEmprContriEsi(backupState.includeEmprContriEsi);
             setEsiMappedComponents(backupState.esiMappedComponents);
-            
+
             setEnableGratuity(backupState.enableGratuity);
             setIncludeInCtcGratuity(backupState.includeInCtcGratuity);
             setGratuityMode(backupState.gratuityMode);
@@ -151,11 +151,11 @@ const StatutorySettings: React.FC = () => {
             setOtherExceptionDetails(backupState.otherExceptionDetails);
             setDeathDisablementServiceType(backupState.deathDisablementServiceType);
             setDeathDisablementMinYears(backupState.deathDisablementMinYears);
-            
+
             setYearsCalculationMode(backupState.yearsCalculationMode);
             setIncludedServicePeriods(backupState.includedServicePeriods);
             setLwpLimitDays(backupState.lwpLimitDays);
-            
+
             setMaxGratuityType(backupState.maxGratuityType);
             setCustomMaxGratuityAmount(backupState.customMaxGratuityAmount);
 
@@ -182,37 +182,37 @@ const StatutorySettings: React.FC = () => {
 
     const toggleGratuityCriteria = (item: string) => {
         if (!isEditing) return;
-        setGratuityCriteria(prev => 
+        setGratuityCriteria(prev =>
             prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
         );
     };
 
     const toggleGratuityDept = (dept: string) => {
         if (!isEditing) return;
-        setSelectedGratuityDepts(prev => 
+        setSelectedGratuityDepts(prev =>
             prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
         );
     };
 
     const toggleGratuityComponent = (component: string) => {
         if (!isEditing) return;
-        setGratuityCalculationComponents(prev => 
-            prev.includes(component) 
-                ? prev.filter(c => c !== component) 
+        setGratuityCalculationComponents(prev =>
+            prev.includes(component)
+                ? prev.filter(c => c !== component)
                 : [...prev, component]
         );
     };
 
     const toggleGratuityException = (exc: string) => {
         if (!isEditing) return;
-        setGratuityExceptions(prev => 
+        setGratuityExceptions(prev =>
             prev.includes(exc) ? prev.filter(e => e !== exc) : [...prev, exc]
         );
     };
 
     const toggleIncludedServicePeriod = (period: string) => {
         if (!isEditing) return;
-        setIncludedServicePeriods(prev => 
+        setIncludedServicePeriods(prev =>
             prev.includes(period) ? prev.filter(p => p !== period) : [...prev, period]
         );
     };
@@ -229,15 +229,15 @@ const StatutorySettings: React.FC = () => {
                     </div>
                     <div className="flex gap-3">
                         {isEditing && (
-                            <button 
-                                onClick={handleCancel} 
+                            <button
+                                onClick={handleCancel}
                                 className="px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                             >
                                 Cancel
                             </button>
                         )}
-                        <button 
-                            onClick={() => isEditing ? setIsEditing(false) : handleEdit()} 
+                        <button
+                            onClick={() => isEditing ? setIsEditing(false) : handleEdit()}
                             className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                         >
                             {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
@@ -269,9 +269,9 @@ const StatutorySettings: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">ESIC Employer Code/Insurance Number</label>
-                                        <input 
-                                            type="text" 
-                                            value={esiNumber} 
+                                        <input
+                                            type="text"
+                                            value={esiNumber}
                                             onChange={(e) => setEsiNumber(e.target.value)}
                                             disabled={!isEditing}
                                             className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed font-mono"
@@ -279,9 +279,9 @@ const StatutorySettings: React.FC = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name</label>
-                                        <input 
-                                            type="text" 
-                                            value={esiEstablishmentName} 
+                                        <input
+                                            type="text"
+                                            value={esiEstablishmentName}
                                             onChange={(e) => setEsiEstablishmentName(e.target.value)}
                                             disabled={!isEditing}
                                             placeholder="Enter Establishment Name"
@@ -292,9 +292,9 @@ const StatutorySettings: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Date of Coverage / Applicability Date</label>
-                                        <input 
-                                            type="date" 
-                                            value={esiCoverageDate} 
+                                        <input
+                                            type="date"
+                                            value={esiCoverageDate}
                                             onChange={(e) => setEsiCoverageDate(e.target.value)}
                                             disabled={!isEditing}
                                             className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
@@ -318,8 +318,8 @@ const StatutorySettings: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Employees' Contribution</label>
                                         <div className="flex items-center gap-3">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 value={esiEmpRate}
                                                 onChange={(e) => setEsiEmpRate(e.target.value)}
                                                 disabled={!isEditing}
@@ -330,7 +330,7 @@ const StatutorySettings: React.FC = () => {
                                         <p className="mt-2 text-xs text-slate-500 leading-relaxed italic">
                                             If daily average wage ≤ ₹176 (approx. monthly ₹5,280–₹5,500 depending on days), employee is exempt from contributing 0.75%, but employer still pays 3.25%.
                                         </p>
-                                        <button 
+                                        <button
                                             onClick={() => setShowContributionModal(true)}
                                             className="mt-4 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-100 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-sky-100 transition-all flex items-center gap-2 shadow-sm"
                                         >
@@ -341,8 +341,8 @@ const StatutorySettings: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Employer's Contribution</label>
                                         <div className="flex items-center gap-3">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 value={esiEmprRate}
                                                 onChange={(e) => setEsiEmprRate(e.target.value)}
                                                 disabled={!isEditing}
@@ -372,12 +372,12 @@ const StatutorySettings: React.FC = () => {
                                                     <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiMappedComponents.includes(comp) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                         {esiMappedComponents.includes(comp) && <Check size={14} className="text-white stroke-[3]" />}
                                                     </div>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="hidden" 
-                                                        checked={esiMappedComponents.includes(comp)} 
-                                                        onChange={() => toggleEsiComponent(comp)} 
-                                                        disabled={!isEditing} 
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={esiMappedComponents.includes(comp)}
+                                                        onChange={() => toggleEsiComponent(comp)}
+                                                        disabled={!isEditing}
                                                     />
                                                     <span className={`text-sm font-semibold transition-colors ${esiMappedComponents.includes(comp) ? 'text-sky-900' : 'text-slate-600'}`}>{comp}</span>
                                                 </label>
@@ -448,18 +448,18 @@ const StatutorySettings: React.FC = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex flex-col justify-center">
                                         <label className="flex items-center gap-3 cursor-pointer group">
                                             <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeInCtcGratuity ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                 {includeInCtcGratuity && <Check size={14} className="text-white stroke-[3]" />}
                                             </div>
-                                            <input 
-                                                type="checkbox" 
-                                                className="hidden" 
-                                                checked={includeInCtcGratuity} 
-                                                onChange={() => isEditing && setIncludeInCtcGratuity(!includeInCtcGratuity)} 
-                                                disabled={!isEditing} 
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={includeInCtcGratuity}
+                                                onChange={() => isEditing && setIncludeInCtcGratuity(!includeInCtcGratuity)}
+                                                disabled={!isEditing}
                                             />
                                             <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include Gratuity in employee's salary structure (CTC).</span>
                                         </label>
@@ -474,12 +474,12 @@ const StatutorySettings: React.FC = () => {
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${gratuityMode === 'all' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                 {gratuityMode === 'all' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                             </div>
-                                            <input 
-                                                type="radio" 
-                                                name="gratuityMode" 
-                                                checked={gratuityMode === 'all'} 
-                                                onChange={() => isEditing && setGratuityMode('all')} 
-                                                className="hidden" 
+                                            <input
+                                                type="radio"
+                                                name="gratuityMode"
+                                                checked={gratuityMode === 'all'}
+                                                onChange={() => isEditing && setGratuityMode('all')}
+                                                className="hidden"
                                                 disabled={!isEditing}
                                             />
                                             <span className={`text-sm ${gratuityMode === 'all' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Yes (Enable for all eligible employees)</span>
@@ -488,12 +488,12 @@ const StatutorySettings: React.FC = () => {
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${gratuityMode === 'selective' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                 {gratuityMode === 'selective' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                             </div>
-                                            <input 
-                                                type="radio" 
-                                                name="gratuityMode" 
-                                                checked={gratuityMode === 'selective'} 
-                                                onChange={() => isEditing && setGratuityMode('selective')} 
-                                                className="hidden" 
+                                            <input
+                                                type="radio"
+                                                name="gratuityMode"
+                                                checked={gratuityMode === 'selective'}
+                                                onChange={() => isEditing && setGratuityMode('selective')}
+                                                className="hidden"
                                                 disabled={!isEditing}
                                             />
                                             <span className={`text-sm ${gratuityMode === 'selective' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Selective (Enable based on criteria)</span>
@@ -516,12 +516,12 @@ const StatutorySettings: React.FC = () => {
                                                         <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${gratuityCriteria.includes(item) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                             {gratuityCriteria.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
                                                         </div>
-                                                        <input 
-                                                            type="checkbox" 
-                                                            className="hidden" 
-                                                            checked={gratuityCriteria.includes(item)} 
-                                                            onChange={() => toggleGratuityCriteria(item)} 
-                                                            disabled={!isEditing} 
+                                                        <input
+                                                            type="checkbox"
+                                                            className="hidden"
+                                                            checked={gratuityCriteria.includes(item)}
+                                                            onChange={() => toggleGratuityCriteria(item)}
+                                                            disabled={!isEditing}
                                                         />
                                                         <span className={`text-xs font-semibold ${gratuityCriteria.includes(item) ? 'text-sky-900' : 'text-slate-600'}`}>{item}</span>
                                                     </label>
@@ -552,7 +552,7 @@ const StatutorySettings: React.FC = () => {
                                                         )}
                                                     </div>
                                                     {isEditing && (
-                                                        <select 
+                                                        <select
                                                             className="absolute inset-0 opacity-0 cursor-pointer w-full"
                                                             onChange={(e) => toggleGratuityDept(e.target.value)}
                                                             value=""
@@ -578,12 +578,12 @@ const StatutorySettings: React.FC = () => {
                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${gratuityCalculationComponents.includes(item) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                     {gratuityCalculationComponents.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
                                                 </div>
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="hidden" 
-                                                    checked={gratuityCalculationComponents.includes(item)} 
-                                                    onChange={() => toggleGratuityComponent(item)} 
-                                                    disabled={!isEditing} 
+                                                <input
+                                                    type="checkbox"
+                                                    className="hidden"
+                                                    checked={gratuityCalculationComponents.includes(item)}
+                                                    onChange={() => toggleGratuityComponent(item)}
+                                                    disabled={!isEditing}
                                                 />
                                                 <span className={`text-xs font-semibold ${gratuityCalculationComponents.includes(item) ? 'text-sky-900' : 'text-slate-600'}`}>{item}</span>
                                             </label>
@@ -603,12 +603,12 @@ const StatutorySettings: React.FC = () => {
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${minServicePeriod === 'standard' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                 {minServicePeriod === 'standard' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                             </div>
-                                            <input 
-                                                type="radio" 
-                                                name="minServicePeriod" 
-                                                checked={minServicePeriod === 'standard'} 
-                                                onChange={() => isEditing && setMinServicePeriod('standard')} 
-                                                className="hidden" 
+                                            <input
+                                                type="radio"
+                                                name="minServicePeriod"
+                                                checked={minServicePeriod === 'standard'}
+                                                onChange={() => isEditing && setMinServicePeriod('standard')}
+                                                className="hidden"
                                                 disabled={!isEditing}
                                             />
                                             <span className={`text-sm ${minServicePeriod === 'standard' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>5 years (Standard As per Gratuity Act - Recommended)</span>
@@ -618,20 +618,20 @@ const StatutorySettings: React.FC = () => {
                                                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${minServicePeriod === 'custom' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                     {minServicePeriod === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                                 </div>
-                                                <input 
-                                                    type="radio" 
-                                                    name="minServicePeriod" 
-                                                    checked={minServicePeriod === 'custom'} 
-                                                    onChange={() => isEditing && setMinServicePeriod('custom')} 
-                                                    className="hidden" 
+                                                <input
+                                                    type="radio"
+                                                    name="minServicePeriod"
+                                                    checked={minServicePeriod === 'custom'}
+                                                    onChange={() => isEditing && setMinServicePeriod('custom')}
+                                                    className="hidden"
                                                     disabled={!isEditing}
                                                 />
                                                 <span className={`text-sm ${minServicePeriod === 'custom' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Custom period</span>
                                             </label>
                                             {minServicePeriod === 'custom' && (
                                                 <div className="flex items-center gap-3 animate-in slide-in-from-left-2">
-                                                    <input 
-                                                        type="number" 
+                                                    <input
+                                                        type="number"
                                                         min="0"
                                                         value={customServiceYears}
                                                         onChange={(e) => setCustomServiceYears(e.target.value)}
@@ -658,12 +658,12 @@ const StatutorySettings: React.FC = () => {
                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${gratuityExceptions.includes(item) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                     {gratuityExceptions.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
                                                 </div>
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="hidden" 
-                                                    checked={gratuityExceptions.includes(item)} 
-                                                    onChange={() => toggleGratuityException(item)} 
-                                                    disabled={!isEditing} 
+                                                <input
+                                                    type="checkbox"
+                                                    className="hidden"
+                                                    checked={gratuityExceptions.includes(item)}
+                                                    onChange={() => toggleGratuityException(item)}
+                                                    disabled={!isEditing}
                                                 />
                                                 <span className={`text-xs font-semibold ${gratuityExceptions.includes(item) ? 'text-sky-900' : 'text-slate-600'}`}>{item}</span>
                                             </label>
@@ -673,7 +673,7 @@ const StatutorySettings: React.FC = () => {
                                     {gratuityExceptions.includes('Others') && (
                                         <div className="animate-in fade-in slide-in-from-top-1">
                                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Others details:</label>
-                                            <textarea 
+                                            <textarea
                                                 value={otherExceptionDetails}
                                                 onChange={(e) => setOtherExceptionDetails(e.target.value)}
                                                 disabled={!isEditing}
@@ -691,12 +691,12 @@ const StatutorySettings: React.FC = () => {
                                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deathDisablementServiceType === 'none' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                         {deathDisablementServiceType === 'none' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                                     </div>
-                                                    <input 
-                                                        type="radio" 
-                                                        name="deathDisablementServiceType" 
-                                                        checked={deathDisablementServiceType === 'none'} 
-                                                        onChange={() => isEditing && setDeathDisablementServiceType('none')} 
-                                                        className="hidden" 
+                                                    <input
+                                                        type="radio"
+                                                        name="deathDisablementServiceType"
+                                                        checked={deathDisablementServiceType === 'none'}
+                                                        onChange={() => isEditing && setDeathDisablementServiceType('none')}
+                                                        className="hidden"
                                                         disabled={!isEditing}
                                                     />
                                                     <span className={`text-sm ${deathDisablementServiceType === 'none' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>No minimum service required</span>
@@ -706,20 +706,20 @@ const StatutorySettings: React.FC = () => {
                                                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deathDisablementServiceType === 'minimum' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                             {deathDisablementServiceType === 'minimum' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                                         </div>
-                                                        <input 
-                                                            type="radio" 
-                                                            name="deathDisablementServiceType" 
-                                                            checked={deathDisablementServiceType === 'minimum'} 
-                                                            onChange={() => isEditing && setDeathDisablementServiceType('minimum')} 
-                                                            className="hidden" 
+                                                        <input
+                                                            type="radio"
+                                                            name="deathDisablementServiceType"
+                                                            checked={deathDisablementServiceType === 'minimum'}
+                                                            onChange={() => isEditing && setDeathDisablementServiceType('minimum')}
+                                                            className="hidden"
                                                             disabled={!isEditing}
                                                         />
                                                         <span className={`text-sm ${deathDisablementServiceType === 'minimum' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Minimum ____ year of service required</span>
                                                     </label>
                                                     {deathDisablementServiceType === 'minimum' && (
                                                         <div className="flex items-center gap-3 animate-in slide-in-from-left-2">
-                                                            <input 
-                                                                type="number" 
+                                                            <input
+                                                                type="number"
                                                                 min="0"
                                                                 value={deathDisablementMinYears}
                                                                 onChange={(e) => setDeathDisablementMinYears(e.target.value)}
@@ -748,12 +748,12 @@ const StatutorySettings: React.FC = () => {
                                                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${yearsCalculationMode === mode.id ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                     {yearsCalculationMode === mode.id && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                                 </div>
-                                                <input 
-                                                    type="radio" 
-                                                    name="yearsCalculationMode" 
-                                                    checked={yearsCalculationMode === mode.id} 
-                                                    onChange={() => isEditing && setYearsCalculationMode(mode.id as any)} 
-                                                    className="hidden" 
+                                                <input
+                                                    type="radio"
+                                                    name="yearsCalculationMode"
+                                                    checked={yearsCalculationMode === mode.id}
+                                                    onChange={() => isEditing && setYearsCalculationMode(mode.id as any)}
+                                                    className="hidden"
                                                     disabled={!isEditing}
                                                 />
                                                 <span className={`text-sm ${yearsCalculationMode === mode.id ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{mode.label}</span>
@@ -793,19 +793,19 @@ const StatutorySettings: React.FC = () => {
                                         ].map(period => {
                                             const isLWP = period.includes('LWP');
                                             const labelText = isLWP ? `Leave without pay (LWP) - if < ${lwpLimitDays} days per year` : period;
-                                            
+
                                             return (
                                                 <div key={period} className="space-y-2">
                                                     <label className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'cursor-pointer hover:border-sky-200 hover:bg-sky-50/50' : 'cursor-default'} ${includedServicePeriods.includes(period) ? 'border-sky-200 bg-sky-50/50 shadow-sm' : 'border-slate-200 bg-white'}`}>
                                                         <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includedServicePeriods.includes(period) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                             {includedServicePeriods.includes(period) && <Check size={14} className="text-white stroke-[3]" />}
                                                         </div>
-                                                        <input 
-                                                            type="checkbox" 
-                                                            className="hidden" 
-                                                            checked={includedServicePeriods.includes(period)} 
-                                                            onChange={() => toggleIncludedServicePeriod(period)} 
-                                                            disabled={!isEditing} 
+                                                        <input
+                                                            type="checkbox"
+                                                            className="hidden"
+                                                            checked={includedServicePeriods.includes(period)}
+                                                            onChange={() => toggleIncludedServicePeriod(period)}
+                                                            disabled={!isEditing}
                                                         />
                                                         <span className={`text-[11px] font-semibold ${includedServicePeriods.includes(period) ? 'text-sky-900' : 'text-slate-600'}`}>{labelText}</span>
                                                     </label>
@@ -813,9 +813,9 @@ const StatutorySettings: React.FC = () => {
                                                         <div className="pl-8 animate-in fade-in zoom-in-95">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-[10px] font-bold text-slate-400 uppercase">Limit:</span>
-                                                                <input 
-                                                                    type="number" 
-                                                                    value={lwpLimitDays} 
+                                                                <input
+                                                                    type="number"
+                                                                    value={lwpLimitDays}
                                                                     onChange={(e) => setLwpLimitDays(e.target.value)}
                                                                     className="w-16 px-2 py-1 border border-slate-200 rounded text-xs font-bold text-slate-700 focus:border-sky-500 outline-none"
                                                                 />
@@ -837,13 +837,13 @@ const StatutorySettings: React.FC = () => {
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${maxGratuityType === 'statutory' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                 {maxGratuityType === 'statutory' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                             </div>
-                                            <input 
-                                                type="radio" 
-                                                name="maxGratuityType" 
-                                                checked={maxGratuityType === 'statutory'} 
-                                                onChange={() => isEditing && setMaxGratuityType('statutory')} 
-                                                className="hidden" 
-                                                disabled={!isEditing} 
+                                            <input
+                                                type="radio"
+                                                name="maxGratuityType"
+                                                checked={maxGratuityType === 'statutory'}
+                                                onChange={() => isEditing && setMaxGratuityType('statutory')}
+                                                className="hidden"
+                                                disabled={!isEditing}
                                             />
                                             <span className={`text-sm ${maxGratuityType === 'statutory' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Yes, ₹20,00,000 (Twenty Lakh Rupees) (As per GRATUITY Act)</span>
                                         </label>
@@ -851,13 +851,13 @@ const StatutorySettings: React.FC = () => {
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${maxGratuityType === 'none' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                 {maxGratuityType === 'none' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                             </div>
-                                            <input 
-                                                type="radio" 
-                                                name="maxGratuityType" 
-                                                checked={maxGratuityType === 'none'} 
-                                                onChange={() => isEditing && setMaxGratuityType('none')} 
-                                                className="hidden" 
-                                                disabled={!isEditing} 
+                                            <input
+                                                type="radio"
+                                                name="maxGratuityType"
+                                                checked={maxGratuityType === 'none'}
+                                                onChange={() => isEditing && setMaxGratuityType('none')}
+                                                className="hidden"
+                                                disabled={!isEditing}
                                             />
                                             <span className={`text-sm ${maxGratuityType === 'none' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>No Maximum Limit</span>
                                         </label>
@@ -866,13 +866,13 @@ const StatutorySettings: React.FC = () => {
                                                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${maxGratuityType === 'custom' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
                                                     {maxGratuityType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                                 </div>
-                                                <input 
-                                                    type="radio" 
-                                                    name="maxGratuityType" 
-                                                    checked={maxGratuityType === 'custom'} 
-                                                    onChange={() => isEditing && setMaxGratuityType('custom')} 
-                                                    className="hidden" 
-                                                    disabled={!isEditing} 
+                                                <input
+                                                    type="radio"
+                                                    name="maxGratuityType"
+                                                    checked={maxGratuityType === 'custom'}
+                                                    onChange={() => isEditing && setMaxGratuityType('custom')}
+                                                    className="hidden"
+                                                    disabled={!isEditing}
                                                 />
                                                 <span className={`text-sm ${maxGratuityType === 'custom' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Custom</span>
                                             </label>
@@ -880,8 +880,8 @@ const StatutorySettings: React.FC = () => {
                                                 <div className="flex items-center gap-3 animate-in slide-in-from-left-2">
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             min="1"
                                                             value={customMaxGratuityAmount}
                                                             onChange={(e) => {
@@ -909,136 +909,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
 
                                 {/* Nomination Configuration */}
-                                <div className="space-y-6 pt-6 border-t border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-widest">Nomination Configuration</label>
-                                    
-                                    <div className="space-y-4">
-                                        <label className="block text-sm font-bold text-slate-700">1. Nomination mandatory</label>
-                                        <div className="flex flex-col sm:flex-row gap-6">
-                                            {[
-                                                { id: 'yes', label: 'Yes (Employee must nominate at time of joining)' },
-                                                { id: 'no', label: 'No' }
-                                            ].map((opt) => (
-                                                <label key={opt.id} className={`flex items-center gap-2.5 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${nominationMandatory === opt.id ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                        {nominationMandatory === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                    </div>
-                                                    <input 
-                                                        type="radio" 
-                                                        name="nominationMandatory" 
-                                                        checked={nominationMandatory === opt.id} 
-                                                        onChange={() => isEditing && setNominationMandatory(opt.id as any)} 
-                                                        className="hidden" 
-                                                        disabled={!isEditing}
-                                                    />
-                                                    <span className={`text-sm ${nominationMandatory === opt.id ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{opt.label}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
 
-                                    <div className="space-y-4">
-                                        <label className="block text-sm font-bold text-slate-700">2. Nomination can be changed</label>
-                                        <div className="flex flex-col gap-4">
-                                            {[
-                                                { id: 'anytime', label: 'Yes, anytime during service' },
-                                                { id: 'approval', label: 'Yes, but requires approval' },
-                                                { id: 'events', label: 'Only during specific events (marriage, birth of child, etc.)' }
-                                            ].map((opt) => (
-                                                <label key={opt.id} className={`flex items-center gap-2.5 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${nominationChangeRule === opt.id ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                        {nominationChangeRule === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                    </div>
-                                                    <input 
-                                                        type="radio" 
-                                                        name="nominationChangeRule" 
-                                                        checked={nominationChangeRule === opt.id} 
-                                                        onChange={() => isEditing && setNominationChangeRule(opt.id as any)} 
-                                                        className="hidden" 
-                                                        disabled={!isEditing}
-                                                    />
-                                                    <span className={`text-sm ${nominationChangeRule === opt.id ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{opt.label}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="block text-sm font-bold text-slate-700">3. Number of nominees allowed</label>
-                                        <div className="flex flex-col gap-4">
-                                            <label className={`flex items-center gap-2.5 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${nomineeCountType === 'single' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                    {nomineeCountType === 'single' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                </div>
-                                                <input 
-                                                    type="radio" 
-                                                    name="nomineeCountType" 
-                                                    checked={nomineeCountType === 'single'} 
-                                                    onChange={() => isEditing && setNomineeCountType('single')} 
-                                                    className="hidden" 
-                                                    disabled={!isEditing}
-                                                />
-                                                <span className={`text-sm ${nomineeCountType === 'single' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Single nominee only</span>
-                                            </label>
-                                            
-                                            <div className="flex items-center gap-6">
-                                                <label className={`flex items-center gap-2.5 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${nomineeCountType === 'multiple' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                        {nomineeCountType === 'multiple' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                    </div>
-                                                    <input 
-                                                        type="radio" 
-                                                        name="nomineeCountType" 
-                                                        checked={nomineeCountType === 'multiple'} 
-                                                        onChange={() => isEditing && setNomineeCountType('multiple')} 
-                                                        className="hidden" 
-                                                        disabled={!isEditing}
-                                                    />
-                                                    <span className={`text-sm ${nomineeCountType === 'multiple' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Multiple nominees (with percentage distribution)</span>
-                                                </label>
-                                                {nomineeCountType === 'multiple' && (
-                                                    <div className="flex items-center gap-3 animate-in slide-in-from-left-2">
-                                                        <label className="text-xs font-bold text-slate-400 uppercase">Max nominees:</label>
-                                                        <input 
-                                                            type="number" 
-                                                            min="1"
-                                                            value={maxNominees}
-                                                            onChange={(e) => setMaxNominees(e.target.value)}
-                                                            disabled={!isEditing}
-                                                            className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="block text-sm font-bold text-slate-700">4. If no nomination</label>
-                                        <div className="flex flex-col gap-4">
-                                            {[
-                                                { id: 'legal_heirs', label: 'Pay to legal heirs as per succession law' },
-                                                { id: 'certificate', label: 'Require legal heir certificate' },
-                                                { id: 'hold', label: 'Company holds amount until claimed' }
-                                            ].map((opt) => (
-                                                <label key={opt.id} className={`flex items-center gap-2.5 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${noNominationRule === opt.id ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                        {noNominationRule === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                    </div>
-                                                    <input 
-                                                        type="radio" 
-                                                        name="noNominationRule" 
-                                                        checked={noNominationRule === opt.id} 
-                                                        onChange={() => isEditing && setNoNominationRule(opt.id as any)} 
-                                                        className="hidden" 
-                                                        disabled={!isEditing}
-                                                    />
-                                                    <span className={`text-sm ${noNominationRule === opt.id ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{opt.label}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         )}
                     </div>
@@ -1061,7 +932,7 @@ const StatutorySettings: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">State</label>
                                     <div className="relative">
-                                        <select 
+                                        <select
                                             value={lwfState}
                                             onChange={(e) => setLwfState(e.target.value)}
                                             disabled={!isEditing}
@@ -1087,7 +958,7 @@ const StatutorySettings: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">PT State</label>
                                 <div className="relative">
-                                    <select 
+                                    <select
                                         value={ptState}
                                         onChange={(e) => setPtState(e.target.value)}
                                         disabled={!isEditing}
@@ -1101,9 +972,9 @@ const StatutorySettings: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">PT Number</label>
                                 <div className="relative">
-                                    <input 
-                                        type="text" 
-                                        value={ptNumber} 
+                                    <input
+                                        type="text"
+                                        value={ptNumber}
                                         onChange={(e) => setPtNumber(e.target.value)}
                                         disabled={!isEditing}
                                         placeholder="PT Number"
@@ -1139,9 +1010,9 @@ const StatutorySettings: React.FC = () => {
                                 {/* Registration ID */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Corporate NPS Registration ID</label>
-                                    <input 
-                                        type="text" 
-                                        value={npsRegistrationId} 
+                                    <input
+                                        type="text"
+                                        value={npsRegistrationId}
                                         onChange={(e) => setNpsRegistrationId(e.target.value)}
                                         disabled={!isEditing}
                                         placeholder="Optional – Enter company NPS ID from PFRDA"
@@ -1154,7 +1025,7 @@ const StatutorySettings: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Deduction Cycle</label>
                                         <div className="relative">
-                                            <select 
+                                            <select
                                                 value={npsDeductionCycle}
                                                 onChange={(e) => setNpsDeductionCycle(e.target.value)}
                                                 disabled={!isEditing}
@@ -1168,11 +1039,11 @@ const StatutorySettings: React.FC = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Contribution Base</label>
-                                        <input 
-                                            type="text" 
-                                            value={npsContributionBase} 
+                                        <input
+                                            type="text"
+                                            value={npsContributionBase}
                                             disabled
-                                            className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-700 cursor-not-allowed" 
+                                            className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-700 cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
@@ -1182,8 +1053,8 @@ const StatutorySettings: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Employee Contribution Rate</label>
                                         <div className="flex items-center gap-3">
-                                            <input 
-                                                type="number" 
+                                            <input
+                                                type="number"
                                                 value={npsEmpRate}
                                                 onChange={(e) => setNpsEmpRate(e.target.value)}
                                                 disabled={!isEditing}
@@ -1195,8 +1066,8 @@ const StatutorySettings: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Employer Contribution Rate</label>
                                         <div className="flex items-center gap-3">
-                                            <input 
-                                                type="number" 
+                                            <input
+                                                type="number"
                                                 value={npsEmprRate}
                                                 onChange={(e) => setNpsEmprRate(e.target.value)}
                                                 disabled={!isEditing}
@@ -1291,7 +1162,7 @@ const StatutorySettings: React.FC = () => {
                             </div>
                         </div>
                         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button 
+                            <button
                                 onClick={() => setShowContributionModal(false)}
                                 className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-100 transition-colors text-sm shadow-sm"
                             >

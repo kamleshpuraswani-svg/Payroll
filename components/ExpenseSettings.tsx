@@ -558,146 +558,226 @@ const ExpenseSettings: React.FC = () => {
                     </div>
                     <button
                         onClick={() => {
+                            setActiveTab('categories');
                             setShowExpenseCategoryView(true);
-                            setIsAddingCategory(true);
                         }}
                         className="mb-4 px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-sky-600 text-white border border-sky-600 shadow-md shadow-sky-100 hover:bg-sky-700"
                     >
-                        Expense Category
+                        Expense Categories
                     </button>
                 </div>
 
                 {/* Tab Content */}
                 <div>
                     {showExpenseCategoryView ? (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                            {/* Header Section: Zoho Style */}
-                            <div className="flex justify-between items-end border-b border-slate-200">
-                                <div className="space-y-1">
-                                    <h3 className="text-xl font-bold text-slate-800">Sales Department Policy</h3>
-                                    <div className="flex gap-6">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 bg-white min-h-screen">
+                            {/* Header Section */}
+                            <div className="flex flex-col space-y-4 pb-6 border-b border-slate-100">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-slate-800">Expense Categories Configuration</h3>
+                                        <p className="text-slate-500 mt-1">Set up and manage expense categories for HR</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setShowExpenseCategoryView(false)}
+                                            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all"
+                                        >
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tabs and Action Button */}
+                                <div className="flex justify-between items-end">
+                                    <div className="flex gap-8">
                                         {[
-                                            { id: 'policy', label: 'Policy Settings' },
-                                            { id: 'limits', label: 'Category Limits' },
-                                            { id: 'mileage', label: 'Mileage' },
-                                            { id: 'perdiem', label: 'Per Diem' },
-                                            { id: 'rules', label: 'Rules' },
-                                            { id: 'audit', label: 'Audit' },
-                                        ].map(subTab => (
+                                            { id: 'categories', label: 'Expense Categories' },
+                                            { id: 'rules', label: 'Expense Configuration' },
+                                        ].filter(tab => activeTab === 'rules' || tab.id !== 'rules').map(tab => (
                                             <button
-                                                key={subTab.id}
-                                                className={`pb-3 text-sm font-semibold transition-all relative ${subTab.id === 'limits' ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                key={tab.id}
+                                                onClick={() => setActiveTab(tab.id as any)}
+                                                className={`pb-3 text-sm font-bold transition-all relative ${activeTab === tab.id
+                                                    ? 'text-sky-600'
+                                                    : 'text-slate-400 hover:text-slate-600'
+                                                    }`}
                                             >
-                                                {subTab.label}
-                                                {subTab.id === 'limits' && (
+                                                {tab.label}
+                                                {activeTab === tab.id && (
                                                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full" />
                                                 )}
                                             </button>
                                         ))}
                                     </div>
-                                </div>
-                                <button
-                                    onClick={() => setShowExpenseCategoryView(false)}
-                                    className="p-2 text-slate-400 hover:text-slate-600 mb-2"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            {/* General Limits Section */}
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                                    <h4 className="text-sm font-bold text-slate-700">General Limits</h4>
-                                    <button className="text-slate-400 hover:text-sky-600 transition-colors">
-                                        <Edit2 size={14} />
-                                    </button>
-                                </div>
-                                <div className="p-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                        <div className="space-y-1">
-                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</p>
-                                            <p className="text-lg font-bold text-slate-700">₹ 10,000</p>
-                                        </div>
-                                    </div>
+                                    {activeTab === 'categories' && (
+                                        <button
+                                            onClick={() => {
+                                                setEditingCategory(null);
+                                                setIsAddingCategory(true);
+                                            }}
+                                            className="px-6 py-2.5 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
+                                        >
+                                            <Plus size={16} /> ADD CATEGORY
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Category Specific Limits Table */}
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-20">
-                                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                                    <h4 className="text-sm font-bold text-slate-700">Category Specific Limits</h4>
-                                    <button
-                                        onClick={() => setIsAddingCategory(true)}
-                                        className="px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 shadow-sm transition-all flex items-center gap-1.5"
-                                    >
-                                        <Plus size={14} /> Add Category
-                                    </button>
-                                </div>
-                                <table className="w-full text-left">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
-                                        <tr>
-                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
-                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {categories.map(cat => (
-                                            <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                <td className="px-6 py-5">
-                                                    <div className="space-y-1">
-                                                        <p className="text-sm font-bold text-slate-700">{cat.name}</p>
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[10px] font-bold text-slate-400">Limit:</span>
-                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${cat.name === 'Travel & Conveyance' ? 'bg-sky-50 text-sky-600 border border-sky-100' : 'text-slate-500'}`}>
-                                                                    ₹ {cat.max_limit?.toLocaleString() || '∞'}
-                                                                </span>
+                            {/* Main Content Area */}
+                            <div className="pb-20">
+                                {activeTab === 'categories' ? (
+                                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-50 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
+                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</th>
+                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required limit</th>
+                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {categories.map((cat, index) => (
+                                                    <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-6 py-6">
+                                                            <p className="text-sm font-bold text-slate-700">{cat.name}</p>
+                                                        </td>
+                                                        <td className="px-6 py-6">
+                                                            <p className="text-sm font-bold text-slate-600">
+                                                                {cat.max_limit ? `₹ ${cat.max_limit.toLocaleString()}` : '∞'}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-6 py-6">
+                                                            <p className="text-sm font-bold text-slate-600">
+                                                                {cat.receipt_threshold ? `₹ ${cat.receipt_threshold.toLocaleString()}` : '-'}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-6 py-6">
+                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-600">
+                                                                ACTIVE
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-6 text-right">
+                                                            <div className="flex justify-end gap-3 transition-opacity">
+                                                                <button
+                                                                    onClick={() => openEditModal(cat)}
+                                                                    className="text-slate-400 hover:text-sky-600 transition-colors"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteCategory(cat.id)}
+                                                                    className="text-slate-400 hover:text-rose-500 transition-colors"
+                                                                    title="Delete"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
                                                             </div>
-                                                            {cat.receipt_threshold > 0 && (
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[10px] font-bold text-slate-400">Receipt Thr:</span>
-                                                                    <span className="text-[10px] font-bold text-slate-500">₹ {cat.receipt_threshold}</span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        {categories.length === 0 && (
+                                            <div className="p-8 text-center text-slate-400">
+                                                No categories found. Add one to get started.
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col lg:flex-row gap-6 h-[600px]">
+                                        {/* Left Side: List */}
+                                        <div className="w-full lg:w-1/3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Category</h4>
+                                            </div>
+                                            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                                {categories.map(cat => (
+                                                    <button
+                                                        key={cat.id}
+                                                        onClick={() => setEditingCategory(cat)}
+                                                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold transition-all flex justify-between items-center ${editingCategory?.id === cat.id
+                                                            ? 'bg-sky-50 text-sky-700 border border-sky-100'
+                                                            : 'text-slate-600 hover:bg-slate-50'
+                                                            }`}
+                                                    >
+                                                        {cat.name}
+                                                        {editingCategory?.id === cat.id && <ChevronRight size={16} />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Right Side: Configuration Panel */}
+                                        <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                            {editingCategory ? (
+                                                <>
+                                                    <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                                                        <h4 className="text-sm font-bold text-slate-800">Expense Configuration</h4>
+                                                        <span className="text-xs font-semibold text-slate-400">{editingCategory.name}</span>
+                                                    </div>
+                                                    <div className="p-6 flex-1 overflow-y-auto space-y-6">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit</label>
+                                                                <div className="relative">
+                                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                                                    <input
+                                                                        type="text"
+                                                                        defaultValue={editingCategory.max_limit}
+                                                                        className="w-full pl-7 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                                    />
                                                                 </div>
-                                                            )}
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[10px] font-bold text-slate-400">Desc Mandatory:</span>
-                                                                <span className="text-[10px] font-bold text-emerald-600">YES</span>
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Requirements</label>
+                                                                <select className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all">
+                                                                    <option>Required above ₹ {editingCategory.receipt_threshold || 200}</option>
+                                                                    <option>Always Required</option>
+                                                                    <option>Not Required</option>
+                                                                </select>
                                                             </div>
                                                         </div>
+
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approval Workflows</label>
+                                                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 flex items-center gap-2">
+                                                                <ShieldCheck size={16} className="text-sky-600" />
+                                                                <span>Reporting Manager</span>
+                                                                <ChevronRight size={14} className="text-slate-400" />
+                                                                <span>Finance Head</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                                                            <label className="flex items-center justify-between cursor-pointer group">
+                                                                <span className="text-sm font-semibold text-slate-700">Allow split expenses</span>
+                                                                <input type="checkbox" className="accent-sky-600 w-4 h-4" />
+                                                            </label>
+                                                            <label className="flex items-center justify-between cursor-pointer group">
+                                                                <span className="text-sm font-semibold text-slate-700">Require description</span>
+                                                                <input type="checkbox" defaultChecked={true} className="accent-sky-600 w-4 h-4" />
+                                                            </label>
+                                                        </div>
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <label className="relative inline-flex items-center cursor-pointer">
-                                                        <input type="checkbox" className="sr-only peer" defaultChecked />
-                                                        <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
-                                                    </label>
-                                                </td>
-                                                <td className="px-6 py-5 text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setEditingCategory(cat);
-                                                                setIsAddingCategory(true);
-                                                                setShowExpenseCategoryView(true);
-                                                            }}
-                                                            className="text-[11px] font-bold text-sky-600 hover:text-sky-700 px-3 py-1 rounded bg-sky-50 hover:bg-sky-100 transition-all"
-                                                        >
-                                                            OVERRIDE
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteCategory(cat.id)}
-                                                            className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
-                                                        >
-                                                            <Trash2 size={14} />
+                                                    <div className="p-5 border-t border-slate-100 bg-slate-50/30 flex justify-end">
+                                                        <button className="px-6 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-md shadow-sky-100">
+                                                            Save Changes
                                                         </button>
                                                     </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                                </>
+                                            ) : (
+                                                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-300">
+                                                    <Settings2 size={48} className="mb-4 opacity-50" />
+                                                    <p className="text-sm font-bold">Select a category to configure</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
@@ -710,8 +790,8 @@ const ExpenseSettings: React.FC = () => {
                                         </div>
                                         <button
                                             onClick={() => {
+                                                setActiveTab('rules');
                                                 setShowExpenseCategoryView(true);
-                                                setIsAddingCategory(true);
                                             }}
                                             className="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
                                         >

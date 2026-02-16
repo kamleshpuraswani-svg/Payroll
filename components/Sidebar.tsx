@@ -257,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                   <button
                     onClick={() => handleItemClick(item)}
                     className={`
-                      w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                      w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                       ${isActive || (groupActive && !isExpanded)
                         ? 'bg-sky-50 text-sky-700'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
@@ -289,7 +289,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                             <button
                               onClick={() => handleItemClick(subItem)}
                               className={`
-                                w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                                 ${isSubActive || (subGroupActive && !isSubExpanded)
                                   ? 'bg-sky-50 text-sky-700'
                                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}

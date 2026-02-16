@@ -57,11 +57,7 @@ const Dashboard: React.FC<DashboardProps> = ({ companies, auditLogs }) => {
         ))}
       </div>
 
-      {/* Main Content Area - Currently Empty/Reserved */}
-      <div className="min-h-[400px] flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-        <p className="font-medium">Dashboard Widgets Hidden</p>
-        <p className="text-sm">Select a card above to view details</p>
-      </div>
+
 
       {/* Slide-in Panels - Rendered conditionally but stacked via standard DOM order */}
       <EmployeePanel

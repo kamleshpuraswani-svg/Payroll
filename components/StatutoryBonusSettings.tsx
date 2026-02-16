@@ -555,19 +555,7 @@ const StatutoryBonusSettings: React.FC = () => {
           </div>
 
           {enableBonus && (
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2">
-              <div className="space-y-4">
-                <label className="flex items-start gap-3 group cursor-pointer">
-                  <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${has20Employees ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'}`}>
-                    {has20Employees && <Check size={14} className="text-white" />}
-                  </div>
-                  <input type="checkbox" className="hidden" checked={has20Employees} onChange={() => isEditing && setHas20Employees(!has20Employees)} disabled={!isEditing} />
-                  <div>
-                    <span className="text-sm font-bold text-slate-700">Company has ≥20 employees</span>
-                    <p className="text-xs text-slate-400 mt-1">Auto-detected from current workforce strength.</p>
-                  </div>
-                </label>
-              </div>
+            <div className="p-8 animate-in slide-in-from-top-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Establishment Year</label>
@@ -860,25 +848,7 @@ const StatutoryBonusSettings: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notification & Automation</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Alert if payout delayed &gt;8 months</span>
-                      <label className={`relative inline-flex items-center ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}>
-                        <input type="checkbox" checked={alertDelayedPayout} onChange={() => isEditing && setAlertDelayedPayout(!alertDelayedPayout)} disabled={!isEditing} className="sr-only peer" />
-                        <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Year-end processing wizard</span>
-                      <label className={`relative inline-flex items-center ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}>
-                        <input type="checkbox" checked={yearEndWizard} onChange={() => isEditing && setYearEndWizard(!yearEndWizard)} disabled={!isEditing} className="sr-only peer" />
-                        <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
+
               </div>
             </div>
 

@@ -44,6 +44,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
    const [selectedStructureId, setSelectedStructureId] = useState('S2');
    const [effectiveFrom, setEffectiveFrom] = useState('');
    const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
+   const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
 
    // Refs to track initial values for change detection
    const initialValues = useRef({
@@ -445,6 +446,21 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                            <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
                         </div>
                         {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1 animate-in fade-in slide-in-from-top-1">{errors.effectiveFrom}</p>}
+                     </div>
+
+                     {/* Arrears Payout Date Field */}
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Date</label>
+                        <div className="relative">
+                           <input
+                              type="date"
+                              value={arrearsPayoutDate}
+                              onChange={(e) => setArrearsPayoutDate(e.target.value)}
+                              disabled={isReadOnly}
+                              className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all ${isReadOnly ? 'bg-slate-100 text-slate-500 border-slate-200' : 'border-slate-300 hover:border-slate-400'}`}
+                           />
+                           <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                        </div>
                      </div>
                   </div>
 
