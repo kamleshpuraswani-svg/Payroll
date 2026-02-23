@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
     description text,
     receipt_threshold numeric DEFAULT 200,
     pro_rata boolean DEFAULT false,
+    applicable_to jsonb DEFAULT '[]',
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
 ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS receipt_threshold numeric DEFAULT 200;
 ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS pro_rata boolean DEFAULT false;
 ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.expense_categories ADD COLUMN IF NOT EXISTS applicable_to jsonb DEFAULT '[]';
 
 -- 2. Create Global Expense Settings Table
 CREATE TABLE IF NOT EXISTS public.expense_settings (

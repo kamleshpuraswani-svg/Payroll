@@ -94,9 +94,21 @@ const ExpenseSettings: React.FC = () => {
                     .select('*')
                     .order('name');
                 if (refreshError) throw refreshError;
-                if (refreshedCat) setCategories(refreshedCat);
+                if (refreshedCat) {
+                    setCategories(refreshedCat);
+                    setConfiguredExpenses(refreshedCat.map(c => ({
+                        ...c,
+                        category_name: c.name,
+                        category_id: c.id
+                    })));
+                }
             } else if (catData) {
                 setCategories(catData);
+                setConfiguredExpenses(catData.map(c => ({
+                    ...c,
+                    category_name: c.name,
+                    category_id: c.id
+                })));
             }
 
             // Fetch workflow approvers
@@ -264,21 +276,34 @@ const ExpenseSettings: React.FC = () => {
         const categoryId = formData.get('category') as string;
         const limit = formData.get('limit') as string;
         const receiptThreshold = formData.get('receipt_threshold') as string;
-        const status = formData.get('status') as string;
+        const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
-        const category = categories.find(c => c.id === categoryId);
+        setIsSaving(true);
+        try {
+            const configData = {
+                max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
+                receipt_threshold: parseFloat(receiptThreshold),
+                status: status,
+                applicable_to: selectedEntities
+            };
 
-        const newExpense = {
-            id: Math.random().toString(36).substr(2, 9),
-            category_id: categoryId,
-            category_name: category?.name || 'Unknown',
-            max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
-            receipt_threshold: parseFloat(receiptThreshold),
-            status: status
-        };
+            const { error } = await supabase
+                .from('expense_categories')
+                .update(configData)
+                .eq('id', categoryId);
 
-        setConfiguredExpenses(prev => [...prev, newExpense]);
-        setIsAddingExpense(false);
+            if (error) throw error;
+
+            await fetchData();
+            setIsAddingExpense(false);
+            setSelectedEntities([]); // Clear selections after save
+            setEntitySearch('');
+        } catch (error: any) {
+            console.error('Error saving expense config:', error);
+            alert(`Failed to save configuration: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const updateSettings = async (updates: any) => {
