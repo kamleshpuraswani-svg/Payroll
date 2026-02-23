@@ -98,8 +98,8 @@ const SalaryAnnexureModal: React.FC<{
                     { id: 'hra', name: 'House Rent Allowance', annualAmount: hra, monthlyAmount: Math.round(hra / 12), type: 'earnings' },
                     { id: 'special', name: 'Special Allowance', annualAmount: special, monthlyAmount: Math.round(special / 12), type: 'earnings' },
                     { id: 'lta', name: 'Leave Travel Allowance', annualAmount: lta, monthlyAmount: Math.round(lta / 12), type: 'earnings' },
-                    { id: 'pf', name: 'Provident Fund (Employer)', annualAmount: pf, monthlyAmount: Math.round(pf / 12), type: 'retirals', isMandatory: true },
-                    { id: 'gratuity', name: 'Gratuity', annualAmount: grat, monthlyAmount: Math.round(grat / 12), type: 'retirals', isMandatory: true },
+                    { id: 'pf', name: 'Provident Fund (Employer)', annualAmount: pf, monthlyAmount: Math.round(pf / 12), type: 'retirals', isMandatory: false },
+                    { id: 'gratuity', name: 'Gratuity', annualAmount: grat, monthlyAmount: Math.round(grat / 12), type: 'retirals', isMandatory: false },
                 ]);
             }
         }

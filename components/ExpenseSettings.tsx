@@ -33,6 +33,8 @@ const ExpenseSettings: React.FC = () => {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showExpenseCategoryView, setShowExpenseCategoryView] = useState(false);
+    const [isAddingExpense, setIsAddingExpense] = useState(false);
+    const [configuredExpenses, setConfiguredExpenses] = useState<any[]>([]);
 
     // State for Expense Categories
     const [categories, setCategories] = useState<any[]>([]);
@@ -48,6 +50,17 @@ const ExpenseSettings: React.FC = () => {
         receipt_mandatory_amount: 200,
         allow_backdated_claims: false
     });
+
+    // Multi-select state for Add Expense modal
+    const [selectedEntities, setSelectedEntities] = useState<any[]>([]);
+    const [availableDesignations, setAvailableDesignations] = useState<string[]>([]);
+    const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
+    const [entitySearch, setEntitySearch] = useState('');
+    const [showEntityDropdown, setShowEntityDropdown] = useState(false);
+
+    // Hardcoded fallbacks
+    const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA'];
+    const FALLBACK_DESIGS = ['Software Engineer', 'Product Manager', 'Designer', 'Accountant', 'HR Associate', 'Sales Lead', 'QA Analyst'];
 
     useEffect(() => {
         fetchData();
@@ -115,14 +128,25 @@ const ExpenseSettings: React.FC = () => {
                 })));
             }
 
-            // Fetch all employees
+            // Fetch all employees with designations
             const { data: empData, error: empError } = await supabase
                 .from('employees')
-                .select('id, name, eid, avatar_url, department')
+                .select('id, name, eid, avatar_url, department, designation')
                 .eq('status', 'Active')
                 .order('name');
             if (empError) console.error('Employee fetch error:', empError);
-            if (empData) setAllEmployees(empData);
+            if (empData) {
+                setAllEmployees(empData);
+                // Extract unique departments and designations
+                const depts = Array.from(new Set(empData.map(e => e.department).filter(Boolean))) as string[];
+                const desigs = Array.from(new Set((empData as any).map((e: any) => e.designation).filter(Boolean))) as string[];
+
+                setAvailableDepartments(depts.length > 0 ? depts.sort() : FALLBACK_DEPTS);
+                setAvailableDesignations(desigs.length > 0 ? desigs.sort() : FALLBACK_DESIGS);
+            } else {
+                setAvailableDepartments(FALLBACK_DEPTS);
+                setAvailableDesignations(FALLBACK_DESIGS);
+            }
 
             // Fetch settings
             const { data: settingsData, error: settingsError } = await supabase
@@ -143,19 +167,13 @@ const ExpenseSettings: React.FC = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget as HTMLFormElement);
         const name = formData.get('name') as string;
-        const limit = formData.get('limit') as string;
-        const threshold = formData.get('receipt_threshold') as string;
-        const proRata = formData.get('pro_rata') === 'on';
-        const description = formData.get('description') as string;
+        const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
         setIsSaving(true);
         try {
             const categoryData = {
                 name,
-                max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
-                receipt_threshold: parseFloat(threshold),
-                pro_rata: proRata,
-                description
+                status
             };
 
             if (editingCategory) {
@@ -167,10 +185,7 @@ const ExpenseSettings: React.FC = () => {
             } else {
                 const { error } = await supabase
                     .from('expense_categories')
-                    .insert([{
-                        ...categoryData,
-                        status: 'Active'
-                    }]);
+                    .insert([categoryData]);
                 if (error) throw error;
             }
             await fetchData();
@@ -243,6 +258,29 @@ const ExpenseSettings: React.FC = () => {
         }
     };
 
+    const handleSaveExpense = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget as HTMLFormElement);
+        const categoryId = formData.get('category') as string;
+        const limit = formData.get('limit') as string;
+        const receiptThreshold = formData.get('receipt_threshold') as string;
+        const status = formData.get('status') as string;
+
+        const category = categories.find(c => c.id === categoryId);
+
+        const newExpense = {
+            id: Math.random().toString(36).substr(2, 9),
+            category_id: categoryId,
+            category_name: category?.name || 'Unknown',
+            max_limit: parseFloat(limit.replace(/[^0-9.]/g, '')),
+            receipt_threshold: parseFloat(receiptThreshold),
+            status: status
+        };
+
+        setConfiguredExpenses(prev => [...prev, newExpense]);
+        setIsAddingExpense(false);
+    };
+
     const updateSettings = async (updates: any) => {
         const newSettings = { ...settings, ...updates };
         setSettings(newSettings);
@@ -274,7 +312,7 @@ const ExpenseSettings: React.FC = () => {
 
                 {/* Modal for Add Category / Override */}
                 {isAddingCategory && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                         <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -304,48 +342,19 @@ const ExpenseSettings: React.FC = () => {
                                             disabled={!!editingCategory}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</label>
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                                <input
-                                                    name="limit"
-                                                    type="text"
-                                                    defaultValue={editingCategory?.max_limit || ''}
-                                                    placeholder="5,000"
-                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required limit</label>
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                                <input
-                                                    name="receipt_threshold"
-                                                    type="number"
-                                                    defaultValue={editingCategory?.receipt_threshold || 200}
-                                                    placeholder="200"
-                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-sky-50/50 rounded-lg border border-sky-100">
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
                                         <div className="space-y-0.5">
-                                            <label className="text-sm font-bold text-slate-700 italic">Make description mandatory</label>
-                                            <p className="text-[10px] text-slate-500">Require justification for all claims</p>
+                                            <label className="text-sm font-bold text-slate-700">Status</label>
+                                            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{editingCategory?.status === 'Inactive' ? 'Inactive' : 'Active'}</p>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
                                                 type="checkbox"
-                                                name="pro_rata"
-                                                defaultChecked={editingCategory?.pro_rata || true}
+                                                name="status"
+                                                defaultChecked={editingCategory ? editingCategory.status === 'Active' : true}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-sky-500"></div>
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
                                         </label>
                                     </div>
                                 </div>
@@ -365,7 +374,7 @@ const ExpenseSettings: React.FC = () => {
                                         disabled={isSaving}
                                         className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
-                                        {isSaving ? 'Saving...' : (editingCategory ? 'Save Changes' : 'Add Category')}
+                                        {isSaving ? 'Saving...' : (editingCategory ? 'Save Changes' : 'Submit')}
                                     </button>
                                 </div>
                             </form>
@@ -373,7 +382,7 @@ const ExpenseSettings: React.FC = () => {
                     </div>
                 )}
                 {isAddingWorkflow && (
-                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
                         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">
                             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <div>
@@ -515,6 +524,220 @@ const ExpenseSettings: React.FC = () => {
                         </div>
                     </div>
                 )}
+                {isAddingExpense && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                                    <Plus className="text-sky-600" size={18} /> Add Expense
+                                </h3>
+                                <button
+                                    onClick={() => setIsAddingExpense(false)}
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleSaveExpense} className="p-6 space-y-6">
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Category</label>
+                                        <select
+                                            name="category"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                            required
+                                        >
+                                            <option value="">Select a category</option>
+                                            {categories.map(cat => (
+                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                                <input
+                                                    name="limit"
+                                                    type="text"
+                                                    placeholder="5,000"
+                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center gap-1.5">
+                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required amount</label>
+                                                <div className="group relative">
+                                                    <Info size={12} className="text-slate-300 cursor-help" />
+                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-[200] text-center leading-relaxed">
+                                                        Claims above this amount will require a receipt/document.
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                                <input
+                                                    name="receipt_threshold"
+                                                    type="number"
+                                                    placeholder="200"
+                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To (Designation, Department or Employees)</label>
+                                        <div className="min-h-[42px] p-1.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-wrap gap-1.5">
+                                            {selectedEntities.map((entity, idx) => (
+                                                <div key={idx} className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold ${entity.type === 'Employee' ? 'bg-sky-100 text-sky-700' :
+                                                    entity.type === 'Department' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                    <span>{entity.name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedEntities(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="hover:text-rose-500"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <div className="relative flex-1 min-w-[120px]">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    className="w-full px-2 py-1 bg-transparent border-none text-sm focus:outline-none"
+                                                    value={entitySearch}
+                                                    onChange={(e) => {
+                                                        setEntitySearch(e.target.value);
+                                                        setShowEntityDropdown(true);
+                                                    }}
+                                                    onFocus={() => setShowEntityDropdown(true)}
+                                                    onBlur={() => setTimeout(() => setShowEntityDropdown(false), 200)}
+                                                />
+                                                {showEntityDropdown && (
+                                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[160] max-h-60 overflow-y-auto">
+                                                        <div className="p-2">
+                                                            {/* Designations */}
+                                                            {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
+                                                                <>
+                                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-2">Designations</div>
+                                                                    {availableDesignations
+                                                                        .filter(d => d.toLowerCase().includes(entitySearch.toLowerCase()))
+                                                                        .map(d => (
+                                                                            <button
+                                                                                key={d}
+                                                                                type="button"
+                                                                                onMouseDown={(e) => {
+                                                                                    e.preventDefault(); // Prevent blur
+                                                                                    if (!selectedEntities.find(ent => ent.type === 'Designation' && ent.name === d)) {
+                                                                                        setSelectedEntities(prev => [...prev, { type: 'Designation', name: d }]);
+                                                                                    }
+                                                                                    setEntitySearch('');
+                                                                                    setShowEntityDropdown(false);
+                                                                                }}
+                                                                                className="w-full text-left px-3 py-1.5 rounded hover:bg-slate-50 text-xs font-semibold text-slate-600"
+                                                                            >
+                                                                                {d}
+                                                                            </button>
+                                                                        ))}
+                                                                </>
+                                                            )}
+
+                                                            {/* Departments */}
+                                                            {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
+                                                                <>
+                                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2 mb-1 px-2">Departments</div>
+                                                                    {availableDepartments
+                                                                        .filter(d => d.toLowerCase().includes(entitySearch.toLowerCase()))
+                                                                        .map(d => (
+                                                                            <button
+                                                                                key={d}
+                                                                                type="button"
+                                                                                onMouseDown={(e) => {
+                                                                                    e.preventDefault(); // Prevent blur
+                                                                                    if (!selectedEntities.find(ent => ent.type === 'Department' && ent.name === d)) {
+                                                                                        setSelectedEntities(prev => [...prev, { type: 'Department', name: d }]);
+                                                                                    }
+                                                                                    setEntitySearch('');
+                                                                                    setShowEntityDropdown(false);
+                                                                                }}
+                                                                                className="w-full text-left px-3 py-1.5 rounded hover:bg-slate-50 text-xs font-semibold text-slate-600"
+                                                                            >
+                                                                                {d}
+                                                                            </button>
+                                                                        ))}
+                                                                </>
+                                                            )}
+
+                                                            {/* Employees */}
+                                                            {allEmployees.filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
+                                                                <>
+                                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2 mb-1 px-2">Employees</div>
+                                                                    {allEmployees
+                                                                        .filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase()))
+                                                                        .map(e => (
+                                                                            <button
+                                                                                key={e.id}
+                                                                                type="button"
+                                                                                onMouseDown={(e) => {
+                                                                                    e.preventDefault(); // Prevent blur
+                                                                                    if (!selectedEntities.find(entity => entity.type === 'Employee' && entity.id === e.id)) {
+                                                                                        setSelectedEntities(prev => [...prev, { type: 'Employee', name: e.name, id: e.id }]);
+                                                                                    }
+                                                                                    setEntitySearch('');
+                                                                                    setShowEntityDropdown(false);
+                                                                                }}
+                                                                                className="w-full text-left px-3 py-1.5 rounded hover:bg-slate-50 text-xs font-semibold text-slate-600"
+                                                                            >
+                                                                                {e.name} ({e.eid})
+                                                                            </button>
+                                                                        ))}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</label>
+                                        <select
+                                            name="status"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                            required
+                                        >
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAddingExpense(false)}
+                                        className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100"
+                                    >
+                                        Add Expense
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
@@ -569,238 +792,277 @@ const ExpenseSettings: React.FC = () => {
 
                 {/* Tab Content */}
                 <div>
-                    {showExpenseCategoryView ? (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 bg-white min-h-screen">
-                            {/* Header Section */}
-                            <div className="flex flex-col space-y-4 pb-6 border-b border-slate-100">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-slate-800">Expense Categories Configuration</h3>
-                                        <p className="text-slate-500 mt-1">Set up and manage expense categories for HR</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => setShowExpenseCategoryView(false)}
-                                            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all"
-                                        >
-                                            <X size={24} />
-                                        </button>
-                                    </div>
-                                </div>
+                    {showExpenseCategoryView && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl h-[85vh] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
+                                <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                                    {/* Header Section */}
+                                    <div className="flex flex-col space-y-4 pb-6 border-b border-slate-100">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-slate-800">Expense Categories Configuration</h3>
+                                                <p className="text-slate-500 mt-1">Set up and manage expense categories for HR</p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => setShowExpenseCategoryView(false)}
+                                                    className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all"
+                                                >
+                                                    <X size={24} />
+                                                </button>
+                                            </div>
+                                        </div>
 
-                                {/* Tabs and Action Button */}
-                                <div className="flex justify-between items-end">
-                                    <div className="flex gap-8">
-                                        {[
-                                            { id: 'categories', label: 'Expense Categories' },
-                                            { id: 'rules', label: 'Expense Configuration' },
-                                        ].filter(tab => activeTab === 'rules' || tab.id !== 'rules').map(tab => (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setActiveTab(tab.id as any)}
-                                                className={`pb-3 text-sm font-bold transition-all relative ${activeTab === tab.id
-                                                    ? 'text-sky-600'
-                                                    : 'text-slate-400 hover:text-slate-600'
-                                                    }`}
-                                            >
-                                                {tab.label}
-                                                {activeTab === tab.id && (
-                                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full" />
-                                                )}
-                                            </button>
-                                        ))}
+                                        {/* Tabs and Action Button */}
+                                        <div className="flex justify-between items-end">
+                                            <div className="flex gap-8">
+                                                {[
+                                                    { id: 'categories', label: 'Expense Categories' },
+                                                    { id: 'rules', label: 'Expense Configuration' },
+                                                ].filter(tab => activeTab === 'rules' || tab.id !== 'rules').map(tab => (
+                                                    <button
+                                                        key={tab.id}
+                                                        onClick={() => setActiveTab(tab.id as any)}
+                                                        className={`pb-3 text-sm font-bold transition-all relative ${activeTab === tab.id
+                                                            ? 'text-sky-600'
+                                                            : 'text-slate-400 hover:text-slate-600'
+                                                            }`}
+                                                    >
+                                                        {tab.label}
+                                                        {activeTab === tab.id && (
+                                                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {activeTab === 'categories' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingCategory(null);
+                                                        setIsAddingCategory(true);
+                                                    }}
+                                                    className="px-6 py-2.5 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
+                                                >
+                                                    <Plus size={16} /> ADD CATEGORY
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    {activeTab === 'categories' && (
-                                        <button
-                                            onClick={() => {
-                                                setEditingCategory(null);
-                                                setIsAddingCategory(true);
-                                            }}
-                                            className="px-6 py-2.5 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
-                                        >
-                                            <Plus size={16} /> ADD CATEGORY
-                                        </button>
-                                    )}
+
+                                    {/* Main Content Area */}
+                                    <div className="pb-20">
+                                        {activeTab === 'categories' ? (
+                                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                                        <tr>
+                                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
+                                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-50">
+                                                        {categories.map((cat, index) => (
+                                                            <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                                <td className="px-6 py-6">
+                                                                    <p className="text-sm font-bold text-slate-700">{cat.name}</p>
+                                                                </td>
+                                                                <td className="px-6 py-6">
+                                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${cat.status === 'Inactive' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                                        {cat.status?.toUpperCase() || 'ACTIVE'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-6 text-right">
+                                                                    <div className="flex justify-end gap-3 transition-opacity">
+                                                                        <button
+                                                                            onClick={() => openEditModal(cat)}
+                                                                            className="text-slate-400 hover:text-sky-600 transition-colors"
+                                                                            title="Edit"
+                                                                        >
+                                                                            <Edit2 size={16} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteCategory(cat.id)}
+                                                                            className="text-slate-400 hover:text-rose-500 transition-colors"
+                                                                            title="Delete"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                                {categories.length === 0 && (
+                                                    <div className="p-8 text-center text-slate-400">
+                                                        No categories found. Add one to get started.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col lg:flex-row gap-6 h-[600px]">
+                                                {/* Left Side: List */}
+                                                <div className="w-full lg:w-1/3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Category</h4>
+                                                    </div>
+                                                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                                        {categories.map(cat => (
+                                                            <button
+                                                                key={cat.id}
+                                                                onClick={() => setEditingCategory(cat)}
+                                                                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold transition-all flex justify-between items-center ${editingCategory?.id === cat.id
+                                                                    ? 'bg-sky-50 text-sky-700 border border-sky-100'
+                                                                    : 'text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                            >
+                                                                {cat.name}
+                                                                {editingCategory?.id === cat.id && <ChevronRight size={16} />}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Side: Configuration Panel */}
+                                                <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                    {editingCategory ? (
+                                                        <>
+                                                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                                                                <h4 className="text-sm font-bold text-slate-800">Expense Configuration</h4>
+                                                                <span className="text-xs font-semibold text-slate-400">{editingCategory.name}</span>
+                                                            </div>
+                                                            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                    <div className="space-y-1.5">
+                                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit</label>
+                                                                        <div className="relative">
+                                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                                                            <input
+                                                                                type="text"
+                                                                                defaultValue={editingCategory.max_limit}
+                                                                                className="w-full pl-7 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-1.5">
+                                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Requirements</label>
+                                                                        <select className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all">
+                                                                            <option>Required above ₹ {editingCategory.receipt_threshold || 200}</option>
+                                                                            <option>Always Required</option>
+                                                                            <option>Not Required</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-1.5">
+                                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approval Workflows</label>
+                                                                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 flex items-center gap-2">
+                                                                        <ShieldCheck size={16} className="text-sky-600" />
+                                                                        <span>Reporting Manager</span>
+                                                                        <ChevronRight size={14} className="text-slate-400" />
+                                                                        <span>Finance Head</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-4 pt-4 border-t border-slate-100">
+                                                                    <label className="flex items-center justify-between cursor-pointer group">
+                                                                        <span className="text-sm font-semibold text-slate-700">Allow split expenses</span>
+                                                                        <input type="checkbox" className="accent-sky-600 w-4 h-4" />
+                                                                    </label>
+                                                                    <label className="flex items-center justify-between cursor-pointer group">
+                                                                        <span className="text-sm font-semibold text-slate-700">Require description</span>
+                                                                        <input type="checkbox" defaultChecked={true} className="accent-sky-600 w-4 h-4" />
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div className="p-5 border-t border-slate-100 bg-slate-50/30 flex justify-end">
+                                                                <button className="px-6 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-md shadow-sky-100">
+                                                                    Save Changes
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-300">
+                                                            <Settings2 size={48} className="mb-4 opacity-50" />
+                                                            <p className="text-sm font-bold">Select a category to configure</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
 
-                            {/* Main Content Area */}
-                            <div className="pb-20">
-                                {activeTab === 'categories' ? (
-                                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    {!showExpenseCategoryView && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-top-2">
+                            {activeTab === 'categories' && (
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense Configuration</h3>
+                                        <button
+                                            onClick={() => setIsAddingExpense(true)}
+                                            className="flex items-center gap-2 px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 transition-all shadow-md shadow-sky-100"
+                                        >
+                                            <Plus size={14} /> Add Expense
+                                        </button>
+                                    </div>
+
+                                    <div className="overflow-hidden">
                                         <table className="w-full text-left">
                                             <thead className="bg-slate-50 border-b border-slate-100">
                                                 <tr>
                                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
-                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</th>
+                                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit</th>
                                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required limit</th>
                                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
-                                                {categories.map((cat, index) => (
-                                                    <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-6 py-6">
-                                                            <p className="text-sm font-bold text-slate-700">{cat.name}</p>
+                                                {configuredExpenses.map((exp) => (
+                                                    <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-sm font-bold text-slate-700">{exp.category_name}</p>
                                                         </td>
-                                                        <td className="px-6 py-6">
-                                                            <p className="text-sm font-bold text-slate-600">
-                                                                {cat.max_limit ? `₹ ${cat.max_limit.toLocaleString()}` : '∞'}
-                                                            </p>
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-sm font-bold text-slate-600">₹ {exp.max_limit.toLocaleString()}</p>
                                                         </td>
-                                                        <td className="px-6 py-6">
-                                                            <p className="text-sm font-bold text-slate-600">
-                                                                {cat.receipt_threshold ? `₹ ${cat.receipt_threshold.toLocaleString()}` : '-'}
-                                                            </p>
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-sm font-bold text-slate-600">₹ {exp.receipt_threshold.toLocaleString()}</p>
                                                         </td>
-                                                        <td className="px-6 py-6">
-                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-600">
-                                                                ACTIVE
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${exp.status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                                {exp.status.toUpperCase()}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-6 text-right">
-                                                            <div className="flex justify-end gap-3 transition-opacity">
-                                                                <button
-                                                                    onClick={() => openEditModal(cat)}
-                                                                    className="text-slate-400 hover:text-sky-600 transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Edit2 size={16} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteCategory(cat.id)}
-                                                                    className="text-slate-400 hover:text-rose-500 transition-colors"
-                                                                    title="Delete"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </div>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <button
+                                                                onClick={() => setConfiguredExpenses(prev => prev.filter(e => e.id !== exp.id))}
+                                                                className="text-slate-400 hover:text-rose-500 transition-colors"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
-                                        {categories.length === 0 && (
-                                            <div className="p-8 text-center text-slate-400">
-                                                No categories found. Add one to get started.
+                                        {configuredExpenses.length === 0 && (
+                                            <div className="p-12 text-center">
+                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
+                                                    <Receipt size={32} />
+                                                </div>
+                                                <p className="text-sm font-bold text-slate-400">No expenses configured yet</p>
+                                                <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-black">Click "Add Expense" to get started</p>
                                             </div>
                                         )}
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col lg:flex-row gap-6 h-[600px]">
-                                        {/* Left Side: List */}
-                                        <div className="w-full lg:w-1/3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Category</h4>
-                                            </div>
-                                            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                                                {categories.map(cat => (
-                                                    <button
-                                                        key={cat.id}
-                                                        onClick={() => setEditingCategory(cat)}
-                                                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold transition-all flex justify-between items-center ${editingCategory?.id === cat.id
-                                                            ? 'bg-sky-50 text-sky-700 border border-sky-100'
-                                                            : 'text-slate-600 hover:bg-slate-50'
-                                                            }`}
-                                                    >
-                                                        {cat.name}
-                                                        {editingCategory?.id === cat.id && <ChevronRight size={16} />}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Right Side: Configuration Panel */}
-                                        <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                            {editingCategory ? (
-                                                <>
-                                                    <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                                                        <h4 className="text-sm font-bold text-slate-800">Expense Configuration</h4>
-                                                        <span className="text-xs font-semibold text-slate-400">{editingCategory.name}</span>
-                                                    </div>
-                                                    <div className="p-6 flex-1 overflow-y-auto space-y-6">
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                            <div className="space-y-1.5">
-                                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit</label>
-                                                                <div className="relative">
-                                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                                                    <input
-                                                                        type="text"
-                                                                        defaultValue={editingCategory.max_limit}
-                                                                        className="w-full pl-7 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="space-y-1.5">
-                                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Requirements</label>
-                                                                <select className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all">
-                                                                    <option>Required above ₹ {editingCategory.receipt_threshold || 200}</option>
-                                                                    <option>Always Required</option>
-                                                                    <option>Not Required</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approval Workflows</label>
-                                                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 flex items-center gap-2">
-                                                                <ShieldCheck size={16} className="text-sky-600" />
-                                                                <span>Reporting Manager</span>
-                                                                <ChevronRight size={14} className="text-slate-400" />
-                                                                <span>Finance Head</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-4 pt-4 border-t border-slate-100">
-                                                            <label className="flex items-center justify-between cursor-pointer group">
-                                                                <span className="text-sm font-semibold text-slate-700">Allow split expenses</span>
-                                                                <input type="checkbox" className="accent-sky-600 w-4 h-4" />
-                                                            </label>
-                                                            <label className="flex items-center justify-between cursor-pointer group">
-                                                                <span className="text-sm font-semibold text-slate-700">Require description</span>
-                                                                <input type="checkbox" defaultChecked={true} className="accent-sky-600 w-4 h-4" />
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-5 border-t border-slate-100 bg-slate-50/30 flex justify-end">
-                                                        <button className="px-6 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-md shadow-sky-100">
-                                                            Save Changes
-                                                        </button>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-300">
-                                                    <Settings2 size={48} className="mb-4 opacity-50" />
-                                                    <p className="text-sm font-bold">Select a category to configure</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            {activeTab === 'categories' && (
-                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center animate-in fade-in slide-in-from-top-2">
-                                    <div className="flex flex-col items-center justify-center space-y-4">
-                                        <div className="p-4 bg-slate-50 text-slate-400 rounded-2xl shadow-sm border border-slate-100">
-                                            <Receipt size={40} />
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                setActiveTab('rules');
-                                                setShowExpenseCategoryView(true);
-                                            }}
-                                            className="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
-                                        >
-                                            Add Configuration
-                                        </button>
-                                    </div>
                                 </div>
                             )}
-
 
                             {activeTab === 'rules' && (
                                 <div className="space-y-8 animate-in fade-in slide-in-from-top-2">
@@ -917,11 +1179,11 @@ const ExpenseSettings: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
