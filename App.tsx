@@ -75,9 +75,6 @@ const App: React.FC = () => {
           userRole={userRole}
           onRoleSwitch={handleRoleSwitch}
         />
-        <div className="bg-rose-500 text-white text-[10px] py-1 px-4 text-center font-bold uppercase tracking-widest z-[100]">
-          Debug Mode: v3.0 - Button Removal Verification - 25 Feb 2026
-        </div>
 
         <div className="flex-1 overflow-y-auto scroll-smooth">
 
