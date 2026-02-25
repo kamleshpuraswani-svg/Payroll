@@ -1,4 +1,5 @@
 ﻿
+// v3 - Final Verify Push - Export to CSV removed - 25 Feb 2026
 import React, { useState, useEffect } from 'react';
 import {
     Plus,
@@ -710,16 +711,7 @@ const HRSalaryComponents: React.FC = () => {
                     </h1>
                     <p className="text-slate-500 mt-1">Configure earnings, deductions, and reimbursement rules.</p>
                 </div>
-                {!isAdding && (
-                    <div className="flex gap-2">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm">
-                            <Download size={16} /> Export to CSV
-                        </button>
-                        <div className="text-xs text-slate-400 self-center hidden sm:block">
-                            Last updated: 03 Dec 2025
-                        </div>
-                    </div>
-                )}
+
             </div>
 
             {isAdding ? (
