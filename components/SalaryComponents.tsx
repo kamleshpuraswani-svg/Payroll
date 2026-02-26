@@ -48,7 +48,7 @@ interface ConfirmationModalProps {
 const INITIAL_DATA: SalaryComponent[] = [
     // Earnings
     {
-        id: '1',
+        id: '550e8400-e29b-41d4-a716-446655440001',
         name: 'Basic',
         type: 'Fixed Pay',
         calculation: '50% of CTC',
@@ -65,7 +65,7 @@ const INITIAL_DATA: SalaryComponent[] = [
         effective_date: '2025-04-01'
     },
     {
-        id: '2',
+        id: '550e8400-e29b-41d4-a716-446655440002',
         name: 'House Rent Allowance',
         type: 'Fixed Pay',
         calculation: '50% of Basic',
@@ -82,7 +82,7 @@ const INITIAL_DATA: SalaryComponent[] = [
         effective_date: '2025-04-01'
     },
     {
-        id: '3',
+        id: '550e8400-e29b-41d4-a716-446655440003',
         name: 'Fixed Allowance',
         type: 'Fixed Pay',
         calculation: 'Flat Rs. 5000',
@@ -98,7 +98,7 @@ const INITIAL_DATA: SalaryComponent[] = [
         created: 'By Kamlesh P.\nAt 5:38 PM, Nov 17, 2025'
     },
     {
-        id: '4',
+        id: '550e8400-e29b-41d4-a716-446655440004',
         name: 'Commission',
         type: 'Variable Pay',
         calculation: '10% of Basic',
@@ -115,24 +115,24 @@ const INITIAL_DATA: SalaryComponent[] = [
     },
 
     // Deductions
-    { id: '7', name: 'Professional Tax (PT)', type: 'Variable Pay', calculation: 'State Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Prof Tax' },
-    { id: '8', name: 'Provident Fund (Employee)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'EPF' },
-    { id: '9', name: 'Income Tax (TDS)', type: 'Variable Pay', calculation: 'As per Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'TDS' },
-    { id: '10', name: 'Loan Repayment', type: 'Fixed Pay', calculation: 'Fixed EMI', taxable: 'Tax Deductible', status: false, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Loan Recovery' },
-    { id: '17', name: 'Health Insurance Premium', type: 'Fixed Pay', calculation: 'Flat ₹500', taxable: 'Partially Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Health Ins' },
-    { id: '18', name: 'Salary Advance Recovery', type: 'Variable Pay', calculation: 'Manual', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Sal Adv' },
-    { id: '19', name: 'Labour Welfare Fund', type: 'Fixed Pay', calculation: 'State Rules', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'LWF' },
+    { id: '550e8400-e29b-41d4-a716-446655440007', name: 'Professional Tax (PT)', type: 'Variable Pay', calculation: 'State Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Prof Tax' },
+    { id: '550e8400-e29b-41d4-a716-446655440008', name: 'Provident Fund (Employee)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'EPF' },
+    { id: '550e8400-e29b-41d4-a716-446655440009', name: 'Income Tax (TDS)', type: 'Variable Pay', calculation: 'As per Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'TDS' },
+    { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Loan Repayment', type: 'Fixed Pay', calculation: 'Fixed EMI', taxable: 'Tax Deductible', status: false, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Loan Recovery' },
+    { id: '550e8400-e29b-41d4-a716-446655440017', name: 'Health Insurance Premium', type: 'Fixed Pay', calculation: 'Flat ₹500', taxable: 'Partially Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Health Ins' },
+    { id: '550e8400-e29b-41d4-a716-446655440018', name: 'Salary Advance Recovery', type: 'Variable Pay', calculation: 'Manual', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Sal Adv' },
+    { id: '550e8400-e29b-41d4-a716-446655440019', name: 'Labour Welfare Fund', type: 'Fixed Pay', calculation: 'State Rules', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'LWF' },
 
     // Benefits (Data kept for future use, tab hidden)
-    { id: '11', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
+    { id: '550e8400-e29b-41d4-a716-446655440011', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
 
     // Reimbursements
-    { id: '14', name: 'Medical Reimbursement', type: 'Fixed Pay', calculation: 'Up to ₹ 15,000', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amount_or_percent: '15000', payslip_name: 'Medical Reimb', calc_method: 'Flat' },
-    { id: '15', name: 'Fuel Reimbursement', type: 'Variable Pay', calculation: 'As per bills', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amount_or_percent: '0', payslip_name: 'Fuel', calc_method: 'Flat' },
-    { id: '16', name: 'Books & Periodicals', type: 'Fixed Pay', calculation: '₹ 1,000 / month', taxable: 'Fully Exempt', status: false, category: 'Reimbursements', amount_or_percent: '1000', payslip_name: 'Books', calc_method: 'Flat' },
-    { id: '20', name: 'Driver Salary', type: 'Fixed Pay', calculation: 'Up to ₹ 10,000', taxable: 'Fully Exempt', status: true, category: 'Reimbursements', amount_or_percent: '10000', payslip_name: 'Driver', calc_method: 'Flat' },
-    { id: '21', name: 'Internet Reimbursement', type: 'Fixed Pay', calculation: 'Flat ₹ 1,000', taxable: 'Fully Exempt', status: true, category: 'Reimbursements', amount_or_percent: '1000', payslip_name: 'Internet', calc_method: 'Flat' },
-    { id: '22', name: 'Food Coupons', type: 'Fixed Pay', calculation: '₹ 2,200 / month', taxable: 'Fully Exempt', status: true, category: 'Reimbursements', amount_or_percent: '2200', payslip_name: 'Food Coupons', calc_method: 'Flat' },
+    { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Medical Reimbursement', type: 'Fixed Pay', calculation: 'Up to ₹ 15,000', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amount_or_percent: '15000', payslip_name: 'Medical Reimb', calc_method: 'Flat' },
+    { id: '550e8400-e29b-41d4-a716-446655440015', name: 'Fuel Reimbursement', type: 'Variable Pay', calculation: 'As per bills', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amount_or_percent: '0', payslip_name: 'Fuel', calc_method: 'Flat' },
+    { id: '550e8400-e29b-41d4-a716-446655440016', name: 'Books & Periodicals', type: 'Fixed Pay', calculation: '₹ 1,000 / month', taxable: 'Fully Exempt', status: false, category: 'Reimbursements', amount_or_percent: '1000', payslip_name: 'Books', calc_method: 'Flat' },
+    { id: '550e8400-e29b-41d4-a716-446655440020', name: 'Driver Salary', type: 'Fixed Pay', calculation: 'Up to ₹ 10,000', taxable: 'Fully Exempt', status: true, category: 'Reimbursements', amount_or_percent: '10000', payslip_name: 'Driver', calc_method: 'Flat' },
+    { id: '550e8400-e29b-41d4-a716-446655440021', name: 'Internet Reimbursement', type: 'Fixed Pay', calculation: 'Flat ₹ 1,000', taxable: 'Fully Exempt', status: true, category: 'Reimbursements', amount_or_percent: '1000', payslip_name: 'Internet', calc_method: 'Flat' },
+    { id: '550e8400-e29b-41d4-a716-446655440022', name: 'Food Coupons', type: 'Fixed Pay', calculation: '₹ 2,200 / month', taxable: 'Fully Exempt', status: true, category: 'Reimbursements', amount_or_percent: '2200', payslip_name: 'Food Coupons', calc_method: 'Flat' },
 ];
 
 // --- Confirmation Modal ---
@@ -426,7 +426,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [name, setName] = useState(initialData?.name || '');
     const [payslip_name, setPayslip_name] = useState(initialData?.payslip_name || '');
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
-    const [isActive, setIsActive] = useState(initialData?.status ?? false);
+    const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [show_in_payslip, setShow_in_payslip] = useState(initialData?.show_in_payslip ?? false);
     const [effective_date, setEffective_date] = useState(initialData?.effective_date || new Date().toISOString().split('T')[0]);
     const [deduction_type, setDeduction_type] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deduction_type || 'Statutory');
@@ -772,9 +772,10 @@ const SalaryComponents: React.FC = () => {
 
                 setComponents(prev => prev.map(c => c.id === id ? { ...c, status: statusToSet } : c));
                 setStatusChangeRequest({ isOpen: false, id: null, newStatus: false });
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error updating status:', error);
-                alert('Failed to update status. Please try again.');
+                const errorMessage = error?.message || (typeof error === 'string' ? error : 'Unknown error');
+                alert(`Failed to update status: ${errorMessage}. Please try again.`);
             }
         }
     };
@@ -1055,7 +1056,7 @@ const SalaryComponents: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusClick(item.id, item.status)}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.status ? 'text-emerald-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.status ? 'text-amber-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
                                                         title={item.status ? "Deactivate" : "Activate"}
                                                     >
                                                         <Power size={16} />
