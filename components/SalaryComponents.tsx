@@ -115,13 +115,13 @@ const INITIAL_DATA: SalaryComponent[] = [
     },
 
     // Deductions
-    { id: '550e8400-e29b-41d4-a716-446655440007', name: 'Professional Tax (PT)', type: 'Variable Pay', calculation: 'State Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Prof Tax' },
-    { id: '550e8400-e29b-41d4-a716-446655440008', name: 'Provident Fund (Employee)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'EPF' },
-    { id: '550e8400-e29b-41d4-a716-446655440009', name: 'Income Tax (TDS)', type: 'Variable Pay', calculation: 'As per Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'TDS' },
-    { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Loan Repayment', type: 'Fixed Pay', calculation: 'Fixed EMI', taxable: 'Tax Deductible', status: false, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Loan Recovery' },
-    { id: '550e8400-e29b-41d4-a716-446655440017', name: 'Health Insurance Premium', type: 'Fixed Pay', calculation: 'Flat ₹500', taxable: 'Partially Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Health Ins' },
-    { id: '550e8400-e29b-41d4-a716-446655440018', name: 'Salary Advance Recovery', type: 'Variable Pay', calculation: 'Manual', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Sal Adv' },
-    { id: '550e8400-e29b-41d4-a716-446655440019', name: 'Labour Welfare Fund', type: 'Fixed Pay', calculation: 'State Rules', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'LWF' },
+    { id: '550e8400-e29b-41d4-a716-446655440007', name: 'Professional Tax (PT)', type: 'Variable Pay', calculation: '50% of CTC', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Prof Tax', deduction_type: 'Statutory' },
+    { id: '550e8400-e29b-41d4-a716-446655440008', name: 'Provident Fund (Employee)', type: 'Variable Pay', calculation: '50% of Basic', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'EPF', deduction_type: 'Statutory' },
+    { id: '550e8400-e29b-41d4-a716-446655440009', name: 'Income Tax (TDS)', type: 'Variable Pay', calculation: 'Flat | 1000 INR', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'TDS', deduction_type: 'Statutory' },
+    { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Loan Repayment', type: 'Fixed Pay', calculation: '10% of Basic, DA', taxable: 'Tax Deductible', status: false, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Loan Recovery', deduction_type: 'Non-Statutory' },
+    { id: '550e8400-e29b-41d4-a716-446655440017', name: 'Health Insurance Premium', type: 'Fixed Pay', calculation: '40% of Basic, HRA', taxable: 'Partially Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Health Ins', deduction_type: 'Non-Statutory' },
+    { id: '550e8400-e29b-41d4-a716-446655440018', name: 'Salary Advance Recovery', type: 'Variable Pay', calculation: 'Flat | 5000 INR', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Sal Adv', deduction_type: 'Non-Statutory' },
+    { id: '550e8400-e29b-41d4-a716-446655440019', name: 'Labour Welfare Fund', type: 'Fixed Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'LWF', deduction_type: 'Statutory' },
 
     // Benefits (Data kept for future use, tab hidden)
     { id: '550e8400-e29b-41d4-a716-446655440011', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
@@ -180,6 +180,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
         initialData?.calc_method || 'Flat'
     );
     const [amount_or_percent, setAmount_or_percent] = useState(initialData?.amount_or_percent || '');
+    const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     // Configurations
     const [isTaxable, setIsTaxable] = useState(initialData?.taxable !== 'Fully Exempt');
@@ -192,6 +194,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
 
     const handleSave = () => {
+        const calculateString = calc_method === 'Flat'
+            ? `Flat ₹${amount_or_percent}`
+            : `${amount_or_percent}% of ${selectedComponents.join(', ')}`;
+
         const updatedData: Partial<SalaryComponent> = {
             name,
             payslip_name,
@@ -199,9 +205,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
             calc_method: natureOfPay === 'Fixed' ? calc_method : undefined,
             amount_or_percent: natureOfPay === 'Fixed' ? amount_or_percent : undefined,
-            calculation: natureOfPay === 'Fixed'
-                ? (calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : `${amount_or_percent}% of CTC`)
-                : 'Variable',
+            calculation: natureOfPay === 'Fixed' ? calculateString : 'Variable',
             taxable: isTaxable ? 'Fully Taxable' : 'Fully Exempt',
             consider_epf: consider_epf,
             consider_esi: consider_esi,
@@ -270,11 +274,45 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <span className="text-sm text-slate-700 font-medium">Percentage of</span>
                             </label>
                             <div className="relative">
-                                <select disabled={calc_method !== 'Percentage'} className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50">
-                                    <option>CTC</option>
-                                    <option>Basic</option>
-                                </select>
-                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                <button
+                                    type="button"
+                                    disabled={calc_method !== 'Percentage'}
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between"
+                                >
+                                    <span className="truncate max-w-[80px]">
+                                        {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
+                                    </span>
+                                    <ChevronDown size={14} className="text-slate-400" />
+                                </button>
+
+                                {isDropdownOpen && calc_method === 'Percentage' && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setIsDropdownOpen(false)}
+                                        />
+                                        <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
+                                            {['CTC', 'Basic'].map(comp => (
+                                                <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedComponents.includes(comp)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedComponents([...selectedComponents, comp]);
+                                                            } else {
+                                                                setSelectedComponents(selectedComponents.filter(c => c !== comp));
+                                                            }
+                                                        }}
+                                                        className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                                                    />
+                                                    <span className="text-sm text-slate-700">{comp}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -431,6 +469,14 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [effective_date, setEffective_date] = useState(initialData?.effective_date || new Date().toISOString().split('T')[0]);
     const [deduction_type, setDeduction_type] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deduction_type || 'Statutory');
 
+    const [calc_method, setCalc_method] = useState<'Flat' | 'Percentage'>(
+        initialData?.calc_method || 'Flat'
+    );
+    const [amount_or_percent, setAmount_or_percent] = useState(initialData?.amount_or_percent || '');
+    const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+
     const handleSave = () => {
         const updatedData: Partial<SalaryComponent> = {
             name,
@@ -440,9 +486,11 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             show_in_payslip,
             effective_date,
             deduction_type,
+            calc_method,
+            amount_or_percent,
             type: 'Variable Pay',
             category: 'Deductions',
-            calculation: frequency === 'One-time' ? 'One-time Deduction' : 'Recurring Deduction',
+            calculation: calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : `${amount_or_percent}% of ${selectedComponents.join(', ')}`,
             taxable: 'Tax Deductible',
         };
         onSave(updatedData);
@@ -489,6 +537,87 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         ))}
                     </div>
                 </div>
+
+                {/* Calculation Method */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">Calculation Method <span className="text-rose-500">*</span></label>
+                        <div className="flex items-center gap-6 h-[42px]">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    {calc_method === 'Flat' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                </div>
+                                <input type="radio" className="hidden" checked={calc_method === 'Flat'} onChange={() => setCalc_method('Flat')} />
+                                <span className="text-sm text-slate-700">Flat Amount</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    {calc_method === 'Percentage' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                </div>
+                                <input type="radio" className="hidden" checked={calc_method === 'Percentage'} onChange={() => setCalc_method('Percentage')} />
+                                <span className="text-sm text-slate-700">Percentage of</span>
+                            </label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    disabled={calc_method !== 'Percentage'}
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50 flex items-center gap-2 min-w-[100px] hover:bg-slate-100 transition-colors"
+                                >
+                                    <span className="flex-1 text-left">{selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select...'}</span>
+                                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
+                                            {['CTC', 'Basic'].map(comp => (
+                                                <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                                        {selectedComponents.includes(comp) && <Check size={12} className="text-white" />}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={selectedComponents.includes(comp)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedComponents(prev => [...prev, comp]);
+                                                            } else {
+                                                                // Prevent deselecting everything if needed, or allow it
+                                                                setSelectedComponents(prev => prev.filter(c => c !== comp));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span className="text-sm text-slate-700 font-medium">{comp}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            {calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={amount_or_percent}
+                                onChange={(e) => setAmount_or_percent(e.target.value)}
+                                placeholder={calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
+                                className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                            />
+                            <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                {calc_method === 'Percentage' ? '%' : '₹'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Select the deduction frequency <span className="text-rose-500">*</span></label>
                     <div className="space-y-2">
@@ -531,6 +660,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [payslip_name, setPayslip_name] = useState(initialData?.payslip_name || '');
     const [amount_or_percent, setAmount_or_percent] = useState(initialData?.amount_or_percent || '');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
+    const [show_in_payslip, setShow_in_payslip] = useState(initialData?.show_in_payslip ?? false);
 
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
@@ -539,8 +669,14 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [calc_method, setCalc_method] = useState<'Flat' | 'Percentage'>(
         initialData?.calc_method || 'Flat'
     );
+    const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSave = () => {
+        const calculateString = calc_method === 'Flat'
+            ? 'Fixed Amount'
+            : `% of ${selectedComponents.join(', ')}`;
+
         const updatedData: Partial<SalaryComponent> = {
             name,
             payslip_name,
@@ -549,8 +685,9 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
             category: 'Reimbursements',
             calc_method: calc_method,
-            calculation: calc_method === 'Flat' ? `Fixed Amount` : `% of CTC`,
+            calculation: calculateString,
             taxable: 'Partially Exempt',
+            show_in_payslip: show_in_payslip,
         };
         onSave(updatedData);
     };
@@ -612,11 +749,45 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                     <span className="text-sm text-slate-700 font-medium">Percentage of</span>
                                 </label>
                                 <div className="relative">
-                                    <select disabled={calc_method !== 'Percentage'} className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50">
-                                        <option>CTC</option>
-                                        <option>Basic</option>
-                                    </select>
-                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                    <button
+                                        type="button"
+                                        disabled={calc_method !== 'Percentage'}
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between"
+                                    >
+                                        <span className="truncate max-w-[80px]">
+                                            {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
+                                        </span>
+                                        <ChevronDown size={14} className="text-slate-400" />
+                                    </button>
+
+                                    {isDropdownOpen && calc_method === 'Percentage' && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() => setIsDropdownOpen(false)}
+                                            />
+                                            <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
+                                                {['CTC', 'Basic'].map(comp => (
+                                                    <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedComponents.includes(comp)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedComponents([...selectedComponents, comp]);
+                                                                } else {
+                                                                    setSelectedComponents(selectedComponents.filter(c => c !== comp));
+                                                                }
+                                                            }}
+                                                            className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                                                        />
+                                                        <span className="text-sm text-slate-700">{comp}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -641,13 +812,21 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                     </div>
 
                     {/* Active Checkbox */}
-                    <div className="pt-2">
-                        <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="flex flex-col gap-4 pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
                                 {isActive && <Check size={14} className="text-white" />}
                             </div>
                             <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
                             <span className="text-sm font-medium text-slate-700">Mark as Active</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_in_payslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {show_in_payslip && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={show_in_payslip} onChange={() => setShow_in_payslip(!show_in_payslip)} />
+                            <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
                         </label>
                     </div>
                 </div>
@@ -774,8 +953,14 @@ const SalaryComponents: React.FC = () => {
                 setStatusChangeRequest({ isOpen: false, id: null, newStatus: false });
             } catch (error: any) {
                 console.error('Error updating status:', error);
-                const errorMessage = error?.message || (typeof error === 'string' ? error : 'Unknown error');
-                alert(`Failed to update status: ${errorMessage}. Please try again.`);
+                let errorMessage = error?.message || (typeof error === 'string' ? error : 'Unknown error');
+
+                // Provide a more helpful message for missing table error
+                if (errorMessage.includes('Relation') && errorMessage.includes('does not exist')) {
+                    errorMessage = "The 'salary_components' table is missing from your database. Please run the provided SQL script in your Supabase editor.";
+                }
+
+                alert(`Failed to update status: ${errorMessage}`);
             }
         }
     };
@@ -829,6 +1014,8 @@ const SalaryComponents: React.FC = () => {
         let headers: string[] = [];
         if (activeTab === 'Earnings') {
             headers = ['Component Name', 'Nature of Pay', 'Calculation Method', 'Value', 'Consider for PF', 'Consider for ESI', 'Status', 'Last Modified', 'Created'];
+        } else if (activeTab === 'Deductions') {
+            headers = ['Component Name', 'Calculation Method', 'Deduction Type', 'Deduction Frequency', 'Taxable', 'Status'];
         } else {
             headers = ['Component Name', 'Nature of Pay', 'Taxable', 'Status'];
         }
@@ -846,6 +1033,15 @@ const SalaryComponents: React.FC = () => {
                     `"${item.status ? 'Active' : 'Inactive'}"`,
                     `"${(item.last_modified || '').replace(/\n/g, ' ').replace(/"/g, '""')}"`,
                     `"${(item.created || '').replace(/\n/g, ' ').replace(/"/g, '""')}"`
+                ];
+            } else if (activeTab === 'Deductions') {
+                return [
+                    `"${(item.name || '').replace(/"/g, '""')}"`,
+                    `"${item.calculation || ''}"`,
+                    `"${item.deduction_type || 'Non-Statutory'}"`,
+                    `"${item.frequency || 'Recurring'}"`,
+                    `"${item.taxable}"`,
+                    `"${item.status ? 'Active' : 'Inactive'}"`
                 ];
             } else {
                 return [
@@ -985,7 +1181,7 @@ const SalaryComponents: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-4">Component Name</th>
                                     <th className="px-6 py-4">Name in Payslip</th>
-                                    <th className="px-6 py-4">Nature of Pay</th>
+                                    <th className="px-6 py-4">{activeTab === 'Deductions' ? 'Calculation Method' : 'Nature of Pay'}</th>
 
                                     {/* Columns Specific to Earnings vs Others */}
                                     {activeTab === 'Earnings' ? (
@@ -999,7 +1195,12 @@ const SalaryComponents: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            {/* Fallback Columns for Deductions/Reimbursements (Calculcation Removed) */}
+                                            {activeTab === 'Deductions' && (
+                                                <>
+                                                    <th className="px-6 py-4">Deduction Type</th>
+                                                    <th className="px-6 py-4">Deduction Frequency</th>
+                                                </>
+                                            )}
                                             <th className="px-6 py-4">Taxable</th>
                                             <th className="px-6 py-4">Status</th>
                                         </>
@@ -1015,9 +1216,13 @@ const SalaryComponents: React.FC = () => {
                                             <td className="px-6 py-4 font-semibold text-slate-800">{item.name}</td>
                                             <td className="px-6 py-4 text-slate-600">{item.payslip_name || '-'}</td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
-                                                    {item.type}
-                                                </span>
+                                                {activeTab === 'Deductions' ? (
+                                                    <span className="text-slate-600 font-medium">{item.calculation || '-'}</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
+                                                        {item.type}
+                                                    </span>
+                                                )}
                                             </td>
 
                                             {/* Data Cells Specific to Earnings vs Others */}
@@ -1036,6 +1241,16 @@ const SalaryComponents: React.FC = () => {
                                                 </>
                                             ) : (
                                                 <>
+                                                    {activeTab === 'Deductions' && (
+                                                        <>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.deduction_type === 'Statutory' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-slate-50 text-slate-600 border border-slate-100'}`}>
+                                                                    {item.deduction_type || 'Non-Statutory'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-slate-500 font-medium">{item.frequency || 'Recurring'}</td>
+                                                        </>
+                                                    )}
                                                     <td className="px-6 py-4">{item.taxable}</td>
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${item.status ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
