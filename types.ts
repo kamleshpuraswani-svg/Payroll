@@ -9,12 +9,12 @@ export interface Company {
   plan: 'Basic' | 'Pro' | 'Enterprise';
   employees: number;
   status: 'Active' | 'Pending' | 'Suspended';
-  lastAudit: string;
+  last_audit: string;
   location?: string;
-  businessUnit?: string;
-  lastPayrollRun?: string;
+  business_unit?: string;
+  last_payroll_run?: string;
   industry?: string;
-  logoUrl?: string;
+  logo_url?: string;
 }
 
 export interface StatAction {
@@ -26,20 +26,20 @@ export interface StatMetric {
   title: string;
   value: string;
   trend: string;
-  trendUp: boolean;
+  trend_up: boolean;
   icon: React.ReactNode;
-  colorClass: string;
+  color_class: string;
   onClick?: () => void;
-  onInfoClick?: () => void;
+  on_info_click?: () => void;
   actions?: StatAction[];
-  extraDetails?: { label: string; value: string; color?: string }[];
-  detailsAtTop?: boolean;
+  extra_details?: { label: string; value: string; color?: string }[];
+  details_at_top?: boolean;
 }
 
 export interface AuditLog {
   id: string;
   action: string;
-  user: string;
+  user_name: string;
   timestamp: string;
   severity: 'Low' | 'Medium' | 'High';
 }
@@ -86,56 +86,59 @@ export enum ViewState {
 
 export interface ApprovalItem {
   id: string;
-  employeeName: string;
-  companyName: string;
+  employee_name: string;
+  company_name: string;
   type: 'Investment Declaration' | 'Reimbursement Claim' | 'Tax Regime Change' | 'Bank Details Update';
-  submittedTime: string;
+  submitted_time: string;
   amount?: string;
   details: string;
-  avatarUrl?: string;
+  avatar_url?: string;
 }
 
 export interface Employee {
   id: string;
-  name: string;
-  eid: string;
-  company: string;
+  first_name: string;
+  last_name: string;
+  employee_id: string;
+  company_id: string;
   department: string;
+  designation?: string;
   location?: string;
-  businessUnit?: string;
-  ctc: string;
-  joinDate: string;
+  business_unit?: string;
+  ctc: string | number;
+  date_of_joining: string;
   status: 'Active' | 'New Joinee' | 'On Notice' | 'Relieved';
-  avatarUrl: string;
+  avatar_url?: string;
+  email: string;
 }
 
 export interface StatutoryReport {
   id: string;
-  companyName: string;
-  reportType: string;
-  dueDate: string;
-  daysRemaining: number;
+  company_name: string;
+  report_type: string;
+  due_date: string;
+  days_remaining: number;
   status: 'Critical' | 'Due Soon' | 'Upcoming' | 'Safe';
   category: 'TDS' | 'PF' | 'ESI' | 'PT';
-  logoUrl?: string;
+  logo_url?: string;
 }
 
 export interface DeclarationProof {
   id: string;
-  fileName: string;
-  fileType: 'pdf' | 'jpg' | 'png';
+  file_name: string;
+  file_type: 'pdf' | 'jpg' | 'png';
   size: string;
 }
 
 export interface TaxDeclaration {
   id: string;
-  employeeName: string;
-  employeeId: string;
-  avatarUrl: string;
+  employee_name: string;
+  employee_id: string;
+  avatar_url: string;
   type: '80C' | '80D' | 'HRA' | '80CCD' | '80G' | 'Others';
-  typeLabel: string;
+  type_label: string;
   amount: number;
-  submittedDate: string;
+  submitted_date: string;
   proofs: DeclarationProof[];
   status: 'Pending' | 'Approved' | 'Rejected';
   notes: string;

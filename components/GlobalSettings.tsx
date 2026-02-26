@@ -21,7 +21,7 @@ import {
 
 import OrganizationTaxDetails from './OrganizationTaxDetails';
 import PayrollSettings from './PayrollSettings';
-import HRSalaryComponents from './HRSalaryComponents';
+import SalaryComponents from './SalaryComponents';
 import HRSalaryStructure from './HRSalaryStructure';
 import HRTaxConfiguration from './HRTaxConfiguration';
 import HRSalarySlipTemplate from './HRSalarySlipTemplate';
@@ -60,7 +60,7 @@ const GlobalSettings: React.FC = () => {
       switch (activeModule) {
          case 'organization': return <OrganizationTaxDetails />;
          case 'schedule': return <PayrollSettings />;
-         case 'components': return <HRSalaryComponents />;
+         case 'components': return <SalaryComponents />;
          case 'structure': return <HRSalaryStructure embedded={true} />;
          case 'tax-config': return <HRTaxConfiguration />;
          case 'loan-types': return <LoanAdvancesTypes />;
@@ -108,7 +108,7 @@ const GlobalSettings: React.FC = () => {
          </div>
 
          {/* Right Content */}
-         <div className="flex-1 h-full overflow-hidden flex flex-col bg-white relative">
+         <div className="flex-1 h-full overflow-y-auto flex flex-col bg-white relative">
             {renderContent()}
          </div>
       </div>

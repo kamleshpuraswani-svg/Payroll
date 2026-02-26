@@ -534,7 +534,7 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
                 <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">Edit Investment Declaration</h3>
-                        <p className="text-xs text-sky-700 font-medium">{doc.employeeName} ({doc.employeeId})</p>
+                        <p className="text-xs text-sky-700 font-medium">{doc?.employee_name || 'N/A'} ({doc?.employee_id || 'N/A'})</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-sky-100 rounded-full text-slate-400 hover:text-sky-700 transition-colors">
                         <X size={20} />
@@ -544,11 +544,17 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Employee Info Header (Read Only) */}
                     <div className="flex items-start gap-4 p-4 border border-slate-100 rounded-xl bg-slate-50/50">
-                        <img src={doc.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover" />
+                        {doc?.avatar_url ? (
+                            <img src={doc.avatar_url} alt="" className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover" />
+                        ) : (
+                            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-white shadow-sm">
+                                <User size={20} />
+                            </div>
+                        )}
                         <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-sm">
                             <div className="col-span-1 sm:col-span-2">
                                 <p className="text-[10px] text-slate-400 font-bold uppercase">Employee</p>
-                                <p className="font-bold text-slate-800">{doc.employeeName}</p>
+                                <p className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase">Dept</p>
@@ -556,7 +562,7 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
                             </div>
                             <div>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase">Regime</p>
-                                <p className="font-medium text-slate-700">{doc.regime}</p>
+                                <p className="font-medium text-slate-700">{doc?.regime || 'N/A'}</p>
                             </div>
                         </div>
                     </div>
@@ -567,7 +573,7 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Declaration Type</label>
                                 <div className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500 font-medium cursor-not-allowed">
-                                    {doc.typeLabel}
+                                    {doc?.type_label || 'N/A'}
                                 </div>
                             </div>
                             <div>
@@ -633,10 +639,10 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Attached Proofs</label>
                             <div className="grid grid-cols-3 gap-3">
-                                {proofs.map((proof, i) => (
+                                {(proofs || []).map((proof, i) => (
                                     <div key={i} className="border border-slate-200 rounded-lg p-2 flex flex-col items-center text-center bg-slate-50 relative group">
                                         <div className="mb-1 text-slate-400"><FileText size={20} /></div>
-                                        <p className="text-[10px] font-medium text-slate-600 truncate w-full">{proof.fileName}</p>
+                                        <p className="text-[10px] font-medium text-slate-600 truncate w-full">{proof?.file_name || 'File'}</p>
                                         <button className="absolute top-1 right-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <XCircle size={14} />
                                         </button>
@@ -696,7 +702,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                 <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">Approve Declaration</h3>
-                        <p className="text-xs text-sky-700 font-medium">{doc.employeeName} ({doc.employeeId})</p>
+                        <p className="text-xs text-sky-700 font-medium">{doc?.employee_name || 'N/A'} ({doc?.employee_id || 'N/A'})</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-sky-100 rounded-full text-slate-400 hover:text-sky-700 transition-colors">
                         <X size={20} />
@@ -708,11 +714,11 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase">Declaration</p>
-                            <p className="font-bold text-slate-800">{doc.typeLabel}</p>
+                            <p className="font-bold text-slate-800">{doc?.type_label || 'N/A'}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-xs font-bold text-slate-400 uppercase">Declared Amount</p>
-                            <p className="font-bold text-slate-800 text-lg">₹{doc.amount.toLocaleString('en-IN')}</p>
+                            <p className="font-bold text-slate-800 text-lg">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
                         </div>
                     </div>
 
@@ -723,7 +729,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                             <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Approved' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
                                 <input type="radio" name="decision" checked={decision === 'Approved'} onChange={() => setDecision('Approved')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
                                 <span className="ml-3 font-bold text-slate-700">Full Approve</span>
-                                <span className="ml-auto text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded">₹{doc.amount.toLocaleString()}</span>
+                                <span className="ml-auto text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded">₹{(doc?.amount || 0).toLocaleString()}</span>
                             </label>
 
                             <label className={`flex flex-col p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Partially Approved' ? 'border-orange-500 bg-orange-50/30' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -775,10 +781,10 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                     <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Attached Proofs (Review)</label>
                         <div className="flex gap-2 overflow-x-auto pb-1">
-                            {doc.proofs.map((proof, i) => (
+                            {(doc?.proofs || []).map((proof, i) => (
                                 <div key={i} className="min-w-[100px] border border-slate-200 rounded-lg p-2 flex flex-col items-center text-center bg-slate-50">
                                     <FileText size={16} className="text-slate-400 mb-1" />
-                                    <p className="text-[9px] font-medium text-slate-600 truncate w-full" title={proof.fileName}>{proof.fileName}</p>
+                                    <p className="text-[9px] font-medium text-slate-600 truncate w-full" title={proof?.file_name || 'File'}>{proof?.file_name || 'File'}</p>
                                 </div>
                             ))}
                         </div>
@@ -853,7 +859,7 @@ const AddCommentModal: React.FC<CommentModalProps> = ({ doc, onClose, onComment 
                 <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">Add Comment</h3>
-                        <p className="text-xs text-sky-700 font-medium">{doc.employeeName} ({doc.employeeId})</p>
+                        <p className="text-xs text-sky-700 font-medium">{doc?.employee_name || 'N/A'} ({doc?.employee_id || 'N/A'})</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-sky-100 rounded-full text-slate-400 hover:text-sky-700 transition-colors">
                         <X size={20} />
@@ -972,7 +978,7 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                 <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">View Investment Declaration</h3>
-                        <p className="text-xs text-sky-700 font-medium">{doc.employeeName} ({doc.employeeId})</p>
+                        <p className="text-xs text-sky-700 font-medium">{doc?.employee_name || 'N/A'} ({doc?.employee_id || 'N/A'})</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={onClose} className="p-2 hover:bg-sky-100 rounded-full text-slate-400 hover:text-sky-700 transition-colors">
@@ -984,12 +990,18 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Employee Info Header */}
                     <div className="flex items-start gap-4 p-4 border border-slate-100 rounded-xl bg-slate-50/50">
-                        <img src={doc.avatarUrl} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover" />
+                        {doc?.avatar_url ? (
+                            <img src={doc.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover" />
+                        ) : (
+                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-white shadow-sm">
+                                <User size={24} />
+                            </div>
+                        )}
                         <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 text-sm">
                             <div className="col-span-1 sm:col-span-2">
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Employee</p>
-                                <p className="font-bold text-slate-800">{doc.employeeName}</p>
-                                <p className="text-xs text-slate-500">{doc.employeeId}</p>
+                                <p className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</p>
+                                <p className="text-xs text-slate-500">{doc?.employee_id || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Department</p>
@@ -997,11 +1009,11 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                             </div>
                             <div>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">CTC</p>
-                                <p className="font-medium text-slate-700">{doc.ctc}</p>
+                                <p className="font-medium text-slate-700">{doc?.ctc || 'N/A'}</p>
                             </div>
                             <div className="col-span-2 sm:col-span-4 pt-1">
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
-                                    Tax Regime: {doc.regime}
+                                    Tax Regime: {doc?.regime || 'N/A'}
                                 </span>
                             </div>
                         </div>
@@ -1011,7 +1023,7 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-slate-100 pb-6">
                         <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Declaration Type</p>
-                            <p className="font-bold text-purple-700 text-sm">{doc.typeLabel}</p>
+                            <p className="font-bold text-purple-700 text-sm">{doc?.type_label || 'N/A'}</p>
                         </div>
                         <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Max Limit</p>
@@ -1019,11 +1031,11 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                         </div>
                         <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Declared Amount</p>
-                            <p className="font-bold text-slate-800 text-lg">₹{doc.amount.toLocaleString('en-IN')}</p>
+                            <p className="font-bold text-slate-800 text-lg">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
                         </div>
                         <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Submitted Date</p>
-                            <p className="font-medium text-slate-700 text-sm flex items-center gap-1"><Calendar size={12} /> {doc.submittedDate}</p>
+                            <p className="font-medium text-slate-700 text-sm flex items-center gap-1"><Calendar size={12} /> {doc?.submitted_date || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -1039,15 +1051,15 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {doc.breakdown.map((item, idx) => (
+                                    {(doc?.breakdown || []).map((item, idx) => (
                                         <tr key={idx}>
-                                            <td className="px-4 py-2.5 text-slate-700">{item.label}</td>
-                                            <td className="px-4 py-2.5 text-right font-medium text-slate-800">₹{item.amount.toLocaleString('en-IN')}</td>
+                                            <td className="px-4 py-2.5 text-slate-700">{item?.label || 'N/A'}</td>
+                                            <td className="px-4 py-2.5 text-right font-medium text-slate-800">₹{(item?.amount || 0).toLocaleString('en-IN')}</td>
                                         </tr>
                                     ))}
                                     <tr className="bg-slate-50/50 font-bold">
                                         <td className="px-4 py-2.5 text-slate-800">Total</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-900">₹{doc.amount.toLocaleString('en-IN')}</td>
+                                        <td className="px-4 py-2.5 text-right text-slate-900">₹{(doc?.amount || 0).toLocaleString('en-IN')}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1056,28 +1068,28 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
 
                     {/* Attached Proofs */}
                     <div>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Attached Proofs ({doc.proofs.length})</h4>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Attached Proofs ({(doc?.proofs || []).length})</h4>
                         <div className="grid grid-cols-3 gap-3">
-                            {doc.proofs.map((proof, i) => (
+                            {(doc?.proofs || []).map((proof, i) => (
                                 <div key={i} className="border border-slate-200 rounded-xl p-3 flex flex-col items-center text-center gap-2 hover:border-purple-300 transition-all group bg-white shadow-sm hover:shadow-md relative cursor-pointer">
                                     <div className="mb-1">
-                                        {proof.fileType === 'pdf' ? <FileText size={24} className="text-rose-500" /> : <ImageIcon size={24} className="text-sky-500" />}
+                                        {proof?.file_type === 'pdf' ? <FileText size={24} className="text-rose-500" /> : <ImageIcon size={24} className="text-sky-500" />}
                                     </div>
                                     <div className="w-full">
-                                        <p className="text-[10px] font-medium text-slate-700 truncate px-1" title={proof.fileName}>{proof.fileName}</p>
-                                        <p className="text-[9px] text-slate-400 mt-0.5">{proof.size}</p>
+                                        <p className="text-[10px] font-medium text-slate-700 truncate px-1" title={proof?.file_name || 'File'}>{proof?.file_name || 'File'}</p>
+                                        <p className="text-[9px] text-slate-400 mt-0.5">{proof?.size || '0 KB'}</p>
                                     </div>
                                     {/* Hover Actions */}
                                     <div className="absolute inset-0 bg-slate-900/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); handleViewProof(proof.fileName); }}
+                                            onClick={(e) => { e.stopPropagation(); handleViewProof(proof?.file_name || 'file.pdf'); }}
                                             className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-600 hover:text-purple-600 transition-colors"
                                             title="View"
                                         >
                                             <Eye size={14} />
                                         </button>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); handleDownloadProof(proof.fileName); }}
+                                            onClick={(e) => { e.stopPropagation(); handleDownloadProof(proof?.file_name || 'file.pdf'); }}
                                             className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-600 hover:text-purple-600 transition-colors"
                                             title="Download"
                                         >
@@ -1093,11 +1105,11 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                     <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-3">
                         <div className="flex justify-between items-center">
                             <h4 className="text-xs font-bold text-slate-500 uppercase">Current Status</h4>
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyle(doc.status)}`}>{doc.status}</span>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyle(doc?.status || 'Pending')}`}>{doc?.status || 'Pending'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-slate-500 pt-3 border-t border-slate-200">
                             <Clock size={12} />
-                            <span>Submitted by employee – {doc.submittedDate}</span>
+                            <span>Submitted by employee – {doc?.submitted_date || 'N/A'}</span>
                         </div>
                     </div>
                 </div>
@@ -1260,52 +1272,58 @@ const TaxDeclarationsManagement: React.FC = () => {
                             <tbody className="divide-y divide-slate-100">
                                 {declarations.map((doc) => (
                                     <tr
-                                        key={doc.id}
-                                        onClick={() => handleOpenView(doc.id)}
-                                        className={`hover:bg-sky-50/30 cursor-pointer transition-colors group ${selectedDocId === doc.id ? 'bg-sky-50/50' : ''}`}
+                                        key={doc?.id || Math.random()}
+                                        onClick={() => handleOpenView(doc?.id || '')}
+                                        className={`hover:bg-sky-50/30 cursor-pointer transition-colors group ${selectedDocId === doc?.id ? 'bg-sky-50/50' : ''}`}
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <img src={doc.avatarUrl} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200" />
+                                                {doc?.avatar_url ? (
+                                                    <img src={doc.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200" />
+                                                ) : (
+                                                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                        <User size={14} />
+                                                    </div>
+                                                )}
                                                 <div>
-                                                    <div className="font-bold text-slate-800">{doc.employeeName}</div>
-                                                    <div className="text-xs text-slate-400 font-mono">{doc.employeeId}</div>
+                                                    <div className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</div>
+                                                    <div className="text-xs text-slate-400 font-mono">{doc?.employee_id || 'N/A'}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc.type)}`}>
-                                                {doc.typeLabel}
+                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc?.type || '')}`}>
+                                                {doc?.type_label || 'N/A'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-black text-slate-700">₹{doc.amount.toLocaleString('en-IN')}</div>
+                                            <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
-                                            {doc.submittedDate}
+                                            {doc?.submitted_date || 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">
-                                                <FileText size={12} /> {doc.proofs.length} Files
+                                                <FileText size={12} /> {(doc?.proofs || []).length} Files
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc.status)}`}>
-                                                {doc.status}
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
+                                                {doc?.status || 'Pending'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-0.5">
-                                                <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc.id); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc.id); setModalMode('APPROVE'); }}
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('APPROVE'); }}
                                                     className="p-1.5 hover:bg-slate-100 hover:text-emerald-600 rounded-lg text-slate-400 transition-colors"
                                                     title="Decide"
                                                 >
                                                     <Check size={15} />
                                                 </button>
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc.id); setModalMode('COMMENT'); }}
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('COMMENT'); }}
                                                     className="p-1.5 hover:bg-slate-100 hover:text-sky-600 rounded-lg text-slate-400 transition-colors"
                                                     title="Add Note"
                                                 >

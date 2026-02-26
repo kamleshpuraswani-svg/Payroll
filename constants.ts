@@ -7,9 +7,9 @@ export const MOCK_COMPANIES: Company[] = [
     plan: 'Enterprise',
     employees: 12500,
     status: 'Active',
-    lastAudit: '2 hours ago',
-    businessUnit: 'Digital Technology',
-    lastPayrollRun: '30 Nov 2025',
+    last_audit: '2 hours ago',
+    business_unit: 'Digital Technology',
+    last_payroll_run: '30 Nov 2025',
     industry: 'Technology'
   },
   {
@@ -18,9 +18,9 @@ export const MOCK_COMPANIES: Company[] = [
     plan: 'Pro',
     employees: 4560,
     status: 'Active',
-    lastAudit: '1 day ago',
-    businessUnit: 'Retail Banking',
-    lastPayrollRun: '28 Nov 2025',
+    last_audit: '1 day ago',
+    business_unit: 'Retail Banking',
+    last_payroll_run: '28 Nov 2025',
     industry: 'Manufacturing'
   },
   {
@@ -29,9 +29,9 @@ export const MOCK_COMPANIES: Company[] = [
     plan: 'Enterprise',
     employees: 8900,
     status: 'Pending',
-    lastAudit: '3 days ago',
-    businessUnit: 'Supply Chain',
-    lastPayrollRun: '29 Nov 2025',
+    last_audit: '3 days ago',
+    business_unit: 'Supply Chain',
+    last_payroll_run: '29 Nov 2025',
     industry: 'Logistics'
   },
   {
@@ -40,9 +40,9 @@ export const MOCK_COMPANIES: Company[] = [
     plan: 'Basic',
     employees: 45,
     status: 'Suspended',
-    lastAudit: '1 week ago',
-    businessUnit: 'Product Innovation',
-    lastPayrollRun: '30 Nov 2025',
+    last_audit: '1 week ago',
+    business_unit: 'Product Innovation',
+    last_payroll_run: '30 Nov 2025',
     industry: 'SaaS'
   },
   {
@@ -51,9 +51,9 @@ export const MOCK_COMPANIES: Company[] = [
     plan: 'Pro',
     employees: 180,
     status: 'Active',
-    lastAudit: '5 hours ago',
-    businessUnit: 'Digital Technology',
-    lastPayrollRun: '30 Nov 2025',
+    last_audit: '5 hours ago',
+    business_unit: 'Digital Technology',
+    last_payroll_run: '30 Nov 2025',
     industry: 'Design'
   },
   {
@@ -62,146 +62,146 @@ export const MOCK_COMPANIES: Company[] = [
     plan: 'Pro',
     employees: 2340,
     status: 'Active',
-    lastAudit: '12 hours ago',
-    businessUnit: 'Strategic Consulting',
-    lastPayrollRun: '30 Nov 2025',
+    last_audit: '12 hours ago',
+    business_unit: 'Strategic Consulting',
+    last_payroll_run: '30 Nov 2025',
     industry: 'Consulting'
   },
 ];
 
 export const MOCK_AUDIT_LOGS: AuditLog[] = [
-  { id: 'LOG-001', action: 'Modified Tax Bracket Configuration', user: 'Admin Sarah', timestamp: '10 mins ago', severity: 'High' },
-  { id: 'LOG-002', action: 'Added New Client: Zenith Co.', user: 'Sales Team', timestamp: '45 mins ago', severity: 'Medium' },
-  { id: 'LOG-003', action: 'System Backup Completed', user: 'System', timestamp: '2 hours ago', severity: 'Low' },
-  { id: 'LOG-004', action: 'Updated Salary Component Rules', user: 'Admin Mike', timestamp: '4 hours ago', severity: 'High' },
-  { id: 'LOG-005', action: 'User Permissions Updated', user: 'SuperAdmin', timestamp: 'Yesterday', severity: 'Medium' },
+  { id: 'LOG-001', action: 'Modified Tax Bracket Configuration', user_name: 'Admin Sarah', timestamp: '10 mins ago', severity: 'High' },
+  { id: 'LOG-002', action: 'Added New Client: Zenith Co.', user_name: 'Sales Team', timestamp: '45 mins ago', severity: 'Medium' },
+  { id: 'LOG-003', action: 'System Backup Completed', user_name: 'System', timestamp: '2 hours ago', severity: 'Low' },
+  { id: 'LOG-004', action: 'Updated Salary Component Rules', user_name: 'Admin Mike', timestamp: '4 hours ago', severity: 'High' },
+  { id: 'LOG-005', action: 'User Permissions Updated', user_name: 'SuperAdmin', timestamp: 'Yesterday', severity: 'Medium' },
 ];
 
 export const MOCK_APPROVALS: ApprovalItem[] = [
   {
     id: 'APP-001',
-    employeeName: 'Priya Sharma',
-    companyName: 'TechFlow Systems',
+    employee_name: 'Priya Sharma',
+    company_name: 'TechFlow Systems',
     type: 'Investment Declaration',
-    submittedTime: '2 hrs ago',
+    submitted_time: '2 hrs ago',
     amount: '₹1,48,000',
     details: '80C',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   },
   {
     id: 'APP-002',
-    employeeName: 'Arjun Mehta',
-    companyName: 'Acme Corp',
+    employee_name: 'Arjun Mehta',
+    company_name: 'Acme Corp',
     type: 'Reimbursement Claim',
-    submittedTime: '5 hrs ago',
+    submitted_time: '5 hrs ago',
     amount: '₹12,400',
     details: 'Medical',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   },
   {
     id: 'APP-003',
-    employeeName: 'Neha Kapoor',
-    companyName: 'StartUp Inc',
+    employee_name: 'Neha Kapoor',
+    company_name: 'StartUp Inc',
     type: 'Tax Regime Change',
-    submittedTime: '1 day ago',
+    submitted_time: '1 day ago',
     details: 'Old → New',
-    avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   },
   {
     id: 'APP-004',
-    employeeName: 'Rohan Desai',
-    companyName: 'Global Logistics',
+    employee_name: 'Rohan Desai',
+    company_name: 'Global Logistics',
     type: 'Bank Details Update',
-    submittedTime: '1 day ago',
+    submitted_time: '1 day ago',
     details: 'HDFC A/c ****6789',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   },
   {
     id: 'APP-005',
-    employeeName: 'Ananya Patel',
-    companyName: 'TechFlow Systems',
+    employee_name: 'Ananya Patel',
+    company_name: 'TechFlow Systems',
     type: 'Reimbursement Claim',
-    submittedTime: '2 days ago',
+    submitted_time: '2 days ago',
     amount: '₹8,900',
     details: 'LTA',
-    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   },
   {
     id: 'APP-006',
-    employeeName: 'Vikram Singh',
-    companyName: 'Acme Corp',
+    employee_name: 'Vikram Singh',
+    company_name: 'Acme Corp',
     type: 'Investment Declaration',
-    submittedTime: '3 days ago',
+    submitted_time: '3 days ago',
     amount: '₹1,50,000',
     details: '80C + 80D',
-    avatarUrl: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   },
   {
     id: 'APP-007',
-    employeeName: 'Sneha Reddy',
-    companyName: 'PixelCraft Studio',
+    employee_name: 'Sneha Reddy',
+    company_name: 'PixelCraft Studio',
     type: 'Reimbursement Claim',
-    submittedTime: '4 days ago',
+    submitted_time: '4 days ago',
     amount: '₹6,200',
     details: 'Telephone',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   }
 ];
 
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'Priya Sharma', eid: 'TF00912', company: 'TechFlow Systems', department: 'Software Engineering', businessUnit: 'Digital Technology', location: 'Digital Technology', ctc: '₹18.5 L', joinDate: '12 Jan 2023', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '2', name: 'Arjun Mehta', eid: 'AC04567', company: 'Acme Corp', department: 'Sales', businessUnit: 'Retail Banking', location: 'Retail Banking', ctc: '₹24.0 L', joinDate: '03 Mar 2024', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '3', name: 'Neha Kapoor', eid: 'SU00234', company: 'StartUp Inc', department: 'Product', businessUnit: 'Product Management', location: 'Product Management', ctc: '₹15.8 L', joinDate: '22 Nov 2025', status: 'New Joinee', avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '4', name: 'Rohan Desai', eid: 'GL07890', company: 'Global Logistics', department: 'DevOps', businessUnit: 'Digital Technology', location: 'Digital Technology', ctc: '₹21.2 L', joinDate: '17 Apr 2022', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '5', name: 'Ananya Patel', eid: 'TF01145', company: 'TechFlow Systems', department: 'QA', businessUnit: 'Wealth Management', location: 'Wealth Management', ctc: '₹14.7 L', joinDate: '05 Oct 2025', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '6', name: 'Vikram Singh', eid: 'AC03987', company: 'Acme Corp', department: 'Finance', businessUnit: 'Corporate Strategy', location: 'Corporate Strategy', ctc: '₹19.0 L', joinDate: '01 Dec 2021', status: 'On Notice', avatarUrl: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '7', name: 'Sneha Reddy', eid: 'PX05678', company: 'PixelCraft Studio', department: 'Design', businessUnit: 'Creative Services', location: 'Creative Services', ctc: '₹16.4 L', joinDate: '14 Feb 2025', status: 'Active', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-  { id: '8', name: 'Karan Malhotra', eid: 'SU00821', company: 'StartUp Inc', department: 'Marketing', businessUnit: 'Brand & Growth', location: 'Brand & Growth', ctc: '₹12.5 L', joinDate: '30 Nov 2025', status: 'Relieved', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '1', first_name: 'Priya', last_name: 'Sharma', employee_id: 'TF00912', company_id: 'TF-1024', email: 'priya@techflow.com', department: 'Software Engineering', business_unit: 'Digital Technology', location: 'Digital Technology', ctc: '1850000', date_of_joining: '2023-01-12', status: 'Active', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '2', first_name: 'Arjun', last_name: 'Mehta', employee_id: 'AC04567', company_id: 'AC-1001', email: 'arjun@acme.com', department: 'Sales', business_unit: 'Retail Banking', location: 'Retail Banking', ctc: '2400000', date_of_joining: '2024-03-03', status: 'Active', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '3', first_name: 'Neha', last_name: 'Kapoor', employee_id: 'SU00234', company_id: 'SU-1027', email: 'neha@startup.com', department: 'Product', business_unit: 'Product Management', location: 'Product Management', ctc: '1580000', date_of_joining: '2025-11-22', status: 'New Joinee', avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '4', first_name: 'Rohan', last_name: 'Desai', employee_id: 'GL07890', company_id: 'GL-1026', email: 'rohan@globallogistics.com', department: 'DevOps', business_unit: 'Digital Technology', location: 'Digital Technology', ctc: '2120000', date_of_joining: '2022-04-17', status: 'Active', avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '5', first_name: 'Ananya', last_name: 'Patel', employee_id: 'TF01145', company_id: 'TF-1024', email: 'ananya@techflow.com', department: 'QA', business_unit: 'Wealth Management', location: 'Wealth Management', ctc: '1470000', date_of_joining: '2025-10-05', status: 'Active', avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '6', first_name: 'Vikram', last_name: 'Singh', employee_id: 'AC03987', company_id: 'AC-1001', email: 'vikram@acme.com', department: 'Finance', business_unit: 'Corporate Strategy', location: 'Corporate Strategy', ctc: '1900000', date_of_joining: '2021-12-01', status: 'On Notice', avatar_url: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '7', first_name: 'Sneha', last_name: 'Reddy', employee_id: 'PX05678', company_id: 'PX-1098', email: 'sneha@pixelcraft.com', department: 'Design', business_unit: 'Creative Services', location: 'Creative Services', ctc: '1640000', date_of_joining: '2025-02-14', status: 'Active', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+  { id: '8', first_name: 'Karan', last_name: 'Malhotra', employee_id: 'SU00821', company_id: 'SU-1027', email: 'karan@startup.com', department: 'Marketing', business_unit: 'Brand & Growth', location: 'Brand & Growth', ctc: '1250000', date_of_joining: '2025-11-30', status: 'Relieved', avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
 ];
 
 export const MOCK_STATUTORY_REPORTS: StatutoryReport[] = [
   {
     id: 'RPT-001',
-    companyName: 'Acme Corp',
-    reportType: 'Form 24Q (Q3)',
-    dueDate: '31 Dec 2025',
-    daysRemaining: 2,
+    company_name: 'Acme Corp',
+    report_type: 'Form 24Q (Q3)',
+    due_date: '31 Dec 2025',
+    days_remaining: 2,
     status: 'Critical',
     category: 'TDS'
   },
   {
     id: 'RPT-002',
-    companyName: 'TechFlow Systems',
-    reportType: 'PF ECR (Nov)',
-    dueDate: '02 Jan 2026',
-    daysRemaining: 4,
+    company_name: 'TechFlow Systems',
+    report_type: 'PF ECR (Nov)',
+    due_date: '02 Jan 2026',
+    days_remaining: 4,
     status: 'Due Soon',
     category: 'PF'
   },
   {
     id: 'RPT-003',
-    companyName: 'Global Logistics',
-    reportType: 'ESI Return (Half-yearly)',
-    dueDate: '06 Jan 2026',
-    daysRemaining: 8,
+    company_name: 'Global Logistics',
+    report_type: 'ESI Return (Half-yearly)',
+    due_date: '06 Jan 2026',
+    days_remaining: 8,
     status: 'Due Soon',
     category: 'ESI'
   },
   {
     id: 'RPT-004',
-    companyName: 'StartUp Inc',
-    reportType: 'Maharashtra PT Return',
-    dueDate: '10 Jan 2026',
-    daysRemaining: 12,
+    company_name: 'StartUp Inc',
+    report_type: 'Maharashtra PT Return',
+    due_date: '10 Jan 2026',
+    days_remaining: 12,
     status: 'Upcoming',
     category: 'PT'
   },
   {
     id: 'RPT-005',
-    companyName: 'PixelCraft Studio',
-    reportType: 'Form 16 Part A',
-    dueDate: '15 May 2026',
-    daysRemaining: 135,
+    company_name: 'PixelCraft Studio',
+    report_type: 'Form 16 Part A',
+    due_date: '15 May 2026',
+    days_remaining: 135,
     status: 'Safe',
     category: 'TDS'
   }
@@ -210,21 +210,21 @@ export const MOCK_STATUTORY_REPORTS: StatutoryReport[] = [
 export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
   {
     id: 'TX-001',
-    employeeName: 'Priya Sharma',
-    employeeId: 'TF00912',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
+    employee_name: 'Priya Sharma',
+    employee_id: 'TF00912',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
     type: '80C',
-    typeLabel: '80C Investments',
+    type_label: '80C Investments',
     amount: 150000,
-    submittedDate: '10 Dec 2025',
+    submitted_date: '10 Dec 2025',
     status: 'Pending',
     notes: 'LIC receipt pending',
     ctc: '₹18.5 L',
     regime: 'Old',
     proofs: [
-      { id: 'p1', fileName: 'LIC_Receipt.pdf', fileType: 'pdf', size: '1.2 MB' },
-      { id: 'p2', fileName: 'PPF_Statement.jpg', fileType: 'jpg', size: '850 KB' },
-      { id: 'p3', fileName: 'ELSS_Cert.pdf', fileType: 'pdf', size: '2.1 MB' }
+      { id: 'p1', file_name: 'LIC_Receipt.pdf', file_type: 'pdf', size: '1.2 MB' },
+      { id: 'p2', file_name: 'PPF_Statement.jpg', file_type: 'jpg', size: '850 KB' },
+      { id: 'p3', file_name: 'ELSS_Cert.pdf', file_type: 'pdf', size: '2.1 MB' }
     ],
     breakdown: [
       { label: 'LIC Premium', amount: 80000 },
@@ -233,37 +233,37 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
   },
   {
     id: 'TX-002',
-    employeeName: 'Arjun Mehta',
-    employeeId: 'AC04567',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun',
+    employee_name: 'Arjun Mehta',
+    employee_id: 'AC04567',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun',
     type: 'HRA',
-    typeLabel: 'HRA Rent Receipts',
+    type_label: 'HRA Rent Receipts',
     amount: 240000,
-    submittedDate: '08 Dec 2025',
+    submitted_date: '08 Dec 2025',
     status: 'Approved',
     notes: '',
     ctc: '₹24.0 L',
     regime: 'Old',
-    proofs: Array.from({ length: 12 }).map((_, i) => ({ id: `h${i}`, fileName: `Rent_Receipt_Month_${i + 1}.pdf`, fileType: 'pdf', size: '300 KB' })),
+    proofs: Array.from({ length: 12 }).map((_, i) => ({ id: `h${i}`, file_name: `Rent_Receipt_Month_${i + 1}.pdf`, file_type: 'pdf', size: '300 KB' })),
     breakdown: [
       { label: 'Annual Rent Paid', amount: 240000 }
     ]
   },
   {
     id: 'TX-003',
-    employeeName: 'Neha Kapoor',
-    employeeId: 'SU00234',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Neha',
+    employee_name: 'Neha Kapoor',
+    employee_id: 'SU00234',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Neha',
     type: '80D',
-    typeLabel: '80D Medical Insurance',
+    type_label: '80D Medical Insurance',
     amount: 75000,
-    submittedDate: '12 Dec 2025',
+    submitted_date: '12 Dec 2025',
     status: 'Rejected',
     notes: 'Invalid policy document uploaded. Please upload a clear copy of the premium receipt.',
     ctc: '₹15.8 L',
     regime: 'New',
     proofs: [
-      { id: 'm1', fileName: 'Policy_Invalid.jpg', fileType: 'jpg', size: '2.4 MB' }
+      { id: 'm1', file_name: 'Policy_Invalid.jpg', file_type: 'jpg', size: '2.4 MB' }
     ],
     breakdown: [
       { label: 'Self & Spouse', amount: 25000 },
@@ -272,19 +272,19 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
   },
   {
     id: 'TX-004',
-    employeeName: 'Rohan Desai',
-    employeeId: 'GL07890',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan',
+    employee_name: 'Rohan Desai',
+    employee_id: 'GL07890',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan',
     type: '80CCD',
-    typeLabel: '80CCD NPS',
+    type_label: '80CCD NPS',
     amount: 50000,
-    submittedDate: '05 Dec 2025',
+    submitted_date: '05 Dec 2025',
     status: 'Pending',
     notes: '',
     ctc: '₹21.2 L',
     regime: 'New',
     proofs: [
-      { id: 'n1', fileName: 'NPS_Contribution.pdf', fileType: 'pdf', size: '1.1 MB' }
+      { id: 'n1', file_name: 'NPS_Contribution.pdf', file_type: 'pdf', size: '1.1 MB' }
     ],
     breakdown: [
       { label: 'Tier 1 Contribution', amount: 50000 }
@@ -292,19 +292,19 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
   },
   {
     id: 'TX-005',
-    employeeName: 'Ananya Patel',
-    employeeId: 'TF01145',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya',
+    employee_name: 'Ananya Patel',
+    employee_id: 'TF01145',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya',
     type: '80G',
-    typeLabel: '80G Donations',
+    type_label: '80G Donations',
     amount: 20000,
-    submittedDate: '15 Dec 2025',
+    submitted_date: '15 Dec 2025',
     status: 'Approved',
     notes: '',
     ctc: '₹14.7 L',
     regime: 'Old',
     proofs: [
-      { id: 'g1', fileName: 'NGO_Receipt.pdf', fileType: 'pdf', size: '450 KB' }
+      { id: 'g1', file_name: 'NGO_Receipt.pdf', file_type: 'pdf', size: '450 KB' }
     ],
     breakdown: [
       { label: 'Prime Minister Relief Fund', amount: 20000 }
@@ -312,19 +312,19 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
   },
   {
     id: 'TX-006',
-    employeeName: 'Vikram Singh',
-    employeeId: 'AC03987',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram',
+    employee_name: 'Vikram Singh',
+    employee_id: 'AC03987',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram',
     type: '80C',
-    typeLabel: '80C Investments',
+    type_label: '80C Investments',
     amount: 120000,
-    submittedDate: '18 Dec 2025',
+    submitted_date: '18 Dec 2025',
     status: 'Pending',
     notes: '',
     ctc: '₹19.0 L',
     regime: 'Old',
     proofs: [
-      { id: 'v1', fileName: 'NSC_Cert.jpg', fileType: 'jpg', size: '1.8 MB' }
+      { id: 'v1', file_name: 'NSC_Cert.jpg', file_type: 'jpg', size: '1.8 MB' }
     ],
     breakdown: [
       { label: 'NSC Purchase', amount: 120000 }

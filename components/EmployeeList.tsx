@@ -195,7 +195,7 @@ const SalaryAnnexureModal: React.FC<{
                 <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-start bg-white">
                     <div>
                         <h3 className="text-xl font-bold text-slate-800 tracking-tight">Salary Structure Annexure</h3>
-                        <p className="text-sm text-sky-600 font-bold mt-0.5">{employee.name} <span className="text-slate-400 font-medium">({employee.eid})</span></p>
+                        <p className="text-sm text-sky-600 font-bold mt-0.5">{employee.first_name} {employee.last_name} <span className="text-slate-400 font-medium">({employee.employee_id})</span></p>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -524,7 +524,7 @@ const AssignStructureModal: React.FC<{
     };
 
     const filteredEmployees = employees.filter(e => {
-        const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) || e.eid.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = `${e.first_name} ${e.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) || e.employee_id.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesDept = deptFilter === 'All' || e.department === deptFilter;
         const matchesLoc = locFilter === 'All' || e.location === locFilter;
         return matchesSearch && matchesDept && matchesLoc;
@@ -685,13 +685,13 @@ const AssignStructureModal: React.FC<{
                                     {selectedEmployeesList.map(emp => (
                                         <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-4 py-4">
-                                                <div className="font-bold text-slate-800">{emp.name}</div>
-                                                <div className="text-xs text-slate-500">{emp.eid}</div>
+                                                <div className="font-bold text-slate-800">{emp.first_name} {emp.last_name}</div>
+                                                <div className="text-xs text-slate-500">{emp.employee_id}</div>
                                             </td>
                                             <td className="px-4 py-4 text-slate-600">
                                                 <div className="flex items-center gap-2">
                                                     <Calendar size={14} className="text-slate-400" />
-                                                    {emp.joinDate}
+                                                    {emp.date_of_joining}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
@@ -907,10 +907,16 @@ const AssignStructureModal: React.FC<{
                                             </td>
                                             <td className="px-6 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <img src={emp.avatarUrl} alt="" className="w-9 h-9 rounded-full border border-slate-200 object-cover" />
+                                                    {emp?.avatar_url ? (
+                                                        <img src={emp.avatar_url} alt="" className="w-9 h-9 rounded-full border border-slate-200 object-cover" />
+                                                    ) : (
+                                                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                            <Users size={14} />
+                                                        </div>
+                                                    )}
                                                     <div>
-                                                        <div className="font-bold text-slate-800">{emp.name}</div>
-                                                        <div className="text-xs text-slate-500">{emp.eid}</div>
+                                                        <div className="font-bold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
+                                                        <div className="text-xs text-slate-500">{emp?.employee_id || 'N/A'}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -1007,7 +1013,7 @@ interface EmployeeListProps {
 
 const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [employees] = useState<Employee[]>(MOCK_EMPLOYEES);
+    const [employees] = useState<Employee[]>(MOCK_EMPLOYEES || []);
 
     // Selection & Modal States
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -1017,10 +1023,11 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
         setSearchTerm(e.target.value);
     };
 
-    const filteredEmployees = employees.filter(emp =>
-        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.eid.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.department.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredEmployees = (employees || []).filter(emp =>
+        (emp?.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (emp?.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (emp?.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (emp?.department || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const toggleSelection = (id: string) => {
@@ -1113,44 +1120,49 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredEmployees.map((emp) => (
-                                <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${selectedEmployeeIds.includes(emp.id) ? 'bg-purple-50/30' : ''}`}>
+                            {(filteredEmployees || []).map((emp) => (
+                                <tr key={emp?.id || Math.random()} className={`hover:bg-slate-50 transition-colors group ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-purple-50/30' : ''}`}>
                                     <td className="px-4 py-4 text-center">
                                         <input
                                             type="checkbox"
-                                            checked={selectedEmployeeIds.includes(emp.id)}
-                                            onChange={() => toggleSelection(emp.id)}
-                                            className={`rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4 transition-opacity duration-200 ${selectedEmployeeIds.includes(emp.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                            checked={selectedEmployeeIds.includes(emp?.id || '')}
+                                            onChange={() => toggleSelection(emp?.id || '')}
+                                            className={`rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4 transition-opacity duration-200 ${selectedEmployeeIds.includes(emp?.id || '') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                         />
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <img src={emp.avatarUrl} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 object-cover" />
+                                            {emp?.avatar_url ? (
+                                                <img src={emp.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 object-cover" />
+                                            ) : (
+                                                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                    <Users size={14} />
+                                                </div>
+                                            )}
                                             <div>
-                                                <div className="font-semibold text-slate-800">{emp.name}</div>
-                                                <div className="text-xs text-slate-400 font-mono">{emp.eid}</div>
+                                                <div className="font-semibold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
+                                                <div className="text-xs text-slate-400 font-mono">{emp?.employee_id || 'N/A'}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">
                                         <div className="flex items-center gap-1.5">
                                             <Calendar size={14} className="text-slate-300" />
-                                            {emp.joinDate}
+                                            {emp?.date_of_joining || 'N/A'}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">{emp.department}</td>
-                                    <td className="px-6 py-4">{emp.businessUnit || emp.location || 'Digital Technology'}</td>
+                                    <td className="px-6 py-4">{emp?.department || 'N/A'}</td>
+                                    <td className="px-6 py-4">{emp?.business_unit || emp?.location || 'Digital Technology'}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
-                                            {emp.status}
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${emp?.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                                            {emp?.status || 'Unknown'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 font-medium text-slate-700">{emp.ctc}</td>
+                                    <td className="px-6 py-4 font-medium text-slate-700">{emp?.ctc || 'N/A'}</td>
                                     <td className="px-4 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => onView(emp.id)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors" title="View Profile"><Eye size={16} /></button>
-                                            <button onClick={() => onEdit(emp.id)} className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Edit"><Edit2 size={16} /></button>
-
+                                            <button onClick={() => onView(emp?.id || '')} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors" title="View Profile"><Eye size={16} /></button>
+                                            <button onClick={() => onEdit(emp?.id || '')} className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Edit"><Edit2 size={16} /></button>
                                         </div>
                                     </td>
                                 </tr>

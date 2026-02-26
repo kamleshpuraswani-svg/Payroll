@@ -37,6 +37,8 @@ interface SalaryComponent {
     lastModified?: string;
     created?: string;
     effectiveDate?: string;
+    deductionType?: 'Statutory' | 'Non-Statutory';
+    showInPayslip?: boolean;
 }
 
 interface AddEarningFormProps {
@@ -430,6 +432,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
     const [isActive, setIsActive] = useState(initialData?.status ?? false);
+    const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
+    const [deductionType, setDeductionType] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deductionType || 'Statutory');
 
     const handleSave = () => {
         const updatedData: Partial<SalaryComponent> = {
@@ -437,6 +442,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             payslipName,
             frequency,
             status: isActive,
+            showInPayslip,
+            effectiveDate,
+            deductionType,
             type: 'Variable Pay',
             category: 'Deductions',
             calculation: frequency === 'One-time' ? 'One-time Deduction' : 'Recurring Deduction',
@@ -452,8 +460,40 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
             </div>
             <div className="p-8 space-y-6">
-                <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
-                <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
+                    <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date <span className="text-rose-500">*</span></label>
+                        <input
+                            type="date"
+                            value={effectiveDate}
+                            onChange={(e) => setEffectiveDate(e.target.value)}
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">Deduction Type <span className="text-rose-500">*</span></label>
+                    <div className="flex gap-6">
+                        {(['Statutory', 'Non-Statutory'] as const).map(type => (
+                            <label key={type} className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${deductionType === type ? 'border-sky-500' : 'border-slate-300'}`}>
+                                    {deductionType === type && <div className="w-2 h-2 rounded-full bg-sky-500" />}
+                                </div>
+                                <input
+                                    type="radio"
+                                    className="hidden"
+                                    checked={deductionType === type}
+                                    onChange={() => setDeductionType(type)}
+                                />
+                                <span className="text-sm text-slate-700">{type}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
                 <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Select the deduction frequency <span className="text-rose-500">*</span></label>
                     <div className="space-y-2">
@@ -468,7 +508,22 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         ))}
                     </div>
                 </div>
-                <div className="pt-2"><label className="flex items-center gap-2 cursor-pointer"><div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>{isActive && <CheckCircle size={14} className="text-white" />}</div><input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} /><span className="text-sm font-medium text-slate-700">Mark this as Active</span></label></div>
+                <div className="pt-2 flex flex-col gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>
+                            {showInPayslip && <CheckCircle size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
+                        <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>
+                            {isActive && <CheckCircle size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
+                        <span className="text-sm font-medium text-slate-700">Mark as Active</span>
+                    </label>
+                </div>
             </div>
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3"><button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button><button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button></div>
         </div>
@@ -699,7 +754,7 @@ const HRSalaryComponents: React.FC = () => {
     };
 
     return (
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300 pb-24">
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

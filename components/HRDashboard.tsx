@@ -64,19 +64,19 @@ const TdsFullReportModal: React.FC<{ onClose: () => void; data: any[] }> = ({ on
                     <div className="grid grid-cols-4 gap-4 mb-6">
                         <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
                             <p className="text-xs font-bold text-purple-600 uppercase mb-1">Total TDS</p>
-                            <p className="text-xl font-bold text-purple-900">₹ {data.reduce((acc, curr) => acc + curr.tds, 0).toFixed(2)} L</p>
+                            <p className="text-xl font-bold text-purple-900">₹ {(data || []).reduce((acc, curr) => acc + (curr?.tds || 0), 0).toFixed(2)} L</p>
                         </div>
                         <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
                             <p className="text-xs font-bold text-indigo-600 uppercase mb-1">Salary TDS</p>
-                            <p className="text-xl font-bold text-indigo-900">₹ {data.reduce((acc, curr) => acc + curr.salaryTds, 0).toFixed(2)} L</p>
+                            <p className="text-xl font-bold text-indigo-900">₹ {(data || []).reduce((acc, curr) => acc + (curr?.salaryTds || 0), 0).toFixed(2)} L</p>
                         </div>
                         <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
                             <p className="text-xs font-bold text-amber-600 uppercase mb-1">Perquisite Tax</p>
-                            <p className="text-xl font-bold text-amber-900">₹ {data.reduce((acc, curr) => acc + curr.perqTds, 0).toFixed(2)} L</p>
+                            <p className="text-xl font-bold text-amber-900">₹ {(data || []).reduce((acc, curr) => acc + (curr?.perqTds || 0), 0).toFixed(2)} L</p>
                         </div>
                         <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
                             <p className="text-xs font-bold text-emerald-600 uppercase mb-1">Avg Employees</p>
-                            <p className="text-xl font-bold text-emerald-900">{Math.round(data.reduce((acc, curr) => acc + curr.employees, 0) / data.length)}</p>
+                            <p className="text-xl font-bold text-emerald-900">{Math.round((data || []).reduce((acc, curr) => acc + (curr?.employees || 0), 0) / (data?.length || 1))}</p>
                         </div>
                     </div>
 
@@ -93,14 +93,14 @@ const TdsFullReportModal: React.FC<{ onClose: () => void; data: any[] }> = ({ on
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {[...data].reverse().map((row, idx) => (
+                            {[...(data || [])].reverse().map((row, idx) => (
                                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-4 py-3 font-medium text-slate-800">{row.period}</td>
-                                    <td className="px-4 py-3 text-right text-slate-600">{row.gross}</td>
-                                    <td className="px-4 py-3 text-right text-slate-600">₹ {row.salaryTds.toFixed(2)} L</td>
-                                    <td className="px-4 py-3 text-right text-slate-600">₹ {row.perqTds.toFixed(2)} L</td>
-                                    <td className="px-4 py-3 text-right font-bold text-purple-700">₹ {row.tds.toFixed(2)} L</td>
-                                    <td className="px-4 py-3 text-right text-slate-600">{row.employees}</td>
+                                    <td className="px-4 py-3 font-medium text-slate-800">{row?.period || 'N/A'}</td>
+                                    <td className="px-4 py-3 text-right text-slate-600">{row?.gross || 'N/A'}</td>
+                                    <td className="px-4 py-3 text-right text-slate-600">₹ {(row?.salaryTds || 0).toFixed(2)} L</td>
+                                    <td className="px-4 py-3 text-right text-slate-600">₹ {(row?.perqTds || 0).toFixed(2)} L</td>
+                                    <td className="px-4 py-3 text-right font-bold text-purple-700">₹ {(row?.tds || 0).toFixed(2)} L</td>
+                                    <td className="px-4 py-3 text-right text-slate-600">{row?.employees || 0}</td>
                                     <td className="px-4 py-3 text-center">
                                         <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
                                             Deposited
@@ -258,11 +258,11 @@ const SendPayslipsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <div className="px-6 py-4 bg-white border-b border-slate-100 grid grid-cols-2 gap-4">
                     <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
                         <p className="text-xs text-emerald-700 font-medium">Payslips Sent</p>
-                        <p className="text-lg font-bold text-emerald-800">{stats.sent}</p>
+                        <p className="text-lg font-bold text-emerald-800">{stats?.sent || 0}</p>
                     </div>
                     <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
                         <p className="text-xs text-amber-700 font-medium">Pending</p>
-                        <p className="text-lg font-bold text-amber-800">{stats.pending}</p>
+                        <p className="text-lg font-bold text-amber-800">{stats?.pending || 0}</p>
                     </div>
                 </div>
 
@@ -284,26 +284,26 @@ const SendPayslipsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     {employees.map(emp => (
                         <div key={emp.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors group">
                             <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${emp.status === 'Sent' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}`}>
-                                    {emp.status === 'Sent' ? <Check size={14} /> : emp.name.charAt(0)}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${emp?.status === 'Sent' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                                    {emp?.status === 'Sent' ? <Check size={14} /> : (emp?.name || 'E').charAt(0)}
                                 </div>
                                 <div>
-                                    <p className={`text-sm font-semibold ${emp.status === 'Sent' ? 'text-slate-500' : 'text-slate-800'}`}>{emp.name}</p>
-                                    <p className="text-xs text-slate-500">{emp.email}</p>
+                                    <p className={`text-sm font-semibold ${emp?.status === 'Sent' ? 'text-slate-500' : 'text-slate-800'}`}>{emp?.name || 'N/A'}</p>
+                                    <p className="text-xs text-slate-500">{emp?.email || 'N/A'}</p>
                                 </div>
                             </div>
 
-                            {emp.status === 'Sent' ? (
+                            {emp?.status === 'Sent' ? (
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium border border-emerald-100">
                                     <Check size={12} /> Sent
                                 </div>
                             ) : (
                                 <button
-                                    onClick={() => handleSendSingle(emp.id)}
-                                    disabled={sendingIds.includes(emp.id) || sendingAll}
+                                    onClick={() => handleSendSingle(emp?.id || '')}
+                                    disabled={sendingIds.includes(emp?.id || '') || sendingAll}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 rounded-lg text-xs font-bold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {sendingIds.includes(emp.id) ? 'Sending...' : <><Send size={12} /> Send</>}
+                                    {sendingIds.includes(emp?.id || '') ? 'Sending...' : <><Send size={12} /> Send</>}
                                 </button>
                             )}
                         </div>
@@ -386,23 +386,23 @@ const PendingTaxProofsModal: React.FC<{ onClose: () => void }> = ({ onClose }) =
                             <div key={emp.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
-                                        {emp.avatar}
+                                        {emp?.avatar || 'E'}
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-bold text-slate-800">{emp.name}</h4>
+                                        <h4 className="text-sm font-bold text-slate-800">{emp?.name || 'N/A'}</h4>
                                         <div className="text-xs text-slate-500 flex items-center gap-2">
-                                            <span>{emp.dept}</span>
+                                            <span>{emp?.dept || 'N/A'}</span>
                                             <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                            <span className="text-amber-600">Missing: {emp.missing}</span>
+                                            <span className="text-amber-600">Missing: {emp?.missing || 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => handleRemind(emp.id)}
-                                    disabled={remindedList.includes(emp.id)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${remindedList.includes(emp.id) ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white border border-slate-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200'}`}
+                                    onClick={() => handleRemind(emp?.id || '')}
+                                    disabled={remindedList.includes(emp?.id || '')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${remindedList.includes(emp?.id || '') ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white border border-slate-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200'}`}
                                 >
-                                    {remindedList.includes(emp.id) ? 'Reminded' : 'Send Reminder'}
+                                    {remindedList.includes(emp?.id || '') ? 'Reminded' : 'Send Reminder'}
                                 </button>
                             </div>
                         ))}
@@ -729,9 +729,9 @@ const HRDashboard: React.FC = () => {
         plan: 'Enterprise',
         employees: 452,
         status: 'Active',
-        lastAudit: 'Today',
-        businessUnit: 'Digital Technology',
-        lastPayrollRun: '31 Oct 2025'
+        last_audit: 'Today',
+        business_unit: 'Digital Technology',
+        last_payroll_run: '31 Oct 2025'
     };
 
     // Function to get data based on range
@@ -799,32 +799,32 @@ const HRDashboard: React.FC = () => {
             title: 'Total Employees',
             value: '452',
             trend: '',
-            trendUp: false,
+            trend_up: false,
             icon: <Users />,
-            colorClass: 'text-indigo-600 bg-indigo-100',
+            color_class: 'text-indigo-600 bg-indigo-100',
         },
         {
             title: 'Pending Requests',
             value: '15',
             trend: 'Requires Action',
-            trendUp: false,
+            trend_up: false,
             icon: <Clock />,
-            colorClass: 'text-amber-600 bg-amber-100',
-            onInfoClick: () => setIsApprovalsPanelOpen(true)
+            color_class: 'text-amber-600 bg-amber-100',
+            on_info_click: () => setIsApprovalsPanelOpen(true)
         },
         {
             title: 'Payroll Status',
             value: 'Pending',
             trend: 'Due in 5 days',
-            trendUp: true,
+            trend_up: true,
             icon: <FileText />,
-            colorClass: 'text-emerald-600 bg-emerald-100',
-            extraDetails: [
+            color_class: 'text-emerald-600 bg-emerald-100',
+            extra_details: [
                 { label: 'Current Cycle', value: 'January, 2026' },
                 { label: 'Pay Frequency', value: 'Monthly' },
                 { label: 'Pay Day', value: 'Last Working Day' },
             ],
-            detailsAtTop: true
+            details_at_top: true
         },
     ];
 

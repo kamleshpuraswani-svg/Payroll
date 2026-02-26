@@ -444,7 +444,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
 
     const handleAddApprover = () => {
         if (userRole === 'EMPLOYEE') return;
-        const emp = MOCK_EMPLOYEES.find(e => e.id === selectedApproverId);
+        const emp = MOCK_EMPLOYEES.find(e => e.employee_id === selectedApproverId);
         if (emp && !approvers.find(a => a.id === emp.id)) {
             setApprovers([...approvers, emp]);
             setSelectedApproverId('');
@@ -526,7 +526,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                 >
                                     <option value="">-- Choose Employee --</option>
                                     {MOCK_EMPLOYEES.map(emp => (
-                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                        <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
                                     ))}
                                 </select>
                                 <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -689,7 +689,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                             >
                                                 <option value="">Select Employee to Add...</option>
                                                 {MOCK_EMPLOYEES.map(emp => (
-                                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                                    <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
                                                 ))}
                                             </select>
                                             <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -712,7 +712,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                             {approvers.map((app, idx) => (
                                                 <div key={app.id} className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm group transition-all">
                                                     <span className="w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-[10px] font-black">{idx + 1}</span>
-                                                    <span className="font-bold text-slate-700">{app.name}</span>
+                                                    <span className="font-bold text-slate-700">{app.first_name} {app.last_name}</span>
                                                     {userRole !== 'EMPLOYEE' && (
                                                         <div className="flex items-center gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button
@@ -795,7 +795,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
             filtered = filtered.filter(l => l.employee.id === currentEmployeeId);
         }
         return filtered.filter(loan =>
-            loan.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            `${loan.employee.name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
             loan.id.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [allLoans, userRole, currentEmployeeId, searchTerm]);
@@ -851,11 +851,11 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
             const newRequest: LoanRequest = {
                 id: `LN-${Date.now().toString().slice(-4)}`,
                 employee: {
-                    name: selectedEmp.name,
-                    id: selectedEmp.eid,
+                    name: `${selectedEmp.first_name} ${selectedEmp.last_name}`,
+                    id: selectedEmp.employee_id,
                     department: selectedEmp.department,
-                    ctc: selectedEmp.ctc || 'N/A',
-                    avatar: selectedEmp.avatarUrl
+                    ctc: String(selectedEmp.ctc || 'N/A'),
+                    avatar: selectedEmp.avatar_url
                 },
                 type: data.loanType === 'Salary Advance' ? 'Salary Advance' : 'Personal Loan',
                 requestedAmount: data.amount,
