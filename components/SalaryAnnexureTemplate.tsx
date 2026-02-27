@@ -49,6 +49,7 @@ interface AnnexureTemplate {
     id: string;
     name: string;
     status: 'Published' | 'Draft';
+    isActive: boolean;
     lastModified: string;
     lastUpdatedBy: string;
     createdBy: string;
@@ -69,6 +70,7 @@ const MOCK_ANNEXURE_TEMPLATES: AnnexureTemplate[] = [
         id: '1',
         name: 'Standard Offer Annexure',
         status: 'Published',
+        isActive: true,
         lastModified: '03 Dec 2025',
         lastUpdatedBy: 'Admin',
         createdBy: 'Admin',
@@ -323,6 +325,10 @@ const SalaryAnnexureTemplate: React.FC = () => {
         setView('VIEW');
     };
 
+    const handleToggleActive = (id: string) => {
+        setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive } : t));
+    };
+
     const handleSave = (status: 'Published' | 'Draft') => {
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
@@ -339,6 +345,7 @@ const SalaryAnnexureTemplate: React.FC = () => {
             id: editingTemplateId || Date.now().toString(),
             name: templateName,
             status,
+            isActive: existingTemplate?.isActive ?? true,
             lastModified: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
             lastUpdatedBy: 'Admin', // Assuming current user is Admin
             createdBy: existingTemplate?.createdBy || 'Admin', // Keep original creator or set Admin for new
@@ -417,9 +424,14 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                        <div className="flex justify-end items-center gap-4">
+                                            <div onClick={(e) => { e.stopPropagation(); handleToggleActive(t.id); }} className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${t.isActive ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${t.isActive ? 'translate-x-5' : ''}`} />
+                                            </div>
+                                            <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
