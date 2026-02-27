@@ -29,10 +29,7 @@ interface ComponentItem {
 interface AnnexureTemplateSettings {
     showPercentageColumn: boolean;
     showMonthlyColumn: boolean;
-    showExemptTags: boolean;
-    highlightBasicRule: boolean;
     includeEmployerContribution: boolean;
-    showDisclaimer: boolean;
 }
 
 interface HeaderConfig {
@@ -104,10 +101,7 @@ const MOCK_ANNEXURE_TEMPLATES: AnnexureTemplate[] = [
         settings: {
             showPercentageColumn: true,
             showMonthlyColumn: true,
-            showExemptTags: true,
-            highlightBasicRule: true,
-            includeEmployerContribution: true,
-            showDisclaimer: true
+            includeEmployerContribution: true
         }
     }
 ];
@@ -636,29 +630,6 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                         </label>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Display Options</label>
-                                    <div className="space-y-3">
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Show Exempt Tags</span>
-                                            <div onClick={() => setSettings({ ...settings, showExemptTags: !settings.showExemptTags })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showExemptTags ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showExemptTags ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Highlight Basic ≥50%</span>
-                                            <div onClick={() => setSettings({ ...settings, highlightBasicRule: !settings.highlightBasicRule })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.highlightBasicRule ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.highlightBasicRule ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Show Disclaimer</span>
-                                            <div onClick={() => setSettings({ ...settings, showDisclaimer: !settings.showDisclaimer })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showDisclaimer ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showDisclaimer ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </>
@@ -708,8 +679,6 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                         <tr key={`e-${i}`}>
                                             <td className="border border-slate-300 p-2">
                                                 {item.name}
-                                                {settings.showExemptTags && (item.name.includes('HRA') || item.name.includes('Conveyance') || item.name.includes('LTA')) && <span className="ml-2 text-[10px] bg-slate-100 px-1 rounded text-slate-500">Exempt</span>}
-                                                {settings.highlightBasicRule && item.name.includes('Basic') && <span className="ml-2 text-emerald-600 text-xs">✔ ≥50%</span>}
                                             </td>
                                             {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount) / 12)}</td>}
                                             <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
@@ -776,7 +745,7 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                         <span className="text-sm font-bold text-slate-700">Approximate Monthly Take Home</span>
                                         <span className="text-lg font-bold text-slate-900">₹ 1,28,000</span>
                                     </div>
-                                    {settings.showDisclaimer && <p className="text-xs text-slate-500 italic">* TDS will be deducted as per prevailing Income Tax rules. Professional Tax is subject to state laws.</p>}
+                                    {true && <p className="text-xs text-slate-500 italic">* TDS will be deducted as per prevailing Income Tax rules. Professional Tax is subject to state laws.</p>}
                                 </div>
                                 <div className="mt-8 flex justify-between items-end">
                                     <div className="border-t border-slate-400 pt-2 w-48">
