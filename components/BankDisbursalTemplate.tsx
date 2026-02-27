@@ -112,6 +112,7 @@ const AddBankColumnModal: React.FC<{
     onAdd: (cols: BankColumn[]) => void;
 }> = ({ isOpen, onClose, onAdd }) => {
     const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     if (!isOpen) return null;
 
@@ -143,52 +144,68 @@ const AddBankColumnModal: React.FC<{
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-visible flex flex-col">
                 <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <h3 className="font-bold text-slate-800">Add New Column</h3>
+                    <h3 className="font-bold text-slate-800 text-sm">Add New Column</h3>
                     <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
                 </div>
 
-                <div className="p-6 overflow-y-auto">
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-4">Select Fields</label>
-                    <div className="space-y-2">
-                        {SYSTEM_FIELDS.map(f => (
-                            <div
-                                key={f.id}
-                                onClick={() => toggleFieldSelection(f.id)}
-                                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${selectedFieldIds.includes(f.id) ? 'bg-purple-50 border-purple-200 ring-1 ring-purple-200' : 'bg-white border-slate-200 hover:border-purple-300'}`}
-                            >
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-medium ${selectedFieldIds.includes(f.id) ? 'text-purple-700' : 'text-slate-700'}`}>{f.label}</span>
-                                    <span className="text-[10px] text-slate-400">e.g. {f.sample}</span>
-                                </div>
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedFieldIds.includes(f.id) ? 'bg-purple-600 border-purple-600' : 'bg-white border-slate-300'}`}>
-                                    {selectedFieldIds.includes(f.id) && <Plus size={14} className="text-white rotate-45" />}
-                                </div>
+                <div className="p-6 space-y-4">
+                    <div className="relative">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2 text-left">Select Fields</label>
+                        <div
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white hover:border-purple-300 transition-colors flex justify-between items-center cursor-pointer min-h-[42px]"
+                        >
+                            <div className="flex flex-wrap gap-1 items-center">
+                                {selectedFieldIds.length === 0 ? (
+                                    <span className="text-slate-400">Select multiple columns...</span>
+                                ) : (
+                                    <span className="text-slate-800 font-medium">
+                                        {selectedFieldIds.length === 1
+                                            ? SYSTEM_FIELDS.find(f => f.id === selectedFieldIds[0])?.label
+                                            : `${selectedFieldIds.length} fields selected`}
+                                    </span>
+                                )}
                             </div>
-                        ))}
+                            <Plus size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-45' : ''}`} />
+                        </div>
+
+                        {/* Custom Dropdown Content */}
+                        {isDropdownOpen && (
+                            <>
+                                <div className="fixed inset-0 z-[75]" onClick={() => setIsDropdownOpen(false)} />
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[80] overflow-y-auto max-h-[250px] py-1 animate-in zoom-in-95 duration-100">
+                                    {SYSTEM_FIELDS.map(f => (
+                                        <div
+                                            key={f.id}
+                                            onClick={() => toggleFieldSelection(f.id)}
+                                            className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 cursor-pointer group"
+                                        >
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedFieldIds.includes(f.id) ? 'bg-purple-600 border-purple-600' : 'bg-white border-slate-300 group-hover:border-purple-400'}`}>
+                                                {selectedFieldIds.includes(f.id) && <Plus size={12} className="text-white rotate-45" />}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-sm ${selectedFieldIds.includes(f.id) ? 'text-purple-700 font-medium' : 'text-slate-700'}`}>{f.label}</span>
+                                                <span className="text-[10px] text-slate-400 font-mono">e.g. {f.sample}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <span className="text-xs text-slate-500 font-medium">
-                        {selectedFieldIds.length} fields selected
-                    </span>
-                    <div className="flex gap-2">
-                        <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-white rounded-lg text-sm font-medium transition-colors">Cancel</button>
-                        <button
-                            onClick={handleAdd}
-                            disabled={selectedFieldIds.length === 0}
-                            className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-sm"
-                        >
-                            Add {selectedFieldIds.length > 1 ? 'Columns' : 'Column'}
-                        </button>
-                    </div>
-                </div>
-                <div className="px-6 pb-2 text-center">
-                    <p className="text-[10px] text-slate-400">
-                        Data for selected columns will be automatically populated from the system.
-                    </p>
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+                    <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-white rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                    <button
+                        onClick={handleAdd}
+                        disabled={selectedFieldIds.length === 0}
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-sm"
+                    >
+                        Add Column{selectedFieldIds.length > 1 ? 's' : ''}
+                    </button>
                 </div>
             </div>
         </div>
