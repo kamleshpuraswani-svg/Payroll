@@ -116,6 +116,22 @@ create table if not exists public.expense_categories (
     updated_at timestamp with time zone default now()
 );
 
+-- Document Templates (NEW: Consolidates all template types)
+create table if not exists public.document_templates (
+    id uuid default uuid_generate_v4() primary key,
+    type text not null check (type in ('salary_slip', 'bank_disbursal', 'salary_annexure', 'fnf_settlement')),
+    name text not null,
+    bank_name text, -- Specific to bank disbursal
+    status text default 'Draft',
+    is_active boolean default true,
+    content jsonb default '{}'::jsonb, -- Store sections, columns, headerConfig etc.
+    settings jsonb default '{}'::jsonb,
+    created_by text,
+    last_updated_by text,
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now()
+);
+
 -- ==========================================
 -- 3. Transactions & Requests
 -- ==========================================
@@ -182,6 +198,7 @@ alter table public.expense_categories enable row level security;
 alter table public.tax_declarations enable row level security;
 alter table public.reimbursement_claims enable row level security;
 alter table public.employee_loans enable row level security;
+alter table public.document_templates enable row level security;
 
 -- Public "Allow All" Policies
 create policy "Allow all for public" on public.companies for all using (true) with check (true);
@@ -195,6 +212,7 @@ create policy "Allow all for public" on public.expense_categories for all using 
 create policy "Allow all for public" on public.tax_declarations for all using (true) with check (true);
 create policy "Allow all for public" on public.reimbursement_claims for all using (true) with check (true);
 create policy "Allow all for public" on public.employee_loans for all using (true) with check (true);
+create policy "Allow all for public" on public.document_templates for all using (true) with check (true);
 
 -- ==========================================
 -- 5. Triggers & Functions
@@ -213,3 +231,4 @@ create trigger update_operational_config_updated_at before update on public.oper
 create trigger update_expense_categories_updated_at before update on public.expense_categories for each row execute procedure update_updated_at_column();
 create trigger update_reimbursement_claims_updated_at before update on public.reimbursement_claims for each row execute procedure update_updated_at_column();
 create trigger update_employee_loans_updated_at before update on public.employee_loans for each row execute procedure update_updated_at_column();
+create trigger update_document_templates_updated_at before update on public.document_templates for each row execute procedure update_updated_at_column();

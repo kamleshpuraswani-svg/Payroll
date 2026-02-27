@@ -24,3 +24,407 @@
 5:18:21 PM [vite] (client) hmr update /components/FnFSettlementTemplate.tsx, /index.css
 5:18:32 PM [vite] (client) hmr update /components/FnFSettlementTemplate.tsx, /index.css
 5:27:46 PM [vite] (client) hmr update /components/FnFSettlementTemplate.tsx, /index.css
+5:37:13 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+5:41:39 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+5:41:46 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+5:43:46 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+5:51:27 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+5:51:47 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+5:54:06 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+6:48:28 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+6:50:57 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+6:53:10 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+6:55:17 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+6:59:00 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:05:09 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:05:29 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:07:24 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:11:19 PM [vite] (client) page reload package.json
+7:11:48 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:11:48 PM [vite] Internal server error: /Users/kamlesh/Documents/Payroll/components/BankDisbursalTemplate.tsx: 'import' and 'export' may only appear at the top level. (743:4)
+
+  741 |     };
+  742 |
+> 743 |     export default BankDisbursalTemplate;
+      |     ^
+  744 |
+  Plugin: vite:react-babel
+  File: /Users/kamlesh/Documents/Payroll/components/BankDisbursalTemplate.tsx:743:4
+  741|      };
+  742|  
+  743|      export default BankDisbursalTemplate;
+     |      ^
+  744|  
+      at constructor (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12871:18)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12747:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseBlock (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13297:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12100:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12075:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11687:12)
+      at TypeScriptParserMixin.parseExprAtom (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11331:23)
+      at TypeScriptParserMixin.parseExprAtom (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9786:20)
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10800:39
+      at TypeScriptParserMixin.allowInAnd (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12421:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10800:17)
+      at TypeScriptParserMixin.parseVar (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13384:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13230:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12851:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12612:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14488:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10126:18)
+      at parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:261:32)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+7:12:04 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:12:06 PM [vite] (client) ✨ new dependencies optimized: xlsx
+7:12:06 PM [vite] (client) ✨ optimized dependencies changed. reloading
+7:13:12 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:16:46 PM [vite] (client) page reload supabase_consolidated_schema.sql
+7:16:55 PM [vite] (client) page reload supabase_consolidated_schema.sql
+7:17:12 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:17:49 PM [vite] (client) hmr update /components/BankDisbursalTemplate.tsx, /index.css
+7:19:08 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+7:19:08 PM [vite] Internal server error: /Users/kamlesh/Documents/Payroll/components/HRSalarySlipTemplate.tsx: Identifier 'Trash2' has already been declared. (18:4)
+
+  16 |     Check,
+  17 |     Info,
+> 18 |     Trash2
+     |     ^
+  19 | } from 'lucide-react';
+  20 | import { supabase } from '../services/supabaseClient';
+  21 |
+  Plugin: vite:react-babel
+  File: /Users/kamlesh/Documents/Payroll/components/HRSalarySlipTemplate.tsx:18:4
+  16 |      Check,
+  17 |      Info,
+  18 |      Trash2
+     |      ^
+  19 |  } from 'lucide-react';
+  20 |  import { supabase } from '../services/supabaseClient';
+      at constructor (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptScopeHandler.declareName (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4866:21)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7567:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7563:12)
+      at TypeScriptParserMixin.checkLVal (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7500:12)
+      at TypeScriptParserMixin.finishImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14266:10)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14419:17)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10148:18)
+      at TypeScriptParserMixin.parseNamedImportSpecifiers (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14398:36)
+      at TypeScriptParserMixin.parseImportSpecifiersAndAfter (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14242:37)
+      at TypeScriptParserMixin.parseImport (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14235:17)
+      at TypeScriptParserMixin.parseImport (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9353:26)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12876:27)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12612:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14488:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10126:18)
+      at parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:261:32)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:189:28
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:113:33
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:287:14)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+7:19:36 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+7:19:36 PM [vite] Internal server error: /Users/kamlesh/Documents/Payroll/components/HRSalarySlipTemplate.tsx: Unexpected token (6:0)
+
+  4 |     Info,
+  5 |     Trash2
+> 6 | } from 'lucide-react';
+    | ^
+  7 | import { supabase } from '../services/supabaseClient';
+  8 |
+  9 | // --- Types ---
+  Plugin: vite:react-babel
+  File: /Users/kamlesh/Documents/Payroll/components/HRSalarySlipTemplate.tsx:6:0
+  4  |      Info,
+  5  |      Trash2
+  6  |  } from 'lucide-react';
+     |  ^
+  7  |  import { supabase } from '../services/supabaseClient';
+  8  |  
+      at constructor (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptParserMixin.unexpected (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6619:16)
+      at TypeScriptParserMixin.parseExprAtom (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11442:22)
+      at TypeScriptParserMixin.parseExprAtom (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9786:20)
+      at TypeScriptParserMixin.parseExpressionBase (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10784:23)
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10780:39
+      at TypeScriptParserMixin.allowInAnd (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12421:16)
+      at TypeScriptParserMixin.parseExpression (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10780:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12895:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12612:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14488:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10126:18)
+      at parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:261:32)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:189:28
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:113:33
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:287:14)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+7:19:54 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+7:19:54 PM [vite] Internal server error: /Users/kamlesh/Documents/Payroll/components/HRSalarySlipTemplate.tsx: Identifier 'templates' has already been declared. (534:11)
+
+  532 |
+  533 |     // --- Supabase Persistence ---
+> 534 |     const [templates, setTemplates] = useState<PayslipTemplate[]>([]);
+      |            ^
+  535 |     const [isLoading, setIsLoading] = useState(true);
+  536 |
+  537 |     const fetchTemplates = async () => {
+  Plugin: vite:react-babel
+  File: /Users/kamlesh/Documents/Payroll/components/HRSalarySlipTemplate.tsx:534:11
+  532|  
+  533|      // --- Supabase Persistence ---
+  534|      const [templates, setTemplates] = useState<PayslipTemplate[]>([]);
+     |             ^
+  535|      const [isLoading, setIsLoading] = useState(true);
+  536|  
+      at constructor (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptScopeHandler.checkRedeclarationInScope (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:1619:19)
+      at TypeScriptScopeHandler.declareName (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:1585:12)
+      at TypeScriptScopeHandler.declareName (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4880:11)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7567:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7563:12)
+      at TypeScriptParserMixin.checkLVal (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7500:12)
+      at TypeScriptParserMixin.checkLVal (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7540:16)
+      at TypeScriptParserMixin.parseVarId (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13412:10)
+      at TypeScriptParserMixin.parseVarId (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9752:11)
+      at TypeScriptParserMixin.parseVar (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13383:12)
+      at TypeScriptParserMixin.parseVarStatement (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13230:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12851:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12747:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseBlock (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13297:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12100:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12075:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11687:12)
+      at TypeScriptParserMixin.parseExprAtom (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11331:23)
+      at TypeScriptParserMixin.parseExprAtom (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9786:20)
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10800:39
+      at TypeScriptParserMixin.allowInAnd (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12421:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10800:17)
+      at TypeScriptParserMixin.parseVar (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13384:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13230:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12851:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12612:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14488:25)
+7:20:05 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+7:20:20 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+7:21:00 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+7:21:00 PM [vite] Internal server error: /Users/kamlesh/Documents/Payroll/components/SalaryAnnexureTemplate.tsx: Identifier 'Trash2' has already been declared. (18:4)
+
+  16 |     Check,
+  17 |     Briefcase,
+> 18 |     Trash2
+     |     ^
+  19 | } from 'lucide-react';
+  20 | import { supabase } from '../services/supabaseClient';
+  21 |
+  Plugin: vite:react-babel
+  File: /Users/kamlesh/Documents/Payroll/components/SalaryAnnexureTemplate.tsx:18:4
+  16 |      Check,
+  17 |      Briefcase,
+  18 |      Trash2
+     |      ^
+  19 |  } from 'lucide-react';
+  20 |  import { supabase } from '../services/supabaseClient';
+      at constructor (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptScopeHandler.declareName (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4866:21)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7567:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7563:12)
+      at TypeScriptParserMixin.checkLVal (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7500:12)
+      at TypeScriptParserMixin.finishImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14266:10)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14419:17)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10148:18)
+      at TypeScriptParserMixin.parseNamedImportSpecifiers (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14398:36)
+      at TypeScriptParserMixin.parseImportSpecifiersAndAfter (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14242:37)
+      at TypeScriptParserMixin.parseImport (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14235:17)
+      at TypeScriptParserMixin.parseImport (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9353:26)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12876:27)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12612:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14488:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10126:18)
+      at parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:261:32)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:189:28
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:113:33
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:287:14)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+7:21:25 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+7:21:38 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+7:21:50 PM [vite] (client) hmr update /components/SalaryAnnexureTemplate.tsx, /index.css
+7:22:43 PM [vite] (client) hmr update /components/FnFSettlementTemplate.tsx, /index.css
+7:22:43 PM [vite] Internal server error: /Users/kamlesh/Documents/Payroll/components/FnFSettlementTemplate.tsx: Identifier 'Trash2' has already been declared. (18:4)
+
+  16 |     Briefcase,
+  17 |     Calculator,
+> 18 |     Trash2
+     |     ^
+  19 | } from 'lucide-react';
+  20 | import { supabase } from '../services/supabaseClient';
+  21 |
+  Plugin: vite:react-babel
+  File: /Users/kamlesh/Documents/Payroll/components/FnFSettlementTemplate.tsx:18:4
+  16 |      Briefcase,
+  17 |      Calculator,
+  18 |      Trash2
+     |      ^
+  19 |  } from 'lucide-react';
+  20 |  import { supabase } from '../services/supabaseClient';
+      at constructor (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptScopeHandler.declareName (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:4866:21)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7567:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7563:12)
+      at TypeScriptParserMixin.checkLVal (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:7500:12)
+      at TypeScriptParserMixin.finishImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14266:10)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14419:17)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10148:18)
+      at TypeScriptParserMixin.parseNamedImportSpecifiers (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14398:36)
+      at TypeScriptParserMixin.parseImportSpecifiersAndAfter (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14242:37)
+      at TypeScriptParserMixin.parseImport (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14235:17)
+      at TypeScriptParserMixin.parseImport (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9353:26)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12876:27)
+      at TypeScriptParserMixin.parseStatementContent (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:12612:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14488:25)
+      at TypeScriptParserMixin.parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:10126:18)
+      at parse (/Users/kamlesh/Documents/Payroll/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:261:32)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:189:28
+      at /Users/kamlesh/Documents/Payroll/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:113:33
+      at step (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:287:14)
+      at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
+7:22:59 PM [vite] (client) hmr update /components/FnFSettlementTemplate.tsx, /index.css

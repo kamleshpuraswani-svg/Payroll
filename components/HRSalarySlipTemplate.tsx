@@ -16,6 +16,7 @@ import {
     Check,
     Info
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 // --- Types ---
 
@@ -400,17 +401,6 @@ const HRSalarySlipTemplate: React.FC = () => {
     const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
     const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
 
-    // Persist templates in localStorage
-    const [templates, setTemplates] = useState<PayslipTemplate[]>(() => {
-        const saved = localStorage.getItem('collab_payslip_templates');
-        return saved ? JSON.parse(saved) : MOCK_TEMPLATES;
-    });
-
-    // Save changes to localStorage
-    useEffect(() => {
-        localStorage.setItem('collab_payslip_templates', JSON.stringify(templates));
-    }, [templates]);
-
     const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
     // Editor State
@@ -529,6 +519,48 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     const [validationError, setValidationError] = useState<string | null>(null);
 
+    // --- Supabase Persistence ---
+    const [templates, setTemplates] = useState<PayslipTemplate[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchTemplates = async () => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('document_templates')
+                .select('*')
+                .eq('type', 'salary_slip');
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const formattedTemplates: PayslipTemplate[] = data.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    status: item.status as 'Published' | 'Draft',
+                    isActive: item.is_active,
+                    createdBy: item.created_by || 'Admin',
+                    lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    sections: item.content.sections,
+                    settings: item.settings,
+                    headerConfig: item.content.headerConfig
+                }));
+                setTemplates(formattedTemplates);
+            } else {
+                setTemplates(MOCK_TEMPLATES);
+            }
+        } catch (err) {
+            console.error('Error fetching templates:', err);
+            setTemplates(MOCK_TEMPLATES);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTemplates();
+    }, []);
+
     const handleCreate = () => {
         setEditingTemplateId(null);
         setTemplateName('');
@@ -563,7 +595,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         setView('VIEW');
     };
 
-    const handleSave = (status: 'Published' | 'Draft') => {
+    const handleSave = async (status: 'Published' | 'Draft') => {
         // Validation
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
@@ -574,25 +606,39 @@ const HRSalarySlipTemplate: React.FC = () => {
             return;
         }
 
-        const newTemplate: PayslipTemplate = {
-            id: editingTemplateId || Date.now().toString(),
+        const existingTemplate = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
+
+        const templatePayload = {
+            type: 'salary_slip',
             name: templateName,
             status,
-            isActive: editingTemplateId ? (templates.find(t => t.id === editingTemplateId)?.isActive ?? true) : true,
-            createdBy: 'HR Manager',
-            lastModified: 'Just now',
-            sections,
-            settings,
-            headerConfig
+            is_active: existingTemplate?.isActive ?? true,
+            content: { sections, headerConfig },
+            settings: settings,
+            last_updated_by: 'Admin', // In real app, get from auth
+            created_by: existingTemplate?.createdBy || 'Admin'
         };
 
-        if (editingTemplateId) {
-            setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
-        } else {
-            setTemplates(prev => [...prev, newTemplate]);
+        try {
+            if (editingTemplateId) {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .update(templatePayload)
+                    .eq('id', editingTemplateId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .insert([templatePayload]);
+                if (error) throw error;
+            }
+            await fetchTemplates();
+            setView('LIST');
+            setValidationError(null);
+        } catch (err) {
+            console.error('Error saving template:', err);
+            setValidationError('Failed to save to Supabase.');
         }
-        setView('LIST');
-        setValidationError(null);
     };
 
     const toggleSetting = (key: keyof TemplateSettings, modalType?: 'YTD' | 'EMPLOYER' | 'PASSWORD') => {
@@ -605,8 +651,36 @@ const HRSalarySlipTemplate: React.FC = () => {
         }
     };
 
-    const toggleTemplateActive = (id: string) => {
-        setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive } : t));
+    const toggleTemplateActive = async (id: string) => {
+        const template = templates.find(t => t.id === id);
+        if (!template) return;
+
+        const newActiveState = !template.isActive;
+        try {
+            const { error } = await supabase
+                .from('document_templates')
+                .update({ is_active: newActiveState })
+                .eq('id', id);
+            if (error) throw error;
+            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState } : t));
+        } catch (err) {
+            console.error('Error toggling active state:', err);
+        }
+    };
+
+    const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to delete this template?')) return;
+        try {
+            const { error } = await supabase
+                .from('document_templates')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+            await fetchTemplates();
+        } catch (err) {
+            console.error('Error deleting template:', err);
+        }
     };
 
     const addComponent = (items: ComponentItem[]) => {
@@ -755,7 +829,22 @@ const HRSalarySlipTemplate: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {templates.map(t => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                            <span>Loading templates...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : templates.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        No templates found. Create your first one!
+                                    </td>
+                                </tr>
+                            ) : templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
                                     <td className="px-6 py-4">

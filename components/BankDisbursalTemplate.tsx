@@ -18,6 +18,7 @@ import {
     Type,
     Database
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 // --- Types ---
 
@@ -237,20 +238,68 @@ const BankDisbursalTemplate: React.FC = () => {
     const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
     const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
 
-    const handleToggleActive = (id: string, e: React.MouseEvent) => {
+    const handleToggleActive = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive } : t));
+        const template = templates.find(t => t.id === id);
+        if (!template) return;
+
+        const newActiveState = !template.isActive;
+
+        try {
+            const { error } = await supabase
+                .from('document_templates')
+                .update({ is_active: newActiveState })
+                .eq('id', id);
+
+            if (error) throw error;
+            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState } : t));
+        } catch (err) {
+            console.error('Error toggling status:', err);
+        }
     };
 
-    // Persist templates in localStorage
-    const [templates, setTemplates] = useState<BankTemplate[]>(() => {
-        const saved = localStorage.getItem('collab_bank_templates');
-        return saved ? JSON.parse(saved) : MOCK_BANK_TEMPLATES;
-    });
+    // --- Supabase Persistence ---
+    const [templates, setTemplates] = useState<BankTemplate[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchTemplates = async () => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('document_templates')
+                .select('*')
+                .eq('type', 'bank_disbursal');
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const formattedTemplates: BankTemplate[] = data.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    bankName: item.bank_name || '',
+                    status: item.status as 'Published' | 'Draft',
+                    isActive: item.is_active,
+                    lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    lastUpdatedBy: item.last_updated_by || 'Admin',
+                    createdBy: item.created_by || 'Admin',
+                    columns: item.content.columns as BankColumn[],
+                    settings: item.settings as BankTemplateSettings
+                }));
+                setTemplates(formattedTemplates);
+            } else {
+                setTemplates(MOCK_BANK_TEMPLATES);
+            }
+        } catch (err) {
+            console.error('Error fetching templates:', err);
+            setTemplates(MOCK_BANK_TEMPLATES);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        localStorage.setItem('collab_bank_templates', JSON.stringify(templates));
-    }, [templates]);
+        fetchTemplates();
+    }, []);
 
     const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
@@ -292,7 +341,24 @@ const BankDisbursalTemplate: React.FC = () => {
         setView('VIEW');
     };
 
-    const handleSave = (status: 'Published' | 'Draft') => {
+    const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to delete this bank format?')) return;
+
+        try {
+            const { error } = await supabase
+                .from('document_templates')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            await fetchTemplates();
+        } catch (err) {
+            console.error('Error deleting template:', err);
+        }
+    };
+
+    const handleSave = async (status: 'Published' | 'Draft') => {
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
             return;
@@ -306,26 +372,38 @@ const BankDisbursalTemplate: React.FC = () => {
 
         const existingTemplate = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
 
-        const newTemplate: BankTemplate = {
-            id: editingTemplateId || Date.now().toString(),
+        const templatePayload = {
+            type: 'bank_disbursal',
             name: templateName,
-            bankName: selectedBank,
+            bank_name: selectedBank,
             status,
-            isActive: existingTemplate?.isActive ?? true,
-            lastModified: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            lastUpdatedBy: 'Admin',
-            createdBy: existingTemplate?.createdBy || 'Admin',
-            columns,
-            settings
+            is_active: existingTemplate?.isActive ?? true,
+            content: { columns },
+            settings: settings,
+            last_updated_by: 'Admin',
+            created_by: existingTemplate?.createdBy || 'Admin'
         };
 
-        if (editingTemplateId) {
-            setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
-        } else {
-            setTemplates(prev => [...prev, newTemplate]);
+        try {
+            if (editingTemplateId) {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .update(templatePayload)
+                    .eq('id', editingTemplateId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .insert([templatePayload]);
+                if (error) throw error;
+            }
+            await fetchTemplates();
+            setView('LIST');
+            setValidationError(null);
+        } catch (err) {
+            console.error('Error saving template:', err);
+            setValidationError('Failed to save to Supabase. Check console.');
         }
-        setView('LIST');
-        setValidationError(null);
     };
 
     const toggleColumn = (id: string) => {
@@ -436,7 +514,22 @@ const BankDisbursalTemplate: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {templates.map(t => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                            <span>Loading templates...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : templates.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                                        No bank formats found. Create your first one!
+                                    </td>
+                                </tr>
+                            ) : templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
                                     <td className="px-6 py-4">
@@ -480,6 +573,7 @@ const BankDisbursalTemplate: React.FC = () => {
                                                 <button onClick={(e) => { e.stopPropagation(); handleDownloadSample(t.columns, t.settings); }} className="p-1.5 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 rounded" title="Download Format"><Download size={16} /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                                <button onClick={(e) => handleDeleteTemplate(t.id, e)} className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded"><Trash2 size={16} /></button>
                                             </div>
                                         </div>
                                     </td>
