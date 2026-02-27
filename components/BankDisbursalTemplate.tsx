@@ -45,6 +45,7 @@ interface BankTemplateSettings {
 interface BankTemplate {
     id: string;
     name: string;
+    bankName: string;
     status: 'Published' | 'Draft';
     isActive: boolean;
     lastModified: string;
@@ -86,10 +87,21 @@ const DEFAULT_COLUMNS: BankColumn[] = SYSTEM_FIELDS.slice(0, 8).map(f => ({
     included: true
 }));
 
+const INDIAN_BANKS = [
+    'State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Punjab National Bank',
+    'Bank of Baroda', 'Canara Bank', 'Union Bank of India', 'Kotak Mahindra Bank',
+    'IndusInd Bank', 'Bank of India', 'Central Bank of India', 'Indian Bank',
+    'Indian Overseas Bank', 'UCO Bank', 'Bank of Maharashtra', 'IDBI Bank',
+    'Yes Bank', 'IDFC First Bank', 'Federal Bank', 'RBL Bank', 'South Indian Bank',
+    'Bandhan Bank', 'Karur Vysya Bank', 'Karnataka Bank', 'City Union Bank',
+    'Tamilnad Mercantile Bank', 'Catholic Syrian Bank', 'Dhanlaxmi Bank'
+];
+
 const MOCK_BANK_TEMPLATES: BankTemplate[] = [
     {
         id: '1',
         name: 'Default Universal Format',
+        bankName: 'Universal',
         status: 'Published',
         isActive: true,
         lastModified: '03 Dec 2025',
@@ -243,6 +255,7 @@ const BankDisbursalTemplate: React.FC = () => {
 
     // Editor State
     const [templateName, setTemplateName] = useState('');
+    const [selectedBank, setSelectedBank] = useState('');
     const [columns, setColumns] = useState<BankColumn[]>(DEFAULT_COLUMNS);
     const [settings, setSettings] = useState<BankTemplateSettings>(MOCK_BANK_TEMPLATES[0].settings);
     const [validationError, setValidationError] = useState<string | null>(null);
@@ -256,6 +269,7 @@ const BankDisbursalTemplate: React.FC = () => {
     const handleCreate = () => {
         setEditingTemplateId(null);
         setTemplateName('');
+        setSelectedBank('');
         setColumns(DEFAULT_COLUMNS);
         setSettings(MOCK_BANK_TEMPLATES[0].settings);
         setActiveTab('EDITOR');
@@ -265,6 +279,7 @@ const BankDisbursalTemplate: React.FC = () => {
     const handleEdit = (t: BankTemplate) => {
         setEditingTemplateId(t.id);
         setTemplateName(t.name);
+        setSelectedBank(t.bankName);
         setColumns(t.columns);
         setSettings(t.settings);
         setActiveTab('EDITOR');
@@ -293,6 +308,7 @@ const BankDisbursalTemplate: React.FC = () => {
         const newTemplate: BankTemplate = {
             id: editingTemplateId || Date.now().toString(),
             name: templateName,
+            bankName: selectedBank,
             status,
             isActive: existingTemplate?.isActive ?? true,
             lastModified: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -440,21 +456,39 @@ const BankDisbursalTemplate: React.FC = () => {
             <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20} /></button>
-                    <div>
-                        <div className="text-xs text-slate-500 font-medium">
+                    <div className="flex flex-col gap-1 items-start">
+                        <div className="flex items-center gap-3">
+                            {isReadOnly ? (
+                                <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={templateName}
+                                    onChange={e => setTemplateName(e.target.value)}
+                                    placeholder="Enter Template Name"
+                                    className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1 min-w-[200px]"
+                                />
+                            )}
+                            <div className="h-6 w-px bg-slate-200 mx-1" />
+                            {isReadOnly ? (
+                                <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{selectedBank || 'No Bank Selected'}</span>
+                            ) : (
+                                <select
+                                    value={selectedBank}
+                                    onChange={e => setSelectedBank(e.target.value)}
+                                    className="text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border-none rounded-full px-3 py-1 focus:ring-2 focus:ring-purple-200 focus:outline-none cursor-pointer appearance-none transition-colors"
+                                >
+                                    <option value="">Select Bank...</option>
+                                    {INDIAN_BANKS.map(bank => (
+                                        <option key={bank} value={bank}>{bank}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-medium tracking-wide flex items-center gap-1.5 px-1 uppercase">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
                             Bank Format
                         </div>
-                        {isReadOnly ? (
-                            <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
-                        ) : (
-                            <input
-                                type="text"
-                                value={templateName}
-                                onChange={e => setTemplateName(e.target.value)}
-                                placeholder="Enter Template Name"
-                                className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
-                            />
-                        )}
                     </div>
                 </div>
 
