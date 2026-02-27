@@ -383,7 +383,7 @@ const SalaryAnnexureTemplate: React.FC = () => {
                         <h3 className="text-sm font-bold text-purple-900">Default Salary Annexure Template</h3>
                         <p className="text-xs text-purple-700 mt-1">This is the global default Salary Annexure (Offer Letter CTC Breakup) template. All companies will use this in offer letters unless they create a custom version.</p>
                     </div>
-                    <button onClick={handleCreate} className="ml-auto px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
+                    <button onClick={handleCreate} className="ml-auto px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 whitespace-nowrap shrink-0">
                         <Plus size={16} /> Create Annexure
                     </button>
                 </div>
