@@ -368,8 +368,11 @@ const BankDisbursalTemplate: React.FC = () => {
         setDraggedItemIndex(null);
     };
 
-    const handleDownloadSample = () => {
-        const activeCols = columns.filter(c => c.included);
+    const handleDownloadSample = (customColumns?: BankColumn[], customSettings?: BankTemplateSettings) => {
+        const targetColumns = customColumns || columns;
+        const targetSettings = customSettings || settings;
+
+        const activeCols = targetColumns.filter(c => c.included);
         if (activeCols.length === 0) return;
 
         // Generate headers
@@ -400,7 +403,7 @@ const BankDisbursalTemplate: React.FC = () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sample Disbursal");
 
         // Format filename
-        const fileName = `${settings.fileNamePattern.replace('{{company}}', 'TechFlow').replace('{{month}}', 'Nov').replace('{{year}}', '2025')}.xlsx`;
+        const fileName = `${targetSettings.fileNamePattern.replace('{{company}}', 'TechFlow').replace('{{month}}', 'Nov').replace('{{year}}', '2025')}.xlsx`;
 
         // Export
         XLSX.writeFile(workbook, fileName);
@@ -474,6 +477,7 @@ const BankDisbursalTemplate: React.FC = () => {
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${t.isActive ? 'translate-x-5' : ''}`} />
                                             </div>
                                             <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={(e) => { e.stopPropagation(); handleDownloadSample(t.columns, t.settings); }} className="p-1.5 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 rounded" title="Download Format"><Download size={16} /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
                                             </div>
