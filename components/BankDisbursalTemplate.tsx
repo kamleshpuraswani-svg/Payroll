@@ -385,6 +385,7 @@ const BankDisbursalTemplate: React.FC = () => {
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
                             <tr>
                                 <th className="px-6 py-4">Template Name</th>
+                                <th className="px-6 py-4">Bank</th>
                                 <th className="px-6 py-4">Format</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Created By</th>
@@ -396,6 +397,11 @@ const BankDisbursalTemplate: React.FC = () => {
                             {templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded">
+                                            {t.bankName || 'Universal'}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-200 text-xs font-mono text-slate-600">
                                             <FileSpreadsheet size={12} /> {t.settings.fileType}
