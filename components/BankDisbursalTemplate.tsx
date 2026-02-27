@@ -109,123 +109,86 @@ const MOCK_BANK_TEMPLATES: BankTemplate[] = [
 const AddBankColumnModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (col: BankColumn) => void;
+    onAdd: (cols: BankColumn[]) => void;
 }> = ({ isOpen, onClose, onAdd }) => {
-    const [tab, setTab] = useState<'SYSTEM' | 'CUSTOM'>('SYSTEM');
-    const [selectedFieldId, setSelectedFieldId] = useState(SYSTEM_FIELDS[0].id);
-
-    // Custom Column State
-    const [customHeader, setCustomHeader] = useState('');
-    const [customValue, setCustomValue] = useState('');
+    const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
 
     if (!isOpen) return null;
 
+    const toggleFieldSelection = (id: string) => {
+        setSelectedFieldIds(prev =>
+            prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
+        );
+    };
+
     const handleAdd = () => {
-        if (tab === 'SYSTEM') {
-            const field = SYSTEM_FIELDS.find(f => f.id === selectedFieldId);
-            if (field) {
-                onAdd({
-                    id: `${field.id}_${Date.now()}`,
-                    type: 'System',
-                    fieldId: field.id,
-                    headerName: field.label,
-                    sampleValue: field.sample,
-                    included: true
-                });
-            }
-        } else {
-            if (!customHeader) return;
-            onAdd({
-                id: `custom_${Date.now()}`,
-                type: 'Custom',
-                headerName: customHeader,
-                customValue: customValue,
-                sampleValue: customValue,
+        const newCols: BankColumn[] = selectedFieldIds.map(fid => {
+            const field = SYSTEM_FIELDS.find(f => f.id === fid);
+            return {
+                id: `${fid}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                type: 'System',
+                fieldId: fid,
+                headerName: field?.label || fid,
+                sampleValue: field?.sample || '',
                 included: true
-            });
+            };
+        });
+
+        if (newCols.length > 0) {
+            onAdd(newCols);
         }
         onClose();
-        // Reset states
-        setCustomHeader('');
-        setCustomValue('');
+        setSelectedFieldIds([]);
     };
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
                 <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <h3 className="font-bold text-slate-800">Add New Column</h3>
                     <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
                 </div>
 
-                <div className="flex border-b border-slate-100">
-                    <button
-                        onClick={() => setTab('SYSTEM')}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${tab === 'SYSTEM' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
-                    >
-                        <Database size={16} /> System Field
-                    </button>
-                    <button
-                        onClick={() => setTab('CUSTOM')}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${tab === 'CUSTOM' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
-                    >
-                        <Type size={16} /> Custom Value
-                    </button>
-                </div>
-
-                <div className="p-6 space-y-6">
-                    {tab === 'SYSTEM' ? (
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select Field</label>
-                            <select
-                                value={selectedFieldId}
-                                onChange={(e) => setSelectedFieldId(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                <div className="p-6 overflow-y-auto">
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-4">Select Fields</label>
+                    <div className="space-y-2">
+                        {SYSTEM_FIELDS.map(f => (
+                            <div
+                                key={f.id}
+                                onClick={() => toggleFieldSelection(f.id)}
+                                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${selectedFieldIds.includes(f.id) ? 'bg-purple-50 border-purple-200 ring-1 ring-purple-200' : 'bg-white border-slate-200 hover:border-purple-300'}`}
                             >
-                                {SYSTEM_FIELDS.map(f => (
-                                    <option key={f.id} value={f.id}>{f.label} (e.g. {f.sample})</option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-slate-400 mt-2">
-                                Data for this column will be automatically populated from the system.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Column Header</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Bank Code"
-                                    value={customHeader}
-                                    onChange={(e) => setCustomHeader(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                />
+                                <div className="flex flex-col">
+                                    <span className={`text-sm font-medium ${selectedFieldIds.includes(f.id) ? 'text-purple-700' : 'text-slate-700'}`}>{f.label}</span>
+                                    <span className="text-[10px] text-slate-400">e.g. {f.sample}</span>
+                                </div>
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedFieldIds.includes(f.id) ? 'bg-purple-600 border-purple-600' : 'bg-white border-slate-300'}`}>
+                                    {selectedFieldIds.includes(f.id) && <Plus size={14} className="text-white rotate-45" />}
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Fixed Value</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. HDFC001"
-                                    value={customValue}
-                                    onChange={(e) => setCustomValue(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                />
-                                <p className="text-xs text-slate-400 mt-1">This value will be repeated for every row in the export file.</p>
-                            </div>
-                        </div>
-                    )}
+                        ))}
+                    </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
-                    <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-white rounded-lg text-sm font-medium transition-colors">Cancel</button>
-                    <button
-                        onClick={handleAdd}
-                        disabled={tab === 'CUSTOM' && !customHeader}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-sm"
-                    >
-                        Add Column
-                    </button>
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <span className="text-xs text-slate-500 font-medium">
+                        {selectedFieldIds.length} fields selected
+                    </span>
+                    <div className="flex gap-2">
+                        <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-white rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                        <button
+                            onClick={handleAdd}
+                            disabled={selectedFieldIds.length === 0}
+                            className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-sm"
+                        >
+                            Add {selectedFieldIds.length > 1 ? 'Columns' : 'Column'}
+                        </button>
+                    </div>
+                </div>
+                <div className="px-6 pb-2 text-center">
+                    <p className="text-[10px] text-slate-400">
+                        Data for selected columns will be automatically populated from the system.
+                    </p>
                 </div>
             </div>
         </div>
@@ -323,8 +286,8 @@ const BankDisbursalTemplate: React.FC = () => {
         setColumns(prev => prev.map(c => c.id === id ? { ...c, headerName: name } : c));
     };
 
-    const handleAddColumn = (newCol: BankColumn) => {
-        setColumns(prev => [...prev, newCol]);
+    const handleAddColumn = (newCols: BankColumn[]) => {
+        setColumns(prev => [...prev, ...newCols]);
     };
 
     const handleDeleteColumn = (id: string) => {
