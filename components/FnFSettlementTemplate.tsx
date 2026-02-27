@@ -1,197 +1,202 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Edit2, 
-  Eye, 
-  Trash2, 
-  Save, 
-  X, 
-  Settings, 
-  CheckCircle, 
-  AlertCircle, 
-  FileText, 
-  ChevronLeft,
-  Image as ImageIcon,
-  Check,
-  Briefcase,
-  Calculator
+import {
+    Plus,
+    Edit2,
+    Eye,
+    Trash2,
+    Save,
+    X,
+    Settings,
+    CheckCircle,
+    AlertCircle,
+    FileText,
+    ChevronLeft,
+    Image as ImageIcon,
+    Check,
+    Briefcase,
+    Calculator
 } from 'lucide-react';
 
 // --- Types ---
 
 interface ComponentItem {
-  id: string;
-  name: string;
-  amount: string; 
-  type: 'Fixed' | 'Variable' | 'Calculated';
+    id: string;
+    name: string;
+    amount: string;
+    type: 'Fixed' | 'Variable' | 'Calculated';
 }
 
 interface FnFTemplateSettings {
-  currency: string;
-  dateFormat: string;
-  showGratuityBreakdown: boolean;
-  showYTD: boolean;
-  includeForm16: boolean;
-  passwordProtect: boolean;
+    currency: string;
+    dateFormat: string;
+    showGratuityBreakdown: boolean;
+    showYTD: boolean;
+    includeForm16: boolean;
+    passwordProtect: boolean;
 }
 
 interface FnFHeaderConfig {
-  logoPosition: 'Left' | 'Center' | 'Right';
-  showLogo: boolean;
-  showCompanyName: boolean;
-  showCompanyAddress: boolean;
-  documentTitle: string;
-  employeeFields: {
-    name: boolean;
-    id: boolean;
-    designation: boolean;
-    doj: boolean;
-    dor: boolean; // Date of Relieving
-    pan: boolean;
-    uan: boolean;
-  };
+    logoPosition: 'Left' | 'Center' | 'Right';
+    showLogo: boolean;
+    showCompanyName: boolean;
+    showCompanyAddress: boolean;
+    documentTitle: string;
+    employeeFields: {
+        name: boolean;
+        department: boolean;
+        id: boolean;
+        designation: boolean;
+        doj: boolean;
+        dor: boolean; // Date of Relieving
+        pan: boolean;
+        uan: boolean;
+    };
 }
 
 interface FnFTemplate {
-  id: string;
-  name: string;
-  status: 'Published' | 'Draft';
-  lastModified: string;
-  sections: {
-    earnings: ComponentItem[];
-    deductions: ComponentItem[];
-  };
-  settings: FnFTemplateSettings;
-  headerConfig: FnFHeaderConfig;
+    id: string;
+    name: string;
+    status: 'Published' | 'Draft';
+    createdBy: string;
+    lastUpdatedBy: string;
+    isActive: boolean;
+    sections: {
+        earnings: ComponentItem[];
+        deductions: ComponentItem[];
+    };
+    settings: FnFTemplateSettings;
+    headerConfig: FnFHeaderConfig;
 }
 
 // --- Mock Data ---
 
 const MOCK_FNF_TEMPLATES: FnFTemplate[] = [
-  {
-    id: '1',
-    name: 'Standard F&F Settlement',
-    status: 'Published',
-    lastModified: '03 Dec 2025',
-    headerConfig: {
-        logoPosition: 'Left',
-        showLogo: true,
-        showCompanyName: true,
-        showCompanyAddress: true,
-        documentTitle: 'Full and Final Settlement Statement',
-        employeeFields: { name: true, id: true, designation: true, doj: true, dor: true, pan: true, uan: true }
-    },
-    sections: {
-      earnings: [
-        { id: 'e1', name: 'Last Month Salary', amount: '45,000', type: 'Variable' },
-        { id: 'e2', name: 'Pending Salary (Prorated)', amount: '12,500', type: 'Calculated' },
-        { id: 'e3', name: 'Leave Encashment', amount: '42,000', type: 'Calculated' },
-        { id: 'e4', name: 'Gratuity', amount: '68,400', type: 'Calculated' },
-        { id: 'e5', name: 'Performance Bonus', amount: '25,000', type: 'Variable' },
-      ],
-      deductions: [
-        { id: 'd1', name: 'Provident Fund (Final)', amount: '3,600', type: 'Variable' },
-        { id: 'd2', name: 'Income Tax (TDS)', amount: '4,200', type: 'Variable' },
-        { id: 'd3', name: 'Notice Pay Recovery', amount: '0', type: 'Variable' },
-        { id: 'd4', name: 'Laptop Damage Recovery', amount: '380', type: 'Fixed' },
-      ]
-    },
-    settings: {
-      currency: 'INR',
-      dateFormat: 'DD MMM YYYY',
-      showGratuityBreakdown: true,
-      showYTD: false,
-      includeForm16: true,
-      passwordProtect: true
+    {
+        id: '1',
+        name: 'Standard F&F Settlement',
+        status: 'Published',
+        createdBy: 'Super Admin',
+        lastUpdatedBy: '03 Dec 2025',
+        isActive: true,
+        headerConfig: {
+            logoPosition: 'Left',
+            showLogo: true,
+            showCompanyName: true,
+            showCompanyAddress: true,
+            documentTitle: 'Full and Final Settlement Statement',
+            employeeFields: { name: true, department: true, id: true, designation: true, doj: true, dor: true, pan: true, uan: true }
+        },
+        sections: {
+            earnings: [
+                { id: 'e1', name: 'Last Month Salary', amount: '45,000', type: 'Variable' },
+                { id: 'e2', name: 'Pending Salary (Prorated)', amount: '12,500', type: 'Calculated' },
+                { id: 'e3', name: 'Leave Encashment', amount: '42,000', type: 'Calculated' },
+                { id: 'e4', name: 'Gratuity', amount: '68,400', type: 'Calculated' },
+                { id: 'e5', name: 'Performance Bonus', amount: '25,000', type: 'Variable' },
+            ],
+            deductions: [
+                { id: 'd1', name: 'Provident Fund (Final)', amount: '3,600', type: 'Variable' },
+                { id: 'd2', name: 'Income Tax (TDS)', amount: '4,200', type: 'Variable' },
+                { id: 'd3', name: 'Notice Pay Recovery', amount: '0', type: 'Variable' },
+                { id: 'd4', name: 'Laptop Damage Recovery', amount: '380', type: 'Fixed' },
+            ]
+        },
+        settings: {
+            currency: 'INR',
+            dateFormat: 'DD MMM YYYY',
+            showGratuityBreakdown: true,
+            showYTD: false,
+            includeForm16: true,
+            passwordProtect: true
+        }
     }
-  }
 ];
 
 // --- Sub-Components ---
 
 const LeaveEncashmentModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  selectedComponents: string[];
-  onToggleComponent: (comp: string) => void;
+    isOpen: boolean;
+    onClose: () => void;
+    selectedComponents: string[];
+    onToggleComponent: (comp: string) => void;
 }> = ({ isOpen, onClose, selectedComponents, onToggleComponent }) => {
-  if (!isOpen) return null;
+    if (!isOpen) return null;
 
-  const options = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"];
-  
-  const getFormulaDisplay = () => {
-    const active = options.filter(opt => selectedComponents.includes(opt));
-    if (active.length === 0) return "(None Selected) / Divisor";
-    const labels = active.map(a => a.replace(" Salary", "").replace(" Allowance", ""));
-    return `(${labels.join(" + ")}) / Divisor`;
-  };
+    const options = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"];
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h3 className="font-bold text-slate-800">Leave Encashment Settings</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="p-6 space-y-6">
-          <div>
-            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Components for Encashment</h4>
-            <div className="space-y-2">
-              {options.map(opt => (
-                <label key={opt} className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
-                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(opt) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-300'}`}>
-                    {selectedComponents.includes(opt) && <Check size={14} className="text-white stroke-[3]" />}
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    className="hidden" 
-                    checked={selectedComponents.includes(opt)}
-                    onChange={() => onToggleComponent(opt)}
-                  />
-                  <span className={`text-sm font-semibold ${selectedComponents.includes(opt) ? 'text-purple-900' : 'text-slate-600'}`}>{opt}</span>
-                </label>
-              ))}
+    const getFormulaDisplay = () => {
+        const active = options.filter(opt => selectedComponents.includes(opt));
+        if (active.length === 0) return "(None Selected) / Divisor";
+        const labels = active.map(a => a.replace(" Salary", "").replace(" Allowance", ""));
+        return `(${labels.join(" + ")}) / Divisor`;
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 className="font-bold text-slate-800">Leave Encashment Settings</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div>
+                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Components for Encashment</h4>
+                        <div className="space-y-2">
+                            {options.map(opt => (
+                                <label key={opt} className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(opt) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-300'}`}>
+                                        {selectedComponents.includes(opt) && <Check size={14} className="text-white stroke-[3]" />}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="hidden"
+                                        checked={selectedComponents.includes(opt)}
+                                        onChange={() => onToggleComponent(opt)}
+                                    />
+                                    <span className={`text-sm font-semibold ${selectedComponents.includes(opt) ? 'text-purple-900' : 'text-slate-600'}`}>{opt}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-2 text-indigo-600">
+                            <Calculator size={16} />
+                            <h5 className="text-[10px] font-black uppercase tracking-widest">Formula Preview</h5>
+                        </div>
+                        <div className="space-y-2">
+                            <div>
+                                <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Daily Rate Calculation</p>
+                                <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
+                                    Daily Rate = {getFormulaDisplay()}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Final Amount</p>
+                                <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
+                                    Encashment Amount = Daily Rate × Encashable Days
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                    <button onClick={onClose} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all text-sm">
+                        Save Settings
+                    </button>
+                </div>
             </div>
-          </div>
-
-          <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3">
-             <div className="flex items-center gap-2 text-indigo-600">
-                <Calculator size={16} />
-                <h5 className="text-[10px] font-black uppercase tracking-widest">Formula Preview</h5>
-             </div>
-             <div className="space-y-2">
-                <div>
-                   <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Daily Rate Calculation</p>
-                   <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
-                      Daily Rate = {getFormulaDisplay()}
-                   </div>
-                </div>
-                <div>
-                   <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Final Amount</p>
-                   <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
-                      Encashment Amount = Daily Rate × Encashable Days
-                   </div>
-                </div>
-             </div>
-          </div>
         </div>
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-          <button onClick={onClose} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all text-sm">
-            Save Settings
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
-const FnFHeaderConfigModal: React.FC<{ 
-    isOpen: boolean; 
-    onClose: () => void; 
-    config: FnFHeaderConfig; 
-    onChange: (cfg: FnFHeaderConfig) => void; 
+const FnFHeaderConfigModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    config: FnFHeaderConfig;
+    onChange: (cfg: FnFHeaderConfig) => void;
 }> = ({ isOpen, onClose, config, onChange }) => {
     if (!isOpen) return null;
 
@@ -214,29 +219,29 @@ const FnFHeaderConfigModal: React.FC<{
                     <div className="space-y-3">
                         <h4 className="text-xs font-bold text-slate-500 uppercase">Branding</h4>
                         <div className="space-y-2">
-                             <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                 <input type="checkbox" checked={config.showLogo} onChange={e => onChange({...config, showLogo: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
-                                 <span className="text-sm font-medium text-slate-700">Show Company Logo</span>
-                             </label>
-                             <div className="grid grid-cols-2 gap-3">
-                                 <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                    <input type="checkbox" checked={config.showCompanyName} onChange={e => onChange({...config, showCompanyName: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
+                            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input type="checkbox" checked={config.showLogo} onChange={e => onChange({ ...config, showLogo: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
+                                <span className="text-sm font-medium text-slate-700">Company Logo</span>
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                    <input type="checkbox" checked={config.showCompanyName} onChange={e => onChange({ ...config, showCompanyName: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
                                     <span className="text-sm font-medium text-slate-700">Company Name</span>
-                                 </label>
-                                 <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                    <input type="checkbox" checked={config.showCompanyAddress} onChange={e => onChange({...config, showCompanyAddress: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
+                                </label>
+                                <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                    <input type="checkbox" checked={config.showCompanyAddress} onChange={e => onChange({ ...config, showCompanyAddress: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
                                     <span className="text-sm font-medium text-slate-700">Address</span>
-                                 </label>
-                             </div>
+                                </label>
+                            </div>
                         </div>
-                        
+
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Logo Position</label>
                             <div className="flex bg-slate-100 p-1 rounded-lg">
                                 {['Left', 'Center', 'Right'].map((pos) => (
                                     <button
                                         key={pos}
-                                        onClick={() => onChange({...config, logoPosition: pos as any})}
+                                        onClick={() => onChange({ ...config, logoPosition: pos as any })}
                                         className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${config.logoPosition === pos ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         {pos}
@@ -249,10 +254,10 @@ const FnFHeaderConfigModal: React.FC<{
                     {/* Document Title */}
                     <div>
                         <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Document Title</h4>
-                        <input 
-                            type="text" 
-                            value={config.documentTitle} 
-                            onChange={e => onChange({...config, documentTitle: e.target.value})}
+                        <input
+                            type="text"
+                            value={config.documentTitle}
+                            onChange={e => onChange({ ...config, documentTitle: e.target.value })}
                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                         />
                     </div>
@@ -262,7 +267,7 @@ const FnFHeaderConfigModal: React.FC<{
                         <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Employee Details</h4>
                         <div className="grid grid-cols-2 gap-2">
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={config.employeeFields.name} onChange={() => toggleField('name')} className="rounded text-purple-600 focus:ring-purple-500" /> Name
+                                <input type="checkbox" checked={config.employeeFields.name} onChange={() => toggleField('name')} className="rounded text-purple-600 focus:ring-purple-500" /> Employee Name
                             </label>
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                                 <input type="checkbox" checked={config.employeeFields.id} onChange={() => toggleField('id')} className="rounded text-purple-600 focus:ring-purple-500" /> Employee ID
@@ -271,13 +276,16 @@ const FnFHeaderConfigModal: React.FC<{
                                 <input type="checkbox" checked={config.employeeFields.designation} onChange={() => toggleField('designation')} className="rounded text-purple-600 focus:ring-purple-500" /> Designation
                             </label>
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={config.employeeFields.doj} onChange={() => toggleField('doj')} className="rounded text-purple-600 focus:ring-purple-500" /> DOJ
+                                <input type="checkbox" checked={config.employeeFields.department} onChange={() => toggleField('department')} className="rounded text-purple-600 focus:ring-purple-500" /> Department
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                                <input type="checkbox" checked={config.employeeFields.doj} onChange={() => toggleField('doj')} className="rounded text-purple-600 focus:ring-purple-500" /> Date of Joining
                             </label>
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                                 <input type="checkbox" checked={config.employeeFields.dor} onChange={() => toggleField('dor')} className="rounded text-purple-600 focus:ring-purple-500" /> DOR (Relieving)
                             </label>
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={config.employeeFields.pan} onChange={() => toggleField('pan')} className="rounded text-purple-600 focus:ring-purple-500" /> PAN
+                                <input type="checkbox" checked={config.employeeFields.pan} onChange={() => toggleField('pan')} className="rounded text-purple-600 focus:ring-purple-500" /> PAN Number
                             </label>
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                                 <input type="checkbox" checked={config.employeeFields.uan} onChange={() => toggleField('uan')} className="rounded text-purple-600 focus:ring-purple-500" /> UAN
@@ -293,11 +301,11 @@ const FnFHeaderConfigModal: React.FC<{
     );
 };
 
-const AddFnFComponentModal: React.FC<{ 
-    isOpen: boolean; 
-    onClose: () => void; 
+const AddFnFComponentModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
     section: 'earnings' | 'deductions' | null;
-    onAdd: (items: ComponentItem[]) => void 
+    onAdd: (items: ComponentItem[]) => void
 }> = ({ isOpen, onClose, section, onAdd }) => {
     const [selected, setSelected] = useState<string[]>([]);
 
@@ -357,256 +365,273 @@ const AddFnFComponentModal: React.FC<{
 // --- Main Component ---
 
 const FnFSettlementTemplate: React.FC = () => {
-  const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
-  const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
-  
-  // Persist templates in localStorage
-  const [templates, setTemplates] = useState<FnFTemplate[]>(() => {
-    const saved = localStorage.getItem('collab_fnf_templates');
-    return saved ? JSON.parse(saved) : MOCK_FNF_TEMPLATES;
-  });
+    const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
+    const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
 
-  useEffect(() => {
-    localStorage.setItem('collab_fnf_templates', JSON.stringify(templates));
-  }, [templates]);
+    // Persist templates in localStorage
+    const [templates, setTemplates] = useState<FnFTemplate[]>(() => {
+        const saved = localStorage.getItem('collab_fnf_templates');
+        return saved ? JSON.parse(saved) : MOCK_FNF_TEMPLATES;
+    });
 
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+    useEffect(() => {
+        localStorage.setItem('collab_fnf_templates', JSON.stringify(templates));
+    }, [templates]);
 
-  // Leave Encashment State
-  const [showLeaveEncashmentModal, setShowLeaveEncashmentModal] = useState(false);
-  const [encashmentComponents, setEncashmentComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
+    const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
-  // Editor State
-  const [templateName, setTemplateName] = useState('');
-  const [sections, setSections] = useState<FnFTemplate['sections']>({ earnings: [], deductions: [] });
-  const [headerConfig, setHeaderConfig] = useState<FnFHeaderConfig>(MOCK_FNF_TEMPLATES[0].headerConfig);
-  const [settings, setSettings] = useState<FnFTemplateSettings>(MOCK_FNF_TEMPLATES[0].settings);
+    // Leave Encashment State
+    const [showLeaveEncashmentModal, setShowLeaveEncashmentModal] = useState(false);
+    const [encashmentComponents, setEncashmentComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
 
-  // Modal States
-  const [headerConfigOpen, setHeaderConfigOpen] = useState(false);
-  const [addComponentModal, setAddComponentModal] = useState<{ isOpen: boolean; section: 'earnings' | 'deductions' | null }>({ isOpen: false, section: null });
-  const [validationError, setValidationError] = useState<string | null>(null);
+    // Editor State
+    const [templateName, setTemplateName] = useState('');
+    const [sections, setSections] = useState<FnFTemplate['sections']>({ earnings: [], deductions: [] });
+    const [headerConfig, setHeaderConfig] = useState<FnFHeaderConfig>(MOCK_FNF_TEMPLATES[0].headerConfig);
+    const [settings, setSettings] = useState<FnFTemplateSettings>(MOCK_FNF_TEMPLATES[0].settings);
 
-  const handleCreate = () => {
-      setEditingTemplateId(null);
-      setTemplateName('');
-      setSections({ earnings: [], deductions: [] });
-      setSettings(MOCK_FNF_TEMPLATES[0].settings); 
-      setHeaderConfig(MOCK_FNF_TEMPLATES[0].headerConfig);
-      setActiveTab('EDITOR');
-      setView('EDITOR');
-  };
+    // Modal States
+    const [headerConfigOpen, setHeaderConfigOpen] = useState(false);
+    const [addComponentModal, setAddComponentModal] = useState<{ isOpen: boolean; section: 'earnings' | 'deductions' | null }>({ isOpen: false, section: null });
+    const [validationError, setValidationError] = useState<string | null>(null);
 
-  const handleEdit = (t: FnFTemplate) => {
-      setEditingTemplateId(t.id);
-      setTemplateName(t.name);
-      setSections(t.sections);
-      setSettings(t.settings);
-      setHeaderConfig(t.headerConfig);
-      setActiveTab('EDITOR');
-      setView('EDITOR');
-  };
+    const handleCreate = () => {
+        setEditingTemplateId(null);
+        setTemplateName('');
+        setSections({ earnings: [], deductions: [] });
+        setSettings(MOCK_FNF_TEMPLATES[0].settings);
+        setHeaderConfig(MOCK_FNF_TEMPLATES[0].headerConfig);
+        setActiveTab('EDITOR');
+        setView('EDITOR');
+    };
 
-  const handleView = (t: FnFTemplate) => {
-      handleEdit(t);
-      setView('VIEW');
-  };
+    const handleEdit = (t: FnFTemplate) => {
+        setEditingTemplateId(t.id);
+        setTemplateName(t.name);
+        setSections(t.sections);
+        setSettings(t.settings);
+        setHeaderConfig(t.headerConfig);
+        setActiveTab('EDITOR');
+        setView('EDITOR');
+    };
 
-  const handleSave = (status: 'Published' | 'Draft') => {
-      if (!templateName.trim()) {
-          setValidationError('Template Name is required');
-          return;
-      }
-      if (sections.earnings.length === 0) {
-          setValidationError('At least one earning/dues component is required.');
-          return;
-      }
+    const handleView = (t: FnFTemplate) => {
+        handleEdit(t);
+        setView('VIEW');
+    };
 
-      const newTemplate: FnFTemplate = {
-          id: editingTemplateId || Date.now().toString(),
-          name: templateName,
-          status,
-          lastModified: 'Just now',
-          sections,
-          settings,
-          headerConfig
-      };
+    const handleSave = (status: 'Published' | 'Draft') => {
+        if (!templateName.trim()) {
+            setValidationError('Template Name is required');
+            return;
+        }
+        if (sections.earnings.length === 0) {
+            setValidationError('At least one earning/dues component is required.');
+            return;
+        }
 
-      if (editingTemplateId) {
-          setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
-      } else {
-          setTemplates(prev => [...prev, newTemplate]);
-      }
-      setView('LIST');
-      setValidationError(null);
-  };
+        const newTemplate: FnFTemplate = {
+            id: editingTemplateId || Date.now().toString(),
+            name: templateName,
+            status,
+            createdBy: editingTemplateId ? (templates.find(t => t.id === editingTemplateId)?.createdBy || 'Super Admin') : 'Super Admin',
+            lastUpdatedBy: '03 Dec 2025',
+            isActive: editingTemplateId ? (templates.find(t => t.id === editingTemplateId)?.isActive ?? true) : true,
+            sections,
+            settings,
+            headerConfig
+        };
 
-  const toggleEncashmentComponent = (comp: string) => {
-    setEncashmentComponents(prev => 
-        prev.includes(comp) ? prev.filter(c => c !== comp) : [...prev, comp]
-    );
-  };
+        if (editingTemplateId) {
+            setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
+        } else {
+            setTemplates(prev => [...prev, newTemplate]);
+        }
+        setView('LIST');
+        setValidationError(null);
+    };
 
-  const addComponent = (items: ComponentItem[]) => {
-      if (!addComponentModal.section) return;
-      setSections(prev => ({ 
-          ...prev, 
-          [addComponentModal.section!]: [...prev[addComponentModal.section!], ...items] 
-      }));
-  };
+    const handleToggleActive = (id: string) => {
+        setTemplates(prev => prev.map(t =>
+            t.id === id ? { ...t, isActive: !t.isActive } : t
+        ));
+    };
 
-  const removeComponent = (section: keyof typeof sections, id: string) => {
-      setSections(prev => ({ ...prev, [section]: prev[section].filter(i => i.id !== id) }));
-  };
+    const toggleEncashmentComponent = (comp: string) => {
+        setEncashmentComponents(prev =>
+            prev.includes(comp) ? prev.filter(c => c !== comp) : [...prev, comp]
+        );
+    };
 
-  const parseAmount = (amt: string) => parseFloat(amt.replace(/,/g, '')) || 0;
-  const formatCurrency = (amt: number) => amt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const addComponent = (items: ComponentItem[]) => {
+        if (!addComponentModal.section) return;
+        setSections(prev => ({
+            ...prev,
+            [addComponentModal.section!]: [...prev[addComponentModal.section!], ...items]
+        }));
+    };
 
-  // --- RENDER LIST ---
-  if (view === 'LIST') {
-      return (
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
-             <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
-                 <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Briefcase size={20}/></div>
-                 <div className="flex-1">
-                     <h3 className="text-sm font-bold text-purple-900">Default Full & Final Settlement Template</h3>
-                     <p className="text-xs text-purple-700 mt-1">This is the global default Full & Final Settlement template. All companies will use this for F&F unless they create a custom version.</p>
-                 </div>
-                 <div className="flex gap-2">
-                    <button 
-                        onClick={() => setShowLeaveEncashmentModal(true)}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-lg hover:bg-slate-50 shadow-sm flex items-center gap-2 transition-all"
-                    >
-                        <Settings size={16} /> Leave Encashment Settings
-                    </button>
-                    <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
-                        <Plus size={16} /> Create New Version
-                    </button>
-                 </div>
-             </div>
+    const removeComponent = (section: keyof typeof sections, id: string) => {
+        setSections(prev => ({ ...prev, [section]: prev[section].filter(i => i.id !== id) }));
+    };
 
-             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
-                        <tr>
-                            <th className="px-6 py-4">Template Name</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Last Modified</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {templates.map(t => (
-                            <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
-                                <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
-                                <td className="px-6 py-4">
-                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                                        t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
-                                        'bg-amber-50 text-amber-700 border-amber-100'
-                                    }`}>
-                                        {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                                        {t.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">{t.lastModified}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16}/></button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16}/></button>
-                                    </div>
-                                </td>
+    const parseAmount = (amt: string) => parseFloat(amt.replace(/,/g, '')) || 0;
+    const formatCurrency = (amt: number) => amt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+    // --- RENDER LIST ---
+    if (view === 'LIST') {
+        return (
+            <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
+                    <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Briefcase size={20} /></div>
+                    <div className="flex-1">
+                        <h3 className="text-sm font-bold text-purple-900">Default Full & Final Settlement Template</h3>
+                        <p className="text-xs text-purple-700 mt-1">This is the global default Full & Final Settlement template. All companies will use this for F&F unless they create a custom version.</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowLeaveEncashmentModal(true)}
+                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-lg hover:bg-slate-50 shadow-sm flex items-center gap-2 transition-all"
+                        >
+                            <Settings size={16} /> Leave Encashment Settings
+                        </button>
+                        <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
+                            <Plus size={16} /> Create Payslip
+                        </button>
+                    </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <table className="w-full text-left text-sm text-slate-600">
+                        <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                            <tr>
+                                <th className="px-6 py-4">Template Name</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Create By</th>
+                                <th className="px-6 py-4">Last Updated By</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-             </div>
-             
-             <div className="text-center text-xs text-slate-400 mt-4">
-                1,156 companies are currently using this default F&F template · Last published: 03 Dec 2025
-             </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {templates.map(t => (
+                                <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
+                                    <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                            }`}>
+                                            {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                            {t.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-500 font-medium">{t.createdBy}</td>
+                                    <td className="px-6 py-4">{t.lastUpdatedBy}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end items-center gap-3">
+                                            <div
+                                                onClick={(e) => { e.stopPropagation(); handleToggleActive(t.id); }}
+                                                className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${t.isActive ? 'bg-purple-600' : 'bg-slate-200'}`}
+                                            >
+                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${t.isActive ? 'translate-x-4' : ''}`} />
+                                            </div>
+                                            <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-             <LeaveEncashmentModal 
-                isOpen={showLeaveEncashmentModal}
-                onClose={() => setShowLeaveEncashmentModal(false)}
-                selectedComponents={encashmentComponents}
-                onToggleComponent={toggleEncashmentComponent}
-             />
-        </div>
-      );
-  }
+                <div className="text-center text-xs text-slate-400 mt-4">
+                    1,156 companies are currently using this default F&F template · Last published: 03 Dec 2025
+                </div>
 
-  // --- RENDER EDITOR / VIEW ---
-  const isReadOnly = view === 'VIEW';
+                <LeaveEncashmentModal
+                    isOpen={showLeaveEncashmentModal}
+                    onClose={() => setShowLeaveEncashmentModal(false)}
+                    selectedComponents={encashmentComponents}
+                    onToggleComponent={toggleEncashmentComponent}
+                />
+            </div>
+        );
+    }
 
-  return (
-      <div className="w-full h-[calc(100vh-80px)] flex flex-col animate-in fade-in duration-300 bg-slate-50">
-           {/* Top Bar */}
-           <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
-               <div className="flex items-center gap-4">
-                   <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20}/></button>
-                   <div>
-                       <div className="text-xs text-slate-500 flex gap-2 items-center">
-                           <span>F&F Template</span> <span className="text-slate-300">/</span> <span className="uppercase font-bold text-xs text-purple-600">{view} MODE</span>
-                       </div>
-                       {isReadOnly ? (
-                           <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
-                       ) : (
-                           <input 
-                              type="text" 
-                              value={templateName} 
-                              onChange={e => setTemplateName(e.target.value)} 
-                              placeholder="Enter Template Name" 
-                              className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
-                           />
-                       )}
-                   </div>
-               </div>
-               
-               <div className="flex gap-2">
-                   {isReadOnly ? (
-                       <button onClick={() => setView('EDITOR')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
-                           <Edit2 size={16} /> Edit Template
-                       </button>
-                   ) : (
-                       <>
-                           <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                           <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
-                           <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will instantly update F&F template for all companies using default">
-                               <Save size={16} /> Publish Globally
-                           </button>
-                       </>
-                   )}
-               </div>
-           </div>
+    // --- RENDER EDITOR / VIEW ---
+    const isReadOnly = view === 'VIEW';
 
-           {/* Tabs */}
-           <div className="px-6 border-b border-slate-200 bg-white shrink-0">
-               <div className="flex gap-6">
-                   <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                   <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview & History</button>
-               </div>
-           </div>
-           
-           {validationError && (
-               <div className="bg-rose-50 px-6 py-2 text-xs text-rose-600 font-medium border-b border-rose-100 flex items-center gap-2">
-                   <AlertCircle size={14} /> {validationError}
-               </div>
-           )}
+    return (
+        <div className="w-full h-[calc(100vh-80px)] flex flex-col animate-in fade-in duration-300 bg-slate-50">
+            {/* Top Bar */}
+            <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20} /></button>
+                    <div>
+                        <div className="text-xs text-slate-500 font-medium">
+                            F&F Template
+                        </div>
+                        {isReadOnly ? (
+                            <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
+                        ) : (
+                            <input
+                                type="text"
+                                value={templateName}
+                                onChange={e => setTemplateName(e.target.value)}
+                                placeholder="Enter Template Name"
+                                className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
+                            />
+                        )}
+                    </div>
+                </div>
 
-           {/* Content */}
-           <div className="flex-1 flex overflow-hidden">
-               {activeTab === 'EDITOR' ? (
-                   <>
-                       {/* Left: Builder Canvas */}
-                       <div className="flex-1 overflow-y-auto p-8">
-                           <div className="max-w-4xl mx-auto bg-white shadow-sm border border-slate-200 min-h-[800px] flex flex-col relative rounded-xl overflow-hidden">
+                <div className="flex gap-2">
+                    {isReadOnly ? (
+                        <button onClick={() => setView('EDITOR')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
+                            <Edit2 size={16} /> Edit Template
+                        </button>
+                    ) : (
+                        <>
+                            <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
+                            <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
+                            <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will instantly update F&F template for all companies using default">
+                                <Save size={16} /> Publish
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="px-6 border-b border-slate-200 bg-white shrink-0">
+                <div className="flex gap-6">
+                    <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview & History</button>
+                </div>
+            </div>
+
+            {validationError && (
+                <div className="bg-rose-50 px-6 py-2 text-xs text-rose-600 font-medium border-b border-rose-100 flex items-center gap-2">
+                    <AlertCircle size={14} /> {validationError}
+                </div>
+            )}
+
+            {/* Content */}
+            <div className="flex-1 flex overflow-hidden">
+                {activeTab === 'EDITOR' ? (
+                    <>
+                        {/* Left: Builder Canvas */}
+                        <div className="flex-1 overflow-y-auto p-8">
+                            <div className="max-w-4xl mx-auto bg-white shadow-sm border border-slate-200 min-h-[800px] flex flex-col relative rounded-xl overflow-hidden">
                                 <div className="p-2 bg-slate-50 border-b border-slate-100 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">F&F Settlement Canvas</div>
-                                
+
                                 <div className="p-8 space-y-8">
                                     {/* Header Block */}
                                     <div className={`relative border border-slate-100 rounded-xl p-6 transition-all group ${!isReadOnly ? 'hover:border-purple-200 hover:shadow-sm' : ''}`}>
-                                        {!isReadOnly && <button onClick={() => setHeaderConfigOpen(true)} className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-slate-200 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-purple-600"><Settings size={14}/></button>}
-                                        
+                                        {!isReadOnly && <button onClick={() => setHeaderConfigOpen(true)} className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-slate-200 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-purple-600"><Settings size={14} /></button>}
+
                                         <div className={`flex justify-between items-start ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
                                             {headerConfig.showLogo && (
                                                 <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300 mb-4 sm:mb-0"><ImageIcon size={24} /></div>
@@ -620,12 +645,13 @@ const FnFSettlementTemplate: React.FC = () => {
                                             <h3 className="font-bold text-slate-800 underline underline-offset-4">{headerConfig.documentTitle}</h3>
                                         </div>
                                         <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-600">
-                                            {headerConfig.employeeFields.name && <div>Name: <span className="font-semibold text-slate-800">Employee Name</span></div>}
+                                            {headerConfig.employeeFields.name && <div>Employee Name: <span className="font-semibold text-slate-800">Employee Name</span></div>}
                                             {headerConfig.employeeFields.id && <div>ID: <span className="font-semibold text-slate-800">EMP001</span></div>}
                                             {headerConfig.employeeFields.designation && <div>Designation: <span className="font-semibold text-slate-800">Designation</span></div>}
-                                            {headerConfig.employeeFields.doj && <div>DOJ: <span className="font-semibold text-slate-800">DD/MM/YYYY</span></div>}
+                                            {headerConfig.employeeFields.department && <div>Department: <span className="font-semibold text-slate-800">Department</span></div>}
+                                            {headerConfig.employeeFields.doj && <div>Date of Joining: <span className="font-semibold text-slate-800">DD/MM/YYYY</span></div>}
                                             {headerConfig.employeeFields.dor && <div>DOR (Relieving): <span className="font-semibold text-slate-800">DD/MM/YYYY</span></div>}
-                                            {headerConfig.employeeFields.pan && <div>PAN: <span className="font-semibold text-slate-800">XXXXX1234X</span></div>}
+                                            {headerConfig.employeeFields.pan && <div>PAN Number: <span className="font-semibold text-slate-800">XXXXX1234X</span></div>}
                                             {headerConfig.employeeFields.uan && <div>UAN: <span className="font-semibold text-slate-800">100900200300</span></div>}
                                         </div>
                                     </div>
@@ -691,146 +717,117 @@ const FnFSettlementTemplate: React.FC = () => {
                                             Date: DD/MM/YYYY &nbsp; | &nbsp; Place: Bangalore
                                         </div>
                                     </div>
-                                    
-                                </div>
-                           </div>
-                       </div>
 
-                       {/* Right: Settings Sidebar */}
-                       <div className="w-80 bg-white border-l border-slate-200 p-6 overflow-y-auto">
-                            <h3 className="font-bold text-slate-800 mb-6">Settings</h3>
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Global Options</label>
-                                    <div className="space-y-3">
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Gratuity Breakdown</span>
-                                            <div onClick={() => setSettings({...settings, showGratuityBreakdown: !settings.showGratuityBreakdown})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showGratuityBreakdown ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showGratuityBreakdown ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Include Form 16 Ref</span>
-                                            <div onClick={() => setSettings({...settings, includeForm16: !settings.includeForm16})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.includeForm16 ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.includeForm16 ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Password Protect PDF</span>
-                                            <div onClick={() => setSettings({...settings, passwordProtect: !settings.passwordProtect})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.passwordProtect ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.passwordProtect ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                    </div>
                                 </div>
                             </div>
-                       </div>
-                   </>
-               ) : (
-                   /* PREVIEW TAB */
-                   <div className="flex-1 bg-slate-100 p-8 flex justify-center overflow-y-auto">
-                       <div className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-12 flex flex-col relative text-slate-900" style={{ fontFamily: 'Times New Roman, serif' }}>
-                           
-                           {/* Dynamic Header */}
-                           <div className={`flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
-                               {headerConfig.showLogo && (
-                                   <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center text-slate-400 mb-4 sm:mb-0 border border-slate-300">
-                                       <ImageIcon size={32}/>
-                                   </div>
-                               )}
-                               <div className={`${headerConfig.logoPosition === 'Center' ? 'w-full text-center' : headerConfig.logoPosition === 'Left' ? 'text-right' : 'text-left'}`}>
-                                   {headerConfig.showCompanyName && <h1 className="text-2xl font-bold uppercase tracking-wide">TechFlow Systems Pvt Ltd</h1>}
-                                   {headerConfig.showCompanyAddress && <p className="text-sm text-slate-500 mt-1 max-w-xs ml-auto">123 Business Park, Sector 4, Bangalore - 560001</p>}
-                               </div>
-                           </div>
+                        </div>
+                    </>
+                ) : (
+                    /* PREVIEW TAB */
+                    <div className="flex-1 bg-slate-100 p-8 flex justify-center overflow-y-auto">
+                        <div className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-12 flex flex-col relative text-slate-900" style={{ fontFamily: 'Times New Roman, serif' }}>
 
-                           <div className="text-center mb-8">
-                               <h2 className="text-xl font-bold uppercase underline underline-offset-4">{headerConfig.documentTitle}</h2>
-                           </div>
-                           
-                           {/* Employee Details - Arjun Mehta */}
-                           <div className="grid grid-cols-2 gap-y-3 gap-x-8 mb-8 text-sm border-b border-slate-200 pb-6">
-                               {headerConfig.employeeFields.name && <div className="flex"><span className="w-36 font-bold text-slate-600">Employee Name</span><span>: Arjun Mehta</span></div>}
-                               {headerConfig.employeeFields.id && <div className="flex"><span className="w-36 font-bold text-slate-600">Employee ID</span><span>: TF00888</span></div>}
-                               {headerConfig.employeeFields.designation && <div className="flex"><span className="w-36 font-bold text-slate-600">Designation</span><span>: Product Manager</span></div>}
-                               {headerConfig.employeeFields.doj && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Joining</span><span>: 15 Mar 2022</span></div>}
-                               {headerConfig.employeeFields.dor && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Relieving</span><span>: 30 Nov 2025</span></div>}
-                               {headerConfig.employeeFields.pan && <div className="flex"><span className="w-36 font-bold text-slate-600">PAN</span><span>: ABCDE1234F</span></div>}
-                               {headerConfig.employeeFields.uan && <div className="flex"><span className="w-36 font-bold text-slate-600">UAN</span><span>: 100900200300</span></div>}
-                           </div>
-
-                           {/* Earnings Table */}
-                           <div className="mb-6">
-                               <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Earnings & Dues</h4>
-                               <table className="w-full border-collapse border border-slate-300 text-sm">
-                                   <thead className="bg-slate-50">
-                                       <tr>
-                                           <th className="border border-slate-300 p-2 text-left">Description</th>
-                                           <th className="border border-slate-300 p-2 text-right w-40">Amount (₹)</th>
-                                       </tr>
-                                   </thead>
-                                   <tbody>
-                                       {sections.earnings.map((item, i) => (
-                                           <tr key={i}>
-                                               <td className="border border-slate-300 p-2">{item.name}</td>
-                                               <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
-                                           </tr>
-                                       ))}
-                                       <tr className="bg-emerald-50 font-bold">
-                                           <td className="border border-slate-300 p-2 text-right">Total Earnings (A)</td>
-                                           <td className="border border-slate-300 p-2 text-right">
-                                               {formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}
-                                           </td>
-                                       </tr>
-                                   </tbody>
-                               </table>
-                           </div>
-
-                           {/* Deductions Table */}
-                           <div className="mb-8">
-                               <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Deductions & Recoveries</h4>
-                               <table className="w-full border-collapse border border-slate-300 text-sm">
-                                   <thead className="bg-slate-50">
-                                       <tr>
-                                           <th className="border border-slate-300 p-2 text-left">Description</th>
-                                           <th className="border border-slate-300 p-2 text-right w-40">Amount (₹)</th>
-                                       </tr>
-                                   </thead>
-                                   <tbody>
-                                       {sections.deductions.map((item, i) => (
-                                           <tr key={i}>
-                                               <td className="border border-slate-300 p-2">{item.name}</td>
-                                               <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
-                                           </tr>
-                                       ))}
-                                       <tr className="bg-rose-50 font-bold">
-                                           <td className="border border-slate-300 p-2 text-right">Total Deductions (B)</td>
-                                           <td className="border border-slate-300 p-2 text-right">
-                                               {formatCurrency(sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0))}
-                                           </td>
-                                       </tr>
-                                   </tbody>
-                               </table>
-                           </div>
-
-                           {/* Net Pay */}
-                           <div className="flex justify-end mb-12">
-                               <div className="w-full border-2 border-slate-800 p-4 flex justify-between items-center bg-slate-50">
-                                   <div className="text-left">
-                                       <span className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Net Payable Amount</span>
-                                       <span className="text-[10px] text-slate-400">(Total Earnings - Total Deductions)</span>
-                                   </div>
-                                   <span className="font-bold text-2xl text-slate-900">
-                                       ₹ {formatCurrency(
-                                           sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0) - 
-                                           sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0)
-                                       )}
-                                   </span>
+                            {/* Dynamic Header */}
+                            <div className={`flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
+                                {headerConfig.showLogo && (
+                                    <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center text-slate-400 mb-4 sm:mb-0 border border-slate-300">
+                                        <ImageIcon size={32} />
+                                    </div>
+                                )}
+                                <div className={`${headerConfig.logoPosition === 'Center' ? 'w-full text-center' : headerConfig.logoPosition === 'Left' ? 'text-right' : 'text-left'}`}>
+                                    {headerConfig.showCompanyName && <h1 className="text-2xl font-bold uppercase tracking-wide">TechFlow Systems Pvt Ltd</h1>}
+                                    {headerConfig.showCompanyAddress && <p className="text-sm text-slate-500 mt-1 max-w-xs ml-auto">123 Business Park, Sector 4, Bangalore - 560001</p>}
                                 </div>
-                           </div>
+                            </div>
 
-                           {/* Signature Blocks */}
-                           <div className="mt-auto pt-8 border-t border-slate-300">
+                            <div className="text-center mb-8">
+                                <h2 className="text-xl font-bold uppercase underline underline-offset-4">{headerConfig.documentTitle}</h2>
+                            </div>
+
+                            {/* Employee Details - Arjun Mehta */}
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-8 mb-8 text-sm border-b border-slate-200 pb-6">
+                                {headerConfig.employeeFields.name && <div className="flex"><span className="w-36 font-bold text-slate-600">Employee Name</span><span>: Arjun Mehta</span></div>}
+                                {headerConfig.employeeFields.id && <div className="flex"><span className="w-36 font-bold text-slate-600">Employee ID</span><span>: TF00888</span></div>}
+                                {headerConfig.employeeFields.designation && <div className="flex"><span className="w-36 font-bold text-slate-600">Designation</span><span>: Product Manager</span></div>}
+                                {headerConfig.employeeFields.department && <div className="flex"><span className="w-36 font-bold text-slate-600">Department</span><span>: Software Engineering</span></div>}
+                                {headerConfig.employeeFields.doj && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Joining</span><span>: 15 Mar 2022</span></div>}
+                                {headerConfig.employeeFields.dor && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Relieving</span><span>: 30 Nov 2025</span></div>}
+                                {headerConfig.employeeFields.pan && <div className="flex"><span className="w-36 font-bold text-slate-600">PAN Number</span><span>: ABCDE1234F</span></div>}
+                                {headerConfig.employeeFields.uan && <div className="flex"><span className="w-36 font-bold text-slate-600">UAN</span><span>: 100900200300</span></div>}
+                            </div>
+
+                            {/* Earnings Table */}
+                            <div className="mb-6">
+                                <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Earnings & Dues</h4>
+                                <table className="w-full border-collapse border border-slate-300 text-sm">
+                                    <thead className="bg-slate-50">
+                                        <tr>
+                                            <th className="border border-slate-300 p-2 text-left">Description</th>
+                                            <th className="border border-slate-300 p-2 text-right w-40">Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sections.earnings.map((item, i) => (
+                                            <tr key={i}>
+                                                <td className="border border-slate-300 p-2">{item.name}</td>
+                                                <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
+                                            </tr>
+                                        ))}
+                                        <tr className="bg-emerald-50 font-bold">
+                                            <td className="border border-slate-300 p-2 text-right">Total Earnings (A)</td>
+                                            <td className="border border-slate-300 p-2 text-right">
+                                                {formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Deductions Table */}
+                            <div className="mb-8">
+                                <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Deductions & Recoveries</h4>
+                                <table className="w-full border-collapse border border-slate-300 text-sm">
+                                    <thead className="bg-slate-50">
+                                        <tr>
+                                            <th className="border border-slate-300 p-2 text-left">Description</th>
+                                            <th className="border border-slate-300 p-2 text-right w-40">Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sections.deductions.map((item, i) => (
+                                            <tr key={i}>
+                                                <td className="border border-slate-300 p-2">{item.name}</td>
+                                                <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
+                                            </tr>
+                                        ))}
+                                        <tr className="bg-rose-50 font-bold">
+                                            <td className="border border-slate-300 p-2 text-right">Total Deductions (B)</td>
+                                            <td className="border border-slate-300 p-2 text-right">
+                                                {formatCurrency(sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0))}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Net Pay */}
+                            <div className="flex justify-end mb-12">
+                                <div className="w-full border-2 border-slate-800 p-4 flex justify-between items-center bg-slate-50">
+                                    <div className="text-left">
+                                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Net Payable Amount</span>
+                                        <span className="text-[10px] text-slate-400">(Total Earnings - Total Deductions)</span>
+                                    </div>
+                                    <span className="font-bold text-2xl text-slate-900">
+                                        ₹ {formatCurrency(
+                                            sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0) -
+                                            sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0)
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Signature Blocks */}
+                            <div className="mt-auto pt-8 border-t border-slate-300">
                                 <div className="flex justify-between items-end gap-12">
                                     <div className="flex-1 text-left">
                                         <div className="h-16 mb-2"></div>
@@ -850,22 +847,22 @@ const FnFSettlementTemplate: React.FC = () => {
                                 <div className="mt-6 text-xs text-slate-400 text-center">
                                     Date: {new Date().toLocaleDateString()} &nbsp; | &nbsp; Place: Bangalore
                                 </div>
-                           </div>
-                       </div>
-                   </div>
-               )}
-           </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
-           {/* Modals */}
-           <FnFHeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} />
-           <AddFnFComponentModal 
-              isOpen={addComponentModal.isOpen} 
-              onClose={() => setAddComponentModal({isOpen: false, section: null})} 
-              section={addComponentModal.section}
-              onAdd={addComponent} 
-           />
-      </div>
-  );
+            {/* Modals */}
+            <FnFHeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} />
+            <AddFnFComponentModal
+                isOpen={addComponentModal.isOpen}
+                onClose={() => setAddComponentModal({ isOpen: false, section: null })}
+                section={addComponentModal.section}
+                onAdd={addComponent}
+            />
+        </div>
+    );
 };
 
 export default FnFSettlementTemplate;

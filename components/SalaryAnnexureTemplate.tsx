@@ -1,125 +1,125 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Edit2, 
-  Eye, 
-  Trash2, 
-  Save, 
-  X, 
-  Settings, 
-  CheckCircle, 
-  AlertCircle, 
-  FileText, 
-  ChevronLeft,
-  Image as ImageIcon,
-  Check,
-  Briefcase
+import {
+    Plus,
+    Edit2,
+    Eye,
+    Trash2,
+    Save,
+    X,
+    Settings,
+    CheckCircle,
+    AlertCircle,
+    FileText,
+    ChevronLeft,
+    Image as ImageIcon,
+    Check,
+    Briefcase
 } from 'lucide-react';
 
 // --- Types ---
 
 interface ComponentItem {
-  id: string;
-  name: string;
-  amount: string; 
-  type: 'Fixed' | 'Variable' | 'Calculated';
+    id: string;
+    name: string;
+    amount: string;
+    type: 'Fixed' | 'Variable' | 'Calculated';
 }
 
 interface AnnexureTemplateSettings {
-  showPercentageColumn: boolean;
-  showMonthlyColumn: boolean;
-  showExemptTags: boolean;
-  highlightBasicRule: boolean;
-  includeEmployerContribution: boolean;
-  showDisclaimer: boolean;
+    showPercentageColumn: boolean;
+    showMonthlyColumn: boolean;
+    showExemptTags: boolean;
+    highlightBasicRule: boolean;
+    includeEmployerContribution: boolean;
+    showDisclaimer: boolean;
 }
 
 interface HeaderConfig {
-  logoPosition: 'Left' | 'Center' | 'Right';
-  showLogo: boolean;
-  showCompanyName: boolean;
-  showCompanyAddress: boolean;
-  documentTitle: string;
-  candidateFields: {
-    name: boolean;
-    designation: boolean;
-    location: boolean;
-    doj: boolean;
-  };
+    logoPosition: 'Left' | 'Center' | 'Right';
+    showLogo: boolean;
+    showCompanyName: boolean;
+    showCompanyAddress: boolean;
+    documentTitle: string;
+    candidateFields: {
+        name: boolean;
+        designation: boolean;
+        location: boolean;
+        doj: boolean;
+    };
 }
 
 interface AnnexureTemplate {
-  id: string;
-  name: string;
-  status: 'Published' | 'Draft';
-  lastModified: string;
-  sections: {
-    earnings: ComponentItem[];
-    retirals: ComponentItem[];
-    reimbursements: ComponentItem[];
-    deductions: ComponentItem[];
-  };
-  settings: AnnexureTemplateSettings;
-  headerConfig: HeaderConfig;
+    id: string;
+    name: string;
+    status: 'Published' | 'Draft';
+    lastModified: string;
+    sections: {
+        earnings: ComponentItem[];
+        retirals: ComponentItem[];
+        reimbursements: ComponentItem[];
+        deductions: ComponentItem[];
+    };
+    settings: AnnexureTemplateSettings;
+    headerConfig: HeaderConfig;
 }
 
 // --- Mock Data ---
 
 const MOCK_ANNEXURE_TEMPLATES: AnnexureTemplate[] = [
-  {
-    id: '1',
-    name: 'Standard Offer Annexure',
-    status: 'Published',
-    lastModified: '03 Dec 2025',
-    headerConfig: {
-        logoPosition: 'Left',
-        showLogo: true,
-        showCompanyName: true,
-        showCompanyAddress: true,
-        documentTitle: 'Annexure to Offer Letter – Compensation Details',
-        candidateFields: { name: true, designation: true, location: true, doj: true }
-    },
-    sections: {
-      earnings: [
-        { id: 'e1', name: 'Basic Salary', amount: '7,40,000', type: 'Fixed' },
-        { id: 'e2', name: 'House Rent Allowance', amount: '3,70,000', type: 'Fixed' },
-        { id: 'e3', name: 'Special Allowance', amount: '4,50,000', type: 'Fixed' },
-        { id: 'e4', name: 'Conveyance Allowance', amount: '19,200', type: 'Fixed' },
-        { id: 'e5', name: 'LTA', amount: '50,000', type: 'Fixed' },
-      ],
-      retirals: [
-        { id: 'b1', name: 'Employer PF Contribution', amount: '88,800', type: 'Calculated' },
-        { id: 'b2', name: 'Gratuity', amount: '35,600', type: 'Calculated' },
-        { id: 'b3', name: 'Group Medical Insurance', amount: '15,000', type: 'Fixed' },
-      ],
-      reimbursements: [
-        { id: 'r1', name: 'Telephone & Internet', amount: '24,000', type: 'Variable' },
-        { id: 'r2', name: 'Books & Periodicals', amount: '12,000', type: 'Variable' },
-      ],
-      deductions: [
-        { id: 'd1', name: 'Employee PF', amount: '88,800', type: 'Calculated' },
-        { id: 'd2', name: 'Professional Tax', amount: '2,400', type: 'Fixed' },
-      ]
-    },
-    settings: {
-      showPercentageColumn: true,
-      showMonthlyColumn: true,
-      showExemptTags: true,
-      highlightBasicRule: true,
-      includeEmployerContribution: true,
-      showDisclaimer: true
+    {
+        id: '1',
+        name: 'Standard Offer Annexure',
+        status: 'Published',
+        lastModified: '03 Dec 2025',
+        headerConfig: {
+            logoPosition: 'Left',
+            showLogo: true,
+            showCompanyName: true,
+            showCompanyAddress: true,
+            documentTitle: 'Annexure to Offer Letter – Compensation Details',
+            candidateFields: { name: true, designation: true, location: true, doj: true }
+        },
+        sections: {
+            earnings: [
+                { id: 'e1', name: 'Basic Salary', amount: '7,40,000', type: 'Fixed' },
+                { id: 'e2', name: 'House Rent Allowance', amount: '3,70,000', type: 'Fixed' },
+                { id: 'e3', name: 'Special Allowance', amount: '4,50,000', type: 'Fixed' },
+                { id: 'e4', name: 'Conveyance Allowance', amount: '19,200', type: 'Fixed' },
+                { id: 'e5', name: 'LTA', amount: '50,000', type: 'Fixed' },
+            ],
+            retirals: [
+                { id: 'b1', name: 'Employer PF Contribution', amount: '88,800', type: 'Calculated' },
+                { id: 'b2', name: 'Gratuity', amount: '35,600', type: 'Calculated' },
+                { id: 'b3', name: 'Group Medical Insurance', amount: '15,000', type: 'Fixed' },
+            ],
+            reimbursements: [
+                { id: 'r1', name: 'Telephone & Internet', amount: '24,000', type: 'Variable' },
+                { id: 'r2', name: 'Books & Periodicals', amount: '12,000', type: 'Variable' },
+            ],
+            deductions: [
+                { id: 'd1', name: 'Employee PF', amount: '88,800', type: 'Calculated' },
+                { id: 'd2', name: 'Professional Tax', amount: '2,400', type: 'Fixed' },
+            ]
+        },
+        settings: {
+            showPercentageColumn: true,
+            showMonthlyColumn: true,
+            showExemptTags: true,
+            highlightBasicRule: true,
+            includeEmployerContribution: true,
+            showDisclaimer: true
+        }
     }
-  }
 ];
 
 // --- Sub-Components ---
 
-const HeaderConfigModal: React.FC<{ 
-    isOpen: boolean; 
-    onClose: () => void; 
-    config: HeaderConfig; 
-    onChange: (cfg: HeaderConfig) => void; 
+const HeaderConfigModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    config: HeaderConfig;
+    onChange: (cfg: HeaderConfig) => void;
 }> = ({ isOpen, onClose, config, onChange }) => {
     if (!isOpen) return null;
 
@@ -142,29 +142,29 @@ const HeaderConfigModal: React.FC<{
                     <div className="space-y-3">
                         <h4 className="text-xs font-bold text-slate-500 uppercase">Branding</h4>
                         <div className="space-y-2">
-                             <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                 <input type="checkbox" checked={config.showLogo} onChange={e => onChange({...config, showLogo: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
-                                 <span className="text-sm font-medium text-slate-700">Show Company Logo</span>
-                             </label>
-                             <div className="grid grid-cols-2 gap-3">
-                                 <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                    <input type="checkbox" checked={config.showCompanyName} onChange={e => onChange({...config, showCompanyName: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
+                            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input type="checkbox" checked={config.showLogo} onChange={e => onChange({ ...config, showLogo: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
+                                <span className="text-sm font-medium text-slate-700">Show Company Logo</span>
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                    <input type="checkbox" checked={config.showCompanyName} onChange={e => onChange({ ...config, showCompanyName: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
                                     <span className="text-sm font-medium text-slate-700">Company Name</span>
-                                 </label>
-                                 <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                    <input type="checkbox" checked={config.showCompanyAddress} onChange={e => onChange({...config, showCompanyAddress: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
+                                </label>
+                                <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                    <input type="checkbox" checked={config.showCompanyAddress} onChange={e => onChange({ ...config, showCompanyAddress: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
                                     <span className="text-sm font-medium text-slate-700">Address</span>
-                                 </label>
-                             </div>
+                                </label>
+                            </div>
                         </div>
-                        
+
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Logo Position</label>
                             <div className="flex bg-slate-100 p-1 rounded-lg">
                                 {['Left', 'Center', 'Right'].map((pos) => (
                                     <button
                                         key={pos}
-                                        onClick={() => onChange({...config, logoPosition: pos as any})}
+                                        onClick={() => onChange({ ...config, logoPosition: pos as any })}
                                         className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${config.logoPosition === pos ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         {pos}
@@ -177,10 +177,10 @@ const HeaderConfigModal: React.FC<{
                     {/* Document Title */}
                     <div>
                         <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Document Title</h4>
-                        <input 
-                            type="text" 
-                            value={config.documentTitle} 
-                            onChange={e => onChange({...config, documentTitle: e.target.value})}
+                        <input
+                            type="text"
+                            value={config.documentTitle}
+                            onChange={e => onChange({ ...config, documentTitle: e.target.value })}
                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                         />
                     </div>
@@ -212,11 +212,11 @@ const HeaderConfigModal: React.FC<{
     );
 };
 
-const AddComponentModal: React.FC<{ 
-    isOpen: boolean; 
-    onClose: () => void; 
+const AddComponentModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
     section: 'earnings' | 'retirals' | 'reimbursements' | 'deductions' | null;
-    onAdd: (items: ComponentItem[]) => void 
+    onAdd: (items: ComponentItem[]) => void
 }> = ({ isOpen, onClose, section, onAdd }) => {
     const [selected, setSelected] = useState<string[]>([]);
 
@@ -278,231 +278,230 @@ const AddComponentModal: React.FC<{
 // --- Main Component ---
 
 const SalaryAnnexureTemplate: React.FC = () => {
-  const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
-  const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
-  
-  // Persist templates in localStorage
-  const [templates, setTemplates] = useState<AnnexureTemplate[]>(() => {
-    const saved = localStorage.getItem('collab_annexure_templates');
-    return saved ? JSON.parse(saved) : MOCK_ANNEXURE_TEMPLATES;
-  });
+    const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
+    const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
 
-  useEffect(() => {
-    localStorage.setItem('collab_annexure_templates', JSON.stringify(templates));
-  }, [templates]);
+    // Persist templates in localStorage
+    const [templates, setTemplates] = useState<AnnexureTemplate[]>(() => {
+        const saved = localStorage.getItem('collab_annexure_templates');
+        return saved ? JSON.parse(saved) : MOCK_ANNEXURE_TEMPLATES;
+    });
 
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+    useEffect(() => {
+        localStorage.setItem('collab_annexure_templates', JSON.stringify(templates));
+    }, [templates]);
 
-  // Editor State
-  const [templateName, setTemplateName] = useState('');
-  const [sections, setSections] = useState<AnnexureTemplate['sections']>({ earnings: [], retirals: [], reimbursements: [], deductions: [] });
-  const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(MOCK_ANNEXURE_TEMPLATES[0].headerConfig);
-  const [settings, setSettings] = useState<AnnexureTemplateSettings>(MOCK_ANNEXURE_TEMPLATES[0].settings);
+    const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
-  // Modal States
-  const [headerConfigOpen, setHeaderConfigOpen] = useState(false);
-  const [addComponentModal, setAddComponentModal] = useState<{ isOpen: boolean; section: 'earnings' | 'retirals' | 'reimbursements' | 'deductions' | null }>({ isOpen: false, section: null });
-  const [validationError, setValidationError] = useState<string | null>(null);
+    // Editor State
+    const [templateName, setTemplateName] = useState('');
+    const [sections, setSections] = useState<AnnexureTemplate['sections']>({ earnings: [], retirals: [], reimbursements: [], deductions: [] });
+    const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(MOCK_ANNEXURE_TEMPLATES[0].headerConfig);
+    const [settings, setSettings] = useState<AnnexureTemplateSettings>(MOCK_ANNEXURE_TEMPLATES[0].settings);
 
-  const handleCreate = () => {
-      setEditingTemplateId(null);
-      setTemplateName('');
-      setSections({ earnings: [], retirals: [], reimbursements: [], deductions: [] });
-      setSettings(MOCK_ANNEXURE_TEMPLATES[0].settings); 
-      setHeaderConfig(MOCK_ANNEXURE_TEMPLATES[0].headerConfig);
-      setActiveTab('EDITOR');
-      setView('EDITOR');
-  };
+    // Modal States
+    const [headerConfigOpen, setHeaderConfigOpen] = useState(false);
+    const [addComponentModal, setAddComponentModal] = useState<{ isOpen: boolean; section: 'earnings' | 'retirals' | 'reimbursements' | 'deductions' | null }>({ isOpen: false, section: null });
+    const [validationError, setValidationError] = useState<string | null>(null);
 
-  const handleEdit = (t: AnnexureTemplate) => {
-      setEditingTemplateId(t.id);
-      setTemplateName(t.name);
-      setSections(t.sections);
-      setSettings(t.settings);
-      setHeaderConfig(t.headerConfig);
-      setActiveTab('EDITOR');
-      setView('EDITOR');
-  };
+    const handleCreate = () => {
+        setEditingTemplateId(null);
+        setTemplateName('');
+        setSections({ earnings: [], retirals: [], reimbursements: [], deductions: [] });
+        setSettings(MOCK_ANNEXURE_TEMPLATES[0].settings);
+        setHeaderConfig(MOCK_ANNEXURE_TEMPLATES[0].headerConfig);
+        setActiveTab('EDITOR');
+        setView('EDITOR');
+    };
 
-  const handleView = (t: AnnexureTemplate) => {
-      handleEdit(t);
-      setView('VIEW');
-  };
+    const handleEdit = (t: AnnexureTemplate) => {
+        setEditingTemplateId(t.id);
+        setTemplateName(t.name);
+        setSections(t.sections);
+        setSettings(t.settings);
+        setHeaderConfig(t.headerConfig);
+        setActiveTab('EDITOR');
+        setView('EDITOR');
+    };
 
-  const handleSave = (status: 'Published' | 'Draft') => {
-      if (!templateName.trim()) {
-          setValidationError('Template Name is required');
-          return;
-      }
-      if (sections.earnings.length === 0) {
-          setValidationError('At least one earning component is required.');
-          return;
-      }
+    const handleView = (t: AnnexureTemplate) => {
+        handleEdit(t);
+        setView('VIEW');
+    };
 
-      const newTemplate: AnnexureTemplate = {
-          id: editingTemplateId || Date.now().toString(),
-          name: templateName,
-          status,
-          lastModified: 'Just now',
-          sections,
-          settings,
-          headerConfig
-      };
+    const handleSave = (status: 'Published' | 'Draft') => {
+        if (!templateName.trim()) {
+            setValidationError('Template Name is required');
+            return;
+        }
+        if (sections.earnings.length === 0) {
+            setValidationError('At least one earning component is required.');
+            return;
+        }
 
-      if (editingTemplateId) {
-          setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
-      } else {
-          setTemplates(prev => [...prev, newTemplate]);
-      }
-      setView('LIST');
-      setValidationError(null);
-  };
+        const newTemplate: AnnexureTemplate = {
+            id: editingTemplateId || Date.now().toString(),
+            name: templateName,
+            status,
+            lastModified: 'Just now',
+            sections,
+            settings,
+            headerConfig
+        };
 
-  const addComponent = (items: ComponentItem[]) => {
-      if (!addComponentModal.section) return;
-      setSections(prev => ({ 
-          ...prev, 
-          [addComponentModal.section!]: [...prev[addComponentModal.section!], ...items] 
-      }));
-  };
+        if (editingTemplateId) {
+            setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
+        } else {
+            setTemplates(prev => [...prev, newTemplate]);
+        }
+        setView('LIST');
+        setValidationError(null);
+    };
 
-  const removeComponent = (section: keyof typeof sections, id: string) => {
-      setSections(prev => ({ ...prev, [section]: prev[section].filter(i => i.id !== id) }));
-  };
+    const addComponent = (items: ComponentItem[]) => {
+        if (!addComponentModal.section) return;
+        setSections(prev => ({
+            ...prev,
+            [addComponentModal.section!]: [...prev[addComponentModal.section!], ...items]
+        }));
+    };
 
-  const parseAmount = (amt: string) => parseFloat(amt.replace(/,/g, '')) || 0;
-  const formatCurrency = (amt: number) => amt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const removeComponent = (section: keyof typeof sections, id: string) => {
+        setSections(prev => ({ ...prev, [section]: prev[section].filter(i => i.id !== id) }));
+    };
 
-  // --- RENDER LIST ---
-  if (view === 'LIST') {
-      return (
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
-             <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
-                 <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Briefcase size={20}/></div>
-                 <div>
-                     <h3 className="text-sm font-bold text-purple-900">Default Salary Annexure Template</h3>
-                     <p className="text-xs text-purple-700 mt-1">This is the global default Salary Annexure (Offer Letter CTC Breakup) template. All companies will use this in offer letters unless they create a custom version.</p>
-                 </div>
-                 <button onClick={handleCreate} className="ml-auto px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
-                     <Plus size={16} /> Create New Version
-                 </button>
-             </div>
+    const parseAmount = (amt: string) => parseFloat(amt.replace(/,/g, '')) || 0;
+    const formatCurrency = (amt: number) => amt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
-             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
-                        <tr>
-                            <th className="px-6 py-4">Template Name</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Last Modified</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {templates.map(t => (
-                            <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
-                                <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
-                                <td className="px-6 py-4">
-                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                                        t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
-                                        'bg-amber-50 text-amber-700 border-amber-100'
-                                    }`}>
-                                        {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                                        {t.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">{t.lastModified}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16}/></button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16}/></button>
-                                    </div>
-                                </td>
+    // --- RENDER LIST ---
+    if (view === 'LIST') {
+        return (
+            <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
+                    <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Briefcase size={20} /></div>
+                    <div>
+                        <h3 className="text-sm font-bold text-purple-900">Default Salary Annexure Template</h3>
+                        <p className="text-xs text-purple-700 mt-1">This is the global default Salary Annexure (Offer Letter CTC Breakup) template. All companies will use this in offer letters unless they create a custom version.</p>
+                    </div>
+                    <button onClick={handleCreate} className="ml-auto px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
+                        <Plus size={16} /> Create Annexure
+                    </button>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <table className="w-full text-left text-sm text-slate-600">
+                        <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                            <tr>
+                                <th className="px-6 py-4">Template Name</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Last Modified</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-             </div>
-             
-             <div className="text-center text-xs text-slate-400 mt-4">
-                1,156 companies are currently using this default annexure template · Last published: 03 Dec 2025
-             </div>
-        </div>
-      );
-  }
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {templates.map(t => (
+                                <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
+                                    <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                            }`}>
+                                            {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                            {t.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">{t.lastModified}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-  // --- RENDER EDITOR / VIEW ---
-  const isReadOnly = view === 'VIEW';
+                <div className="text-center text-xs text-slate-400 mt-4">
+                    1,156 companies are currently using this default annexure template · Last published: 03 Dec 2025
+                </div>
+            </div>
+        );
+    }
 
-  return (
-      <div className="w-full h-[calc(100vh-80px)] flex flex-col animate-in fade-in duration-300 bg-slate-50">
-           {/* Top Bar */}
-           <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
-               <div className="flex items-center gap-4">
-                   <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20}/></button>
-                   <div>
-                       <div className="text-xs text-slate-500 flex gap-2 items-center">
-                           <span>Salary Annexure</span> <span className="text-slate-300">/</span> <span className="uppercase font-bold text-xs text-purple-600">{view} MODE</span>
-                       </div>
-                       {isReadOnly ? (
-                           <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
-                       ) : (
-                           <input 
-                              type="text" 
-                              value={templateName} 
-                              onChange={e => setTemplateName(e.target.value)} 
-                              placeholder="Enter Template Name" 
-                              className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
-                           />
-                       )}
-                   </div>
-               </div>
-               
-               <div className="flex gap-2">
-                   {isReadOnly ? (
-                       <button onClick={() => setView('EDITOR')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
-                           <Edit2 size={16} /> Edit Template
-                       </button>
-                   ) : (
-                       <>
-                           <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                           <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
-                           <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will update annexure template for all companies using default">
-                               <Save size={16} /> Publish Globally
-                           </button>
-                       </>
-                   )}
-               </div>
-           </div>
+    // --- RENDER EDITOR / VIEW ---
+    const isReadOnly = view === 'VIEW';
 
-           {/* Tabs */}
-           <div className="px-6 border-b border-slate-200 bg-white shrink-0">
-               <div className="flex gap-6">
-                   <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                   <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview & History</button>
-               </div>
-           </div>
-           
-           {validationError && (
-               <div className="bg-rose-50 px-6 py-2 text-xs text-rose-600 font-medium border-b border-rose-100 flex items-center gap-2">
-                   <AlertCircle size={14} /> {validationError}
-               </div>
-           )}
+    return (
+        <div className="w-full h-[calc(100vh-80px)] flex flex-col animate-in fade-in duration-300 bg-slate-50">
+            {/* Top Bar */}
+            <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20} /></button>
+                    <div>
+                        <div className="text-xs text-slate-500 font-medium">
+                            Salary Annexure
+                        </div>
+                        {isReadOnly ? (
+                            <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
+                        ) : (
+                            <input
+                                type="text"
+                                value={templateName}
+                                onChange={e => setTemplateName(e.target.value)}
+                                placeholder="Enter Template Name"
+                                className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
+                            />
+                        )}
+                    </div>
+                </div>
 
-           {/* Content */}
-           <div className="flex-1 flex overflow-hidden">
-               {activeTab === 'EDITOR' ? (
-                   <>
-                       {/* Left: Builder Canvas */}
-                       <div className="flex-1 overflow-y-auto p-8">
-                           <div className="max-w-4xl mx-auto bg-white shadow-sm border border-slate-200 min-h-[800px] flex flex-col relative rounded-xl overflow-hidden">
+                <div className="flex gap-2">
+                    {isReadOnly ? (
+                        <button onClick={() => setView('EDITOR')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
+                            <Edit2 size={16} /> Edit Template
+                        </button>
+                    ) : (
+                        <>
+                            <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
+                            <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
+                            <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will update annexure template for all companies using default">
+                                <Save size={16} /> Publish
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="px-6 border-b border-slate-200 bg-white shrink-0">
+                <div className="flex gap-6">
+                    <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview & History</button>
+                </div>
+            </div>
+
+            {validationError && (
+                <div className="bg-rose-50 px-6 py-2 text-xs text-rose-600 font-medium border-b border-rose-100 flex items-center gap-2">
+                    <AlertCircle size={14} /> {validationError}
+                </div>
+            )}
+
+            {/* Content */}
+            <div className="flex-1 flex overflow-hidden">
+                {activeTab === 'EDITOR' ? (
+                    <>
+                        {/* Left: Builder Canvas */}
+                        <div className="flex-1 overflow-y-auto p-8">
+                            <div className="max-w-4xl mx-auto bg-white shadow-sm border border-slate-200 min-h-[800px] flex flex-col relative rounded-xl overflow-hidden">
                                 <div className="p-2 bg-slate-50 border-b border-slate-100 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Annexure Canvas</div>
-                                
+
                                 <div className="p-8 space-y-8">
                                     {/* Header Block */}
                                     <div className={`relative border border-slate-100 rounded-xl p-6 transition-all group ${!isReadOnly ? 'hover:border-purple-200 hover:shadow-sm' : ''}`}>
-                                        {!isReadOnly && <button onClick={() => setHeaderConfigOpen(true)} className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-slate-200 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-purple-600"><Settings size={14}/></button>}
-                                        
+                                        {!isReadOnly && <button onClick={() => setHeaderConfigOpen(true)} className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-slate-200 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-purple-600"><Settings size={14} /></button>}
+
                                         <div className={`flex justify-between items-start ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
                                             {headerConfig.showLogo && (
                                                 <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300 mb-4 sm:mb-0"><ImageIcon size={24} /></div>
@@ -525,7 +524,7 @@ const SalaryAnnexureTemplate: React.FC = () => {
 
                                     {/* Annual CTC Table Sections */}
                                     <div className="space-y-6">
-                                        
+
                                         {/* A. Earnings */}
                                         <div className="border border-slate-200 rounded-xl overflow-hidden">
                                             <div className="bg-emerald-50 px-4 py-2 border-b border-emerald-100 text-xs font-bold uppercase text-emerald-700">A. Annual Earnings</div>
@@ -616,13 +615,13 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                     <div className="mt-8 pt-8 border-t border-slate-200">
                                         <p className="text-xs text-slate-500 italic text-center">Note: TDS will be deducted as per prevailing Income Tax rules</p>
                                     </div>
-                                    
-                                </div>
-                           </div>
-                       </div>
 
-                       {/* Right: Settings Sidebar */}
-                       <div className="w-80 bg-white border-l border-slate-200 p-6 overflow-y-auto">
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right: Settings Sidebar */}
+                        <div className="w-80 bg-white border-l border-slate-200 p-6 overflow-y-auto">
                             <h3 className="font-bold text-slate-800 mb-6">Settings</h3>
                             <div className="space-y-6">
                                 <div>
@@ -630,13 +629,13 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                     <div className="space-y-3">
                                         <label className="flex items-center justify-between cursor-pointer">
                                             <span className="text-sm text-slate-700">Show % of CTC</span>
-                                            <div onClick={() => setSettings({...settings, showPercentageColumn: !settings.showPercentageColumn})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showPercentageColumn ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                            <div onClick={() => setSettings({ ...settings, showPercentageColumn: !settings.showPercentageColumn })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showPercentageColumn ? 'bg-purple-600' : 'bg-slate-200'}`}>
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showPercentageColumn ? 'translate-x-4' : ''}`} />
                                             </div>
                                         </label>
                                         <label className="flex items-center justify-between cursor-pointer">
                                             <span className="text-sm text-slate-700">Show Monthly</span>
-                                            <div onClick={() => setSettings({...settings, showMonthlyColumn: !settings.showMonthlyColumn})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showMonthlyColumn ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                            <div onClick={() => setSettings({ ...settings, showMonthlyColumn: !settings.showMonthlyColumn })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showMonthlyColumn ? 'bg-purple-600' : 'bg-slate-200'}`}>
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showMonthlyColumn ? 'translate-x-4' : ''}`} />
                                             </div>
                                         </label>
@@ -647,137 +646,137 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                     <div className="space-y-3">
                                         <label className="flex items-center justify-between cursor-pointer">
                                             <span className="text-sm text-slate-700">Show Exempt Tags</span>
-                                            <div onClick={() => setSettings({...settings, showExemptTags: !settings.showExemptTags})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showExemptTags ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                            <div onClick={() => setSettings({ ...settings, showExemptTags: !settings.showExemptTags })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showExemptTags ? 'bg-purple-600' : 'bg-slate-200'}`}>
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showExemptTags ? 'translate-x-4' : ''}`} />
                                             </div>
                                         </label>
                                         <label className="flex items-center justify-between cursor-pointer">
                                             <span className="text-sm text-slate-700">Highlight Basic ≥50%</span>
-                                            <div onClick={() => setSettings({...settings, highlightBasicRule: !settings.highlightBasicRule})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.highlightBasicRule ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                            <div onClick={() => setSettings({ ...settings, highlightBasicRule: !settings.highlightBasicRule })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.highlightBasicRule ? 'bg-purple-600' : 'bg-slate-200'}`}>
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.highlightBasicRule ? 'translate-x-4' : ''}`} />
                                             </div>
                                         </label>
                                         <label className="flex items-center justify-between cursor-pointer">
                                             <span className="text-sm text-slate-700">Show Disclaimer</span>
-                                            <div onClick={() => setSettings({...settings, showDisclaimer: !settings.showDisclaimer})} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showDisclaimer ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                            <div onClick={() => setSettings({ ...settings, showDisclaimer: !settings.showDisclaimer })} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showDisclaimer ? 'bg-purple-600' : 'bg-slate-200'}`}>
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showDisclaimer ? 'translate-x-4' : ''}`} />
                                             </div>
                                         </label>
                                     </div>
                                 </div>
                             </div>
-                       </div>
-                   </>
-               ) : (
-                   /* PREVIEW TAB */
-                   <div className="flex-1 bg-slate-100 p-8 flex justify-center overflow-y-auto">
-                       <div className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-12 flex flex-col relative text-slate-900" style={{ fontFamily: 'Times New Roman, serif' }}>
-                           
-                           {/* Header */}
-                           <div className={`flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
-                               {headerConfig.showLogo && (
-                                   <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center text-slate-400 mb-4 sm:mb-0 border border-slate-300">
-                                       <ImageIcon size={32}/>
-                                   </div>
-                               )}
-                               <div className={`${headerConfig.logoPosition === 'Center' ? 'w-full text-center' : headerConfig.logoPosition === 'Left' ? 'text-right' : 'text-left'}`}>
-                                   {headerConfig.showCompanyName && <h1 className="text-2xl font-bold uppercase tracking-wide">TechFlow Systems Pvt Ltd</h1>}
-                                   {headerConfig.showCompanyAddress && <p className="text-sm text-slate-500 mt-1 max-w-xs ml-auto">123 Business Park, Sector 4, Bangalore - 560001</p>}
-                               </div>
-                           </div>
+                        </div>
+                    </>
+                ) : (
+                    /* PREVIEW TAB */
+                    <div className="flex-1 bg-slate-100 p-8 flex justify-center overflow-y-auto">
+                        <div className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-12 flex flex-col relative text-slate-900" style={{ fontFamily: 'Times New Roman, serif' }}>
 
-                           <div className="text-center mb-8">
-                               <h2 className="text-xl font-bold uppercase underline underline-offset-4">{headerConfig.documentTitle}</h2>
-                           </div>
-                           
-                           {/* Candidate Details */}
-                           <div className="grid grid-cols-2 gap-y-3 gap-x-8 mb-8 text-sm border-b border-slate-200 pb-6">
-                               {headerConfig.candidateFields.name && <div className="flex"><span className="w-36 font-bold text-slate-600">Candidate Name</span><span>: Priya Sharma</span></div>}
-                               {headerConfig.candidateFields.designation && <div className="flex"><span className="w-36 font-bold text-slate-600">Designation</span><span>: Software Engineer</span></div>}
-                               {headerConfig.candidateFields.location && <div className="flex"><span className="w-36 font-bold text-slate-600">Location</span><span>: Bangalore</span></div>}
-                               {headerConfig.candidateFields.doj && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Joining</span><span>: 15 Dec 2025</span></div>}
-                           </div>
+                            {/* Header */}
+                            <div className={`flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
+                                {headerConfig.showLogo && (
+                                    <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center text-slate-400 mb-4 sm:mb-0 border border-slate-300">
+                                        <ImageIcon size={32} />
+                                    </div>
+                                )}
+                                <div className={`${headerConfig.logoPosition === 'Center' ? 'w-full text-center' : headerConfig.logoPosition === 'Left' ? 'text-right' : 'text-left'}`}>
+                                    {headerConfig.showCompanyName && <h1 className="text-2xl font-bold uppercase tracking-wide">TechFlow Systems Pvt Ltd</h1>}
+                                    {headerConfig.showCompanyAddress && <p className="text-sm text-slate-500 mt-1 max-w-xs ml-auto">123 Business Park, Sector 4, Bangalore - 560001</p>}
+                                </div>
+                            </div>
 
-                           {/* CTC Table */}
-                           <table className="w-full border-collapse border border-slate-300 text-sm mb-8">
-                               <thead className="bg-slate-50">
-                                   <tr>
-                                       <th className="border border-slate-300 p-2 text-left">Components</th>
-                                       {settings.showMonthlyColumn && <th className="border border-slate-300 p-2 text-right">Monthly (₹)</th>}
-                                       <th className="border border-slate-300 p-2 text-right">Annual (₹)</th>
-                                       {settings.showPercentageColumn && <th className="border border-slate-300 p-2 text-right">% of CTC</th>}
-                                   </tr>
-                               </thead>
-                               <tbody>
-                                   {/* Earnings */}
-                                   <tr className="bg-emerald-50"><td colSpan={4} className="border border-slate-300 p-2 font-bold text-emerald-800">A. Earnings</td></tr>
-                                   {sections.earnings.map((item, i) => (
-                                       <tr key={`e-${i}`}>
-                                           <td className="border border-slate-300 p-2">
-                                               {item.name}
-                                               {settings.showExemptTags && (item.name.includes('HRA') || item.name.includes('Conveyance') || item.name.includes('LTA')) && <span className="ml-2 text-[10px] bg-slate-100 px-1 rounded text-slate-500">Exempt</span>}
-                                               {settings.highlightBasicRule && item.name.includes('Basic') && <span className="ml-2 text-emerald-600 text-xs">✔ ≥50%</span>}
-                                           </td>
-                                           {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount)/12)}</td>}
-                                           <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
-                                           {settings.showPercentageColumn && <td className="border border-slate-300 p-2 text-right text-slate-500">{((parseAmount(item.amount) / 1850000) * 100).toFixed(1)}%</td>}
-                                       </tr>
-                                   ))}
+                            <div className="text-center mb-8">
+                                <h2 className="text-xl font-bold uppercase underline underline-offset-4">{headerConfig.documentTitle}</h2>
+                            </div>
 
-                                   {/* Retirals */}
-                                   <tr className="bg-sky-50"><td colSpan={4} className="border border-slate-300 p-2 font-bold text-sky-800">B. Retirals & Benefits</td></tr>
-                                   {sections.retirals.map((item, i) => (
-                                       <tr key={`b-${i}`}>
-                                           <td className="border border-slate-300 p-2">{item.name}</td>
-                                           {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount)/12)}</td>}
-                                           <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
-                                           {settings.showPercentageColumn && <td className="border border-slate-300 p-2 text-right text-slate-500">{((parseAmount(item.amount) / 1850000) * 100).toFixed(1)}%</td>}
-                                       </tr>
-                                   ))}
+                            {/* Candidate Details */}
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-8 mb-8 text-sm border-b border-slate-200 pb-6">
+                                {headerConfig.candidateFields.name && <div className="flex"><span className="w-36 font-bold text-slate-600">Candidate Name</span><span>: Priya Sharma</span></div>}
+                                {headerConfig.candidateFields.designation && <div className="flex"><span className="w-36 font-bold text-slate-600">Designation</span><span>: Software Engineer</span></div>}
+                                {headerConfig.candidateFields.location && <div className="flex"><span className="w-36 font-bold text-slate-600">Location</span><span>: Bangalore</span></div>}
+                                {headerConfig.candidateFields.doj && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Joining</span><span>: 15 Dec 2025</span></div>}
+                            </div>
 
-                                   {/* Reimbursements */}
-                                   <tr className="bg-amber-50"><td colSpan={4} className="border border-slate-300 p-2 font-bold text-amber-800">C. Reimbursements</td></tr>
-                                   {sections.reimbursements.map((item, i) => (
-                                       <tr key={`r-${i}`}>
-                                           <td className="border border-slate-300 p-2">{item.name}</td>
-                                           {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount)/12)}</td>}
-                                           <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
-                                           {settings.showPercentageColumn && <td className="border border-slate-300 p-2 text-right text-slate-500">{((parseAmount(item.amount) / 1850000) * 100).toFixed(1)}%</td>}
-                                       </tr>
-                                   ))}
+                            {/* CTC Table */}
+                            <table className="w-full border-collapse border border-slate-300 text-sm mb-8">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="border border-slate-300 p-2 text-left">Components</th>
+                                        {settings.showMonthlyColumn && <th className="border border-slate-300 p-2 text-right">Monthly (₹)</th>}
+                                        <th className="border border-slate-300 p-2 text-right">Annual (₹)</th>
+                                        {settings.showPercentageColumn && <th className="border border-slate-300 p-2 text-right">% of CTC</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {/* Earnings */}
+                                    <tr className="bg-emerald-50"><td colSpan={4} className="border border-slate-300 p-2 font-bold text-emerald-800">A. Earnings</td></tr>
+                                    {sections.earnings.map((item, i) => (
+                                        <tr key={`e-${i}`}>
+                                            <td className="border border-slate-300 p-2">
+                                                {item.name}
+                                                {settings.showExemptTags && (item.name.includes('HRA') || item.name.includes('Conveyance') || item.name.includes('LTA')) && <span className="ml-2 text-[10px] bg-slate-100 px-1 rounded text-slate-500">Exempt</span>}
+                                                {settings.highlightBasicRule && item.name.includes('Basic') && <span className="ml-2 text-emerald-600 text-xs">✔ ≥50%</span>}
+                                            </td>
+                                            {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount) / 12)}</td>}
+                                            <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
+                                            {settings.showPercentageColumn && <td className="border border-slate-300 p-2 text-right text-slate-500">{((parseAmount(item.amount) / 1850000) * 100).toFixed(1)}%</td>}
+                                        </tr>
+                                    ))}
 
-                                   {/* Total CTC */}
-                                   <tr className="bg-slate-800 text-white font-bold">
-                                       <td className="border border-slate-300 p-3">Total Cost to Company (A+B+C)</td>
-                                       {settings.showMonthlyColumn && <td className="border border-slate-300 p-3 text-right">₹ 1,54,166</td>}
-                                       <td className="border border-slate-300 p-3 text-right text-lg">₹ 18,50,000</td>
-                                       {settings.showPercentageColumn && <td className="border border-slate-300 p-3 text-right">100%</td>}
-                                   </tr>
-                               </tbody>
-                           </table>
+                                    {/* Retirals */}
+                                    <tr className="bg-sky-50"><td colSpan={4} className="border border-slate-300 p-2 font-bold text-sky-800">B. Retirals & Benefits</td></tr>
+                                    {sections.retirals.map((item, i) => (
+                                        <tr key={`b-${i}`}>
+                                            <td className="border border-slate-300 p-2">{item.name}</td>
+                                            {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount) / 12)}</td>}
+                                            <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
+                                            {settings.showPercentageColumn && <td className="border border-slate-300 p-2 text-right text-slate-500">{((parseAmount(item.amount) / 1850000) * 100).toFixed(1)}%</td>}
+                                        </tr>
+                                    ))}
 
-                           <div className="mb-8">
+                                    {/* Reimbursements */}
+                                    <tr className="bg-amber-50"><td colSpan={4} className="border border-slate-300 p-2 font-bold text-amber-800">C. Reimbursements</td></tr>
+                                    {sections.reimbursements.map((item, i) => (
+                                        <tr key={`r-${i}`}>
+                                            <td className="border border-slate-300 p-2">{item.name}</td>
+                                            {settings.showMonthlyColumn && <td className="border border-slate-300 p-2 text-right">{formatCurrency(parseAmount(item.amount) / 12)}</td>}
+                                            <td className="border border-slate-300 p-2 text-right">{item.amount}</td>
+                                            {settings.showPercentageColumn && <td className="border border-slate-300 p-2 text-right text-slate-500">{((parseAmount(item.amount) / 1850000) * 100).toFixed(1)}%</td>}
+                                        </tr>
+                                    ))}
+
+                                    {/* Total CTC */}
+                                    <tr className="bg-slate-800 text-white font-bold">
+                                        <td className="border border-slate-300 p-3">Total Cost to Company (A+B+C)</td>
+                                        {settings.showMonthlyColumn && <td className="border border-slate-300 p-3 text-right">₹ 1,54,166</td>}
+                                        <td className="border border-slate-300 p-3 text-right text-lg">₹ 18,50,000</td>
+                                        {settings.showPercentageColumn && <td className="border border-slate-300 p-3 text-right">100%</td>}
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div className="mb-8">
                                 <p className="font-bold text-sm text-slate-800 mb-1">Amount in Words:</p>
                                 <p className="text-sm text-slate-600 italic">Rupees Eighteen Lakh Fifty Thousand Only</p>
-                           </div>
+                            </div>
 
-                           {/* Deductions (Informational) */}
-                           <div className="mb-8">
-                               <h4 className="font-bold text-sm mb-2 uppercase text-rose-700">D. Estimated Deductions (From Monthly Salary)</h4>
-                               <table className="w-full border-collapse border border-slate-300 text-sm">
-                                   <tbody>
-                                       {sections.deductions.map((item, i) => (
-                                           <tr key={`d-${i}`}>
-                                               <td className="border border-slate-300 p-2 w-[70%]">{item.name}</td>
-                                               <td className="border border-slate-300 p-2 text-right text-rose-600">₹ {item.amount}</td>
-                                           </tr>
-                                       ))}
-                                   </tbody>
-                               </table>
-                           </div>
+                            {/* Deductions (Informational) */}
+                            <div className="mb-8">
+                                <h4 className="font-bold text-sm mb-2 uppercase text-rose-700">D. Estimated Deductions (From Monthly Salary)</h4>
+                                <table className="w-full border-collapse border border-slate-300 text-sm">
+                                    <tbody>
+                                        {sections.deductions.map((item, i) => (
+                                            <tr key={`d-${i}`}>
+                                                <td className="border border-slate-300 p-2 w-[70%]">{item.name}</td>
+                                                <td className="border border-slate-300 p-2 text-right text-rose-600">₹ {item.amount}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                           {/* Summary & Disclaimer */}
-                           <div className="mt-auto pt-8 border-t border-slate-300">
+                            {/* Summary & Disclaimer */}
+                            <div className="mt-auto pt-8 border-t border-slate-300">
                                 <div className="bg-slate-50 p-4 border border-slate-200 rounded">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-bold text-slate-700">Approximate Monthly Take Home</span>
@@ -793,22 +792,22 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                         <p className="text-sm font-bold text-slate-800">Candidate Signature</p>
                                     </div>
                                 </div>
-                           </div>
-                       </div>
-                   </div>
-               )}
-           </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
-           {/* Modals */}
-           <HeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} />
-           <AddComponentModal 
-              isOpen={addComponentModal.isOpen} 
-              onClose={() => setAddComponentModal({isOpen: false, section: null})} 
-              section={addComponentModal.section}
-              onAdd={addComponent} 
-           />
-      </div>
-  );
+            {/* Modals */}
+            <HeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} />
+            <AddComponentModal
+                isOpen={addComponentModal.isOpen}
+                onClose={() => setAddComponentModal({ isOpen: false, section: null })}
+                section={addComponentModal.section}
+                onAdd={addComponent}
+            />
+        </div>
+    );
 };
 
 export default SalaryAnnexureTemplate;
