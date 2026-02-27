@@ -50,6 +50,8 @@ interface AnnexureTemplate {
     name: string;
     status: 'Published' | 'Draft';
     lastModified: string;
+    lastUpdatedBy: string;
+    createdBy: string;
     sections: {
         earnings: ComponentItem[];
         retirals: ComponentItem[];
@@ -68,6 +70,8 @@ const MOCK_ANNEXURE_TEMPLATES: AnnexureTemplate[] = [
         name: 'Standard Offer Annexure',
         status: 'Published',
         lastModified: '03 Dec 2025',
+        lastUpdatedBy: 'Admin',
+        createdBy: 'Admin',
         headerConfig: {
             logoPosition: 'Left',
             showLogo: true,
@@ -329,11 +333,15 @@ const SalaryAnnexureTemplate: React.FC = () => {
             return;
         }
 
+        const existingTemplate = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
+
         const newTemplate: AnnexureTemplate = {
             id: editingTemplateId || Date.now().toString(),
             name: templateName,
             status,
-            lastModified: 'Just now',
+            lastModified: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            lastUpdatedBy: 'Admin', // Assuming current user is Admin
+            createdBy: existingTemplate?.createdBy || 'Admin', // Keep original creator or set Admin for new
             sections,
             settings,
             headerConfig
@@ -384,7 +392,8 @@ const SalaryAnnexureTemplate: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-4">Template Name</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Last Modified</th>
+                                <th className="px-6 py-4">Created By</th>
+                                <th className="px-6 py-4">Last Updated By</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -400,7 +409,13 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                             {t.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">{t.lastModified}</td>
+                                    <td className="px-6 py-4 text-slate-600">{t.createdBy}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span>{t.lastModified}</span>
+                                            <span className="text-[10px] text-slate-400">by {t.lastUpdatedBy}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
