@@ -46,7 +46,10 @@ interface BankTemplate {
     id: string;
     name: string;
     status: 'Published' | 'Draft';
+    isActive: boolean;
     lastModified: string;
+    lastUpdatedBy: string;
+    createdBy: string;
     columns: BankColumn[];
     settings: BankTemplateSettings;
 }
@@ -88,7 +91,10 @@ const MOCK_BANK_TEMPLATES: BankTemplate[] = [
         id: '1',
         name: 'Default Universal Format',
         status: 'Published',
+        isActive: true,
         lastModified: '03 Dec 2025',
+        lastUpdatedBy: 'Admin',
+        createdBy: 'Admin',
         columns: DEFAULT_COLUMNS,
         settings: {
             fileType: 'Excel',
@@ -218,6 +224,11 @@ const BankDisbursalTemplate: React.FC = () => {
     const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
     const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
 
+    const handleToggleActive = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive } : t));
+    };
+
     // Persist templates in localStorage
     const [templates, setTemplates] = useState<BankTemplate[]>(() => {
         const saved = localStorage.getItem('collab_bank_templates');
@@ -277,11 +288,16 @@ const BankDisbursalTemplate: React.FC = () => {
             return;
         }
 
+        const existingTemplate = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
+
         const newTemplate: BankTemplate = {
             id: editingTemplateId || Date.now().toString(),
             name: templateName,
             status,
-            lastModified: 'Just now',
+            isActive: existingTemplate?.isActive ?? true,
+            lastModified: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            lastUpdatedBy: 'Admin',
+            createdBy: existingTemplate?.createdBy || 'Admin',
             columns,
             settings
         };
@@ -355,7 +371,8 @@ const BankDisbursalTemplate: React.FC = () => {
                                 <th className="px-6 py-4">Template Name</th>
                                 <th className="px-6 py-4">Format</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Last Modified</th>
+                                <th className="px-6 py-4">Created By</th>
+                                <th className="px-6 py-4">Last Updated By</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -376,11 +393,29 @@ const BankDisbursalTemplate: React.FC = () => {
                                             {t.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">{t.lastModified}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-700">{t.createdBy}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-700 font-medium">{t.lastModified}</span>
+                                            <span className="text-[10px] text-slate-400">by {t.lastUpdatedBy}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                        <div className="flex justify-end items-center gap-4">
+                                            <div
+                                                onClick={(e) => handleToggleActive(t.id, e)}
+                                                className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${t.isActive ? 'bg-purple-600' : 'bg-slate-200'}`}
+                                            >
+                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${t.isActive ? 'translate-x-5' : ''}`} />
+                                            </div>
+                                            <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
