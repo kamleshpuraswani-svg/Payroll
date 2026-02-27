@@ -390,7 +390,7 @@ const BankDisbursalTemplate: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                'bg-amber-50 text-amber-700 border-amber-100'
+                                            'bg-amber-50 text-amber-700 border-amber-100'
                                             }`}>
                                             {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
                                             {t.status}
@@ -483,21 +483,10 @@ const BankDisbursalTemplate: React.FC = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden max-w-5xl mx-auto">
                                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                                     <div>
-                                        <h3 className="font-bold text-slate-800 text-sm">Column Mapper</h3>
+                                        <h3 className="font-bold text-slate-800 text-sm">Column Mapping</h3>
                                         <p className="text-xs text-slate-500">Configure and reorder columns for the export file</p>
                                     </div>
                                     <div className="flex gap-3">
-                                        {!isReadOnly && (
-                                            <select
-                                                value={settings.fileType}
-                                                onChange={(e) => setSettings({ ...settings, fileType: e.target.value as any })}
-                                                className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:border-purple-500"
-                                            >
-                                                <option value="Excel">Excel (.xlsx)</option>
-                                                <option value="CSV">CSV (.csv)</option>
-                                                <option value="TXT">Text (.txt)</option>
-                                            </select>
-                                        )}
                                         {!isReadOnly && (
                                             <button
                                                 onClick={() => setIsAddColumnModalOpen(true)}
@@ -509,8 +498,7 @@ const BankDisbursalTemplate: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50 px-6 py-2 border-b border-slate-100 text-xs font-bold uppercase text-slate-400 grid grid-cols-[40px_40px_1fr_1fr_1fr_auto] gap-4">
-                                    <div>Sel</div>
+                                <div className="bg-slate-50 px-6 py-2 border-b border-slate-100 text-xs font-bold uppercase text-slate-400 grid grid-cols-[40px_1fr_1fr_1fr_auto] gap-4">
                                     <div>#</div>
                                     <div>Column Header Name</div>
                                     <div>Mapped To</div>
@@ -526,17 +514,8 @@ const BankDisbursalTemplate: React.FC = () => {
                                             onDragStart={(e) => handleDragStart(e, idx)}
                                             onDragOver={(e) => handleDragOver(e, idx)}
                                             onDrop={(e) => handleDrop(e, idx)}
-                                            className={`grid grid-cols-[40px_40px_1fr_1fr_1fr_auto] gap-4 items-center px-6 py-3 transition-colors ${!col.included ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50'} ${draggedItemIndex === idx ? 'opacity-50 border-2 border-purple-300' : ''}`}
+                                            className={`grid grid-cols-[40px_1fr_1fr_1fr_auto] gap-4 items-center px-6 py-3 transition-colors ${!col.included ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50'} ${draggedItemIndex === idx ? 'opacity-50 border-2 border-purple-300' : ''}`}
                                         >
-                                            <div className="flex items-center justify-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={col.included}
-                                                    disabled={isReadOnly}
-                                                    onChange={() => toggleColumn(col.id)}
-                                                    className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                                                />
-                                            </div>
 
                                             <div className="text-xs font-mono text-slate-400">{idx + 1}</div>
 
@@ -578,7 +557,7 @@ const BankDisbursalTemplate: React.FC = () => {
                                                 {!isReadOnly && (
                                                     <GripVertical size={16} className="text-slate-300 cursor-grab active:cursor-grabbing hover:text-slate-500" />
                                                 )}
-                                                {!isReadOnly && col.type === 'Custom' && (
+                                                {!isReadOnly && (
                                                     <Trash2 size={14} onClick={() => handleDeleteColumn(col.id)} className="text-slate-300 cursor-pointer hover:text-rose-500" />
                                                 )}
                                             </div>
