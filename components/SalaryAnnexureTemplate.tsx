@@ -45,7 +45,6 @@ interface HeaderConfig {
         name: boolean;
         designation: boolean;
         location: boolean;
-        doj: boolean;
     };
 }
 
@@ -78,7 +77,7 @@ const MOCK_ANNEXURE_TEMPLATES: AnnexureTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: true,
             documentTitle: 'Annexure to Offer Letter – Compensation Details',
-            candidateFields: { name: true, designation: true, location: true, doj: true }
+            candidateFields: { name: true, designation: true, location: true }
         },
         sections: {
             earnings: [
@@ -144,7 +143,7 @@ const HeaderConfigModal: React.FC<{
                         <div className="space-y-2">
                             <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
                                 <input type="checkbox" checked={config.showLogo} onChange={e => onChange({ ...config, showLogo: e.target.checked })} className="rounded text-purple-600 focus:ring-purple-500" />
-                                <span className="text-sm font-medium text-slate-700">Show Company Logo</span>
+                                <span className="text-sm font-medium text-slate-700">Company Logo</span>
                             </label>
                             <div className="grid grid-cols-2 gap-3">
                                 <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
@@ -197,9 +196,6 @@ const HeaderConfigModal: React.FC<{
                             </label>
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                                 <input type="checkbox" checked={config.candidateFields.location} onChange={() => toggleField('location')} className="rounded text-purple-600 focus:ring-purple-500" /> Location
-                            </label>
-                            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={config.candidateFields.doj} onChange={() => toggleField('doj')} className="rounded text-purple-600 focus:ring-purple-500" /> DOJ
                             </label>
                         </div>
                     </div>
@@ -518,7 +514,6 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                             {headerConfig.candidateFields.name && <div>Candidate Name: <span className="font-semibold text-slate-800">Priya Sharma</span></div>}
                                             {headerConfig.candidateFields.designation && <div>Designation: <span className="font-semibold text-slate-800">Software Engineer</span></div>}
                                             {headerConfig.candidateFields.location && <div>Location: <span className="font-semibold text-slate-800">Bangalore</span></div>}
-                                            {headerConfig.candidateFields.doj && <div>DOJ: <span className="font-semibold text-slate-800">DD/MM/YYYY</span></div>}
                                         </div>
                                     </div>
 
@@ -694,7 +689,6 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                 {headerConfig.candidateFields.name && <div className="flex"><span className="w-36 font-bold text-slate-600">Candidate Name</span><span>: Priya Sharma</span></div>}
                                 {headerConfig.candidateFields.designation && <div className="flex"><span className="w-36 font-bold text-slate-600">Designation</span><span>: Software Engineer</span></div>}
                                 {headerConfig.candidateFields.location && <div className="flex"><span className="w-36 font-bold text-slate-600">Location</span><span>: Bangalore</span></div>}
-                                {headerConfig.candidateFields.doj && <div className="flex"><span className="w-36 font-bold text-slate-600">Date of Joining</span><span>: 15 Dec 2025</span></div>}
                             </div>
 
                             {/* CTC Table */}
