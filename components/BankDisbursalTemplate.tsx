@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import {
     Plus,
     Edit2,
@@ -367,6 +368,44 @@ const BankDisbursalTemplate: React.FC = () => {
         setDraggedItemIndex(null);
     };
 
+    const handleDownloadSample = () => {
+        const activeCols = columns.filter(c => c.included);
+        if (activeCols.length === 0) return;
+
+        // Generate headers
+        const headers = activeCols.map(c => c.headerName);
+
+        // Generate rows (using sample data logic similar to preview)
+        const rowsPool = [1, 2, 3, 4, 5, 6, 7, 8];
+        const dataRows = rowsPool.map(rowNum => {
+            const row: Record<string, string> = {};
+            activeCols.forEach(col => {
+                let cellValue = col.sampleValue;
+                if (col.type === 'Custom') {
+                    cellValue = col.customValue || '';
+                } else {
+                    if (col.fieldId === 'sr_no') cellValue = rowNum.toString();
+                    if (col.fieldId === 'emp_name' && rowNum === 2) cellValue = 'Arjun Mehta';
+                    if (col.fieldId === 'net_pay' && rowNum === 2) cellValue = '85400.00';
+                    if (col.fieldId === 'bank_acc' && rowNum === 2) cellValue = '000987654321';
+                }
+                row[col.headerName] = cellValue;
+            });
+            return row;
+        });
+
+        // Create workbook and sheet
+        const worksheet = XLSX.utils.json_to_sheet(dataRows, { header: headers });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sample Disbursal");
+
+        // Format filename
+        const fileName = `${settings.fileNamePattern.replace('{{company}}', 'TechFlow').replace('{{month}}', 'Nov').replace('{{year}}', '2025')}.xlsx`;
+
+        // Export
+        XLSX.writeFile(workbook, fileName);
+    };
+
     // --- RENDER LIST ---
     if (view === 'LIST') {
         return (
@@ -634,7 +673,10 @@ const BankDisbursalTemplate: React.FC = () => {
                                         <p className="text-xs text-slate-500">{settings.fileNamePattern.replace('{{company}}', 'TechFlow').replace('{{month}}', 'Nov').replace('{{year}}', '2025')}.{settings.fileType.toLowerCase()}</p>
                                     </div>
                                 </div>
-                                <button className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded shadow-sm hover:bg-slate-50 flex items-center gap-2">
+                                <button
+                                    onClick={handleDownloadSample}
+                                    className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded shadow-sm hover:bg-slate-50 flex items-center gap-2"
+                                >
                                     <Download size={14} /> Download Sample
                                 </button>
                             </div>
