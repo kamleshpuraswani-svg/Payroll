@@ -24,7 +24,8 @@ import {
     Download,
     Share2,
     Plus,
-    Check
+    Check,
+    AlertTriangle
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -1070,34 +1071,44 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     const fetchEmployees = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
-            .from('employees')
-            .select('*')
-            .order('first_name', { ascending: true });
+        setFetchError(null);
+        try {
+            const { data, error } = await supabase
+                .from('employees')
+                .select('*')
+                .order('name', { ascending: true });
 
-        if (error) {
-            console.error('Error fetching employees:', error);
-        } else {
-            const mappedData: Employee[] = (data || []).map(item => ({
-                id: item.id,
-                first_name: item.first_name,
-                last_name: item.last_name || '',
-                employee_id: item.eid,
-                company_id: item.company_id || '',
-                department: item.department || 'N/A',
-                location: item.location || 'N/A',
-                ctc: item.ctc || 'N/A',
-                date_of_joining: item.join_date || 'N/A',
-                status: item.status || 'Active',
-                avatar_url: item.avatar_url,
-                email: item.email || ''
-            }));
-            setEmployees(mappedData);
+            if (error) {
+                console.error('Error fetching employees:', error);
+                setFetchError(error.message);
+            } else {
+                console.log('Fetched employees:', data?.length);
+                const mappedData: Employee[] = (data || []).map(item => ({
+                    id: item.id,
+                    first_name: item.name || 'N/A',
+                    last_name: '',
+                    employee_id: item.eid,
+                    company_id: item.company_id || '',
+                    department: item.department || 'N/A',
+                    location: item.location || 'N/A',
+                    ctc: item.ctc || 'N/A',
+                    date_of_joining: item.join_date || 'N/A',
+                    status: item.status || 'Active',
+                    avatar_url: item.avatar_url,
+                    email: item.email || ''
+                }));
+                setEmployees(mappedData);
+            }
+        } catch (err: any) {
+            console.error('Unexpected error in fetchEmployees:', err);
+            setFetchError(err.message || 'An unexpected error occurred');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     useEffect(() => {
@@ -1114,7 +1125,6 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
 
     const filteredEmployees = (employees || []).filter(emp =>
         (emp?.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (emp?.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (emp?.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (emp?.department || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -1215,6 +1225,26 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading employees...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : fetchError ? (
+                                <tr>
+                                    <td colSpan={8} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <AlertTriangle size={24} />
+                                            <span className="font-bold">Error loading employees</span>
+                                            <p className="text-xs text-rose-400">{fetchError}</p>
+                                            <button onClick={() => fetchEmployees()} className="mt-2 px-4 py-1.5 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold hover:bg-rose-200 transition-colors">Retry</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredEmployees.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Users size={24} className="text-slate-200" />
+                                            <span>No employees found matching filters.</span>
                                         </div>
                                     </td>
                                 </tr>

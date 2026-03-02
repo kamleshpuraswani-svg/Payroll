@@ -11,7 +11,7 @@ const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
 
 async function check() {
     console.log('--- Checking salary_structures ---');
-    const { data: sData, error: sError } = await supabase.from('salary_structures').select('*').limit(1);
+    const { data: sData, error: sError } = await supabase.from('salary_structures').select('*');
     if (sError) {
         console.log('Error salary_structures:', sError.message);
     } else {
@@ -19,7 +19,7 @@ async function check() {
     }
 
     console.log('\n--- Checking employees ---');
-    const { data: eData, error: eError } = await supabase.from('employees').select('*').limit(1);
+    const { data: eData, error: eError } = await supabase.from('employees').select('id, name, eid, salary_structure_id');
     if (eError) {
         console.log('Error employees:', eError.message);
     } else {
