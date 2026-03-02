@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../services/supabaseClient';
 import {
    User,
    Camera,
@@ -23,34 +24,112 @@ import {
 } from 'lucide-react';
 
 interface EditEmployeeProfileProps {
+   employeeId?: string;
    onBack?: () => void;
    onViewHistory?: () => void;
    isReadOnly?: boolean;
 }
 
-const SALARY_STRUCTURES = [
-   { id: 'S1', name: 'Standard IT 2025' },
-   { id: 'S2', name: 'Standard Finance' },
-   { id: 'S3', name: 'Internship Stipend' },
-   { id: 'S4', name: 'Contractor Fixed' },
-   { id: 'S5', name: 'Sales Commission Based' }
-];
+const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, onBack, onViewHistory, isReadOnly = false }) => {
+   const [fullName, setFullName] = useState('Loading...');
+   const [designation, setDesignation] = useState('');
+   const [department, setDepartment] = useState('Engineering');
+   const [joiningDate, setJoiningDate] = useState('');
+   const [location, setLocation] = useState('Bangalore');
 
-const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onViewHistory, isReadOnly = false }) => {
-   const [ctc, setCtc] = useState<number>(1300000);
+   const [accountNumber, setAccountNumber] = useState('');
+   const [ifscCode, setIfscCode] = useState('');
+   const [bankName, setBankName] = useState('');
+   const [branchName, setBranchName] = useState('');
+
+   const [panNumber, setPanNumber] = useState('');
+   const [aadhaarNumber, setAadhaarNumber] = useState('');
+   const [uanNumber, setUanNumber] = useState('');
+
+   const [ctc, setCtc] = useState<number>(0);
    const [regime, setRegime] = useState('New Regime (2025)');
    const [bankVerified, setBankVerified] = useState(true);
    const [isSaving, setIsSaving] = useState(false);
-   const [selectedStructureId, setSelectedStructureId] = useState('S2');
+   const [selectedStructureId, setSelectedStructureId] = useState('');
    const [effectiveFrom, setEffectiveFrom] = useState('');
    const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
 
+   const [salaryStructures, setSalaryStructures] = useState<{ id: string, name: string }[]>([]);
+   const [isLoading, setIsLoading] = useState(true);
+
    // Refs to track initial values for change detection
    const initialValues = useRef({
-      ctc: 1300000,
-      structureId: 'S2'
+      ctc: 0,
+      structureId: ''
    });
+
+   useEffect(() => {
+      fetchSalaryStructures();
+      if (employeeId) {
+         fetchEmployeeData();
+      }
+   }, [employeeId]);
+
+   const fetchSalaryStructures = async () => {
+      try {
+         const { data, error } = await supabase
+            .from('salary_structures')
+            .select('id, name')
+            .eq('status', 'Active');
+
+         if (error) throw error;
+         if (data) setSalaryStructures(data);
+      } catch (error) {
+         console.error('Error fetching structures:', error);
+      }
+   };
+
+   const fetchEmployeeData = async () => {
+      setIsLoading(true);
+      try {
+         const { data, error } = await supabase
+            .from('employees')
+            .select('*')
+            .eq('id', employeeId)
+            .single();
+
+         if (error) throw error;
+         if (data) {
+            setFullName(data.name || '');
+            setDesignation(data.designation || '');
+            setDepartment(data.department || 'Engineering');
+            setJoiningDate(data.join_date || '');
+            setLocation(data.location || 'Bangalore');
+
+            setAccountNumber(data.bank_account_no || '');
+            setIfscCode(data.bank_ifsc || '');
+            setBankName(data.bank_name || '');
+            setBranchName(data.bank_branch || '');
+
+            setPanNumber(data.pan_no || '');
+            setAadhaarNumber(data.aadhaar_no || '');
+            setUanNumber(data.uan_no || '');
+
+            const fetchedCtc = Number(data.ctc) || 0;
+            setCtc(fetchedCtc);
+            setRegime(data.tax_regime || 'New Regime (2025)');
+            setSelectedStructureId(data.salary_structure_id || '');
+            setEffectiveFrom(data.effective_date || '');
+
+            initialValues.current = {
+               ctc: fetchedCtc,
+               structureId: data.salary_structure_id || ''
+            };
+         }
+      } catch (error) {
+         console.error('Error fetching employee:', error);
+      } finally {
+         setIsLoading(false);
+      }
+   };
+
+   // Helper to calculate estimated TDS for demo purposes
 
    // Helper to calculate estimated TDS for demo purposes
    const calculateEstTax = (amount: number, regimeType: 'OLD' | 'NEW') => {
@@ -129,7 +208,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
 
    const salary = calculateSalary(ctc);
 
-   const handleSave = () => {
+   const handleSave = async () => {
       // Check if critical fields changed
       const hasChanged = ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId;
 
@@ -142,10 +221,40 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
       }
 
       setIsSaving(true);
-      setTimeout(() => {
-         setIsSaving(false);
-         if (onBack) onBack(); // Go back after save for demo flow
-      }, 1500);
+      try {
+         const updates = {
+            id: employeeId,
+            name: fullName,
+            designation,
+            department,
+            join_date: joiningDate,
+            location,
+            bank_account_no: accountNumber,
+            bank_ifsc: ifscCode,
+            bank_name: bankName,
+            bank_branch: branchName,
+            pan_no: panNumber,
+            aadhaar_no: aadhaarNumber,
+            uan_no: uanNumber,
+            ctc,
+            tax_regime: regime,
+            salary_structure_id: selectedStructureId,
+            effective_date: effectiveFrom
+         };
+
+         const { error } = await supabase
+            .from('employees')
+            .upsert(updates);
+
+         if (error) throw error;
+
+         if (onBack) onBack();
+      } catch (error) {
+         console.error('Error saving:', error);
+         alert('Failed to save changes. Please try again.');
+      } finally {
+         setIsSaving(true);
+      }
    };
 
    const formatCurrency = (amount: number) => {
@@ -174,7 +283,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                   </div>
                   <h1 className="text-xl font-bold text-slate-800 flex items-center gap-3">
                      {isReadOnly ? 'Employee Profile' : 'Edit Payroll Profile'}
-                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">Active</span>
+                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">{isLoading ? 'Loading...' : 'Active'}</span>
                   </h1>
                </div>
             </div>
@@ -259,15 +368,15 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            <div className="sm:col-span-2">
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                              <input type="text" defaultValue="Priya Sharma" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Designation</label>
-                              <input type="text" defaultValue="Senior Software Engineer" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                              <input type="text" value={designation} onChange={(e) => setDesignation(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Department</label>
-                              <select disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
+                              <select value={department} onChange={(e) => setDepartment(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
                                  <option>Engineering</option>
                                  <option>Product</option>
                                  <option>Design</option>
@@ -276,11 +385,11 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Date of Joining</label>
-                              <input type="date" defaultValue="2023-01-12" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                              <input type="date" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Work Location</label>
-                              <select disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
+                              <select value={location} onChange={(e) => setLocation(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
                                  <option>Bangalore</option>
                                  <option>Mumbai</option>
                                  <option>Remote</option>
@@ -312,22 +421,22 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                   <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Account Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <input type="text" defaultValue="50100234567890" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                        <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">IFSC Code {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <div className="relative">
-                           <input type="text" defaultValue="HDFC0001234" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                           <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            {!isReadOnly && <button className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-sky-600 hover:text-sky-700">VERIFY</button>}
                         </div>
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name</label>
-                        <input type="text" defaultValue="HDFC Bank" readOnly className="w-full px-3 py-2 border border-slate-100 bg-slate-50 rounded-lg text-sm text-slate-600 focus:outline-none cursor-not-allowed" />
+                        <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Branch</label>
-                        <input type="text" defaultValue="Koramangala 4th Block" readOnly className="w-full px-3 py-2 border border-slate-100 bg-slate-50 rounded-lg text-sm text-slate-600 focus:outline-none cursor-not-allowed" />
+                        <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
                      </div>
                   </div>
                </div>
@@ -343,20 +452,20 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PAN Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <div className="relative">
-                           <input type="text" defaultValue="ABCDE1234F" disabled={isReadOnly} className={`w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                           <input type="text" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} disabled={isReadOnly} className={`w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         </div>
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Aadhaar Number</label>
                         <div className="relative">
-                           <input type="text" defaultValue="xxxx-xxxx-1234" disabled={isReadOnly} className={`w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                           <input type="text" value={aadhaarNumber} onChange={(e) => setAadhaarNumber(e.target.value)} disabled={isReadOnly} className={`w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         </div>
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">UAN (PF)</label>
-                        <input type="text" defaultValue="100900200300" disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                        <input type="text" value={uanNumber} onChange={(e) => setUanNumber(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Regime (FY 2025-26)</label>
@@ -394,7 +503,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Assigned Structure</label>
                         {isReadOnly ? (
                            <div className="font-medium text-slate-800 text-sm bg-white px-3 py-2 border border-slate-200 rounded-lg">
-                              {SALARY_STRUCTURES.find(s => s.id === selectedStructureId)?.name || 'Not Assigned'}
+                              {salaryStructures.find(s => s.id === selectedStructureId)?.name || 'Not Assigned'}
                            </div>
                         ) : (
                            <div className="relative">
@@ -403,7 +512,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ onBack, onVie
                                  onChange={(e) => setSelectedStructureId(e.target.value)}
                                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 appearance-none"
                               >
-                                 {SALARY_STRUCTURES.map(s => (
+                                 <option value="">Select Structure</option>
+                                 {salaryStructures.map(s => (
                                     <option key={s.id} value={s.id}>{s.name}</option>
                                  ))}
                               </select>

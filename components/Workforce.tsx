@@ -26,15 +26,16 @@ const Workforce: React.FC = () => {
   return (
     <>
       {view === 'LIST' && <EmployeeList onEdit={handleEdit} onView={handleView} />}
-      {view === 'EDIT' && (
-        <EditEmployeeProfile 
-          onBack={handleBack} 
+      {view === 'EDIT' && selectedEmployeeId && (
+        <EditEmployeeProfile
+          employeeId={selectedEmployeeId}
+          onBack={handleBack}
           onViewHistory={() => setView('VIEW_HISTORY')}
-          isReadOnly={false} 
+          isReadOnly={false}
         />
       )}
       {view === 'VIEW_HISTORY' && selectedEmployeeId && (
-        <EmployeeSalaryHistory 
+        <EmployeeSalaryHistory
           employeeId={selectedEmployeeId}
           onBack={handleBack}
         />
