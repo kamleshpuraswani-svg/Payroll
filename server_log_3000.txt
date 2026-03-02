@@ -444,3 +444,4 @@
 1:48:48 PM [vite] (client) hmr update /App.tsx, /index.css
 1:54:39 PM [vite] (client) page reload supabase_consolidated_schema.sql
 2:00:31 PM [vite] (client) hmr update /components/HRSalaryComponents.tsx, /index.css
+3:01:20 PM [vite] (client) page reload scripts/seed_components.ts

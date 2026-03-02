@@ -57,7 +57,66 @@ const SEED_COMPONENTS = [
         payslip_name: 'EPF',
         deduction_type: 'Statutory',
         is_system: true,
-        created_by: 'System'
+        created_by: 'System',
+        show_in_payslip: true
+    },
+    {
+        name: 'Professional Tax',
+        type: 'Fixed Pay',
+        calculation: 'Slab based',
+        taxable: 'Tax Deductible',
+        status: true,
+        category: 'Deductions',
+        amount_or_percent: '200',
+        calc_method: 'Flat',
+        payslip_name: 'PT',
+        deduction_type: 'Statutory',
+        is_system: true,
+        created_by: 'System',
+        show_in_payslip: true
+    },
+    {
+        name: 'ESI (Employee)',
+        type: 'Variable Pay',
+        calculation: '0.75% of Gross',
+        taxable: 'Tax Deductible',
+        status: true,
+        category: 'Deductions',
+        amount_or_percent: '0.75',
+        calc_method: 'Percentage',
+        payslip_name: 'ESI',
+        deduction_type: 'Statutory',
+        is_system: true,
+        created_by: 'System',
+        show_in_payslip: true
+    },
+    {
+        name: 'Fuel Reimbursement',
+        type: 'Variable Pay',
+        calculation: 'Monthly Limit',
+        taxable: 'Fully Exempt',
+        status: true,
+        category: 'Reimbursements',
+        amount_or_percent: '2000',
+        calc_method: 'Flat',
+        payslip_name: 'Fuel Exp',
+        is_system: true,
+        created_by: 'System',
+        show_in_payslip: true
+    },
+    {
+        name: 'Internet Reimbursement',
+        type: 'Fixed Pay',
+        calculation: 'Monthly Fixed',
+        taxable: 'Fully Exempt',
+        status: true,
+        category: 'Reimbursements',
+        amount_or_percent: '500',
+        calc_method: 'Flat',
+        payslip_name: 'Net Exp',
+        is_system: true,
+        created_by: 'System',
+        show_in_payslip: true
     }
 ];
 
