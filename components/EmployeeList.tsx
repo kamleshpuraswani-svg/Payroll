@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
+import { supabase } from '../services/supabaseClient';
 
 interface SalaryHistoryRow {
     id: string;
@@ -479,7 +480,21 @@ const AssignStructureModal: React.FC<{
     // Selection & Data States
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [assignments, setAssignments] = useState<Record<string, string>>({});
-    const [effectiveDate, setEffectiveDate] = useState('2025-11-01');
+    const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [availableStructures, setAvailableStructures] = useState<string[]>(STRUCTURE_OPTIONS);
+
+    useEffect(() => {
+        const fetchStructures = async () => {
+            const { data, error } = await supabase
+                .from('salary_structures')
+                .select('name');
+            if (data && !error) {
+                setAvailableStructures(data.map(s => s.name));
+            }
+        };
+        fetchStructures();
+    }, []);
 
     // Step 2 Data
     const [ctcValues, setCtcValues] = useState<Record<string, string>>({});
@@ -610,6 +625,42 @@ const AssignStructureModal: React.FC<{
         // Cess 4%
         const totalTax = Math.round(tax * 1.04);
         return totalTax > 0 ? totalTax.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }) : 'Nil';
+    };
+
+    const handleConfirmAssignment = async () => {
+        setIsLoading(true);
+        try {
+            for (const id of selectedIds) {
+                const structureName = assignments[id];
+                const ctcValue = ctcValues[id];
+
+                if (!structureName) continue;
+
+                // Find structure ID
+                const { data: structData } = await supabase
+                    .from('salary_structures')
+                    .select('id')
+                    .eq('name', structureName)
+                    .single();
+
+                const { error } = await supabase
+                    .from('employees')
+                    .update({
+                        salary_structure_id: structData?.id,
+                        ctc: ctcValue,
+                        effective_date: effectiveDate
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+            }
+            setStep(3);
+        } catch (error) {
+            console.error('Error in handleConfirmAssignment:', error);
+            alert('Failed to save assignments. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // --- RENDER STEP 3: SUCCESS ---
@@ -755,10 +806,14 @@ const AssignStructureModal: React.FC<{
                                 Cancel
                             </button>
                             <button
-                                onClick={() => setStep(3)}
+                                onClick={handleConfirmAssignment}
+                                disabled={isLoading}
                                 className="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-colors text-sm flex items-center gap-2"
                             >
-                                <CheckCircle size={18} /> Confirm Assignment
+                                {isLoading ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : <CheckCircle size={18} />}
+                                Confirm Assignment
                             </button>
                         </div>
                     </div>
@@ -1013,7 +1068,41 @@ interface EmployeeListProps {
 
 const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [employees] = useState<Employee[]>(MOCK_EMPLOYEES || []);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchEmployees = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('employees')
+            .select('*')
+            .order('first_name', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching employees:', error);
+        } else {
+            const mappedData: Employee[] = (data || []).map(item => ({
+                id: item.id,
+                first_name: item.first_name,
+                last_name: item.last_name || '',
+                employee_id: item.eid,
+                company_id: item.company_id || '',
+                department: item.department || 'N/A',
+                location: item.location || 'N/A',
+                ctc: item.ctc || 'N/A',
+                date_of_joining: item.join_date || 'N/A',
+                status: item.status || 'Active',
+                avatar_url: item.avatar_url,
+                email: item.email || ''
+            }));
+            setEmployees(mappedData);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchEmployees();
+    }, []);
 
     // Selection & Modal States
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -1120,7 +1209,16 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {(filteredEmployees || []).map((emp) => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                            <span>Loading employees...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (filteredEmployees || []).map((emp) => (
                                 <tr key={emp?.id || Math.random()} className={`hover:bg-slate-50 transition-colors group ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-purple-50/30' : ''}`}>
                                     <td className="px-4 py-4 text-center">
                                         <input

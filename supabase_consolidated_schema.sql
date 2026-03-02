@@ -25,15 +25,18 @@ create table if not exists public.companies (
 -- Employees
 create table if not exists public.employees (
   id text primary key,
-  name text not null,
+  first_name text not null,
+  last_name text,
   eid text not null unique,
-  company_name text,
+  company_id text,
   department text,
   location text,
   ctc text,
   join_date text,
   status text check (status in ('Active', 'New Joinee', 'On Notice', 'Relieved')),
   avatar_url text,
+  salary_structure_id uuid,
+  effective_date text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -65,6 +68,9 @@ create table if not exists public.salary_components (
     effective_date date default current_date,
     deduction_type text check (deduction_type in ('Statutory', 'Non-Statutory')),
     show_in_payslip boolean default false,
+    created_by text,
+    last_updated_by text,
+    is_system boolean default false,
     created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now()
 );
@@ -128,6 +134,34 @@ create table if not exists public.document_templates (
     settings jsonb default '{}'::jsonb,
     created_by text,
     last_updated_by text,
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now()
+);
+
+-- Salary Structures (NEW)
+create table if not exists public.salary_structures (
+    id uuid default uuid_generate_v4() primary key,
+    name text not null,
+    description text,
+    departments jsonb default '[]'::jsonb,
+    designations jsonb default '[]'::jsonb,
+    status text default 'Active',
+    earnings jsonb default '[]'::jsonb,
+    deductions jsonb default '[]'::jsonb,
+    benefits jsonb default '[]'::jsonb,
+    reimbursements jsonb default '[]'::jsonb,
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now()
+);
+
+-- Loan Types (NEW)
+create table if not exists public.loan_types (
+    id uuid default uuid_generate_v4() primary key,
+    name text not null,
+    interest_rate numeric default 0,
+    max_amount numeric default 0,
+    tenure_months integer default 12,
+    is_active boolean default true,
     created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now()
 );
@@ -199,6 +233,8 @@ alter table public.tax_declarations enable row level security;
 alter table public.reimbursement_claims enable row level security;
 alter table public.employee_loans enable row level security;
 alter table public.document_templates enable row level security;
+alter table public.salary_structures enable row level security;
+alter table public.loan_types enable row level security;
 
 -- Public "Allow All" Policies
 create policy "Allow all for public" on public.companies for all using (true) with check (true);
@@ -213,6 +249,8 @@ create policy "Allow all for public" on public.tax_declarations for all using (t
 create policy "Allow all for public" on public.reimbursement_claims for all using (true) with check (true);
 create policy "Allow all for public" on public.employee_loans for all using (true) with check (true);
 create policy "Allow all for public" on public.document_templates for all using (true) with check (true);
+create policy "Allow all for public" on public.salary_structures for all using (true) with check (true);
+create policy "Allow all for public" on public.loan_types for all using (true) with check (true);
 
 -- ==========================================
 -- 5. Triggers & Functions
@@ -232,3 +270,5 @@ create trigger update_expense_categories_updated_at before update on public.expe
 create trigger update_reimbursement_claims_updated_at before update on public.reimbursement_claims for each row execute procedure update_updated_at_column();
 create trigger update_employee_loans_updated_at before update on public.employee_loans for each row execute procedure update_updated_at_column();
 create trigger update_document_templates_updated_at before update on public.document_templates for each row execute procedure update_updated_at_column();
+create trigger update_salary_structures_updated_at before update on public.salary_structures for each row execute procedure update_updated_at_column();
+create trigger update_loan_types_updated_at before update on public.loan_types for each row execute procedure update_updated_at_column();

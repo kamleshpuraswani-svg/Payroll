@@ -428,3 +428,19 @@
       at /Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:273:13
       at async.call.result.err.err (/Users/kamlesh/Documents/Payroll/node_modules/gensync/index.js:223:11)
 7:22:59 PM [vite] (client) hmr update /components/FnFSettlementTemplate.tsx, /index.css
+1:42:16 PM [vite] (client) page reload supabase_consolidated_schema.sql
+1:42:58 PM [vite] (client) page reload supabase_consolidated_schema.sql
+1:43:54 PM [vite] (client) page reload supabase_consolidated_schema.sql
+1:44:20 PM [vite] (client) page reload components/HRSalaryComponents.tsx
+1:44:32 PM [vite] (client) page reload components/HRSalaryComponents.tsx
+1:44:54 PM [vite] (client) page reload supabase_consolidated_schema.sql
+1:45:07 PM [vite] (client) page reload supabase_consolidated_schema.sql
+1:45:24 PM [vite] (client) hmr update /components/EmployeeList.tsx, /index.css
+1:45:59 PM [vite] (client) hmr update /components/SalaryStructure.tsx, /index.css
+1:46:22 PM [vite] (client) hmr update /components/SalaryStructure.tsx, /index.css
+1:46:31 PM [vite] (client) hmr update /components/SalaryStructure.tsx, /index.css
+1:47:14 PM [vite] (client) hmr update /components/HRTaxConfiguration.tsx, /index.css
+1:47:46 PM [vite] (client) hmr update /components/LoanAdvancesTypes.tsx, /index.css
+1:48:48 PM [vite] (client) hmr update /App.tsx, /index.css
+1:54:39 PM [vite] (client) page reload supabase_consolidated_schema.sql
+2:00:31 PM [vite] (client) hmr update /components/HRSalaryComponents.tsx, /index.css

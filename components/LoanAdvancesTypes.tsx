@@ -17,6 +17,7 @@ import {
     ArrowUp,
     ArrowDown
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 interface LoanType {
     id: string;
@@ -51,16 +52,39 @@ const EMPLOYEES_LIST = [
 ];
 
 const LoanAdvancesTypes: React.FC = () => {
-    // Persistence: Initialize from localStorage if available, else use empty array (per requirement)
-    const [loanTypes, setLoanTypes] = useState<LoanType[]>(() => {
-        const saved = localStorage.getItem('collab_loan_types');
-        return saved ? JSON.parse(saved) : [];
-    });
+    // Persistence: Initialize from Supabase
+    const [loanTypes, setLoanTypes] = useState<LoanType[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Save to localStorage whenever loanTypes changes
+    const fetchLoanTypes = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('loan_types')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching loan types:', error);
+        } else {
+            const mappedData: LoanType[] = (data || []).map(item => ({
+                id: item.id,
+                name: item.name,
+                interestRate: Number(item.interest_rate),
+                maxAmount: item.max_amount || '',
+                maxTenure: item.max_tenure || 0,
+                status: item.status,
+                description: item.description || '',
+                approvers: item.approvers || [],
+                repaymentMonth: item.repayment_month || ''
+            }));
+            setLoanTypes(mappedData);
+        }
+        setIsLoading(false);
+    };
+
     useEffect(() => {
-        localStorage.setItem('collab_loan_types', JSON.stringify(loanTypes));
-    }, [loanTypes]);
+        fetchLoanTypes();
+    }, []);
 
     const [isEditing, setIsEditing] = useState(false);
     const [currentLoan, setCurrentLoan] = useState<Partial<LoanType>>({});
@@ -150,12 +174,22 @@ const LoanAdvancesTypes: React.FC = () => {
         setLoanTypes(prev => [newLoan, ...prev]);
     };
 
-    const handleDelete = (id: string) => {
-        setLoanTypes(prev => prev.filter(t => t.id !== id));
+    const handleDelete = async (id: string) => {
+        const { error } = await supabase
+            .from('loan_types')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting loan type:', error);
+            alert('Failed to delete loan type.');
+        } else {
+            fetchLoanTypes();
+        }
         setDeleteId(null);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const newErrors: { name?: string; maxAmount?: string; interestRate?: string; maxTenure?: string } = {};
 
         // 1. Basic Validation
@@ -163,31 +197,23 @@ const LoanAdvancesTypes: React.FC = () => {
             newErrors.name = 'Loan Type is required.';
         }
 
-        // 2. Max Amount Validation (Common for both)
-        // For fixed, check if value exists. For multiple, it's usually always set by dropdown, but check anyway.
         let isMaxAmountValid = true;
         if (amountType === 'Fixed') {
             if (!fixedVal || parseFloat(fixedVal.replace(/,/g, '')) <= 0) isMaxAmountValid = false;
         }
-        // Multi is controlled by select, so generally valid, but let's be safe
         if (amountType === 'Multiple' && (!multiFactor || !multiBasis)) isMaxAmountValid = false;
 
         if (!isMaxAmountValid) {
             newErrors.maxAmount = 'Max Amount Limit is required.';
         }
 
-        // 3. Conditional Validation based on Type
         if (currentLoan.name === 'Loan') {
-            // Interest Rate: Must be defined.
             if (currentLoan.interestRate === undefined || currentLoan.interestRate === null) {
                 newErrors.interestRate = 'Interest Rate is required.';
             }
-
-            // Max Tenure: Must be > 0 for a Loan
             if (!currentLoan.maxTenure || currentLoan.maxTenure <= 0) {
                 newErrors.maxTenure = 'Max Tenure is required (min 1 month).';
             }
-            // Max Tenure check for Loan (24 months)
             if (currentLoan.maxTenure && currentLoan.maxTenure > 24) {
                 newErrors.maxTenure = 'Max tenure allowed is 24 months.';
             }
@@ -204,41 +230,65 @@ const LoanAdvancesTypes: React.FC = () => {
             return;
         }
 
-        // Construct maxAmount string
         const finalMaxAmount = amountType === 'Fixed'
             ? fixedVal
             : `${multiFactor} months ${multiBasis}`;
 
-        if (currentLoan.id) {
-            // Update
-            setLoanTypes(prev => prev.map(t => t.id === currentLoan.id ? {
-                ...t,
-                ...currentLoan,
-                maxAmount: finalMaxAmount,
-                interestRate: (currentLoan.interestRate || 0),
-                maxTenure: (currentLoan.maxTenure || 0),
-                repaymentMonth: (currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') ? (currentLoan.repaymentMonth || monthOptions[0]) : undefined
-            } as LoanType : t));
-        } else {
-            // Add
-            const newType: LoanType = {
-                id: Date.now().toString(),
-                name: currentLoan.name!,
-                interestRate: (currentLoan.interestRate || 0),
-                maxAmount: finalMaxAmount,
-                maxTenure: (currentLoan.maxTenure || 0),
+        setIsLoading(true);
+        try {
+            const payload = {
+                name: currentLoan.name,
+                interest_rate: currentLoan.interestRate || 0,
+                max_amount: finalMaxAmount,
+                max_tenure: currentLoan.maxTenure || 0,
                 status: currentLoan.status ?? true,
                 description: currentLoan.description || '',
                 approvers: currentLoan.approvers || [],
-                repaymentMonth: (currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') ? (currentLoan.repaymentMonth || monthOptions[0]) : undefined
+                repayment_month: (currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') ? (currentLoan.repaymentMonth || monthOptions[0]) : null,
+                updated_at: new Date().toISOString()
             };
-            setLoanTypes(prev => [...prev, newType]);
+
+            let error;
+            if (currentLoan.id) {
+                const { error: updateError } = await supabase
+                    .from('loan_types')
+                    .update(payload)
+                    .eq('id', currentLoan.id);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('loan_types')
+                    .insert([payload]);
+                error = insertError;
+            }
+
+            if (error) throw error;
+
+            await fetchLoanTypes();
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Error saving loan type:', err);
+            alert('Failed to save loan type.');
+        } finally {
+            setIsLoading(false);
         }
-        setIsEditing(false);
     };
 
-    const toggleStatus = (id: string) => {
-        setLoanTypes(prev => prev.map(t => t.id === id ? { ...t, status: !t.status } : t));
+    const toggleStatus = async (id: string) => {
+        const type = loanTypes.find(t => t.id === id);
+        if (!type) return;
+
+        const { error } = await supabase
+            .from('loan_types')
+            .update({ status: !type.status, updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error toggling status:', error);
+            alert('Failed to update status.');
+        } else {
+            fetchLoanTypes();
+        }
     };
 
     // Approver Handlers
@@ -347,7 +397,16 @@ const LoanAdvancesTypes: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {filteredTypes.length > 0 ? filteredTypes.map((item) => (
+                                        {isLoading ? (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                                        <span>Loading loan types...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : filteredTypes.length > 0 ? filteredTypes.map((item) => (
                                             <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
                                                 <td className="px-6 py-4 max-w-xs">
                                                     <div>

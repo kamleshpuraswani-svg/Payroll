@@ -11,6 +11,7 @@ import {
   Save,
   Loader2
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 // Default Data as Fallback
 const DEFAULT_TAX_DATA: Record<string, { NEW: any[], OLD: any[] }> = {
@@ -77,26 +78,51 @@ export default function HRTaxConfiguration() {
   const [isDraftMode, setIsDraftMode] = useState(false);
 
   // Persistence: Load all tax data into state
-  const [historicalData, setHistoricalData] = useState(() => {
-    const saved = localStorage.getItem('collab_hr_tax_config');
-    return saved ? JSON.parse(saved) : DEFAULT_TAX_DATA;
-  });
+  const [historicalData, setHistoricalData] = useState<any>(DEFAULT_TAX_DATA);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchTaxData = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('tax_configurations')
+      .select('*')
+      .order('financial_year', { ascending: false })
+      .order('slab_from', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching tax data:', error);
+    } else if (data && data.length > 0) {
+      const reconstructed: any = {};
+      data.forEach(row => {
+        if (!reconstructed[row.financial_year]) {
+          reconstructed[row.financial_year] = { NEW: [], OLD: [] };
+        }
+        reconstructed[row.financial_year][row.regime].push({
+          from: Number(row.slab_from),
+          to: row.slab_to ? Number(row.slab_to) : null,
+          rate: Number(row.rate)
+        });
+      });
+      setHistoricalData(reconstructed);
+      setAvailableYears(Object.keys(reconstructed).sort().reverse());
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTaxData();
+  }, []);
 
   // Current working slabs
-  const [newRegimeSlabs, setNewRegimeSlabs] = useState(historicalData['2025-2026'].NEW);
-  const [oldRegimeSlabs, setOldRegimeSlabs] = useState(historicalData['2025-2026'].OLD);
+  const [newRegimeSlabs, setNewRegimeSlabs] = useState<any[]>([]);
+  const [oldRegimeSlabs, setOldRegimeSlabs] = useState<any[]>([]);
 
-  // Save to localStorage whenever historicalData changes
-  useEffect(() => {
-    localStorage.setItem('collab_hr_tax_config', JSON.stringify(historicalData));
-  }, [historicalData]);
-
-  // Reset editing state and update slabs when switching year or regime
+  // Reset editing state and update slabs when switching year or data refreshes
   useEffect(() => {
     setEditingRowIndex(null);
     if (historicalData[selectedYear]) {
-      setNewRegimeSlabs(historicalData[selectedYear].NEW);
-      setOldRegimeSlabs(historicalData[selectedYear].OLD);
+      setNewRegimeSlabs(historicalData[selectedYear].NEW || []);
+      setOldRegimeSlabs(historicalData[selectedYear].OLD || []);
     }
   }, [selectedYear, historicalData]);
 
@@ -162,22 +188,57 @@ export default function HRTaxConfiguration() {
     setIsDraftMode(true);
   };
 
-  const handleSaveConfiguration = () => {
+  const handleSaveConfiguration = async () => {
     setIsSaving(true);
 
-    setTimeout(() => {
-      // Update historical data state which triggers persistence
-      const updatedData = { ...historicalData };
-      updatedData[selectedYear] = {
-        NEW: newRegimeSlabs,
-        OLD: oldRegimeSlabs
-      };
-      setHistoricalData(updatedData);
+    try {
+      // 1. Delete existing slabs for this year (both regimes)
+      const { error: deleteError } = await supabase
+        .from('tax_configurations')
+        .delete()
+        .eq('financial_year', selectedYear);
 
-      setIsSaving(false);
+      if (deleteError) throw deleteError;
+
+      // 2. Prepare new records
+      const recordsToInsert: any[] = [];
+
+      newRegimeSlabs.forEach(slab => {
+        recordsToInsert.push({
+          financial_year: selectedYear,
+          regime: 'NEW',
+          slab_from: slab.from,
+          slab_to: slab.to,
+          rate: slab.rate
+        });
+      });
+
+      oldRegimeSlabs.forEach(slab => {
+        recordsToInsert.push({
+          financial_year: selectedYear,
+          regime: 'OLD',
+          slab_from: slab.from,
+          slab_to: slab.to,
+          rate: slab.rate
+        });
+      });
+
+      // 3. Insert new records
+      const { error: insertError } = await supabase
+        .from('tax_configurations')
+        .insert(recordsToInsert);
+
+      if (insertError) throw insertError;
+
+      await fetchTaxData();
       setIsDraftMode(false);
       alert(`Configuration for ${selectedYear} saved successfully!`);
-    }, 500);
+    } catch (error) {
+      console.error('Error saving tax configuration:', error);
+      alert('Failed to save tax configuration.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -313,7 +374,16 @@ export default function HRTaxConfiguration() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {activeSlabs.map((slab, index) => {
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                            <span>Loading tax slabs...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : activeSlabs.map((slab, index) => {
                       const isEditing = editingRowIndex === index;
                       return (
                         <tr key={index} className="group hover:bg-purple-50/30 transition-colors">

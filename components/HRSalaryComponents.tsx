@@ -15,8 +15,10 @@ import {
     Power,
     AlertTriangle,
     Check,
-    Info
+    Info,
+    Lock
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 interface SalaryComponent {
     id: string;
@@ -39,6 +41,7 @@ interface SalaryComponent {
     effectiveDate?: string;
     deductionType?: 'Statutory' | 'Non-Statutory';
     showInPayslip?: boolean;
+    isSystem?: boolean;
 }
 
 interface AddEarningFormProps {
@@ -670,16 +673,49 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 const HRSalaryComponents: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Earnings');
 
-    // Initialize from localStorage or fallback to INITIAL_DATA
-    const [components, setComponents] = useState<SalaryComponent[]>(() => {
-        const saved = localStorage.getItem('collab_salary_components');
-        return saved ? JSON.parse(saved) : INITIAL_DATA;
-    });
+    // Initialize state
+    const [components, setComponents] = useState<SalaryComponent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Save to localStorage on change
+    const fetchComponents = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('salary_components')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching components:', error);
+        } else {
+            const mappedData: SalaryComponent[] = (data || []).map(item => ({
+                id: item.id,
+                name: item.name,
+                type: item.type,
+                calculation: item.calculation,
+                taxable: item.taxable,
+                status: item.status,
+                category: item.category,
+                amountOrPercent: item.amount_or_percent,
+                calcMethod: item.calc_method,
+                payslipName: item.payslip_name,
+                frequency: item.frequency,
+                considerEPF: item.consider_epf,
+                considerESI: item.consider_esi,
+                effectiveDate: item.effective_date,
+                deductionType: item.deduction_type,
+                showInPayslip: item.show_in_payslip,
+                created: item.created_by,
+                lastModified: item.last_updated_by,
+                isSystem: item.is_system
+            }));
+            setComponents(mappedData);
+        }
+        setIsLoading(false);
+    };
+
     useEffect(() => {
-        localStorage.setItem('collab_salary_components', JSON.stringify(components));
-    }, [components]);
+        fetchComponents();
+    }, []);
 
     const [isAdding, setIsAdding] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -703,9 +739,18 @@ const HRSalaryComponents: React.FC = () => {
         setDeleteConfirmation({ isOpen: true, id });
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deleteConfirmation.id) {
-            setComponents(prev => prev.filter(c => c.id !== deleteConfirmation.id));
+            const { error } = await supabase
+                .from('salary_components')
+                .delete()
+                .eq('id', deleteConfirmation.id);
+
+            if (error) {
+                console.error('Error deleting component:', error);
+            } else {
+                fetchComponents();
+            }
             setDeleteConfirmation({ isOpen: false, id: null });
             if (isAdding && editingComponent?.id === deleteConfirmation.id) {
                 handleCancel();
@@ -722,29 +767,58 @@ const HRSalaryComponents: React.FC = () => {
         }
     };
 
-    const confirmStatusChange = (id: string | null = statusChangeRequest.id, statusToSet: boolean = statusChangeRequest.newStatus) => {
+    const confirmStatusChange = async (id: string | null = statusChangeRequest.id, statusToSet: boolean = statusChangeRequest.newStatus) => {
         if (id) {
-            setComponents(prev => prev.map(c => c.id === id ? { ...c, status: statusToSet } : c));
+            const { error } = await supabase
+                .from('salary_components')
+                .update({ status: statusToSet, last_updated_by: 'Admin' })
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error updating status:', error);
+            } else {
+                fetchComponents();
+            }
             setStatusChangeRequest({ isOpen: false, id: null, newStatus: false });
         }
     };
 
-    const handleSave = (data: Partial<SalaryComponent>) => {
+    const handleSave = async (data: Partial<SalaryComponent>) => {
+        const payload = {
+            name: data.name || 'New Component',
+            type: data.type || 'Fixed Pay',
+            calculation: data.calculation || '',
+            taxable: data.taxable || 'Fully Taxable',
+            status: data.status ?? true,
+            category: activeTab as any,
+            amount_or_percent: data.amountOrPercent,
+            calc_method: data.calcMethod,
+            payslip_name: data.payslipName,
+            frequency: data.frequency,
+            consider_epf: data.considerEPF,
+            consider_esi: data.considerESI,
+            effective_date: data.effectiveDate,
+            deduction_type: data.deductionType,
+            show_in_payslip: data.showInPayslip,
+            last_updated_by: 'Admin'
+        } as any;
+
         if (editingComponent) {
-            setComponents(prev => prev.map(c => c.id === editingComponent.id ? { ...c, ...data } : c));
+            const { error } = await supabase
+                .from('salary_components')
+                .update(payload)
+                .eq('id', editingComponent.id);
+
+            if (error) console.error('Error updating component:', error);
         } else {
-            const newComponent: SalaryComponent = {
-                id: Date.now().toString(),
-                name: data.name || 'New Component',
-                type: data.type || 'Fixed Pay',
-                calculation: data.calculation || '',
-                taxable: data.taxable || 'Fully Taxable',
-                status: data.status ?? true,
-                category: activeTab as any,
-                ...data
-            };
-            setComponents(prev => [...prev, newComponent]);
+            payload.created_by = 'Admin';
+            const { error } = await supabase
+                .from('salary_components')
+                .insert([payload]);
+
+            if (error) console.error('Error inserting component:', error);
         }
+        fetchComponents();
         handleCancel();
     };
 
@@ -872,10 +946,24 @@ const HRSalaryComponents: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {filteredData.length > 0 ? (
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={activeTab === 'Earnings' ? 9 : 5} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                                <span>Loading components...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : filteredData.length > 0 ? (
                                     filteredData.map((item) => (
-                                        <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
-                                            <td className="px-6 py-4 font-semibold text-slate-800">{item.name}</td>
+                                        <tr key={item.id} className={`hover:bg-slate-50/80 transition-colors group ${item.isSystem ? 'bg-slate-50/30' : ''}`}>
+                                            <td className="px-6 py-4 font-semibold text-slate-800">
+                                                <div className="flex items-center gap-2">
+                                                    {item.name}
+                                                    {item.isSystem && <Lock size={12} className="text-slate-400" title="System Component" />}
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
                                                     {item.type}
@@ -922,22 +1010,25 @@ const HRSalaryComponents: React.FC = () => {
                                                 <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => handleEditClick(item)}
-                                                        className="p-1.5 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors"
-                                                        title="Edit"
+                                                        disabled={item.isSystem}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.isSystem ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'}`}
+                                                        title={item.isSystem ? "System components cannot be edited" : "Edit"}
                                                     >
                                                         <Edit2 size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusClick(item.id, item.status)}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.status ? 'text-emerald-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                                                        title={item.status ? "Deactivate" : "Activate"}
+                                                        disabled={item.isSystem}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.isSystem ? 'text-slate-300 cursor-not-allowed' : item.status ? 'text-emerald-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                                                        title={item.isSystem ? "System components cannot be deactivated" : item.status ? "Deactivate" : "Activate"}
                                                     >
                                                         <Power size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteClick(item.id)}
-                                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                                                        title="Delete"
+                                                        disabled={item.isSystem}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.isSystem ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'}`}
+                                                        title={item.isSystem ? "System components cannot be deleted" : "Delete"}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>

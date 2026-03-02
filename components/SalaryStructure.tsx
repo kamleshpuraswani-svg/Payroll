@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../services/supabaseClient';
 import {
     Plus,
     Search,
@@ -250,15 +251,16 @@ interface AddComponentModalProps {
     category: 'earnings' | 'deductions' | 'benefits' | 'reimbursements';
     onAdd: (components: SalaryComponent[]) => void;
     existingIds: string[];
+    masterComponents: Record<string, SalaryComponent[]>;
 }
 
-const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, category, onAdd, existingIds }) => {
+const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, category, onAdd, existingIds, masterComponents }) => {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     if (!isOpen) return null;
 
-    const availableComponents = MASTER_COMPONENTS[category].filter(c => !existingIds.includes(c.id));
+    const availableComponents = masterComponents[category].filter(c => !existingIds.includes(c.id));
     const filteredComponents = availableComponents.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const toggleSelection = (id: string) => {
@@ -331,17 +333,75 @@ const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, 
 
 const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView = 'LIST', onBack }) => {
     const [view, setView] = useState<'LIST' | 'VIEW' | 'EDITOR'>(initialView);
-
-    // Persist structures in localStorage
-    const [structures, setStructures] = useState<Structure[]>(() => {
-        const saved = localStorage.getItem('collab_salary_structures');
-        return saved ? JSON.parse(saved) : MOCK_STRUCTURES;
+    const [structures, setStructures] = useState<Structure[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [masterComponents, setMasterComponents] = useState<Record<string, SalaryComponent[]>>({
+        earnings: [],
+        deductions: [],
+        benefits: [],
+        reimbursements: []
     });
 
-    // Save changes to localStorage whenever structures change
+    const fetchStructures = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('salary_structures')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching structures:', error);
+        } else {
+            const mapped: Structure[] = (data || []).map(s => ({
+                id: s.id,
+                name: s.name,
+                description: s.description || '',
+                departments: s.departments || [],
+                designations: s.designations || [],
+                employees: [],
+                employeeCount: 0, // In a real app, count from employees table
+                status: s.status || 'Active',
+                lastModified: new Date(s.last_modified).toLocaleDateString(),
+                earnings: s.earnings || [],
+                deductions: s.deductions || [],
+                benefits: s.benefits || [],
+                reimbursements: s.reimbursements || []
+            }));
+            setStructures(mapped);
+        }
+        setIsLoading(false);
+    };
+
+    const fetchMasterComponents = async () => {
+        const { data, error } = await supabase
+            .from('salary_components')
+            .select('*')
+            .eq('status', 'Active');
+
+        if (!error && data) {
+            const groups: any = { earnings: [], deductions: [], benefits: [], reimbursements: [] };
+            data.forEach(item => {
+                const category = item.type.toLowerCase().includes('deduction') ? 'deductions' :
+                    item.type.toLowerCase().includes('earning') ? 'earnings' :
+                        item.type.toLowerCase().includes('reimbursement') ? 'reimbursements' : 'earnings';
+
+                groups[category].push({
+                    id: item.id,
+                    name: item.name,
+                    calculation: item.calculation_type,
+                    type: item.type,
+                    taxStatus: item.is_taxable ? 'Taxable' : 'Non-Taxable',
+                    value: item.value
+                });
+            });
+            setMasterComponents(groups);
+        }
+    };
+
     useEffect(() => {
-        localStorage.setItem('collab_salary_structures', JSON.stringify(structures));
-    }, [structures]);
+        fetchStructures();
+        fetchMasterComponents();
+    }, []);
 
     const [activeStructureId, setActiveStructureId] = useState<string | null>(null);
 
@@ -423,7 +483,7 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
         if (addModalCategory === 'reimbursements') setReimbursements(prev => [...prev, ...newComponents]);
     };
 
-    const handleSaveStructure = (status: 'Active' | 'Draft') => {
+    const handleSaveStructure = async (status: 'Active' | 'Draft') => {
         // Validation
         const newErrors: any = {};
         if (!structureName.trim()) newErrors.name = 'Structure Name is required';
@@ -435,42 +495,68 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
             return;
         }
 
-        const newStructure: Structure = {
-            id: activeStructureId || Date.now().toString(),
-            name: structureName,
-            description,
-            departments: selectedDepartments,
-            designations: selectedDesignations,
-            employees: selectedEmployees,
-            employeeCount: activeStructureId ? (structures.find(s => s.id === activeStructureId)?.employeeCount || 0) : 0,
-            status: status,
-            lastModified: 'Just now',
-            earnings,
-            deductions,
-            benefits,
-            reimbursements
-        };
+        setIsLoading(true);
+        try {
+            const structureData = {
+                name: structureName,
+                description,
+                departments: selectedDepartments,
+                designations: selectedDesignations,
+                earnings,
+                deductions,
+                benefits,
+                reimbursements,
+                status: status,
+                last_modified: new Date().toISOString()
+            };
 
-        if (activeStructureId) {
-            setStructures(prev => prev.map(s => s.id === activeStructureId ? newStructure : s));
-        } else {
-            setStructures(prev => [...prev, newStructure]);
-        }
+            let error;
+            if (activeStructureId) {
+                const { error: updateError } = await supabase
+                    .from('salary_structures')
+                    .update(structureData)
+                    .eq('id', activeStructureId);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('salary_structures')
+                    .insert([structureData]);
+                error = insertError;
+            }
 
-        if (onBack) {
-            onBack();
-        } else {
-            setView('LIST');
+            if (error) throw error;
+
+            await fetchStructures();
+            if (onBack) {
+                onBack();
+            } else {
+                setView('LIST');
+            }
+        } catch (error) {
+            console.error('Error saving structure:', error);
+            alert('Failed to save salary structure.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const toggleStructureStatus = (id: string) => {
-        setStructures(prev => prev.map(s => {
-            if (s.id === id) {
-                return { ...s, status: s.status === 'Active' ? 'Inactive' : 'Active' };
-            }
-            return s;
-        }));
+    const toggleStructureStatus = async (id: string) => {
+        const structure = structures.find(s => s.id === id);
+        if (!structure) return;
+
+        const newStatus = structure.status === 'Active' ? 'Inactive' : 'Active';
+
+        const { error } = await supabase
+            .from('salary_structures')
+            .update({ status: newStatus, last_modified: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update status.');
+        } else {
+            fetchStructures();
+        }
     };
 
     const infoMessage = "If no department and designation selected, it will assigned to all employees.";
@@ -711,6 +797,7 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                     category={addModalCategory}
                     onAdd={handleAddComponents}
                     existingIds={[...earnings, ...deductions, ...benefits, ...reimbursements].map(c => c.id)}
+                    masterComponents={masterComponents}
                 />
             </ContentWrapper>
         );
@@ -769,7 +856,16 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {structures.map((item) => {
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={7} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                        <span>Loading structures...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : structures.map((item) => {
                             const isArchived = item.status === 'Archived';
 
                             return (
@@ -784,8 +880,8 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                                     <td className="px-6 py-4">{item.employeeCount}</td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${item.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                item.status === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                                    'bg-slate-100 text-slate-500 border-slate-200'
+                                            item.status === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                                'bg-slate-100 text-slate-500 border-slate-200'
                                             }`}>
                                             {item.status === 'Active' ? <CheckCircle size={12} /> : item.status === 'Draft' ? <AlertCircle size={12} /> : <X size={12} />}
                                             {item.status}
