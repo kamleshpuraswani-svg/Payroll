@@ -4,18 +4,18 @@ import { Save, Edit2, ShieldCheck, Info, ChevronDown, Building2 } from 'lucide-r
 
 const OrganizationTaxDetails: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
-    
+
     // Statutory Identifiers
     const [panNumber, setPanNumber] = useState('ABCDE1234F');
     const [tanNumber, setTanNumber] = useState('BLRT12345C');
     const [gstin, setGstin] = useState('29ABCDE1234F1Z5');
-    
+
     // AO Code
     const [ao1, setAo1] = useState('AAA');
     const [ao2, setAo2] = useState('AA');
     const [ao3, setAo3] = useState('000');
     const [ao4, setAo4] = useState('00');
-    
+
     // Frequency
     const [frequency, setFrequency] = useState('Monthly');
 
@@ -24,7 +24,7 @@ const OrganizationTaxDetails: React.FC = () => {
     const [deductorName, setDeductorName] = useState('Suresh Kumar');
     const [fatherName, setFatherName] = useState('Ramesh Kumar');
     const [designation, setDesignation] = useState('');
-    
+
     return (
         <div className="h-full overflow-y-auto">
             <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
@@ -36,15 +36,15 @@ const OrganizationTaxDetails: React.FC = () => {
                     </div>
                     <div className="flex gap-3">
                         {isEditing && (
-                            <button 
-                                onClick={() => setIsEditing(false)} 
+                            <button
+                                onClick={() => setIsEditing(false)}
                                 className="px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                             >
                                 Cancel
                             </button>
                         )}
-                        <button 
-                            onClick={() => setIsEditing(!isEditing)} 
+                        <button
+                            onClick={() => setIsEditing(!isEditing)}
                             className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                         >
                             {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
@@ -55,24 +55,24 @@ const OrganizationTaxDetails: React.FC = () => {
 
                 {/* Company Identity & Contact */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">COMPANY IDENTITY & CONTACT</h3>
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">COMPANY INFORMATION</h3>
                     <div className="space-y-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">REGISTERED COMPANY NAME</label>
-                            <input 
-                                type="text" 
-                                defaultValue="TechFlow Systems Pvt Ltd" 
-                                disabled={!isEditing} 
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 disabled:bg-slate-50 disabled:text-slate-800 focus:outline-none focus:border-indigo-500 transition-colors" 
+                            <input
+                                type="text"
+                                defaultValue="TechFlow Systems Pvt Ltd"
+                                disabled={!isEditing}
+                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 disabled:bg-slate-50 disabled:text-slate-800 focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">COMPANY ADDRESS</label>
-                            <input 
-                                type="text" 
-                                defaultValue="123, Business Park, Sector 4, Bangalore - 560001" 
-                                disabled={!isEditing} 
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 disabled:bg-slate-50 focus:outline-none focus:border-indigo-500 transition-colors" 
+                            <input
+                                type="text"
+                                defaultValue="123, Business Park, Sector 4, Bangalore - 560001"
+                                disabled={!isEditing}
+                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 disabled:bg-slate-50 focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                     </div>
@@ -81,9 +81,9 @@ const OrganizationTaxDetails: React.FC = () => {
                 {/* Statutory Identifiers */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100 flex items-center gap-2">
-                        <ShieldCheck size={18} className="text-indigo-600"/> STATUTORY IDENTIFIERS
+                        <ShieldCheck size={18} className="text-indigo-600" /> STATUTORY IDENTIFIERS
                     </h3>
-                    
+
                     <div className="space-y-8">
                         {/* Row 1 */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -122,8 +122,8 @@ const OrganizationTaxDetails: React.FC = () => {
                                     Tax Payment Frequency <Info size={14} className="text-slate-400" />
                                 </label>
                                 <div className="relative">
-                                    <select 
-                                        value={frequency} 
+                                    <select
+                                        value={frequency}
                                         onChange={e => setFrequency(e.target.value)}
                                         disabled={!isEditing}
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white appearance-none disabled:bg-slate-50 focus:outline-none focus:border-indigo-500"
@@ -141,7 +141,7 @@ const OrganizationTaxDetails: React.FC = () => {
                 {/* Tax Deductor Details */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-6">Tax Deductor Details</h3>
-                    
+
                     <div className="space-y-6">
                         {/* Deductor Type */}
                         <div>
@@ -169,8 +169,8 @@ const OrganizationTaxDetails: React.FC = () => {
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Deductor's Name</label>
                                 <div className="relative">
-                                    <select 
-                                        value={deductorName} 
+                                    <select
+                                        value={deductorName}
                                         onChange={e => setDeductorName(e.target.value)}
                                         disabled={!isEditing}
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white appearance-none disabled:bg-slate-50 focus:outline-none focus:border-indigo-500"
@@ -184,12 +184,12 @@ const OrganizationTaxDetails: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Deductor's Father's Name</label>
-                                <input 
-                                    type="text" 
-                                    value={fatherName} 
-                                    onChange={e => setFatherName(e.target.value)} 
-                                    disabled={!isEditing} 
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 disabled:bg-slate-50 focus:outline-none focus:border-indigo-500" 
+                                <input
+                                    type="text"
+                                    value={fatherName}
+                                    onChange={e => setFatherName(e.target.value)}
+                                    disabled={!isEditing}
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 disabled:bg-slate-50 focus:outline-none focus:border-indigo-500"
                                 />
                             </div>
                         </div>
@@ -198,13 +198,13 @@ const OrganizationTaxDetails: React.FC = () => {
                         {deductorType === 'Non-Employee' && (
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Deductor's Designation</label>
-                                <input 
-                                    type="text" 
-                                    value={designation} 
-                                    onChange={e => setDesignation(e.target.value)} 
-                                    disabled={!isEditing} 
+                                <input
+                                    type="text"
+                                    value={designation}
+                                    onChange={e => setDesignation(e.target.value)}
+                                    disabled={!isEditing}
                                     placeholder="Enter Designation"
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 disabled:bg-slate-50 focus:outline-none focus:border-indigo-500 transition-colors" 
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 disabled:bg-slate-50 focus:outline-none focus:border-indigo-500 transition-colors"
                                 />
                             </div>
                         )}
