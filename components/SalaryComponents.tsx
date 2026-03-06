@@ -791,7 +791,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Select the deduction frequency <span className="text-rose-500">*</span></label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        {userRole === 'HR_MANAGER' ? 'Deduction Frequency' : 'Select the deduction frequency'} <span className="text-rose-500">*</span>
+                    </label>
                     <div className="space-y-2">
                         {['One-time', 'Recurring'].map(freq => (
                             <label key={freq} className="flex items-center gap-2 cursor-pointer">
