@@ -200,6 +200,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
         }
     }, [userRole]);
 
+    const [isOtherSelected, setIsOtherSelected] = useState(false);
+    const [customName, setCustomName] = useState('');
     const [payslip_name, setPayslip_name] = useState(initialData?.payslip_name || '');
     const [effective_date, setEffective_date] = useState(initialData?.effective_date || '');
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
@@ -224,8 +226,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = () => {
-        if (userRole === 'HR_MANAGER' && !effective_date) {
-            setError('Effective Date is mandatory');
+        const finalName = isOtherSelected ? customName : name;
+        if (userRole === 'HR_MANAGER' && (!finalName || !effective_date)) {
+            if (!effective_date) setError('Effective Date is mandatory');
+            else setError('Component Name is mandatory');
             return;
         }
         setError(null);
@@ -234,7 +238,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             : `${amount_or_percent}% of ${selectedComponents.join(', ')}`;
 
         const updatedData: Partial<SalaryComponent> = {
-            name,
+            name: finalName,
             payslip_name,
             effective_date,
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
@@ -265,25 +269,49 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         {userRole === 'HR_MANAGER' ? (
                             <div className="relative">
                                 <select
-                                    value={name}
+                                    value={isOtherSelected ? 'others' : name}
                                     onChange={e => {
                                         const val = e.target.value;
-                                        setName(val);
-                                        // Auto-fill payslip name if empty
-                                        if (!payslip_name) setPayslip_name(val);
+                                        if (val === 'others') {
+                                            setIsOtherSelected(true);
+                                            setName('');
+                                        } else {
+                                            setIsOtherSelected(false);
+                                            setName(val);
+                                            // Auto-fill payslip name if empty
+                                            if (!payslip_name) setPayslip_name(val);
+                                        }
                                     }}
                                     disabled={isLoadingEarnings}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white"
+                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white font-medium text-slate-700"
                                 >
                                     <option value="">Select Component</option>
                                     {availableEarnings.map(comp => (
                                         <option key={comp.id} value={comp.name}>{comp.name}</option>
                                     ))}
+                                    <option value="others" className="text-purple-600 font-semibold border-t border-slate-100">+ Others</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
                         ) : (
                             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                        )}
+
+                        {userRole === 'HR_MANAGER' && isOtherSelected && (
+                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                                <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
+                                <input
+                                    type="text"
+                                    value={customName}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setCustomName(val);
+                                        if (!payslip_name) setPayslip_name(val);
+                                    }}
+                                    placeholder="Enter Custom Name"
+                                    className="w-full px-3 py-2.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10"
+                                />
+                            </div>
                         )}
                     </div>
                     <div>
