@@ -931,8 +931,8 @@ const HRSalaryComponents: React.FC = () => {
                                             <th className="px-6 py-4">Consider for PF</th>
                                             <th className="px-6 py-4">Consider for ESI</th>
                                             <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4">Last Modified</th>
-                                            <th className="px-6 py-4">Created</th>
+                                            <th className="px-6 py-4">Last Modified By</th>
+                                            <th className="px-6 py-4">Created By</th>
                                         </>
                                     ) : (
                                         <>
@@ -961,7 +961,6 @@ const HRSalaryComponents: React.FC = () => {
                                             <td className="px-6 py-4 font-semibold text-slate-800">
                                                 <div className="flex items-center gap-2">
                                                     {item.name}
-                                                    {item.isSystem && <Lock size={12} className="text-slate-400" title="System Component" />}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -1010,25 +1009,22 @@ const HRSalaryComponents: React.FC = () => {
                                                 <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => handleEditClick(item)}
-                                                        disabled={item.isSystem}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.isSystem ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'}`}
-                                                        title={item.isSystem ? "System components cannot be edited" : "Edit"}
+                                                        className="p-1.5 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors"
+                                                        title="Edit"
                                                     >
                                                         <Edit2 size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusClick(item.id, item.status)}
-                                                        disabled={item.isSystem}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.isSystem ? 'text-slate-300 cursor-not-allowed' : item.status ? 'text-emerald-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                                                        title={item.isSystem ? "System components cannot be deactivated" : item.status ? "Deactivate" : "Activate"}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.status ? 'text-emerald-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                                                        title={item.status ? "Deactivate" : "Activate"}
                                                     >
                                                         <Power size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteClick(item.id)}
-                                                        disabled={item.isSystem}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.isSystem ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'}`}
-                                                        title={item.isSystem ? "System components cannot be deleted" : "Delete"}
+                                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                                                        title="Delete"
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
