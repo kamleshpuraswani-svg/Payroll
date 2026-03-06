@@ -62,6 +62,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
 
    const renderContent = () => {
       switch (activeModule) {
+         case 'organization': return <OrganizationTaxDetails />;
          case 'schedule': return <PayrollSettings userRole={userRole} />;
          case 'components': return <SalaryComponents userRole={userRole} />;
          case 'structure': return <HRSalaryStructure embedded={true} />;
