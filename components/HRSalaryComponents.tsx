@@ -922,7 +922,8 @@ const HRSalaryComponents: React.FC = () => {
                             <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
                                 <tr>
                                     <th className="px-6 py-4">Component Name</th>
-                                    <th className="px-6 py-4">Nature of Pay</th>
+                                    <th className="px-6 py-4">Name in Payslip</th>
+                                    {activeTab !== 'Reimbursements' && <th className="px-6 py-4">Nature of Pay</th>}
 
                                     {/* Columns Specific to Earnings vs Others */}
                                     {activeTab === 'Earnings' ? (
@@ -936,9 +937,16 @@ const HRSalaryComponents: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            {/* Fallback Columns for Deductions/Reimbursements (Calculcation Removed) */}
-                                            <th className="px-6 py-4">Taxable</th>
+                                            {activeTab === 'Reimbursements' && (
+                                                <>
+                                                    <th className="px-6 py-4">Calculation Method</th>
+                                                    <th className="px-6 py-4">Deduction Type</th>
+                                                    <th className="px-6 py-4">Deduction Frequency</th>
+                                                </>
+                                            )}
                                             <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4">Last Modified By</th>
+                                            <th className="px-6 py-4">Created By</th>
                                         </>
                                     )}
 
@@ -948,7 +956,7 @@ const HRSalaryComponents: React.FC = () => {
                             <tbody className="divide-y divide-slate-100">
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={activeTab === 'Earnings' ? 9 : 5} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                                 <span>Loading components...</span>
@@ -963,11 +971,16 @@ const HRSalaryComponents: React.FC = () => {
                                                     {item.name}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
-                                                    {item.type}
-                                                </span>
+                                            <td className="px-6 py-4 text-slate-600 font-medium">
+                                                {item.payslipName || '-'}
                                             </td>
+                                            {activeTab !== 'Reimbursements' && (
+                                                <td className="px-6 py-4">
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
+                                                        {item.type}
+                                                    </span>
+                                                </td>
+                                            )}
 
                                             {activeTab === 'Earnings' ? (
                                                 <>
@@ -989,19 +1002,25 @@ const HRSalaryComponents: React.FC = () => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs border ${item.taxable === 'Fully Taxable' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                                                            item.taxable === 'Fully Exempt' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                                'bg-sky-50 text-sky-700 border-sky-100'
-                                                            }`}>
-                                                            {item.taxable}
-                                                        </span>
-                                                    </td>
+                                                    {activeTab === 'Reimbursements' && (
+                                                        <>
+                                                            <td className="px-6 py-4 font-medium text-slate-700">
+                                                                <div className="flex flex-col">
+                                                                    <span>{item.calcMethod === 'Flat' ? 'Flat' : item.calculation || '-'}</span>
+                                                                    {item.calcMethod === 'Flat' && <span className="text-xs text-slate-500">Rs. {item.amountOrPercent || '0'}</span>}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.deductionType || '-'}</td>
+                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.frequency || '-'}</td>
+                                                        </>
+                                                    )}
                                                     <td className="px-6 py-4">
                                                         <span className="font-bold text-slate-700">
                                                             {item.status ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </td>
+                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.lastModified || '-'}</td>
+                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.created || '-'}</td>
                                                 </>
                                             )}
 
@@ -1034,7 +1053,7 @@ const HRSalaryComponents: React.FC = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={activeTab === 'Earnings' ? 9 : 5} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Info size={24} className="opacity-50" />
                                                 <p>No components found for this category.</p>
