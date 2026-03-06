@@ -140,9 +140,9 @@ const INITIAL_DATA: SalaryComponent[] = [
     { id: '11', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
 
     // Reimbursements
-    { id: '14', name: 'Medical Reimbursement', type: 'Fixed Pay', calculation: 'Up to â‚¹ 15,000', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amountOrPercent: '15000', payslipName: 'Medical Reimb', calcMethod: 'Flat' },
+    { id: '14', name: 'Medical Reimbursement', type: 'Fixed Pay', calculation: 'Up to ₹ 15,000', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amountOrPercent: '15000', payslipName: 'Medical Reimb', calcMethod: 'Flat' },
     { id: '15', name: 'Fuel Reimbursement', type: 'Variable Pay', calculation: 'As per bills', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amountOrPercent: '0', payslipName: 'Fuel', calcMethod: 'Flat' },
-    { id: '16', name: 'Books & Periodicals', type: 'Fixed Pay', calculation: 'â‚¹ 1,000 / month', taxable: 'Fully Exempt', status: false, category: 'Reimbursements', amountOrPercent: '1000', payslipName: 'Books', calcMethod: 'Flat' },
+    { id: '16', name: 'Books & Periodicals', type: 'Fixed Pay', calculation: '₹ 1,000 / month', taxable: 'Fully Exempt', status: false, category: 'Reimbursements', amountOrPercent: '1000', payslipName: 'Books', calcMethod: 'Flat' },
 ];
 
 // --- Confirmation Modal ---
@@ -210,7 +210,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             calcMethod: natureOfPay === 'Fixed' ? calcMethod : undefined,
             amountOrPercent: natureOfPay === 'Fixed' ? amount : undefined,
             calculation: natureOfPay === 'Fixed'
-                ? (calcMethod === 'Flat' ? `Flat â‚¹${amount}` : `${amount}% of CTC`)
+                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : `${amount}% of CTC`)
                 : 'Variable',
             taxable: isTaxable ? 'Fully Taxable' : 'Fully Exempt',
             considerEPF: isConsiderEPF,
@@ -294,7 +294,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <div className="relative">
                                 <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                    {calcMethod === 'Percentage' ? '%' : 'â‚¹'}
+                                    {calcMethod === 'Percentage' ? '%' : '₹'}
                                 </div>
                             </div>
                         </div>
@@ -395,7 +395,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                             {epfContribution === 'Limit' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
                                         </div>
                                         <input type="radio" className="hidden" checked={epfContribution === 'Limit'} onChange={() => setEpfContribution('Limit')} />
-                                        <span className="text-sm text-slate-700 font-medium">Only when PF Wage is less than â‚¹ 15,000</span>
+                                        <span className="text-sm text-slate-700 font-medium">Only when PF Wage is less than ₹ 15,000</span>
                                     </label>
                                 </div>
                             )}
@@ -642,7 +642,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                     className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                                 />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                    {calcMethod === 'Percentage' ? '%' : 'â‚¹'}
+                                    {calcMethod === 'Percentage' ? '%' : '₹'}
                                 </div>
                             </div>
                         </div>
