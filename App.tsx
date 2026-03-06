@@ -234,7 +234,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_EXPENSES && <ExpenseManagement />}
                 {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances userRole={userRole} />}
                 {currentView === ViewState.HR_SALARY_COMPONENTS && <SalaryComponents />}
-                {currentView === ViewState.SETTINGS && <GlobalSettings />}
+                {currentView === ViewState.SETTINGS && <GlobalSettings userRole={userRole} />}
                 {currentView === ViewState.HR_OPERATIONAL_CONFIG && <OperationalConfig />}
               </>
             )}

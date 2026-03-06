@@ -10,6 +10,7 @@ interface PaySchedule {
     payPeriodEnd: string;
     payDate: string;
     status: 'Active' | 'Inactive';
+    effectiveDate?: string;
 }
 
 const MOCK_SCHEDULES: PaySchedule[] = [
@@ -68,15 +69,17 @@ interface AddPayScheduleModalProps {
     onClose: () => void;
     onSave: (schedule: Partial<PaySchedule>) => void;
     initialData?: PaySchedule | null;
+    userRole?: string;
 }
 
-const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData }) => {
+const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole }) => {
     // Form State
     const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>('Weekly');
     const [weeklyPayDay, setWeeklyPayDay] = useState('Fri');
     const [calcBase, setCalcBase] = useState('Actual days in a month');
     const [startMonthStr, setStartMonthStr] = useState('December 2025');
     const [firstPayDate, setFirstPayDate] = useState('');
+    const [effectiveDate, setEffectiveDate] = useState('');
 
     // Semi-Monthly Specific State
     const [smFirstType, setSmFirstType] = useState<'15th' | 'custom'>('15th');
@@ -99,6 +102,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             }
             // Note: For a real app, you would parse other fields like payPeriodStart/End to set smFirstType, etc.
             // For now, we mainly ensure Frequency is set and locked as per requirement.
+            if (initialData.effectiveDate) {
+                setEffectiveDate(initialData.effectiveDate);
+            }
         }
     }, [initialData]);
 
@@ -193,6 +199,11 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         if (!startMonthStr) newErrors.startMonth = "Start month is required";
         if (!firstPayDate) newErrors.firstPayDate = "Pay date is required";
 
+        // Validate Effective Date for HR Manager
+        if (userRole === 'HR_MANAGER' && !effectiveDate) {
+            newErrors.effectiveDate = "Effective date is required";
+        }
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -215,7 +226,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             frequency,
             name: initialData?.name || (frequency === 'Monthly' ? 'New Monthly Schedule' : `${frequency} Schedule`),
             status: initialData?.status || 'Active',
-            payDate: payDateDesc
+            payDate: payDateDesc,
+            effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate
         });
     };
 
@@ -526,29 +538,44 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 </div>
                             </div>
 
-                            <div className="text-sm text-slate-500 pt-2">
-                                Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
-                            </div>
+                            {userRole === 'HR_MANAGER' && (
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Effective Date <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            value={effectiveDate}
+                                            onChange={(e) => setEffectiveDate(e.target.value)}
+                                            className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                        />
+                                    </div>
+                                    {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Calendar Preview Section */}
-                        <div className="w-full lg:w-80 shrink-0">
-                            {renderCalendar()}
+                        <div className="text-sm text-slate-500 pt-2">
+                            Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
                         </div>
                     </div>
-                </div>
 
-                {/* Footer */}
-                <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-3">
-                    <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
-                    <button onClick={handleSave} className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm">Save</button>
+                    {/* Calendar Preview Section */}
+                    <div className="w-full lg:w-80 shrink-0">
+                        {renderCalendar()}
+                    </div>
                 </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
+                <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
+                <button onClick={handleSave} className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm">Save</button>
             </div>
         </div>
     );
 };
 
-const PayrollSettings: React.FC = () => {
+const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [schedules, setSchedules] = useState<PaySchedule[]>(MOCK_SCHEDULES);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
@@ -668,6 +695,7 @@ const PayrollSettings: React.FC = () => {
                     onClose={() => { setIsModalOpen(false); setEditingSchedule(null); }}
                     onSave={handleSave}
                     initialData={editingSchedule}
+                    userRole={userRole}
                 />
             )}
         </div>

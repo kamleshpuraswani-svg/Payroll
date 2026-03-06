@@ -35,7 +35,11 @@ import LoanAdvancesTypes from './LoanAdvancesTypes';
 import FnFSettlementTemplate from './FnFSettlementTemplate';
 import ExpenseSettings from './ExpenseSettings';
 
-const GlobalSettings: React.FC = () => {
+interface GlobalSettingsProps {
+   userRole?: string;
+}
+
+const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
    const [activeModule, setActiveModule] = useState('organization');
 
    const menuItems = [
@@ -59,7 +63,7 @@ const GlobalSettings: React.FC = () => {
    const renderContent = () => {
       switch (activeModule) {
          case 'organization': return <OrganizationTaxDetails />;
-         case 'schedule': return <PayrollSettings />;
+         case 'schedule': return <PayrollSettings userRole={userRole} />;
          case 'components': return <SalaryComponents />;
          case 'structure': return <HRSalaryStructure embedded={true} />;
          case 'tax-config': return <HRTaxConfiguration />;
