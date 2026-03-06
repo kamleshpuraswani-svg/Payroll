@@ -511,8 +511,36 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 }
 
 // --- Detailed Add Deduction Form ---
-const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
+const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, userRole }) => {
     const [name, setName] = useState(initialData?.name || '');
+    const [availableDeductions, setAvailableDeductions] = useState<{ id: string, name: string }[]>([]);
+    const [isLoadingDeductions, setIsLoadingDeductions] = useState(false);
+
+    useEffect(() => {
+        if (userRole === 'HR_MANAGER') {
+            const fetchAvailableDeductions = async () => {
+                setIsLoadingDeductions(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('salary_components')
+                        .select('id, name')
+                        .eq('category', 'Deductions')
+                        .eq('status', true);
+
+                    if (error) throw error;
+                    if (data) {
+                        setAvailableDeductions(data);
+                    }
+                } catch (err) {
+                    console.error('Error fetching available deductions:', err);
+                } finally {
+                    setIsLoadingDeductions(false);
+                }
+            };
+            fetchAvailableDeductions();
+        }
+    }, [userRole]);
+
     const [payslip_name, setPayslip_name] = useState(initialData?.payslip_name || '');
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
@@ -555,7 +583,31 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             </div>
             <div className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
+                        {userRole === 'HR_MANAGER' ? (
+                            <div className="relative">
+                                <select
+                                    value={name}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setName(val);
+                                        if (!payslip_name) setPayslip_name(val);
+                                    }}
+                                    disabled={isLoadingDeductions}
+                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white"
+                                >
+                                    <option value="">Select Component</option>
+                                    {availableDeductions.map(comp => (
+                                        <option key={comp.id} value={comp.name}>{comp.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                        ) : (
+                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                        )}
+                    </div>
                     <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslip_name} onChange={(e) => setPayslip_name(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -706,8 +758,36 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
 }
 
 // --- Detailed Add Reimbursement Form ---
-const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
+const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, userRole }) => {
     const [name, setName] = useState(initialData?.name || '');
+    const [availableReimbursements, setAvailableReimbursements] = useState<{ id: string, name: string }[]>([]);
+    const [isLoadingReimbursements, setIsLoadingReimbursements] = useState(false);
+
+    useEffect(() => {
+        if (userRole === 'HR_MANAGER') {
+            const fetchAvailableReimbursements = async () => {
+                setIsLoadingReimbursements(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('salary_components')
+                        .select('id, name')
+                        .eq('category', 'Reimbursements')
+                        .eq('status', true);
+
+                    if (error) throw error;
+                    if (data) {
+                        setAvailableReimbursements(data);
+                    }
+                } catch (err) {
+                    console.error('Error fetching available reimbursements:', err);
+                } finally {
+                    setIsLoadingReimbursements(false);
+                }
+            };
+            fetchAvailableReimbursements();
+        }
+    }, [userRole]);
+
     const [payslip_name, setPayslip_name] = useState(initialData?.payslip_name || '');
     const [amount_or_percent, setAmount_or_percent] = useState(initialData?.amount_or_percent || '');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
@@ -756,7 +836,28 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
+                            {userRole === 'HR_MANAGER' ? (
+                                <div className="relative">
+                                    <select
+                                        value={name}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setName(val);
+                                            if (!payslip_name) setPayslip_name(val);
+                                        }}
+                                        disabled={isLoadingReimbursements}
+                                        className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white font-medium text-slate-700"
+                                    >
+                                        <option value="">Select Component</option>
+                                        {availableReimbursements.map(comp => (
+                                            <option key={comp.id} value={comp.name}>{comp.name}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                            ) : (
+                                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
+                            )}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
@@ -1140,9 +1241,9 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 activeTab === 'Earnings' ? (
                     <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} userRole={userRole} />
                 ) : activeTab === 'Deductions' ? (
-                    <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
+                    <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} userRole={userRole} />
                 ) : (
-                    <AddReimbursementComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
+                    <AddReimbursementComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} userRole={userRole} />
                 )
             ) : (
                 /* Main Content */
