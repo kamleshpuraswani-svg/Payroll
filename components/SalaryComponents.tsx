@@ -221,8 +221,14 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [consider_esi, setConsider_esi] = useState(initialData?.consider_esi ?? true);
     const [showInPayslip, setShowInPayslip] = useState(true);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSave = () => {
+        if (userRole === 'HR_MANAGER' && !effective_date) {
+            setError('Effective Date is mandatory for HR Manager');
+            return;
+        }
+        setError(null);
         const calculateString = calc_method === 'Flat'
             ? `Flat ₹${amount_or_percent}`
             : `${amount_or_percent}% of ${selectedComponents.join(', ')}`;
@@ -285,8 +291,9 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         <input type="text" value={payslip_name} onChange={e => setPayslip_name(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
-                        <input type="date" value={effective_date} onChange={e => setEffective_date(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600" />
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date {userRole === 'HR_MANAGER' && <span className="text-rose-500">*</span>}</label>
+                        <input type="date" value={effective_date} onChange={e => setEffective_date(e.target.value)} className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`} />
+                        {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                     </div>
                 </div>
 
@@ -554,9 +561,14 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [amount_or_percent, setAmount_or_percent] = useState(initialData?.amount_or_percent || '');
     const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+    const [error, setError] = useState<string | null>(null);
 
     const handleSave = () => {
+        if (userRole === 'HR_MANAGER' && !effective_date) {
+            setError('Effective Date is mandatory for HR Manager');
+            return;
+        }
+        setError(null);
         const updatedData: Partial<SalaryComponent> = {
             name,
             payslip_name,
@@ -617,8 +629,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                             type="date"
                             value={effective_date}
                             onChange={(e) => setEffective_date(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                            className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`}
                         />
+                        {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                     </div>
                 </div>
                 <div>
@@ -762,6 +775,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [name, setName] = useState(initialData?.name || '');
     const [availableReimbursements, setAvailableReimbursements] = useState<{ id: string, name: string }[]>([]);
     const [isLoadingReimbursements, setIsLoadingReimbursements] = useState(false);
+    const [effective_date, setEffective_date] = useState(initialData?.effective_date || '');
 
     useEffect(() => {
         if (userRole === 'HR_MANAGER') {
@@ -802,8 +816,14 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     );
     const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSave = () => {
+        if (userRole === 'HR_MANAGER' && !effective_date) {
+            setError('Effective Date is mandatory for HR Manager');
+            return;
+        }
+        setError(null);
         const calculateString = calc_method === 'Flat'
             ? 'Fixed Amount'
             : `% of ${selectedComponents.join(', ')}`;
@@ -811,6 +831,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
         const updatedData: Partial<SalaryComponent> = {
             name,
             payslip_name,
+            effective_date,
             amount_or_percent: amount_or_percent,
             status: isActive,
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
@@ -862,6 +883,11 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
                             <input type="text" value={payslip_name} onChange={(e) => setPayslip_name(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date <span className="text-rose-500">*</span></label>
+                            <input type="date" value={effective_date} onChange={(e) => setEffective_date(e.target.value)} className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-slate-600 ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`} />
+                            {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                         </div>
                     </div>
 
@@ -1342,6 +1368,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             <th className="px-6 py-4">Consider for PF</th>
                                             <th className="px-6 py-4">Consider for ESI</th>
                                             <th className="px-6 py-4">Status</th>
+                                            {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
                                             <th className="px-6 py-4">Last Modified</th>
                                             <th className="px-6 py-4">Created</th>
                                         </>
@@ -1355,6 +1382,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             )}
                                             <th className="px-6 py-4">Taxable</th>
                                             <th className="px-6 py-4">Status</th>
+                                            {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
                                         </>
                                     )}
 
@@ -1388,6 +1416,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             {item.status ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </td>
+                                                    {userRole === 'HR_MANAGER' && <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>}
                                                     <td className="px-6 py-4 text-slate-500">{item.last_modified ? new Date(item.last_modified).toLocaleDateString() : '-'}</td>
                                                     <td className="px-6 py-4 text-slate-500">{item.created ? new Date(item.created).toLocaleDateString() : '-'}</td>
                                                 </>
@@ -1409,6 +1438,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             {item.status ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </td>
+                                                    {userRole === 'HR_MANAGER' && <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>}
                                                 </>
                                             )}
 
