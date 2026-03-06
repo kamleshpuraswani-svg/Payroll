@@ -1456,8 +1456,8 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             <th className="px-6 py-4">Consider for ESI</th>
                                             <th className="px-6 py-4">Status</th>
                                             {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
-                                            <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' ? 'Last Modified By' : 'Last Modified'}</th>
-                                            <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' ? 'Created By' : 'Created'}</th>
+                                            <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER' ? 'Last Modified By' : 'Last Modified'}</th>
+                                            <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER' ? 'Created By' : 'Created'}</th>
                                         </>
                                     ) : (
                                         <>
@@ -1482,14 +1482,14 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 <>
                                                     <th className="px-6 py-4">Effective Date</th>
                                                     <th className="px-6 py-4">Created By</th>
-                                                    <th className="px-6 py-4">Last Updated By</th>
+                                                    <th className="px-6 py-4">Last Modified By</th>
                                                 </>
                                             )}
                                             {activeTab !== 'Deductions' && userRole === 'HR_MANAGER' && (
                                                 <>
                                                     <th className="px-6 py-4">Effective Date</th>
                                                     <th className="px-6 py-4">Created By</th>
-                                                    <th className="px-6 py-4">Last Updated By</th>
+                                                    <th className="px-6 py-4">Last Modified By</th>
                                                 </>
                                             )}
                                         </>
