@@ -1467,8 +1467,15 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                     <th className="px-6 py-4">Deduction Frequency</th>
                                                 </>
                                             )}
-                                            {!(activeTab === 'Deductions' && userRole === 'HR_MANAGER') && (
-                                                <th className="px-6 py-4">Taxable</th>
+                                            {activeTab !== 'Deductions' && (
+                                                <>
+                                                    {userRole === 'HR_MANAGER' && (
+                                                        <th className="px-6 py-4">Calculation Method</th>
+                                                    )}
+                                                    {userRole !== 'HR_MANAGER' && (
+                                                        <th className="px-6 py-4">Taxable</th>
+                                                    )}
+                                                </>
                                             )}
                                             <th className="px-6 py-4">Status</th>
                                             {activeTab === 'Deductions' && userRole === 'HR_MANAGER' && (
@@ -1479,7 +1486,11 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 </>
                                             )}
                                             {activeTab !== 'Deductions' && userRole === 'HR_MANAGER' && (
-                                                <th className="px-6 py-4">Effective Date</th>
+                                                <>
+                                                    <th className="px-6 py-4">Effective Date</th>
+                                                    <th className="px-6 py-4">Created By</th>
+                                                    <th className="px-6 py-4">Last Updated By</th>
+                                                </>
                                             )}
                                         </>
                                     )}
@@ -1530,8 +1541,15 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             <td className="px-6 py-4 text-slate-500 font-medium">{item.frequency || 'Recurring'}</td>
                                                         </>
                                                     )}
-                                                    {!(activeTab === 'Deductions' && userRole === 'HR_MANAGER') && (
-                                                        <td className="px-6 py-4">{item.taxable}</td>
+                                                    {activeTab !== 'Deductions' && (
+                                                        <>
+                                                            {userRole === 'HR_MANAGER' && (
+                                                                <td className="px-6 py-4">{item.calc_method === 'Flat' ? 'Flat' : (item.calculation || '-')}</td>
+                                                            )}
+                                                            {userRole !== 'HR_MANAGER' && (
+                                                                <td className="px-6 py-4">{item.taxable}</td>
+                                                            )}
+                                                        </>
                                                     )}
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${item.status ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
@@ -1554,7 +1572,19 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         </>
                                                     )}
                                                     {activeTab !== 'Deductions' && userRole === 'HR_MANAGER' && (
-                                                        <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>
+                                                        <>
+                                                            <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>
+                                                            <td className="px-6 py-4 text-slate-500">
+                                                                {item.created ? (
+                                                                    <div className="whitespace-pre-line text-xs">{item.created}</div>
+                                                                ) : '-'}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-slate-500">
+                                                                {item.last_modified ? (
+                                                                    <div className="whitespace-pre-line text-xs">{item.last_modified}</div>
+                                                                ) : '-'}
+                                                            </td>
+                                                        </>
                                                     )}
                                                 </>
                                             )}
