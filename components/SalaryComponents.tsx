@@ -1456,8 +1456,8 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             <th className="px-6 py-4">Consider for ESI</th>
                                             <th className="px-6 py-4">Status</th>
                                             {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
-                                            <th className="px-6 py-4">Last Modified</th>
-                                            <th className="px-6 py-4">Created</th>
+                                            <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' ? 'Last Modified By' : 'Last Modified'}</th>
+                                            <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' ? 'Created By' : 'Created'}</th>
                                         </>
                                     ) : (
                                         <>
@@ -1502,7 +1502,12 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                 {filteredData.length > 0 ? (
                                     filteredData.map((item) => (
                                         <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
-                                            <td className="px-6 py-4 font-semibold text-slate-800">{item.name}</td>
+                                            <td className="px-6 py-4 font-semibold text-slate-800">
+                                                <div className="flex items-center gap-2">
+                                                    {item.name}
+                                                    {item.created === 'System' && userRole !== 'SUPER_ADMIN' && <div className="text-slate-400" title="System Component"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></div>}
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4 text-slate-600">{item.payslip_name || '-'}</td>
                                             <td className="px-6 py-4">
                                                 {activeTab === 'Deductions' ? (
@@ -1593,22 +1598,25 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => handleEditClick(item)}
-                                                        className="p-1.5 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors"
-                                                        title="Edit"
+                                                        disabled={item.created === 'System' && userRole !== 'SUPER_ADMIN'}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.created === 'System' && userRole !== 'SUPER_ADMIN' ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'}`}
+                                                        title={item.created === 'System' && userRole !== 'SUPER_ADMIN' ? "System components cannot be edited" : "Edit"}
                                                     >
                                                         <Edit2 size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusClick(item.id, item.status)}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.status ? 'text-amber-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                                                        title={item.status ? "Deactivate" : "Activate"}
+                                                        disabled={item.created === 'System' && userRole !== 'SUPER_ADMIN'}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.created === 'System' && userRole !== 'SUPER_ADMIN' ? 'opacity-50 cursor-not-allowed text-slate-400' : item.status ? 'text-amber-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                                                        title={item.created === 'System' && userRole !== 'SUPER_ADMIN' ? "System components cannot be deactivated" : item.status ? "Deactivate" : "Activate"}
                                                     >
                                                         <Power size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteClick(item.id)}
-                                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                                                        title="Delete"
+                                                        disabled={item.created === 'System' && userRole !== 'SUPER_ADMIN'}
+                                                        className={`p-1.5 rounded-md transition-colors ${item.created === 'System' && userRole !== 'SUPER_ADMIN' ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'}`}
+                                                        title={item.created === 'System' && userRole !== 'SUPER_ADMIN' ? "System components cannot be deleted" : "Delete"}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
