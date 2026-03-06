@@ -944,6 +944,9 @@ const HRSalaryComponents: React.FC = () => {
                                                     <th className="px-6 py-4">Deduction Frequency</th>
                                                 </>
                                             )}
+                                            {activeTab === 'Deductions' && (
+                                                <th className="px-6 py-4">Calculation Method</th>
+                                            )}
                                             <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4">Created By</th>
@@ -1013,6 +1016,9 @@ const HRSalaryComponents: React.FC = () => {
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.deductionType || '-'}</td>
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.frequency || '-'}</td>
                                                         </>
+                                                    )}
+                                                    {activeTab === 'Deductions' && (
+                                                        <td className="px-6 py-4 text-slate-600 font-medium">{item.calculation || '-'}</td>
                                                     )}
                                                     <td className="px-6 py-4">
                                                         <span className="font-bold text-slate-700">
