@@ -225,7 +225,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
     const handleSave = () => {
         if (userRole === 'HR_MANAGER' && !effective_date) {
-            setError('Effective Date is mandatory for HR Manager');
+            setError('Effective Date is mandatory');
             return;
         }
         setError(null);
@@ -565,7 +565,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
 
     const handleSave = () => {
         if (userRole === 'HR_MANAGER' && !effective_date) {
-            setError('Effective Date is mandatory for HR Manager');
+            setError('Effective Date is mandatory');
             return;
         }
         setError(null);
@@ -820,7 +820,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 
     const handleSave = () => {
         if (userRole === 'HR_MANAGER' && !effective_date) {
-            setError('Effective Date is mandatory for HR Manager');
+            setError('Effective Date is mandatory');
             return;
         }
         setError(null);
