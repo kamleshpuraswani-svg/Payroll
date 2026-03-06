@@ -32,6 +32,7 @@ interface AddEarningFormProps {
     onCancel: () => void;
     onSave: (data: Partial<SalaryComponent>) => void;
     initialData?: SalaryComponent | null;
+    userRole?: string;
 }
 
 interface ConfirmationModalProps {
@@ -169,8 +170,36 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 };
 
 // --- Detailed Add Earning Form ---
-const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
+const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, userRole }) => {
     const [name, setName] = useState(initialData?.name || '');
+    const [availableEarnings, setAvailableEarnings] = useState<{ id: string, name: string }[]>([]);
+    const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
+
+    useEffect(() => {
+        if (userRole === 'HR_MANAGER') {
+            const fetchAvailableEarnings = async () => {
+                setIsLoadingEarnings(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('salary_components')
+                        .select('id, name')
+                        .eq('category', 'Earnings')
+                        .eq('status', true);
+
+                    if (error) throw error;
+                    if (data) {
+                        setAvailableEarnings(data);
+                    }
+                } catch (err) {
+                    console.error('Error fetching available earnings:', err);
+                } finally {
+                    setIsLoadingEarnings(false);
+                }
+            };
+            fetchAvailableEarnings();
+        }
+    }, [userRole]);
+
     const [payslip_name, setPayslip_name] = useState(initialData?.payslip_name || '');
     const [effective_date, setEffective_date] = useState(initialData?.effective_date || '');
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
@@ -227,7 +256,29 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                        {userRole === 'HR_MANAGER' ? (
+                            <div className="relative">
+                                <select
+                                    value={name}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setName(val);
+                                        // Auto-fill payslip name if empty
+                                        if (!payslip_name) setPayslip_name(val);
+                                    }}
+                                    disabled={isLoadingEarnings}
+                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white"
+                                >
+                                    <option value="">Select Component</option>
+                                    {availableEarnings.map(comp => (
+                                        <option key={comp.id} value={comp.name}>{comp.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                        ) : (
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                        )}
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
@@ -841,7 +892,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     );
 }
 
-const SalaryComponents: React.FC = () => {
+const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [activeTab, setActiveTab] = useState('Earnings');
     const [components, setComponents] = useState<SalaryComponent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -1087,7 +1138,7 @@ const SalaryComponents: React.FC = () => {
 
             {isAdding ? (
                 activeTab === 'Earnings' ? (
-                    <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
+                    <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} userRole={userRole} />
                 ) : activeTab === 'Deductions' ? (
                     <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
                 ) : (
