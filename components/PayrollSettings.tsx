@@ -334,242 +334,243 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-8">
                     <div className="flex flex-col lg:flex-row gap-8">
-                        {/* Form Section */}
-                        <div className="flex-1 space-y-8">
-                            {/* Frequency */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-3">When do you pay your employees? <span className="text-rose-500">*</span></label>
-                                <div className="flex gap-6">
-                                    {['Weekly', 'Semi-Monthly', 'Monthly'].map(f => (
-                                        <label key={f} className={`flex items-center gap-2.5 cursor-pointer group ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${frequency === f ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                {frequency === f && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="freq"
-                                                checked={frequency === f}
-                                                onChange={() => !initialData && setFrequency(f as any)}
-                                                className="hidden"
-                                                disabled={!!initialData}
-                                            />
-                                            <span className={`text-sm ${frequency === f ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{f}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                                {errors.frequency && <p className="text-xs text-rose-500 mt-1">{errors.frequency}</p>}
-                                {initialData && <p className="text-xs text-amber-600 mt-2 flex items-center gap-1"><Info size={12} /> Pay frequency cannot be changed once created.</p>}
-                            </div>
-
-                            {/* Weekly Specifics */}
-                            {frequency === 'Weekly' && (
-                                <div className="animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-3">Weekly Pay Day <span className="text-rose-500">*</span></label>
-                                    <div className="flex gap-3 flex-wrap">
-                                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                            <label key={day} className="flex items-center gap-2 cursor-pointer group">
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${weeklyPayDay === day ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                    {weeklyPayDay === day && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                        <div className="flex-1">
+                            <div className="space-y-8">
+                                {/* Frequency */}
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-3">When do you pay your employees? <span className="text-rose-500">*</span></label>
+                                    <div className="flex gap-6">
+                                        {['Weekly', 'Semi-Monthly', 'Monthly'].map(f => (
+                                            <label key={f} className={`flex items-center gap-2.5 cursor-pointer group ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${frequency === f ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
+                                                    {frequency === f && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
                                                 </div>
                                                 <input
                                                     type="radio"
-                                                    name="wday"
+                                                    name="freq"
+                                                    checked={frequency === f}
+                                                    onChange={() => !initialData && setFrequency(f as any)}
                                                     className="hidden"
-                                                    checked={weeklyPayDay === day}
-                                                    onChange={() => setWeeklyPayDay(day)}
+                                                    disabled={!!initialData}
                                                 />
-                                                <span className="text-sm text-slate-600">{day}</span>
+                                                <span className={`text-sm ${frequency === f ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{f}</span>
                                             </label>
                                         ))}
                                     </div>
-                                    {errors.weeklyPayDay && <p className="text-xs text-rose-500 mt-1">{errors.weeklyPayDay}</p>}
+                                    {errors.frequency && <p className="text-xs text-rose-500 mt-1">{errors.frequency}</p>}
+                                    {initialData && <p className="text-xs text-amber-600 mt-2 flex items-center gap-1"><Info size={12} /> Pay frequency cannot be changed once created.</p>}
                                 </div>
-                            )}
 
-                            {/* Semi-Monthly Specifics */}
-                            {frequency === 'Semi-Monthly' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
-                                    <h4 className="text-sm font-bold text-sky-600">When would you like to pay? <span className="text-rose-500">*</span></h4>
+                                {/* Weekly Specifics */}
+                                {frequency === 'Weekly' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2">
+                                        <label className="block text-sm font-bold text-slate-700 mb-3">Weekly Pay Day <span className="text-rose-500">*</span></label>
+                                        <div className="flex gap-3 flex-wrap">
+                                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                                <label key={day} className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${weeklyPayDay === day ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {weeklyPayDay === day && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input
+                                                        type="radio"
+                                                        name="wday"
+                                                        className="hidden"
+                                                        checked={weeklyPayDay === day}
+                                                        onChange={() => setWeeklyPayDay(day)}
+                                                    />
+                                                    <span className="text-sm text-slate-600">{day}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {errors.weeklyPayDay && <p className="text-xs text-rose-500 mt-1">{errors.weeklyPayDay}</p>}
+                                    </div>
+                                )}
 
-                                    {/* 1st Period Config */}
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-800 mb-3">Pay Schedule for 1st to 15th:</p>
-                                        <div className="flex flex-col sm:flex-row gap-6">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smFirstType === '15th' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                    {smFirstType === '15th' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                </div>
-                                                <input type="radio" name="semi1" checked={smFirstType === '15th'} onChange={() => setSmFirstType('15th')} className="hidden" />
-                                                <span className="text-sm text-slate-700">on 15th of same month</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smFirstType === 'custom' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                    {smFirstType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                </div>
-                                                <input type="radio" name="semi1" checked={smFirstType === 'custom'} onChange={() => setSmFirstType('custom')} className="hidden" />
-                                                <div className="flex items-center gap-2">
-                                                    <select
-                                                        value={smFirstCustomDay}
-                                                        onChange={(e) => setSmFirstCustomDay(e.target.value)}
-                                                        disabled={smFirstType !== 'custom'}
-                                                        className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
-                                                    >
-                                                        {Array.from({ length: daysInSelectedMonth }, (_, i) => i + 1).map(d => (
-                                                            <option key={d} value={d}>{d}</option>
-                                                        ))}
-                                                    </select>
-                                                    <span className="text-sm text-slate-500">of same month</span>
-                                                </div>
-                                            </label>
+                                {/* Semi-Monthly Specifics */}
+                                {frequency === 'Semi-Monthly' && (
+                                    <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
+                                        <h4 className="text-sm font-bold text-sky-600">When would you like to pay? <span className="text-rose-500">*</span></h4>
+
+                                        {/* 1st Period Config */}
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-800 mb-3">Pay Schedule for 1st to 15th:</p>
+                                            <div className="flex flex-col sm:flex-row gap-6">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smFirstType === '15th' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {smFirstType === '15th' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input type="radio" name="semi1" checked={smFirstType === '15th'} onChange={() => setSmFirstType('15th')} className="hidden" />
+                                                    <span className="text-sm text-slate-700">on 15th of same month</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smFirstType === 'custom' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {smFirstType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input type="radio" name="semi1" checked={smFirstType === 'custom'} onChange={() => setSmFirstType('custom')} className="hidden" />
+                                                    <div className="flex items-center gap-2">
+                                                        <select
+                                                            value={smFirstCustomDay}
+                                                            onChange={(e) => setSmFirstCustomDay(e.target.value)}
+                                                            disabled={smFirstType !== 'custom'}
+                                                            className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
+                                                        >
+                                                            {Array.from({ length: daysInSelectedMonth }, (_, i) => i + 1).map(d => (
+                                                                <option key={d} value={d}>{d}</option>
+                                                            ))}
+                                                        </select>
+                                                        <span className="text-sm text-slate-500">of same month</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* 2nd Period Config */}
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-800 mb-3">Pay Schedule for 16th to the end of month:</p>
+                                            <div className="flex flex-col sm:flex-row gap-6">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smSecondType === 'last' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {smSecondType === 'last' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input type="radio" name="semi2" checked={smSecondType === 'last'} onChange={() => setSmSecondType('last')} className="hidden" />
+                                                    <span className="text-sm text-slate-700">on last day of same month</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smSecondType === 'custom' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {smSecondType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input type="radio" name="semi2" checked={smSecondType === 'custom'} onChange={() => setSmSecondType('custom')} className="hidden" />
+                                                    <div className="flex items-center gap-2">
+                                                        <select
+                                                            value={smSecondCustomDay}
+                                                            onChange={(e) => setSmSecondCustomDay(e.target.value)}
+                                                            disabled={smSecondType !== 'custom'}
+                                                            className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
+                                                        >
+                                                            {Array.from({ length: daysInNextMonth }, (_, i) => i + 1).map(d => (
+                                                                <option key={d} value={d}>{d}</option>
+                                                            ))}
+                                                        </select>
+                                                        <span className="text-sm text-slate-500">of following month</span>
+                                                    </div>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
+                                )}
 
-                                    {/* 2nd Period Config */}
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-800 mb-3">Pay Schedule for 16th to the end of month:</p>
-                                        <div className="flex flex-col sm:flex-row gap-6">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smSecondType === 'last' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                    {smSecondType === 'last' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                </div>
-                                                <input type="radio" name="semi2" checked={smSecondType === 'last'} onChange={() => setSmSecondType('last')} className="hidden" />
-                                                <span className="text-sm text-slate-700">on last day of same month</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smSecondType === 'custom' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                    {smSecondType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                </div>
-                                                <input type="radio" name="semi2" checked={smSecondType === 'custom'} onChange={() => setSmSecondType('custom')} className="hidden" />
-                                                <div className="flex items-center gap-2">
-                                                    <select
-                                                        value={smSecondCustomDay}
-                                                        onChange={(e) => setSmSecondCustomDay(e.target.value)}
-                                                        disabled={smSecondType !== 'custom'}
-                                                        className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
-                                                    >
-                                                        {Array.from({ length: daysInNextMonth }, (_, i) => i + 1).map(d => (
-                                                            <option key={d} value={d}>{d}</option>
-                                                        ))}
-                                                    </select>
-                                                    <span className="text-sm text-slate-500">of following month</span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Common Bottom Fields */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                    Calculate monthly salary based on? <span className="text-rose-500">*</span>
-                                    <Info size={14} className="text-slate-400 cursor-help" />
-                                </label>
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Actual days in a month' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                            {calcBase === 'Actual days in a month' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                        </div>
-                                        <input
-                                            type="radio"
-                                            name="calcbase"
-                                            checked={calcBase === 'Actual days in a month'}
-                                            onChange={() => setCalcBase('Actual days in a month')}
-                                            className="hidden"
-                                        />
-                                        <span className="text-sm text-slate-700">Actual days in a month</span>
-                                    </label>
-                                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Organisation working days' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                            {calcBase === 'Organisation working days' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                        </div>
-                                        <input
-                                            type="radio"
-                                            name="calcbase"
-                                            checked={calcBase === 'Organisation working days'}
-                                            onChange={() => setCalcBase('Organisation working days')}
-                                            className="hidden"
-                                        />
-                                        <span className="text-sm text-slate-700">Organisation working days (per month)</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Common Bottom Fields */}
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Start your first payroll from <span className="text-rose-500">*</span></label>
-                                    <div className="relative">
-                                        <select
-                                            value={startMonthStr}
-                                            onChange={(e) => setStartMonthStr(e.target.value)}
-                                            className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.startMonth ? 'border-rose-500' : 'border-slate-200'}`}
-                                        >
-                                            {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                    </div>
-                                    {errors.startMonth && <p className="text-xs text-rose-500 mt-1">{errors.startMonth}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Select a pay date for your first payroll <span className="text-rose-500">*</span></label>
-                                    <div className="relative">
-                                        {frequency === 'Monthly' ? (
+                                    <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                        Calculate monthly salary based on? <span className="text-rose-500">*</span>
+                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                    </label>
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2.5 cursor-pointer group">
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Actual days in a month' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                {calcBase === 'Actual days in a month' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                            </div>
                                             <input
-                                                type="date"
-                                                value={firstPayDate}
-                                                onChange={(e) => setFirstPayDate(e.target.value)}
-                                                className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                type="radio"
+                                                name="calcbase"
+                                                checked={calcBase === 'Actual days in a month'}
+                                                onChange={() => setCalcBase('Actual days in a month')}
+                                                className="hidden"
                                             />
-                                        ) : (
-                                            <>
-                                                <select
+                                            <span className="text-sm text-slate-700">Actual days in a month</span>
+                                        </label>
+                                        <label className="flex items-center gap-2.5 cursor-pointer group">
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Organisation working days' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                {calcBase === 'Organisation working days' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                            </div>
+                                            <input
+                                                type="radio"
+                                                name="calcbase"
+                                                checked={calcBase === 'Organisation working days'}
+                                                onChange={() => setCalcBase('Organisation working days')}
+                                                className="hidden"
+                                            />
+                                            <span className="text-sm text-slate-700">Organisation working days (per month)</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Start your first payroll from <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <select
+                                                value={startMonthStr}
+                                                onChange={(e) => setStartMonthStr(e.target.value)}
+                                                className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.startMonth ? 'border-rose-500' : 'border-slate-200'}`}
+                                            >
+                                                {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                        {errors.startMonth && <p className="text-xs text-rose-500 mt-1">{errors.startMonth}</p>}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Select a pay date for your first payroll <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            {frequency === 'Monthly' ? (
+                                                <input
+                                                    type="date"
                                                     value={firstPayDate}
                                                     onChange={(e) => setFirstPayDate(e.target.value)}
-                                                    className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                                >
-                                                    {payDateOptions.map(d => <option key={d} value={d}>{d}</option>)}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </>
-                                        )}
+                                                    className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <select
+                                                        value={firstPayDate}
+                                                        onChange={(e) => setFirstPayDate(e.target.value)}
+                                                        className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                    >
+                                                        {payDateOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </>
+                                            )}
+                                        </div>
+                                        {errors.firstPayDate && <p className="text-xs text-rose-500 mt-1">{errors.firstPayDate}</p>}
                                     </div>
-                                    {errors.firstPayDate && <p className="text-xs text-rose-500 mt-1">{errors.firstPayDate}</p>}
                                 </div>
+
+                                {userRole === 'HR_MANAGER' && (
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Effective Date <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <input
+                                                type="date"
+                                                value={effectiveDate}
+                                                onChange={(e) => setEffectiveDate(e.target.value)}
+                                                className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                            />
+                                        </div>
+                                        {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
+                                    </div>
+                                )}
                             </div>
 
-                            {userRole === 'HR_MANAGER' && (
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Effective Date <span className="text-rose-500">*</span></label>
-                                    <div className="relative">
-                                        <input
-                                            type="date"
-                                            value={effectiveDate}
-                                            onChange={(e) => setEffectiveDate(e.target.value)}
-                                            className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                        />
-                                    </div>
-                                    {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
-                                </div>
-                            )}
+                            <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8">
+                                Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
+                            </div>
                         </div>
 
-                        <div className="text-sm text-slate-500 pt-2">
-                            Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
+                        {/* Calendar Preview Section */}
+                        <div className="w-full lg:w-80 shrink-0">
+                            {renderCalendar()}
                         </div>
-                    </div>
-
-                    {/* Calendar Preview Section */}
-                    <div className="w-full lg:w-80 shrink-0">
-                        {renderCalendar()}
                     </div>
                 </div>
-            </div>
 
-            {/* Footer */}
-            <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
-                <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
-                <button onClick={handleSave} className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm">Save</button>
+                {/* Footer */}
+                <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
+                    <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
+                    <button onClick={handleSave} className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm">Save</button>
+                </div>
             </div>
         </div>
     );
