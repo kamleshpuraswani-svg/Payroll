@@ -1088,7 +1088,7 @@ const ExpenseSettings: React.FC = () => {
                                 {/* Approval Workflow Section */}
                                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
                                     <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Workflow Engine</h3>
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Approval Workflow</h3>
                                         <button
                                             onClick={() => setIsAddingWorkflow(true)}
                                             className="flex items-center gap-2 px-4 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 transition-all shadow-md shadow-sky-100"
