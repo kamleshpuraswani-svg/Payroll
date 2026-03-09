@@ -29,6 +29,8 @@ interface LoanType {
     description: string;
     approvers?: string[];
     repaymentMonth?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 const MOCK_LOAN_TYPES: LoanType[] = [
@@ -75,7 +77,9 @@ const LoanAdvancesTypes: React.FC = () => {
                 status: item.status,
                 description: item.description || '',
                 approvers: item.approvers || [],
-                repaymentMonth: item.repayment_month || ''
+                repaymentMonth: item.repayment_month || '',
+                createdAt: item.created_at,
+                updatedAt: item.updated_at
             }));
             setLoanTypes(mappedData);
         }
@@ -393,6 +397,8 @@ const LoanAdvancesTypes: React.FC = () => {
                                             <th className="px-6 py-4">Max Amount</th>
                                             <th className="px-6 py-4">Max Tenure</th>
                                             <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4">Created By</th>
+                                            <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4 text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -426,29 +432,43 @@ const LoanAdvancesTypes: React.FC = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <button
-                                                        onClick={() => toggleStatus(item.id)}
-                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.status ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                                                    >
-                                                        <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${item.status ? 'translate-x-5' : 'translate-x-1'}`} />
-                                                    </button>
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${item.status ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                                        {item.status ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-slate-600">HR Manager</span>
+                                                    {item.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-slate-600">HR Manager</span>
+                                                    {item.updatedAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center justify-end gap-3 transition-opacity">
                                                         <button
-                                                            onClick={() => handleEdit(item)}
-                                                            className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                            title="Edit"
+                                                            onClick={() => toggleStatus(item.id)}
+                                                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.status ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                                            title={item.status ? "Deactivate" : "Activate"}
                                                         >
-                                                            <Edit2 size={16} />
+                                                            <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${item.status ? 'translate-x-5' : 'translate-x-1'}`} />
                                                         </button>
-                                                        <button
-                                                            onClick={() => setDeleteId(item.id)}
-                                                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                        <div className="flex items-center gap-1 border-l border-slate-200 pl-3 opacity-60 group-hover:opacity-100">
+                                                            <button
+                                                                onClick={() => handleEdit(item)}
+                                                                className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setDeleteId(item.id)}
+                                                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
