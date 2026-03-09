@@ -672,6 +672,8 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
+    const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
 
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
@@ -680,6 +682,8 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage'>(
         initialData?.calcMethod || 'Flat'
     );
+    const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSave = () => {
         const updatedData: Partial<SalaryComponent> = {
@@ -687,10 +691,12 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             payslipName,
             amountOrPercent: amount,
             status: isActive,
+            effectiveDate,
+            showInPayslip,
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
             category: 'Reimbursements',
             calcMethod: calcMethod,
-            calculation: calcMethod === 'Flat' ? `Fixed Amount` : `% of CTC`,
+            calculation: calcMethod === 'Flat' ? `Fixed Amount` : `${amount}% of ${selectedComponents.join(', ')}`,
             taxable: 'Partially Exempt',
         };
         onSave(updatedData);
@@ -714,6 +720,10 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
                             <input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
+                            <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 transition-all" />
                         </div>
                     </div>
 
@@ -753,11 +763,45 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                     <span className="text-sm text-slate-700 font-medium">Percentage of</span>
                                 </label>
                                 <div className="relative">
-                                    <select disabled={calcMethod !== 'Percentage'} className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50">
-                                        <option>CTC</option>
-                                        <option>Basic</option>
-                                    </select>
-                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                    <button
+                                        type="button"
+                                        disabled={calcMethod !== 'Percentage'}
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between transition-all"
+                                    >
+                                        <span className="truncate max-w-[80px]">
+                                            {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
+                                        </span>
+                                        <ChevronDown size={14} className="text-slate-400" />
+                                    </button>
+
+                                    {isDropdownOpen && calcMethod === 'Percentage' && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() => setIsDropdownOpen(false)}
+                                            />
+                                            <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
+                                                {['CTC', 'Basic'].map(comp => (
+                                                    <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedComponents.includes(comp)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedComponents([...selectedComponents, comp]);
+                                                                } else {
+                                                                    setSelectedComponents(selectedComponents.filter(c => c !== comp));
+                                                                }
+                                                            }}
+                                                            className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                                                        />
+                                                        <span className="text-sm text-slate-700">{comp}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -781,8 +825,15 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         </div>
                     </div>
 
-                    {/* Active Checkbox */}
-                    <div className="pt-2">
+                    {/* Checkboxes */}
+                    <div className="pt-2 flex flex-col gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {showInPayslip && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
+                            <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
+                        </label>
                         <label className="flex items-center gap-2 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
                                 {isActive && <Check size={14} className="text-white" />}
