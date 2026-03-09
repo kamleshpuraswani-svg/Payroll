@@ -14,7 +14,11 @@ import {
     Image as ImageIcon,
     Check,
     Briefcase,
-    Calculator
+    Calculator,
+    Search,
+    Users,
+    ChevronDown,
+    Info
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -431,6 +435,170 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
     const [headerConfigOpen, setHeaderConfigOpen] = useState(false);
     const [addComponentModal, setAddComponentModal] = useState<{ isOpen: boolean; section: 'earnings' | 'deductions' | null }>({ isOpen: false, section: null });
     const [validationError, setValidationError] = useState<string | null>(null);
+
+    // --- CRM Notifications Configuration ---
+    const [allEmployees, setAllEmployees] = useState<any[]>([]);
+    const [crmNotifications, setCrmNotifications] = useState({
+        lead: [] as any[],
+        deal: [] as any[],
+        interview: [] as any[]
+    });
+    const [activeNotificationDropdown, setActiveNotificationDropdown] = useState<'lead' | 'deal' | 'interview' | null>(null);
+    const [crmNotificationSearch, setCrmNotificationSearch] = useState('');
+    const [isCrmNotificationsOpen, setIsCrmNotificationsOpen] = useState(true);
+
+    const fetchEmployees = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('employees')
+                .select('id, name, eid, avatar_url, department, designation')
+                .eq('status', 'Active')
+                .order('name');
+            if (error) throw error;
+            if (data) setAllEmployees(data);
+        } catch (err) {
+            console.error('Error fetching employees:', err);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'CONFIG') {
+            fetchEmployees();
+        }
+    }, [activeTab]);
+
+    const handleSelectEmployee = (type: 'lead' | 'deal' | 'interview', employee: any) => {
+        setCrmNotifications(prev => {
+            const current = prev[type];
+            const exists = current.find(e => e.id === employee.id);
+            if (exists) {
+                return {
+                    ...prev,
+                    [type]: current.filter(e => e.id !== employee.id)
+                };
+            }
+            return {
+                ...prev,
+                [type]: [...current, employee]
+            };
+        });
+    };
+
+    const handleRemoveEmployee = (type: 'lead' | 'deal' | 'interview', employeeId: string) => {
+        setCrmNotifications(prev => ({
+            ...prev,
+            [type]: prev[type].filter(e => e.id !== employeeId)
+        }));
+    };
+
+    const renderEmployeeSelector = (type: 'lead' | 'deal' | 'interview', label: string) => {
+        const selected = crmNotifications[type];
+        const isOpen = activeNotificationDropdown === type;
+
+        return (
+            <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
+                    <Info size={12} className="text-slate-300 cursor-help" />
+                </div>
+
+                <div className="relative">
+                    <div
+                        className="min-h-[46px] p-2 bg-white border border-slate-200 rounded-xl flex flex-wrap gap-2 items-center cursor-text focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/10 transition-all"
+                        onClick={() => setActiveNotificationDropdown(type)}
+                    >
+                        {selected.map(emp => (
+                            <span key={emp.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 border border-purple-100 rounded-lg text-xs font-bold text-purple-700 animate-in zoom-in-95 duration-200">
+                                {emp.name}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleRemoveEmployee(type, emp.id); }}
+                                    className="p-0.5 hover:bg-purple-200 rounded-full transition-colors"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </span>
+                        ))}
+                        <input
+                            type="text"
+                            placeholder={selected.length === 0 ? "Select members..." : ""}
+                            className="flex-1 min-w-[150px] bg-transparent border-none text-sm font-semibold text-slate-700 focus:outline-none focus:ring-0 p-1"
+                            value={isOpen ? crmNotificationSearch : ''}
+                            onChange={(e) => setCrmNotificationSearch(e.target.value)}
+                            onFocus={() => setActiveNotificationDropdown(type)}
+                        />
+                        <div className="flex items-center gap-2 pr-1">
+                            {selected.length > 0 && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setCrmNotifications(prev => ({ ...prev, [type]: [] })); }}
+                                    className="p-1 text-slate-300 hover:text-slate-500 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                            <ChevronDown size={18} className={`text-slate-300 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                    </div>
+
+                    {isOpen && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setActiveNotificationDropdown(null)}></div>
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-4 duration-300">
+                                <div className="p-3 sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100 z-10">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            placeholder="Search by name or ID..."
+                                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 transition-all"
+                                            value={crmNotificationSearch}
+                                            onChange={(e) => setCrmNotificationSearch(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="p-2 space-y-1">
+                                    {allEmployees
+                                        .filter(emp =>
+                                            emp.name.toLowerCase().includes(crmNotificationSearch.toLowerCase()) ||
+                                            emp.eid.toLowerCase().includes(crmNotificationSearch.toLowerCase())
+                                        )
+                                        .map(emp => {
+                                            const isSelected = selected.find(e => e.id === emp.id);
+                                            return (
+                                                <button
+                                                    key={emp.id}
+                                                    onClick={() => handleSelectEmployee(type, emp)}
+                                                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${isSelected ? 'bg-purple-50 text-purple-700' : 'hover:bg-slate-50 text-slate-700'}`}
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold overflow-hidden border border-slate-200 shadow-sm flex-shrink-0">
+                                                        {emp.avatar_url ? <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" /> : emp.name.charAt(0)}
+                                                    </div>
+                                                    <div className="flex-1 text-left min-w-0">
+                                                        <p className="text-sm font-bold truncate tracking-tight">{emp.name}</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{emp.department} • {emp.eid}</p>
+                                                    </div>
+                                                    <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isSelected ? 'bg-purple-600 border-purple-600' : 'bg-white border-slate-200'}`}>
+                                                        {isSelected && <Check size={12} className="text-white" />}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    {allEmployees.filter(emp =>
+                                        emp.name.toLowerCase().includes(crmNotificationSearch.toLowerCase()) ||
+                                        emp.eid.toLowerCase().includes(crmNotificationSearch.toLowerCase())
+                                    ).length === 0 && (
+                                            <div className="py-8 text-center bg-slate-50 rounded-2xl m-2 border border-dashed border-slate-200">
+                                                <p className="text-sm font-bold text-slate-400">No employees found</p>
+                                            </div>
+                                        )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     const handleCreate = () => {
         setEditingTemplateId(null);
@@ -921,14 +1089,48 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                     </div>
                 ) : (
                     /* CONFIGURATION TAB */
-                    <div className="flex-1 bg-slate-50 p-8 flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
-                            <Settings className="w-10 h-10 text-purple-600" />
+                    <div className="flex-1 bg-slate-50/50 p-4 lg:p-8 overflow-y-auto">
+                        <div className="max-w-4xl mx-auto space-y-6">
+                            {/* CRM Notifications Section */}
+                            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <button
+                                    onClick={() => setIsCrmNotificationsOpen(!isCrmNotificationsOpen)}
+                                    className="w-full p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 border border-purple-100">
+                                            <Users size={24} />
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="text-lg font-bold text-slate-800">CRM Notifications</h3>
+                                            <p className="text-sm text-slate-500 font-medium">Configure recipients for various CRM activity alerts</p>
+                                        </div>
+                                    </div>
+                                    <div className={`w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center transition-transform duration-300 ${isCrmNotificationsOpen ? 'rotate-180 bg-slate-50' : ''}`}>
+                                        <ChevronDown size={18} className="text-slate-400" />
+                                    </div>
+                                </button>
+
+                                {isCrmNotificationsOpen && (
+                                    <div className="px-6 pb-8 pt-2 space-y-8 animate-in fade-in slide-in-from-top-4 duration-300">
+                                        <div className="grid grid-cols-1 gap-8">
+                                            {renderEmployeeSelector('lead', 'Lead Notifications')}
+                                            {renderEmployeeSelector('deal', 'Deal Notifications')}
+                                            {renderEmployeeSelector('interview', 'Interview Notifications')}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Additional Config Items Placeholder */}
+                            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-12 flex flex-col items-center justify-center text-center opacity-60 grayscale">
+                                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-4 border border-slate-200">
+                                    <Settings size={32} />
+                                </div>
+                                <h4 className="text-base font-bold text-slate-800">More Settings Coming Soon</h4>
+                                <p className="text-xs text-slate-500 mt-1 max-w-xs">We're working on formula mappings and policy overrides.</p>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">F&F Settlement Configuration</h3>
-                        <p className="text-slate-500 max-w-md mx-auto">
-                            Manage advanced settings, formula mappings, and policy overrides for the Full & Final Settlement process. This module is currently under development.
-                        </p>
                     </div>
                 )}
             </div>
