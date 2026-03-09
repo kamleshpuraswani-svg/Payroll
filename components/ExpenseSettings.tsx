@@ -573,7 +573,7 @@ const ExpenseSettings: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                    <Plus className="text-sky-600" size={18} /> Add Expense Configuration
+                                    Add Expense Configuration
                                 </h3>
                                 <button
                                     onClick={() => setIsAddingExpense(false)}
@@ -616,9 +616,9 @@ const ExpenseSettings: React.FC = () => {
                                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required amount</label>
                                                 <div className="group relative">
                                                     <Info size={12} className="text-slate-300 cursor-help" />
-                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-[200] text-center leading-relaxed">
+                                                    <div className="invisible group-hover:visible absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-[200] text-center leading-relaxed">
                                                         Claims above this amount will require a receipt/document.
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                        <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-800"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -771,7 +771,6 @@ const ExpenseSettings: React.FC = () => {
                                     <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
                                         <div className="space-y-0.5">
                                             <label className="text-sm font-bold text-slate-700">Status</label>
-                                            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Toggle category status</p>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
@@ -797,7 +796,7 @@ const ExpenseSettings: React.FC = () => {
                                         disabled={isSaving}
                                         className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
-                                        {isSaving ? 'Saving...' : 'Add Configuration'}
+                                        {isSaving ? 'Saving...' : 'Submit'}
                                     </button>
                                 </div>
                             </form>
