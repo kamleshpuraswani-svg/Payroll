@@ -478,10 +478,18 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
-    const [isActive, setIsActive] = useState(initialData?.status ?? false);
+    const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
     const [deductionType, setDeductionType] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deductionType || 'Statutory');
+
+    // Calculation Method State
+    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage'>(
+        initialData?.calcMethod || 'Flat'
+    );
+    const [amountOrPercent, setAmountOrPercent] = useState(initialData?.amountOrPercent || '');
+    const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSave = () => {
         const updatedData: Partial<SalaryComponent> = {
@@ -492,9 +500,11 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             showInPayslip,
             effectiveDate,
             deductionType,
+            calcMethod,
+            amountOrPercent,
             type: 'Variable Pay',
             category: 'Deductions',
-            calculation: frequency === 'One-time' ? 'One-time Deduction' : 'Recurring Deduction',
+            calculation: calcMethod === 'Flat' ? `Flat ₹${amountOrPercent}` : `${amountOrPercent}% of ${selectedComponents.join(', ')}`,
             taxable: 'Tax Deductible',
         };
         onSave(updatedData);
@@ -513,7 +523,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date <span className="text-rose-500">*</span></label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date</label>
                         <input
                             type="date"
                             value={effectiveDate}
@@ -541,8 +551,87 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         ))}
                     </div>
                 </div>
+                {/* Calculation Method */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">Calculation Method <span className="text-rose-500">*</span></label>
+                        <div className="flex items-center gap-6 h-[42px]">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    {calcMethod === 'Flat' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                </div>
+                                <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
+                                <span className="text-sm text-slate-700">Flat Amount</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    {calcMethod === 'Percentage' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                </div>
+                                <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
+                                <span className="text-sm text-slate-700">Percentage of</span>
+                            </label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    disabled={calcMethod !== 'Percentage'}
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50 flex items-center gap-2 min-w-[100px] hover:bg-slate-100 transition-colors"
+                                >
+                                    <span className="flex-1 text-left">{selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select...'}</span>
+                                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
+                                            {['CTC', 'Basic'].map(comp => (
+                                                <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                                        {selectedComponents.includes(comp) && <Check size={12} className="text-white" />}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={selectedComponents.includes(comp)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedComponents(prev => [...prev, comp]);
+                                                            } else {
+                                                                setSelectedComponents(prev => prev.filter(c => c !== comp));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span className="text-sm text-slate-700 font-medium">{comp}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={amountOrPercent}
+                                onChange={(e) => setAmountOrPercent(e.target.value)}
+                                placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
+                                className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                            />
+                            <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                {calcMethod === 'Percentage' ? '%' : '₹'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Select the deduction frequency <span className="text-rose-500">*</span></label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Frequency <span className="text-rose-500">*</span></label>
                     <div className="space-y-2">
                         {['One-time', 'Recurring'].map(freq => (
                             <label key={freq} className="flex items-center gap-2 cursor-pointer">
