@@ -181,34 +181,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 // --- Detailed Add Earning Form ---
 const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
     const [name, setName] = useState(initialData?.name || '');
-    const [availableEarnings, setAvailableEarnings] = useState<{ id: string, name: string }[]>([]);
-    const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
-
-    useEffect(() => {
-        const fetchAvailableEarnings = async () => {
-            setIsLoadingEarnings(true);
-            try {
-                const { data, error } = await supabase
-                    .from('salary_components')
-                    .select('id, name')
-                    .eq('category', 'Earnings')
-                    .eq('status', true);
-
-                if (error) throw error;
-                if (data) {
-                    setAvailableEarnings(data);
-                }
-            } catch (err) {
-                console.error('Error fetching available earnings:', err);
-            } finally {
-                setIsLoadingEarnings(false);
-            }
-        };
-        fetchAvailableEarnings();
-    }, []);
-
-    const [isOtherSelected, setIsOtherSelected] = useState(false);
-    const [customName, setCustomName] = useState('');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
     const [error, setError] = useState<string | null>(null);
@@ -234,16 +206,14 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
 
     const handleSave = () => {
-        const finalName = isOtherSelected ? customName : name;
-        if (!finalName || !effectiveDate) {
-            if (!effectiveDate) setError('Effective Date is mandatory');
-            else setError('Component Name is mandatory');
+        if (!name) {
+            setError('Component Name is mandatory');
             return;
         }
         setError(null);
 
         const updatedData: Partial<SalaryComponent> = {
-            name: finalName,
+            name,
             payslipName,
             effectiveDate,
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
@@ -274,57 +244,15 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                            <div className="relative">
-                                <select
-                                    value={isOtherSelected ? 'others' : name}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (val === 'others') {
-                                            setIsOtherSelected(true);
-                                            setName('');
-                                        } else {
-                                            setIsOtherSelected(false);
-                                            setName(val);
-                                            if (!payslipName) setPayslipName(val);
-                                        }
-                                    }}
-                                    disabled={isLoadingEarnings}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white font-medium text-slate-700"
-                                >
-                                    <option value="">Select Component</option>
-                                    {availableEarnings.map(comp => (
-                                        <option key={comp.id} value={comp.name}>{comp.name}</option>
-                                    ))}
-                                    <option value="others" className="text-purple-600 font-semibold border-t border-slate-100">+ Others</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                            </div>
-
-                            {isOtherSelected && (
-                                <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        value={customName}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            setCustomName(val);
-                                            if (!payslipName) setPayslipName(val);
-                                        }}
-                                        placeholder="Enter Custom Name"
-                                        className="w-full px-3 py-2.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10"
-                                    />
-                                </div>
-                            )}
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
                             <input type="text" value={payslipName} onChange={e => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date <span className="text-rose-500">*</span></label>
-                            <input type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 ${error && !effectiveDate ? 'border-rose-500' : 'border-slate-200'}`} />
-                            {error && !effectiveDate && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
+                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
+                            <input type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600" />
                         </div>
                     </div>
 
