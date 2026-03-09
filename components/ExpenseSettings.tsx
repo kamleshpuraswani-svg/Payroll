@@ -301,9 +301,13 @@ const ExpenseSettings: React.FC = () => {
 
         setIsSaving(true);
         try {
+            // Calculate a baseline limit from the selected entities if any, or use 0
+            const maxLimit = selectedEntities.length > 0 ? Math.max(...selectedEntities.map(e => e.limit || 0)) : 0;
+            const minThreshold = selectedEntities.length > 0 ? Math.min(...selectedEntities.map(e => e.receipt_threshold || 200)) : 200;
+
             const configData = {
-                max_limit: parseFloat(totalLimit.replace(/[^0-9.]/g, '')),
-                receipt_threshold: parseFloat(receiptThreshold),
+                max_limit: maxLimit,
+                receipt_threshold: minThreshold,
                 status: status,
                 applicable_to: selectedEntities,
                 updated_at: new Date().toISOString()
@@ -616,76 +620,61 @@ const ExpenseSettings: React.FC = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</label>
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                                <input
-                                                    name="limit"
-                                                    type="text"
-                                                    defaultValue={editingExpense ? (editingExpense.max_limit || 0).toLocaleString() : ''}
-                                                    placeholder="5,000"
-                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-1.5">
-                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt required amount</label>
-                                                <div className="group relative">
-                                                    <Info size={12} className="text-slate-300 cursor-help" />
-                                                    <div className="invisible group-hover:visible absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-[200] text-center leading-relaxed">
-                                                        Claims above this amount will require a receipt/document.
-                                                        <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-800"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                                <input
-                                                    name="receipt_threshold"
-                                                    type="number"
-                                                    defaultValue={editingExpense?.receipt_threshold || 200}
-                                                    placeholder="200"
-                                                    className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {/* Global fields removed, now managed at per-entity level in Applicable To section */}
 
                                     <div className="space-y-3">
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</label>
-                                        <div className="space-y-2">
+                                        <div className="space-y-4">
                                             {selectedEntities.map((entity, idx) => (
-                                                <div key={idx} className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-2 rounded-lg group animate-in slide-in-from-left-2">
-                                                    <div className={`flex-1 flex items-center gap-2 px-2 py-1 rounded-md text-[11px] font-bold ${entity.type === 'Employee' ? 'bg-sky-100 text-sky-700' :
+                                                <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4 animate-in slide-in-from-left-2 relative group">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedEntities(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="absolute top-3 right-3 text-slate-400 hover:text-rose-500 transition-colors p-1"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+
+                                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold ${entity.type === 'Employee' ? 'bg-sky-100 text-sky-700' :
                                                         entity.type === 'Department' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'
                                                         }`}>
                                                         <span>{entity.name}</span>
                                                         {entity.type === 'Employee' && <span className="opacity-50 text-[9px]">({entity.id})</span>}
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] font-black text-slate-400">LIMIT ₹</span>
-                                                        <input
-                                                            type="number"
-                                                            value={entity.limit || ''}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value === '' ? '' : parseFloat(e.target.value);
-                                                                setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, limit: val } : ent));
-                                                            }}
-                                                            className="w-24 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500"
-                                                            placeholder="Amount"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedEntities(prev => prev.filter((_, i) => i !== idx))}
-                                                            className="text-slate-400 hover:text-rose-500 transition-colors"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</label>
+                                                            <div className="relative">
+                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[11px]">₹</span>
+                                                                <input
+                                                                    type="number"
+                                                                    value={entity.limit || ''}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                                                                        setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, limit: val } : ent));
+                                                                    }}
+                                                                    className="w-full pl-6 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500"
+                                                                    placeholder="Limit"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Receipt required amount</label>
+                                                            <div className="relative">
+                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[11px]">₹</span>
+                                                                <input
+                                                                    type="number"
+                                                                    value={entity.receipt_threshold || ''}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                                                                        setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, receipt_threshold: val } : ent));
+                                                                    }}
+                                                                    className="w-full pl-6 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500"
+                                                                    placeholder="Threshold"
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
@@ -720,7 +709,7 @@ const ExpenseSettings: React.FC = () => {
                                                                             onMouseDown={(e) => {
                                                                                 e.preventDefault(); // Prevent blur
                                                                                 if (!selectedEntities.find(ent => ent.type === 'Designation' && ent.name === d)) {
-                                                                                    setSelectedEntities(prev => [...prev, { type: 'Designation', name: d, limit: 5000 }]);
+                                                                                    setSelectedEntities(prev => [...prev, { type: 'Designation', name: d, limit: 5000, receipt_threshold: 200 }]);
                                                                                 }
                                                                                 setEntitySearch('');
                                                                                 setShowEntityDropdown(false);
@@ -746,7 +735,7 @@ const ExpenseSettings: React.FC = () => {
                                                                             onMouseDown={(e) => {
                                                                                 e.preventDefault(); // Prevent blur
                                                                                 if (!selectedEntities.find(ent => ent.type === 'Department' && ent.name === d)) {
-                                                                                    setSelectedEntities(prev => [...prev, { type: 'Department', name: d, limit: 5000 }]);
+                                                                                    setSelectedEntities(prev => [...prev, { type: 'Department', name: d, limit: 5000, receipt_threshold: 200 }]);
                                                                                 }
                                                                                 setEntitySearch('');
                                                                                 setShowEntityDropdown(false);
@@ -772,7 +761,7 @@ const ExpenseSettings: React.FC = () => {
                                                                             onMouseDown={(e) => {
                                                                                 e.preventDefault(); // Prevent blur
                                                                                 if (!selectedEntities.find(entity => entity.type === 'Employee' && entity.id === e.id)) {
-                                                                                    setSelectedEntities(prev => [...prev, { type: 'Employee', name: e.name, id: e.id, limit: 5000 }]);
+                                                                                    setSelectedEntities(prev => [...prev, { type: 'Employee', name: e.name, id: e.id, limit: 5000, receipt_threshold: 200 }]);
                                                                                 }
                                                                                 setEntitySearch('');
                                                                                 setShowEntityDropdown(false);
