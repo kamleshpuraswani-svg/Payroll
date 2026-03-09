@@ -354,8 +354,8 @@ export const RunPayrollModal: React.FC<{
 
    // Step 1: Selection Logic
    const filteredEmployees = payrollEmployees.filter(e =>
-      e.name.toLowerCase().includes(empSearch.toLowerCase()) ||
-      e.eid.toLowerCase().includes(empSearch.toLowerCase())
+      `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
+      e.employee_id.toLowerCase().includes(empSearch.toLowerCase())
    );
 
    const eligibleCount = payrollEmployees.filter(e => e.payrollStatus === 'Eligible').length;
@@ -522,11 +522,11 @@ export const RunPayrollModal: React.FC<{
                                     <td className="px-4 py-3">
                                        <div className="flex items-center gap-3">
                                           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
-                                             <img src={emp.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                             <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
                                           </div>
                                           <div>
-                                             <div className="font-semibold text-slate-800">{emp.name}</div>
-                                             <div className="text-xs text-slate-500">{emp.department} • {emp.eid}</div>
+                                             <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
+                                             <div className="text-xs text-slate-500">{emp.department} • {emp.employee_id}</div>
                                           </div>
                                        </div>
                                     </td>
