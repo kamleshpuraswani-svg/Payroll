@@ -571,8 +571,8 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                             <tr>
                                 <th className="px-6 py-4">Template Name</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Create By</th>
-                                <th className="px-6 py-4">Last Updated By</th>
+                                <th className="px-6 py-4">Created By</th>
+                                <th className="px-6 py-4">Last Modified By</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
