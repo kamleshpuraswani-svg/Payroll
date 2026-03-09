@@ -706,8 +706,8 @@ const ExpenseSettings: React.FC = () => {
                                                                         <button
                                                                             key={d}
                                                                             type="button"
-                                                                            onMouseDown={(e) => {
-                                                                                e.preventDefault(); // Prevent blur
+                                                                            onMouseDown={(ev) => {
+                                                                                ev.preventDefault(); // Prevent blur
                                                                                 if (!selectedEntities.find(ent => ent.type === 'Designation' && ent.name === d)) {
                                                                                     setSelectedEntities(prev => [...prev, { type: 'Designation', name: d, limit: 5000, receipt_threshold: 200 }]);
                                                                                 }
@@ -732,8 +732,8 @@ const ExpenseSettings: React.FC = () => {
                                                                         <button
                                                                             key={d}
                                                                             type="button"
-                                                                            onMouseDown={(e) => {
-                                                                                e.preventDefault(); // Prevent blur
+                                                                            onMouseDown={(ev) => {
+                                                                                ev.preventDefault(); // Prevent blur
                                                                                 if (!selectedEntities.find(ent => ent.type === 'Department' && ent.name === d)) {
                                                                                     setSelectedEntities(prev => [...prev, { type: 'Department', name: d, limit: 5000, receipt_threshold: 200 }]);
                                                                                 }
@@ -758,8 +758,8 @@ const ExpenseSettings: React.FC = () => {
                                                                         <button
                                                                             key={e.id}
                                                                             type="button"
-                                                                            onMouseDown={(e) => {
-                                                                                e.preventDefault(); // Prevent blur
+                                                                            onMouseDown={(ev) => {
+                                                                                ev.preventDefault(); // Prevent blur
                                                                                 if (!selectedEntities.find(entity => entity.type === 'Employee' && entity.id === e.id)) {
                                                                                     setSelectedEntities(prev => [...prev, { type: 'Employee', name: e.name, id: e.id, limit: 5000, receipt_threshold: 200 }]);
                                                                                 }
