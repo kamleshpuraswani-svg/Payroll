@@ -866,6 +866,8 @@ const ExpenseSettings: React.FC = () => {
                                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit</th>
                                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Required</th>
                                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
+                                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
                                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                             </tr>
                                         </thead>
@@ -886,8 +888,40 @@ const ExpenseSettings: React.FC = () => {
                                                             {(exp.status || 'ACTIVE').toUpperCase()}
                                                         </span>
                                                     </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center text-[10px] font-bold text-sky-600">HM</div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-slate-600">HR Manager</p>
+                                                                {exp.created_at && (
+                                                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                                                        {new Date(exp.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">HM</div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-slate-600">HR Manager</p>
+                                                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                                                    {new Date(exp.updated_at || exp.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-3">
+                                                        <div className="flex justify-end items-center gap-4">
+                                                            <button
+                                                                onClick={() => toggleCategoryStatus(exp.id)}
+                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${exp.status !== 'Inactive' ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                                                title={exp.status !== 'Inactive' ? "Deactivate" : "Activate"}
+                                                            >
+                                                                <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${exp.status !== 'Inactive' ? 'translate-x-5' : 'translate-x-1'}`} />
+                                                            </button>
+                                                            <div className="h-4 w-[1px] bg-slate-100 mx-1"></div>
                                                             <button
                                                                 onClick={() => openEditModal(exp)}
                                                                 className="text-slate-400 hover:text-sky-600 transition-colors"
