@@ -703,7 +703,7 @@ const LoanAdvancesTypes: React.FC = () => {
 
                                 {/* Approval Flow Section */}
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Approval Flow (Hierarchy)</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Approval Flow</label>
                                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                                         <div className="flex gap-3 mb-4">
                                             <div className="relative flex-1">
@@ -779,7 +779,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                         {currentLoan.status && <CheckCircle size={14} className="text-white" />}
                                     </div>
                                     <input type="checkbox" className="hidden" checked={currentLoan.status} onChange={() => setCurrentLoan({ ...currentLoan, status: !currentLoan.status })} />
-                                    <span className="text-sm font-medium text-slate-700">Active</span>
+                                    <span className="text-sm font-medium text-slate-700">Mark as Active</span>
                                 </label>
                             </div>
                         </div>
