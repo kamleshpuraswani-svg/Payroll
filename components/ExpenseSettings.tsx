@@ -20,7 +20,9 @@ import {
     ArrowUp,
     ArrowDown,
     UserCircle,
-    ChevronRight
+    ChevronRight,
+    Home,
+    User
 } from 'lucide-react';
 
 const ExpenseSettings: React.FC = () => {
@@ -585,231 +587,299 @@ const ExpenseSettings: React.FC = () => {
                         </div>
                     </div>
                 )}
-                {/* Modal for Add Expense Configuration */}
                 {isAddingExpense && (
                     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                    {editingExpense ? 'Edit Expense Configuration' : 'Add Expense Configuration'}
-                                </h3>
+                        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">
+                                        {editingExpense ? 'Edit Expense Configuration' : 'Add Expense Configuration'}
+                                    </h3>
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Define category limits and applicability</p>
+                                </div>
                                 <button
                                     onClick={() => {
                                         setIsAddingExpense(false);
                                         setEditingExpense(null);
                                     }}
-                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
                                 >
-                                    <X size={18} />
+                                    <X size={20} />
                                 </button>
                             </div>
-                            <form onSubmit={handleSaveExpense} className="p-6 space-y-6">
-                                <div className="space-y-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Category</label>
-                                        <select
-                                            name="category"
-                                            defaultValue={editingExpense?.id || ''}
-                                            disabled={!!editingExpense}
-                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all disabled:opacity-50"
-                                            required
-                                        >
-                                            <option value="">Select a category</option>
-                                            {categories.map(cat => (
-                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {/* Global fields removed, now managed at per-entity level in Applicable To section */}
-
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</label>
-                                        <div className="space-y-4">
-                                            {selectedEntities.map((entity, idx) => (
-                                                <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4 animate-in slide-in-from-left-2 relative group">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setSelectedEntities(prev => prev.filter((_, i) => i !== idx))}
-                                                        className="absolute top-3 right-3 text-slate-400 hover:text-rose-500 transition-colors p-1"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
-
-                                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold ${entity.type === 'Employee' ? 'bg-sky-100 text-sky-700' :
-                                                        entity.type === 'Department' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'
-                                                        }`}>
-                                                        <span>{entity.name}</span>
-                                                        {entity.type === 'Employee' && <span className="opacity-50 text-[9px]">({entity.id})</span>}
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expense amount limit (monthly)</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[11px]">₹</span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={entity.limit || ''}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value === '' ? '' : parseFloat(e.target.value);
-                                                                        setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, limit: val } : ent));
-                                                                    }}
-                                                                    className="w-full pl-6 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500"
-                                                                    placeholder="Limit"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Receipt required amount</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[11px]">₹</span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={entity.receipt_threshold || ''}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value === '' ? '' : parseFloat(e.target.value);
-                                                                        setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, receipt_threshold: val } : ent));
-                                                                    }}
-                                                                    className="w-full pl-6 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500"
-                                                                    placeholder="Threshold"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                            <form onSubmit={handleSaveExpense} className="flex flex-col h-[85vh] max-h-[750px]">
+                                <div className="p-8 space-y-8 overflow-y-auto flex-1 custom-scrollbar bg-white">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Select Expense Category</label>
+                                            <div className="relative group">
+                                                <select
+                                                    name="category"
+                                                    defaultValue={editingExpense?.id || ''}
+                                                    disabled={!!editingExpense}
+                                                    className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-sky-500 focus:bg-white transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer group-hover:border-slate-300"
+                                                    required
+                                                >
+                                                    <option value="">Choose a category...</option>
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-slate-500 transition-colors" />
+                                            </div>
                                         </div>
 
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="Search to add Designation, Department or Employee..."
-                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-sky-500 shadow-sm"
-                                                value={entitySearch}
-                                                onChange={(e) => {
-                                                    setEntitySearch(e.target.value);
-                                                    setShowEntityDropdown(true);
-                                                }}
-                                                onFocus={() => setShowEntityDropdown(true)}
-                                                onBlur={() => setTimeout(() => setShowEntityDropdown(false), 200)}
-                                            />
-                                            {showEntityDropdown && (
-                                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[160] max-h-60 overflow-y-auto">
-                                                    <div className="p-2">
-                                                        {/* Designations */}
-                                                        {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
-                                                            <>
-                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-2">Designations</div>
-                                                                {availableDesignations
-                                                                    .filter(d => d.toLowerCase().includes(entitySearch.toLowerCase()))
-                                                                    .map(d => (
-                                                                        <button
-                                                                            key={d}
-                                                                            type="button"
-                                                                            onMouseDown={(ev) => {
-                                                                                ev.preventDefault(); // Prevent blur
-                                                                                if (!selectedEntities.find(ent => ent.type === 'Designation' && ent.name === d)) {
-                                                                                    setSelectedEntities(prev => [...prev, { type: 'Designation', name: d, limit: 5000, receipt_threshold: 200 }]);
-                                                                                }
-                                                                                setEntitySearch('');
-                                                                                setShowEntityDropdown(false);
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-1.5 rounded hover:bg-slate-50 text-xs font-semibold text-slate-600"
-                                                                        >
-                                                                            {d}
-                                                                        </button>
-                                                                    ))}
-                                                            </>
-                                                        )}
-
-                                                        {/* Departments */}
-                                                        {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
-                                                            <>
-                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2 mb-1 px-2">Departments</div>
-                                                                {availableDepartments
-                                                                    .filter(d => d.toLowerCase().includes(entitySearch.toLowerCase()))
-                                                                    .map(d => (
-                                                                        <button
-                                                                            key={d}
-                                                                            type="button"
-                                                                            onMouseDown={(ev) => {
-                                                                                ev.preventDefault(); // Prevent blur
-                                                                                if (!selectedEntities.find(ent => ent.type === 'Department' && ent.name === d)) {
-                                                                                    setSelectedEntities(prev => [...prev, { type: 'Department', name: d, limit: 5000, receipt_threshold: 200 }]);
-                                                                                }
-                                                                                setEntitySearch('');
-                                                                                setShowEntityDropdown(false);
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-1.5 rounded hover:bg-slate-50 text-xs font-semibold text-slate-600"
-                                                                        >
-                                                                            {d}
-                                                                        </button>
-                                                                    ))}
-                                                            </>
-                                                        )}
-
-                                                        {/* Employees */}
-                                                        {allEmployees.filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
-                                                            <>
-                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2 mb-1 px-2">Employees</div>
-                                                                {allEmployees
-                                                                    .filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase()))
-                                                                    .map(e => (
-                                                                        <button
-                                                                            key={e.id}
-                                                                            type="button"
-                                                                            onMouseDown={(ev) => {
-                                                                                ev.preventDefault(); // Prevent blur
-                                                                                if (!selectedEntities.find(entity => entity.type === 'Employee' && entity.id === e.id)) {
-                                                                                    setSelectedEntities(prev => [...prev, { type: 'Employee', name: e.name, id: e.id, limit: 5000, receipt_threshold: 200 }]);
-                                                                                }
-                                                                                setEntitySearch('');
-                                                                                setShowEntityDropdown(false);
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-1.5 rounded hover:bg-slate-50 text-xs font-semibold text-slate-600"
-                                                                        >
-                                                                            {e.name} ({e.eid})
-                                                                        </button>
-                                                                    ))}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Configuration Status</label>
+                                            <div className="flex items-center justify-between h-[52px] px-5 bg-slate-50 border border-slate-200 rounded-xl group hover:border-slate-300 transition-all">
+                                                <span className="text-sm font-bold text-slate-600">Mark as Active</span>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="status"
+                                                        defaultChecked={editingExpense ? editingExpense.status !== 'Inactive' : true}
+                                                        className="sr-only peer"
+                                                    />
+                                                    <div className="w-12 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500 shadow-inner"></div>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                                        <div className="space-y-0.5">
-                                            <label className="text-sm font-bold text-slate-700">Status</label>
+
+                                    <div className="space-y-5">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div>
+                                                <h4 className="text-sm font-black text-slate-800">Applicable To & Per-Entity Limits</h4>
+                                                <p className="text-[11px] text-slate-400 font-bold mt-0.5">Control monthly limits and receipt thresholds for specific groups.</p>
+                                            </div>
+                                            <div className="relative w-full md:w-80 group">
+                                                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search Dept, Designation or Employee..."
+                                                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-sky-500 focus:bg-white shadow-sm transition-all group-hover:border-slate-300 placeholder:text-slate-300"
+                                                    value={entitySearch}
+                                                    onChange={(e) => {
+                                                        setEntitySearch(e.target.value);
+                                                        setShowEntityDropdown(true);
+                                                    }}
+                                                    onFocus={() => setShowEntityDropdown(true)}
+                                                    onBlur={() => setTimeout(() => setShowEntityDropdown(false), 200)}
+                                                />
+                                                {showEntityDropdown && (
+                                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[160] max-h-72 overflow-y-auto animate-in slide-in-from-top-2 duration-200 custom-scrollbar border-t-0 ring-4 ring-slate-900/5">
+                                                        <div className="p-3">
+                                                            {/* Designations */}
+                                                            {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
+                                                                <div className="mb-4">
+                                                                    <div className="text-[9px] font-black text-slate-300 tracking-[3px] uppercase px-3 py-2">Designations</div>
+                                                                    {availableDesignations
+                                                                        .filter(d => d.toLowerCase().includes(entitySearch.toLowerCase()))
+                                                                        .map(d => (
+                                                                            <button
+                                                                                key={d}
+                                                                                type="button"
+                                                                                onMouseDown={(ev) => {
+                                                                                    ev.preventDefault();
+                                                                                    if (!selectedEntities.find(ent => ent.type === 'Designation' && ent.name === d)) {
+                                                                                        setSelectedEntities(prev => [...prev, { type: 'Designation', name: d, limit: 5000, receipt_threshold: 200 }]);
+                                                                                    }
+                                                                                    setEntitySearch('');
+                                                                                }}
+                                                                                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-sky-50 text-[11px] font-bold text-slate-600 flex items-center justify-between group/item transition-colors"
+                                                                            >
+                                                                                <span className="flex items-center gap-2">
+                                                                                    <ShieldCheck size={14} className="text-amber-500" />
+                                                                                    {d}
+                                                                                </span>
+                                                                                <Plus size={14} className="opacity-0 group-hover/item:opacity-100 text-sky-500 translate-x-2 group-hover/item:translate-x-0 transition-all" />
+                                                                            </button>
+                                                                        ))}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Departments */}
+                                                            {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
+                                                                <div className="mb-4">
+                                                                    <div className="text-[9px] font-black text-slate-300 tracking-[3px] uppercase px-3 py-2">Departments</div>
+                                                                    {availableDepartments
+                                                                        .filter(d => d.toLowerCase().includes(entitySearch.toLowerCase()))
+                                                                        .map(d => (
+                                                                            <button
+                                                                                key={d}
+                                                                                type="button"
+                                                                                onMouseDown={(ev) => {
+                                                                                    ev.preventDefault();
+                                                                                    if (!selectedEntities.find(ent => ent.type === 'Department' && ent.name === d)) {
+                                                                                        setSelectedEntities(prev => [...prev, { type: 'Department', name: d, limit: 5000, receipt_threshold: 200 }]);
+                                                                                    }
+                                                                                    setEntitySearch('');
+                                                                                }}
+                                                                                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-purple-50 text-[11px] font-bold text-slate-600 flex items-center justify-between group/item transition-colors"
+                                                                            >
+                                                                                <span className="flex items-center gap-2">
+                                                                                    <Home size={14} className="text-purple-500" />
+                                                                                    {d}
+                                                                                </span>
+                                                                                <Plus size={14} className="opacity-0 group-hover/item:opacity-100 text-purple-500 translate-x-2 group-hover/item:translate-x-0 transition-all" />
+                                                                            </button>
+                                                                        ))}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Employees */}
+                                                            {allEmployees.filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase())).length > 0 && (
+                                                                <div>
+                                                                    <div className="text-[9px] font-black text-slate-300 tracking-[3px] uppercase px-3 py-2">Employees</div>
+                                                                    {allEmployees
+                                                                        .filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase()))
+                                                                        .map(e => (
+                                                                            <button
+                                                                                key={e.id}
+                                                                                type="button"
+                                                                                onMouseDown={(ev) => {
+                                                                                    ev.preventDefault();
+                                                                                    if (!selectedEntities.find(entity => entity.type === 'Employee' && entity.id === e.id)) {
+                                                                                        setSelectedEntities(prev => [...prev, { type: 'Employee', name: e.name, id: e.id, limit: 5000, receipt_threshold: 200 }]);
+                                                                                    }
+                                                                                    setEntitySearch('');
+                                                                                }}
+                                                                                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-sky-50 text-[11px] font-bold text-slate-600 flex items-center justify-between group/item transition-colors"
+                                                                            >
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center text-sky-600">
+                                                                                        <span className="text-[10px] uppercase">{e.name.charAt(0)}</span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <div className="font-black text-slate-700">{e.name}</div>
+                                                                                        <div className="text-[9px] text-slate-400 font-bold">{e.eid} • {e.department}</div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <Plus size={14} className="opacity-0 group-hover/item:opacity-100 text-sky-500 translate-x-2 group-hover/item:translate-x-0 transition-all" />
+                                                                            </button>
+                                                                        ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                name="status"
-                                                defaultChecked={editingExpense ? editingExpense.status !== 'Inactive' : true}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                                        </label>
+
+                                        <div className="bg-slate-50 border border-slate-100 rounded-[24px] overflow-hidden shadow-sm">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-slate-100/50">
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Applicable Entity</th>
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[2px] w-52">Exp. Limit (Monthly)</th>
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[2px] w-52">Receipt Threshold</th>
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[2px] w-16 text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                                        {selectedEntities.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={4} className="px-8 py-20 text-center">
+                                                                    <div className="flex flex-col items-center gap-4">
+                                                                        <div className="w-16 h-16 rounded-[20px] bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
+                                                                            <Users size={28} className="text-slate-200" />
+                                                                        </div>
+                                                                        <div className="space-y-1">
+                                                                            <p className="text-sm font-black text-slate-500">No entities selection detected</p>
+                                                                            <p className="text-[11px] text-slate-400 font-bold">Try searching for a department, designation or specific employee above.</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            selectedEntities.map((entity, idx) => (
+                                                                <tr key={idx} className="group hover:bg-slate-50/30 transition-all animate-in fade-in slide-in-from-top-1 duration-300">
+                                                                    <td className="px-8 py-5">
+                                                                        <div className="flex items-center gap-4">
+                                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border ${entity.type === 'Employee' ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                                                                                entity.type === 'Department' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                                                }`}>
+                                                                                {entity.type === 'Employee' ? <User size={18} /> : entity.type === 'Department' ? <Home size={18} /> : <ShieldCheck size={18} />}
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-sm font-black text-slate-800 leading-tight mb-0.5">{entity.name}</p>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${entity.type === 'Employee' ? 'bg-sky-100 text-sky-700' :
+                                                                                        entity.type === 'Department' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'
+                                                                                        }`}>{entity.type}</span>
+                                                                                    {entity.id && <span className="text-[10px] text-slate-400 font-bold">#{entity.id}</span>}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-8 py-5">
+                                                                        <div className="relative group/input">
+                                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs transition-colors group-focus-within/input:text-sky-500">₹</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={entity.limit || ''}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                                                                                    setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, limit: val } : ent));
+                                                                                }}
+                                                                                className="w-full pl-8 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-black text-slate-700 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/5 transition-all outline-none"
+                                                                                placeholder="0.00"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-8 py-5">
+                                                                        <div className="relative group/input">
+                                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs transition-colors group-focus-within/input:text-sky-500">₹</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={entity.receipt_threshold || ''}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                                                                                    setSelectedEntities(prev => prev.map((ent, i) => i === idx ? { ...ent, receipt_threshold: val } : ent));
+                                                                                }}
+                                                                                className="w-full pl-8 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-black text-slate-700 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/5 transition-all outline-none"
+                                                                                placeholder="0.00"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-8 py-5 text-center">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setSelectedEntities(prev => prev.filter((_, i) => i !== idx))}
+                                                                            className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all hover:rotate-12 outline-none"
+                                                                        >
+                                                                            <Trash2 size={18} />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 pt-2">
+
+                                <div className="p-8 border-t border-slate-100 flex gap-4 bg-slate-50/30 justify-end">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setIsAddingExpense(false);
                                             setEditingExpense(null);
                                         }}
-                                        className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all"
+                                        className="px-8 py-3 bg-white border border-slate-200 text-slate-500 rounded-2xl hover:bg-slate-50 hover:text-slate-700 font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95"
                                     >
-                                        Cancel
+                                        Discard
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSaving}
-                                        className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
+                                        className="px-12 py-3 bg-sky-600 text-white rounded-2xl hover:bg-sky-700 font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-sky-100 active:scale-95 disabled:opacity-50 flex items-center gap-2"
                                     >
-                                        {isSaving ? 'Saving...' : 'Submit'}
+                                        {isSaving ? 'Processing...' : 'Save Configuration'}
+                                        {!isSaving && <ChevronRight size={16} />}
                                     </button>
                                 </div>
                             </form>
