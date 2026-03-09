@@ -371,7 +371,7 @@ interface FnFSettlementTemplateProps {
 
 const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole }) => {
     const [view, setView] = useState<'LIST' | 'EDITOR' | 'VIEW'>('LIST');
-    const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
+    const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW' | 'CONFIG'>('EDITOR');
 
     // --- Supabase Persistence ---
     const [templates, setTemplates] = useState<FnFTemplate[]>([]);
@@ -688,7 +688,8 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
             <div className="px-6 border-b border-slate-200 bg-white shrink-0">
                 <div className="flex gap-6">
                     <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview & History</button>
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview</button>
+                    <button onClick={() => setActiveTab('CONFIG')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'CONFIG' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Configuration</button>
                 </div>
             </div>
 
@@ -802,12 +803,11 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                             </div>
                         </div>
                     </>
-                ) : (
+                ) : activeTab === 'PREVIEW' ? (
                     /* PREVIEW TAB */
                     <div className="flex-1 bg-slate-100 p-8 flex justify-center overflow-y-auto">
                         <div className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-12 flex flex-col relative text-slate-900" style={{ fontFamily: 'Times New Roman, serif' }}>
-
-                            {/* Dynamic Header */}
+                            {/* ... existing preview content ... */}
                             <div className={`flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
                                 {headerConfig.showLogo && (
                                     <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center text-slate-400 mb-4 sm:mb-0 border border-slate-300">
@@ -819,12 +819,9 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                     {headerConfig.showCompanyAddress && <p className="text-sm text-slate-500 mt-1 max-w-xs ml-auto">123 Business Park, Sector 4, Bangalore - 560001</p>}
                                 </div>
                             </div>
-
                             <div className="text-center mb-8">
                                 <h2 className="text-xl font-bold uppercase underline underline-offset-4">{headerConfig.documentTitle}</h2>
                             </div>
-
-                            {/* Employee Details - Arjun Mehta */}
                             <div className="grid grid-cols-2 gap-y-3 gap-x-8 mb-8 text-sm border-b border-slate-200 pb-6">
                                 {headerConfig.employeeFields.name && <div className="flex"><span className="w-36 font-bold text-slate-600">Employee Name</span><span>: Arjun Mehta</span></div>}
                                 {headerConfig.employeeFields.id && <div className="flex"><span className="w-36 font-bold text-slate-600">Employee ID</span><span>: TF00888</span></div>}
@@ -835,8 +832,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                 {headerConfig.employeeFields.pan && <div className="flex"><span className="w-36 font-bold text-slate-600">PAN Number</span><span>: ABCDE1234F</span></div>}
                                 {headerConfig.employeeFields.uan && <div className="flex"><span className="w-36 font-bold text-slate-600">UAN</span><span>: 100900200300</span></div>}
                             </div>
-
-                            {/* Earnings Table */}
                             <div className="mb-6">
                                 <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Earnings & Dues</h4>
                                 <table className="w-full border-collapse border border-slate-300 text-sm">
@@ -862,8 +857,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                     </tbody>
                                 </table>
                             </div>
-
-                            {/* Deductions Table */}
                             <div className="mb-8">
                                 <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Deductions & Recoveries</h4>
                                 <table className="w-full border-collapse border border-slate-300 text-sm">
@@ -889,8 +882,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                     </tbody>
                                 </table>
                             </div>
-
-                            {/* Net Pay */}
                             <div className="flex justify-end mb-12">
                                 <div className="w-full border-2 border-slate-800 p-4 flex justify-between items-center bg-slate-50">
                                     <div className="text-left">
@@ -905,8 +896,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                     </span>
                                 </div>
                             </div>
-
-                            {/* Signature Blocks */}
                             <div className="mt-auto pt-8 border-t border-slate-300">
                                 <div className="flex justify-between items-end gap-12">
                                     <div className="flex-1 text-left">
@@ -929,6 +918,17 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                 </div>
                             </div>
                         </div>
+                    </div>
+                ) : (
+                    /* CONFIGURATION TAB */
+                    <div className="flex-1 bg-slate-50 p-8 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
+                            <Settings className="w-10 h-10 text-purple-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">F&F Settlement Configuration</h3>
+                        <p className="text-slate-500 max-w-md mx-auto">
+                            Manage advanced settings, formula mappings, and policy overrides for the Full & Final Settlement process. This module is currently under development.
+                        </p>
                     </div>
                 )}
             </div>
