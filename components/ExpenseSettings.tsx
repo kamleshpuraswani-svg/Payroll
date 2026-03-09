@@ -609,40 +609,22 @@ const ExpenseSettings: React.FC = () => {
                             </div>
                             <form onSubmit={handleSaveExpense} className="flex flex-col h-[85vh] max-h-[750px]">
                                 <div className="p-8 space-y-8 overflow-y-auto flex-1 custom-scrollbar bg-white">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Select Expense Category</label>
-                                            <div className="relative group">
-                                                <select
-                                                    name="category"
-                                                    defaultValue={editingExpense?.id || ''}
-                                                    disabled={!!editingExpense}
-                                                    className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-sky-500 focus:bg-white transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer group-hover:border-slate-300"
-                                                    required
-                                                >
-                                                    <option value="">Choose a category...</option>
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-slate-500 transition-colors" />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Configuration Status</label>
-                                            <div className="flex items-center justify-between h-[52px] px-5 bg-slate-50 border border-slate-200 rounded-xl group hover:border-slate-300 transition-all">
-                                                <span className="text-sm font-bold text-slate-600">Mark as Active</span>
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="status"
-                                                        defaultChecked={editingExpense ? editingExpense.status !== 'Inactive' : true}
-                                                        className="sr-only peer"
-                                                    />
-                                                    <div className="w-12 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500 shadow-inner"></div>
-                                                </label>
-                                            </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Select Expense Category</label>
+                                        <div className="relative group">
+                                            <select
+                                                name="category"
+                                                defaultValue={editingExpense?.id || ''}
+                                                disabled={!!editingExpense}
+                                                className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-sky-500 focus:bg-white transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer group-hover:border-slate-300"
+                                                required
+                                            >
+                                                <option value="">Choose a category...</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-slate-500 transition-colors" />
                                         </div>
                                     </div>
 
@@ -859,6 +841,18 @@ const ExpenseSettings: React.FC = () => {
                                                 </table>
                                             </div>
                                         </div>
+                                        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl group hover:border-slate-300 transition-all">
+                                            <span className="text-sm font-black text-slate-600">Status</span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    name="status"
+                                                    defaultChecked={editingExpense ? editingExpense.status !== 'Inactive' : true}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-12 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500 shadow-inner"></div>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -871,14 +865,14 @@ const ExpenseSettings: React.FC = () => {
                                         }}
                                         className="px-8 py-3 bg-white border border-slate-200 text-slate-500 rounded-2xl hover:bg-slate-50 hover:text-slate-700 font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95"
                                     >
-                                        Discard
+                                        Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSaving}
                                         className="px-12 py-3 bg-sky-600 text-white rounded-2xl hover:bg-sky-700 font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-sky-100 active:scale-95 disabled:opacity-50 flex items-center gap-2"
                                     >
-                                        {isSaving ? 'Processing...' : 'Save Configuration'}
+                                        {isSaving ? 'Processing...' : 'Save'}
                                         {!isSaving && <ChevronRight size={16} />}
                                     </button>
                                 </div>
