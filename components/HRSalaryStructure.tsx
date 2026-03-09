@@ -473,6 +473,17 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         }));
     };
 
+    const confirmDelete = (id: string) => {
+        setDeleteConfirmation({ isOpen: true, id });
+    };
+
+    const handleDeleteStructure = () => {
+        if (deleteConfirmation.id) {
+            setStructures(prev => prev.filter(s => s.id !== deleteConfirmation.id));
+        }
+        setDeleteConfirmation({ isOpen: false, id: null });
+    };
+
     const infoMessage = "If no department and designation selected, it will assigned to all employees.";
 
     // Helper Wrapper for embedded scrolling
@@ -810,6 +821,13 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                             >
                                                 <Edit2 size={16} />
                                             </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); confirmDelete(item.id); }}
+                                                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -818,6 +836,16 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                     </tbody>
                 </table>
             </div>
+
+            <ConfirmationModal
+                isOpen={deleteConfirmation.isOpen}
+                onClose={() => setDeleteConfirmation({ isOpen: false, id: null })}
+                onConfirm={handleDeleteStructure}
+                title="Delete Salary Structure?"
+                message="Are you sure you want to delete this salary structure? This action cannot be undone."
+                confirmLabel="Delete Structure"
+                isDanger={true}
+            />
         </ContentWrapper>
     );
 };
