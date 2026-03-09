@@ -821,11 +821,6 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
             {/* Action Bar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="w-full sm:w-auto flex items-center gap-3">
-                    <button onClick={handleCreateClick} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium shadow-sm transition-colors flex items-center gap-2">
-                        <Plus size={18} /> Create Salary Structure
-                    </button>
-                </div>
-                <div className="w-full sm:w-auto flex items-center gap-3">
                     <div className="relative flex-1 sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <input type="text" placeholder="Search structures..." className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
@@ -838,6 +833,11 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                         </select>
                         <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
                     </div>
+                </div>
+                <div className="w-full sm:w-auto flex items-center justify-end gap-3">
+                    <button onClick={handleCreateClick} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium shadow-sm transition-colors flex items-center gap-2">
+                        <Plus size={18} /> Create Salary Structure
+                    </button>
                 </div>
             </div>
 
