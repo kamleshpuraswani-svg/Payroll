@@ -259,6 +259,26 @@ const ExpenseSettings: React.FC = () => {
         }
     };
 
+    const toggleCategoryStatus = async (id: string) => {
+        const category = categories.find(c => c.id === id);
+        if (!category) return;
+
+        const newStatus = category.status === 'Active' ? 'Inactive' : 'Active';
+
+        try {
+            const { error } = await supabase
+                .from('expense_categories')
+                .update({ status: newStatus, updated_at: new Date().toISOString() })
+                .eq('id', id);
+
+            if (error) throw error;
+            await fetchData();
+        } catch (error: any) {
+            console.error('Error toggling status:', error);
+            alert(`Failed to update status: ${error.message || 'Unknown error'}`);
+        }
+    };
+
     const handleDeleteCategory = async (id: string) => {
         if (!confirm('Are you sure you want to delete this category?')) return;
 
@@ -369,7 +389,6 @@ const ExpenseSettings: React.FC = () => {
                                     <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
                                         <div className="space-y-0.5">
                                             <label className="text-sm font-bold text-slate-700">Status</label>
-                                            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{editingCategory?.status === 'Inactive' ? 'Inactive' : 'Active'}</p>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
@@ -1078,28 +1097,55 @@ const ExpenseSettings: React.FC = () => {
                                                     <tr>
                                                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
                                                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
+                                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
                                                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50">
                                                     {categories.map((cat) => (
                                                         <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                            <td className="px-6 py-6">
+                                                            <td className="px-6 py-6 border-b border-slate-50">
                                                                 <p className="text-sm font-bold text-slate-700">{cat.name}</p>
                                                             </td>
-                                                            <td className="px-6 py-6">
+                                                            <td className="px-6 py-6 border-b border-slate-50">
                                                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${cat.status === 'Inactive' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
                                                                     {cat.status?.toUpperCase() || 'ACTIVE'}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-6 py-6 text-right">
-                                                                <div className="flex justify-end gap-3">
-                                                                    <button onClick={() => openEditModal(cat)} className="text-slate-400 hover:text-sky-600 transition-colors" title="Edit">
-                                                                        <Edit2 size={16} />
+                                                            <td className="px-6 py-6 border-b border-slate-50">
+                                                                <span className="text-sm font-medium text-slate-600">HR Manager</span>
+                                                                {cat.created_at && (
+                                                                    <p className="text-[10px] text-slate-400 mt-1">
+                                                                        {new Date(cat.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                    </p>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-6 border-b border-slate-50">
+                                                                <span className="text-sm font-medium text-slate-600">HR Manager</span>
+                                                                {cat.updated_at && (
+                                                                    <p className="text-[10px] text-slate-400 mt-1">
+                                                                        {new Date(cat.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                    </p>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-6 text-right border-b border-slate-50">
+                                                                <div className="flex justify-end items-center gap-4">
+                                                                    <button
+                                                                        onClick={() => toggleCategoryStatus(cat.id)}
+                                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${cat.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                                                        title={cat.status === 'Active' ? "Deactivate" : "Activate"}
+                                                                    >
+                                                                        <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${cat.status === 'Active' ? 'translate-x-5' : 'translate-x-1'}`} />
                                                                     </button>
-                                                                    <button onClick={() => handleDeleteCategory(cat.id)} className="text-slate-400 hover:text-rose-500 transition-colors" title="Delete">
-                                                                        <Trash2 size={16} />
-                                                                    </button>
+                                                                    <div className="flex gap-2 border-l border-slate-100 pl-4 items-center">
+                                                                        <button onClick={() => openEditModal(cat)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all" title="Edit">
+                                                                            <Edit2 size={16} />
+                                                                        </button>
+                                                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Delete">
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                         </tr>
