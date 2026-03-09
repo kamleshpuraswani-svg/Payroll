@@ -610,7 +610,7 @@ const ExpenseSettings: React.FC = () => {
                             <form onSubmit={handleSaveExpense} className="flex flex-col h-[85vh] max-h-[750px]">
                                 <div className="p-8 space-y-8 overflow-y-auto flex-1 custom-scrollbar bg-white">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Select Expense Category</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[1.5px]">Expense Category</label>
                                         <div className="relative group">
                                             <select
                                                 name="category"
