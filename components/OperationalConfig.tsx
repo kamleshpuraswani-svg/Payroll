@@ -344,7 +344,12 @@ const OperationalConfig: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
                                     Eligible Departments <span className="text-red-500">*</span>
-                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                    <div className="group relative">
+                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
+                                            Choose departments who will be eligible for Loans and Advances. This helps limit selection to relevant teams only.
+                                        </div>
+                                    </div>
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
