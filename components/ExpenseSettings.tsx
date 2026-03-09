@@ -34,6 +34,7 @@ const ExpenseSettings: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showExpenseCategoryView, setShowExpenseCategoryView] = useState(false);
     const [isAddingExpense, setIsAddingExpense] = useState(false);
+    const [editingExpense, setEditingExpense] = useState<any>(null);
     const [configuredExpenses, setConfiguredExpenses] = useState<any[]>([]);
 
     // State for Expense Categories
@@ -303,18 +304,25 @@ const ExpenseSettings: React.FC = () => {
             const configData = {
                 max_limit: parseFloat(totalLimit.replace(/[^0-9.]/g, '')),
                 receipt_threshold: parseFloat(receiptThreshold),
-                status: status
+                status: status,
+                applicable_to: selectedEntities,
+                updated_at: new Date().toISOString()
             };
+
+            const targetId = editingExpense ? editingExpense.id : categoryId;
+
+            if (!targetId) throw new Error('Category is required');
 
             const { error } = await supabase
                 .from('expense_categories')
                 .update(configData)
-                .eq('id', categoryId);
+                .eq('id', targetId);
 
             if (error) throw error;
 
             await fetchData();
             setIsAddingExpense(false);
+            setEditingExpense(null);
             setSelectedEntities([]);
             setEntitySearch('');
         } catch (error: any) {
@@ -348,6 +356,12 @@ const ExpenseSettings: React.FC = () => {
     const openEditModal = (category: any) => {
         setEditingCategory(category);
         setIsAddingCategory(true);
+    };
+
+    const openEditExpenseModal = (expense: any) => {
+        setEditingExpense(expense);
+        setSelectedEntities(expense.applicable_to || []);
+        setIsAddingExpense(true);
     };
 
     return (
@@ -573,10 +587,13 @@ const ExpenseSettings: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                    Add Expense Configuration
+                                    {editingExpense ? 'Edit Expense Configuration' : 'Add Expense Configuration'}
                                 </h3>
                                 <button
-                                    onClick={() => setIsAddingExpense(false)}
+                                    onClick={() => {
+                                        setIsAddingExpense(false);
+                                        setEditingExpense(null);
+                                    }}
                                     className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                                 >
                                     <X size={18} />
@@ -588,7 +605,9 @@ const ExpenseSettings: React.FC = () => {
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Category</label>
                                         <select
                                             name="category"
-                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                            defaultValue={editingExpense?.id || ''}
+                                            disabled={!!editingExpense}
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all disabled:opacity-50"
                                             required
                                         >
                                             <option value="">Select a category</option>
@@ -605,6 +624,7 @@ const ExpenseSettings: React.FC = () => {
                                                 <input
                                                     name="limit"
                                                     type="text"
+                                                    defaultValue={editingExpense ? (editingExpense.max_limit || 0).toLocaleString() : ''}
                                                     placeholder="5,000"
                                                     className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                                     required
@@ -627,6 +647,7 @@ const ExpenseSettings: React.FC = () => {
                                                 <input
                                                     name="receipt_threshold"
                                                     type="number"
+                                                    defaultValue={editingExpense?.receipt_threshold || 200}
                                                     placeholder="200"
                                                     className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                                     required
@@ -776,7 +797,7 @@ const ExpenseSettings: React.FC = () => {
                                             <input
                                                 type="checkbox"
                                                 name="status"
-                                                defaultChecked={true}
+                                                defaultChecked={editingExpense ? editingExpense.status !== 'Inactive' : true}
                                                 className="sr-only peer"
                                             />
                                             <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
@@ -786,7 +807,10 @@ const ExpenseSettings: React.FC = () => {
                                 <div className="flex gap-3 pt-2">
                                     <button
                                         type="button"
-                                        onClick={() => setIsAddingExpense(false)}
+                                        onClick={() => {
+                                            setIsAddingExpense(false);
+                                            setEditingExpense(null);
+                                        }}
                                         className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all"
                                     >
                                         Cancel
@@ -851,6 +875,7 @@ const ExpenseSettings: React.FC = () => {
                                         onClick={() => {
                                             setSelectedEntities([]);
                                             setEntitySearch('');
+                                            setEditingExpense(null);
                                             setIsAddingExpense(true);
                                         }}
                                         className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 transition-all shadow-md shadow-sky-100"
@@ -923,7 +948,7 @@ const ExpenseSettings: React.FC = () => {
                                                             </button>
                                                             <div className="h-4 w-[1px] bg-slate-100 mx-1"></div>
                                                             <button
-                                                                onClick={() => openEditModal(exp)}
+                                                                onClick={() => openEditExpenseModal(exp)}
                                                                 className="text-slate-400 hover:text-sky-600 transition-colors"
                                                                 title="Edit"
                                                             >
