@@ -907,7 +907,7 @@ const ExpenseSettings: React.FC = () => {
                         <div className="flex border-b border-slate-200 gap-6">
                             {[
                                 { id: 'categories', label: 'Expense Categories' },
-                                { id: 'rules', label: 'Policy & Workflow' },
+                                { id: 'rules', label: 'Operational Config' },
                             ].map(tab => (
                                 <button
                                     key={tab.id}
@@ -1072,12 +1072,10 @@ const ExpenseSettings: React.FC = () => {
                                                             onChange={(e) => updateSettings({ backdated_limit_months: parseInt(e.target.value) })}
                                                             className="w-28 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-sky-600 focus:outline-none focus:border-sky-500 bg-white appearance-none text-center cursor-pointer hover:border-sky-300 transition-colors"
                                                         >
-                                                            <option value={0}>No limit</option>
-                                                            {[1, 2, 3, 4, 5, 6, 12, 24].map((m) => (
-                                                                <option key={m} value={m}>{m} {m === 1 ? 'Month' : 'Months'}</option>
+                                                            {[...Array(12)].map((_, i) => (
+                                                                <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'Month' : 'Months'}</option>
                                                             ))}
                                                         </select>
-                                                        <span className="text-[10px] font-black text-slate-400">LIMIT</span>
                                                     </div>
                                                 </div>
                                             </div>
