@@ -182,7 +182,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.PAYROLL && <PayrollSettings />}
                 {currentView === ViewState.TAX && <TaxConfiguration />}
                 {currentView === ViewState.SALARY && <SalaryComponents />}
-                {currentView === ViewState.TEMPLATE_SETUP && <TemplateSetup />}
+                {currentView === ViewState.TEMPLATE_SETUP && <TemplateSetup userRole={userRole} />}
                 {currentView === ViewState.CUSTOMERS && (
                   <div className="p-10 flex flex-col items-center justify-center h-full text-slate-400">
                     <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">

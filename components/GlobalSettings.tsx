@@ -69,7 +69,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          case 'tax-config': return <HRTaxConfiguration />;
          case 'loan-types': return <LoanAdvancesTypes />;
          case 'expenses-config': return <ExpenseSettings />;
-         case 'fnf-settlement': return <FnFSettlementTemplate />;
+         case 'fnf-settlement': return <FnFSettlementTemplate userRole={userRole} />;
 
          case 'payslip': return <HRSalarySlipTemplate />;
          case 'bank': return <HRBankDisbursalTemplate />;
