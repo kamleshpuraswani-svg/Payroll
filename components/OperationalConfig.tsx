@@ -41,10 +41,8 @@ const OperationalConfig: React.FC = () => {
     const [employeeStatus, setEmployeeStatus] = useState<string[]>(['Probation', 'Confirmed']);
     const [approvalSourceSettings, setApprovalSourceSettings] = useState<{
         departments: string[];
-        employees: SelectedEmployee[];
     }>({
-        departments: [],
-        employees: []
+        departments: []
     });
 
     useEffect(() => {
@@ -83,8 +81,7 @@ const OperationalConfig: React.FC = () => {
                     setEligibleDepartments(eligibility.config_value.departments || []);
                     setEmployeeStatus(eligibility.config_value.statuses || ['Probation', 'Confirmed']);
                     setApprovalSourceSettings(eligibility.config_value.approval_source_settings || {
-                        departments: [],
-                        employees: []
+                        departments: []
                     });
                 }
             }
@@ -191,26 +188,6 @@ const OperationalConfig: React.FC = () => {
         setApprovalSourceSettings(prev => ({
             ...prev,
             departments: prev.departments.filter(d => d !== dept)
-        }));
-    };
-
-    const handleApprovalSourceSelectEmp = (id: string) => {
-        if (!id) return;
-        if (approvalSourceSettings.employees.find(emp => emp.id === id)) return;
-
-        const empToAdd = allEmployees.find(emp => emp.id === id);
-        if (empToAdd) {
-            setApprovalSourceSettings(prev => ({
-                ...prev,
-                employees: [...prev.employees, empToAdd]
-            }));
-        }
-    };
-
-    const removeApprovalSourceEmp = (id: string) => {
-        setApprovalSourceSettings(prev => ({
-            ...prev,
-            employees: prev.employees.filter(emp => emp.id !== id)
         }));
     };
 
@@ -457,7 +434,7 @@ const OperationalConfig: React.FC = () => {
                                         </div>
                                     </label>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="max-w-md">
                                         {/* Dropdown for Departments */}
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -477,30 +454,10 @@ const OperationalConfig: React.FC = () => {
                                                 <ChevronDown size={16} className="text-slate-400" />
                                             </div>
                                         </div>
-
-                                        {/* Dropdown for Employees */}
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                <Search size={16} className="text-slate-400" />
-                                            </div>
-                                            <select
-                                                value=""
-                                                onChange={(e) => handleApprovalSourceSelectEmp(e.target.value)}
-                                                className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer text-sm"
-                                            >
-                                                <option value="" disabled>Search employee...</option>
-                                                {allEmployees.filter(emp => !approvalSourceSettings.employees.find(s => s.id === emp.id)).map(emp => (
-                                                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                                                <ChevronDown size={16} className="text-slate-400" />
-                                            </div>
-                                        </div>
                                     </div>
 
                                     {/* Selected Items List */}
-                                    {(approvalSourceSettings.departments.length > 0 || approvalSourceSettings.employees.length > 0) && (
+                                    {approvalSourceSettings.departments.length > 0 && (
                                         <div className="mt-4 flex flex-wrap gap-2">
                                             {approvalSourceSettings.departments.map(dept => (
                                                 <div key={dept} className="flex items-center gap-2 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-lg text-xs font-bold">
@@ -509,17 +466,6 @@ const OperationalConfig: React.FC = () => {
                                                         {dept}
                                                     </div>
                                                     <button onClick={() => removeApprovalSourceDept(dept)} className="hover:text-rose-600 transition-colors">
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            {approvalSourceSettings.employees.map(emp => (
-                                                <div key={emp.id} className="flex items-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <CheckCircle2 size={12} className="opacity-70" />
-                                                        {emp.name} ({emp.eid})
-                                                    </div>
-                                                    <button onClick={() => removeApprovalSourceEmp(emp.id)} className="hover:text-rose-600 transition-colors">
                                                         <X size={14} />
                                                     </button>
                                                 </div>
