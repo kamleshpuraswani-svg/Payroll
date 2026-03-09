@@ -786,7 +786,7 @@ const LoanAdvancesTypes: React.FC = () => {
 
                         <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
                             <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                            <button onClick={handleSave} className="px-6 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-bold text-sm shadow-sm transition-colors">Save Details</button>
+                            <button onClick={handleSave} className="px-6 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-bold text-sm shadow-sm transition-colors">Save</button>
                         </div>
                     </div>
                 )}
