@@ -436,16 +436,18 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
     const [addComponentModal, setAddComponentModal] = useState<{ isOpen: boolean; section: 'earnings' | 'deductions' | null }>({ isOpen: false, section: null });
     const [validationError, setValidationError] = useState<string | null>(null);
 
-    // --- CRM Notifications Configuration ---
+    // --- Template Mapping Configuration ---
     const [allEmployees, setAllEmployees] = useState<any[]>([]);
-    const [crmNotifications, setCrmNotifications] = useState({
-        lead: [] as any[],
-        deal: [] as any[],
-        interview: [] as any[]
+    const [availableDepartments, setAvailableDepartments] = useState<string[]>(["Engineering", "Product", "Sales", "HR", "Marketing", "Finance"]);
+    const [availableDesignations, setAvailableDesignations] = useState<string[]>(["Software Engineer", "Product Manager", "Designer", "HR Manager", "Sales Lead", "QA Analyst"]);
+    const [templateMapping, setTemplateMapping] = useState({
+        departments: ["Engineering", "Product"] as string[],
+        designations: ["Software Engineer", "Product Manager"] as string[],
+        employees: [] as any[]
     });
-    const [activeNotificationDropdown, setActiveNotificationDropdown] = useState<'lead' | 'deal' | 'interview' | null>(null);
-    const [crmNotificationSearch, setCrmNotificationSearch] = useState('');
-    const [isCrmNotificationsOpen, setIsCrmNotificationsOpen] = useState(true);
+    const [activeMappingDropdown, setActiveMappingDropdown] = useState<'departments' | 'designations' | 'employees' | null>(null);
+    const [mappingSearch, setMappingSearch] = useState('');
+    const [isTemplateMappingOpen, setIsTemplateMappingOpen] = useState(true);
 
     const fetchEmployees = async () => {
         try {
@@ -455,7 +457,24 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                 .eq('status', 'Active')
                 .order('name');
             if (error) throw error;
-            if (data) setAllEmployees(data);
+            if (data) {
+                setAllEmployees(data);
+
+                // Extract unique departments and designations
+                const depts = Array.from(new Set(data.map(e => e.department).filter(Boolean))) as string[];
+                const desigs = Array.from(new Set(data.map((e: any) => e.designation).filter(Boolean))) as string[];
+
+                if (depts.length > 0) setAvailableDepartments(depts.sort());
+                if (desigs.length > 0) setAvailableDesignations(desigs.sort());
+
+                // Prefill dummy employee data if empty
+                if (templateMapping.employees.length === 0 && data.length > 0) {
+                    setTemplateMapping(prev => ({
+                        ...prev,
+                        employees: data.slice(0, 2)
+                    }));
+                }
+            }
         } catch (err) {
             console.error('Error fetching employees:', err);
         }
@@ -467,69 +486,78 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
         }
     }, [activeTab]);
 
-    const handleSelectEmployee = (type: 'lead' | 'deal' | 'interview', employee: any) => {
-        setCrmNotifications(prev => {
-            const current = prev[type];
-            const exists = current.find(e => e.id === employee.id);
+    const handleSelectMapping = (type: 'departments' | 'designations' | 'employees', value: any) => {
+        setTemplateMapping(prev => {
+            const current = (prev[type] as any[]);
+            const identifier = type === 'employees' ? value.id : value;
+            const exists = current.find(item => (type === 'employees' ? item.id === identifier : item === identifier));
+
             if (exists) {
                 return {
                     ...prev,
-                    [type]: current.filter(e => e.id !== employee.id)
+                    [type]: current.filter(item => (type === 'employees' ? item.id !== identifier : item !== identifier))
                 };
             }
             return {
                 ...prev,
-                [type]: [...current, employee]
+                [type]: [...current, value]
             };
         });
     };
 
-    const handleRemoveEmployee = (type: 'lead' | 'deal' | 'interview', employeeId: string) => {
-        setCrmNotifications(prev => ({
+    const handleRemoveMapping = (type: 'departments' | 'designations' | 'employees', value: any) => {
+        setTemplateMapping(prev => ({
             ...prev,
-            [type]: prev[type].filter(e => e.id !== employeeId)
+            [type]: (prev[type] as any[]).filter(item => (type === 'employees' ? item.id !== value : item !== value))
         }));
     };
 
-    const renderEmployeeSelector = (type: 'lead' | 'deal' | 'interview', label: string) => {
-        const selected = crmNotifications[type];
-        const isOpen = activeNotificationDropdown === type;
+    const renderMappingSelector = (type: 'departments' | 'designations' | 'employees', label: string) => {
+        const selected = templateMapping[type] as any[];
+        const isOpen = activeMappingDropdown === type;
+        const options = type === 'employees'
+            ? allEmployees
+            : (type === 'departments' ? availableDepartments : availableDesignations);
 
         return (
             <div className="space-y-2">
                 <div className="flex items-center gap-2">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
-                    <Info size={12} className="text-slate-300 cursor-help" />
                 </div>
 
                 <div className="relative">
                     <div
                         className="min-h-[46px] p-2 bg-white border border-slate-200 rounded-xl flex flex-wrap gap-2 items-center cursor-text focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/10 transition-all"
-                        onClick={() => setActiveNotificationDropdown(type)}
+                        onClick={() => setActiveMappingDropdown(type)}
                     >
-                        {selected.map(emp => (
-                            <span key={emp.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 border border-purple-100 rounded-lg text-xs font-bold text-purple-700 animate-in zoom-in-95 duration-200">
-                                {emp.name}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleRemoveEmployee(type, emp.id); }}
-                                    className="p-0.5 hover:bg-purple-200 rounded-full transition-colors"
-                                >
-                                    <X size={12} />
-                                </button>
-                            </span>
-                        ))}
+                        {selected.map(item => {
+                            const isEmployee = type === 'employees';
+                            const id = isEmployee ? item.id : item;
+                            const name = isEmployee ? item.name : item;
+                            return (
+                                <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 border border-purple-100 rounded-lg text-xs font-bold text-purple-700 animate-in zoom-in-95 duration-200">
+                                    {name}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveMapping(type, id); }}
+                                        className="p-0.5 hover:bg-purple-200 rounded-full transition-colors"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </span>
+                            );
+                        })}
                         <input
                             type="text"
-                            placeholder={selected.length === 0 ? "Select members..." : ""}
+                            placeholder={selected.length === 0 ? "Select options..." : ""}
                             className="flex-1 min-w-[150px] bg-transparent border-none text-sm font-semibold text-slate-700 focus:outline-none focus:ring-0 p-1"
-                            value={isOpen ? crmNotificationSearch : ''}
-                            onChange={(e) => setCrmNotificationSearch(e.target.value)}
-                            onFocus={() => setActiveNotificationDropdown(type)}
+                            value={isOpen ? mappingSearch : ''}
+                            onChange={(e) => setMappingSearch(e.target.value)}
+                            onFocus={() => setActiveMappingDropdown(type)}
                         />
                         <div className="flex items-center gap-2 pr-1">
                             {selected.length > 0 && (
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setCrmNotifications(prev => ({ ...prev, [type]: [] })); }}
+                                    onClick={(e) => { e.stopPropagation(); setTemplateMapping(prev => ({ ...prev, [type]: [] })); }}
                                     className="p-1 text-slate-300 hover:text-slate-500 transition-colors"
                                 >
                                     <X size={16} />
@@ -541,7 +569,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
 
                     {isOpen && (
                         <>
-                            <div className="fixed inset-0 z-40" onClick={() => setActiveNotificationDropdown(null)}></div>
+                            <div className="fixed inset-0 z-40" onClick={() => setActiveMappingDropdown(null)}></div>
                             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-4 duration-300">
                                 <div className="p-3 sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100 z-10">
                                     <div className="relative">
@@ -549,46 +577,65 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                         <input
                                             autoFocus
                                             type="text"
-                                            placeholder="Search by name or ID..."
+                                            placeholder={`Search ${label.toLowerCase()}...`}
                                             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 transition-all"
-                                            value={crmNotificationSearch}
-                                            onChange={(e) => setCrmNotificationSearch(e.target.value)}
+                                            value={mappingSearch}
+                                            onChange={(e) => setMappingSearch(e.target.value)}
                                         />
                                     </div>
                                 </div>
                                 <div className="p-2 space-y-1">
-                                    {allEmployees
-                                        .filter(emp =>
-                                            emp.name.toLowerCase().includes(crmNotificationSearch.toLowerCase()) ||
-                                            emp.eid.toLowerCase().includes(crmNotificationSearch.toLowerCase())
-                                        )
-                                        .map(emp => {
-                                            const isSelected = selected.find(e => e.id === emp.id);
+                                    {options
+                                        .filter(opt => {
+                                            const search = mappingSearch.toLowerCase();
+                                            if (type === 'employees') {
+                                                return opt.name.toLowerCase().includes(search) || opt.eid.toLowerCase().includes(search);
+                                            }
+                                            return opt.toLowerCase().includes(search);
+                                        })
+                                        .map(opt => {
+                                            const isEmployee = type === 'employees';
+                                            const isSelected = isEmployee
+                                                ? selected.find(e => e.id === opt.id)
+                                                : selected.includes(opt);
+                                            const id = isEmployee ? opt.id : opt;
+
                                             return (
                                                 <button
-                                                    key={emp.id}
-                                                    onClick={() => handleSelectEmployee(type, emp)}
+                                                    key={id}
+                                                    onClick={() => handleSelectMapping(type, opt)}
                                                     className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${isSelected ? 'bg-purple-50 text-purple-700' : 'hover:bg-slate-50 text-slate-700'}`}
                                                 >
-                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold overflow-hidden border border-slate-200 shadow-sm flex-shrink-0">
-                                                        {emp.avatar_url ? <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" /> : emp.name.charAt(0)}
-                                                    </div>
-                                                    <div className="flex-1 text-left min-w-0">
-                                                        <p className="text-sm font-bold truncate tracking-tight">{emp.name}</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{emp.department} • {emp.eid}</p>
-                                                    </div>
+                                                    {isEmployee ? (
+                                                        <>
+                                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold overflow-hidden border border-slate-200 shadow-sm flex-shrink-0">
+                                                                {opt.avatar_url ? <img src={opt.avatar_url} alt="" className="w-full h-full object-cover" /> : opt.name.charAt(0)}
+                                                            </div>
+                                                            <div className="flex-1 text-left min-w-0">
+                                                                <p className="text-sm font-bold truncate tracking-tight">{opt.name}</p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{opt.department} • {opt.eid}</p>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex-1 text-left min-w-0 p-1">
+                                                            <p className="text-sm font-bold truncate tracking-tight">{opt}</p>
+                                                        </div>
+                                                    )}
                                                     <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isSelected ? 'bg-purple-600 border-purple-600' : 'bg-white border-slate-200'}`}>
                                                         {isSelected && <Check size={12} className="text-white" />}
                                                     </div>
                                                 </button>
                                             );
                                         })}
-                                    {allEmployees.filter(emp =>
-                                        emp.name.toLowerCase().includes(crmNotificationSearch.toLowerCase()) ||
-                                        emp.eid.toLowerCase().includes(crmNotificationSearch.toLowerCase())
-                                    ).length === 0 && (
+                                    {options.filter(opt => {
+                                        const search = mappingSearch.toLowerCase();
+                                        if (type === 'employees') {
+                                            return opt.name.toLowerCase().includes(search) || opt.eid.toLowerCase().includes(search);
+                                        }
+                                        return opt.toLowerCase().includes(search);
+                                    }).length === 0 && (
                                             <div className="py-8 text-center bg-slate-50 rounded-2xl m-2 border border-dashed border-slate-200">
-                                                <p className="text-sm font-bold text-slate-400">No employees found</p>
+                                                <p className="text-sm font-bold text-slate-400">No {label.toLowerCase()} found</p>
                                             </div>
                                         )}
                                 </div>
@@ -1091,10 +1138,10 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                     /* CONFIGURATION TAB */
                     <div className="flex-1 bg-slate-50/50 p-4 lg:p-8 overflow-y-auto">
                         <div className="max-w-4xl mx-auto space-y-6">
-                            {/* CRM Notifications Section */}
+                            {/* Template Mapping Section */}
                             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <button
-                                    onClick={() => setIsCrmNotificationsOpen(!isCrmNotificationsOpen)}
+                                    onClick={() => setIsTemplateMappingOpen(!isTemplateMappingOpen)}
                                     className="w-full p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
                                 >
                                     <div className="flex items-center gap-4">
@@ -1102,21 +1149,20 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                             <Users size={24} />
                                         </div>
                                         <div className="text-left">
-                                            <h3 className="text-lg font-bold text-slate-800">CRM Notifications</h3>
-                                            <p className="text-sm text-slate-500 font-medium">Configure recipients for various CRM activity alerts</p>
+                                            <h3 className="text-lg font-bold text-slate-800">Template Mapping</h3>
                                         </div>
                                     </div>
-                                    <div className={`w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center transition-transform duration-300 ${isCrmNotificationsOpen ? 'rotate-180 bg-slate-50' : ''}`}>
+                                    <div className={`w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center transition-transform duration-300 ${isTemplateMappingOpen ? 'rotate-180 bg-slate-50' : ''}`}>
                                         <ChevronDown size={18} className="text-slate-400" />
                                     </div>
                                 </button>
 
-                                {isCrmNotificationsOpen && (
+                                {isTemplateMappingOpen && (
                                     <div className="px-6 pb-8 pt-2 space-y-8 animate-in fade-in slide-in-from-top-4 duration-300">
                                         <div className="grid grid-cols-1 gap-8">
-                                            {renderEmployeeSelector('lead', 'Lead Notifications')}
-                                            {renderEmployeeSelector('deal', 'Deal Notifications')}
-                                            {renderEmployeeSelector('interview', 'Interview Notifications')}
+                                            {renderMappingSelector('departments', 'Department')}
+                                            {renderMappingSelector('designations', 'Designation')}
+                                            {renderMappingSelector('employees', 'Employee')}
                                         </div>
                                     </div>
                                 )}
