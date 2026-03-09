@@ -96,7 +96,7 @@ export const ViewCompanyModal: React.FC<{ isOpen: boolean; onClose: () => void; 
                   </div>
                   <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
                      <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Last Payroll</p>
-                     <p className="text-2xl font-bold text-emerald-900">{company.lastPayrollRun}</p>
+                     <p className="text-2xl font-bold text-emerald-900">{company.last_payroll_run}</p>
                   </div>
                </div>
 
