@@ -39,6 +39,13 @@ const OperationalConfig: React.FC = () => {
 
     const [eligibleDepartments, setEligibleDepartments] = useState<string[]>([]);
     const [employeeStatus, setEmployeeStatus] = useState<string[]>(['Probation', 'Confirmed']);
+    const [approvalSourceSettings, setApprovalSourceSettings] = useState<{
+        departments: string[];
+        employees: SelectedEmployee[];
+    }>({
+        departments: [],
+        employees: []
+    });
 
     useEffect(() => {
         fetchConfig();
@@ -75,6 +82,10 @@ const OperationalConfig: React.FC = () => {
                 if (eligibility && eligibility.config_value) {
                     setEligibleDepartments(eligibility.config_value.departments || []);
                     setEmployeeStatus(eligibility.config_value.statuses || ['Probation', 'Confirmed']);
+                    setApprovalSourceSettings(eligibility.config_value.approval_source_settings || {
+                        departments: [],
+                        employees: []
+                    });
                 }
             }
         } catch (err: any) {
@@ -106,7 +117,8 @@ const OperationalConfig: React.FC = () => {
                     config_key: 'loans_advances_eligibility',
                     config_value: {
                         departments: eligibleDepartments,
-                        statuses: employeeStatus
+                        statuses: employeeStatus,
+                        approval_source_settings: approvalSourceSettings
                     }
                 }, { onConflict: 'config_key' });
 
@@ -164,6 +176,42 @@ const OperationalConfig: React.FC = () => {
                 ? prev.filter(s => s !== status)
                 : [...prev, status]
         );
+    };
+
+    const handleApprovalSourceSelectDept = (dept: string) => {
+        if (!dept) return;
+        if (approvalSourceSettings.departments.includes(dept)) return;
+        setApprovalSourceSettings(prev => ({
+            ...prev,
+            departments: [...prev.departments, dept]
+        }));
+    };
+
+    const removeApprovalSourceDept = (dept: string) => {
+        setApprovalSourceSettings(prev => ({
+            ...prev,
+            departments: prev.departments.filter(d => d !== dept)
+        }));
+    };
+
+    const handleApprovalSourceSelectEmp = (id: string) => {
+        if (!id) return;
+        if (approvalSourceSettings.employees.find(emp => emp.id === id)) return;
+
+        const empToAdd = allEmployees.find(emp => emp.id === id);
+        if (empToAdd) {
+            setApprovalSourceSettings(prev => ({
+                ...prev,
+                employees: [...prev.employees, empToAdd]
+            }));
+        }
+    };
+
+    const removeApprovalSourceEmp = (id: string) => {
+        setApprovalSourceSettings(prev => ({
+            ...prev,
+            employees: prev.employees.filter(emp => emp.id !== id)
+        }));
     };
 
     return (
@@ -369,32 +417,115 @@ const OperationalConfig: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Employee Status Section */}
-                            <div className="pt-4">
-                                <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
-                                    Employee Status <span className="text-red-500">*</span>
-                                </label>
-                                <div className="flex flex-wrap gap-8 items-center">
-                                    {['Probation', 'Confirmed', 'Notice Period', 'Intern'].map((status) => (
-                                        <label key={status} className="flex items-center gap-3 cursor-pointer group">
-                                            <div className="relative flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={employeeStatus.includes(status)}
-                                                    onChange={() => toggleStatus(status)}
-                                                    className="peer appearance-none w-5 h-5 border-2 border-slate-200 rounded-md checked:bg-sky-500 checked:border-sky-500 transition-all cursor-pointer"
-                                                />
-                                                <div className="absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">
-                                                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
-                                                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-                                                    </svg>
+                            <div className="pt-4 space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                        Employee Status <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="flex flex-wrap gap-8 items-center">
+                                        {['Probation', 'Confirmed', 'Notice Period', 'Intern'].map((status) => (
+                                            <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                                                <div className="relative flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={employeeStatus.includes(status)}
+                                                        onChange={() => toggleStatus(status)}
+                                                        className="peer appearance-none w-5 h-5 border-2 border-slate-200 rounded-md checked:bg-sky-500 checked:border-sky-500 transition-all cursor-pointer"
+                                                    />
+                                                    <div className="absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">
+                                                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                                                            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                                                    {status}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100">
+                                    <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                        Approval Source Settings <span className="text-red-500">*</span>
+                                        <div className="group relative">
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
+                                                Select the department whose employees should be available for assignment in the dropdowns for the approval flow for any loans & advances requests of employees. This helps limit selection to relevant teams only.
                                             </div>
-                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-                                                {status}
-                                            </span>
-                                        </label>
-                                    ))}
+                                        </div>
+                                    </label>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Dropdown for Departments */}
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                <Search size={16} className="text-slate-400" />
+                                            </div>
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleApprovalSourceSelectDept(e.target.value)}
+                                                className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer text-sm"
+                                            >
+                                                <option value="" disabled>Search department...</option>
+                                                {DEPARTMENTS.filter(dept => !approvalSourceSettings.departments.includes(dept)).map(dept => (
+                                                    <option key={dept} value={dept}>{dept}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                <ChevronDown size={16} className="text-slate-400" />
+                                            </div>
+                                        </div>
+
+                                        {/* Dropdown for Employees */}
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                <Search size={16} className="text-slate-400" />
+                                            </div>
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleApprovalSourceSelectEmp(e.target.value)}
+                                                className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer text-sm"
+                                            >
+                                                <option value="" disabled>Search employee...</option>
+                                                {allEmployees.filter(emp => !approvalSourceSettings.employees.find(s => s.id === emp.id)).map(emp => (
+                                                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                <ChevronDown size={16} className="text-slate-400" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Selected Items List */}
+                                    {(approvalSourceSettings.departments.length > 0 || approvalSourceSettings.employees.length > 0) && (
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            {approvalSourceSettings.departments.map(dept => (
+                                                <div key={dept} className="flex items-center gap-2 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-lg text-xs font-bold">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Search size={12} className="opacity-70" />
+                                                        {dept}
+                                                    </div>
+                                                    <button onClick={() => removeApprovalSourceDept(dept)} className="hover:text-rose-600 transition-colors">
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {approvalSourceSettings.employees.map(emp => (
+                                                <div key={emp.id} className="flex items-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <CheckCircle2 size={12} className="opacity-70" />
+                                                        {emp.name} ({emp.eid})
+                                                    </div>
+                                                    <button onClick={() => removeApprovalSourceEmp(emp.id)} className="hover:text-rose-600 transition-colors">
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
