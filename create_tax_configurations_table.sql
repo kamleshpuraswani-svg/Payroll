@@ -12,8 +12,14 @@ create table if not exists public.tax_configurations (
 -- Enable RLS
 alter table public.tax_configurations enable row level security;
 
+-- Drop Policy if it exists to avoid errors on multiple runs
+drop policy if exists "Allow all for public" on public.tax_configurations;
+
 -- Public "Allow All" Policy
 create policy "Allow all for public" on public.tax_configurations for all using (true) with check (true);
+
+-- Clear existing mock data before re-inserting to prevent duplicates
+delete from public.tax_configurations where financial_year in ('2025-2026', '2024-2025', '2023-2024');
 
 -- Insert Dummy Data for Previous Financial Years
 insert into public.tax_configurations (financial_year, regime, slab_from, slab_to, rate) values
