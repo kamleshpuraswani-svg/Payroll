@@ -358,7 +358,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                     Select Filter Field
                                                 </div>
                                                 <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                                    <FileText size={16} className="text-slate-400" /> Loan Name
+                                                    <FileText size={16} className="text-slate-400" /> Loan Type
                                                 </button>
                                             </div>
                                         )}
@@ -392,7 +392,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 <table className="w-full text-left text-sm text-slate-600">
                                     <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b border-slate-200">
                                         <tr>
-                                            <th className="px-6 py-4">Loan Name</th>
+                                            <th className="px-6 py-4">Loan Type</th>
                                             <th className="px-6 py-4">Interest Rate</th>
                                             <th className="px-6 py-4">Max Amount</th>
                                             <th className="px-6 py-4">Max Tenure</th>
