@@ -37,6 +37,7 @@ interface Structure {
     employees?: string[];
     employeeCount: number;
     status: 'Active' | 'Draft' | 'Archived' | 'Inactive';
+    createdBy?: string;
     lastModified: string;
     earnings: SalaryComponent[];
     deductions: SalaryComponent[];
@@ -104,6 +105,7 @@ const MOCK_STRUCTURES: Structure[] = [
         employees: [],
         employeeCount: 1240,
         status: 'Active',
+        createdBy: 'Priya Sharma',
         lastModified: '2 days ago',
         earnings: [MASTER_COMPONENTS.earnings[0], MASTER_COMPONENTS.earnings[1], MASTER_COMPONENTS.earnings[2]],
         deductions: [MASTER_COMPONENTS.deductions[0], MASTER_COMPONENTS.deductions[1]],
@@ -119,6 +121,7 @@ const MOCK_STRUCTURES: Structure[] = [
         employees: [],
         employeeCount: 45,
         status: 'Active',
+        createdBy: 'Amit Patel',
         lastModified: '1 week ago',
         earnings: [{ id: 'm99', name: 'Stipend', calculation: 'Fixed', type: 'Fixed', taxStatus: 'Taxable' }],
         deductions: [],
@@ -444,6 +447,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             employees: selectedEmployees,
             employeeCount: activeStructureId ? (structures.find(s => s.id === activeStructureId)?.employeeCount || 0) : 0,
             status: status,
+            createdBy: activeStructureId ? structures.find(s => s.id === activeStructureId)?.createdBy : 'Current User',
             lastModified: 'Just now',
             earnings,
             deductions,
@@ -777,7 +781,8 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                             <th className="px-6 py-4">Designation</th>
                             <th className="px-6 py-4">Employees</th>
                             <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Last Modified</th>
+                            <th className="px-6 py-4">Created By</th>
+                            <th className="px-6 py-4">Last Modified By</th>
                             <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -804,6 +809,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                             {item.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 text-xs text-slate-500">{item.createdBy || 'System'}</td>
                                     <td className="px-6 py-4 text-xs text-slate-500">{item.lastModified}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-4">
