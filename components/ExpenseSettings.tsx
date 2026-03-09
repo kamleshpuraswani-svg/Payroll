@@ -51,7 +51,7 @@ const ExpenseSettings: React.FC = () => {
         id: '',
         deadline_claims_date: 5,
         receipt_mandatory_amount: 200,
-        allow_backdated_claims: false
+        backdated_limit_months: 3
     });
 
     // Multi-select state for Add Expense modal
@@ -1061,31 +1061,25 @@ const ExpenseSettings: React.FC = () => {
                                                         <span className="text-[10px] font-black text-slate-400">DATE</span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-6">
-                                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Advanced Controls</h3>
-                                                {saveSuccess && (
-                                                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 animate-pulse">
-                                                        <Check size={10} /> SAVED
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="space-y-4">
-                                                <label className="flex items-center justify-between cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition-colors">
-                                                    <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Allow back-dated claims</span>
-                                                    <div className="relative inline-flex items-center">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="sr-only peer"
-                                                            checked={settings.allow_backdated_claims}
-                                                            onChange={(e) => updateSettings({ allow_backdated_claims: e.target.checked })}
-                                                        />
-                                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                                                <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-700">Back-dated Claims Limit</p>
+                                                        <p className="text-xs text-slate-500">How many months back can employees claim?</p>
                                                     </div>
-                                                </label>
+                                                    <div className="flex items-center gap-2">
+                                                        <select
+                                                            value={settings.backdated_limit_months}
+                                                            onChange={(e) => updateSettings({ backdated_limit_months: parseInt(e.target.value) })}
+                                                            className="w-28 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-sky-600 focus:outline-none focus:border-sky-500 bg-white appearance-none text-center cursor-pointer hover:border-sky-300 transition-colors"
+                                                        >
+                                                            <option value={0}>No limit</option>
+                                                            {[1, 2, 3, 4, 5, 6, 12, 24].map((m) => (
+                                                                <option key={m} value={m}>{m} {m === 1 ? 'Month' : 'Months'}</option>
+                                                            ))}
+                                                        </select>
+                                                        <span className="text-[10px] font-black text-slate-400">LIMIT</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
