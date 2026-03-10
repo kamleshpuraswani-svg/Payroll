@@ -34,6 +34,7 @@ import TDSSettings from './TDSSettings';
 import LoanAdvancesTypes from './LoanAdvancesTypes';
 import FnFSettlementTemplate from './FnFSettlementTemplate';
 import ExpenseSettings from './ExpenseSettings';
+import PayrollPaygroup from './PayrollPaygroup';
 
 interface GlobalSettingsProps {
    userRole?: string;
@@ -43,6 +44,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
    const [activeModule, setActiveModule] = useState('organization');
 
    const menuItems = [
+      ...(userRole === 'HR_MANAGER' ? [{ id: 'paygroup', label: 'Payroll Paygroup', icon: Landmark }] : []),
       { id: 'organization', label: 'Organization Tax Details', icon: Building2 },
       { id: 'schedule', label: 'Pay Schedule', icon: Calendar },
       { id: 'components', label: 'Salary Components', icon: Layers },
@@ -62,6 +64,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
 
    const renderContent = () => {
       switch (activeModule) {
+         case 'paygroup': return <PayrollPaygroup />;
          case 'organization': return <OrganizationTaxDetails />;
          case 'schedule': return <PayrollSettings userRole={userRole} />;
          case 'components': return <SalaryComponents userRole={userRole} />;
