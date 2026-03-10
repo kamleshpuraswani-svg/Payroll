@@ -162,8 +162,18 @@ create table if not exists public.loan_types (
     max_amount numeric default 0,
     tenure_months integer default 12,
     is_active boolean default true,
-    created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now()
+);
+
+-- Paygroups (NEW)
+create table if not exists public.paygroups (
+    id uuid default gen_random_uuid() primary key,
+    name text not null,
+    business_units text[] default '{}',
+    status boolean default true,
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now(),
+    created_by text default 'HR Manager'
 );
 
 -- ==========================================
@@ -235,6 +245,7 @@ alter table public.employee_loans enable row level security;
 alter table public.document_templates enable row level security;
 alter table public.salary_structures enable row level security;
 alter table public.loan_types enable row level security;
+alter table public.paygroups enable row level security;
 
 -- Public "Allow All" Policies
 create policy "Allow all for public" on public.companies for all using (true) with check (true);
@@ -251,6 +262,7 @@ create policy "Allow all for public" on public.employee_loans for all using (tru
 create policy "Allow all for public" on public.document_templates for all using (true) with check (true);
 create policy "Allow all for public" on public.salary_structures for all using (true) with check (true);
 create policy "Allow all for public" on public.loan_types for all using (true) with check (true);
+create policy "Allow all for public" on public.paygroups for all using (true) with check (true);
 
 -- ==========================================
 -- 5. Triggers & Functions
@@ -272,3 +284,4 @@ create trigger update_employee_loans_updated_at before update on public.employee
 create trigger update_document_templates_updated_at before update on public.document_templates for each row execute procedure update_updated_at_column();
 create trigger update_salary_structures_updated_at before update on public.salary_structures for each row execute procedure update_updated_at_column();
 create trigger update_loan_types_updated_at before update on public.loan_types for each row execute procedure update_updated_at_column();
+create trigger update_paygroups_updated_at before update on public.paygroups for each row execute procedure update_updated_at_column();

@@ -100,9 +100,9 @@ const PayrollPaygroup: React.FC = () => {
             setPaygroupName('');
             setSelectedBUs([]);
             setEditingPaygroup(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving paygroup:', error);
-            alert('Failed to save paygroup');
+            alert(`Failed to save paygroup: ${error.message || 'Unknown error'}`);
         }
     };
 
