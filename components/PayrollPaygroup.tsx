@@ -151,7 +151,7 @@ const PayrollPaygroup: React.FC = () => {
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => handleOpenEdit(pg)}
-                                        className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all opacity-0 group-hover/card:opacity-100"
+                                        className="p-2 bg-sky-50 text-[#0388d1] rounded-full hover:bg-sky-100 transition-all shadow-sm shadow-sky-50"
                                         title="Edit Paygroup"
                                     >
                                         <Edit2 size={16} />
