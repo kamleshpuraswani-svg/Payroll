@@ -149,10 +149,6 @@ const LeaveEncashmentModal: React.FC<{
                 {/* Header */}
                 <div className="px-8 pt-10 pb-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-br from-white to-slate-50/50">
                     <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2 border border-purple-100/50">
-                            <Settings size={12} className="animate-spin-slow" />
-                            Configuration Panel
-                        </div>
                         <h3 className="text-2xl font-black text-slate-800 tracking-tight">Leave Encashment</h3>
                         <p className="text-xs text-slate-500 font-medium mt-1">Configure components for daily rate calculation</p>
                     </div>
@@ -180,13 +176,13 @@ const LeaveEncashmentModal: React.FC<{
                                 <label
                                     key={opt}
                                     className={`relative group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${selectedComponents.includes(opt)
-                                            ? 'bg-purple-50/30 border-purple-200 shadow-[0_4px_12px_-4px_rgba(147,51,234,0.1)]'
-                                            : 'bg-white border-slate-100 hover:border-slate-300/60 hover:shadow-md'
+                                        ? 'bg-purple-50/30 border-purple-200 shadow-[0_4px_12px_-4px_rgba(147,51,234,0.1)]'
+                                        : 'bg-white border-slate-100 hover:border-slate-300/60 hover:shadow-md'
                                         }`}
                                 >
                                     <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${selectedComponents.includes(opt)
-                                            ? 'bg-purple-600 border-purple-600 scale-110 shadow-lg shadow-purple-200'
-                                            : 'border-slate-200 bg-white group-hover:border-purple-300'
+                                        ? 'bg-purple-600 border-purple-600 scale-110 shadow-lg shadow-purple-200'
+                                        : 'border-slate-200 bg-white group-hover:border-purple-300'
                                         }`}>
                                         {selectedComponents.includes(opt) && <Check size={14} className="text-white stroke-[4]" />}
                                     </div>
@@ -213,7 +209,7 @@ const LeaveEncashmentModal: React.FC<{
                     {/* Formula Preview with Glassmorphism */}
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                        <div className="relative p-6 bg-white/40 backdrop-blur-md border border-indigo-100/50 rounded-3xl space-y-5 shadow-sm">
+                        <div className="relative p-6 bg-white border border-indigo-100/50 rounded-3xl space-y-5 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
@@ -230,26 +226,26 @@ const LeaveEncashmentModal: React.FC<{
                             </div>
 
                             <div className="space-y-4">
-                                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-inner group/code overflow-hidden">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2">
+                                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm group/code overflow-hidden">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                                         Daily Rate Logic
                                     </p>
                                     <div className="font-mono text-[12px] leading-relaxed transition-all duration-300">
-                                        <span className="text-slate-400">Daily Rate = </span>
-                                        <span className="text-emerald-400 font-bold tracking-tight bg-emerald-400/10 px-2 py-0.5 rounded-md border border-emerald-400/20">{getFormulaDisplay()}</span>
+                                        <span className="text-slate-500 font-bold">Daily Rate = </span>
+                                        <span className="text-indigo-600 font-bold tracking-tight bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{getFormulaDisplay()}</span>
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-inner group/code overflow-hidden">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2">
+                                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm group/code overflow-hidden">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full bg-rose-500"></span>
                                         Final Payable
                                     </p>
                                     <div className="font-mono text-[12px] leading-relaxed">
-                                        <span className="text-indigo-400">Encashment = </span>
-                                        <span className="text-white">Daily Rate × </span>
-                                        <span className="text-blue-400">Days</span>
+                                        <span className="text-purple-600 font-bold">Encashment = </span>
+                                        <span className="text-slate-700 font-bold">Daily Rate × </span>
+                                        <span className="text-indigo-600 font-bold">Days</span>
                                     </div>
                                 </div>
                             </div>
@@ -264,9 +260,8 @@ const LeaveEncashmentModal: React.FC<{
                         className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-[0_10px_20px_-5px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
                     >
                         <Save size={18} />
-                        Apply Changes
+                        Save
                     </button>
-                    <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">Changes will reflect in settlement calculations instantly</p>
                 </div>
             </div>
         </div>
