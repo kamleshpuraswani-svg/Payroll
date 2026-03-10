@@ -137,22 +137,58 @@ const LeaveEncashmentModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <h3 className="font-bold text-slate-800">Leave Encashment Settings</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+        <div className="fixed inset-0 z-[150] overflow-hidden">
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                onClick={onClose}
+            />
+
+            {/* Panel */}
+            <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-[-20px_0_50px_-15px_rgba(0,0,0,0.1)] flex flex-col animate-in slide-in-from-right duration-500 ease-out border-l border-slate-200">
+                {/* Header */}
+                <div className="px-8 pt-10 pb-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-br from-white to-slate-50/50">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2 border border-purple-100/50">
+                            <Settings size={12} className="animate-spin-slow" />
+                            Configuration Panel
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">Leave Encashment</h3>
+                        <p className="text-xs text-slate-500 font-medium mt-1">Configure components for daily rate calculation</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2.5 hover:bg-white hover:shadow-lg hover:border-slate-200 border border-transparent rounded-2xl text-slate-400 hover:text-rose-500 transition-all duration-300"
+                    >
                         <X size={20} />
                     </button>
                 </div>
-                <div className="p-6 space-y-6">
-                    <div>
-                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Components for Encashment</h4>
-                        <div className="space-y-2">
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10 custom-scrollbar">
+                    {/* Component Selection */}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                <Users size={16} />
+                            </div>
+                            <h4 className="text-sm font-bold text-slate-700 tracking-tight">Components for Encashment</h4>
+                        </div>
+
+                        <div className="grid gap-3">
                             {options.map(opt => (
-                                <label key={opt} className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
-                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(opt) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-300'}`}>
-                                        {selectedComponents.includes(opt) && <Check size={14} className="text-white stroke-[3]" />}
+                                <label
+                                    key={opt}
+                                    className={`relative group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${selectedComponents.includes(opt)
+                                            ? 'bg-purple-50/30 border-purple-200 shadow-[0_4px_12px_-4px_rgba(147,51,234,0.1)]'
+                                            : 'bg-white border-slate-100 hover:border-slate-300/60 hover:shadow-md'
+                                        }`}
+                                >
+                                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${selectedComponents.includes(opt)
+                                            ? 'bg-purple-600 border-purple-600 scale-110 shadow-lg shadow-purple-200'
+                                            : 'border-slate-200 bg-white group-hover:border-purple-300'
+                                        }`}>
+                                        {selectedComponents.includes(opt) && <Check size={14} className="text-white stroke-[4]" />}
                                     </div>
                                     <input
                                         type="checkbox"
@@ -160,37 +196,77 @@ const LeaveEncashmentModal: React.FC<{
                                         checked={selectedComponents.includes(opt)}
                                         onChange={() => onToggleComponent(opt)}
                                     />
-                                    <span className={`text-sm font-semibold ${selectedComponents.includes(opt) ? 'text-purple-900' : 'text-slate-600'}`}>{opt}</span>
+                                    <div className="flex-1">
+                                        <span className={`text-sm font-bold tracking-tight transition-colors duration-300 ${selectedComponents.includes(opt) ? 'text-purple-900' : 'text-slate-600'
+                                            }`}>
+                                            {opt}
+                                        </span>
+                                    </div>
+                                    {selectedComponents.includes(opt) && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                                    )}
                                 </label>
                             ))}
                         </div>
                     </div>
 
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3">
-                        <div className="flex items-center gap-2 text-indigo-600">
-                            <Calculator size={16} />
-                            <h5 className="text-[10px] font-black uppercase tracking-widest">Formula Preview</h5>
-                        </div>
-                        <div className="space-y-2">
-                            <div>
-                                <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Daily Rate Calculation</p>
-                                <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
-                                    Daily Rate = {getFormulaDisplay()}
+                    {/* Formula Preview with Glassmorphism */}
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                        <div className="relative p-6 bg-white/40 backdrop-blur-md border border-indigo-100/50 rounded-3xl space-y-5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                                        <Calculator size={20} />
+                                    </div>
+                                    <div>
+                                        <h5 className="text-xs font-black text-indigo-900 uppercase tracking-widest">Formula Preview</h5>
+                                        <p className="text-[10px] text-indigo-500 mt-0.5 font-bold">LIVE CALCULATION LOGIC</p>
+                                    </div>
+                                </div>
+                                <div className="p-2 bg-indigo-50 rounded-full text-indigo-400">
+                                    <Info size={14} />
                                 </div>
                             </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Final Amount</p>
-                                <div className="bg-white px-3 py-2 rounded-lg border border-indigo-200 font-mono text-[11px] text-indigo-700 shadow-sm">
-                                    Encashment Amount = Daily Rate × Encashable Days
+
+                            <div className="space-y-4">
+                                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-inner group/code overflow-hidden">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                        Daily Rate Logic
+                                    </p>
+                                    <div className="font-mono text-[12px] leading-relaxed transition-all duration-300">
+                                        <span className="text-slate-400">Daily Rate = </span>
+                                        <span className="text-emerald-400 font-bold tracking-tight bg-emerald-400/10 px-2 py-0.5 rounded-md border border-emerald-400/20">{getFormulaDisplay()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-inner group/code overflow-hidden">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                        Final Payable
+                                    </p>
+                                    <div className="font-mono text-[12px] leading-relaxed">
+                                        <span className="text-indigo-400">Encashment = </span>
+                                        <span className="text-white">Daily Rate × </span>
+                                        <span className="text-blue-400">Days</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                    <button onClick={onClose} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all text-sm">
-                        Save Settings
+
+                {/* Footer */}
+                <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex flex-col gap-3">
+                    <button
+                        onClick={onClose}
+                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-[0_10px_20px_-5px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
+                    >
+                        <Save size={18} />
+                        Apply Changes
                     </button>
+                    <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">Changes will reflect in settlement calculations instantly</p>
                 </div>
             </div>
         </div>
