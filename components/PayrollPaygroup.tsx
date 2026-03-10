@@ -114,7 +114,6 @@ const PayrollPaygroup: React.FC = () => {
                         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-20">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-800 tracking-tight">Create New Paygroup</h3>
-                                <p className="text-xs text-slate-400 font-medium mt-0.5 uppercase tracking-widest">Configuration Panel</p>
                             </div>
                             <button
                                 onClick={() => setIsRSPOpen(false)}
@@ -149,8 +148,8 @@ const PayrollPaygroup: React.FC = () => {
                                             key={bu}
                                             onClick={() => handleToggleBU(bu)}
                                             className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${selectedBUs.includes(bu)
-                                                    ? 'bg-sky-50 border-sky-200 shadow-sm shadow-sky-50'
-                                                    : 'bg-white border-slate-100 hover:border-slate-300'
+                                                ? 'bg-sky-50 border-sky-200 shadow-sm shadow-sky-50'
+                                                : 'bg-white border-slate-100 hover:border-slate-300'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
@@ -162,8 +161,8 @@ const PayrollPaygroup: React.FC = () => {
                                                     }`}>{bu}</span>
                                             </div>
                                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedBUs.includes(bu)
-                                                    ? 'bg-sky-600 border-sky-600'
-                                                    : 'bg-white border-slate-200'
+                                                ? 'bg-sky-600 border-sky-600'
+                                                : 'bg-white border-slate-200'
                                                 }`}>
                                                 {selectedBUs.includes(bu) && <Check size={14} className="text-white" />}
                                             </div>
@@ -186,7 +185,7 @@ const PayrollPaygroup: React.FC = () => {
                                 className="px-8 py-2.5 bg-[#0388d1] text-white rounded-none font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2 active:scale-95"
                             >
                                 <Save size={18} />
-                                Save Paygroup
+                                Save
                             </button>
                         </div>
                     </div>
