@@ -21,17 +21,10 @@ const PayrollPaygroup: React.FC = () => {
                     <p className="text-slate-500 max-w-sm">
                         Paygroups help you group employees based on their pay frequencies and cycles. Start by creating your first paygroup.
                     </p>
-                    <button className="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 mt-4">
-                        + Create New Paygroup
+                    <button className="px-6 py-2.5 bg-sky-600 text-white rounded-none font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 mt-4">
+                        Create New Paygroup
                     </button>
                 </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800">
-                <Info size={20} className="shrink-0" />
-                <p className="text-sm font-medium">
-                    <span className="font-bold">Note:</span> Paygroups are essential for running payroll for different departments or locations with varying schedules.
-                </p>
             </div>
         </div>
     );
