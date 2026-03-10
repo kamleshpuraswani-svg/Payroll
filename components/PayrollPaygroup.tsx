@@ -64,7 +64,7 @@ const PayrollPaygroup: React.FC = () => {
                         </p>
                         <button
                             onClick={() => setIsRSPOpen(true)}
-                            className="px-8 py-3 bg-[#0388d1] text-white rounded-none font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 mt-4 active:scale-95"
+                            className="px-8 py-3 bg-[#0388d1] text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 mt-4 active:scale-95"
                         >
                             Create New Paygroup
                         </button>
@@ -182,7 +182,7 @@ const PayrollPaygroup: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-8 py-2.5 bg-[#0388d1] text-white rounded-none font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2 active:scale-95"
+                                className="px-8 py-2.5 bg-[#0388d1] text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2 active:scale-95"
                             >
                                 <Save size={18} />
                                 Save
