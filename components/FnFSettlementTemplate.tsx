@@ -743,7 +743,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
         setView('VIEW');
     };
 
-    const handleSave = (status: 'Published' | 'Draft') => {
+    const handleSave = async (status: 'Published' | 'Draft') => {
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
             return;
@@ -753,25 +753,40 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
             return;
         }
 
-        const newTemplate: FnFTemplate = {
-            id: editingTemplateId || Date.now().toString(),
+        const templateData = {
             name: templateName,
             status,
-            createdBy: editingTemplateId ? (templates.find(t => t.id === editingTemplateId)?.createdBy || 'Super Admin') : 'Super Admin',
-            lastUpdatedBy: '03 Dec 2025',
-            isActive: editingTemplateId ? (templates.find(t => t.id === editingTemplateId)?.isActive ?? true) : true,
-            sections,
+            type: 'fnf_settlement',
+            content: {
+                sections,
+                headerConfig
+            },
             settings,
-            headerConfig
+            is_active: editingTemplateId ? (templates.find(t => t.id === editingTemplateId)?.isActive ?? true) : true,
+            updated_at: new Date().toISOString()
         };
 
-        if (editingTemplateId) {
-            setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
-        } else {
-            setTemplates(prev => [...prev, newTemplate]);
+        try {
+            if (editingTemplateId) {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .update(templateData)
+                    .eq('id', editingTemplateId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .insert([{ ...templateData, created_by: 'Super Admin' }]);
+                if (error) throw error;
+            }
+
+            await fetchTemplates();
+            setView('LIST');
+            setValidationError(null);
+        } catch (err) {
+            console.error('Error saving template:', err);
+            setValidationError('Failed to save template to database.');
         }
-        setView('LIST');
-        setValidationError(null);
     };
 
     const handleToggleActive = async (id: string, e: React.MouseEvent) => {

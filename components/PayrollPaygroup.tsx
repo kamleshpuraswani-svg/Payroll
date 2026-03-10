@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Landmark, X, Save, Building2, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Landmark, X, Save, Building2, Check, Loader2, Edit2 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 const BUSINESS_UNITS = [
     "Digital Technology",
@@ -16,9 +17,32 @@ const BUSINESS_UNITS = [
 
 const PayrollPaygroup: React.FC = () => {
     const [isRSPOpen, setIsRSPOpen] = useState(false);
+    const [editingPaygroup, setEditingPaygroup] = useState<any>(null);
     const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [paygroupName, setPaygroupName] = useState('');
     const [selectedBUs, setSelectedBUs] = useState<string[]>([]);
+
+    const fetchPaygroups = async () => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (error) {
+            console.error('Error fetching paygroups:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPaygroups();
+    }, []);
 
     const handleToggleBU = (bu: string) => {
         setSelectedBUs(prev =>
@@ -26,21 +50,60 @@ const PayrollPaygroup: React.FC = () => {
         );
     };
 
-    const handleSave = () => {
+    const handleOpenCreate = () => {
+        setEditingPaygroup(null);
+        setPaygroupName('');
+        setSelectedBUs([]);
+        setIsRSPOpen(true);
+    };
+
+    const handleOpenEdit = (pg: any) => {
+        setEditingPaygroup(pg);
+        setPaygroupName(pg.name);
+        setSelectedBUs(pg.business_units || []);
+        setIsRSPOpen(true);
+    };
+
+    const handleSave = async () => {
         if (!paygroupName) {
             alert('Please enter a paygroup name');
             return;
         }
-        const newPaygroup = {
-            id: Date.now(),
-            name: paygroupName,
-            businessUnits: selectedBUs,
-            createdAt: new Date().toLocaleDateString()
-        };
-        setPaygroups([newPaygroup, ...paygroups]);
-        setIsRSPOpen(false);
-        setPaygroupName('');
-        setSelectedBUs([]);
+
+        try {
+            const payload = {
+                name: paygroupName,
+                business_units: selectedBUs,
+                updated_at: new Date().toISOString()
+            };
+
+            if (editingPaygroup) {
+                // Update existing paygroup
+                const { error } = await supabase
+                    .from('paygroups')
+                    .update(payload)
+                    .eq('id', editingPaygroup.id);
+                if (error) throw error;
+            } else {
+                // Insert new paygroup
+                const { error } = await supabase
+                    .from('paygroups')
+                    .insert([{
+                        ...payload,
+                        created_by: 'HR Manager'
+                    }]);
+                if (error) throw error;
+            }
+
+            await fetchPaygroups();
+            setIsRSPOpen(false);
+            setPaygroupName('');
+            setSelectedBUs([]);
+            setEditingPaygroup(null);
+        } catch (error) {
+            console.error('Error saving paygroup:', error);
+            alert('Failed to save paygroup');
+        }
     };
 
     return (
@@ -52,7 +115,14 @@ const PayrollPaygroup: React.FC = () => {
                 </div>
             </div>
 
-            {paygroups.length === 0 ? (
+            {isLoading ? (
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden h-[400px] flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-10 h-10 text-sky-600 animate-spin" />
+                        <p className="text-slate-500 font-medium">Loading paygroups...</p>
+                    </div>
+                </div>
+            ) : paygroups.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-24 flex flex-col items-center justify-center text-center space-y-4">
                         <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center text-sky-600 mb-2">
@@ -63,7 +133,7 @@ const PayrollPaygroup: React.FC = () => {
                             Paygroups help you group employees based on their pay frequencies and cycles. Start by creating your first paygroup.
                         </p>
                         <button
-                            onClick={() => setIsRSPOpen(true)}
+                            onClick={handleOpenCreate}
                             className="px-8 py-3 bg-[#0388d1] text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 mt-4 active:scale-95"
                         >
                             Create New Paygroup
@@ -73,16 +143,27 @@ const PayrollPaygroup: React.FC = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {paygroups.map(pg => (
-                        <div key={pg.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                        <div key={pg.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all relative group/card">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-2 bg-sky-50 text-sky-600 rounded-lg">
                                     <Landmark size={20} />
                                 </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{pg.createdAt}</span>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleOpenEdit(pg)}
+                                        className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all opacity-0 group-hover/card:opacity-100"
+                                        title="Edit Paygroup"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {new Date(pg.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
                             </div>
                             <h4 className="text-lg font-bold text-slate-800 mb-2">{pg.name}</h4>
                             <div className="flex flex-wrap gap-2">
-                                {pg.businessUnits.map((bu: string) => (
+                                {pg.business_units?.map((bu: string) => (
                                     <span key={bu} className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold">
                                         {bu}
                                     </span>
@@ -91,8 +172,8 @@ const PayrollPaygroup: React.FC = () => {
                         </div>
                     ))}
                     <button
-                        onClick={() => setIsRSPOpen(true)}
-                        className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition-all group"
+                        onClick={handleOpenCreate}
+                        className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition-all group min-h-[160px]"
                     >
                         <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-sky-100 transition-colors">
                             <Save size={20} />
@@ -113,7 +194,9 @@ const PayrollPaygroup: React.FC = () => {
                         {/* RSP Header */}
                         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-20">
                             <div>
-                                <h3 className="text-xl font-bold text-slate-800 tracking-tight">Create New Paygroup</h3>
+                                <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+                                    {editingPaygroup ? 'Edit Paygroup' : 'Create New Paygroup'}
+                                </h3>
                             </div>
                             <button
                                 onClick={() => setIsRSPOpen(false)}
