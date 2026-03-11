@@ -1,7 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
 import { Save, Edit2, ShieldCheck, Info, ChevronDown, Building2, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+
+const BUSINESS_UNITS = [
+    "Digital Technology",
+    "Retail Banking",
+    "Supply Chain",
+    "Product Innovation",
+    "Strategic Consulting",
+    "Wealth Management",
+    "Corporate Strategy",
+    "Creative Services",
+    "Brand & Growth",
+    "Product Management"
+];
 
 const OrganizationTaxDetails: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
@@ -31,6 +43,7 @@ const OrganizationTaxDetails: React.FC = () => {
     const [accountName, setAccountName] = useState('');
     const [ifscCode, setIfscCode] = useState('');
     const [branch, setBranch] = useState('');
+    const [selectedBusinessUnit, setSelectedBusinessUnit] = useState(BUSINESS_UNITS[0]);
 
     // Auto-populate branch based on IFSC
     const handleIfscChange = (code: string) => {
@@ -87,6 +100,7 @@ const OrganizationTaxDetails: React.FC = () => {
                 if (config.accountName) setAccountName(config.accountName);
                 if (config.ifscCode) setIfscCode(config.ifscCode);
                 if (config.branch) setBranch(config.branch);
+                if (config.selectedBusinessUnit) setSelectedBusinessUnit(config.selectedBusinessUnit);
             }
         } catch (err: any) {
             console.error('Error fetching config:', err);
@@ -110,7 +124,8 @@ const OrganizationTaxDetails: React.FC = () => {
                 ao1, ao2, ao3, ao4,
                 frequency,
                 deductorType, deductorName, fatherName, designation,
-                accountNumber, accountName, ifscCode, branch
+                accountNumber, accountName, ifscCode, branch,
+                selectedBusinessUnit
             };
 
             const { error: saveError } = await supabase
@@ -155,6 +170,18 @@ const OrganizationTaxDetails: React.FC = () => {
                                 <span className="text-xs font-bold">{error}</span>
                             </div>
                         )}
+                        <div className="relative">
+                            <select
+                                value={selectedBusinessUnit}
+                                onChange={(e) => setSelectedBusinessUnit(e.target.value)}
+                                className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none hover:border-indigo-400 focus:border-indigo-500 transition-all appearance-none cursor-pointer h-10 shadow-sm"
+                            >
+                                {BUSINESS_UNITS.map(bu => (
+                                    <option key={bu} value={bu}>{bu}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
                         {isEditing && (
                             <button
                                 onClick={() => setIsEditing(false)}
