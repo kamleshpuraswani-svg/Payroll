@@ -3,16 +3,9 @@ import { Save, Edit2, ShieldCheck, Info, ChevronDown, Building2, CheckCircle2, A
 import { supabase } from '../services/supabaseClient';
 
 const BUSINESS_UNITS = [
-    "Digital Technology",
-    "Retail Banking",
-    "Supply Chain",
-    "Product Innovation",
-    "Strategic Consulting",
-    "Wealth Management",
-    "Corporate Strategy",
-    "Creative Services",
-    "Brand & Growth",
-    "Product Management"
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
 ];
 
 const OrganizationTaxDetails: React.FC = () => {
