@@ -618,7 +618,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     };
 
     return (
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
+        <div className="p-4 lg:p-8 max-w-full mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
 
             {/* List Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
