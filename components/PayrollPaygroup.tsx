@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, X, Save, Building2, Check, Loader2, Edit2 } from 'lucide-react';
+import { Landmark, X, Save, Building2, Check, Loader2, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 const BUSINESS_UNITS = [
@@ -122,6 +122,26 @@ const PayrollPaygroup: React.FC = () => {
         }
     };
 
+    const handleDelete = async (id: string, name: string) => {
+        if (!window.confirm(`Are you sure you want to delete the paygroup "${name}"? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('paygroups')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            
+            await fetchPaygroups();
+        } catch (error: any) {
+            console.error('Error deleting paygroup:', error);
+            alert(`Failed to delete paygroup: ${error.message || 'Unknown error'}`);
+        }
+    };
+
     return (
         <div className="p-8 space-y-6 animate-in fade-in duration-500 relative min-h-screen">
             <div className="flex justify-between items-start">
@@ -164,7 +184,7 @@ const PayrollPaygroup: React.FC = () => {
                                 <div className="p-2 bg-sky-50 text-sky-600 rounded-lg">
                                     <Landmark size={20} />
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => handleOpenEdit(pg)}
                                         className="p-2 bg-sky-50 text-[#0388d1] rounded-full hover:bg-sky-100 transition-all shadow-sm shadow-sky-50"
@@ -172,9 +192,13 @@ const PayrollPaygroup: React.FC = () => {
                                     >
                                         <Edit2 size={16} />
                                     </button>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        {new Date(pg.created_at).toLocaleDateString()}
-                                    </span>
+                                    <button
+                                        onClick={() => handleDelete(pg.id, pg.name)}
+                                        className="p-2 bg-rose-50 text-rose-600 rounded-full hover:bg-rose-100 transition-all shadow-sm shadow-rose-50"
+                                        title="Delete Paygroup"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
                             <h4 className="text-lg font-bold text-slate-800 mb-2">{pg.name}</h4>
@@ -245,19 +269,42 @@ const PayrollPaygroup: React.FC = () => {
                                     {BUSINESS_UNITS.map(bu => (
                                         <div
                                             key={bu}
-                                            onClick={() => handleToggleBU(bu)}
+                                            onClick={() => {
+                                                const isAssigned = paygroups.some(pg => 
+                                                    (editingPaygroup ? pg.id !== editingPaygroup.id : true) && 
+                                                    pg.business_units && pg.business_units.includes(bu)
+                                                );
+                                                if (!isAssigned) handleToggleBU(bu);
+                                            }}
                                             className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${selectedBUs.includes(bu)
                                                 ? 'bg-sky-50 border-sky-200 shadow-sm shadow-sky-50'
                                                 : 'bg-white border-slate-100 hover:border-slate-300'
-                                                }`}
+                                                } ${(() => {
+                                                    const isAssigned = paygroups.some(pg => 
+                                                        (editingPaygroup ? pg.id !== editingPaygroup.id : true) && 
+                                                        pg.business_units && pg.business_units.includes(bu)
+                                                    );
+                                                    return isAssigned ? 'opacity-50 cursor-not-allowed bg-slate-50 grayscale' : '';
+                                                })()}`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={`p-2 rounded-lg transition-colors ${selectedBUs.includes(bu) ? 'bg-white text-sky-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'
                                                     }`}>
                                                     <Building2 size={16} />
                                                 </div>
-                                                <span className={`text-sm font-bold transition-colors ${selectedBUs.includes(bu) ? 'text-sky-900' : 'text-slate-600'
-                                                    }`}>{bu}</span>
+                                                <div className="flex flex-col">
+                                                    <span className={`text-sm font-bold transition-colors ${selectedBUs.includes(bu) ? 'text-sky-900' : 'text-slate-600'
+                                                        }`}>{bu}</span>
+                                                    {(() => {
+                                                        const isAssigned = paygroups.some(pg => 
+                                                            (editingPaygroup ? pg.id !== editingPaygroup.id : true) && 
+                                                            pg.business_units && pg.business_units.includes(bu)
+                                                        );
+                                                        return isAssigned && (
+                                                            <span className="text-[10px] font-bold text-rose-500 uppercase tracking-tighter">Already Assigned</span>
+                                                        );
+                                                    })()}
+                                                </div>
                                             </div>
                                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedBUs.includes(bu)
                                                 ? 'bg-sky-600 border-sky-600'
