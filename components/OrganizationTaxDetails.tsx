@@ -199,7 +199,7 @@ const OrganizationTaxDetails: React.FC = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">COMPANY INFORMATION</h3>
                     <div className="space-y-6">
-                        <div>
+                        <div className="md:w-1/2">
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">REGISTERED COMPANY NAME</label>
                             <input
                                 type="text"
@@ -244,7 +244,7 @@ const OrganizationTaxDetails: React.FC = () => {
                         </div>
 
                         {/* Row 2 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase mb-2">
                                     TDS circle / AO code <Info size={14} className="text-slate-400" />
@@ -276,6 +276,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
                             </div>
+                            <div className="hidden md:block"></div>
                         </div>
                     </div>
                 </div>
