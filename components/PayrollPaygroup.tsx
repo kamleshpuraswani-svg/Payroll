@@ -3,16 +3,10 @@ import { Landmark, X, Save, Building2, Check, Loader2, Edit2 } from 'lucide-reac
 import { supabase } from '../services/supabaseClient';
 
 const BUSINESS_UNITS = [
-    "Digital Technology",
-    "Retail Banking",
-    "Supply Chain",
-    "Product Innovation",
-    "Strategic Consulting",
-    "Wealth Management",
-    "Corporate Strategy",
-    "Creative Services",
-    "Brand & Growth",
-    "Product Management"
+    "Mindinventory",
+    "300 Minds",
+    "CollabCRM",
+    "Dots & Boxes"
 ];
 
 const PayrollPaygroup: React.FC = () => {
@@ -67,6 +61,28 @@ const PayrollPaygroup: React.FC = () => {
     const handleSave = async () => {
         if (!paygroupName) {
             alert('Please enter a paygroup name');
+            return;
+        }
+
+        if (selectedBUs.length === 0) {
+            alert('Please select at least one business unit');
+            return;
+        }
+
+        // Check for duplicate Business Unit assignments
+        const duplicateBUs: string[] = [];
+        paygroups.forEach(pg => {
+            if (editingPaygroup && pg.id === editingPaygroup.id) return;
+            
+            selectedBUs.forEach(bu => {
+                if (pg.business_units && pg.business_units.includes(bu)) {
+                    if (!duplicateBUs.includes(bu)) duplicateBUs.push(bu);
+                }
+            });
+        });
+
+        if (duplicateBUs.length > 0) {
+            alert(`The following Business Units are already assigned to other paygroups: ${duplicateBUs.join(', ')}. Each unit can only belong to one paygroup.`);
             return;
         }
 
