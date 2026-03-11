@@ -816,6 +816,16 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         <input type="text" placeholder="Search structures..." className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                     </div>
                     <div className="relative">
+                        <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none">
+                            <option>All Status</option>
+                            <option>Active</option>
+                            <option>Draft</option>
+                        </select>
+                        <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
+                <div className="w-full sm:w-auto flex items-center justify-end gap-3">
+                    <div className="relative">
                         <select
                             value={selectedTarget}
                             onChange={(e) => setSelectedTarget(e.target.value)}
@@ -837,18 +847,8 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                     </div>
-                    <div className="relative">
-                        <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none">
-                            <option>All Status</option>
-                            <option>Active</option>
-                            <option>Draft</option>
-                        </select>
-                        <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
-                    </div>
-                </div>
-                <div className="w-full sm:w-auto flex items-center justify-end gap-3">
-                    <button onClick={handleCreateClick} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium shadow-sm transition-colors flex items-center gap-2">
-                        <Plus size={18} /> Create Salary Structure
+                    <button onClick={handleCreateClick} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium shadow-sm transition-colors flex items-center gap-2 text-sm">
+                        Create Salary Structure
                     </button>
                 </div>
             </div>
