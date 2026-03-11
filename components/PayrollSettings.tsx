@@ -602,6 +602,12 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
     const [selectedTarget, setSelectedTarget] = useState<string>('all');
 
+    const filteredSchedules = useMemo(() => {
+        if (selectedTarget === 'all') return schedules;
+        const [type, id] = selectedTarget.split(':');
+        return schedules.filter(s => s.targetType === (type === 'pg' ? 'Paygroup' : 'BusinessUnit') && s.targetId === id);
+    }, [schedules, selectedTarget]);
+
     const fetchConfig = async () => {
         setIsLoading(true);
         try {
@@ -645,8 +651,28 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     }, []);
 
     const handleStatusToggle = async (id: string) => {
+        const scheduleToToggle = schedules.find(s => s.id === id);
+        if (!scheduleToToggle) return;
+
+        const isActivating = scheduleToToggle.status === 'Inactive' || !scheduleToToggle.status;
+        
+        if (isActivating) {
+            // Check if any other schedule for the same target is already active
+            const otherActive = schedules.find(s => 
+                s.id !== id && 
+                s.targetId === scheduleToToggle.targetId && 
+                s.targetType === scheduleToToggle.targetType && 
+                s.status === 'Active'
+            );
+
+            if (otherActive) {
+                alert(`Only one pay schedule should be active at a time for this ${scheduleToToggle.targetType === 'Paygroup' ? 'Paygroup' : 'Business Unit'}.`);
+                return;
+            }
+        }
+
         const updatedSchedules = schedules.map(s => 
-            s.id === id ? { ...s, status: (s.status === 'Active' ? 'Inactive' : 'Active') as 'Active' | 'Inactive' } : s
+            s.id === id ? { ...s, status: (isActivating ? 'Active' : 'Inactive') as 'Active' | 'Inactive' } : s
         );
 
         try {
@@ -677,6 +703,29 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     };
 
     const handleSave = async (scheduleData: Partial<PaySchedule>) => {
+        if (selectedTarget === 'all' && !editingSchedule) {
+            alert('Please select a specific Business Unit or Paygroup before adding a schedule.');
+            return;
+        }
+
+        const [targetTypeRaw, targetId] = selectedTarget.split(':');
+        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+
+        // If saving as active, check if another is active
+        if (scheduleData.status === 'Active') {
+            const otherActive = schedules.find(s => 
+                s.id !== (editingSchedule?.id || '') && 
+                s.targetId === (editingSchedule?.targetId || targetId) && 
+                s.targetType === (editingSchedule?.targetType || targetType) && 
+                s.status === 'Active'
+            );
+
+            if (otherActive) {
+                alert(`Only one pay schedule should be active at a time for this ${targetType === 'Paygroup' ? 'Paygroup' : 'Business Unit'}.`);
+                return;
+            }
+        }
+
         setIsSaving(true);
         let updatedSchedules: PaySchedule[];
 
@@ -685,12 +734,14 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         } else {
             const newSchedule = {
                 id: Date.now().toString(),
-                name: scheduleData.name || 'New Schedule',
+                name: scheduleData.name || (scheduleData.frequency === 'Monthly' ? 'Monthly Schedule' : `${scheduleData.frequency} Schedule`),
                 frequency: scheduleData.frequency || 'Monthly',
                 payPeriodStart: '1st',
                 payPeriodEnd: 'Last',
                 payDate: 'Last Working Day',
-                status: 'Active' as const,
+                status: scheduleData.status || 'Active',
+                targetId,
+                targetType,
                 ...scheduleData
             };
             updatedSchedules = [...schedules, newSchedule as PaySchedule];
@@ -776,7 +827,9 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     )}
                     <button
                         onClick={handleAddNew}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-bold text-sm shadow-sm h-10"
+                        disabled={selectedTarget === 'all'}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-sm h-10"
+                        title={selectedTarget === 'all' ? 'Select a unit or paygroup first' : ''}
                     >
                         {userRole !== 'HR_MANAGER' && <Plus size={18} />} Add Pay Schedule
                     </button>
@@ -842,10 +895,10 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             ) : schedules.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
-                                        No pay schedules configured. Click "Add Pay Schedule" to create one.
+                                        No pay schedules configured for this selection. Click "Add Pay Schedule" to create one.
                                     </td>
                                 </tr>
-                            ) : schedules.map((schedule) => (
+                            ) : filteredSchedules.map((schedule) => (
                                 <tr key={schedule.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-4 py-3 font-semibold text-slate-800">{schedule.name}</td>
                                     <td className="px-4 py-3">
