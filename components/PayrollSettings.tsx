@@ -76,13 +76,15 @@ const getMonthOptions = () => {
 
 interface AddPayScheduleModalProps {
     onClose: () => void;
-    onSave: (schedule: Partial<PaySchedule>) => void;
+    onSave: (schedule: Partial<PaySchedule>, targetInfo: { targetId: string; targetType: 'Paygroup' | 'BusinessUnit' }) => void;
     initialData?: PaySchedule | null;
     userRole?: string;
     isSaving?: boolean;
+    paygroups: any[];
+    selectedTarget: string;
 }
 
-const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole, isSaving }) => {
+const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole, isSaving, paygroups, selectedTarget }) => {
     // Form State
     const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>('Weekly');
     const [weeklyPayDay, setWeeklyPayDay] = useState('Fri');
@@ -90,6 +92,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     const [startMonthStr, setStartMonthStr] = useState('December 2025');
     const [firstPayDate, setFirstPayDate] = useState('');
     const [effectiveDate, setEffectiveDate] = useState('');
+    const [localSelectedTarget, setLocalSelectedTarget] = useState(selectedTarget === 'all' ? '' : selectedTarget);
 
     // Semi-Monthly Specific State
     const [smFirstType, setSmFirstType] = useState<'15th' | 'custom'>('15th');
@@ -105,13 +108,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     useEffect(() => {
         if (initialData) {
             setFrequency(initialData.frequency);
+            if (initialData.targetId && initialData.targetType) {
+                const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
+                setLocalSelectedTarget(`${prefix}:${initialData.targetId}`);
+            }
             // Attempt to parse other fields if they match standard formats
             if (initialData.frequency === 'Weekly' && initialData.payDate.startsWith('Every ')) {
                 const day = initialData.payDate.replace('Every ', '').substring(0, 3);
                 setWeeklyPayDay(day);
             }
-            // Note: For a real app, you would parse other fields like payPeriodStart/End to set smFirstType, etc.
-            // For now, we mainly ensure Frequency is set and locked as per requirement.
             if (initialData.effectiveDate) {
                 setEffectiveDate(initialData.effectiveDate);
             }
@@ -214,6 +219,11 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             newErrors.effectiveDate = "Effective date is required";
         }
 
+        // Validate Target
+        if (!localSelectedTarget) {
+            newErrors.target = "Business Unit or Paygroup is required";
+        }
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -232,13 +242,16 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         }
         else if (frequency === 'Semi-Monthly') payDateDesc = smSecondType === 'last' ? '15th & Last Day' : `15th & ${smSecondCustomDay}th`;
 
+        const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
+        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+
         onSave({
             frequency,
             name: initialData?.name || (frequency === 'Monthly' ? 'New Monthly Schedule' : `${frequency} Schedule`),
             status: initialData?.status || 'Active',
             payDate: payDateDesc,
             effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate
-        });
+        }, { targetId, targetType });
     };
 
     // Calendar Renderer
@@ -346,6 +359,34 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                     <div className="flex flex-col lg:flex-row gap-8">
                         <div className="flex-1">
                             <div className="space-y-8">
+                                {/* Target Selection */}
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            value={localSelectedTarget}
+                                            onChange={(e) => setLocalSelectedTarget(e.target.value)}
+                                            className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.target ? 'border-rose-500' : 'border-slate-200'}`}
+                                        >
+                                            <option value="">Select a unit or paygroup</option>
+                                            <optgroup label="Business Units">
+                                                {BUSINESS_UNITS.map(bu => (
+                                                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="Payroll Paygroups">
+                                                {paygroups.map(pg => (
+                                                    <option key={pg.id} value={`pg:${pg.id}`}>
+                                                        {pg.name}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                    {errors.target && <p className="text-xs text-rose-500 mt-1">{errors.target}</p>}
+                                </div>
+
                                 {/* Frequency */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-3">When do you pay your employees? <span className="text-rose-500">*</span></label>
@@ -702,21 +743,15 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         setIsModalOpen(true);
     };
 
-    const handleSave = async (scheduleData: Partial<PaySchedule>) => {
-        if (selectedTarget === 'all' && !editingSchedule) {
-            alert('Please select a specific Business Unit or Paygroup before adding a schedule.');
-            return;
-        }
-
-        const [targetTypeRaw, targetId] = selectedTarget.split(':');
-        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+    const handleSave = async (scheduleData: Partial<PaySchedule>, targetInfo: { targetId: string; targetType: 'Paygroup' | 'BusinessUnit' }) => {
+        const { targetId, targetType } = targetInfo;
 
         // If saving as active, check if another is active
         if (scheduleData.status === 'Active') {
             const otherActive = schedules.find(s => 
                 s.id !== (editingSchedule?.id || '') && 
-                s.targetId === (editingSchedule?.targetId || targetId) && 
-                s.targetType === (editingSchedule?.targetType || targetType) && 
+                s.targetId === targetId && 
+                s.targetType === targetType && 
                 s.status === 'Active'
             );
 
@@ -957,6 +992,8 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     initialData={editingSchedule}
                     userRole={userRole}
                     isSaving={isSaving}
+                    paygroups={paygroups}
+                    selectedTarget={selectedTarget}
                 />
             )}
         </div>
