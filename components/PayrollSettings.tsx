@@ -862,9 +862,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     )}
                     <button
                         onClick={handleAddNew}
-                        disabled={selectedTarget === 'all'}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-sm h-10"
-                        title={selectedTarget === 'all' ? 'Select a unit or paygroup first' : ''}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-bold text-sm shadow-sm h-10"
                     >
                         {userRole !== 'HR_MANAGER' && <Plus size={18} />} Add Pay Schedule
                     </button>
