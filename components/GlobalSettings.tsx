@@ -21,7 +21,7 @@ import {
 
 import OrganizationTaxDetails from './OrganizationTaxDetails';
 import PayrollSettings from './PayrollSettings';
-import SalaryComponents from './SalaryComponents';
+import HRSalaryComponents from './HRSalaryComponents';
 import HRSalaryStructure from './HRSalaryStructure';
 import HRTaxConfiguration from './HRTaxConfiguration';
 import HRSalarySlipTemplate from './HRSalarySlipTemplate';
@@ -67,7 +67,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          case 'paygroup': return <PayrollPaygroup />;
          case 'organization': return <OrganizationTaxDetails />;
          case 'schedule': return <PayrollSettings userRole={userRole} />;
-         case 'components': return <SalaryComponents userRole={userRole} />;
+         case 'components': return <HRSalaryComponents />;
          case 'structure': return <HRSalaryStructure embedded={true} />;
          case 'tax-config': return <HRTaxConfiguration />;
          case 'loan-types': return <LoanAdvancesTypes />;

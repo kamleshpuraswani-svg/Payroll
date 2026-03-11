@@ -17,7 +17,6 @@ import AiAssistant from './components/AiAssistant';
 import PayrollSettings from './components/PayrollSettings';
 import TaxConfiguration from './components/HRTaxConfiguration';
 import SalaryComponents from './components/SalaryComponents';
-import HRSalaryComponents from './components/HRSalaryComponents';
 import TemplateSetup from './components/TemplateSetup';
 import GlobalSettings from './components/GlobalSettings';
 import PayrollCorner from './components/PayrollCorner';
@@ -234,7 +233,6 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_DOCUMENTS && <DocumentsManager />}
                 {currentView === ViewState.HR_EXPENSES && <ExpenseManagement />}
                 {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances userRole={userRole} />}
-                {currentView === ViewState.HR_SALARY_COMPONENTS && <HRSalaryComponents />}
                 {currentView === ViewState.SETTINGS && <GlobalSettings userRole={userRole} />}
                 {currentView === ViewState.HR_OPERATIONAL_CONFIG && <OperationalConfig />}
               </>
