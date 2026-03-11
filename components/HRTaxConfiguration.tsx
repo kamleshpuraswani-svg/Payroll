@@ -255,7 +255,7 @@ export default function HRTaxConfiguration() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300 pb-20">
+      <div className="p-4 lg:p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

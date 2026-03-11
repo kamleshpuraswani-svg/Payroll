@@ -503,7 +503,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         }
         return (
             <div className="h-full overflow-y-auto">
-                <div className="p-4 lg:p-8 w-full mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
+                <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300 pb-20">
                     {children}
                 </div>
             </div>

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 interface PaySchedule {
     id: string;
@@ -70,9 +71,10 @@ interface AddPayScheduleModalProps {
     onSave: (schedule: Partial<PaySchedule>) => void;
     initialData?: PaySchedule | null;
     userRole?: string;
+    isSaving?: boolean;
 }
 
-const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole }) => {
+const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole, isSaving }) => {
     // Form State
     const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>('Weekly');
     const [weeklyPayDay, setWeeklyPayDay] = useState('Fri');
@@ -568,8 +570,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                 {/* Footer */}
                 <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
-                    <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
-                    <button onClick={handleSave} className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm">Save</button>
+                    <button onClick={onClose} disabled={isSaving} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">Cancel</button>
+                    <button 
+                        onClick={handleSave} 
+                        disabled={isSaving}
+                        className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
+                    >
+                        {isSaving && <Loader2 size={16} className="animate-spin" />}
+                        {isSaving ? 'Saving...' : 'Save'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -577,9 +586,39 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 };
 
 const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
-    const [schedules, setSchedules] = useState<PaySchedule[]>(MOCK_SCHEDULES);
+    const [schedules, setSchedules] = useState<PaySchedule[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
+
+    const fetchSchedules = async () => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', 'pay_schedules')
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error fetching schedules:', error);
+            } else if (data && data.config_value) {
+                setSchedules(data.config_value as PaySchedule[]);
+            } else {
+                setSchedules(MOCK_SCHEDULES);
+            }
+        } catch (error) {
+            console.error('Error fetching schedules:', error);
+            setSchedules(MOCK_SCHEDULES);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSchedules();
+    }, []);
 
     const handleAddNew = () => {
         setEditingSchedule(null);
@@ -591,12 +630,13 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         setIsModalOpen(true);
     };
 
-    const handleSave = (scheduleData: Partial<PaySchedule>) => {
+    const handleSave = async (scheduleData: Partial<PaySchedule>) => {
+        setIsSaving(true);
+        let updatedSchedules: PaySchedule[];
+
         if (editingSchedule) {
-            // Update existing
-            setSchedules(prev => prev.map(s => s.id === editingSchedule.id ? { ...s, ...scheduleData } : s));
+            updatedSchedules = schedules.map(s => s.id === editingSchedule.id ? { ...s, ...scheduleData } : s);
         } else {
-            // Create new
             const newSchedule = {
                 id: Date.now().toString(),
                 name: scheduleData.name || 'New Schedule',
@@ -607,18 +647,55 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 status: 'Active' as const,
                 ...scheduleData
             };
-            setSchedules([...schedules, newSchedule as PaySchedule]);
+            updatedSchedules = [...schedules, newSchedule as PaySchedule];
         }
-        setIsModalOpen(false);
-        setEditingSchedule(null);
+
+        try {
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'pay_schedules',
+                    config_value: updatedSchedules,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+
+            setSchedules(updatedSchedules);
+            setIsModalOpen(false);
+            setEditingSchedule(null);
+        } catch (error) {
+            console.error('Error saving schedules:', error);
+            alert('Failed to save pay schedule.');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleDelete = (id: string) => {
-        setSchedules(prev => prev.filter(s => s.id !== id));
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this pay schedule?')) return;
+
+        const updatedSchedules = schedules.filter(s => s.id !== id);
+        
+        try {
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'pay_schedules',
+                    config_value: updatedSchedules,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setSchedules(updatedSchedules);
+        } catch (error) {
+            console.error('Error deleting schedule:', error);
+            alert('Failed to delete pay schedule.');
+        }
     };
 
     return (
-        <div className="p-4 lg:p-8 max-w-full mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
+        <div className="p-4 lg:p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
 
             {/* List Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -660,7 +737,22 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {schedules.map((schedule) => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
+                                            <span>Loading pay schedules...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : schedules.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        No pay schedules configured. Click "Add Pay Schedule" to create one.
+                                    </td>
+                                </tr>
+                            ) : schedules.map((schedule) => (
                                 <tr key={schedule.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-4 py-3 font-semibold text-slate-800">{schedule.name}</td>
                                     <td className="px-4 py-3">
@@ -676,12 +768,22 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button
-                                            onClick={() => handleEdit(schedule)}
-                                            className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEdit(schedule)}
+                                                className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
+                                                title="Edit Schedule"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(schedule.id)}
+                                                className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                                title="Delete Schedule"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -697,6 +799,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     onSave={handleSave}
                     initialData={editingSchedule}
                     userRole={userRole}
+                    isSaving={isSaving}
                 />
             )}
         </div>

@@ -143,7 +143,7 @@ const OrganizationTaxDetails: React.FC = () => {
 
     return (
         <div className="h-full overflow-y-auto">
-            <div className="p-4 lg:p-8 max-w-full space-y-6 animate-in fade-in duration-300">
+            <div className="p-4 lg:p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
                 {/* Header */}
                 <div className="flex justify-between items-start">
                     <div>
