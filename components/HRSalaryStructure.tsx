@@ -14,9 +14,12 @@ import {
     X,
     AlertTriangle,
     Info,
-    ChevronDown,
-    Check
+    Check,
+    Building2,
+    Sigma,
+    ChevronDown
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 
 // --- Types ---
 
@@ -43,6 +46,8 @@ interface Structure {
     deductions: SalaryComponent[];
     benefits: SalaryComponent[];
     reimbursements: SalaryComponent[];
+    targetId?: string;
+    targetType?: 'Paygroup' | 'BusinessUnit';
 }
 
 interface ConfirmationModalProps {
@@ -66,6 +71,12 @@ interface SalaryStructureProps {
 const DEPARTMENTS = ['Software Engineering', 'Sales', 'Product', 'Finance', 'QA', 'Engineering', 'Marketing', 'Operations'];
 const DESIGNATIONS = ['Senior Engineer', 'Sales Manager', 'Product Analyst', 'DevOps Engineer', 'Finance Associate', 'QA Lead', 'Designer', 'HR Manager'];
 const EMPLOYEES_LIST = ['Priya Sharma (TF00912)', 'Arjun Mehta (AC04567)', 'Neha Kapoor (SU00234)', 'Rohan Desai (GL07890)', 'Vikram Singh (AC03987)', 'Ananya Patel (TF01145)', 'Amit Patel (TF02211)', 'Simran Kaur (GL09988)'];
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 // --- Mock Data ---
 
@@ -341,6 +352,21 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         return saved ? JSON.parse(saved) : MOCK_STRUCTURES;
     });
 
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('all');
+
+    useEffect(() => {
+        const fetchPaygroups = async () => {
+            const { data, error } = await supabase.from('payroll_paygroups').select('*');
+            if (error) {
+                console.error('Error fetching paygroups:', error);
+            } else {
+                setPaygroups(data || []);
+            }
+        };
+        fetchPaygroups();
+    }, []);
+
     // Save changes to localStorage whenever structures change
     useEffect(() => {
         localStorage.setItem('collab_salary_structures', JSON.stringify(structures));
@@ -351,6 +377,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     // Editor State
     const [structureName, setStructureName] = useState('');
     const [description, setDescription] = useState('');
+    const [localSelectedTarget, setLocalSelectedTarget] = useState('');
     const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
     const [selectedDesignations, setSelectedDesignations] = useState<string[]>([]);
     const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
@@ -384,6 +411,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setBenefits([]);
         setReimbursements([]);
         setErrors({});
+        setLocalSelectedTarget(selectedTarget === 'all' ? '' : selectedTarget);
         setView('EDITOR');
     };
 
@@ -398,6 +426,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeductions(structure.deductions);
         setBenefits(structure.benefits);
         setReimbursements(structure.reimbursements);
+        setLocalSelectedTarget(structure.targetId ? `${structure.targetType === 'Paygroup' ? 'pg' : 'bu'}:${structure.targetId}` : '');
         setErrors({});
         setView('VIEW');
     };
@@ -452,7 +481,9 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             earnings,
             deductions,
             benefits,
-            reimbursements
+            reimbursements,
+            targetId: localSelectedTarget ? localSelectedTarget.split(':')[1] : undefined,
+            targetType: localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : undefined
         };
 
         if (activeStructureId) {
@@ -584,31 +615,60 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                         </>
                                     )}
                                 </div>
-                                <div className="flex gap-4 flex-wrap">
-                                    <MultiSelect
-                                        label="Department"
-                                        options={DEPARTMENTS}
-                                        selected={selectedDepartments}
-                                        onChange={setSelectedDepartments}
-                                        disabled={isReadOnly}
-                                        info={infoMessage}
-                                    />
-                                    <MultiSelect
-                                        label="Designation"
-                                        options={DESIGNATIONS}
-                                        selected={selectedDesignations}
-                                        onChange={setSelectedDesignations}
-                                        disabled={isReadOnly}
-                                        info={infoMessage}
-                                    />
-                                    <MultiSelect
-                                        label="Employees"
-                                        options={EMPLOYEES_LIST}
-                                        selected={selectedEmployees}
-                                        onChange={setSelectedEmployees}
-                                        disabled={isReadOnly}
-                                        info="Assign specific employees directly."
-                                    />
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Associate with Unit or Paygroup <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            disabled={isReadOnly}
+                                            value={localSelectedTarget}
+                                            onChange={(e) => setLocalSelectedTarget(e.target.value)}
+                                            className={`w-full px-4 py-2 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${isReadOnly ? 'bg-slate-50 border-slate-100' : 'border-slate-200 hover:border-purple-300'}`}
+                                        >
+                                            <option value="">Select a unit or paygroup</option>
+                                            <optgroup label="Business Units">
+                                                {BUSINESS_UNITS.map(bu => (
+                                                    <option key={bu} value={`bu:${bu}`}>{bu} (Business Unit)</option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="Payroll Paygroups">
+                                                {paygroups.map(pg => (
+                                                    <option key={pg.id} value={`pg:${pg.id}`}>
+                                                        {pg.name} (Paygroup)
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 text-center sm:text-left">Target Assignment Rules</label>
+                                    <div className="flex gap-4 flex-wrap">
+                                        <MultiSelect
+                                            label="Department"
+                                            options={DEPARTMENTS}
+                                            selected={selectedDepartments}
+                                            onChange={setSelectedDepartments}
+                                            disabled={isReadOnly}
+                                            info={infoMessage}
+                                        />
+                                        <MultiSelect
+                                            label="Designation"
+                                            options={DESIGNATIONS}
+                                            selected={selectedDesignations}
+                                            onChange={setSelectedDesignations}
+                                            disabled={isReadOnly}
+                                            info={infoMessage}
+                                        />
+                                        <MultiSelect
+                                            label="Employees"
+                                            options={EMPLOYEES_LIST}
+                                            selected={selectedEmployees}
+                                            onChange={setSelectedEmployees}
+                                            disabled={isReadOnly}
+                                            info="Assign specific employees directly."
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -756,6 +816,28 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         <input type="text" placeholder="Search structures..." className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                     </div>
                     <div className="relative">
+                        <select
+                            value={selectedTarget}
+                            onChange={(e) => setSelectedTarget(e.target.value)}
+                            className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                        >
+                            <option value="all">All Units & Paygroups</option>
+                            <optgroup label="Business Units">
+                                {BUSINESS_UNITS.map(bu => (
+                                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="Payroll Paygroups">
+                                {paygroups.map(pg => (
+                                    <option key={pg.id} value={`pg:${pg.id}`}>
+                                        {pg.name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                    </div>
+                    <div className="relative">
                         <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none">
                             <option>All Status</option>
                             <option>Active</option>
@@ -787,7 +869,11 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {structures.map((item) => {
+                        {structures.filter(s => {
+                            if (selectedTarget === 'all') return true;
+                            const prefix = s.targetType === 'Paygroup' ? 'pg' : 'bu';
+                            return `${prefix}:${s.targetId}` === selectedTarget;
+                        }).map((item) => {
                             const isArchived = item.status === 'Archived';
 
                             return (
