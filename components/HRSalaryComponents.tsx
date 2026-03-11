@@ -588,185 +588,190 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-3xl mx-auto mt-6">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Deduction Component' : 'Add Deduction Component'}</h2>
-                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
-            </div>
-            <div className="p-8 space-y-6">
-                {/* Target Selection */}
-                <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
-                    <div className="relative">
-                        <select
-                            value={localSelectedTarget}
-                            onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                            className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
-                        >
-                            <option value="">Select a unit or paygroup</option>
-                            <optgroup label="Business Units">
-                                {BUSINESS_UNITS.map(bu => (
-                                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                ))}
-                            </optgroup>
-                            <optgroup label="Payroll Paygroups">
-                                {paygroups.map(pg => (
-                                    <option key={pg.id} value={`pg:${pg.id}`}>
-                                        {pg.name}
-                                    </option>
-                                ))}
-                            </optgroup>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                    </div>
-                    {error && error.includes('Business Unit') && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-4xl w-full max-h-[90vh] flex flex-col">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+                    <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Deduction Component' : 'Add Deduction Component'}</h2>
+                    <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
                 </div>
+                <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                    {/* Target Selection */}
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <select
+                                value={localSelectedTarget}
+                                onChange={(e) => setLocalSelectedTarget(e.target.value)}
+                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                            >
+                                <option value="">Select a unit or paygroup</option>
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        {error && error.includes('Business Unit') && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
-                    <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date</label>
-                        <input
-                            type="date"
-                            value={effectiveDate}
-                            onChange={(e) => setEffectiveDate(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
+                        <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Payslip Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
                     </div>
-                </div>
-                <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-3">Deduction Type <span className="text-rose-500">*</span></label>
-                    <div className="flex gap-6">
-                        {(['Statutory', 'Non-Statutory'] as const).map(type => (
-                            <label key={type} className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${deductionType === type ? 'border-sky-500' : 'border-slate-300'}`}>
-                                    {deductionType === type && <div className="w-2 h-2 rounded-full bg-sky-500" />}
-                                </div>
-                                <input
-                                    type="radio"
-                                    className="hidden"
-                                    checked={deductionType === type}
-                                    onChange={() => setDeductionType(type)}
-                                />
-                                <span className="text-sm text-slate-700">{type}</span>
-                            </label>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date</label>
+                            <input
+                                type="date"
+                                value={effectiveDate}
+                                onChange={(e) => setEffectiveDate(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600"
+                            />
+                        </div>
                     </div>
-                </div>
-                {/* Calculation Method */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">Calculation Method <span className="text-rose-500">*</span></label>
-                        <div className="flex items-center gap-6 h-[42px]">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {calcMethod === 'Flat' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">Deduction Type <span className="text-rose-500">*</span></label>
+                        <div className="flex gap-6">
+                            {(['Statutory', 'Non-Statutory'] as const).map(type => (
+                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deductionType === type ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {deductionType === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input
+                                        type="radio"
+                                        className="hidden"
+                                        checked={deductionType === type}
+                                        onChange={() => setDeductionType(type)}
+                                    />
+                                    <span className="text-sm text-slate-700 font-medium">{type}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    {/* Calculation Method */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-3">Calculation Method <span className="text-rose-500">*</span></label>
+                            <div className="flex items-center gap-6 h-[42px]">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
+                                    <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
+                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
+                                </label>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        disabled={calcMethod !== 'Percentage'}
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between transition-all"
+                                    >
+                                        <span className="truncate max-w-[80px]">{selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}</span>
+                                        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isDropdownOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+                                                {['CTC', 'Basic'].map(comp => (
+                                                    <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                                            {selectedComponents.includes(comp) && <Check size={12} className="text-white" />}
+                                                        </div>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="hidden"
+                                                            checked={selectedComponents.includes(comp)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedComponents(prev => [...prev, comp]);
+                                                                } else {
+                                                                    setSelectedComponents(prev => prev.filter(c => c !== comp));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span className="text-sm text-slate-700 font-medium">{comp}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                                <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
-                                <span className="text-sm text-slate-700">Flat Amount</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {calcMethod === 'Percentage' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                </div>
-                                <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
-                                <span className="text-sm text-slate-700">Percentage of</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
                             </label>
                             <div className="relative">
-                                <button
-                                    type="button"
-                                    disabled={calcMethod !== 'Percentage'}
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50 flex items-center gap-2 min-w-[100px] hover:bg-slate-100 transition-colors"
-                                >
-                                    <span className="flex-1 text-left">{selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select...'}</span>
-                                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {isDropdownOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
-                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
-                                            {['CTC', 'Basic'].map(comp => (
-                                                <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer group transition-colors">
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                                        {selectedComponents.includes(comp) && <Check size={12} className="text-white" />}
-                                                    </div>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="hidden"
-                                                        checked={selectedComponents.includes(comp)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setSelectedComponents(prev => [...prev, comp]);
-                                                            } else {
-                                                                setSelectedComponents(prev => prev.filter(c => c !== comp));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <span className="text-sm text-slate-700 font-medium">{comp}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={amountOrPercent}
-                                onChange={(e) => setAmountOrPercent(e.target.value)}
-                                placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
-                                className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                            />
-                            <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                {calcMethod === 'Percentage' ? '%' : '₹'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Frequency <span className="text-rose-500">*</span></label>
-                    <div className="space-y-2">
-                        {['One-time', 'Recurring'].map(freq => (
-                            <label key={freq} className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${frequency === freq ? 'border-sky-500' : 'border-slate-300'}`}>
-                                    {frequency === freq && <div className="w-2 h-2 rounded-full bg-sky-500" />}
+                                <input
+                                    type="text"
+                                    value={amountOrPercent}
+                                    onChange={(e) => setAmountOrPercent(e.target.value)}
+                                    placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
+                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                />
+                                <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                    {calcMethod === 'Percentage' ? '%' : '₹'}
                                 </div>
-                                <input type="radio" className="hidden" checked={frequency === freq} onChange={() => setFrequency(freq as any)} />
-                                <span className="text-sm text-slate-700">{freq === 'One-time' ? 'One-time deduction' : 'Recurring deduction for subsequent Payrolls'}</span>
-                            </label>
-                        ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Frequency <span className="text-rose-500">*</span></label>
+                        <div className="space-y-2">
+                            {['One-time', 'Recurring'].map(freq => (
+                                <label key={freq} className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${frequency === freq ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {frequency === freq && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={frequency === freq} onChange={() => setFrequency(freq as any)} />
+                                    <span className="text-sm text-slate-700 font-medium">{freq === 'One-time' ? 'One-time deduction' : 'Recurring deduction for subsequent Payrolls'}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="pt-2 flex flex-col gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {showInPayslip && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
+                            <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {isActive && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
+                            <span className="text-sm font-medium text-slate-700">Mark as Active</span>
+                        </label>
                     </div>
                 </div>
-                <div className="pt-2 flex flex-col gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>
-                            {showInPayslip && <CheckCircle size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
-                        <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>
-                            {isActive && <CheckCircle size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
-                        <span className="text-sm font-medium text-slate-700">Mark as Active</span>
-                    </label>
+                <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                    <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                    <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
             </div>
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3"><button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button><button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button></div>
         </div>
     );
 }
@@ -831,14 +836,14 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-3xl mx-auto mt-6">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Reimbursement Component' : 'Add Reimbursement Component'}</h2>
-                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-4xl w-full max-h-[90vh] flex flex-col">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+                    <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Reimbursement Component' : 'Add Reimbursement Component'}</h2>
+                    <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+                </div>
 
-            <div className="p-8">
-                <div className="space-y-6">
+                <div className="p-8 space-y-6 overflow-y-auto flex-1">
                     {/* Target Selection */}
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
@@ -904,14 +909,14 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
                             <div className="flex items-center gap-6 h-[42px]">
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
                                     <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
                                 </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
@@ -999,12 +1004,11 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         </label>
                     </div>
                 </div>
-            </div>
 
-            {/* Footer */}
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                    <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                    <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                </div>
             </div>
         </div>
     );
