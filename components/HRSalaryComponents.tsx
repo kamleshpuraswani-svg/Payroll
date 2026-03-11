@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Plus,
     Search,
@@ -16,7 +16,8 @@ import {
     AlertTriangle,
     Check,
     Info,
-    Lock
+    Lock,
+    Building2
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -42,12 +43,22 @@ interface SalaryComponent {
     deductionType?: 'Statutory' | 'Non-Statutory';
     showInPayslip?: boolean;
     isSystem?: boolean;
+    targetId?: string;
+    targetType?: 'Paygroup' | 'BusinessUnit';
 }
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 interface AddEarningFormProps {
     onCancel: () => void;
     onSave: (data: Partial<SalaryComponent>) => void;
     initialData?: SalaryComponent | null;
+    paygroups: any[];
+    selectedTarget: string;
 }
 
 interface ConfirmationModalProps {
@@ -179,11 +190,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 };
 
 // --- Detailed Add Earning Form ---
-const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
+const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
     const [error, setError] = useState<string | null>(null);
+    const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
+        if (initialData?.targetId && initialData?.targetType) {
+            const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
+            return `${prefix}:${initialData.targetId}`;
+        }
+        return selectedTarget === 'all' ? '' : selectedTarget;
+    });
 
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
@@ -210,6 +228,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             setError('Component Name is mandatory');
             return;
         }
+        if (!localSelectedTarget) {
+            setError('Business Unit or Paygroup is mandatory');
+            return;
+        }
         setError(null);
 
         const updatedData: Partial<SalaryComponent> = {
@@ -228,7 +250,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             status: isActive,
             category: 'Earnings'
         };
-        onSave(updatedData);
+
+        const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
+        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+
+        onSave({ ...updatedData, targetId, targetType });
     };
 
     return (
@@ -240,6 +266,34 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                 </div>
 
                 <div className="p-8 space-y-8 overflow-y-auto flex-1">
+                    {/* Target Selection */}
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <select
+                                value={localSelectedTarget}
+                                onChange={(e) => setLocalSelectedTarget(e.target.value)}
+                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                            >
+                                <option value="">Select a unit or paygroup</option>
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        {error && error.includes('Business Unit') && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
+                    </div>
+
                     {/* Section 1 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -474,7 +528,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 }
 
 // --- Detailed Add Deduction Form ---
-const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
+const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
@@ -482,6 +536,15 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
     const [deductionType, setDeductionType] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deductionType || 'Statutory');
+    const [error, setError] = useState<string | null>(null);
+
+    const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
+        if (initialData?.targetId && initialData?.targetType) {
+            const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
+            return `${prefix}:${initialData.targetId}`;
+        }
+        return selectedTarget === 'all' ? '' : selectedTarget;
+    });
 
     // Calculation Method State
     const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage'>(
@@ -492,6 +555,16 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSave = () => {
+        if (!name) {
+            setError('Component Name is mandatory');
+            return;
+        }
+        if (!localSelectedTarget) {
+            setError('Business Unit or Paygroup is mandatory');
+            return;
+        }
+        setError(null);
+
         const updatedData: Partial<SalaryComponent> = {
             name,
             payslipName,
@@ -507,7 +580,11 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             calculation: calcMethod === 'Flat' ? `Flat ₹${amountOrPercent}` : `${amountOrPercent}% of ${selectedComponents.join(', ')}`,
             taxable: 'Tax Deductible',
         };
-        onSave(updatedData);
+
+        const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
+        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+
+        onSave({ ...updatedData, targetId, targetType });
     };
 
     return (
@@ -517,6 +594,34 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
             </div>
             <div className="p-8 space-y-6">
+                {/* Target Selection */}
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                    <div className="relative">
+                        <select
+                            value={localSelectedTarget}
+                            onChange={(e) => setLocalSelectedTarget(e.target.value)}
+                            className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                        >
+                            <option value="">Select a unit or paygroup</option>
+                            <optgroup label="Business Units">
+                                {BUSINESS_UNITS.map(bu => (
+                                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="Payroll Paygroups">
+                                {paygroups.map(pg => (
+                                    <option key={pg.id} value={`pg:${pg.id}`}>
+                                        {pg.name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                    </div>
+                    {error && error.includes('Business Unit') && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
                     <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
@@ -667,13 +772,22 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
 }
 
 // --- Detailed Add Reimbursement Form ---
-const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData }) => {
+const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
     const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
+    const [error, setError] = useState<string | null>(null);
+
+    const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
+        if (initialData?.targetId && initialData?.targetType) {
+            const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
+            return `${prefix}:${initialData.targetId}`;
+        }
+        return selectedTarget === 'all' ? '' : selectedTarget;
+    });
 
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
@@ -686,6 +800,16 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSave = () => {
+        if (!name) {
+            setError('Component Name is mandatory');
+            return;
+        }
+        if (!localSelectedTarget) {
+            setError('Business Unit or Paygroup is mandatory');
+            return;
+        }
+        setError(null);
+
         const updatedData: Partial<SalaryComponent> = {
             name,
             payslipName,
@@ -699,7 +823,11 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             calculation: calcMethod === 'Flat' ? `Fixed Amount` : `${amount}% of ${selectedComponents.join(', ')}`,
             taxable: 'Partially Exempt',
         };
-        onSave(updatedData);
+
+        const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
+        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+
+        onSave({ ...updatedData, targetId, targetType });
     };
 
     return (
@@ -711,6 +839,34 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 
             <div className="p-8">
                 <div className="space-y-6">
+                    {/* Target Selection */}
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <select
+                                value={localSelectedTarget}
+                                onChange={(e) => setLocalSelectedTarget(e.target.value)}
+                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                            >
+                                <option value="">Select a unit or paygroup</option>
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        {error && error.includes('Business Unit') && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
+                    </div>
+
                     {/* Names */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -856,10 +1012,19 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 
 const HRSalaryComponents: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Earnings');
+    const [selectedTarget, setSelectedTarget] = useState('all');
+    const [paygroups, setPaygroups] = useState<any[]>([]);
 
     // Initialize state
     const [components, setComponents] = useState<SalaryComponent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const fetchPaygroups = async () => {
+        const { data, error } = await supabase
+            .from('paygroups')
+            .select('*');
+        if (error) console.error('Error fetching paygroups:', error);
+        else setPaygroups(data || []);
+    };
 
     const fetchComponents = async () => {
         setIsLoading(true);
@@ -890,7 +1055,9 @@ const HRSalaryComponents: React.FC = () => {
                 showInPayslip: item.show_in_payslip,
                 created: item.created_by,
                 lastModified: item.last_updated_by,
-                isSystem: item.is_system
+                isSystem: item.is_system,
+                targetId: item.target_id,
+                targetType: item.target_type
             }));
             setComponents(mappedData);
         }
@@ -899,6 +1066,7 @@ const HRSalaryComponents: React.FC = () => {
 
     useEffect(() => {
         fetchComponents();
+        fetchPaygroups();
     }, []);
 
     const [isAdding, setIsAdding] = useState(false);
@@ -912,7 +1080,18 @@ const HRSalaryComponents: React.FC = () => {
     // Filter out Benefits for now
     const tabs = ['Earnings', 'Deductions', 'Reimbursements'];
 
-    const filteredData = components.filter(c => c.category === activeTab);
+    const filteredData = useMemo(() => {
+        return components.filter(c => {
+            const tabMatch = c.category === activeTab;
+            if (!tabMatch) return false;
+            if (selectedTarget === 'all') return true;
+            
+            const [targetTypeRaw, targetId] = selectedTarget.split(':');
+            const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+            
+            return c.targetId === targetId && c.targetType === targetType;
+        });
+    }, [components, activeTab, selectedTarget]);
 
     const handleEditClick = (component: SalaryComponent) => {
         setEditingComponent(component);
@@ -984,6 +1163,8 @@ const HRSalaryComponents: React.FC = () => {
             effective_date: data.effectiveDate,
             deduction_type: data.deductionType,
             show_in_payslip: data.showInPayslip,
+            target_id: data.targetId,
+            target_type: data.targetType,
             last_updated_by: 'Admin'
         } as any;
 
@@ -1027,11 +1208,11 @@ const HRSalaryComponents: React.FC = () => {
 
             {isAdding ? (
                 activeTab === 'Earnings' ? (
-                    <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
+                    <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
                 ) : activeTab === 'Deductions' ? (
-                    <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
+                    <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
                 ) : (
-                    <AddReimbursementComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} />
+                    <AddReimbursementComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
                 )
             ) : (
                 /* Main Content */
@@ -1092,12 +1273,37 @@ const HRSalaryComponents: React.FC = () => {
                             </button>
                         </div>
 
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
-                        >
-                            <Plus size={16} /> Add Component
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <select
+                                    value={selectedTarget}
+                                    onChange={(e) => setSelectedTarget(e.target.value)}
+                                    className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                                >
+                                    <option value="all">All Units & Paygroups</option>
+                                    <optgroup label="Business Units">
+                                        {BUSINESS_UNITS.map(bu => (
+                                            <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Payroll Paygroups">
+                                        {paygroups.map(pg => (
+                                            <option key={pg.id} value={`pg:${pg.id}`}>
+                                                {pg.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+
+                            <button
+                                onClick={() => setIsAdding(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
+                            >
+                                <Plus size={16} /> Add Component
+                            </button>
+                        </div>
                     </div>
 
                     {/* Data Table */}
