@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface PaySchedule {
@@ -12,7 +12,15 @@ interface PaySchedule {
     payDate: string;
     status: 'Active' | 'Inactive';
     effectiveDate?: string;
+    targetId?: string; // id of paygroup or BU
+    targetType?: 'Paygroup' | 'BusinessUnit';
 }
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 const MOCK_SCHEDULES: PaySchedule[] = [
     {
@@ -587,29 +595,45 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
 const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [schedules, setSchedules] = useState<PaySchedule[]>([]);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
+    const [selectedTarget, setSelectedTarget] = useState<string>('all');
 
-    const fetchSchedules = async () => {
+    const fetchConfig = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
+            // Fetch Pay Schedules
+            const { data: scheduleData, error: scheduleError } = await supabase
                 .from('operational_config')
                 .select('config_value')
                 .eq('config_key', 'pay_schedules')
                 .single();
 
-            if (error && error.code !== 'PGRST116') {
-                console.error('Error fetching schedules:', error);
-            } else if (data && data.config_value) {
-                setSchedules(data.config_value as PaySchedule[]);
+            if (scheduleError && scheduleError.code !== 'PGRST116') {
+                console.error('Error fetching schedules:', scheduleError);
+            } else if (scheduleData && scheduleData.config_value) {
+                setSchedules(scheduleData.config_value as PaySchedule[]);
             } else {
                 setSchedules(MOCK_SCHEDULES);
             }
+
+            // Fetch Paygroups
+            const { data: pgData, error: pgError } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+
+            if (pgError) {
+                console.error('Error fetching paygroups:', pgError);
+            } else {
+                setPaygroups(pgData || []);
+            }
+
         } catch (error) {
-            console.error('Error fetching schedules:', error);
+            console.error('Error fetching data:', error);
             setSchedules(MOCK_SCHEDULES);
         } finally {
             setIsLoading(false);
@@ -617,8 +641,30 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     };
 
     useEffect(() => {
-        fetchSchedules();
+        fetchConfig();
     }, []);
+
+    const handleStatusToggle = async (id: string) => {
+        const updatedSchedules = schedules.map(s => 
+            s.id === id ? { ...s, status: (s.status === 'Active' ? 'Inactive' : 'Active') as 'Active' | 'Inactive' } : s
+        );
+
+        try {
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'pay_schedules',
+                    config_value: updatedSchedules,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setSchedules(updatedSchedules);
+        } catch (error) {
+            console.error('Error toggling status:', error);
+            alert('Failed to update status.');
+        }
+    };
 
     const handleAddNew = () => {
         setEditingSchedule(null);
@@ -703,13 +749,60 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     <h1 className="text-2xl font-bold text-slate-800">Pay Schedule Configuration</h1>
                     <p className="text-slate-500 mt-1">Define and manage pay frequencies across client companies.</p>
                 </div>
-                <button
-                    onClick={handleAddNew}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-bold text-sm shadow-sm"
-                >
-                    <Plus size={18} /> Add Pay Schedule
-                </button>
+                <div className="flex items-center gap-3">
+                    {userRole === 'HR_MANAGER' && (
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
+                            >
+                                <option value="all">All Units & Paygroups</option>
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                    )}
+                    <button
+                        onClick={handleAddNew}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-bold text-sm shadow-sm h-10"
+                    >
+                        {userRole !== 'HR_MANAGER' && <Plus size={18} />} Add Pay Schedule
+                    </button>
+                </div>
             </div>
+
+            {/* Paygroup Associated BUs Info */}
+            {selectedTarget.startsWith('pg:') && (
+                <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-lg text-sky-600 shadow-sm border border-sky-100">
+                            <Building2 size={18} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-sky-900 uppercase tracking-wider">Associated Business Units</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                                {paygroups.find(pg => `pg:${pg.id}` === selectedTarget)?.business_units?.map((bu: string) => (
+                                    <span key={bu} className="px-2 py-0.5 bg-sky-100 text-sky-700 rounded-md text-[10px] font-bold border border-sky-200 uppercase">
+                                        {bu}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* List Content */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -768,7 +861,18 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-2">
+                                        <div className="flex items-center justify-end gap-3">
+                                            {userRole === 'HR_MANAGER' && (
+                                                <button
+                                                    onClick={() => handleStatusToggle(schedule.id)}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${schedule.status === 'Active' ? 'bg-sky-500' : 'bg-slate-200'}`}
+                                                    title={schedule.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${schedule.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`}
+                                                    />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleEdit(schedule)}
                                                 className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
