@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Plus,
     Search,
@@ -1012,7 +1012,7 @@ const HRSalaryComponents: React.FC = () => {
     };
 
     return (
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300 pb-24">
+        <div className="p-4 lg:p-8 max-w-full space-y-6 animate-in fade-in duration-300 pb-24">
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
