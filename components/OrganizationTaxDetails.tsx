@@ -195,65 +195,26 @@ const OrganizationTaxDetails: React.FC = () => {
                                                         <p className="text-[11px] text-slate-500">({domain})</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div>
-                                                    <span className="text-[10px] font-bold">Active</span>
-                                                </div>
                                             </div>
-
                                             {/* Body */}
                                             <div className="mb-6 flex-1">
-                                                <p className="text-[11px] text-slate-400 font-medium mb-1 uppercase tracking-wider">Accounting Email Address</p>
-                                                <p className="text-sm font-semibold text-slate-700 truncate">{email}</p>
-                                            </div>
-
-                                            {/* Stats Row */}
-                                            <div className="grid grid-cols-3 gap-2 mb-6">
-                                                <div>
-                                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Code Prefix</p>
-                                                    <p className="text-sm font-semibold text-slate-800">{codePrefix}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Currency</p>
-                                                    <p className="text-sm font-semibold text-slate-800">{currency}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Employees</p>
-                                                    <p className="text-sm font-semibold text-slate-800">{totalEmployees}</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Icons */}
-                                            <div className="flex gap-2 mb-4">
-                                                <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                                </div>
-                                                <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                                                </div>
-                                                <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                                                </div>
+                                                <p className="text-[11px] text-slate-400 font-medium mb-1 uppercase tracking-wider">Registered Company Name</p>
+                                                <p className="text-sm font-semibold text-slate-700 truncate">TechFlow Systems Pvt Ltd</p>
                                             </div>
 
                                             {/* Footer */}
                                             <div className="pt-4 border-t border-slate-100 flex justify-between items-end mt-auto">
                                                 <div>
                                                     <p className="text-[11px] text-slate-400 mb-0.5">Last Modified by</p>
-                                                    <p className="text-[10px] font-semibold text-slate-600 block">-</p>
+                                                    <p className="text-[10px] font-semibold text-slate-600 block">Isha P. | 21-Nov-2025, 01:30 PM</p>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button 
                                                         onClick={(e) => { e.stopPropagation(); handleCardClick(bu); setIsEditing(true); }}
-                                                        className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors"
+                                                        className="px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors text-xs font-medium"
                                                     >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); }}
-                                                        className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
-                                                    >
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                                        <Edit2 size={12} />
+                                                        Edit
                                                     </button>
                                                 </div>
                                             </div>
