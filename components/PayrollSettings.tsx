@@ -645,13 +645,21 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [selectedTarget, setSelectedTarget] = useState<string>(`bu:${BUSINESS_UNITS[0]}`);
 
     const filteredSchedules = useMemo(() => {
+        if (selectedTarget === 'all') return schedules;
+
+        const [type, id] = selectedTarget.split(':');
+        const targetType = type === 'pg' ? 'Paygroup' : 'BusinessUnit';
+        
+        const savedForTarget = schedules.filter(s => s.targetType === targetType && s.targetId === id);
+
         if (userRole === 'HR_MANAGER') {
-            return MOCK_SCHEDULES.map(s => ({ ...s, status: 'Inactive' as const }));
+            return MOCK_SCHEDULES.map(mock => {
+                const saved = savedForTarget.find(s => s.frequency === mock.frequency);
+                return saved ? { ...saved } : { ...mock, id: `mock-${mock.frequency}-${id}`, status: 'Inactive' as const, targetId: id, targetType };
+            });
         }
 
-        if (selectedTarget === 'all') return schedules;
-        const [type, id] = selectedTarget.split(':');
-        return schedules.filter(s => s.targetType === (type === 'pg' ? 'Paygroup' : 'BusinessUnit') && s.targetId === id);
+        return savedForTarget;
     }, [schedules, selectedTarget, userRole]);
 
     const fetchConfig = async () => {
@@ -697,7 +705,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     }, []);
 
     const handleStatusToggle = async (id: string) => {
-        const scheduleToToggle = schedules.find(s => s.id === id);
+        const scheduleToToggle = filteredSchedules.find(s => s.id === id);
         if (!scheduleToToggle) return;
 
         const isActivating = scheduleToToggle.status === 'Inactive' || !scheduleToToggle.status;
@@ -717,9 +725,21 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             }
         }
 
-        const updatedSchedules = schedules.map(s => 
-            s.id === id ? { ...s, status: (isActivating ? 'Active' : 'Inactive') as 'Active' | 'Inactive' } : s
-        );
+        const isMock = id.startsWith('mock-');
+        let updatedSchedules;
+
+        if (isMock) {
+            const newSchedule = {
+                ...scheduleToToggle,
+                id: Date.now().toString(),
+                status: isActivating ? 'Active' : 'Inactive'
+            };
+            updatedSchedules = [...schedules, newSchedule as PaySchedule];
+        } else {
+            updatedSchedules = schedules.map(s => 
+                s.id === id ? { ...s, status: (isActivating ? 'Active' : 'Inactive') as 'Active' | 'Inactive' } : s
+            );
+        }
 
         try {
             const { error } = await supabase

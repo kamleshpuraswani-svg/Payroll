@@ -1085,16 +1085,29 @@ const HRSalaryComponents: React.FC = () => {
     const tabs = ['Earnings', 'Deductions', 'Reimbursements'];
 
     const filteredData = useMemo(() => {
-        return components.filter(c => {
-            const tabMatch = c.category === activeTab;
-            if (!tabMatch) return false;
-            if (selectedTarget === 'all') return true;
-            
+        let allComponents = [...components];
+
+        if (selectedTarget !== 'all') {
             const [targetTypeRaw, targetId] = selectedTarget.split(':');
             const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
             
-            return c.targetId === targetId && c.targetType === targetType;
-        });
+            // Filter components saved for this target
+            const savedForTarget = components.filter(c => c.targetId === targetId && c.targetType === targetType);
+            
+            // Add INITIAL_DATA as defaults, but skip any that have already been saved/modified
+            const defaultsForTarget = INITIAL_DATA
+                .filter(mock => !savedForTarget.some(saved => saved.name === mock.name))
+                .map(c => ({
+                    ...c,
+                    id: `mock-${c.id}`,
+                    targetType,
+                    targetId: targetId
+                }));
+            
+            allComponents = [...defaultsForTarget, ...savedForTarget];
+        }
+
+        return allComponents.filter(c => c.category === activeTab);
     }, [components, activeTab, selectedTarget]);
 
     const handleEditClick = (component: SalaryComponent) => {
@@ -1108,6 +1121,13 @@ const HRSalaryComponents: React.FC = () => {
 
     const confirmDelete = async () => {
         if (deleteConfirmation.id) {
+            const isMock = deleteConfirmation.id.startsWith('mock-');
+            if (isMock) {
+                alert("Default components cannot be deleted.");
+                setDeleteConfirmation({ isOpen: false, id: null });
+                return;
+            }
+
             const { error } = await supabase
                 .from('salary_components')
                 .delete()
@@ -1136,15 +1156,48 @@ const HRSalaryComponents: React.FC = () => {
 
     const confirmStatusChange = async (id: string | null = statusChangeRequest.id, statusToSet: boolean = statusChangeRequest.newStatus) => {
         if (id) {
-            const { error } = await supabase
-                .from('salary_components')
-                .update({ status: statusToSet, last_updated_by: 'Admin' })
-                .eq('id', id);
-
-            if (error) {
-                console.error('Error updating status:', error);
+            const isMock = id.startsWith('mock-');
+            if (isMock) {
+                // Find in INITIAL_DATA and insert it as a real record
+                const originalId = id.replace('mock-', '');
+                const mockComp = INITIAL_DATA.find(c => c.id === originalId);
+                if (mockComp) {
+                    const [targetTypeRaw, targetId] = selectedTarget.split(':');
+                    const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+                    
+                    const payload = {
+                        name: mockComp.name,
+                        type: mockComp.type,
+                        calculation: mockComp.calculation,
+                        taxable: mockComp.taxable,
+                        status: statusToSet,
+                        category: mockComp.category,
+                        amount_or_percent: mockComp.amountOrPercent,
+                        calc_method: mockComp.calcMethod,
+                        payslip_name: mockComp.payslipName,
+                        frequency: mockComp.frequency,
+                        consider_epf: mockComp.considerEPF,
+                        consider_esi: mockComp.considerESI,
+                        target_id: targetId,
+                        target_type: targetType,
+                        created_by: 'Admin',
+                        last_updated_by: 'Admin'
+                    };
+                    const { error } = await supabase.from('salary_components').insert([payload]);
+                    if (error) console.error('Error inserting mock component status change:', error);
+                    else fetchComponents();
+                }
             } else {
-                fetchComponents();
+                const { error } = await supabase
+                    .from('salary_components')
+                    .update({ status: statusToSet, last_updated_by: 'Admin' })
+                    .eq('id', id);
+
+                if (error) {
+                    console.error('Error updating status:', error);
+                } else {
+                    fetchComponents();
+                }
             }
             setStatusChangeRequest({ isOpen: false, id: null, newStatus: false });
         }
@@ -1173,12 +1226,22 @@ const HRSalaryComponents: React.FC = () => {
         } as any;
 
         if (editingComponent) {
-            const { error } = await supabase
-                .from('salary_components')
-                .update(payload)
-                .eq('id', editingComponent.id);
+            const isMock = editingComponent.id.startsWith('mock-');
+            if (isMock) {
+                payload.created_by = 'Admin';
+                const { error } = await supabase
+                    .from('salary_components')
+                    .insert([payload]);
 
-            if (error) console.error('Error updating component:', error);
+                if (error) console.error('Error inserting component:', error);
+            } else {
+                const { error } = await supabase
+                    .from('salary_components')
+                    .update(payload)
+                    .eq('id', editingComponent.id);
+
+                if (error) console.error('Error updating component:', error);
+            }
         } else {
             payload.created_by = 'Admin';
             const { error } = await supabase
