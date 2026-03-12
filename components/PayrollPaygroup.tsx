@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, X, Save, Building2, Check, Loader2, Edit2, Trash2 } from 'lucide-react';
+import { Landmark, X, Save, Building2, Check, Loader2, Edit2, Trash2, Plus } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 const BUSINESS_UNITS = [
@@ -149,6 +149,13 @@ const PayrollPaygroup: React.FC = () => {
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Payroll Paygroup</h2>
                     <p className="text-slate-500 mt-1">Manage and configure paygroups for your organization.</p>
                 </div>
+                <button
+                    onClick={handleOpenCreate}
+                    className="px-6 py-2.5 bg-[#0388d1] text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center gap-2 active:scale-95"
+                >
+                    <Plus size={18} />
+                    Add Paygroup
+                </button>
             </div>
 
             {isLoading ? (
@@ -211,15 +218,6 @@ const PayrollPaygroup: React.FC = () => {
                             </div>
                         </div>
                     ))}
-                    <button
-                        onClick={handleOpenCreate}
-                        className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition-all group min-h-[160px]"
-                    >
-                        <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-sky-100 transition-colors">
-                            <Save size={20} />
-                        </div>
-                        <span className="font-bold">Add Another Paygroup</span>
-                    </button>
                 </div>
             )}
 

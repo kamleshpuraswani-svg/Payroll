@@ -641,7 +641,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
-    const [selectedTarget, setSelectedTarget] = useState<string>('all');
+    const [selectedTarget, setSelectedTarget] = useState<string>(`bu:${BUSINESS_UNITS[0]}`);
 
     const filteredSchedules = useMemo(() => {
         if (selectedTarget === 'all') return schedules;
@@ -843,7 +843,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                 onChange={(e) => setSelectedTarget(e.target.value)}
                                 className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
                             >
-                                <option value="all">All Units & Paygroups</option>
                                 <optgroup label="Business Units">
                                     {BUSINESS_UNITS.map(bu => (
                                         <option key={bu} value={`bu:${bu}`}>{bu}</option>

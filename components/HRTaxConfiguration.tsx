@@ -133,6 +133,7 @@ export default function HRTaxConfiguration() {
   };
 
   const activeSlabs = tdsRegime === 'NEW' ? newRegimeSlabs : oldRegimeSlabs;
+  const isReadOnly = selectedYear !== '2025-2026' && selectedYear !== '2026-2027';
 
   const updateSlab = (index: number, field: 'from' | 'to' | 'rate', value: string) => {
     const numValue = value === '' ? null : Number(value);
@@ -370,7 +371,7 @@ export default function HRTaxConfiguration() {
                       <th className="px-6 py-4 w-16 text-center">#</th>
                       <th className="px-6 py-4">Income Range (₹)</th>
                       <th className="px-6 py-4">Tax Rate (%)</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
+                      {!isReadOnly && <th className="px-6 py-4 text-right">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -443,6 +444,7 @@ export default function HRTaxConfiguration() {
                               <span className="font-bold text-slate-700 bg-purple-50 text-purple-700 px-2 py-1 rounded-md">{slab.rate}%</span>
                             )}
                           </td>
+                          {!isReadOnly && (
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               {isEditing ? (
@@ -472,11 +474,13 @@ export default function HRTaxConfiguration() {
                               </button>
                             </div>
                           </td>
+                          )}
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
+                {!isReadOnly && (
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
                   <button
                     onClick={handleAddRow}
@@ -485,6 +489,7 @@ export default function HRTaxConfiguration() {
                     <Plus size={16} /> Add Slab Row
                   </button>
                 </div>
+                )}
               </div>
             </div>
           </div>

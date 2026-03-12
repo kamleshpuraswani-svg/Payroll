@@ -41,7 +41,7 @@ interface GlobalSettingsProps {
 }
 
 const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
-   const [activeModule, setActiveModule] = useState('organization');
+   const [activeModule, setActiveModule] = useState(userRole === 'HR_MANAGER' ? 'paygroup' : 'organization');
 
    const menuItems = [
       ...(userRole === 'HR_MANAGER' ? [{ id: 'paygroup', label: 'Payroll Paygroup', icon: Landmark }] : []),

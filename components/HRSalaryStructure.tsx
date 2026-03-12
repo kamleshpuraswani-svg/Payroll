@@ -353,7 +353,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     });
 
     const [paygroups, setPaygroups] = useState<any[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState('all');
+    const [selectedTarget, setSelectedTarget] = useState(`bu:${BUSINESS_UNITS[0]}`);
 
     useEffect(() => {
         const fetchPaygroups = async () => {
@@ -831,7 +831,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                             onChange={(e) => setSelectedTarget(e.target.value)}
                             className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
                         >
-                            <option value="all">All Units & Paygroups</option>
                             <optgroup label="Business Units">
                                 {BUSINESS_UNITS.map(bu => (
                                     <option key={bu} value={`bu:${bu}`}>{bu}</option>
