@@ -401,6 +401,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     const [deductions, setDeductions] = useState<SalaryComponent[]>([]);
     const [benefits, setBenefits] = useState<SalaryComponent[]>([]);
     const [reimbursements, setReimbursements] = useState<SalaryComponent[]>([]);
+    const [currentStatus, setCurrentStatus] = useState<'Active' | 'Draft' | 'Inactive' | 'Archived'>('Draft');
     const [errors, setErrors] = useState<{ name?: string, earnings?: string, deductions?: string }>({});
 
     // Modal State
@@ -426,6 +427,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeductions([]);
         setBenefits([]);
         setReimbursements([]);
+        setCurrentStatus('Draft');
         setErrors({});
         setLocalSelectedTarget(selectedTarget === 'all' ? '' : selectedTarget);
         setView('EDITOR');
@@ -442,6 +444,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeductions(structure.deductions);
         setBenefits(structure.benefits);
         setReimbursements(structure.reimbursements);
+        setCurrentStatus(structure.status);
         setLocalSelectedTarget(structure.targetId ? `${structure.targetType === 'Paygroup' ? 'pg' : 'bu'}:${structure.targetId}` : '');
         setErrors({});
         setView('VIEW');
@@ -505,6 +508,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
              if(error) console.error("Error inserting", error);
         }
         
+        setCurrentStatus(status);
         await fetchStructures();
 
         if (onBack) {
@@ -514,29 +518,24 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         }
     };
 
-    const toggleStructureStatus = async (id: string) => {
-        const s = structures.find(st => st.id === id);
-        if(!s) return;
-        
+    const toggleStructureStatus = async (s: Structure) => {
+        const id = s.id;
         const newStatus = s.status === 'Active' ? 'Inactive' : 'Active';
 
         // Treat default templates as templates that need to be copied when modified.
         if(id.startsWith('mock-')) {
-            const newStructure = {
-                id: Date.now().toString(),
+            const payload = {
                 name: s.name,
                 status: newStatus,
-                associated_units: [],
-                associated_paygroups: [],
-                target_assignment_rules: {},
                 description: s.description || '',
-                earnings: [...s.components.earnings],
-                deductions: [...s.components.deductions],
-                statutory: [...s.components.statutory],
-                target_id: '1',
-                target_type: 'BusinessUnit'
+                earnings: s.earnings || [],
+                deductions: s.deductions || [],
+                benefits: s.benefits || [],
+                reimbursements: s.reimbursements || [],
+                target_id: s.targetId || '1',
+                target_type: s.targetType || 'BusinessUnit'
             };
-            const { error } = await supabase.from('salary_structures').insert([newStructure]);
+            const { error } = await supabase.from('salary_structures').insert([payload]);
             if(!error) await fetchStructures();
             return;
         }
@@ -711,11 +710,9 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                             <div>
                                 <div className="flex items-center gap-3 mb-1.5">
                                     <label className="block text-xs font-bold text-slate-500 uppercase">Description</label>
-                                    {activeStructureId && currentStructure && (
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${currentStructure.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : currentStructure.status === 'Draft' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                                            {currentStructure.status}
-                                        </span>
-                                    )}
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'Active' ? 'bg-emerald-100 text-emerald-700' : currentStatus === 'Draft' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                                        {currentStatus}
+                                    </span>
                                 </div>
                                 {isReadOnly ? (
                                     <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">{description || '-'}</div>
@@ -962,7 +959,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-4">
                                             <button
-                                                onClick={() => toggleStructureStatus(item.id)}
+                                                onClick={() => toggleStructureStatus(item)}
                                                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.status === 'Active' ? 'bg-purple-600' : 'bg-slate-300'}`}
                                                 title={item.status === 'Active' ? "Deactivate" : "Activate"}
                                             >
