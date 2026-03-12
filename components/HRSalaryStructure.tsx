@@ -509,6 +509,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     };
 
     const confirmDelete = (id: string) => {
+        if (id.startsWith('mock-')) {
+            alert('Default structures cannot be deleted.');
+            return;
+        }
         setDeleteConfirmation({ isOpen: true, id });
     };
 
@@ -868,11 +872,32 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {structures.filter(s => {
-                            if (selectedTarget === 'all') return true;
-                            const prefix = s.targetType === 'Paygroup' ? 'pg' : 'bu';
-                            return `${prefix}:${s.targetId}` === selectedTarget;
-                        }).map((item) => {
+                        {(() => {
+                            let allStructures = [...structures];
+                            if (selectedTarget !== 'all') {
+                                const [targetTypeRaw, targetId] = selectedTarget.split(':');
+                                const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+                                
+                                const targetName = targetType === 'BusinessUnit' 
+                                    ? targetId 
+                                    : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
+                                
+                                const savedForTarget = structures.filter(s => s.targetId === targetId && s.targetType === targetType);
+                                
+                                const defaultsForTarget = MOCK_STRUCTURES
+                                    .filter(mock => !savedForTarget.some(saved => saved.name.includes(mock.name)))
+                                    .map(s => ({
+                                        ...s,
+                                        id: `mock-${s.id}-${targetId}`,
+                                        name: `${targetName} - ${s.name}`,
+                                        targetType,
+                                        targetId: targetId
+                                    }));
+                                
+                                allStructures = [...defaultsForTarget, ...savedForTarget];
+                            }
+                            return allStructures;
+                        })().map((item) => {
                             const isArchived = item.status === 'Archived';
 
                             return (

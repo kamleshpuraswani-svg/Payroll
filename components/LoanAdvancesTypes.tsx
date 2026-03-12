@@ -53,10 +53,22 @@ const EMPLOYEES_LIST = [
     "Anjali Mehta (Team Lead)"
 ];
 
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
+
 const LoanAdvancesTypes: React.FC = () => {
     // Persistence: Initialize from Supabase
     const [loanTypes, setLoanTypes] = useState<LoanType[]>([]);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const fetchPaygroups = async () => {
+        const { data } = await supabase.from('payroll_paygroups').select('id, name');
+        if (data) setPaygroups(data);
+    };
 
     const fetchLoanTypes = async () => {
         setIsLoading(true);
@@ -88,6 +100,7 @@ const LoanAdvancesTypes: React.FC = () => {
 
     useEffect(() => {
         fetchLoanTypes();
+        fetchPaygroups();
     }, []);
 
     const [isEditing, setIsEditing] = useState(false);
@@ -380,12 +393,31 @@ const LoanAdvancesTypes: React.FC = () => {
                                     </button>
                                 </div>
 
-                                <button
-                                    onClick={handleAddNew}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm font-bold shadow-sm shadow-purple-100 w-full sm:w-auto justify-center"
-                                >
-                                    <Plus size={18} /> Add Loan Type
-                                </button>
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <div className="relative">
+                                        <select className="appearance-none w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all h-[42px]">
+                                            <optgroup label="Business Units">
+                                                {BUSINESS_UNITS.map(bu => (
+                                                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="Payroll Paygroups">
+                                                {paygroups.map(pg => (
+                                                    <option key={pg.id} value={`pg:${pg.id}`}>
+                                                        {pg.name}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                    <button
+                                        onClick={handleAddNew}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm font-bold shadow-sm shadow-purple-100"
+                                    >
+                                        Add Loan Type
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex-1 overflow-x-auto">
@@ -599,7 +631,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 </div>
 
                                 {/* Repayment Month Dropdown */}
-                                {(currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') && (
+                                {(currentLoan.name && currentLoan.name !== 'Salary Advance' && currentLoan.name !== 'Loan') && (
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Repayment Month</label>
                                         <div className="relative">
@@ -616,100 +648,102 @@ const LoanAdvancesTypes: React.FC = () => {
                                 )}
 
                                 {/* Max Amount Limit - Enhanced Section */}
-                                <div className="md:col-span-2 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Max Amount Limit <span className="text-rose-500">*</span></label>
+                                {currentLoan.name !== 'Salary Advance' && (
+                                    <div className="md:col-span-2 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Max Amount Limit <span className="text-rose-500">*</span></label>
 
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-4">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Fixed' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
-                                                {amountType === 'Fixed' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                className="hidden"
-                                                checked={amountType === 'Fixed'}
-                                                onChange={() => {
-                                                    setAmountType('Fixed');
-                                                    const val = fixedVal || '';
-                                                    setCurrentLoan({ ...currentLoan, maxAmount: val });
-                                                }}
-                                            />
-                                            <span className={`text-sm font-medium ${amountType === 'Fixed' ? 'text-purple-900' : 'text-slate-600'}`}>Fixed Amount</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Multiple' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
-                                                {amountType === 'Multiple' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                className="hidden"
-                                                checked={amountType === 'Multiple'}
-                                                onChange={() => {
-                                                    setAmountType('Multiple');
-                                                    const val = `${multiFactor} months ${multiBasis}`;
-                                                    setCurrentLoan({ ...currentLoan, maxAmount: val });
-                                                }}
-                                            />
-                                            <span className={`text-sm font-medium ${amountType === 'Multiple' ? 'text-purple-900' : 'text-slate-600'}`}>Multiple of Salary</span>
-                                        </label>
-                                    </div>
-
-                                    {amountType === 'Fixed' ? (
-                                        <div className="relative max-w-md animate-in fade-in slide-in-from-top-1 duration-200">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                            <input
-                                                type="text"
-                                                value={fixedVal}
-                                                onChange={(e) => {
-                                                    const raw = e.target.value.replace(/[^\d]/g, '');
-                                                    const formatted = raw ? parseInt(raw).toLocaleString('en-IN') : '';
-                                                    setFixedVal(formatted);
-                                                    setCurrentLoan({ ...currentLoan, maxAmount: formatted });
-                                                    if (errors.maxAmount) setErrors({ ...errors, maxAmount: undefined });
-                                                }}
-                                                placeholder="e.g. 5,00,000"
-                                                className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-2 gap-4 max-w-lg animate-in fade-in slide-in-from-top-1 duration-200">
-                                            <div className="relative">
-                                                <select
-                                                    value={multiFactor}
-                                                    onChange={(e) => {
-                                                        setMultiFactor(e.target.value);
-                                                        setCurrentLoan({ ...currentLoan, maxAmount: `${e.target.value} months ${multiBasis}` });
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-4">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Fixed' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
+                                                    {amountType === 'Fixed' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                </div>
+                                                <input
+                                                    type="radio"
+                                                    className="hidden"
+                                                    checked={amountType === 'Fixed'}
+                                                    onChange={() => {
+                                                        setAmountType('Fixed');
+                                                        const val = fixedVal || '';
+                                                        setCurrentLoan({ ...currentLoan, maxAmount: val });
                                                     }}
-                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
-                                                >
-                                                    {[1, 2, 3, 4, 5, 6, 12].map(n => <option key={n} value={n}>{n}x</option>)}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
-                                            <div className="relative">
-                                                <select
-                                                    value={multiBasis}
-                                                    onChange={(e) => {
-                                                        setMultiBasis(e.target.value);
-                                                        setCurrentLoan({ ...currentLoan, maxAmount: `${multiFactor} months ${e.target.value}` });
+                                                />
+                                                <span className={`text-sm font-medium ${amountType === 'Fixed' ? 'text-purple-900' : 'text-slate-600'}`}>Fixed Amount</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Multiple' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
+                                                    {amountType === 'Multiple' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                </div>
+                                                <input
+                                                    type="radio"
+                                                    className="hidden"
+                                                    checked={amountType === 'Multiple'}
+                                                    onChange={() => {
+                                                        setAmountType('Multiple');
+                                                        const val = `${multiFactor} months ${multiBasis}`;
+                                                        setCurrentLoan({ ...currentLoan, maxAmount: val });
                                                     }}
-                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
-                                                >
-                                                    <option>Basic Salary</option>
-                                                    <option>Gross Salary</option>
-                                                    <option>Net Salary</option>
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
+                                                />
+                                                <span className={`text-sm font-medium ${amountType === 'Multiple' ? 'text-purple-900' : 'text-slate-600'}`}>Multiple of Salary</span>
+                                            </label>
                                         </div>
-                                    )}
-                                    {errors.maxAmount && <p className="text-xs text-rose-500 mt-2 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxAmount}</p>}
 
-                                    <div className="mt-3 flex items-center gap-2 p-2 bg-slate-100 rounded-lg w-fit border border-slate-200">
-                                        <Info size={14} className="text-purple-500" />
-                                        <span className="text-xs text-slate-500">Preview: <span className="font-bold text-slate-700">{amountType === 'Fixed' ? `Max Limit: ₹ ${fixedVal || '0'}` : `Max Limit: ${multiFactor} months ${multiBasis}`}</span></span>
+                                        {amountType === 'Fixed' ? (
+                                            <div className="relative max-w-md animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                <input
+                                                    type="text"
+                                                    value={fixedVal}
+                                                    onChange={(e) => {
+                                                        const raw = e.target.value.replace(/[^\d]/g, '');
+                                                        const formatted = raw ? parseInt(raw).toLocaleString('en-IN') : '';
+                                                        setFixedVal(formatted);
+                                                        setCurrentLoan({ ...currentLoan, maxAmount: formatted });
+                                                        if (errors.maxAmount) setErrors({ ...errors, maxAmount: undefined });
+                                                    }}
+                                                    placeholder="e.g. 5,00,000"
+                                                    className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-2 gap-4 max-w-lg animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="relative">
+                                                    <select
+                                                        value={multiFactor}
+                                                        onChange={(e) => {
+                                                            setMultiFactor(e.target.value);
+                                                            setCurrentLoan({ ...currentLoan, maxAmount: `${e.target.value} months ${multiBasis}` });
+                                                        }}
+                                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
+                                                    >
+                                                        {[1, 2, 3, 4, 5, 6, 12].map(n => <option key={n} value={n}>{n}x</option>)}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                                <div className="relative">
+                                                    <select
+                                                        value={multiBasis}
+                                                        onChange={(e) => {
+                                                            setMultiBasis(e.target.value);
+                                                            setCurrentLoan({ ...currentLoan, maxAmount: `${multiFactor} months ${e.target.value}` });
+                                                        }}
+                                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
+                                                    >
+                                                        <option>Basic Salary</option>
+                                                        <option>Gross Salary</option>
+                                                        <option>Net Salary</option>
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {errors.maxAmount && <p className="text-xs text-rose-500 mt-2 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxAmount}</p>}
+
+                                        <div className="mt-3 flex items-center gap-2 p-2 bg-slate-100 rounded-lg w-fit border border-slate-200">
+                                            <Info size={14} className="text-purple-500" />
+                                            <span className="text-xs text-slate-500">Preview: <span className="font-bold text-slate-700">{amountType === 'Fixed' ? `Max Limit: ₹ ${fixedVal || '0'}` : `Max Limit: ${multiFactor} months ${multiBasis}`}</span></span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <div className="md:col-span-2">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label>
