@@ -483,7 +483,9 @@ const LoanAdvancesTypes: React.FC = () => {
                                                     <span className="font-medium text-slate-700">{item.interestRate}%</span> p.a.
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className="font-medium text-slate-800">{item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}</span>
+                                                    <span className="font-medium text-slate-800">
+                                                        {item.name === 'Salary Advance' ? '--' : item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}
+                                                    </span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">

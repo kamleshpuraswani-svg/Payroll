@@ -267,7 +267,7 @@ export default function HRTaxConfiguration() {
             <p className="text-slate-500 mt-1">Reference guide for New and Old regime income tax slabs.</p>
           </div>
 
-          {/* Year Selector & New FY Button */}
+          {/* Year Selector */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm h-10">
               <Calendar size={16} className="text-slate-400 ml-2" />
@@ -281,13 +281,6 @@ export default function HRTaxConfiguration() {
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              onClick={handleCreateNewFY}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-bold rounded-lg text-sm hover:bg-purple-700 shadow-sm h-10 transition-colors"
-            >
-              <Plus size={16} /> Create New FY 2026–27
-            </button>
           </div>
         </div>
 
