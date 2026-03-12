@@ -584,9 +584,9 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                 <span>/</span>
                                 <span>{activeStructureId ? (isReadOnly ? 'View' : 'Edit') : 'Create'}</span>
                             </div>
-                            <h1 className="text-xl font-bold text-slate-800">
+                            <h1 className="text-2xl font-bold text-slate-800">
                                 {activeStructureId
-                                    ? (isReadOnly ? structureName : `Edit Default Salary Structure | ${structureName}`)
+                                    ? (isReadOnly ? structureName : `Edit Salary Structure | ${structureName}`)
                                     : 'Create Salary Structure'}
                             </h1>
                         </div>
@@ -818,16 +818,14 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     return (
         <ContentWrapper>
             {/* Header */}
-            {!embedded && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                            Salary Structures
-                        </h1>
-                        <p className="text-slate-500 mt-1">Define salary templates to assign to employees.</p>
-                    </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        Salary Structures
+                    </h1>
+                    <p className="text-slate-500 mt-1">Define salary templates to assign to employees.</p>
                 </div>
-            )}
+            </div>
 
             {/* Action Bar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">

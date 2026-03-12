@@ -142,18 +142,109 @@ const INITIAL_DATA: SalaryComponent[] = [
     },
 
     // Deductions
-    { id: '7', name: 'Professional Tax (PT)', type: 'Variable Pay', calculation: 'State Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslipName: 'Prof Tax' },
-    { id: '8', name: 'Provident Fund (Employee)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslipName: 'EPF' },
-    { id: '9', name: 'Income Tax (TDS)', type: 'Variable Pay', calculation: 'As per Slab', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslipName: 'TDS' },
-    { id: '10', name: 'Loan Repayment', type: 'Fixed Pay', calculation: 'Fixed EMI', taxable: 'Tax Deductible', status: false, category: 'Deductions', frequency: 'Recurring', payslipName: 'Loan Recovery' },
+    { 
+        id: '7', 
+        name: 'Professional Tax (PT)', 
+        type: 'Variable Pay', 
+        calculation: 'State Slab', 
+        taxable: 'Tax Deductible', 
+        status: true, 
+        category: 'Deductions', 
+        frequency: 'Recurring', 
+        payslipName: 'Prof Tax',
+        deductionType: 'Statutory',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
+    { 
+        id: '8', 
+        name: 'Provident Fund (Employee)', 
+        type: 'Variable Pay', 
+        calculation: '12% of Basic', 
+        taxable: 'Tax Deductible', 
+        status: true, 
+        category: 'Deductions', 
+        frequency: 'Recurring', 
+        payslipName: 'EPF',
+        deductionType: 'Statutory',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
+    { 
+        id: '9', 
+        name: 'Income Tax (TDS)', 
+        type: 'Variable Pay', 
+        calculation: 'As per Slab', 
+        taxable: 'Tax Deductible', 
+        status: true, 
+        category: 'Deductions', 
+        frequency: 'Recurring', 
+        payslipName: 'TDS',
+        deductionType: 'Statutory',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
+    { 
+        id: '10', 
+        name: 'Loan Repayment', 
+        type: 'Fixed Pay', 
+        calculation: 'Fixed EMI', 
+        taxable: 'Tax Deductible', 
+        status: false, 
+        category: 'Deductions', 
+        frequency: 'Recurring', 
+        payslipName: 'Loan Recovery',
+        deductionType: 'Non-Statutory',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
 
     // Benefits (Data kept for future use, tab hidden)
     { id: '11', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
 
     // Reimbursements
-    { id: '14', name: 'Medical Reimbursement', type: 'Fixed Pay', calculation: 'Up to ₹ 15,000', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amountOrPercent: '15000', payslipName: 'Medical Reimb', calcMethod: 'Flat' },
-    { id: '15', name: 'Fuel Reimbursement', type: 'Variable Pay', calculation: 'As per bills', taxable: 'Partially Exempt', status: true, category: 'Reimbursements', amountOrPercent: '0', payslipName: 'Fuel', calcMethod: 'Flat' },
-    { id: '16', name: 'Books & Periodicals', type: 'Fixed Pay', calculation: '₹ 1,000 / month', taxable: 'Fully Exempt', status: false, category: 'Reimbursements', amountOrPercent: '1000', payslipName: 'Books', calcMethod: 'Flat' },
+    { 
+        id: '14', 
+        name: 'Medical Reimbursement', 
+        type: 'Fixed Pay', 
+        calculation: 'Up to ₹ 15,000', 
+        taxable: 'Partially Exempt', 
+        status: true, 
+        category: 'Reimbursements', 
+        amountOrPercent: '15000', 
+        payslipName: 'Medical Reimb', 
+        calcMethod: 'Flat',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
+    { 
+        id: '15', 
+        name: 'Fuel Reimbursement', 
+        type: 'Variable Pay', 
+        calculation: 'As per bills', 
+        taxable: 'Partially Exempt', 
+        status: true, 
+        category: 'Reimbursements', 
+        amountOrPercent: '0', 
+        payslipName: 'Fuel', 
+        calcMethod: 'Flat',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
+    { 
+        id: '16', 
+        name: 'Books & Periodicals', 
+        type: 'Fixed Pay', 
+        calculation: '₹ 1,000 / month', 
+        taxable: 'Fully Exempt', 
+        status: false, 
+        category: 'Reimbursements', 
+        amountOrPercent: '1000', 
+        payslipName: 'Books', 
+        calcMethod: 'Flat',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
+    },
 ];
 
 // --- Confirmation Modal ---
@@ -305,10 +396,12 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
                             <input type="text" value={payslipName} onChange={e => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
-                            <input type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600" />
-                        </div>
+                        {initialData && (
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
+                                <input type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600" />
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -630,15 +723,17 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Payslip Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date</label>
-                            <input
-                                type="date"
-                                value={effectiveDate}
-                                onChange={(e) => setEffectiveDate(e.target.value)}
-                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600"
-                            />
-                        </div>
+                        {initialData && (
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date</label>
+                                <input
+                                    type="date"
+                                    value={effectiveDate}
+                                    onChange={(e) => setEffectiveDate(e.target.value)}
+                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600"
+                                />
+                            </div>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-3">Deduction Type <span className="text-rose-500">*</span></label>
@@ -885,10 +980,12 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
                             <input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
-                            <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 transition-all" />
-                        </div>
+                        {initialData && (
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
+                                <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 transition-all" />
+                            </div>
+                        )}
                     </div>
 
                     {/* Nature of Pay */}
@@ -1399,7 +1496,6 @@ const HRSalaryComponents: React.FC = () => {
                                             {activeTab === 'Reimbursements' && (
                                                 <>
                                                     <th className="px-6 py-4">Calculation Method</th>
-                                                    <th className="px-6 py-4">Deduction Type</th>
                                                 </>
                                             )}
                                             {activeTab === 'Deductions' && (
@@ -1475,7 +1571,6 @@ const HRSalaryComponents: React.FC = () => {
                                                                     {item.calcMethod === 'Flat' && <span className="text-xs text-slate-500">Rs. {item.amountOrPercent || '0'}</span>}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.deductionType || '-'}</td>
                                                         </>
                                                     )}
                                                     {activeTab === 'Deductions' && (

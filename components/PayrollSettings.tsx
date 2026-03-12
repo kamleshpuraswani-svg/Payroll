@@ -933,14 +933,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <h3 className="font-bold text-lg text-slate-800">Pay Schedules</h3>
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search schedules..."
-                            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                        />
-                    </div>
+
                 </div>
 
                 <div className="overflow-x-auto">

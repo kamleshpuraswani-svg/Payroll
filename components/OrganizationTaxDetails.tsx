@@ -268,11 +268,11 @@ const OrganizationTaxDetails: React.FC = () => {
                                 className="self-start px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
                             >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                                Back to Business Units
+                                Back
                             </button>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">Tax Details: {selectedBusinessUnit}</h2>
+                                    <h2 className="text-2xl font-bold text-slate-800">Organization Tax Details: {selectedBusinessUnit}</h2>
                                     <p className="text-slate-500 mt-1">Manage company details, statutory IDs, and contact information.</p>
                                 </div>
                                 <div className="flex gap-3 items-center">
@@ -303,7 +303,7 @@ const OrganizationTaxDetails: React.FC = () => {
                             className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} disabled:opacity-50`}
                         >
                             {isSaving ? <Loader2 size={16} className="animate-spin" /> : (isEditing ? <Save size={16} /> : <Edit2 size={16} />)}
-                            {isSaving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Edit Details')}
+                            {isSaving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Edit')}
                         </button>
                     </div>
                 </div>
