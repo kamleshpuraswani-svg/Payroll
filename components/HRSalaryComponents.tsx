@@ -271,9 +271,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                         <div className="relative">
                             <select
+                                disabled
                                 value={localSelectedTarget}
                                 onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-slate-50 opacity-80 cursor-not-allowed text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
                             >
                                 <option value="">Select a unit or paygroup</option>
                                 <optgroup label="Business Units">
@@ -600,9 +601,10 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                         <div className="relative">
                             <select
+                                disabled
                                 value={localSelectedTarget}
                                 onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-slate-50 opacity-80 cursor-not-allowed text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
                             >
                                 <option value="">Select a unit or paygroup</option>
                                 <optgroup label="Business Units">
@@ -849,9 +851,10 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                         <div className="relative">
                             <select
+                                disabled
                                 value={localSelectedTarget}
                                 onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
+                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-slate-50 opacity-80 cursor-not-allowed text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
                             >
                                 <option value="">Select a unit or paygroup</option>
                                 <optgroup label="Business Units">
