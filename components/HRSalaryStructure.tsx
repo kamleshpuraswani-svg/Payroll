@@ -346,14 +346,35 @@ const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, 
 const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView = 'LIST', onBack }) => {
     const [view, setView] = useState<'LIST' | 'VIEW' | 'EDITOR'>(initialView);
 
-    // Persist structures in localStorage
-    const [structures, setStructures] = useState<Structure[]>(() => {
-        const saved = localStorage.getItem('collab_salary_structures');
-        return saved ? JSON.parse(saved) : MOCK_STRUCTURES;
-    });
+    const [structures, setStructures] = useState<Structure[]>([]);
 
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState(`bu:${BUSINESS_UNITS[0]}`);
+
+    const fetchStructures = async () => {
+        const { data, error } = await supabase.from('salary_structures').select('*');
+        if (error) {
+            console.error('Error fetching structures:', error);
+        } else {
+            const mapped = (data || []).map(d => ({
+                id: d.id,
+                name: d.name,
+                description: d.description || '',
+                departments: d.departments || [],
+                designations: d.designations || [],
+                status: d.status,
+                earnings: d.earnings || [],
+                deductions: d.deductions || [],
+                benefits: d.benefits || [],
+                reimbursements: d.reimbursements || [],
+                employeeCount: d.employeeCount || 0,
+                lastModified: d.updated_at ? new Date(d.updated_at).toLocaleDateString() : 'Just now',
+                targetId: d.target_id,
+                targetType: d.target_type
+            }));
+            setStructures(mapped);
+        }
+    };
 
     useEffect(() => {
         const fetchPaygroups = async () => {
@@ -365,12 +386,8 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             }
         };
         fetchPaygroups();
+        fetchStructures();
     }, []);
-
-    // Save changes to localStorage whenever structures change
-    useEffect(() => {
-        localStorage.setItem('collab_salary_structures', JSON.stringify(structures));
-    }, [structures]);
 
     const [activeStructureId, setActiveStructureId] = useState<string | null>(null);
 
@@ -455,7 +472,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         if (addModalCategory === 'reimbursements') setReimbursements(prev => [...prev, ...newComponents]);
     };
 
-    const handleSaveStructure = (status: 'Active' | 'Draft') => {
+    const handleSaveStructure = async (status: 'Active' | 'Draft') => {
         // Validation
         const newErrors: any = {};
         if (!structureName.trim()) newErrors.name = 'Structure Name is required';
@@ -467,30 +484,29 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             return;
         }
 
-        const newStructure: Structure = {
-            id: activeStructureId || Date.now().toString(),
+        const payload = {
             name: structureName,
             description,
             departments: selectedDepartments,
             designations: selectedDesignations,
-            employees: selectedEmployees,
-            employeeCount: activeStructureId ? (structures.find(s => s.id === activeStructureId)?.employeeCount || 0) : 0,
             status: status,
-            createdBy: activeStructureId ? structures.find(s => s.id === activeStructureId)?.createdBy : 'Current User',
-            lastModified: 'Just now',
             earnings,
             deductions,
             benefits,
             reimbursements,
-            targetId: localSelectedTarget ? localSelectedTarget.split(':')[1] : undefined,
-            targetType: localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : undefined
+            target_id: localSelectedTarget ? localSelectedTarget.split(':')[1] : null,
+            target_type: localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null
         };
 
-        if (activeStructureId) {
-            setStructures(prev => prev.map(s => s.id === activeStructureId ? newStructure : s));
+        if (activeStructureId && !activeStructureId.startsWith('mock-')) {
+             const { error } = await supabase.from('salary_structures').update(payload).eq('id', activeStructureId);
+             if(error) console.error("Error updating", error);
         } else {
-            setStructures(prev => [...prev, newStructure]);
+             const { error } = await supabase.from('salary_structures').insert([payload]);
+             if(error) console.error("Error inserting", error);
         }
+        
+        await fetchStructures();
 
         if (onBack) {
             onBack();
@@ -499,13 +515,13 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         }
     };
 
-    const toggleStructureStatus = (id: string) => {
-        setStructures(prev => prev.map(s => {
-            if (s.id === id) {
-                return { ...s, status: s.status === 'Active' ? 'Inactive' : 'Active' };
-            }
-            return s;
-        }));
+    const toggleStructureStatus = async (id: string) => {
+        if(id.startsWith('mock-')) return;
+        const s = structures.find(st => st.id === id);
+        if(!s) return;
+        const newStatus = s.status === 'Active' ? 'Inactive' : 'Active';
+        const { error } = await supabase.from('salary_structures').update({ status: newStatus }).eq('id', id);
+        if(!error) await fetchStructures();
     };
 
     const confirmDelete = (id: string) => {
@@ -516,9 +532,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeleteConfirmation({ isOpen: true, id });
     };
 
-    const handleDeleteStructure = () => {
+    const handleDeleteStructure = async () => {
         if (deleteConfirmation.id) {
-            setStructures(prev => prev.filter(s => s.id !== deleteConfirmation.id));
+            const { error } = await supabase.from('salary_structures').delete().eq('id', deleteConfirmation.id);
+            if(!error) await fetchStructures();
         }
         setDeleteConfirmation({ isOpen: false, id: null });
     };

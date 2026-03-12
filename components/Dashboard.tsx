@@ -41,9 +41,9 @@ const Dashboard: React.FC<DashboardProps> = ({ companies, auditLogs }) => {
       title: 'Customers',
       value: '1,284',
       trend: '+7.2% vs last month',
-      trendUp: true,
+      trend_up: true,
       icon: <Building2 />,
-      colorClass: 'text-emerald-600 bg-emerald-100',
+      color_class: 'text-emerald-600 bg-emerald-100',
       onClick: () => togglePanel('COMPANIES'),
     },
   ];

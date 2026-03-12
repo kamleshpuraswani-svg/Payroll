@@ -9,6 +9,7 @@ const BUSINESS_UNITS = [
 ];
 
 const OrganizationTaxDetails: React.FC = () => {
+    const [viewMode, setViewMode] = useState<'cards' | 'details'>('cards');
     const [isEditing, setIsEditing] = useState(false);
 
     // Statutory Identifiers
@@ -141,41 +142,157 @@ const OrganizationTaxDetails: React.FC = () => {
         }
     };
 
+    const handleCardClick = (bu: string) => {
+        setSelectedBusinessUnit(bu);
+        setViewMode('details');
+        setIsEditing(false);
+    };
+
+    const handleBackToCards = () => {
+        setViewMode('cards');
+        setIsEditing(false);
+    };
+
     return (
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto bg-slate-50">
             <div className="p-4 lg:p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
-                {/* Header */}
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-800">Organization Tax Details</h2>
-                        <p className="text-slate-500 mt-1">Manage company details, statutory IDs, and contact information.</p>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                        {saveSuccess && (
-                            <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 animate-in fade-in zoom-in duration-300">
-                                <CheckCircle2 size={16} />
-                                <span className="text-xs font-bold">Changes Synced</span>
+                {viewMode === 'cards' ? (
+                    <>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800">Organization Tax Details</h2>
+                                <p className="text-slate-500 mt-1">Manage company details, statutory IDs, and contact information.</p>
                             </div>
-                        )}
-                        {error && (
-                            <div className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
-                                <AlertCircle size={16} />
-                                <span className="text-xs font-bold">{error}</span>
-                            </div>
-                        )}
-                        <div className="relative">
-                            <select
-                                value={selectedBusinessUnit}
-                                onChange={(e) => setSelectedBusinessUnit(e.target.value)}
-                                className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none hover:border-indigo-400 focus:border-indigo-500 transition-all appearance-none cursor-pointer h-10 shadow-sm"
-                            >
-                                {BUSINESS_UNITS.map(bu => (
-                                    <option key={bu} value={bu}>{bu}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
-                        {isEditing && (
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {BUSINESS_UNITS.map((bu, index) => {
+                                // Mock data for cards
+                                const domain = bu.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+                                const codePrefix = bu.substring(0, 4).toUpperCase();
+                                const currency = index === 2 ? 'USD ($)' : (index === 1 ? 'GBP (£)' : 'INR (₹)');
+                                const totalEmployees = index === 0 ? 0 : (index === 2 ? 41 : (index === 1 ? 71 : 3));
+                                const email = index === 0 ? `james@${domain}` : `account${index * 5}@${domain}`;
+
+                                return (
+                                    <div 
+                                        key={bu} 
+                                        className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex flex-col h-full overflow-hidden"
+                                        onClick={() => handleCardClick(bu)}
+                                    >
+                                        {/* Status Bar */}
+                                        <div className="h-1 bg-indigo-500 w-1/4 rounded-br-lg" />
+                                        
+                                        <div className="p-5 flex-1 flex flex-col">
+                                            {/* Header */}
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 font-bold text-xs shrink-0">
+                                                        {bu.substring(0, 1)}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-slate-800 text-sm line-clamp-1">{bu}</h3>
+                                                        <p className="text-[11px] text-slate-500">({domain})</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div>
+                                                    <span className="text-[10px] font-bold">Active</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Body */}
+                                            <div className="mb-6 flex-1">
+                                                <p className="text-[11px] text-slate-400 font-medium mb-1 uppercase tracking-wider">Accounting Email Address</p>
+                                                <p className="text-sm font-semibold text-slate-700 truncate">{email}</p>
+                                            </div>
+
+                                            {/* Stats Row */}
+                                            <div className="grid grid-cols-3 gap-2 mb-6">
+                                                <div>
+                                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Code Prefix</p>
+                                                    <p className="text-sm font-semibold text-slate-800">{codePrefix}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Currency</p>
+                                                    <p className="text-sm font-semibold text-slate-800">{currency}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Employees</p>
+                                                    <p className="text-sm font-semibold text-slate-800">{totalEmployees}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Icons */}
+                                            <div className="flex gap-2 mb-4">
+                                                <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                                </div>
+                                            </div>
+
+                                            {/* Footer */}
+                                            <div className="pt-4 border-t border-slate-100 flex justify-between items-end mt-auto">
+                                                <div>
+                                                    <p className="text-[11px] text-slate-400 mb-0.5">Last Modified by</p>
+                                                    <p className="text-[10px] font-semibold text-slate-600 block">-</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleCardClick(bu); setIsEditing(true); }}
+                                                        className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); }}
+                                                        className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {/* Header */}
+                        <div className="flex flex-col gap-4">
+                            <button
+                                onClick={handleBackToCards}
+                                className="self-start px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                                Back to Business Units
+                            </button>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-800">Tax Details: {selectedBusinessUnit}</h2>
+                                    <p className="text-slate-500 mt-1">Manage company details, statutory IDs, and contact information.</p>
+                                </div>
+                                <div className="flex gap-3 items-center">
+                                    {saveSuccess && (
+                                        <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 animate-in fade-in zoom-in duration-300">
+                                            <CheckCircle2 size={16} />
+                                            <span className="text-xs font-bold">Changes Synced</span>
+                                        </div>
+                                    )}
+                                    {error && (
+                                        <div className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
+                                            <AlertCircle size={16} />
+                                            <span className="text-xs font-bold">{error}</span>
+                                        </div>
+                                    )}
+                                    {isEditing && (
                             <button
                                 onClick={() => setIsEditing(false)}
                                 disabled={isSaving}
@@ -194,6 +311,7 @@ const OrganizationTaxDetails: React.FC = () => {
                         </button>
                     </div>
                 </div>
+            </div>
 
                 {/* Company Identity & Contact */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -420,6 +538,8 @@ const OrganizationTaxDetails: React.FC = () => {
                         <Loader2 size={32} className="text-sky-500 animate-spin mb-4" />
                         <p className="text-slate-400 font-medium">Fetching configuration from Supabase...</p>
                     </div>
+                )}
+                    </>
                 )}
             </div>
         </div>

@@ -592,7 +592,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                 {userRole === 'HR_MANAGER' && (
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Effective Date <span className="text-rose-500">*</span></label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                            Effective Date <span className="text-rose-500">*</span>
+                                            <div className="group relative">
+                                                <Info size={14} className="text-slate-400 cursor-help" />
+                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                    Select the effective date for these changes.
+                                                </div>
+                                            </div>
+                                        </label>
                                         <div className="relative">
                                             <input
                                                 type="date"
@@ -606,8 +614,13 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 )}
                             </div>
 
-                            <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8">
-                                Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
+                            <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8 space-y-2">
+                                <div>
+                                    Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400 italic">
+                                    If the pay date falls on a holiday or Sunday, payroll will be processed on the previous working day.
+                                </p>
                             </div>
                         </div>
 

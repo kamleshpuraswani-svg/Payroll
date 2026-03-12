@@ -44,32 +44,44 @@ interface ErrorBoundaryState {
 
 // Basic Error Boundary
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error: any, errorInfo: any) { console.error('React Error Boundary caught:', error, errorInfo); }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-10 flex flex-col items-center justify-center h-full text-slate-400 bg-white">
-          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-4 text-rose-500">
-            <AlertTriangle size={32} />
-          </div>
-          <h2 className="text-xl font-bold text-slate-800">Something went wrong</h2>
-          <p className="mt-2">An error occurred while rendering this view. We've used fallback data where possible.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-2 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition-all"
-          >
-            Reload Application
-          </button>
-        </div>
-      );
+    public props: ErrorBoundaryProps;
+    public state: ErrorBoundaryState = {
+        hasError: false
+    };
+
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.props = props;
     }
-    return this.props.children;
-  }
+
+    static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error('React Error Boundary caught:', error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-10 flex flex-col items-center justify-center h-full text-slate-400 bg-white">
+                    <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-4 text-rose-500">
+                        <AlertTriangle size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800">Something went wrong</h2>
+                    <p className="mt-2">An error occurred while rendering this view. We've used fallback data where possible.</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-6 px-6 py-2 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition-all"
+                    >
+                        Reload Application
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
 }
 
 const App: React.FC = () => {

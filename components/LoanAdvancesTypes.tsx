@@ -63,6 +63,7 @@ const LoanAdvancesTypes: React.FC = () => {
     // Persistence: Initialize from Supabase
     const [loanTypes, setLoanTypes] = useState<LoanType[]>([]);
     const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState(`bu:${BUSINESS_UNITS[0]}`);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchPaygroups = async () => {
@@ -91,7 +92,9 @@ const LoanAdvancesTypes: React.FC = () => {
                 approvers: item.approvers || [],
                 repaymentMonth: item.repayment_month || '',
                 createdAt: item.created_at,
-                updatedAt: item.updated_at
+                updatedAt: item.updated_at,
+                targetId: item.target_id,
+                targetType: item.target_type
             }));
             setLoanTypes(mappedData);
         }
@@ -132,9 +135,15 @@ const LoanAdvancesTypes: React.FC = () => {
 
     const monthOptions = getRepaymentMonthOptions();
 
-    const filteredTypes = loanTypes.filter(t =>
-        t.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredTypes = loanTypes.filter(t => {
+        const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const [targetTypeRaw, targetId] = selectedTarget.split(':');
+        const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+        
+        const matchesTarget = t.targetId === targetId && t.targetType === targetType;
+        // Also show items without a target id as default, or filter specifically
+        return matchesSearch && matchesTarget;
+    });
 
     const handleAddNew = () => {
         setCurrentLoan({
@@ -253,6 +262,9 @@ const LoanAdvancesTypes: React.FC = () => {
 
         setIsLoading(true);
         try {
+            const [targetTypeRaw, targetId] = selectedTarget.split(':');
+            const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+            
             const payload = {
                 name: currentLoan.name,
                 interest_rate: currentLoan.interestRate || 0,
@@ -262,7 +274,9 @@ const LoanAdvancesTypes: React.FC = () => {
                 description: currentLoan.description || '',
                 approvers: currentLoan.approvers || [],
                 repayment_month: (currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') ? (currentLoan.repaymentMonth || monthOptions[0]) : null,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                target_id: targetId,
+                target_type: targetType
             };
 
             let error;
@@ -395,7 +409,10 @@ const LoanAdvancesTypes: React.FC = () => {
 
                                 <div className="flex items-center gap-3 w-full sm:w-auto">
                                     <div className="relative">
-                                        <select className="appearance-none w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all h-[42px]">
+                                        <select 
+                                            value={selectedTarget}
+                                            onChange={(e) => setSelectedTarget(e.target.value)}
+                                            className="appearance-none w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all h-[42px]">
                                             <optgroup label="Business Units">
                                                 {BUSINESS_UNITS.map(bu => (
                                                     <option key={bu} value={`bu:${bu}`}>{bu}</option>
