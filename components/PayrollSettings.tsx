@@ -364,9 +364,10 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                                     <div className="relative">
                                         <select
+                                            disabled={userRole === 'HR_MANAGER'}
                                             value={localSelectedTarget}
                                             onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                                            className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.target ? 'border-rose-500' : 'border-slate-200'}`}
+                                            className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.target ? 'border-rose-500' : 'border-slate-200'} ${userRole === 'HR_MANAGER' ? 'bg-slate-50 opacity-80 cursor-not-allowed' : ''}`}
                                         >
                                             <option value="">Select a unit or paygroup</option>
                                             <optgroup label="Business Units">
@@ -644,10 +645,14 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [selectedTarget, setSelectedTarget] = useState<string>(`bu:${BUSINESS_UNITS[0]}`);
 
     const filteredSchedules = useMemo(() => {
+        if (userRole === 'HR_MANAGER') {
+            return MOCK_SCHEDULES.map(s => ({ ...s, status: 'Inactive' as const }));
+        }
+
         if (selectedTarget === 'all') return schedules;
         const [type, id] = selectedTarget.split(':');
         return schedules.filter(s => s.targetType === (type === 'pg' ? 'Paygroup' : 'BusinessUnit') && s.targetId === id);
-    }, [schedules, selectedTarget]);
+    }, [schedules, selectedTarget, userRole]);
 
     const fetchConfig = async () => {
         setIsLoading(true);
@@ -859,12 +864,14 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
                     )}
-                    <button
-                        onClick={handleAddNew}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-bold text-sm shadow-sm h-10"
-                    >
-                        {userRole !== 'HR_MANAGER' && <Plus size={18} />} Add Pay Schedule
-                    </button>
+                    {userRole !== 'HR_MANAGER' && (
+                        <button
+                            onClick={handleAddNew}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-bold text-sm shadow-sm h-10"
+                        >
+                            <Plus size={18} /> Add Pay Schedule
+                        </button>
+                    )}
                 </div>
             </div>
 

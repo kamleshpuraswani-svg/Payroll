@@ -199,13 +199,6 @@ const PayrollPaygroup: React.FC = () => {
                                     >
                                         <Edit2 size={16} />
                                     </button>
-                                    <button
-                                        onClick={() => handleDelete(pg.id, pg.name)}
-                                        className="p-2 bg-rose-50 text-rose-600 rounded-full hover:bg-rose-100 transition-all shadow-sm shadow-rose-50"
-                                        title="Delete Paygroup"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
                                 </div>
                             </div>
                             <h4 className="text-lg font-bold text-slate-800 mb-2">{pg.name}</h4>
