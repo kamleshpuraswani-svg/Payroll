@@ -45,6 +45,16 @@ const OperationalConfig: React.FC = () => {
         departments: []
     });
 
+    // Expense Management settings state
+    const [expenseSettings, setExpenseSettings] = useState({
+        id: '',
+        deadline_claims_date: 5,
+        receipt_mandatory_amount: 200,
+        backdated_limit_months: 3
+    });
+    const [expenseApprovers, setExpenseApprovers] = useState<any[]>([]);
+    const [isExpenseExpanded, setIsExpenseExpanded] = useState(true);
+
     useEffect(() => {
         fetchConfig();
     }, []);
@@ -63,8 +73,9 @@ const OperationalConfig: React.FC = () => {
             // Fetch employees for selection
             const { data: empData, error: empError } = await supabase
                 .from('employees')
-                .select('id, name, eid')
-                .eq('status', 'Active');
+                .select('id, name, eid, avatar_url, department, designation')
+                .eq('status', 'Active')
+                .order('name');
 
             if (empError) console.error('Error fetching employees:', empError);
             if (empData) setAllEmployees(empData);
@@ -85,6 +96,35 @@ const OperationalConfig: React.FC = () => {
                     });
                 }
             }
+
+            // Fetch expense settings
+            const { data: expSettingsData, error: expSettingsError } = await supabase
+                .from('expense_settings')
+                .select('*')
+                .single();
+            if (expSettingsData) setExpenseSettings(expSettingsData);
+
+            // Fetch expense workflow
+            const { data: workflowData, error: workflowError } = await supabase
+                .from('expense_workflows')
+                .select(`
+                    id,
+                    approver_id,
+                    sequence_order
+                `)
+                .order('sequence_order');
+            
+            if (workflowData && empData) {
+                setExpenseApprovers(workflowData.map(w => {
+                    const emp = empData.find(e => e.id === w.approver_id);
+                    return {
+                        ...emp,
+                        workflowId: w.id,
+                        sequence: w.sequence_order
+                    };
+                }).filter(a => a.id)); // Ensure we only keep found employees
+            }
+
         } catch (err: any) {
             console.error('Error fetching config:', err);
             setError('Failed to load configuration from Supabase.');
@@ -121,6 +161,32 @@ const OperationalConfig: React.FC = () => {
 
             if (eligibilityError) throw eligibilityError;
 
+            // Save expense settings
+            const { error: expSettingsError } = await supabase
+                .from('expense_settings')
+                .update({
+                    deadline_claims_date: expenseSettings.deadline_claims_date,
+                    backdated_limit_months: expenseSettings.backdated_limit_months
+                })
+                .eq('id', expenseSettings.id);
+
+            if (expSettingsError) throw expSettingsError;
+
+            // Save expense workflow
+            // Delete existing workflow
+            await supabase.from('expense_workflows').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+            // Insert new sequence
+            const workflowToInsert = expenseApprovers.map((emp, index) => ({
+                approver_id: emp.id,
+                sequence_order: index + 1
+            }));
+
+            if (workflowToInsert.length > 0) {
+                const { error: workflowError } = await supabase.from('expense_workflows').insert(workflowToInsert);
+                if (workflowError) throw workflowError;
+            }
+
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (err: any) {
@@ -131,29 +197,39 @@ const OperationalConfig: React.FC = () => {
         }
     };
 
-    const handleSelectEmployee = (id: string) => {
+    const handleSelectEmployee = (id: string, type: 'payroll' | 'expense') => {
         if (!id) return;
-        if (selectedEmployees.find(emp => emp.id === id)) return;
-
-        const empToAdd = allEmployees.find(emp => emp.id === id);
-        if (empToAdd) {
-            setSelectedEmployees([...selectedEmployees, empToAdd]);
+        
+        if (type === 'payroll') {
+            if (selectedEmployees.find(emp => emp.id === id)) return;
+            const empToAdd = allEmployees.find(emp => emp.id === id);
+            if (empToAdd) setSelectedEmployees([...selectedEmployees, empToAdd]);
+        } else {
+            if (expenseApprovers.find(emp => emp.id === id)) return;
+            const empToAdd = allEmployees.find(emp => emp.id === id);
+            if (empToAdd) setExpenseApprovers([...expenseApprovers, empToAdd]);
         }
     };
 
-    const removeEmployee = (id: string) => {
-        setSelectedEmployees(selectedEmployees.filter(emp => emp.id !== id));
+    const removeEmployee = (id: string, type: 'payroll' | 'expense') => {
+        if (type === 'payroll') {
+            setSelectedEmployees(selectedEmployees.filter(emp => emp.id !== id));
+        } else {
+            setExpenseApprovers(expenseApprovers.filter(emp => emp.id !== id));
+        }
     };
 
-    const moveEmployee = (index: number, direction: 'up' | 'down') => {
-        const newItems = [...selectedEmployees];
+    const moveEmployee = (index: number, direction: 'up' | 'down', type: 'payroll' | 'expense') => {
+        const items = type === 'payroll' ? [...selectedEmployees] : [...expenseApprovers];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
-        if (targetIndex < 0 || targetIndex >= newItems.length) return;
+        if (targetIndex < 0 || targetIndex >= items.length) return;
 
-        const [movedItem] = newItems.splice(index, 1);
-        newItems.splice(targetIndex, 0, movedItem);
-        setSelectedEmployees(newItems);
+        const [movedItem] = items.splice(index, 1);
+        items.splice(targetIndex, 0, movedItem);
+
+        if (type === 'payroll') setSelectedEmployees(items);
+        else setExpenseApprovers(items);
     };
 
     // Eligibility Handlers
@@ -258,7 +334,7 @@ const OperationalConfig: React.FC = () => {
                                     </div>
                                     <select
                                         value=""
-                                        onChange={(e) => handleSelectEmployee(e.target.value)}
+                                        onChange={(e) => handleSelectEmployee(e.target.value, 'payroll')}
                                         className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="" disabled>Search employee...</option>
@@ -287,14 +363,14 @@ const OperationalConfig: React.FC = () => {
                                                 <div className="flex flex-col gap-0.5 text-slate-400">
                                                     <button
                                                         disabled={index === 0}
-                                                        onClick={() => moveEmployee(index, 'up')}
+                                                        onClick={() => moveEmployee(index, 'up', 'payroll')}
                                                         className="hover:text-sky-600 disabled:opacity-30 p-0.5"
                                                     >
                                                         <ArrowUp size={14} />
                                                     </button>
                                                     <button
                                                         disabled={index === selectedEmployees.length - 1}
-                                                        onClick={() => moveEmployee(index, 'down')}
+                                                        onClick={() => moveEmployee(index, 'down', 'payroll')}
                                                         className="hover:text-sky-600 disabled:opacity-30 p-0.5"
                                                     >
                                                         <ArrowDown size={14} />
@@ -307,7 +383,7 @@ const OperationalConfig: React.FC = () => {
                                                 </div>
 
                                                 <button
-                                                    onClick={() => removeEmployee(emp.id)}
+                                                    onClick={() => removeEmployee(emp.id, 'payroll')}
                                                     className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-all"
                                                 >
                                                     <X size={16} />
@@ -472,6 +548,119 @@ const OperationalConfig: React.FC = () => {
                                                     </div>
                                                     <button onClick={() => removeApprovalSourceDept(dept)} className="hover:text-rose-600 transition-colors">
                                                         <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+            {/* Expenses Management Section */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsExpenseExpanded(!isExpenseExpanded)}
+                >
+                    <h3 className="font-semibold text-slate-800">Expenses Management</h3>
+                    <button className="text-slate-400">
+                        {isExpenseExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isExpenseExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-3xl space-y-8">
+                            {/* Submission Rules */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                        Submission Deadline (Date)
+                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                    </label>
+                                    <select
+                                        value={expenseSettings.deadline_claims_date}
+                                        onChange={(e) => setExpenseSettings({...expenseSettings, deadline_claims_date: parseInt(e.target.value)})}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-sky-500 transition-all"
+                                    >
+                                        {[...Array(31)].map((_, i) => (
+                                            <option key={i+1} value={i+1}>{i+1}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                        Back-dated Claims Limit (Months)
+                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                    </label>
+                                    <select
+                                        value={expenseSettings.backdated_limit_months}
+                                        onChange={(e) => setExpenseSettings({...expenseSettings, backdated_limit_months: parseInt(e.target.value)})}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-sky-500 transition-all"
+                                    >
+                                        {[...Array(12)].map((_, i) => (
+                                            <option key={i+1} value={i+1}>{i+1} Months</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Approval Workflow */}
+                            <div className="pt-6 border-t border-slate-100">
+                                <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
+                                    Approval Workflow Sequence
+                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                </label>
+                                
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <Search size={16} className="text-slate-400" />
+                                        </div>
+                                        <select
+                                            value=""
+                                            onChange={(e) => handleSelectEmployee(e.target.value, 'expense')}
+                                            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                        >
+                                            <option value="" disabled>Search approver...</option>
+                                            {allEmployees.filter(emp => !expenseApprovers.find(s => s.id === emp.id)).map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {expenseApprovers.length > 0 && (
+                                        <div className="space-y-2">
+                                            {expenseApprovers.map((emp, index) => (
+                                                <div key={emp.id} className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-3 rounded-lg group hover:border-sky-200 hover:bg-sky-50 transition-all">
+                                                    <div className="flex flex-col gap-0.5 text-slate-400">
+                                                        <button 
+                                                            disabled={index === 0}
+                                                            onClick={() => moveEmployee(index, 'up', 'expense')}
+                                                            className="hover:text-sky-600 disabled:opacity-30 p-0.5"
+                                                        >
+                                                            <ArrowUp size={14} />
+                                                        </button>
+                                                        <button 
+                                                            disabled={index === expenseApprovers.length - 1}
+                                                            onClick={() => moveEmployee(index, 'down', 'expense')}
+                                                            className="hover:text-sky-600 disabled:opacity-30 p-0.5"
+                                                        >
+                                                            <ArrowDown size={14} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-sm font-medium text-slate-700">{emp.name}</div>
+                                                        <div className="text-xs text-slate-500">Employee ID: {emp.eid} • Level {index + 1}</div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => removeEmployee(emp.id, 'expense')}
+                                                        className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-all"
+                                                    >
+                                                        <X size={16} />
                                                     </button>
                                                 </div>
                                             ))}

@@ -22,6 +22,7 @@ import GlobalSettings from './components/GlobalSettings';
 import PayrollCorner from './components/PayrollCorner';
 import Overview from './components/Overview';
 import OperationalConfig from './components/OperationalConfig';
+import ExpenseSettings from './components/ExpenseSettings';
 
 // New Component Imports
 import TaxPlanning from './components/TaxPlanning';
@@ -244,6 +245,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.PAYROLL_APPROVAL && <PayrollApprovalRequests />}
                 {currentView === ViewState.HR_DOCUMENTS && <DocumentsManager />}
                 {currentView === ViewState.HR_EXPENSES && <ExpenseManagement />}
+                {currentView === ViewState.HR_EXPENSES_CONFIG && <ExpenseSettings />}
                 {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances userRole={userRole} />}
                 {currentView === ViewState.SETTINGS && <GlobalSettings userRole={userRole} />}
                 {currentView === ViewState.HR_OPERATIONAL_CONFIG && <OperationalConfig />}

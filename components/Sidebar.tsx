@@ -153,6 +153,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       subItems: [
         { id: 'hr-statutory', label: 'Statutory Settings', viewState: ViewState.SETTINGS },
         { id: 'hr-operational', label: 'Operational Config', viewState: ViewState.HR_OPERATIONAL_CONFIG },
+        { id: 'hr-expenses-mgmt', label: 'Expenses Management', viewState: ViewState.HR_EXPENSES_CONFIG },
       ]
     }
   ];
