@@ -55,6 +55,7 @@ const OrganizationTaxDetails: React.FC = () => {
     };
 
     // Supabase state
+    const [allBuConfigs, setAllBuConfigs] = useState<Record<string, any>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -63,6 +64,47 @@ const OrganizationTaxDetails: React.FC = () => {
     useEffect(() => {
         fetchConfig();
     }, []);
+
+    // Sync individual fields when target BU or all configs change
+    useEffect(() => {
+        const config = allBuConfigs[selectedBusinessUnit];
+        if (config) {
+            setPanNumber(config.panNumber || 'ABCDE1234F');
+            setTanNumber(config.tanNumber || 'BLRT12345C');
+            setGstin(config.gstin || '29ABCDE1234F1Z5');
+            setAo1(config.ao1 || 'AAA');
+            setAo2(config.ao2 || 'AA');
+            setAo3(config.ao3 || '000');
+            setAo4(config.ao4 || '00');
+            setFrequency(config.frequency || 'Monthly');
+            setDeductorType(config.deductorType || 'Employee');
+            setDeductorName(config.deductorName || 'Suresh Kumar');
+            setFatherName(config.fatherName || 'Ramesh Kumar');
+            setDesignation(config.designation || '');
+            setAccountNumber(config.accountNumber || '');
+            setAccountName(config.accountName || '');
+            setIfscCode(config.ifscCode || '');
+            setBranch(config.branch || '');
+        } else {
+            // Revert to defaults if no specific config exists for this BU
+            setPanNumber('ABCDE1234F');
+            setTanNumber('BLRT12345C');
+            setGstin('29ABCDE1234F1Z5');
+            setAo1('AAA');
+            setAo2('AA');
+            setAo3('000');
+            setAo4('00');
+            setFrequency('Monthly');
+            setDeductorType('Employee');
+            setDeductorName('Suresh Kumar');
+            setFatherName('Ramesh Kumar');
+            setDesignation('');
+            setAccountNumber('');
+            setAccountName('');
+            setIfscCode('');
+            setBranch('');
+        }
+    }, [selectedBusinessUnit, allBuConfigs]);
 
     const fetchConfig = async () => {
         setIsLoading(true);
@@ -77,24 +119,8 @@ const OrganizationTaxDetails: React.FC = () => {
             if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
             if (data && data.config_value) {
-                const config = data.config_value;
-                if (config.panNumber) setPanNumber(config.panNumber);
-                if (config.tanNumber) setTanNumber(config.tanNumber);
-                if (config.gstin) setGstin(config.gstin);
-                if (config.ao1) setAo1(config.ao1);
-                if (config.ao2) setAo2(config.ao2);
-                if (config.ao3) setAo3(config.ao3);
-                if (config.ao4) setAo4(config.ao4);
-                if (config.frequency) setFrequency(config.frequency);
-                if (config.deductorType) setDeductorType(config.deductorType);
-                if (config.deductorName) setDeductorName(config.deductorName);
-                if (config.fatherName) setFatherName(config.fatherName);
-                if (config.designation) setDesignation(config.designation);
-                if (config.accountNumber) setAccountNumber(config.accountNumber);
-                if (config.accountName) setAccountName(config.accountName);
-                if (config.ifscCode) setIfscCode(config.ifscCode);
-                if (config.branch) setBranch(config.branch);
-                if (config.selectedBusinessUnit) setSelectedBusinessUnit(config.selectedBusinessUnit);
+                setAllBuConfigs(data.config_value);
+                // Note: individual field syncing happens in useEffect dependent on allBuConfigs
             }
         } catch (err: any) {
             console.error('Error fetching config:', err);
@@ -113,24 +139,33 @@ const OrganizationTaxDetails: React.FC = () => {
         setIsSaving(true);
         setError(null);
         try {
-            const configValue = {
+            // Build config for the CURRENT selected BU
+            const currentBuFields = {
                 panNumber, tanNumber, gstin,
                 ao1, ao2, ao3, ao4,
                 frequency,
                 deductorType, deductorName, fatherName, designation,
-                accountNumber, accountName, ifscCode, branch,
-                selectedBusinessUnit
+                accountNumber, accountName, ifscCode, branch
+            };
+
+            // Merge into the global map
+            const newAllBuConfigs = {
+                ...allBuConfigs,
+                [selectedBusinessUnit]: currentBuFields
             };
 
             const { error: saveError } = await supabase
                 .from('operational_config')
                 .upsert({
                     config_key: 'organization_tax_details',
-                    config_value: configValue
+                    config_value: newAllBuConfigs
                 }, { onConflict: 'config_key' });
 
             if (saveError) throw saveError;
 
+            // Update local state map
+            setAllBuConfigs(newAllBuConfigs);
+            
             setSaveSuccess(true);
             setIsEditing(false);
             setTimeout(() => setSaveSuccess(false), 3000);
