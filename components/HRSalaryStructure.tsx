@@ -323,7 +323,6 @@ const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, 
                                     <span>{comp.calculation}</span> • <span>{comp.type}</span>
                                 </div>
                             </div>
-                            <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{comp.taxStatus}</span>
                         </label>
                     )) : (
                         <p className="text-center text-slate-400 text-sm py-4">No components found.</p>
@@ -516,10 +515,32 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     };
 
     const toggleStructureStatus = async (id: string) => {
-        if(id.startsWith('mock-')) return;
         const s = structures.find(st => st.id === id);
         if(!s) return;
+        
         const newStatus = s.status === 'Active' ? 'Inactive' : 'Active';
+
+        // Treat default templates as templates that need to be copied when modified.
+        if(id.startsWith('mock-')) {
+            const newStructure = {
+                id: Date.now().toString(),
+                name: s.name,
+                status: newStatus,
+                associated_units: [],
+                associated_paygroups: [],
+                target_assignment_rules: {},
+                description: s.description || '',
+                earnings: [...s.components.earnings],
+                deductions: [...s.components.deductions],
+                statutory: [...s.components.statutory],
+                target_id: '1',
+                target_type: 'BusinessUnit'
+            };
+            const { error } = await supabase.from('salary_structures').insert([newStructure]);
+            if(!error) await fetchStructures();
+            return;
+        }
+
         const { error } = await supabase.from('salary_structures').update({ status: newStatus }).eq('id', id);
         if(!error) await fetchStructures();
     };
@@ -579,11 +600,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                             <ArrowLeft size={20} />
                         </button>
                         <div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                                <span>Salary Structures</span>
-                                <span>/</span>
-                                <span>{activeStructureId ? (isReadOnly ? 'View' : 'Edit') : 'Create'}</span>
-                            </div>
                             <h1 className="text-2xl font-bold text-slate-800">
                                 {activeStructureId
                                     ? (isReadOnly ? structureName : `Edit Salary Structure | ${structureName}`)
@@ -693,7 +709,14 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label>
+                                <div className="flex items-center gap-3 mb-1.5">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase">Description</label>
+                                    {activeStructureId && currentStructure && (
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${currentStructure.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : currentStructure.status === 'Draft' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                                            {currentStructure.status}
+                                        </span>
+                                    )}
+                                </div>
                                 {isReadOnly ? (
                                     <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">{description || '-'}</div>
                                 ) : (

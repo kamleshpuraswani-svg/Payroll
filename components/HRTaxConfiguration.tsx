@@ -133,7 +133,7 @@ export default function HRTaxConfiguration() {
   };
 
   const activeSlabs = tdsRegime === 'NEW' ? newRegimeSlabs : oldRegimeSlabs;
-  const isReadOnly = selectedYear !== '2025-2026' && selectedYear !== '2026-2027';
+  const isReadOnly = true;
 
   const updateSlab = (index: number, field: 'from' | 'to' | 'rate', value: string) => {
     const numValue = value === '' ? null : Number(value);
@@ -262,9 +262,9 @@ export default function HRTaxConfiguration() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              Tax Regime Configuration
+              Tax Regime Overview
             </h1>
-            <p className="text-slate-500 mt-1">Manage Income Tax (TDS) slabs and regimes for the selected financial year.</p>
+            <p className="text-slate-500 mt-1">Reference guide for New and Old regime income tax slabs.</p>
           </div>
 
           {/* Year Selector & New FY Button */}

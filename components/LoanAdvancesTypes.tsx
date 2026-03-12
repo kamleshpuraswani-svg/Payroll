@@ -216,6 +216,7 @@ const LoanAdvancesTypes: React.FC = () => {
     };
 
     const handleSave = async () => {
+        const isSalaryAdvance = currentLoan.name === 'Salary Advance';
         const newErrors: { name?: string; maxAmount?: string; interestRate?: string; maxTenure?: string } = {};
 
         // 1. Basic Validation
@@ -224,13 +225,17 @@ const LoanAdvancesTypes: React.FC = () => {
         }
 
         let isMaxAmountValid = true;
-        if (amountType === 'Fixed') {
-            if (!fixedVal || parseFloat(fixedVal.replace(/,/g, '')) <= 0) isMaxAmountValid = false;
-        }
-        if (amountType === 'Multiple' && (!multiFactor || !multiBasis)) isMaxAmountValid = false;
+        
+        // Skip max amount validation for Salary Advance, we will enforce a default
+        if (!isSalaryAdvance) {
+            if (amountType === 'Fixed') {
+                if (!fixedVal || parseFloat(fixedVal.replace(/,/g, '')) <= 0) isMaxAmountValid = false;
+            }
+            if (amountType === 'Multiple' && (!multiFactor || !multiBasis)) isMaxAmountValid = false;
 
-        if (!isMaxAmountValid) {
-            newErrors.maxAmount = 'Max Amount Limit is required.';
+            if (!isMaxAmountValid) {
+                newErrors.maxAmount = 'Max Amount Limit is required.';
+            }
         }
 
         if (currentLoan.name === 'Loan') {
@@ -245,7 +250,7 @@ const LoanAdvancesTypes: React.FC = () => {
             }
         }
 
-        if (currentLoan.name === 'Salary Advance') {
+        if (isSalaryAdvance) {
             if (currentLoan.maxTenure && currentLoan.maxTenure > 3) {
                 newErrors.maxTenure = 'Max tenure allowed is 3 months.';
             }
@@ -256,9 +261,14 @@ const LoanAdvancesTypes: React.FC = () => {
             return;
         }
 
-        const finalMaxAmount = amountType === 'Fixed'
-            ? fixedVal
-            : `${multiFactor} months ${multiBasis}`;
+        let finalMaxAmount = '';
+        if (isSalaryAdvance) {
+            finalMaxAmount = '2 months gross salary';
+        } else {
+            finalMaxAmount = amountType === 'Fixed'
+                ? fixedVal
+                : `${multiFactor} months ${multiBasis}`;
+        }
 
         setIsLoading(true);
         try {
