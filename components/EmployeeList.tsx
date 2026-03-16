@@ -1077,16 +1077,39 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
         setIsLoading(true);
         setFetchError(null);
         try {
-            const { data, error } = await supabase
+            // Attempt to fetch with join
+            let { data, error } = await supabase
                 .from('employees')
                 .select('*, salary_structures(name)')
                 .order('name', { ascending: true });
+
+            // If the join fails (e.g., relationship missing in cache), fallback to separate fetches
+            if (error && error.message.includes('relationship')) {
+                console.warn('Relationship missing in schema cache, falling back to manual join');
+                
+                const [empRes, structRes] = await Promise.all([
+                    supabase.from('employees').select('*').order('name', { ascending: true }),
+                    supabase.from('salary_structures').select('id, name')
+                ]);
+
+                if (empRes.error) throw empRes.error;
+                
+                const structuresMap = (structRes.data || []).reduce((acc: any, s) => {
+                    acc[s.id] = s.name;
+                    return acc;
+                }, {});
+
+                data = (empRes.data || []).map(emp => ({
+                    ...emp,
+                    salary_structures: { name: structuresMap[emp.salary_structure_id] || 'Not Assigned' }
+                }));
+                error = null;
+            }
 
             if (error) {
                 console.error('Error fetching employees:', error);
                 setFetchError(error.message);
             } else {
-                console.log('Fetched employees:', data?.length);
                 const mappedData: Employee[] = (data || []).map(item => ({
                     id: item.id,
                     first_name: item.name || 'N/A',
@@ -1103,7 +1126,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                     email: item.email || '',
                     created_by: item.created_by || 'HR Manager',
                     last_modified_by: item.last_updated_by || item.created_by || 'HR Manager',
-                    salary_structure_name: (item as any).salary_structures?.name || 'Not Assigned'
+                    salary_structure_name: item.salary_structures?.name || 'Not Assigned'
                 }));
                 setEmployees(mappedData);
             }
