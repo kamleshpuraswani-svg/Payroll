@@ -1185,12 +1185,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                     <p className="text-slate-500 mt-1">Manage employee profiles, salary structures and data.</p>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => setIsAssignModalOpen(true)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm transition-colors flex items-center gap-2 shadow-sm"
-                    >
-                        <Briefcase size={16} /> Assign Salary Structure
-                    </button>
+                    {/* Assign Salary Structure button temporarily removed for HR Manager */}
                 </div>
             </div>
 
