@@ -611,7 +611,7 @@ const OperationalConfig: React.FC = () => {
                             {/* Approval Workflow */}
                             <div className="pt-6 border-t border-slate-100">
                                 <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
-                                    Approval Workflow Sequence
+                                    Approval Workflow
                                     <Info size={14} className="text-slate-400 cursor-help" />
                                 </label>
                                 
@@ -636,25 +636,9 @@ const OperationalConfig: React.FC = () => {
                                         <div className="space-y-2">
                                             {expenseApprovers.map((emp, index) => (
                                                 <div key={emp.id} className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-3 rounded-lg group hover:border-sky-200 hover:bg-sky-50 transition-all">
-                                                    <div className="flex flex-col gap-0.5 text-slate-400">
-                                                        <button 
-                                                            disabled={index === 0}
-                                                            onClick={() => moveEmployee(index, 'up', 'expense')}
-                                                            className="hover:text-sky-600 disabled:opacity-30 p-0.5"
-                                                        >
-                                                            <ArrowUp size={14} />
-                                                        </button>
-                                                        <button 
-                                                            disabled={index === expenseApprovers.length - 1}
-                                                            onClick={() => moveEmployee(index, 'down', 'expense')}
-                                                            className="hover:text-sky-600 disabled:opacity-30 p-0.5"
-                                                        >
-                                                            <ArrowDown size={14} />
-                                                        </button>
-                                                    </div>
                                                     <div className="flex-1">
                                                         <div className="text-sm font-medium text-slate-700">{emp.name}</div>
-                                                        <div className="text-xs text-slate-500">Employee ID: {emp.eid} • Level {index + 1}</div>
+                                                        <div className="text-xs text-slate-500">Employee ID: {emp.eid}</div>
                                                     </div>
                                                     <button 
                                                         onClick={() => removeEmployee(emp.id, 'expense')}

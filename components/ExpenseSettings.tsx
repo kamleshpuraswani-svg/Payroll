@@ -67,12 +67,18 @@ const ExpenseSettings: React.FC = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget as HTMLFormElement);
         const name = formData.get('name') as string;
+        const max_limit = parseInt(formData.get('max_limit') as string, 10) || 0;
+        const receipt_threshold = parseInt(formData.get('receipt_threshold') as string, 10) || 0;
+        const pro_rata = formData.get('pro_rata') === 'on';
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
         setIsSaving(true);
         try {
             const categoryData = {
                 name,
+                max_limit,
+                receipt_threshold,
+                pro_rata,
                 status
             };
 
@@ -170,6 +176,45 @@ const ExpenseSettings: React.FC = () => {
                                             required
                                             disabled={!!editingCategory}
                                         />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Max Limit (₹)</label>
+                                            <input
+                                                name="max_limit"
+                                                type="number"
+                                                defaultValue={editingCategory?.max_limit || ''}
+                                                placeholder="e.g. 50000"
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Mandatory Above (₹)</label>
+                                            <input
+                                                name="receipt_threshold"
+                                                type="number"
+                                                defaultValue={editingCategory?.receipt_threshold || '0'}
+                                                placeholder="e.g. 1000"
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                                        <div className="space-y-0.5">
+                                            <label className="text-sm font-bold text-slate-700">Pro-rata Basis</label>
+                                            <p className="text-xs text-slate-500">Calculate limits based on attendance</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="pro_rata"
+                                                defaultChecked={editingCategory ? editingCategory.pro_rata : false}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                                        </label>
                                     </div>
                                     <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
                                         <div className="space-y-0.5">
