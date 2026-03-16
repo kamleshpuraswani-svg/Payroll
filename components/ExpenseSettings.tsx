@@ -55,15 +55,14 @@ const ExpenseSettings: React.FC = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [targetType, targetId] = selectedTarget.split(':');
-            const type = targetType === 'bu' ? 'BusinessUnit' : 'Paygroup';
+            const [type, id] = selectedTarget.split(':');
 
             // Fetch categories
             const { data: catData, error: catError } = await supabase
                 .from('expense_categories')
                 .select('*')
                 .eq('target_type', type)
-                .eq('target_id', targetId)
+                .eq('target_id', id)
                 .order('name');
 
             if (catError) throw catError;
@@ -71,10 +70,10 @@ const ExpenseSettings: React.FC = () => {
             // If no categories found, insert dummy data
             if (catData && catData.length === 0) {
                 const dummyCategories = [
-                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.', target_type: type, target_id: targetId },
-                    { name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.', target_type: type, target_id: targetId },
-                    { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.', target_type: type, target_id: targetId },
-                    { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.', target_type: type, target_id: targetId }
+                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.', target_type: type, target_id: id },
+                    { name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.', target_type: type, target_id: id },
+                    { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.', target_type: type, target_id: id },
+                    { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.', target_type: type, target_id: id }
                 ];
                 const { error: insertError } = await supabase.from('expense_categories').insert(dummyCategories);
                 if (insertError) throw insertError;
@@ -84,7 +83,7 @@ const ExpenseSettings: React.FC = () => {
                     .from('expense_categories')
                     .select('*')
                     .eq('target_type', type)
-                    .eq('target_id', targetId)
+                    .eq('target_id', id)
                     .order('name');
                 if (refreshError) throw refreshError;
                 if (refreshedCat) {
@@ -146,8 +145,7 @@ const ExpenseSettings: React.FC = () => {
         const name = formData.get('name') as string;
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
-        const [targetType, targetId] = selectedTarget.split(':');
-        const type = targetType === 'bu' ? 'BusinessUnit' : 'Paygroup';
+        const [type, id] = selectedTarget.split(':');
 
         setIsSaving(true);
         try {
@@ -155,7 +153,7 @@ const ExpenseSettings: React.FC = () => {
                 name,
                 status,
                 target_type: type,
-                target_id: targetId
+                target_id: id
             };
 
             if (editingCategory) {
