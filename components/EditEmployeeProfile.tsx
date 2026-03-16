@@ -236,10 +236,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             pan_no: panNumber,
             aadhaar_no: aadhaarNumber,
             uan_no: uanNumber,
-            ctc,
+            ctc: ctc.toString(), // Convert to string as per observed schema
             tax_regime: regime,
-            salary_structure_id: selectedStructureId,
-            effective_date: effectiveFrom
+            salary_structure_id: selectedStructureId || null, // Convert empty to null for UUID
+            effective_date: effectiveFrom || null // Convert empty to null for Date
          };
 
          const { error } = await supabase
@@ -253,7 +253,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          console.error('Error saving:', error);
          alert('Failed to save changes. Please try again.');
       } finally {
-         setIsSaving(true);
+         setIsSaving(false);
       }
    };
 
