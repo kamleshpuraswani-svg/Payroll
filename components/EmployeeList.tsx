@@ -1079,7 +1079,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
         try {
             const { data, error } = await supabase
                 .from('employees')
-                .select('*')
+                .select('*, salary_structures(name)')
                 .order('name', { ascending: true });
 
             if (error) {
@@ -1094,12 +1094,16 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                     employee_id: item.eid,
                     company_id: item.company_id || '',
                     department: item.department || 'N/A',
+                    designation: item.designation || 'N/A',
                     location: item.location || 'N/A',
                     ctc: item.ctc || 'N/A',
                     date_of_joining: item.join_date || 'N/A',
                     status: item.status || 'Active',
                     avatar_url: item.avatar_url,
-                    email: item.email || ''
+                    email: item.email || '',
+                    created_by: item.created_by || 'HR Manager',
+                    last_modified_by: item.last_updated_by || item.created_by || 'HR Manager',
+                    salary_structure_name: (item as any).salary_structures?.name || 'Not Assigned'
                 }));
                 setEmployees(mappedData);
             }
@@ -1212,16 +1216,20 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                 <th className="px-6 py-4">Employee</th>
                                 <th className="px-6 py-4">Joining Date</th>
                                 <th className="px-6 py-4">Department</th>
+                                <th className="px-6 py-4">Designation</th>
                                 <th className="px-6 py-4">Business Unit</th>
                                 <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Structure</th>
                                 <th className="px-6 py-4">CTC</th>
+                                <th className="px-6 py-4">Created By</th>
+                                <th className="px-6 py-4 whitespace-nowrap">Last Modified By</th>
                                 <th className="px-4 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading employees...</span>
@@ -1230,7 +1238,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                 </tr>
                             ) : fetchError ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
+                                    <td colSpan={12} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <AlertTriangle size={24} />
                                             <span className="font-bold">Error loading employees</span>
@@ -1241,7 +1249,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                 </tr>
                             ) : filteredEmployees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <Users size={24} className="text-slate-200" />
                                             <span>No employees found matching filters.</span>
@@ -1279,14 +1287,22 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                             {emp?.date_of_joining || 'N/A'}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">{emp?.department || 'N/A'}</td>
+                                    <td className="px-6 py-4 font-medium text-slate-700">{emp?.department || 'N/A'}</td>
+                                    <td className="px-6 py-4 text-slate-500 italic">{emp?.designation || 'N/A'}</td>
                                     <td className="px-6 py-4">{emp?.business_unit || emp?.location || 'Digital Technology'}</td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${emp?.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                             {emp?.status || 'Unknown'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 font-medium text-slate-700">{emp?.ctc || 'N/A'}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 font-bold uppercase tracking-tight">
+                                            {emp?.salary_structure_name || 'Standard'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 font-black text-slate-800">₹ {emp?.ctc ? parseInt(emp.ctc as string).toLocaleString('en-IN') : 'N/A'}</td>
+                                    <td className="px-6 py-4 text-xs font-medium text-slate-500">{emp?.created_by || 'HR Manager'}</td>
+                                    <td className="px-6 py-4 text-xs font-medium text-slate-500">{emp?.last_modified_by || 'HR Manager'}</td>
                                     <td className="px-4 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => onView(emp?.id || '')} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors" title="View Profile"><Eye size={16} /></button>

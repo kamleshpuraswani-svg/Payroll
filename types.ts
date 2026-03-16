@@ -111,6 +111,9 @@ export interface Employee {
   status: 'Active' | 'New Joinee' | 'On Notice' | 'Relieved';
   avatar_url?: string;
   email: string;
+  created_by?: string;
+  last_modified_by?: string;
+  salary_structure_name?: string;
 }
 
 export interface StatutoryReport {
