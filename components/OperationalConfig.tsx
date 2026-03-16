@@ -11,6 +11,8 @@ interface SelectedEmployee {
 // MOCK_EMPLOYEES is kept as fallback or removed if using Supabase
 interface EmployeeData {
     id: string;
+    first_name: string;
+    last_name: string;
     name: string;
     eid: string;
 }
@@ -71,16 +73,23 @@ const OperationalConfig: React.FC = () => {
             if (fetchError) throw fetchError;
 
             // Fetch employees for selection
-            console.log('[OperationalConfig] Fetching employees...');
+            console.log('[OperationalConfig] Fetching employees with corrected schema...');
             const { data: empData, error: empError } = await supabase
                 .from('employees')
-                .select('id, name, eid, avatar_url, department, designation')
-                .eq('status', true)
-                .order('name');
+                .select('id, first_name, last_name, eid, avatar_url, department, designation')
+                .eq('status', 'Active')
+                .order('first_name');
             
-            console.log('[OperationalConfig] fetched employees:', empData?.length || 0);
-            if (empError) console.error('Error fetching employees:', empError);
-            if (empData) setAllEmployees(empData);
+            if (empError) console.error('[OperationalConfig] Error fetching employees:', empError);
+            
+            if (empData) {
+                const formattedEmployees = empData.map(emp => ({
+                    ...emp,
+                    name: `${emp.first_name} ${emp.last_name || ''}`.trim()
+                }));
+                console.log('[OperationalConfig] fetched and formatted employees:', formattedEmployees.length);
+                setAllEmployees(formattedEmployees);
+            }
 
             if (data) {
                 const hierarchy = data.find(c => c.config_key === 'payroll_approval_hierarchy');

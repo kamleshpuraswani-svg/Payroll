@@ -80,15 +80,19 @@ const ExpenseSettings: React.FC = () => {
             // Fetch all employees with designations for configurations
             const { data: empData, error: empError } = await supabase
                 .from('employees')
-                .select('id, name, eid, avatar_url, department, designation')
-                .eq('status', true) // Updated to boolean true
-                .order('name');
+                .select('id, first_name, last_name, eid, avatar_url, department, designation')
+                .eq('status', 'Active')
+                .order('first_name');
             
             if (empError) console.error('Employee fetch error:', empError);
             if (empData) {
-                setAllEmployees(empData);
-                const depts = Array.from(new Set(empData.map(e => e.department).filter(Boolean))) as string[];
-                const desigs = Array.from(new Set((empData as any).map((e: any) => e.designation).filter(Boolean))) as string[];
+                const formattedEmployees = empData.map(emp => ({
+                    ...emp,
+                    name: `${emp.first_name} ${emp.last_name || ''}`.trim()
+                }));
+                setAllEmployees(formattedEmployees);
+                const depts = Array.from(new Set(formattedEmployees.map(e => e.department).filter(Boolean))) as string[];
+                const desigs = Array.from(new Set(formattedEmployees.map((e: any) => e.designation).filter(Boolean))) as string[];
                 setAvailableDepartments(depts.length > 0 ? depts.sort() : FALLBACK_DEPTS);
                 setAvailableDesignations(desigs.length > 0 ? desigs.sort() : FALLBACK_DESIGS);
             } else {
