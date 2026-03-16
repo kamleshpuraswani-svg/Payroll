@@ -153,7 +153,9 @@ const ExpenseSettings: React.FC = () => {
                 name,
                 status,
                 target_type: type,
-                target_id: id
+                target_id: id,
+                last_updated_by: 'HR Manager',
+                ...(editingCategory ? {} : { created_by: 'HR Manager' })
             };
 
             if (editingCategory) {
@@ -199,7 +201,11 @@ const ExpenseSettings: React.FC = () => {
         try {
             const { error } = await supabase
                 .from('expense_categories')
-                .update({ status: newStatus, updated_at: new Date().toISOString() })
+                .update({ 
+                    status: newStatus, 
+                    updated_at: new Date().toISOString(),
+                    last_updated_by: 'HR Manager'
+                })
                 .eq('id', id);
 
             if (error) throw error;
@@ -227,7 +233,8 @@ const ExpenseSettings: React.FC = () => {
             const configData = {
                 status: status,
                 applicable_to: selectedEntities,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                last_updated_by: 'HR Manager'
             };
 
             const targetId = editingExpense ? editingExpense.id : categoryId;
@@ -618,7 +625,8 @@ const ExpenseSettings: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Limits</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                 </tr>
@@ -655,8 +663,26 @@ const ExpenseSettings: React.FC = () => {
                                                 ))}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 italic text-[10px] font-bold text-slate-400 uppercase">
-                                            Multiple Overrides
+                                        <td className="px-6 py-5">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                                    {cat.created_by?.[0] || 'H'}
+                                                </div>
+                                                <p className="text-xs font-bold text-slate-600">{cat.created_by || 'HR Manager'}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-sky-50 flex items-center justify-center text-[10px] font-bold text-sky-600">
+                                                    {cat.last_updated_by?.[0] || 'H'}
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <p className="text-xs font-bold text-slate-600">{cat.last_updated_by || 'HR Manager'}</p>
+                                                    <p className="text-[9px] font-medium text-slate-400 italic">
+                                                        {new Date(cat.updated_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-5">
                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${cat.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
@@ -664,12 +690,18 @@ const ExpenseSettings: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-5 text-right">
-                                            <div className="flex justify-end gap-2">
+                                            <div className="flex justify-end items-center gap-3">
+                                                <button
+                                                    onClick={() => toggleCategoryStatus(cat.id)}
+                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${cat.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${cat.status === 'Active' ? 'translate-x-5' : 'translate-x-1'}`} />
+                                                </button>
                                                 <button onClick={() => {
                                                     setEditingExpense(cat);
                                                     setSelectedEntities(cat.applicable_to || []);
                                                     setIsAddingExpense(true);
-                                                }} className="p-1.5 text-slate-400 hover:text-sky-600">
+                                                }} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all">
                                                     <Edit2 size={16} />
                                                 </button>
                                             </div>

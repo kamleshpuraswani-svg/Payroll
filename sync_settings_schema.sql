@@ -14,10 +14,12 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
     pro_rata boolean DEFAULT false,
     applicable_to jsonb DEFAULT '[]',
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    created_by text DEFAULT 'HR Manager',
+    last_updated_by text DEFAULT 'HR Manager'
 );
 
--- Add target scoping to expense_categories
+-- Add target scoping and audit columns to expense_categories
 DO $$ 
 BEGIN 
     -- Drop old constraint if it exists to allow updating allowed values
@@ -28,7 +30,9 @@ END $$;
 
 ALTER TABLE public.expense_categories 
 ADD COLUMN IF NOT EXISTS target_id text,
-ADD COLUMN IF NOT EXISTS target_type text;
+ADD COLUMN IF NOT EXISTS target_type text,
+ADD COLUMN IF NOT EXISTS created_by text DEFAULT 'HR Manager',
+ADD COLUMN IF NOT EXISTS last_updated_by text DEFAULT 'HR Manager';
 
 ALTER TABLE public.expense_categories 
 ADD CONSTRAINT expense_categories_target_type_check CHECK (target_type IN ('bu', 'pg'));
@@ -59,11 +63,16 @@ CREATE TABLE IF NOT EXISTS public.document_templates (
     settings jsonb DEFAULT '{}'::jsonb,
     target_id text,
     target_type text,
-    created_by text,
-    last_updated_by text,
+    created_by text DEFAULT 'HR Manager',
+    last_updated_by text DEFAULT 'HR Manager',
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );
+
+-- Handle audit columns for document_templates if table existed
+ALTER TABLE public.document_templates 
+ADD COLUMN IF NOT EXISTS created_by text DEFAULT 'HR Manager',
+ADD COLUMN IF NOT EXISTS last_updated_by text DEFAULT 'HR Manager';
 
 -- Handle constraint for document_templates
 DO $$ 
