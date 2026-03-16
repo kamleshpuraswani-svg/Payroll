@@ -44,7 +44,7 @@ const StatutorySettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showContributionModal, setShowContributionModal] = useState(false);
     const [paygroups, setPaygroups] = useState<any[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
     const fetchPaygroups = async () => {
         try {

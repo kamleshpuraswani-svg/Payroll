@@ -66,7 +66,7 @@ const StatutoryBonusSettings: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingFormC, setIsExportingFormC] = useState(false);
   const [paygroups, setPaygroups] = useState<any[]>([]);
-  const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+  const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
   const fetchPaygroups = async () => {
     try {

@@ -35,7 +35,7 @@ const ExpenseSettings: React.FC = () => {
     const [configuredExpenses, setConfiguredExpenses] = useState<any[]>([]);
     const [allEmployees, setAllEmployees] = useState<any[]>([]);
     const [paygroups, setPaygroups] = useState<any[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
     
     // Multi-select state for Add Expense modal
     const [selectedEntities, setSelectedEntities] = useState<any[]>([]);

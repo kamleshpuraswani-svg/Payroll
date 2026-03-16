@@ -12,7 +12,7 @@ const BUSINESS_UNITS = [
 const TDSSettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [paygroups, setPaygroups] = useState<any[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
     const fetchPaygroups = async () => {
         try {

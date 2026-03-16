@@ -17,7 +17,7 @@ const PFSettings: React.FC = () => {
     const [showBelowLimitModal, setShowBelowLimitModal] = useState(false);
     const [showSplitupModal, setShowSplitupModal] = useState(false);
     const [paygroups, setPaygroups] = useState<any[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
     const fetchPaygroups = async () => {
         try {
