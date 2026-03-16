@@ -17,6 +17,7 @@ import {
 const ExpenseSettings: React.FC = () => {
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const [editingCategory, setEditingCategory] = useState<any>(null);
+    const [isShowCategoriesDialog, setIsShowCategoriesDialog] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -303,13 +304,10 @@ const ExpenseSettings: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={() => {
-                                    setEditingCategory(null);
-                                    setIsAddingCategory(true);
-                                }}
+                                onClick={() => setIsShowCategoriesDialog(true)}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
                             >
-                                <Plus size={16} /> ADD CATEGORY
+                                <Receipt size={16} /> EXPENSE CATEGORIES
                             </button>
                             <button
                                 onClick={() => {
@@ -324,75 +322,6 @@ const ExpenseSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50 border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {categories.map((cat) => (
-                                    <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-6 border-b border-slate-50">
-                                            <p className="text-sm font-bold text-slate-700">{cat.name}</p>
-                                        </td>
-                                        <td className="px-6 py-6 border-b border-slate-50">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${cat.status === 'Inactive' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
-                                                {cat.status?.toUpperCase() || 'ACTIVE'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-6 border-b border-slate-50">
-                                            <span className="text-sm font-medium text-slate-600">HR Manager</span>
-                                            {cat.created_at && (
-                                                <p className="text-[10px] text-slate-400 mt-1">
-                                                    {new Date(cat.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                </p>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-6 border-b border-slate-50">
-                                            <span className="text-sm font-medium text-slate-600">HR Manager</span>
-                                            {cat.updated_at && (
-                                                <p className="text-[10px] text-slate-400 mt-1">
-                                                    {new Date(cat.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                </p>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-6 text-right border-b border-slate-50">
-                                            <div className="flex justify-end items-center gap-4">
-                                                <button
-                                                    onClick={() => toggleCategoryStatus(cat.id)}
-                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${cat.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-200'}`}
-                                                    title={cat.status === 'Active' ? "Deactivate" : "Activate"}
-                                                >
-                                                    <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${cat.status === 'Active' ? 'translate-x-5' : 'translate-x-1'}`} />
-                                                </button>
-                                                <div className="flex gap-2 border-l border-slate-100 pl-4 items-center">
-                                                    <button onClick={() => openEditModal(cat)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all" title="Edit">
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Delete">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {categories.length === 0 && (
-                            <div className="p-20 text-center">
-                                <Receipt className="mx-auto mb-4 text-slate-200" size={48} />
-                                <h3 className="text-lg font-bold text-slate-400">No categories found</h3>
-                                <p className="text-sm text-slate-400 mt-1">Add your first expense category to get started.</p>
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* ── Expense Configurations Section ── */}
@@ -463,6 +392,97 @@ const ExpenseSettings: React.FC = () => {
                         </table>
                     </div>
                 </div>
+                {/* Categories Management Dialog */}
+                {isShowCategoriesDialog && (
+                    <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                                        <Receipt size={24} className="text-sky-600" /> Expense Categories
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Manage global expense types and statuses</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setEditingCategory(null);
+                                            setIsAddingCategory(true);
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg font-bold text-xs hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
+                                    >
+                                        <Plus size={14} /> ADD CATEGORY
+                                    </button>
+                                    <button
+                                        onClick={() => setIsShowCategoriesDialog(false)}
+                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-all"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-auto p-6">
+                                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 border-b border-slate-100">
+                                            <tr>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category Name</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Status</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {categories.map((cat) => (
+                                                <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-bold text-slate-700">{cat.name}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${cat.status === 'Inactive' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                            {cat.status?.toUpperCase() || 'ACTIVE'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex justify-end items-center gap-3">
+                                                            <button
+                                                                onClick={() => toggleCategoryStatus(cat.id)}
+                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${cat.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                                            >
+                                                                <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${cat.status === 'Active' ? 'translate-x-5' : 'translate-x-1'}`} />
+                                                            </button>
+                                                            <button onClick={() => openEditModal(cat)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all">
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {categories.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={3} className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
+                                                        No categories found
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                                <button
+                                    onClick={() => setIsShowCategoriesDialog(false)}
+                                    className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-100 font-bold text-xs transition-all"
+                                >
+                                    CLOSE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
