@@ -216,6 +216,12 @@ const ExpenseSettings: React.FC = () => {
         const categoryId = formData.get('category') as string;
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
+        // Check if at least one entity is added with limits
+        if (selectedEntities.length === 0) {
+            alert('Please add at least one Department, Designation, or Employee to this configuration.');
+            return;
+        }
+
         setIsSaving(true);
         try {
             const configData = {
@@ -246,6 +252,38 @@ const ExpenseSettings: React.FC = () => {
         }
     };
 
+    const addEntityToSelection = (type: 'dept' | 'desig' | 'emp', item: any) => {
+        const entityLabel = type === 'dept' ? item : type === 'desig' ? item : item.name;
+        const entityId = type === 'emp' ? item.id : item;
+        
+        // Prevent duplicates
+        if (selectedEntities.some(e => e.id === entityId && e.type === type)) {
+            setEntitySearch('');
+            setShowEntityDropdown(false);
+            return;
+        }
+
+        setSelectedEntities([...selectedEntities, {
+            type,
+            id: entityId,
+            name: entityLabel,
+            max_limit: 0,
+            receipt_threshold: 0
+        }]);
+        setEntitySearch('');
+        setShowEntityDropdown(false);
+    };
+
+    const removeEntityFromSelection = (type: string, id: string) => {
+        setSelectedEntities(selectedEntities.filter(e => !(e.type === type && e.id === id)));
+    };
+
+    const updateEntityLimit = (type: string, id: string, field: 'max_limit' | 'receipt_threshold', value: number) => {
+        setSelectedEntities(selectedEntities.map(e => 
+            (e.type === type && e.id === id) ? { ...e, [field]: value } : e
+        ));
+    };
+
     const openEditModal = (category: any) => {
         setEditingCategory(category);
         setIsAddingCategory(true);
@@ -261,7 +299,7 @@ const ExpenseSettings: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                    {editingCategory ? 'Override Category Limits' : 'Add New Category'}
+                                    {editingCategory ? 'Edit Category' : 'Add New Category'}
                                 </h3>
                                 <button
                                     onClick={() => {
@@ -318,6 +356,198 @@ const ExpenseSettings: React.FC = () => {
                                         className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
                                         {isSaving ? 'Saving...' : 'Submit'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal for Add/Edit Configuration */}
+                {isAddingExpense && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                                    {editingExpense ? 'Edit Configuration' : 'Add New Configuration'}
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        setIsAddingExpense(false);
+                                        setEditingExpense(null);
+                                        setSelectedEntities([]);
+                                    }}
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleSaveExpense} className="flex-1 overflow-y-auto p-6 space-y-6">
+                                <div className="space-y-4">
+                                    {!editingExpense && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Expense Category</label>
+                                            <select
+                                                name="category"
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                required
+                                            >
+                                                <option value="">Select Category...</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {/* Entity Search & Selection */}
+                                    <div className="space-y-4">
+                                        <div className="space-y-1.5 relative">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Add Target (Dept, Designation, or Employee)</label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                    <Search size={16} className="text-slate-400" />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={entitySearch}
+                                                    onChange={(e) => {
+                                                        setEntitySearch(e.target.value);
+                                                        setShowEntityDropdown(true);
+                                                    }}
+                                                    onFocus={() => setShowEntityDropdown(true)}
+                                                    placeholder="Search to add..."
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                />
+                                            </div>
+
+                                            {/* Results Dropdown */}
+                                            {showEntityDropdown && entitySearch.length > 0 && (
+                                                <div className="absolute z-10 top-full inset-x-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto scrollbar-hide py-1 animate-in slide-in-from-top-2 duration-200">
+                                                    {/* Departments */}
+                                                    <div className="px-3 py-2 bg-slate-50/50 border-y border-slate-100 flex items-center gap-2">
+                                                        <Home size={12} className="text-slate-400" />
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Departments</span>
+                                                    </div>
+                                                    {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(dept => (
+                                                        <div key={`dept-${dept}`} onClick={() => addEntityToSelection('dept', dept)} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-semibold text-slate-700">
+                                                            {dept}
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Designations */}
+                                                    <div className="px-3 py-2 bg-slate-50/50 border-y border-slate-100 flex items-center gap-2">
+                                                        <ShieldCheck size={12} className="text-slate-400" />
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Designations</span>
+                                                    </div>
+                                                    {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(desig => (
+                                                        <div key={`desig-${desig}`} onClick={() => addEntityToSelection('desig', desig)} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-semibold text-slate-700">
+                                                            {desig}
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Employees */}
+                                                    <div className="px-3 py-2 bg-slate-50/50 border-y border-slate-100 flex items-center gap-2">
+                                                        <User size={12} className="text-slate-400" />
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Employees</span>
+                                                    </div>
+                                                    {allEmployees.filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase())).map(emp => (
+                                                        <div key={`emp-${emp.id}`} onClick={() => addEntityToSelection('emp', emp)} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-semibold text-slate-700">
+                                                            {emp.name} ({emp.eid})
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Selected Entities List with Inputs */}
+                                        <div className="space-y-3">
+                                            {selectedEntities.map((entity, index) => (
+                                                <div key={`${entity.type}-${entity.id}`} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
+                                                                {entity.type === 'dept' ? <Home size={16} /> : entity.type === 'desig' ? <ShieldCheck size={16} /> : <User size={16} />}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-slate-700">{entity.name}</p>
+                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight">{entity.type === 'dept' ? 'Department' : entity.type === 'desig' ? 'Designation' : 'Employee'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeEntityFromSelection(entity.type, entity.id)}
+                                                            className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit (₹)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={entity.max_limit}
+                                                                onChange={(e) => updateEntityLimit(entity.type, entity.id, 'max_limit', parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Receipt Threshold (₹)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={entity.receipt_threshold}
+                                                                onChange={(e) => updateEntityLimit(entity.type, entity.id, 'receipt_threshold', parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {selectedEntities.length === 0 && (
+                                                <div className="py-8 text-center border-2 border-dashed border-slate-200 rounded-xl">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest italic">No targets added yet</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                                        <div className="space-y-0.5">
+                                            <label className="text-sm font-bold text-slate-700">Status</label>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Enable or disable this configuration</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="status"
+                                                defaultChecked={editingExpense ? editingExpense.status === 'Active' : true}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsAddingExpense(false);
+                                            setEditingExpense(null);
+                                            setSelectedEntities([]);
+                                        }}
+                                        className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-100 font-bold text-sm transition-all shadow-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
+                                    >
+                                        {isSaving ? 'Saving...' : editingExpense ? 'Update Configuration' : 'Submit'}
                                     </button>
                                 </div>
                             </form>
@@ -400,19 +630,33 @@ const ExpenseSettings: React.FC = () => {
                                             <p className="text-sm font-black text-slate-800">{cat.name}</p>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <div className="flex flex-wrap gap-1.5">
+                                            <div className="flex flex-wrap gap-2">
                                                 {cat.applicable_to.map((ent: any, i: number) => (
-                                                    <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase tracking-tight">
-                                                        {ent.name}
-                                                    </span>
+                                                    <div key={i} className="flex flex-col gap-0.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg shadow-sm min-w-[140px]">
+                                                        <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1 mb-1">
+                                                            <div className="text-slate-400">
+                                                                {ent.type === 'dept' ? <Home size={10} /> : ent.type === 'desig' ? <ShieldCheck size={10} /> : <User size={10} />}
+                                                            </div>
+                                                            <span className="text-[10px] font-black text-slate-800 uppercase truncate max-w-[120px]">
+                                                                {ent.name}
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 gap-0.5">
+                                                            <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
+                                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">LIMIT</span>
+                                                                <span className="text-[10px] font-black text-slate-700">₹{ent.max_limit?.toLocaleString()}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
+                                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">THRESH.</span>
+                                                                <span className="text-[10px] font-black text-slate-700">₹{ent.receipt_threshold?.toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5">
-                                            <div className="space-y-0.5">
-                                                <p className="text-[10px] font-black text-slate-700">₹{cat.max_limit?.toLocaleString()} limit</p>
-                                                <p className="text-[9px] font-bold text-slate-400">₹{cat.receipt_threshold?.toLocaleString()} receipt threshold</p>
-                                            </div>
+                                        <td className="px-6 py-5 italic text-[10px] font-bold text-slate-400 uppercase">
+                                            Multiple Overrides
                                         </td>
                                         <td className="px-6 py-5">
                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${cat.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
