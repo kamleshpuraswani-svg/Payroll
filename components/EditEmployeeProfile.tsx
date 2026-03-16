@@ -55,8 +55,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
 
-   const [salaryStructures, setSalaryStructures] = useState<{ id: string, name: string }[]>([]);
+   const [salaryStructures, setSalaryStructures] = useState<{ id: string, name: string, departments?: string[], designations?: string[], employees?: string[] }[]>([]);
    const [isLoading, setIsLoading] = useState(true);
+   const [employeeRawData, setEmployeeRawData] = useState<any>(null);
 
    // Refs to track initial values for change detection
    const initialValues = useRef({
@@ -75,7 +76,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       try {
          const { data, error } = await supabase
             .from('salary_structures')
-            .select('id, name')
+            .select('id, name, departments, designations, employees')
             .eq('status', 'Active');
 
          if (error) throw error;
@@ -83,6 +84,43 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       } catch (error) {
          console.error('Error fetching structures:', error);
       }
+   };
+
+   const getFilteredStructures = () => {
+      if (!salaryStructures.length) return [];
+      
+      const filtered = salaryStructures.filter(struct => {
+         // Check if it has any restriction rules
+         const hasRules = (struct.departments?.length ?? 0) > 0 || 
+                         (struct.designations?.length ?? 0) > 0 || 
+                         (struct.employees?.length ?? 0) > 0;
+         
+         // If No rules (unrestricted), it's global
+         if (!hasRules) return true;
+
+         // Check Department match
+         if (department && struct.departments?.includes(department)) return true;
+
+         // Check Designation match
+         if (designation && struct.designations?.includes(designation)) return true;
+
+         // Check Employee specific match
+         const empId = employeeRawData?.eid || employeeId; 
+         if (struct.employees?.some(e => 
+            e.includes(fullName || '') || 
+            (empId && e.includes(empId))
+         )) return true;
+
+         return false;
+      });
+
+      // Ensure currently selected structure is always visible if it exists
+      if (selectedStructureId && !filtered.find(s => s.id === selectedStructureId)) {
+        const current = salaryStructures.find(s => s.id === selectedStructureId);
+        if (current) filtered.push(current);
+      }
+
+      return filtered;
    };
 
    const fetchEmployeeData = async () => {
@@ -121,6 +159,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                ctc: fetchedCtc,
                structureId: data.salary_structure_id || ''
             };
+            setEmployeeRawData(data);
          }
       } catch (error) {
          console.error('Error fetching employee:', error);
@@ -527,7 +566,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 appearance-none"
                               >
                                  <option value="">Select Structure</option>
-                                 {salaryStructures.map(s => (
+                                 {getFilteredStructures().map(s => (
                                     <option key={s.id} value={s.id}>{s.name}</option>
                                  ))}
                               </select>
