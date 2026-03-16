@@ -76,7 +76,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       try {
          const { data, error } = await supabase
             .from('salary_structures')
-            .select('id, name, departments, designations, employees')
+            .select('id, name, departments, designations')
             .eq('status', 'Active');
 
          if (error) throw error;
