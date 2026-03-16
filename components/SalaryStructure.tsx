@@ -361,14 +361,16 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                 description: s.description || '',
                 departments: s.departments || [],
                 designations: s.designations || [],
-                employees: [],
-                employeeCount: 0, // In a real app, count from employees table
+                employees: s.employees || [],
+                employeeCount: 0,
                 status: s.status || 'Active',
                 lastModified: new Date(s.last_modified).toLocaleDateString(),
                 earnings: s.earnings || [],
                 deductions: s.deductions || [],
                 benefits: s.benefits || [],
-                reimbursements: s.reimbursements || []
+                reimbursements: s.reimbursements || [],
+                targetId: s.target_id,
+                targetType: s.target_type
             }));
             setStructures(mapped);
         }
@@ -511,10 +513,14 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                 reimbursements,
                 status: status,
                 created_by: 'Super Admin',
-                last_modified: new Date().toISOString()
+                last_modified: new Date().toISOString(),
+                target_id: null, // Should be passed if selectable on list screen
+                target_type: null
             };
 
             let error;
+            let savedId = activeStructureId;
+
             if (activeStructureId) {
                 const { error: updateError } = await supabase
                     .from('salary_structures')
@@ -522,13 +528,33 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                     .eq('id', activeStructureId);
                 error = updateError;
             } else {
-                const { error: insertError } = await supabase
+                const { data: insertData, error: insertError } = await supabase
                     .from('salary_structures')
-                    .insert([structureData]);
+                    .insert([structureData])
+                    .select().single();
                 error = insertError;
+                if (!error) savedId = insertData?.id;
             }
 
             if (error) throw error;
+
+            // --- Propagate Assignments to Employees Table ---
+            if (savedId && status === 'Active') {
+                const directEmployeeIds = selectedEmployees.map(empStr => {
+                    const match = empStr.match(/\((.*?)\)/);
+                    return match ? match[1] : null;
+                }).filter(Boolean);
+
+                if (selectedDepartments.length > 0) {
+                    await supabase.from('employees').update({ salary_structure_id: savedId }).in('department', selectedDepartments);
+                }
+                if (selectedDesignations.length > 0) {
+                    await supabase.from('employees').update({ salary_structure_id: savedId }).in('designation', selectedDesignations);
+                }
+                if (directEmployeeIds.length > 0) {
+                    await supabase.from('employees').update({ salary_structure_id: savedId }).in('employee_id', directEmployeeIds);
+                }
+            }
 
             await fetchStructures();
             if (onBack) {
@@ -656,6 +682,19 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                                             {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
                                         </>
                                     )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            disabled={true}
+                                            value={""}
+                                            className="w-full px-4 py-2 border border-slate-100 rounded-lg text-sm bg-slate-50 text-slate-700 appearance-none focus:outline-none"
+                                        >
+                                            <option value="">MindInventory (Business Unit)</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
                                 </div>
                                 <div className="flex gap-4 flex-wrap">
                                     <MultiSelect

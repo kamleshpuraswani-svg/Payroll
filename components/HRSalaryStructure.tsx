@@ -361,6 +361,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 description: d.description || '',
                 departments: d.departments || [],
                 designations: d.designations || [],
+                employees: d.employees || [],
                 status: d.status,
                 earnings: d.earnings || [],
                 deductions: d.deductions || [],
@@ -491,6 +492,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             description,
             departments: selectedDepartments,
             designations: selectedDesignations,
+            employees: selectedEmployees,
             status: status,
             earnings,
             deductions,
@@ -500,12 +502,56 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             target_type: localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null
         };
 
+        let savedId = activeStructureId;
+
         if (activeStructureId && !activeStructureId.startsWith('mock-')) {
              const { error } = await supabase.from('salary_structures').update(payload).eq('id', activeStructureId);
              if(error) console.error("Error updating", error);
         } else {
-             const { error } = await supabase.from('salary_structures').insert([payload]);
-             if(error) console.error("Error inserting", error);
+             const { data, error } = await supabase.from('salary_structures').insert([payload]).select().single();
+             if(error) {
+                 console.error("Error inserting", error);
+             } else {
+                 savedId = data?.id;
+             }
+        }
+
+        // --- Propagate Assignments to Employees Table ---
+        if (savedId && status === 'Active') {
+            try {
+                // Determine Employee IDs from selectedEmployees (format: "Name (ID)")
+                const directEmployeeIds = selectedEmployees.map(empStr => {
+                    const match = empStr.match(/\((.*?)\)/);
+                    return match ? match[1] : null;
+                }).filter(Boolean);
+
+                // Update assignments based on rules (sequentially, more specific ones last)
+                // 1. By Department
+                if (selectedDepartments.length > 0) {
+                    await supabase
+                        .from('employees')
+                        .update({ salary_structure_id: savedId })
+                        .in('department', selectedDepartments);
+                }
+
+                // 2. By Designation
+                if (selectedDesignations.length > 0) {
+                    await supabase
+                        .from('employees')
+                        .update({ salary_structure_id: savedId })
+                        .in('designation', selectedDesignations);
+                }
+
+                // 3. By Specific Employee IDs (Most specific)
+                if (directEmployeeIds.length > 0) {
+                    await supabase
+                        .from('employees')
+                        .update({ salary_structure_id: savedId })
+                        .in('employee_id', directEmployeeIds);
+                }
+            } catch (err) {
+                console.error("Error propagating structure assignments:", err);
+            }
         }
         
         setCurrentStatus(status);
@@ -652,13 +698,13 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Associate with Unit or Paygroup <span className="text-rose-500">*</span></label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                                     <div className="relative">
                                         <select
-                                            disabled={isReadOnly}
+                                            disabled={true}
                                             value={localSelectedTarget}
                                             onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                                            className={`w-full px-4 py-2 border rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${isReadOnly ? 'bg-slate-50 border-slate-100' : 'border-slate-200 hover:border-purple-300'}`}
+                                            className="w-full px-4 py-2 border rounded-lg text-sm bg-slate-50 border-slate-100 text-slate-700 appearance-none focus:outline-none"
                                         >
                                             <option value="">Select a unit or paygroup</option>
                                             <optgroup label="Business Units">
