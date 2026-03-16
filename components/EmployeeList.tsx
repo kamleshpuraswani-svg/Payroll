@@ -1124,6 +1124,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                     status: item.status || 'Active',
                     avatar_url: item.avatar_url,
                     email: item.email || '',
+                    business_unit: item.business_unit || item.location || 'CollabCRM',
                     created_by: item.created_by || 'HR Manager',
                     last_modified_by: item.last_updated_by || item.created_by || 'HR Manager',
                     salary_structure_name: item.salary_structures?.name || 'Not Assigned'
@@ -1312,7 +1313,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                     </td>
                                     <td className="px-6 py-4 font-medium text-slate-700">{emp?.department || 'N/A'}</td>
                                     <td className="px-6 py-4 text-slate-500 italic">{emp?.designation || 'N/A'}</td>
-                                    <td className="px-6 py-4">{emp?.business_unit || emp?.location || 'Digital Technology'}</td>
+                                    <td className="px-6 py-4">{emp?.business_unit || 'CollabCRM'}</td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${emp?.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                             {emp?.status || 'Unknown'}
