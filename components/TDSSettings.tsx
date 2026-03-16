@@ -1,9 +1,62 @@
 
 import React, { useState } from 'react';
-import { Save, Info, ChevronDown, Check, AlertCircle, User, Briefcase, Mail, Edit2, X } from 'lucide-react';
+import { Save, Info, ChevronDown, Check, AlertCircle, User, Briefcase, Mail, Edit2, X, Building2 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 const TDSSettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
+
+    const fetchSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `tds_settings:${selectedTarget}`)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+
+            if (data?.config_value) {
+                const config = data.config_value;
+                setEnableTds(config.enableTds ?? true);
+                setTan(config.tan ?? 'DELA12345B');
+                setDefaultRegime(config.defaultRegime ?? 'New Regime');
+                setLinkDeclarations(config.linkDeclarations ?? true);
+                setChallanReminder(config.challanReminder ?? true);
+                setRespName(config.respName ?? 'Rajesh Kumar');
+                setRespDesg(config.respDesg ?? 'Finance Manager');
+                setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
+            }
+        } catch (err) {
+            console.error('Error fetching TDS settings:', err);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchPaygroups();
+        fetchSettings();
+    }, [selectedTarget]);
     
     // Form State
     const [enableTds, setEnableTds] = useState(true);
@@ -42,9 +95,27 @@ const TDSSettings: React.FC = () => {
         setIsEditing(false);
     };
 
-    const handleSave = () => {
-        setIsEditing(false);
-        // Persist logic here
+    const handleSave = async () => {
+        try {
+            const configValue = {
+                enableTds, tan, defaultRegime, linkDeclarations, challanReminder,
+                respName, respDesg, respEmail
+            };
+
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `tds_settings:${selectedTarget}`,
+                    config_value: configValue,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Error saving TDS settings:', err);
+            alert('Failed to save settings. Please try again.');
+        }
     };
 
     return (
@@ -56,30 +127,53 @@ const TDSSettings: React.FC = () => {
                         <h2 className="text-2xl font-bold text-slate-800">TDS Configuration</h2>
                         <p className="text-slate-500 mt-1">Configure Tax Deducted at Source (TDS) parameters and filing details.</p>
                     </div>
-                    <div className="flex gap-3">
-                        {isEditing ? (
-                            <>
-                                <button 
-                                    onClick={handleCancel}
-                                    className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleSave}
-                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm flex items-center gap-2 transition-colors"
-                                >
-                                    <Save size={16} /> Save Changes
-                                </button>
-                            </>
-                        ) : (
-                            <button 
-                                onClick={handleEdit}
-                                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm shadow-sm flex items-center gap-2 transition-colors"
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
                             >
-                                <Edit2 size={16} /> Edit Settings
-                            </button>
-                        )}
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        <div className="flex gap-3">
+                            {isEditing ? (
+                                <>
+                                    <button
+                                        onClick={handleCancel}
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors h-[42px]"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm flex items-center gap-2 transition-colors h-[42px]"
+                                    >
+                                        <Save size={16} /> Save Changes
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={handleEdit}
+                                    className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm shadow-sm flex items-center gap-2 transition-colors h-[42px]"
+                                >
+                                    <Edit2 size={16} /> Edit Settings
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 

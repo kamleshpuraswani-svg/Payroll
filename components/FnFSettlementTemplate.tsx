@@ -18,8 +18,15 @@ import {
     Search,
     Users,
     ChevronDown,
-    Info
+    Info,
+    Building2
 } from 'lucide-react';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 import { supabase } from '../services/supabaseClient';
 
 // --- Types ---
@@ -451,14 +458,32 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
     // --- Supabase Persistence ---
     const [templates, setTemplates] = useState<FnFTemplate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
 
     const fetchTemplates = async () => {
         setIsLoading(true);
         try {
+            const [type, id] = selectedTarget.split(':');
             const { data, error } = await supabase
                 .from('document_templates')
                 .select('*')
-                .eq('type', 'fnf_settlement');
+                .eq('type', 'fnf_settlement')
+                .eq('target_type', type)
+                .eq('target_id', id);
 
             if (error) throw error;
 
@@ -488,7 +513,8 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
 
     useEffect(() => {
         fetchTemplates();
-    }, []);
+        fetchPaygroups();
+    }, [selectedTarget]);
 
     const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
@@ -753,10 +779,13 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
             return;
         }
 
+        const [targetType, targetId] = selectedTarget.split(':');
         const templateData = {
             name: templateName,
             status,
             type: 'fnf_settlement',
+            target_type: targetType,
+            target_id: targetId,
             content: {
                 sections,
                 headerConfig
@@ -847,6 +876,38 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
     if (view === 'LIST') {
         return (
             <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Full & Final Settlement</h2>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+                            <FileText size={12} />
+                            Manage and Publish F&F settlement templates
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none cursor-pointer focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                    </div>
+                </div>
                 <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
                     <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Briefcase size={20} /></div>
                     <div className="flex-1">

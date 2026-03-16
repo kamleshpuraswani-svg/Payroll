@@ -15,8 +15,17 @@ import {
     Download,
     Settings,
     Type,
-    Database
+    Database,
+    ChevronDown,
+    Building2
 } from 'lucide-react';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
+import { supabase } from '../services/supabaseClient';
 
 // --- Types ---
 
@@ -239,16 +248,63 @@ const HRBankDisbursalTemplate: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'EDITOR' | 'PREVIEW'>('EDITOR');
 
     // Persist templates in localStorage
-    const [templates, setTemplates] = useState<BankTemplate[]>(() => {
-        const saved = localStorage.getItem('collab_bank_templates');
-        return saved ? JSON.parse(saved) : MOCK_BANK_TEMPLATES;
-    });
+    const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
+    const [templates, setTemplates] = useState<BankTemplate[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchTemplates = async () => {
+        setIsLoading(true);
+        try {
+            const [type, id] = selectedTarget.split(':');
+            const { data, error } = await supabase
+                .from('document_templates')
+                .select('*')
+                .eq('type', 'bank_disbursal')
+                .eq('target_type', type)
+                .eq('target_id', id);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const formattedTemplates: BankTemplate[] = data.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    status: item.status as 'Published' | 'Draft',
+                    lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    columns: item.content.columns,
+                    settings: item.settings
+                }));
+                setTemplates(formattedTemplates);
+            } else {
+                setTemplates(MOCK_BANK_TEMPLATES);
+            }
+        } catch (err) {
+            console.error('Error fetching bank templates:', err);
+            setTemplates(MOCK_BANK_TEMPLATES);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
 
     useEffect(() => {
-        localStorage.setItem('collab_bank_templates', JSON.stringify(templates));
-    }, [templates]);
-
-    const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+        fetchPaygroups();
+        fetchTemplates();
+    }, [selectedTarget]);
 
     // Editor State
     const [templateName, setTemplateName] = useState('');
@@ -285,7 +341,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
         setView('VIEW');
     };
 
-    const handleSave = (status: 'Published' | 'Draft') => {
+    const handleSave = async (status: 'Published' | 'Draft') => {
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
             return;
@@ -297,22 +353,38 @@ const HRBankDisbursalTemplate: React.FC = () => {
             return;
         }
 
-        const newTemplate: BankTemplate = {
-            id: editingTemplateId || Date.now().toString(),
+        const [targetType, targetId] = selectedTarget.split(':');
+        const templatePayload = {
+            type: 'bank_disbursal',
             name: templateName,
             status,
-            lastModified: 'Just now',
-            columns,
-            settings
+            target_type: targetType,
+            target_id: targetId,
+            content: { columns },
+            settings,
+            updated_at: new Date().toISOString()
         };
 
-        if (editingTemplateId) {
-            setTemplates(prev => prev.map(t => t.id === editingTemplateId ? newTemplate : t));
-        } else {
-            setTemplates(prev => [...prev, newTemplate]);
+        try {
+            if (editingTemplateId) {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .update(templatePayload)
+                    .eq('id', editingTemplateId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .insert([templatePayload]);
+                if (error) throw error;
+            }
+            await fetchTemplates();
+            setView('LIST');
+            setValidationError(null);
+        } catch (err) {
+            console.error('Error saving bank template:', err);
+            setValidationError('Failed to save to database.');
         }
-        setView('LIST');
-        setValidationError(null);
     };
 
     const toggleColumn = (id: string) => {
@@ -363,9 +435,32 @@ const HRBankDisbursalTemplate: React.FC = () => {
                     <div>
                         <h2 className="text-2xl font-bold text-slate-800">Bank Disbursal Formats</h2>
                     </div>
-                    <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
-                        <Plus size={16} /> Create New Bank Format
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
+                            <Plus size={16} /> Create New Bank Format
+                        </button>
+                    </div>
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -380,7 +475,22 @@ const HRBankDisbursalTemplate: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {templates.map(t => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                            <span>Loading templates...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : templates.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        No templates found. Create your first one!
+                                    </td>
+                                </tr>
+                            ) : templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
                                     <td className="px-6 py-4">

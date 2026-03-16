@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Edit2, Save, Activity, Shield, Briefcase, ChevronDown, Info, AlertCircle, Check, Calendar, X, Award, Trash2, Calculator } from 'lucide-react';
+import { Edit2, Save, Activity, Shield, Briefcase, ChevronDown, Info, AlertCircle, Check, Calendar, X, Award, Trash2, Calculator, Building2 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
@@ -36,6 +43,86 @@ const DEPARTMENTS = [
 const StatutorySettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showContributionModal, setShowContributionModal] = useState(false);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
+
+    const fetchSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `statutory_settings:${selectedTarget}`)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+            
+            if (data?.config_value) {
+                const config = data.config_value;
+                setEnableEsi(config.enableEsi ?? true);
+                setEsiNumber(config.esiNumber ?? '00-00-000000-000-0000');
+                setEsiEstablishmentName(config.esiEstablishmentName ?? 'TechFlow Systems Pvt Ltd');
+                setEsiCoverageDate(config.esiCoverageDate ?? '2023-01-12');
+                setEsiEmpRate(config.esiEmpRate ?? '0.75%');
+                setEsiEmprRate(config.esiEmprRate ?? '3.25%');
+                setIncludeEmprContriEsi(config.includeEmprContriEsi ?? true);
+                setEsiMappedComponents(config.esiMappedComponents ?? ESI_COMPONENTS);
+                setEnableGratuity(config.enableGratuity ?? false);
+                setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
+                setGratuityMode(config.gratuityMode ?? 'all');
+                setGratuityCriteria(config.gratuityCriteria ?? ['Permanent employees only']);
+                setSelectedGratuityDepts(config.selectedGratuityDepts ?? []);
+                setGratuityCalculationComponents(config.gratuityCalculationComponents ?? ['Basic Salary', 'Dearness Allowance (DA)']);
+                setMinServicePeriod(config.minServicePeriod ?? 'standard');
+                setCustomServiceYears(config.customServiceYears ?? '5');
+                setGratuityExceptions(config.gratuityExceptions ?? []);
+                setOtherExceptionDetails(config.otherExceptionDetails ?? '');
+                setDeathDisablementServiceType(config.deathDisablementServiceType ?? 'none');
+                setDeathDisablementMinYears(config.deathDisablementMinYears ?? '0');
+                setYearsCalculationMode(config.yearsCalculationMode ?? 'completed');
+                setIncludedServicePeriods(config.includedServicePeriods ?? [
+                    'Actual working days',
+                    'Paid leave periods',
+                    'Maternity/Paternity leave',
+                    'Notice period served',
+                    'Probation period'
+                ]);
+                setLwpLimitDays(config.lwpLimitDays ?? '30');
+                setMaxGratuityType(config.maxGratuityType ?? 'statutory');
+                setCustomMaxGratuityAmount(config.customMaxGratuityAmount ?? '20,00,000');
+                setEnableLwf(config.enableLwf ?? true);
+                setLwfState(config.lwfState ?? 'Karnataka');
+                setPtState(config.ptState ?? 'Karnataka');
+                setPtNumber(config.ptNumber ?? '');
+                setEnableNps(config.enableNps ?? true);
+                setNpsRegistrationId(config.npsRegistrationId ?? '');
+                setNpsDeductionCycle(config.npsDeductionCycle ?? 'Monthly');
+                setNpsEmpRate(config.npsEmpRate ?? '10');
+                setNpsEmprRate(config.npsEmprRate ?? '10');
+                setNpsWageCeiling(config.npsWageCeiling ?? false);
+                setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
+            }
+        } catch (err) {
+            console.error('Error fetching statutory settings:', err);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchPaygroups();
+        fetchSettings();
+    }, [selectedTarget]);
 
     // ESI State
     const [enableEsi, setEnableEsi] = useState(true);
@@ -126,6 +213,38 @@ const StatutorySettings: React.FC = () => {
             enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
         });
         setIsEditing(true);
+    };
+
+    const handleSave = async () => {
+        try {
+            const configValue = {
+                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents,
+                enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
+                selectedGratuityDepts, gratuityCalculationComponents,
+                minServicePeriod, customServiceYears,
+                gratuityExceptions, otherExceptionDetails,
+                deathDisablementServiceType, deathDisablementMinYears,
+                yearsCalculationMode, includedServicePeriods, lwpLimitDays,
+                maxGratuityType, customMaxGratuityAmount,
+                enableLwf, lwfState,
+                ptState, ptNumber,
+                enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
+            };
+
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `statutory_settings:${selectedTarget}`,
+                    config_value: configValue,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Error saving statutory settings:', err);
+            alert('Failed to save settings. Please try again.');
+        }
     };
 
     const handleCancel = () => {
@@ -227,7 +346,28 @@ const StatutorySettings: React.FC = () => {
                         <h2 className="text-2xl font-bold text-slate-800">Statutory Settings</h2>
                         <p className="text-slate-500 mt-1">Configure ESI, LWF, and Professional Tax compliance rules.</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
                         {isEditing && (
                             <button
                                 onClick={handleCancel}
@@ -237,8 +377,8 @@ const StatutorySettings: React.FC = () => {
                             </button>
                         )}
                         <button
-                            onClick={() => isEditing ? setIsEditing(false) : handleEdit()}
-                            className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                            onClick={() => isEditing ? handleSave() : handleEdit()}
+                            className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} h-[42px]`}
                         >
                             {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
                             {isEditing ? 'Save Settings' : 'Edit Settings'}

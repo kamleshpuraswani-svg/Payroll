@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Edit2, Save, Shield, Info, AlertCircle, ChevronDown, Lightbulb, Eye, X, Calculator, Check } from 'lucide-react';
+import { Edit2, Save, Shield, Info, AlertCircle, ChevronDown, Lightbulb, Eye, X, Calculator, Check, Building2 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 const PFSettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
@@ -9,6 +16,59 @@ const PFSettings: React.FC = () => {
     const [epfJoiningDate, setEpfJoiningDate] = useState('2023-01-12');
     const [showBelowLimitModal, setShowBelowLimitModal] = useState(false);
     const [showSplitupModal, setShowSplitupModal] = useState(false);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
+
+    const fetchSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `pf_settings:${selectedTarget}`)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+            
+            if (data?.config_value) {
+                const config = data.config_value;
+                setEnablePf(config.enablePf ?? true);
+                setPfNumber(config.pfNumber ?? 'AA/AAA/1234567/000');
+                setEstablishmentName(config.establishmentName ?? 'TechFlow Systems Pvt Ltd');
+                setEpfJoiningDate(config.epfJoiningDate ?? '2023-01-12');
+                setEmpRate(config.empRate ?? '12% of Actual PF Wage');
+                setEmprRate(config.emprRate ?? '12% of Actual PF Wage');
+                setEmpLimit(config.empLimit ?? '1800');
+                setEmprLimit(config.emprLimit ?? '1800');
+                setIncludeEmprContri(config.includeEmprContri ?? true);
+                setIncludeEdli(config.includeEdli ?? false);
+                setIncludeAdminCharges(config.includeAdminCharges ?? false);
+                setOverrideRate(config.overrideRate ?? false);
+                setProrateRestricted(config.prorateRestricted ?? false);
+                setConsiderComponents(config.considerComponents ?? true);
+                setBelowLimitComponents(config.belowLimitComponents ?? ['Basic Salary', 'Dearness Allowances (DA)']);
+            }
+        } catch (err) {
+            console.error('Error fetching PF settings:', err);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchPaygroups();
+        fetchSettings();
+    }, [selectedTarget]);
 
     // Contribution Rates
     const [empRate, setEmpRate] = useState('12% of Actual PF Wage');
@@ -63,9 +123,29 @@ const PFSettings: React.FC = () => {
         setIsEditing(false);
     };
 
-    const handleSave = () => {
-        setIsEditing(false);
-        // Persist logic would be here
+    const handleSave = async () => {
+        try {
+            const configValue = {
+                enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit,
+                includeEmprContri, includeEdli, includeAdminCharges, overrideRate,
+                prorateRestricted, considerComponents,
+                belowLimitComponents
+            };
+
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `pf_settings:${selectedTarget}`,
+                    config_value: configValue,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Error saving PF settings:', err);
+            alert('Failed to save settings. Please try again.');
+        }
     };
 
     return (
@@ -76,7 +156,28 @@ const PFSettings: React.FC = () => {
                         <h2 className="text-2xl font-bold text-slate-800">PF Settings</h2>
                         <p className="text-slate-500 mt-1">Configure Employee Provident Fund (EPF) contribution rules and identifiers.</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
                         {isEditing && (
                             <button
                                 onClick={handleCancel}
@@ -87,7 +188,7 @@ const PFSettings: React.FC = () => {
                         )}
                         <button
                             onClick={isEditing ? handleSave : handleEdit}
-                            className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                            className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} h-[42px]`}
                         >
                             {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
                             {isEditing ? 'Save Settings' : 'Edit Settings'}

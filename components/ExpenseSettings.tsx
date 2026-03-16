@@ -11,8 +11,15 @@ import {
     ShieldCheck,
     Users,
     Home,
-    User
+    User,
+    Building2
 } from 'lucide-react';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 const ExpenseSettings: React.FC = () => {
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -27,6 +34,8 @@ const ExpenseSettings: React.FC = () => {
     const [editingExpense, setEditingExpense] = useState<any>(null);
     const [configuredExpenses, setConfiguredExpenses] = useState<any[]>([]);
     const [allEmployees, setAllEmployees] = useState<any[]>([]);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
     
     // Multi-select state for Add Expense modal
     const [selectedEntities, setSelectedEntities] = useState<any[]>([]);
@@ -41,15 +50,20 @@ const ExpenseSettings: React.FC = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [selectedTarget]);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
+            const [targetType, targetId] = selectedTarget.split(':');
+            const type = targetType === 'bu' ? 'BusinessUnit' : 'Paygroup';
+
             // Fetch categories
             const { data: catData, error: catError } = await supabase
                 .from('expense_categories')
                 .select('*')
+                .eq('target_type', type)
+                .eq('target_id', targetId)
                 .order('name');
 
             if (catError) throw catError;
@@ -57,10 +71,10 @@ const ExpenseSettings: React.FC = () => {
             // If no categories found, insert dummy data
             if (catData && catData.length === 0) {
                 const dummyCategories = [
-                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.' },
-                    { name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.' },
-                    { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.' },
-                    { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.' }
+                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.', target_type: type, target_id: targetId },
+                    { name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.', target_type: type, target_id: targetId },
+                    { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.', target_type: type, target_id: targetId },
+                    { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.', target_type: type, target_id: targetId }
                 ];
                 const { error: insertError } = await supabase.from('expense_categories').insert(dummyCategories);
                 if (insertError) throw insertError;
@@ -69,6 +83,8 @@ const ExpenseSettings: React.FC = () => {
                 const { data: refreshedCat, error: refreshError } = await supabase
                     .from('expense_categories')
                     .select('*')
+                    .eq('target_type', type)
+                    .eq('target_id', targetId)
                     .order('name');
                 if (refreshError) throw refreshError;
                 if (refreshedCat) {
@@ -104,6 +120,18 @@ const ExpenseSettings: React.FC = () => {
                 setAvailableDepartments(FALLBACK_DEPTS);
                 setAvailableDesignations(FALLBACK_DESIGS);
             }
+
+            // Fetch paygroups
+            const { data: pgData, error: pgError } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            
+            if (pgError) {
+                console.error('Error fetching paygroups:', pgError);
+            } else {
+                setPaygroups(pgData || []);
+            }
         } catch (error: any) {
             console.error('Error fetching data:', error);
             alert(`Failed to load data: ${error.message || 'Unknown error'}. Please ensure your Supabase schema is up to date.`);
@@ -118,11 +146,16 @@ const ExpenseSettings: React.FC = () => {
         const name = formData.get('name') as string;
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
+        const [targetType, targetId] = selectedTarget.split(':');
+        const type = targetType === 'bu' ? 'BusinessUnit' : 'Paygroup';
+
         setIsSaving(true);
         try {
             const categoryData = {
                 name,
-                status
+                status,
+                target_type: type,
+                target_id: targetId
             };
 
             if (editingCategory) {
@@ -253,7 +286,6 @@ const ExpenseSettings: React.FC = () => {
                                             placeholder="e.g. Travel, Meals"
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                             required
-                                            disabled={!!editingCategory}
                                         />
                                     </div>
                                     <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
@@ -287,7 +319,7 @@ const ExpenseSettings: React.FC = () => {
                                         disabled={isSaving}
                                         className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
-                                        {isSaving ? 'Saving...' : (editingCategory ? 'Save Changes' : 'Submit')}
+                                        {isSaving ? 'Saving...' : 'Submit'}
                                     </button>
                                 </div>
                             </form>
@@ -303,6 +335,27 @@ const ExpenseSettings: React.FC = () => {
                             <p className="text-sm text-slate-500 mt-1">Set up and manage expense categories and their global limits.</p>
                         </div>
                         <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <select
+                                    value={selectedTarget}
+                                    onChange={(e) => setSelectedTarget(e.target.value)}
+                                    className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
+                                >
+                                    <optgroup label="Business Units">
+                                        {BUSINESS_UNITS.map(bu => (
+                                            <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Payroll Paygroups">
+                                        {paygroups.map(pg => (
+                                            <option key={pg.id} value={`pg:${pg.id}`}>
+                                                {pg.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
                             <button
                                 onClick={() => setIsShowCategoriesDialog(true)}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"

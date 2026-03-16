@@ -14,8 +14,16 @@ import {
     ChevronLeft,
     Image as ImageIcon,
     Check,
-    Info
+    Info,
+    ChevronDown,
+    Building2
 } from 'lucide-react';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 import { supabase } from '../services/supabaseClient';
 
 // --- Types ---
@@ -522,14 +530,32 @@ const HRSalarySlipTemplate: React.FC = () => {
     // --- Supabase Persistence ---
     const [templates, setTemplates] = useState<PayslipTemplate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
 
     const fetchTemplates = async () => {
         setIsLoading(true);
         try {
+            const [type, id] = selectedTarget.split(':');
             const { data, error } = await supabase
                 .from('document_templates')
                 .select('*')
-                .eq('type', 'salary_slip');
+                .eq('type', 'salary_slip')
+                .eq('target_type', type)
+                .eq('target_id', id);
 
             if (error) throw error;
 
@@ -559,7 +585,8 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     useEffect(() => {
         fetchTemplates();
-    }, []);
+        fetchPaygroups();
+    }, [selectedTarget]);
 
     const handleCreate = () => {
         setEditingTemplateId(null);
@@ -608,11 +635,14 @@ const HRSalarySlipTemplate: React.FC = () => {
 
         const existingTemplate = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
 
+        const [targetType, targetId] = selectedTarget.split(':');
         const templatePayload = {
             type: 'salary_slip',
             name: templateName,
             status,
             is_active: existingTemplate?.isActive ?? true,
+            target_type: targetType,
+            target_id: targetId,
             content: { sections, headerConfig },
             settings: settings,
             last_updated_by: 'Admin', // In real app, get from auth
@@ -706,9 +736,32 @@ const HRSalarySlipTemplate: React.FC = () => {
                     <div>
                         <h2 className="text-2xl font-bold text-slate-800">Salary Slip Templates</h2>
                     </div>
-                    <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
-                        <Plus size={16} /> Create Salary Slip
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
+                            <Plus size={16} /> Create Salary Slip
+                        </button>
+                    </div>
                 </div>
 
                 {/* Payslip Naming Format Section */}

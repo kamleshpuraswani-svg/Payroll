@@ -28,6 +28,13 @@ import {
   FileCheck,
   Stamp
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 // --- Types & Interfaces for Report ---
 
@@ -58,6 +65,68 @@ const StatutoryBonusSettings: React.FC = () => {
   const [showFormC, setShowFormC] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingFormC, setIsExportingFormC] = useState(false);
+  const [paygroups, setPaygroups] = useState<any[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+
+  const fetchPaygroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('paygroups')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      setPaygroups(data || []);
+    } catch (err) {
+      console.error('Error fetching paygroups:', err);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('operational_config')
+        .select('config_value')
+        .eq('config_key', `statutory_bonus_settings:${selectedTarget}`)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data?.config_value) {
+        const config = data.config_value;
+        setEnableBonus(config.enableBonus ?? true);
+        setHas20Employees(config.has20Employees ?? true);
+        setEstablishmentDate(config.establishmentDate ?? '2020-04-01');
+        setAccountingYear(config.accountingYear ?? 'April - March');
+        setWageCeiling(config.wageCeiling ?? '21000');
+        setMinDaysWorked(config.minDaysWorked ?? '30');
+        setExcludedCategories(config.excludedCategories ?? ['Apprentices']);
+        setApplySpecialMinUnder15(config.applySpecialMinUnder15 ?? true);
+        setCalcComponents(config.calcComponents ?? ['Basic Salary', 'Dearness Allowance (DA)']);
+        setCalcCeiling(config.calcCeiling ?? '7000');
+        setUseStateMinWage(config.useStateMinWage ?? true);
+        setSelectedState(config.selectedState ?? 'Karnataka');
+        setDecisionMethod(config.decisionMethod ?? 'Auto: Minimum 8.33%');
+        setManualBonusRate(config.manualBonusRate ?? '8.33');
+        setPayoutFrequency(config.payoutFrequency ?? 'Annual');
+        setMonthlyAccrual(config.monthlyAccrual ?? true);
+        setAccrualMethod(config.accrualMethod ?? 'Monthly provisioning (accrue 8.33%/12 in each payroll)');
+        setProrateJoiners(config.prorateJoiners ?? true);
+        setExcludeLop(config.excludeLop ?? true);
+        setPaymentMode(config.paymentMode ?? 'Add as separate line in payslip');
+        setAutoIncludePayslip(config.autoIncludePayslip ?? true);
+        setTreatAsTaxable(config.treatAsTaxable ?? true);
+        setAlertDelayedPayout(config.alertDelayedPayout ?? true);
+        setYearEndWizard(config.yearEndWizard ?? true);
+      }
+    } catch (err) {
+      console.error('Error fetching bonus settings:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchPaygroups();
+    fetchSettings();
+  }, [selectedTarget]);
 
   // Section 1 - General / Applicability
   const [enableBonus, setEnableBonus] = useState(true);
@@ -167,8 +236,30 @@ const StatutoryBonusSettings: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const configValue = {
+        enableBonus, has20Employees, establishmentDate, accountingYear,
+        wageCeiling, minDaysWorked, excludedCategories, applySpecialMinUnder15,
+        calcComponents, calcCeiling, useStateMinWage, selectedState, decisionMethod, manualBonusRate,
+        payoutFrequency, monthlyAccrual, accrualMethod, prorateJoiners, excludeLop, paymentMode,
+        autoIncludePayslip, treatAsTaxable, alertDelayedPayout, yearEndWizard
+      };
+
+      const { error } = await supabase
+        .from('operational_config')
+        .upsert({
+          config_key: `statutory_bonus_settings:${selectedTarget}`,
+          config_value: configValue,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'config_key' });
+
+      if (error) throw error;
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Error saving bonus settings:', err);
+      alert('Failed to save settings. Please try again.');
+    }
   };
 
   const toggleArray = (arr: string[], setArr: (val: string[]) => void, item: string) => {
@@ -529,14 +620,35 @@ const StatutoryBonusSettings: React.FC = () => {
             </h2>
             <p className="text-sm font-medium text-slate-500 mt-1">Compliance rules for the Payment of Bonus Act, 1965.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <select
+                value={selectedTarget}
+                onChange={(e) => setSelectedTarget(e.target.value)}
+                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none shadow-sm"
+              >
+                <optgroup label="Business Units">
+                  {BUSINESS_UNITS.map(bu => (
+                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Payroll Paygroups">
+                  {paygroups.map(pg => (
+                    <option key={pg.id} value={`pg:${pg.id}`}>
+                      {pg.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+            </div>
             {isEditing ? (
               <>
-                <button onClick={handleCancel} className="px-5 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all">Cancel</button>
-                <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all"><Save size={18} /> Save Settings</button>
+                <button onClick={handleCancel} className="px-5 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all h-[42px]">Cancel</button>
+                <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all h-[42px]"><Save size={18} /> Save Settings</button>
               </>
             ) : (
-              <button onClick={handleEdit} className="px-6 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-bold text-sm shadow-sm flex items-center gap-2 transition-all"><Edit2 size={18} /> Edit Configuration</button>
+              <button onClick={handleEdit} className="px-6 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-bold text-sm shadow-sm flex items-center gap-2 transition-all h-[42px]"><Edit2 size={18} /> Edit Configuration</button>
             )}
           </div>
         </div>

@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
-/* Added PieChart as PieChartIcon to lucide-react imports to fix the missing component error on line 885 */
-import { Edit2, Save, Calendar, ChevronDown, Bell, Check, Info, AlertCircle, Clock, FileText, History, AlertTriangle, Plus, Trash2, X, ArrowUp, ArrowDown, UserCheck, ShieldCheck, Calculator, PieChart as PieChartIcon, Percent } from 'lucide-react';
+import { Edit2, Save, Calendar, ChevronDown, Bell, Check, Info, AlertCircle, Clock, FileText, History, AlertTriangle, Plus, Trash2, X, ArrowUp, ArrowDown, UserCheck, ShieldCheck, Calculator, PieChart as PieChartIcon, Percent, Building2 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
+
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
 
 const months = ["April", "May", "June", "July", "August", "September", "October", "November", "December", "January", "February", "March"];
 
@@ -111,6 +117,88 @@ const DatePicker: React.FC<{
 };
 
 const IncomeTaxDeclarationSettings: React.FC = () => {
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('MindInventory');
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('paygroups')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
+
+    const fetchSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `income_tax_settings:${selectedTarget}`)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+
+            if (data?.config_value) {
+                const config = data.config_value;
+                setInvEnabled(config.invEnabled ?? true);
+                setInvDeadlineFrom(config.invDeadlineFrom ? new Date(config.invDeadlineFrom) : new Date(2026, 0, 1));
+                setInvDeadlineTo(config.invDeadlineTo ? new Date(config.invDeadlineTo) : new Date(2026, 0, 15));
+                setGracePeriodEnabled(config.gracePeriodEnabled ?? false);
+                setGracePeriodDate(config.gracePeriodDate ? new Date(config.gracePeriodDate) : new Date(2026, 0, 20));
+                setDeclarationFrequency(config.declarationFrequency ?? 'Annually');
+                setInvApprovers(config.invApprovers ?? ["Kavita Sharma (HR)"]);
+                setLimits(config.limits ?? [
+                    { id: '1', section: '80C', limit: '1,50,000', description: 'Investments & Expenses' },
+                    { id: '2', section: '80D', limit: '25,000', description: 'Medical Insurance' }
+                ]);
+                setDefaultRegime(config.defaultRegime ?? 'New Regime');
+                setAllowSwitch(config.allowSwitch ?? true);
+                setSwitchLockDate(config.switchLockDate ? new Date(config.switchLockDate) : new Date(2025, 11, 31));
+                setNotifyRelease(config.notifyRelease ?? true);
+                setEmailReminder(config.emailReminder ?? false);
+                setNotifyLock(config.notifyLock ?? true);
+                setTdsAdjustmentMonth(config.tdsAdjustmentMonth ?? 'April');
+                setDeductTdsOnDeclaration(config.deductTdsOnDeclaration ?? true);
+                setConsiderPreviousIncome(config.considerPreviousIncome ?? false);
+                setDeductionPattern(config.deductionPattern ?? 'Monthly');
+                setSelectedTdsMonths(config.selectedTdsMonths ?? ["April", "May", "June", "July", "August", "September", "November", "December", "January", "February"]);
+                setDistributionMethod(config.distributionMethod ?? 'Equal Distribution Across Selected Months');
+                setMinTdsThreshold(config.minTdsThreshold ?? '10,000');
+                setMaxTdsCap(config.maxTdsCap ?? '10,000');
+                setTdsWeights(config.tdsWeights ?? {
+                    "April": 5, "May": 5, "June": 5, "July": 8, "August": 8, "September": 8,
+                    "October": 0, "November": 10, "December": 10, "January": 15, "February": 15, "March": 0
+                });
+                setProofEnabled(config.proofEnabled ?? true);
+                setProofDeadlineFrom(config.proofDeadlineFrom ? new Date(config.proofDeadlineFrom) : new Date(2026, 0, 1));
+                setProofDeadlineTo(config.proofDeadlineTo ? new Date(config.proofDeadlineTo) : new Date(2026, 1, 28));
+                setProofGraceEnabled(config.proofGraceEnabled ?? false);
+                setProofGraceDate(config.proofGraceDate ? new Date(config.proofGraceDate) : new Date(2026, 2, 10));
+                setMandatoryProof(config.mandatoryProof ?? true);
+                setAutoReject(config.autoReject ?? false);
+                setNotifyRejection(config.notifyRejection ?? true);
+                setAutoAdjustTDS(config.autoAdjustTDS ?? true);
+                setAllowedFileTypes(config.allowedFileTypes ?? ['PDF', 'JPG', 'PNG']);
+                setProofApprovers(config.proofApprovers ?? ["Rajesh Kumar (Finance Head)"]);
+                setPoiPayrollMonth(config.poiPayrollMonth ?? 'March');
+                setMandateComments(config.mandateComments ?? true);
+                setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
+                setNpsWageCeiling(config.npsWageCeiling ?? false);
+            }
+        } catch (err) {
+            console.error('Error fetching income tax settings:', err);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchPaygroups();
+        fetchSettings();
+    }, [selectedTarget]);
     // --- Investment Declaration State ---
     const [isEditingInv, setIsEditingInv] = useState(false);
     const [invEnabled, setInvEnabled] = useState(true);
@@ -231,9 +319,34 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         setSelectedInvApprover("");
     };
 
-    const handleSaveInv = () => {
-        setIsEditingInv(false);
-        setSelectedInvApprover("");
+    const handleSaveInv = async () => {
+        try {
+            const configValue = {
+                invEnabled, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
+                limits, defaultRegime, allowSwitch, switchLockDate,
+                notifyRelease, emailReminder, notifyLock, invApprovers,
+                tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
+                deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
+                proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
+                mandatoryProof, autoReject, notifyRejection, autoAdjustTDS, allowedFileTypes,
+                proofApprovers, poiPayrollMonth, mandateComments, npsIncludeInCtc, npsWageCeiling
+            };
+
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `income_tax_settings:${selectedTarget}`,
+                    config_value: configValue,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setIsEditingInv(false);
+            setSelectedInvApprover("");
+        } catch (err) {
+            console.error('Error saving investment settings:', err);
+            alert('Failed to save settings. Please try again.');
+        }
     };
 
     // -- Handlers for Proof of Investment --
@@ -270,9 +383,34 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         setSelectedProofApprover("");
     };
 
-    const handleSaveProof = () => {
-        setIsEditingProof(false);
-        setSelectedProofApprover("");
+    const handleSaveProof = async () => {
+        try {
+            const configValue = {
+                invEnabled, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
+                limits, defaultRegime, allowSwitch, switchLockDate,
+                notifyRelease, emailReminder, notifyLock, invApprovers,
+                tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
+                deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
+                proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
+                mandatoryProof, autoReject, notifyRejection, autoAdjustTDS, allowedFileTypes,
+                proofApprovers, poiPayrollMonth, mandateComments, npsIncludeInCtc, npsWageCeiling
+            };
+
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `income_tax_settings:${selectedTarget}`,
+                    config_value: configValue,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setIsEditingProof(false);
+            setSelectedProofApprover("");
+        } catch (err) {
+            console.error('Error saving proof settings:', err);
+            alert('Failed to save settings. Please try again.');
+        }
     };
 
     const toggleFileType = (type: string) => {
@@ -640,6 +778,35 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             </div>
 
             <div className="p-4 lg:p-8 w-full mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800">Income Tax Declaration Settings</h2>
+                        <p className="text-slate-500 mt-1">Configure investment declaration, limits, and POI verification rules.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Payroll Paygroups">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`}>
+                                            {pg.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                    </div>
+                </div>
                 
                 {/* 1. Investment Declaration Section */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
