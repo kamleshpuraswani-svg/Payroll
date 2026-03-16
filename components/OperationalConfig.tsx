@@ -11,10 +11,11 @@ interface SelectedEmployee {
 // MOCK_EMPLOYEES is kept as fallback or removed if using Supabase
 interface EmployeeData {
     id: string;
-    first_name: string;
-    last_name: string;
     name: string;
     eid: string;
+    department?: string;
+    designation?: string;
+    avatar_url?: string;
 }
 
 const DEPARTMENTS = [
@@ -73,19 +74,22 @@ const OperationalConfig: React.FC = () => {
             if (fetchError) throw fetchError;
 
             // Fetch employees for selection
-            console.log('[OperationalConfig] Fetching employees with corrected schema...');
+            console.log('[OperationalConfig] Fetching all employees with robust mapping...');
             const { data: empData, error: empError } = await supabase
                 .from('employees')
-                .select('id, first_name, last_name, eid, avatar_url, department, designation')
-                .eq('status', 'Active')
-                .order('first_name');
+                .select('*')
+                .eq('status', 'Active');
             
-            if (empError) console.error('[OperationalConfig] Error fetching employees:', empError);
-            
-            if (empData) {
+            if (empError) {
+                console.error('[OperationalConfig] Error fetching employees:', empError);
+            } else if (empData) {
                 const formattedEmployees = empData.map(emp => ({
-                    ...emp,
-                    name: `${emp.first_name} ${emp.last_name || ''}`.trim()
+                    id: emp.id,
+                    name: emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || 'No Name',
+                    eid: emp.eid || emp.employee_id || 'N/A',
+                    department: emp.department,
+                    designation: emp.designation,
+                    avatar_url: emp.avatar_url
                 }));
                 console.log('[OperationalConfig] fetched and formatted employees:', formattedEmployees.length);
                 setAllEmployees(formattedEmployees);

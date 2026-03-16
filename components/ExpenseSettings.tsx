@@ -80,15 +80,19 @@ const ExpenseSettings: React.FC = () => {
             // Fetch all employees with designations for configurations
             const { data: empData, error: empError } = await supabase
                 .from('employees')
-                .select('id, first_name, last_name, eid, avatar_url, department, designation')
-                .eq('status', 'Active')
-                .order('first_name');
+                .select('*')
+                .eq('status', 'Active');
             
-            if (empError) console.error('Employee fetch error:', empError);
-            if (empData) {
+            if (empError) {
+                console.error('Employee fetch error:', empError);
+            } else if (empData) {
                 const formattedEmployees = empData.map(emp => ({
-                    ...emp,
-                    name: `${emp.first_name} ${emp.last_name || ''}`.trim()
+                    id: emp.id,
+                    name: emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || 'No Name',
+                    eid: emp.eid || emp.employee_id || 'N/A',
+                    department: emp.department,
+                    designation: emp.designation,
+                    avatar_url: emp.avatar_url
                 }));
                 setAllEmployees(formattedEmployees);
                 const depts = Array.from(new Set(formattedEmployees.map(e => e.department).filter(Boolean))) as string[];
