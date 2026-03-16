@@ -71,11 +71,14 @@ const OperationalConfig: React.FC = () => {
             if (fetchError) throw fetchError;
 
             // Fetch employees for selection
+            console.log('[OperationalConfig] Fetching employees...');
             const { data: empData, error: empError } = await supabase
                 .from('employees')
                 .select('id, name, eid, avatar_url, department, designation')
+                .eq('status', true)
                 .order('name');
-
+            
+            console.log('[OperationalConfig] fetched employees:', empData?.length || 0);
             if (empError) console.error('Error fetching employees:', empError);
             if (empData) setAllEmployees(empData);
 
