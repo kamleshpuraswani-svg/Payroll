@@ -554,7 +554,7 @@ const ExpenseSettings: React.FC = () => {
                                         disabled={isSaving}
                                         className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
-                                        {isSaving ? 'Saving...' : editingExpense ? 'Update Configuration' : 'Submit'}
+                                        {isSaving ? 'Saving...' : 'Submit'}
                                     </button>
                                 </div>
                             </form>
