@@ -222,12 +222,17 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
 
       setIsSaving(true);
       try {
+         // Re-re-fetch or use stored data to get eid and company_id if needed
+         const { data: currentEmp } = await supabase.from('employees').select('eid, company_id').eq('id', employeeId).single();
+
          const updates = {
             id: employeeId,
+            eid: currentEmp?.eid,
+            company_id: currentEmp?.company_id,
             name: fullName,
             designation,
             department,
-            join_date: joiningDate,
+            join_date: joiningDate || null,
             location,
             bank_account_no: accountNumber,
             bank_ifsc: ifscCode,
@@ -236,22 +241,31 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             pan_no: panNumber,
             aadhaar_no: aadhaarNumber,
             uan_no: uanNumber,
-            ctc: ctc.toString(), // Convert to string as per observed schema
+            ctc: ctc.toString(), 
             tax_regime: regime,
-            salary_structure_id: selectedStructureId || null, // Convert empty to null for UUID
-            effective_date: effectiveFrom || null // Convert empty to null for Date
+            salary_structure_id: selectedStructureId || null,
+            effective_date: effectiveFrom || null,
+            last_updated_by: 'HR Manager'
          };
 
-         const { error } = await supabase
-            .from('employees')
-            .upsert(updates);
+         console.log('Attempting upsert with:', updates);
 
-         if (error) throw error;
+         const { data, error } = await supabase
+            .from('employees')
+            .upsert(updates)
+            .select();
+
+         if (error) {
+            console.error('Supabase Upsert Error:', error);
+            throw error;
+         }
+
+         console.log('Save successful:', data);
 
          if (onBack) onBack();
-      } catch (error) {
-         console.error('Error saving:', error);
-         alert('Failed to save changes. Please try again.');
+      } catch (error: any) {
+         console.error('Detailed Save Error:', error);
+         alert(`Failed to save changes: ${error.message || 'Unknown error'}. Please check console.`);
       } finally {
          setIsSaving(false);
       }
