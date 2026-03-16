@@ -56,6 +56,7 @@ interface BankTemplate {
     status: 'Published' | 'Draft';
     createdBy: string;
     lastModified: string;
+    lastModifiedBy: string;
     columns: BankColumn[];
     settings: BankTemplateSettings;
 }
@@ -99,6 +100,7 @@ const MOCK_BANK_TEMPLATES: BankTemplate[] = [
         status: 'Published',
         createdBy: 'HR Manager',
         lastModified: '03 Dec 2025',
+        lastModifiedBy: 'HR Manager',
         columns: DEFAULT_COLUMNS,
         settings: {
             fileType: 'Excel',
@@ -211,8 +213,9 @@ const HRBankDisbursalTemplate: React.FC = () => {
                     id: item.id,
                     name: item.name,
                     status: item.status as 'Published' | 'Draft',
-                    createdBy: item.content.createdBy || 'Admin',
+                    createdBy: item.created_by || 'HR Manager',
                     lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    lastModifiedBy: item.last_updated_by || 'HR Manager',
                     columns: item.content.columns,
                     settings: item.settings
                 }));
@@ -448,8 +451,13 @@ const HRBankDisbursalTemplate: React.FC = () => {
                                             {t.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">{t.createdBy || 'HR Manager'}</td>
-                                    <td className="px-6 py-4">{t.lastModified}</td>
+                                    <td className="px-6 py-4">{t.createdBy}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-700 font-medium">{t.lastModified}</span>
+                                            <span className="text-[10px] text-slate-400">by {t.lastModifiedBy}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>

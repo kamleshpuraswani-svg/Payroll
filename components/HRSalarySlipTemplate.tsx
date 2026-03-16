@@ -60,6 +60,7 @@ interface PayslipTemplate {
     isActive: boolean;
     createdBy: string;
     lastModified: string;
+    lastModifiedBy: string;
     sections: {
         earnings: ComponentItem[];
         deductions: ComponentItem[];
@@ -99,6 +100,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
         isActive: true,
         createdBy: 'HR Manager',
         lastModified: '03 Dec 2025',
+        lastModifiedBy: 'HR Manager',
         headerConfig: {
             logoPosition: 'Left',
             showLogo: true,
@@ -140,6 +142,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
         isActive: false,
         createdBy: 'HR Manager',
         lastModified: '1 week ago',
+        lastModifiedBy: 'HR Manager',
         headerConfig: {
             logoPosition: 'Center',
             showLogo: true,
@@ -565,8 +568,9 @@ const HRSalarySlipTemplate: React.FC = () => {
                     name: item.name,
                     status: item.status as 'Published' | 'Draft',
                     isActive: item.is_active,
-                    createdBy: item.created_by || 'Admin',
+                    createdBy: item.created_by || 'HR Manager',
                     lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    lastModifiedBy: item.last_updated_by || 'HR Manager',
                     sections: item.content.sections,
                     settings: item.settings,
                     headerConfig: item.content.headerConfig
@@ -619,6 +623,7 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     const handleView = (t: PayslipTemplate) => {
         handleEdit(t);
+        setActiveTab('PREVIEW');
         setView('VIEW');
     };
 
@@ -909,7 +914,12 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">{t.createdBy}</td>
-                                    <td className="px-6 py-4">{t.lastModified}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-700 font-medium">{t.lastModified}</span>
+                                            <span className="text-[10px] text-slate-400">by {t.lastModifiedBy}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end items-center gap-3">
                                             <button

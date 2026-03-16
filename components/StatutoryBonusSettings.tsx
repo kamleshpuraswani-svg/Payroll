@@ -478,32 +478,32 @@ const StatutoryBonusSettings: React.FC = () => {
           <div className="max-w-[1800px] mx-auto space-y-8">
             {/* Summary Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eligible Employees</p>
                 <div className="flex items-end gap-2">
                   <h4 className="text-3xl font-black text-slate-900">10</h4>
                   <span className="text-xs font-bold text-emerald-600 mb-1 flex items-center gap-0.5"><Check size={14} /> 100% Validated</span>
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Bonus Payable</p>
                 <h4 className="text-3xl font-black text-indigo-600">₹{totalBonus.toLocaleString()}</h4>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Wages Considered</p>
                 <h4 className="text-3xl font-black text-slate-800">₹{totalWages.toLocaleString()}</h4>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Bonus per Emp</p>
                 <h4 className="text-3xl font-black text-slate-800">₹{avgBonus.toLocaleString()}</h4>
               </div>
             </div>
 
             {/* Main Report Table Container */}
-            <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
               <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 bg-slate-50/50">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-indigo-600 font-black">TC</div>
+                  <div className="w-12 h-12 bg-white rounded-lg shadow-sm border border-slate-200 flex items-center justify-center text-indigo-600 font-black">TC</div>
                   <div>
                     <h3 className="font-black text-slate-800 uppercase text-xs tracking-[0.2em]">TechFlow Systems Pvt Ltd</h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-1">123 Business Park, Sector 4, Bangalore - 560001</p>
@@ -654,7 +654,7 @@ const StatutoryBonusSettings: React.FC = () => {
         </div>
 
         {/* Section 1 - General / Applicability */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-indigo-600"><Building size={20} /></div>
@@ -691,7 +691,7 @@ const StatutoryBonusSettings: React.FC = () => {
         {enableBonus && (
           <>
             {/* Section 2 - Eligibility Criteria */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
               <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                 <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-indigo-600"><Users size={20} /></div>
                 <h3 className="font-bold text-slate-800">Eligibility Criteria</h3>
@@ -702,13 +702,13 @@ const StatutoryBonusSettings: React.FC = () => {
                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center">Salary Ceiling <Tooltip text="Basic + DA must be less than or equal to this limit to be eligible." /></label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                      <input type="number" value={wageCeiling} onChange={(e) => setWageCeiling(e.target.value)} disabled={!isEditing} className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-2xl text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50" />
+                      <input type="number" value={wageCeiling} onChange={(e) => setWageCeiling(e.target.value)} disabled={!isEditing} className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-lg text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Min Days Worked <Tooltip text="Minimum number of days employee must work in an accounting year to qualify." /></label>
                     <div className="relative">
-                      <input type="number" value={minDaysWorked} onChange={(e) => setMinDaysWorked(e.target.value)} disabled={!isEditing} className="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50" />
+                      <input type="number" value={minDaysWorked} onChange={(e) => setMinDaysWorked(e.target.value)} disabled={!isEditing} className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50" />
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold uppercase tracking-widest">Days</span>
                     </div>
                   </div>
@@ -718,7 +718,7 @@ const StatutoryBonusSettings: React.FC = () => {
                   <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Exclude Categories</label>
                   <div className="flex wrap gap-4">
                     {['Apprentices', 'Under 15 years old', 'Dismissed for misconduct', 'Part-time / Contract'].map(cat => (
-                      <label key={cat} className={`flex items-center gap-3 px-4 py-3 border rounded-2xl transition-all ${isEditing ? 'cursor-pointer hover:border-indigo-300' : 'cursor-default opacity-80'} ${excludedCategories.includes(cat) ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500' : 'bg-white border-slate-200'}`}>
+                      <label key={cat} className={`flex items-center gap-3 px-4 py-3 border rounded-lg transition-all ${isEditing ? 'cursor-pointer hover:border-indigo-300' : 'cursor-default opacity-80'} ${excludedCategories.includes(cat) ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500' : 'bg-white border-slate-200'}`}>
                         <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${excludedCategories.includes(cat) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
                           {excludedCategories.includes(cat) && <Check size={14} className="text-white" />}
                         </div>
@@ -743,7 +743,7 @@ const StatutoryBonusSettings: React.FC = () => {
             </div>
 
             {/* Section 3 - Calculation Base & Limits */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
               <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                 <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-indigo-600"><Calculator size={20} /></div>
                 <h3 className="font-bold text-slate-800">Calculation Base & Limits</h3>
@@ -753,7 +753,7 @@ const StatutoryBonusSettings: React.FC = () => {
                   <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Calculation Components <Tooltip text="Salary parts considered for computing bonus amount." /></label>
                   <div className="flex wrap gap-4">
                     {['Basic Salary', 'Dearness Allowance (DA)', 'HRA', 'Conveyance'].map(comp => (
-                      <label key={comp} className={`flex items-center gap-3 px-4 py-3 border rounded-2xl transition-all ${isEditing ? 'cursor-pointer hover:border-indigo-300' : 'cursor-default opacity-80'} ${calcComponents.includes(comp) ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500' : 'bg-white border-slate-200'}`}>
+                      <label key={comp} className={`flex items-center gap-3 px-4 py-3 border rounded-lg transition-all ${isEditing ? 'cursor-pointer hover:border-indigo-300' : 'cursor-default opacity-80'} ${calcComponents.includes(comp) ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500' : 'bg-white border-slate-200'}`}>
                         <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${calcComponents.includes(comp) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
                           {calcComponents.includes(comp) && <Check size={14} className="text-white" />}
                         </div>
@@ -770,7 +770,7 @@ const StatutoryBonusSettings: React.FC = () => {
                       <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Bonus Calculation Ceiling</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                        <input type="number" value={calcCeiling} onChange={(e) => setCalcCeiling(e.target.value)} disabled={!isEditing} className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-2xl text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50" />
+                        <input type="number" value={calcCeiling} onChange={(e) => setCalcCeiling(e.target.value)} disabled={!isEditing} className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-lg text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50" />
                       </div>
                       <p className="text-[10px] text-slate-400 mt-2 font-medium italic">If Basic + DA &gt; ceiling → calculate bonus on ceiling amount.</p>
                     </div>
@@ -796,18 +796,18 @@ const StatutoryBonusSettings: React.FC = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col justify-center">
+                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-lg flex flex-col justify-center">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Min Bonus</p>
                       <p className="text-2xl font-black text-slate-900">8.33%</p>
                     </div>
-                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col justify-center">
+                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-lg flex flex-col justify-center">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Max Bonus</p>
                       <p className="text-2xl font-black text-slate-900">20%</p>
                     </div>
                     <div className="col-span-2">
                       <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Decision Method</label>
                       <div className="relative">
-                        <select value={decisionMethod} onChange={(e) => setDecisionMethod(e.target.value)} disabled={!isEditing} className="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 bg-white appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50">
+                        <select value={decisionMethod} onChange={(e) => setDecisionMethod(e.target.value)} disabled={!isEditing} className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-white appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50">
                           <option>Auto: Minimum 8.33%</option>
                           <option>Manual: HR enters 8.33–20%</option>
                           <option>Profit-linked (Custom Rule)</option>
@@ -826,7 +826,7 @@ const StatutoryBonusSettings: React.FC = () => {
                               min="8.33"
                               max="20"
                               step="0.01"
-                              className="w-full px-4 py-3 border border-indigo-200 bg-indigo-50/30 rounded-2xl text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50"
+                              className="w-full px-4 py-3 border border-indigo-200 bg-indigo-50/30 rounded-lg text-sm font-black text-slate-700 focus:outline-none focus:border-indigo-500 disabled:bg-slate-50"
                               placeholder="8.33 - 20.00"
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 font-bold">%</span>
@@ -845,7 +845,7 @@ const StatutoryBonusSettings: React.FC = () => {
             </div>
 
             {/* Section 4 - Payout & Processing */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
               <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                 <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-indigo-600"><Clock size={20} /></div>
                 <h3 className="font-bold text-slate-800">Payout & Processing</h3>
@@ -907,7 +907,7 @@ const StatutoryBonusSettings: React.FC = () => {
                 <div>
                   <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Payment Mode</label>
                   <div className="relative max-w-md">
-                    <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} disabled={!isEditing} className="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 bg-white appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50">
+                    <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} disabled={!isEditing} className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-white appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50">
                       <option>Add as separate line in payslip</option>
                       <option>Lump-sum payment run (Off-cycle)</option>
                     </select>
@@ -918,7 +918,7 @@ const StatutoryBonusSettings: React.FC = () => {
             </div>
 
             {/* Section 5 - Compliance & Reporting */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
               <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                 <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-indigo-600"><ShieldCheck size={20} /></div>
                 <h3 className="font-bold text-slate-800">Compliance & Reporting</h3>
