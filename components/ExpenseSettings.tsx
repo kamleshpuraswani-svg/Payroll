@@ -5,7 +5,13 @@ import {
     Plus,
     Edit2,
     Trash2,
-    X
+    X,
+    ChevronDown,
+    Search,
+    ShieldCheck,
+    Users,
+    Home,
+    User
 } from 'lucide-react';
 
 const ExpenseSettings: React.FC = () => {
@@ -16,6 +22,21 @@ const ExpenseSettings: React.FC = () => {
 
     // State for Expense Categories
     const [categories, setCategories] = useState<any[]>([]);
+    const [isAddingExpense, setIsAddingExpense] = useState(false);
+    const [editingExpense, setEditingExpense] = useState<any>(null);
+    const [configuredExpenses, setConfiguredExpenses] = useState<any[]>([]);
+    const [allEmployees, setAllEmployees] = useState<any[]>([]);
+    
+    // Multi-select state for Add Expense modal
+    const [selectedEntities, setSelectedEntities] = useState<any[]>([]);
+    const [availableDesignations, setAvailableDesignations] = useState<string[]>([]);
+    const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
+    const [entitySearch, setEntitySearch] = useState('');
+    const [showEntityDropdown, setShowEntityDropdown] = useState(false);
+
+    // Hardcoded fallbacks
+    const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA'];
+    const FALLBACK_DESIGS = ['Software Engineer', 'Product Manager', 'Designer', 'Accountant', 'HR Associate', 'Sales Lead', 'QA Analyst'];
 
     useEffect(() => {
         fetchData();
@@ -55,6 +76,25 @@ const ExpenseSettings: React.FC = () => {
             } else if (catData) {
                 setCategories(catData);
             }
+
+            // Fetch all employees with designations for configurations
+            const { data: empData, error: empError } = await supabase
+                .from('employees')
+                .select('id, name, eid, avatar_url, department, designation')
+                .eq('status', true) // Updated to boolean true
+                .order('name');
+            
+            if (empError) console.error('Employee fetch error:', empError);
+            if (empData) {
+                setAllEmployees(empData);
+                const depts = Array.from(new Set(empData.map(e => e.department).filter(Boolean))) as string[];
+                const desigs = Array.from(new Set((empData as any).map((e: any) => e.designation).filter(Boolean))) as string[];
+                setAvailableDepartments(depts.length > 0 ? depts.sort() : FALLBACK_DEPTS);
+                setAvailableDesignations(desigs.length > 0 ? desigs.sort() : FALLBACK_DESIGS);
+            } else {
+                setAvailableDepartments(FALLBACK_DEPTS);
+                setAvailableDesignations(FALLBACK_DESIGS);
+            }
         } catch (error: any) {
             console.error('Error fetching data:', error);
             alert(`Failed to load data: ${error.message || 'Unknown error'}. Please ensure your Supabase schema is up to date.`);
@@ -67,18 +107,12 @@ const ExpenseSettings: React.FC = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget as HTMLFormElement);
         const name = formData.get('name') as string;
-        const max_limit = parseInt(formData.get('max_limit') as string, 10) || 0;
-        const receipt_threshold = parseInt(formData.get('receipt_threshold') as string, 10) || 0;
-        const pro_rata = formData.get('pro_rata') === 'on';
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
         setIsSaving(true);
         try {
             const categoryData = {
                 name,
-                max_limit,
-                receipt_threshold,
-                pro_rata,
                 status
             };
 
@@ -105,6 +139,17 @@ const ExpenseSettings: React.FC = () => {
         }
     };
 
+    const handleDeleteCategory = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this category?')) return;
+
+        try {
+            await supabase.from('expense_categories').delete().eq('id', id);
+            await fetchData();
+        } catch (error) {
+            console.error('Error deleting category:', error);
+        }
+    };
+
     const toggleCategoryStatus = async (id: string) => {
         const category = categories.find(c => c.id === id);
         if (!category) return;
@@ -125,14 +170,39 @@ const ExpenseSettings: React.FC = () => {
         }
     };
 
-    const handleDeleteCategory = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this category?')) return;
+    const handleSaveExpense = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget as HTMLFormElement);
+        const categoryId = formData.get('category') as string;
+        const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
 
+        setIsSaving(true);
         try {
-            await supabase.from('expense_categories').delete().eq('id', id);
+            const configData = {
+                status: status,
+                applicable_to: selectedEntities,
+                updated_at: new Date().toISOString()
+            };
+
+            const targetId = editingExpense ? editingExpense.id : categoryId;
+            if (!targetId) throw new Error('Category is required');
+
+            const { error } = await supabase
+                .from('expense_categories')
+                .update(configData)
+                .eq('id', targetId);
+
+            if (error) throw error;
             await fetchData();
-        } catch (error) {
-            console.error('Error deleting category:', error);
+            setIsAddingExpense(false);
+            setEditingExpense(null);
+            setSelectedEntities([]);
+            setEntitySearch('');
+        } catch (error: any) {
+            console.error('Error saving expense config:', error);
+            alert(`Failed to save configuration: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -176,45 +246,6 @@ const ExpenseSettings: React.FC = () => {
                                             required
                                             disabled={!!editingCategory}
                                         />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Max Limit (₹)</label>
-                                            <input
-                                                name="max_limit"
-                                                type="number"
-                                                defaultValue={editingCategory?.max_limit || ''}
-                                                placeholder="e.g. 50000"
-                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Mandatory Above (₹)</label>
-                                            <input
-                                                name="receipt_threshold"
-                                                type="number"
-                                                defaultValue={editingCategory?.receipt_threshold || '0'}
-                                                placeholder="e.g. 1000"
-                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                                        <div className="space-y-0.5">
-                                            <label className="text-sm font-bold text-slate-700">Pro-rata Basis</label>
-                                            <p className="text-xs text-slate-500">Calculate limits based on attendance</p>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                name="pro_rata"
-                                                defaultChecked={editingCategory ? editingCategory.pro_rata : false}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                                        </label>
                                     </div>
                                     <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
                                         <div className="space-y-0.5">
@@ -262,15 +293,27 @@ const ExpenseSettings: React.FC = () => {
                             <h2 className="text-2xl font-black text-slate-800">Expenses Management</h2>
                             <p className="text-sm text-slate-500 mt-1">Set up and manage expense categories and their global limits.</p>
                         </div>
-                        <button
-                            onClick={() => {
-                                setEditingCategory(null);
-                                setIsAddingCategory(true);
-                            }}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
-                        >
-                            <Plus size={16} /> ADD CATEGORY
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => {
+                                    setEditingCategory(null);
+                                    setIsAddingCategory(true);
+                                }}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
+                            >
+                                <Plus size={16} /> ADD CATEGORY
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setEditingExpense(null);
+                                    setSelectedEntities([]);
+                                    setIsAddingExpense(true);
+                                }}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
+                            >
+                                <Plus size={16} /> ADD CONFIGURATION
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -341,6 +384,75 @@ const ExpenseSettings: React.FC = () => {
                                 <p className="text-sm text-slate-400 mt-1">Add your first expense category to get started.</p>
                             </div>
                         )}
+                    </div>
+                </div>
+
+                {/* ── Expense Configurations Section ── */}
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-800">Expense Configurations</h2>
+                        <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-wider">Overrides and eligibility for specific groups</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Limits</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {categories.filter(c => c.applicable_to && c.applicable_to.length > 0).map((cat) => (
+                                    <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-5">
+                                            <p className="text-sm font-black text-slate-800">{cat.name}</p>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {cat.applicable_to.map((ent: any, i: number) => (
+                                                    <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase tracking-tight">
+                                                        {ent.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <div className="space-y-0.5">
+                                                <p className="text-[10px] font-black text-slate-700">₹{cat.max_limit?.toLocaleString()} limit</p>
+                                                <p className="text-[9px] font-bold text-slate-400">₹{cat.receipt_threshold?.toLocaleString()} receipt threshold</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${cat.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                {cat.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-5 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => {
+                                                    setEditingExpense(cat);
+                                                    setSelectedEntities(cat.applicable_to || []);
+                                                    setIsAddingExpense(true);
+                                                }} className="p-1.5 text-slate-400 hover:text-sky-600">
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {categories.filter(c => c.applicable_to && c.applicable_to.length > 0).length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
+                                            No special configurations defined
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

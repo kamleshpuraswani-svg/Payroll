@@ -74,7 +74,6 @@ const OperationalConfig: React.FC = () => {
             const { data: empData, error: empError } = await supabase
                 .from('employees')
                 .select('id, name, eid, avatar_url, department, designation')
-                .eq('status', 'Active')
                 .order('name');
 
             if (empError) console.error('Error fetching employees:', empError);
@@ -353,7 +352,7 @@ const OperationalConfig: React.FC = () => {
                             {/* Selected Hierarchy Section */}
                             {selectedEmployees.length > 0 && (
                                 <div className="space-y-3">
-                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approval Sequence</p>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approval Workflow</p>
                                     <div className="space-y-2">
                                         {selectedEmployees.map((emp, index) => (
                                             <div
