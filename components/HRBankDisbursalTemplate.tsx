@@ -14,7 +14,6 @@ import {
     GripVertical,
     Download,
     Settings,
-    Type,
     Database,
     ChevronDown,
     Building2
@@ -40,7 +39,7 @@ interface BankColumn {
 }
 
 interface BankTemplateSettings {
-    fileType: 'Excel' | 'CSV' | 'TXT';
+    fileType: 'Excel' | 'CSV';
     fileNamePattern: string;
     narrationTemplate: string;
     amountFormat: '2 Decimals' | 'No Decimals';
@@ -120,43 +119,23 @@ const AddBankColumnModal: React.FC<{
     onClose: () => void;
     onAdd: (col: BankColumn) => void;
 }> = ({ isOpen, onClose, onAdd }) => {
-    const [tab, setTab] = useState<'SYSTEM' | 'CUSTOM'>('SYSTEM');
     const [selectedFieldId, setSelectedFieldId] = useState(SYSTEM_FIELDS[0].id);
-
-    // Custom Column State
-    const [customHeader, setCustomHeader] = useState('');
-    const [customValue, setCustomValue] = useState('');
 
     if (!isOpen) return null;
 
     const handleAdd = () => {
-        if (tab === 'SYSTEM') {
-            const field = SYSTEM_FIELDS.find(f => f.id === selectedFieldId);
-            if (field) {
-                onAdd({
-                    id: `${field.id}_${Date.now()}`,
-                    type: 'System',
-                    fieldId: field.id,
-                    headerName: field.label,
-                    sampleValue: field.sample,
-                    included: true
-                });
-            }
-        } else {
-            if (!customHeader) return;
+        const field = SYSTEM_FIELDS.find(f => f.id === selectedFieldId);
+        if (field) {
             onAdd({
-                id: `custom_${Date.now()}`,
-                type: 'Custom',
-                headerName: customHeader,
-                customValue: customValue,
-                sampleValue: customValue,
+                id: `${field.id}_${Date.now()}`,
+                type: 'System',
+                fieldId: field.id,
+                headerName: field.label,
+                sampleValue: field.sample,
                 included: true
             });
         }
         onClose();
-        // Reset states
-        setCustomHeader('');
-        setCustomValue('');
     };
 
     return (
@@ -167,71 +146,29 @@ const AddBankColumnModal: React.FC<{
                     <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
                 </div>
 
-                <div className="flex border-b border-slate-100">
-                    <button
-                        onClick={() => setTab('SYSTEM')}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${tab === 'SYSTEM' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
-                    >
-                        <Database size={16} /> System Field
-                    </button>
-                    <button
-                        onClick={() => setTab('CUSTOM')}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${tab === 'CUSTOM' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
-                    >
-                        <Type size={16} /> Custom Value
-                    </button>
-                </div>
-
                 <div className="p-6 space-y-6">
-                    {tab === 'SYSTEM' ? (
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select Field</label>
-                            <select
-                                value={selectedFieldId}
-                                onChange={(e) => setSelectedFieldId(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                            >
-                                {SYSTEM_FIELDS.map(f => (
-                                    <option key={f.id} value={f.id}>{f.label} (e.g. {f.sample})</option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-slate-400 mt-2">
-                                Data for this column will be automatically populated from the system.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Column Header</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Bank Code"
-                                    value={customHeader}
-                                    onChange={(e) => setCustomHeader(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Fixed Value</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. HDFC001"
-                                    value={customValue}
-                                    onChange={(e) => setCustomValue(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                />
-                                <p className="text-xs text-slate-400 mt-1">This value will be repeated for every row in the export file.</p>
-                            </div>
-                        </div>
-                    )}
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select Field</label>
+                        <select
+                            value={selectedFieldId}
+                            onChange={(e) => setSelectedFieldId(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                        >
+                            {SYSTEM_FIELDS.map(f => (
+                                <option key={f.id} value={f.id}>{f.label} (e.g. {f.sample})</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-slate-400 mt-2">
+                            Data for this column will be automatically populated from the system.
+                        </p>
+                    </div>
                 </div>
 
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
                     <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-white rounded-lg text-sm font-medium transition-colors">Cancel</button>
                     <button
                         onClick={handleAdd}
-                        disabled={tab === 'CUSTOM' && !customHeader}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-sm"
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors shadow-sm"
                     >
                         Add Column
                     </button>
@@ -605,7 +542,6 @@ const HRBankDisbursalTemplate: React.FC = () => {
                                             >
                                                 <option value="Excel">Excel (.xlsx)</option>
                                                 <option value="CSV">CSV (.csv)</option>
-                                                <option value="TXT">Text (.txt)</option>
                                             </select>
                                         )}
                                         {!isReadOnly && (
@@ -663,19 +599,11 @@ const HRBankDisbursalTemplate: React.FC = () => {
                                                     />
                                                 )}
                                             </div>
-
                                             <div>
-                                                {col.type === 'System' ? (
-                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                        <Database size={12} className="text-slate-400" />
-                                                        {SYSTEM_FIELDS.find(f => f.id === col.fieldId)?.label || 'Unknown'}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-1.5 text-xs text-sky-600 bg-sky-50 px-2 py-0.5 rounded w-fit">
-                                                        <Type size={12} />
-                                                        Fixed: {col.customValue}
-                                                    </div>
-                                                )}
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <Database size={12} className="text-slate-400" />
+                                                    {SYSTEM_FIELDS.find(f => f.id === col.fieldId)?.label || 'Unknown'}
+                                                </div>
                                             </div>
 
                                             <div>
@@ -688,7 +616,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                                                 {!isReadOnly && (
                                                     <GripVertical size={16} className="text-slate-300 cursor-grab active:cursor-grabbing hover:text-slate-500" />
                                                 )}
-                                                {!isReadOnly && col.type === 'Custom' && (
+                                                {!isReadOnly && (
                                                     <Trash2 size={14} onClick={() => handleDeleteColumn(col.id)} className="text-slate-300 cursor-pointer hover:text-rose-500" />
                                                 )}
                                             </div>
