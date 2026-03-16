@@ -54,6 +54,7 @@ interface BankTemplate {
     id: string;
     name: string;
     status: 'Published' | 'Draft';
+    createdBy: string;
     lastModified: string;
     columns: BankColumn[];
     settings: BankTemplateSettings;
@@ -96,6 +97,7 @@ const MOCK_BANK_TEMPLATES: BankTemplate[] = [
         id: '1',
         name: 'Default Universal Format',
         status: 'Published',
+        createdBy: 'HR Manager',
         lastModified: '03 Dec 2025',
         columns: DEFAULT_COLUMNS,
         settings: {
@@ -209,6 +211,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                     id: item.id,
                     name: item.name,
                     status: item.status as 'Published' | 'Draft',
+                    createdBy: item.content.createdBy || 'Admin',
                     lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
                     columns: item.content.columns,
                     settings: item.settings
@@ -275,6 +278,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
 
     const handleView = (t: BankTemplate) => {
         handleEdit(t);
+        setActiveTab('PREVIEW');
         setView('VIEW');
     };
 
@@ -407,7 +411,8 @@ const HRBankDisbursalTemplate: React.FC = () => {
                                 <th className="px-6 py-4">Template Name</th>
                                 <th className="px-6 py-4">Format</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Last Modified</th>
+                                <th className="px-6 py-4">Created By</th>
+                                <th className="px-6 py-4">Last Modified By</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -443,6 +448,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                                             {t.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4">{t.createdBy || 'HR Manager'}</td>
                                     <td className="px-6 py-4">{t.lastModified}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
