@@ -368,7 +368,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 benefits: d.benefits || [],
                 reimbursements: d.reimbursements || [],
                 employeeCount: d.employeeCount || 0,
-                lastModified: d.updated_at ? new Date(d.updated_at).toLocaleDateString() : 'Just now',
+                lastModified: d.last_modified ? new Date(d.last_modified).toLocaleDateString() : 'Just now',
                 targetId: d.target_id,
                 targetType: d.target_type
             }));
@@ -492,7 +492,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             description,
             departments: selectedDepartments,
             designations: selectedDesignations,
-            employees: selectedEmployees,
+            // employees: selectedEmployees, // removed as it is not a column in the database
             status: status,
             earnings,
             deductions,
@@ -506,15 +506,23 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
 
         if (activeStructureId && !activeStructureId.startsWith('mock-')) {
              const { error } = await supabase.from('salary_structures').update(payload).eq('id', activeStructureId);
-             if(error) console.error("Error updating", error);
+             if(error) {
+                 console.error("Error updating", error);
+                 alert(`Failed to update structure: ${error.message}`);
+                 return;
+             }
         } else {
              const { data, error } = await supabase.from('salary_structures').insert([payload]).select().single();
              if(error) {
                  console.error("Error inserting", error);
+                 alert(`Failed to create structure: ${error.message}`);
+                 return;
              } else {
                  savedId = data?.id;
              }
         }
+
+        alert(activeStructureId && !activeStructureId.startsWith('mock-') ? 'Structure updated successfully!' : 'Structure created successfully!');
 
         // --- Propagate Assignments to Employees Table ---
         if (savedId && status === 'Active') {
