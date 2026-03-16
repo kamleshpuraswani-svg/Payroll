@@ -431,9 +431,14 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Department</label>
                               <select value={department} onChange={(e) => setDepartment(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
                                  <option>Engineering</option>
+                                 <option>Software Engineering</option>
                                  <option>Product</option>
                                  <option>Design</option>
                                  <option>Sales</option>
+                                 <option>QA</option>
+                                 <option>Marketing</option>
+                                 <option>DevOps</option>
+                                 <option>Finance</option>
                               </select>
                            </div>
                            <div>
@@ -445,6 +450,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <select value={location} onChange={(e) => setLocation(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
                                  <option>Bangalore</option>
                                  <option>Mumbai</option>
+                                 <option>Pune</option>
+                                 <option>Chennai</option>
+                                 <option>Delhi</option>
                                  <option>Remote</option>
                               </select>
                            </div>
