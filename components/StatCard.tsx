@@ -40,9 +40,9 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
   return (
     <div
       onClick={stat?.onClick}
-      className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-all duration-300 group relative overflow-visible ${stat?.onClick ? 'cursor-pointer hover:shadow-md hover:border-purple-200' : ''}`}
+      className={`bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all duration-300 group relative overflow-visible ${stat?.onClick ? 'cursor-pointer hover:shadow-md hover:border-purple-200' : ''}`}
     >
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-3">
         <div className={`p-3 rounded-lg ${stat?.color_class || ''} bg-opacity-10`}>
           {React.isValidElement(stat?.icon) && React.cloneElement(stat.icon as React.ReactElement<any>, { className: 'w-6 h-6' })}
         </div>
@@ -114,7 +114,7 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
       </div>
 
       {!stat?.details_at_top && stat?.extra_details && stat.extra_details.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-slate-100 space-y-2.5">
+        <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
           {stat.extra_details.map((detail, idx) => (
             <div key={idx} className="flex justify-between items-center text-xs">
               <span className="text-slate-400 font-medium">{detail?.label || 'N/A'}</span>
@@ -125,7 +125,7 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
       )}
 
       {/* Decorative accent line at bottom */}
-      <div className={`h-1 w-0 group-hover:w-full transition-all duration-500 mt-4 rounded-full ${(stat?.color_class || '').replace('text', 'bg').replace('bg-opacity-10', '')}`}></div>
+      <div className={`h-1 w-0 group-hover:w-full transition-all duration-500 mt-3 rounded-full ${(stat?.color_class || '').replace('text', 'bg').replace('bg-opacity-10', '')}`}></div>
     </div>
   );
 };
