@@ -58,6 +58,23 @@ const OperationalConfig: React.FC = () => {
     const [expenseApprovers, setExpenseApprovers] = useState<any[]>([]);
     const [isExpenseExpanded, setIsExpenseExpanded] = useState(true);
 
+    // Payslip Naming Format state
+    const [isPayslipNamingExpanded, setIsPayslipNamingExpanded] = useState(true);
+    const PAYSLIP_TOKENS = [
+        { label: 'Employee Name', value: '{EMPLOYEE_NAME}' },
+        { label: 'Employee ID', value: '{EMPLOYEE_ID}' },
+        { label: 'Month', value: '{MONTH}' },
+        { label: 'Year', value: '{YEAR}' },
+        { label: 'Company Name', value: '{COMPANY_NAME}' },
+    ];
+    const [payslipNameFormat, setPayslipNameFormat] = useState('{EMPLOYEE_NAME}_{MONTH}_{YEAR}');
+    const payslipPreview = payslipNameFormat
+        .replace('{EMPLOYEE_NAME}', 'Priya_Sharma')
+        .replace('{EMPLOYEE_ID}', 'TF00912')
+        .replace('{MONTH}', 'November')
+        .replace('{YEAR}', '2025')
+        .replace('{COMPANY_NAME}', 'TechFlow');
+
     useEffect(() => {
         fetchConfig();
     }, []);
@@ -665,6 +682,69 @@ const OperationalConfig: React.FC = () => {
                                             ))}
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Payslip Naming Format Section */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsPayslipNamingExpanded(!isPayslipNamingExpanded)}
+                >
+                    <h3 className="font-semibold text-slate-800">Payslip Naming Format</h3>
+                    <button className="text-slate-400">
+                        {isPayslipNamingExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isPayslipNamingExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-3xl space-y-6">
+                            <p className="text-sm text-slate-500">
+                                Define the file naming convention for generated payslip PDFs. Use the tokens below to build a dynamic format.
+                            </p>
+
+                            {/* Token Chips */}
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Available Tokens</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {PAYSLIP_TOKENS.map(token => (
+                                        <button
+                                            key={token.value}
+                                            onClick={() => setPayslipNameFormat(prev => prev + token.value)}
+                                            className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-100 rounded-lg text-xs font-bold transition-colors"
+                                            title={`Insert ${token.value}`}
+                                        >
+                                            + {token.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Format Input */}
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Format String</label>
+                                <input
+                                    type="text"
+                                    value={payslipNameFormat}
+                                    onChange={e => setPayslipNameFormat(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                                    placeholder="e.g. {EMPLOYEE_NAME}_{MONTH}_{YEAR}"
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1.5">Separate tokens with underscores or hyphens. The <span className="font-bold">.pdf</span> extension will be appended automatically.</p>
+                            </div>
+
+                            {/* Live Preview */}
+                            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Preview</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-slate-700 font-mono bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+                                        {payslipPreview}.pdf
+                                    </span>
                                 </div>
                             </div>
                         </div>
