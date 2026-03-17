@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle, Edit2, Check } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface SelectedEmployee {
@@ -60,20 +60,45 @@ const OperationalConfig: React.FC = () => {
 
     // Payslip Naming Format state
     const [isPayslipNamingExpanded, setIsPayslipNamingExpanded] = useState(true);
-    const PAYSLIP_TOKENS = [
-        { label: 'Employee Name', value: '{EMPLOYEE_NAME}' },
-        { label: 'Employee ID', value: '{EMPLOYEE_ID}' },
-        { label: 'Month', value: '{MONTH}' },
-        { label: 'Year', value: '{YEAR}' },
-        { label: 'Company Name', value: '{COMPANY_NAME}' },
-    ];
-    const [payslipNameFormat, setPayslipNameFormat] = useState('{EMPLOYEE_NAME}_{MONTH}_{YEAR}');
-    const payslipPreview = payslipNameFormat
-        .replace('{EMPLOYEE_NAME}', 'Priya_Sharma')
-        .replace('{EMPLOYEE_ID}', 'TF00912')
-        .replace('{MONTH}', 'November')
-        .replace('{YEAR}', '2025')
-        .replace('{COMPANY_NAME}', 'TechFlow');
+    const [namingPatternSuffix, setNamingPatternSuffix] = useState('{{EmployeeName}}_{{Month}}_{{Year}}');
+    const [isNamingEditing, setIsNamingEditing] = useState(false);
+    const [tempSuffix, setTempSuffix] = useState('');
+
+    const handleEditNamingFormat = () => {
+        setTempSuffix(namingPatternSuffix);
+        setIsNamingEditing(true);
+    };
+    const handleCancelNamingFormat = () => setIsNamingEditing(false);
+    const handleSaveNamingFormat = () => {
+        setNamingPatternSuffix(tempSuffix);
+        setIsNamingEditing(false);
+    };
+    const handleTagClick = (tag: string) => {
+        if (!isNamingEditing) return;
+        let s = tempSuffix;
+        if (s.includes(tag)) {
+            s = s.replace(tag, '');
+        } else {
+            if (tag === '{{Month}}' && s.includes('{{MonthShort}}')) { s = s.replace('{{MonthShort}}', '{{Month}}'); setTempSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, '')); return; }
+            if (tag === '{{MonthShort}}' && s.includes('{{Month}}')) { s = s.replace('{{Month}}', '{{MonthShort}}'); setTempSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, '')); return; }
+            s = s ? `${s}_${tag}` : tag;
+        }
+        setTempSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, ''));
+    };
+    const generateNamingPreview = (suffix: string) => {
+        return ('Payslip_' + suffix)
+            .replace('{{EmployeeName}}', 'Priya_Sharma')
+            .replace('{{EmployeeID}}', 'TF00912')
+            .replace('{{Month}}', 'November')
+            .replace('{{MonthShort}}', 'Nov')
+            .replace('{{Year}}', '2025')
+            .replace('{{CompanyName}}', 'TechFlow')
+            .replace('{{PayPeriod}}', '01-30_Nov_2025')
+            .replace(/_+/g, '_') + '.pdf';
+    };
+    const resetNamingToDefault = () => {
+        if (isNamingEditing) setTempSuffix('{{Month}}_{{Year}}_{{EmployeeID}}');
+    };
 
     useEffect(() => {
         fetchConfig();
@@ -703,50 +728,101 @@ const OperationalConfig: React.FC = () => {
 
                 {isPayslipNamingExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <div className="max-w-3xl space-y-6">
-                            <p className="text-sm text-slate-500">
-                                Define the file naming convention for generated payslip PDFs. Use the tokens below to build a dynamic format.
-                            </p>
-
-                            {/* Token Chips */}
+                        <div className="mb-5 flex justify-between items-start">
                             <div>
-                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Available Tokens</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {PAYSLIP_TOKENS.map(token => (
-                                        <button
-                                            key={token.value}
-                                            onClick={() => setPayslipNameFormat(prev => prev + token.value)}
-                                            className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-100 rounded-lg text-xs font-bold transition-colors"
-                                            title={`Insert ${token.value}`}
-                                        >
-                                            + {token.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Format Input */}
-                            <div>
-                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Format String</label>
-                                <input
-                                    type="text"
-                                    value={payslipNameFormat}
-                                    onChange={e => setPayslipNameFormat(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
-                                    placeholder="e.g. {EMPLOYEE_NAME}_{MONTH}_{YEAR}"
-                                />
-                                <p className="text-[11px] text-slate-400 mt-1.5">Separate tokens with underscores or hyphens. The <span className="font-bold">.pdf</span> extension will be appended automatically.</p>
-                            </div>
-
-                            {/* Live Preview */}
-                            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Preview</p>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-slate-700 font-mono bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
-                                        {payslipPreview}.pdf
-                                    </span>
+                                    <h4 className="font-bold text-slate-800">PDF Filename Pattern</h4>
+                                    {!isNamingEditing && (
+                                        <button
+                                            onClick={handleEditNamingFormat}
+                                            className="p-1.5 bg-slate-50 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                                            title="Edit Naming Format"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-sm text-slate-500 mt-1">Configure the default naming format for payslip PDFs sent to employees.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Input */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PDF Filename Pattern</label>
+                                <div className="flex shadow-sm rounded-lg overflow-hidden">
+                                    <div className="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 text-sm font-medium text-slate-500 flex items-center select-none">
+                                        Payslip_
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={isNamingEditing ? tempSuffix : namingPatternSuffix}
+                                        onChange={(e) => isNamingEditing && setTempSuffix(e.target.value)}
+                                        disabled={!isNamingEditing}
+                                        className={`flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 ${!isNamingEditing ? 'bg-slate-50 cursor-not-allowed opacity-80' : 'bg-white'}`}
+                                    />
+                                    <div className="w-16 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
+                                        <span className="text-xs font-bold text-slate-500">.pdf</span>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Tag Chips */}
+                            <div className="flex flex-wrap gap-2">
+                                {['{{EmployeeName}}', '{{EmployeeID}}', '{{Month}}', '{{MonthShort}}', '{{Year}}', '{{CompanyName}}', '{{PayPeriod}}'].map(tag => {
+                                    const currentSuffix = isNamingEditing ? tempSuffix : namingPatternSuffix;
+                                    const isSelected = currentSuffix.includes(tag);
+                                    return (
+                                        <button
+                                            key={tag}
+                                            onClick={() => handleTagClick(tag)}
+                                            disabled={!isNamingEditing}
+                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1.5 ${
+                                                !isNamingEditing
+                                                    ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed'
+                                                    : isSelected
+                                                        ? 'bg-sky-100 text-sky-700 border-sky-200 shadow-sm'
+                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300 hover:text-sky-600'
+                                            }`}
+                                        >
+                                            {isSelected && <Check size={12} className="stroke-[3]" />}
+                                            {tag}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Preview */}
+                            <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-100 p-3 rounded-lg">
+                                <span className="text-emerald-600 font-medium text-xs uppercase tracking-wider">Preview:</span>
+                                <span className="font-bold text-emerald-700 truncate">
+                                    {generateNamingPreview(isNamingEditing ? tempSuffix : namingPatternSuffix)}
+                                </span>
+                            </div>
+
+                            {/* Edit Actions */}
+                            {isNamingEditing && (
+                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                                    <button
+                                        onClick={resetNamingToDefault}
+                                        className="text-sm font-medium text-slate-500 hover:text-sky-600 hover:underline mr-2"
+                                    >
+                                        Reset to Default
+                                    </button>
+                                    <button
+                                        onClick={handleCancelNamingFormat}
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveNamingFormat}
+                                        className="px-6 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 shadow-sm transition-colors"
+                                    >
+                                        Save Settings
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
