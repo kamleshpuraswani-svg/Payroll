@@ -260,6 +260,7 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
     submitted_date: '12 Dec 2025',
     status: 'Rejected',
     notes: 'Invalid policy document uploaded. Please upload a clear copy of the premium receipt.',
+    last_modified_by: 'Admin Mike',
     ctc: '₹15.8 L',
     regime: 'New',
     proofs: [

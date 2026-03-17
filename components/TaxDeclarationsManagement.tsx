@@ -1266,6 +1266,7 @@ const TaxDeclarationsManagement: React.FC = () => {
                                     <th className="px-6 py-4">Submitted Date</th>
                                     <th className="px-6 py-4 text-center">Proofs</th>
                                     <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Last Modified By</th>
                                     <th className="px-6 py-4 text-right">ACTIONS</th>
                                 </tr>
                             </thead>
@@ -1311,6 +1312,11 @@ const TaxDeclarationsManagement: React.FC = () => {
                                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
                                                 {doc?.status || 'Pending'}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-xs font-medium text-slate-600 italic">
+                                                {doc?.last_modified_by || 'Not modified'}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-0.5">

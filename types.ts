@@ -146,6 +146,7 @@ export interface TaxDeclaration {
   proofs: DeclarationProof[];
   status: 'Pending' | 'Approved' | 'Rejected';
   notes: string;
+  last_modified_by?: string;
   ctc: string;
   regime: 'Old' | 'New';
   breakdown: { label: string; amount: number }[];
