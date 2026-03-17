@@ -84,15 +84,17 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, onAiClick, userRole, onR
                     <UserCircle size={16} /> Profile Settings
                   </button>
 
-                  {/* Role Switcher for Demo */}
+                    {/* Role Switcher for Demo */}
                   <div className="border-t border-slate-100 my-1 pt-1">
                     <p className="px-4 py-1 text-[10px] uppercase font-bold text-slate-400">Switch Role (Demo)</p>
+                    {/* Super Admin role temporarily hidden - DO NOT DELETE
                     <button
                       onClick={() => { onRoleSwitch('SUPER_ADMIN'); setIsProfileOpen(false); }}
                       className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${userRole === 'SUPER_ADMIN' ? 'bg-sky-50 text-sky-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                       <div className="w-2 h-2 rounded-full bg-sky-500"></div> Super Admin
                     </button>
+                    */}
                     <button
                       onClick={() => { onRoleSwitch('HR_MANAGER'); setIsProfileOpen(false); }}
                       className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${userRole === 'HR_MANAGER' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}

@@ -86,8 +86,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 const App: React.FC = () => {
-  const [userRole, setUserRole] = useState<UserRole>('SUPER_ADMIN');
-  const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
+  // Super Admin role temporarily hidden - defaulting to HR_MANAGER
+  const [userRole, setUserRole] = useState<UserRole>('HR_MANAGER');
+  const [currentView, setCurrentView] = useState<ViewState>(ViewState.HR_DASHBOARD);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
