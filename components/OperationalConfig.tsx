@@ -28,6 +28,12 @@ const DEPARTMENTS = [
     "Operations"
 ];
 
+const BUSINESS_UNITS = [
+    "MindInventory",
+    "300 Minds",
+    "CollabCRM"
+];
+
 const OperationalConfig: React.FC = () => {
     const [isHierarchyExpanded, setIsHierarchyExpanded] = useState(true);
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
@@ -63,15 +69,77 @@ const OperationalConfig: React.FC = () => {
     const [namingPatternSuffix, setNamingPatternSuffix] = useState('{{EmployeeName}}_{{Month}}_{{Year}}');
     const [isNamingEditing, setIsNamingEditing] = useState(false);
     const [tempSuffix, setTempSuffix] = useState('');
+    const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
+    const [isLoadingNaming, setIsLoadingNaming] = useState(false);
+    const [isNamingSaving, setIsNamingSaving] = useState(false);
+
+    const fetchPaygroups = async () => {
+        try {
+            const { data, error } = await supabase.from('paygroups').select('*').order('name');
+            if (error) throw error;
+            setPaygroups(data || []);
+        } catch (err) {
+            console.error('Error fetching paygroups:', err);
+        }
+    };
+
+    const fetchNamingFormat = async (target: string) => {
+        setIsLoadingNaming(true);
+        try {
+            const { data, error } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `payslip_naming_format:${target}`)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+            
+            if (data?.config_value?.suffix) {
+                setNamingPatternSuffix(data.config_value.suffix);
+            } else {
+                setNamingPatternSuffix('{{EmployeeName}}_{{Month}}_{{Year}}');
+            }
+        } catch (err) {
+            console.error('Error fetching naming format:', err);
+        } finally {
+            setIsLoadingNaming(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPaygroups();
+    }, []);
+
+    useEffect(() => {
+        fetchNamingFormat(selectedTarget);
+    }, [selectedTarget]);
 
     const handleEditNamingFormat = () => {
         setTempSuffix(namingPatternSuffix);
         setIsNamingEditing(true);
     };
     const handleCancelNamingFormat = () => setIsNamingEditing(false);
-    const handleSaveNamingFormat = () => {
-        setNamingPatternSuffix(tempSuffix);
-        setIsNamingEditing(false);
+    const handleSaveNamingFormat = async () => {
+        setIsNamingSaving(true);
+        try {
+            const { error } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `payslip_naming_format:${selectedTarget}`,
+                    config_value: { suffix: tempSuffix },
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setNamingPatternSuffix(tempSuffix);
+            setIsNamingEditing(false);
+        } catch (err) {
+            console.error('Error saving naming format:', err);
+            alert('Failed to save naming format.');
+        } finally {
+            setIsNamingSaving(false);
+        }
     };
     const handleTagClick = (tag: string) => {
         if (!isNamingEditing) return;
@@ -720,7 +788,10 @@ const OperationalConfig: React.FC = () => {
                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
                     onClick={() => setIsPayslipNamingExpanded(!isPayslipNamingExpanded)}
                 >
-                    <h3 className="font-semibold text-slate-800">Payslip Naming Format</h3>
+                    <div className="flex items-center gap-3">
+                        <h3 className="font-semibold text-slate-800">Payslip Naming Format</h3>
+                        {isNamingSaving && <Loader2 size={16} className="text-sky-600 animate-spin" />}
+                    </div>
                     <button className="text-slate-400">
                         {isPayslipNamingExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </button>
@@ -728,102 +799,141 @@ const OperationalConfig: React.FC = () => {
 
                 {isPayslipNamingExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <div className="mb-5 flex justify-between items-start">
+                        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <div className="flex items-center gap-2">
-                                    <h4 className="font-bold text-slate-800">PDF Filename Pattern</h4>
-                                    {!isNamingEditing && (
+                                <h4 className="font-bold text-slate-800 text-lg">Format Configuration</h4>
+                                <p className="text-sm text-slate-500 mt-1">Configure the default naming format for payslip PDFs.</p>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <select
+                                        value={selectedTarget}
+                                        onChange={(e) => setSelectedTarget(e.target.value)}
+                                        className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none shadow-sm"
+                                    >
+                                        <optgroup label="Business Units">
+                                            {BUSINESS_UNITS.map(bu => (
+                                                <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="Payroll Paygroups">
+                                            {paygroups.map(pg => (
+                                                <option key={pg.id} value={`pg:${pg.id}`}>
+                                                    {pg.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+
+                                {isNamingEditing ? (
+                                    <div className="flex items-center gap-2">
                                         <button
-                                            onClick={handleEditNamingFormat}
-                                            className="p-1.5 bg-slate-50 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
-                                            title="Edit Naming Format"
+                                            onClick={handleCancelNamingFormat}
+                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm h-[42px]"
                                         >
-                                            <Edit2 size={16} />
+                                            Cancel
                                         </button>
+                                        <button
+                                            onClick={handleSaveNamingFormat}
+                                            disabled={isNamingSaving}
+                                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm transition-colors flex items-center gap-2 h-[42px]"
+                                        >
+                                            {isNamingSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={handleEditNamingFormat}
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm flex items-center gap-2 h-[42px]"
+                                    >
+                                        <Edit2 size={16} /> Edit Format
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {isLoadingNaming ? (
+                            <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
+                                <Loader2 size={24} className="animate-spin text-sky-600" />
+                                <span className="text-sm font-medium">Loading naming format...</span>
+                            </div>
+                        ) : (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                <div className="space-y-4">
+                                    {/* Filename Input */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">PDF Filename Pattern</label>
+                                        <div className="flex shadow-sm rounded-xl overflow-hidden">
+                                            <div className="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 text-sm font-medium text-slate-500 flex items-center select-none">
+                                                Payslip_
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={isNamingEditing ? tempSuffix : namingPatternSuffix}
+                                                onChange={(e) => isNamingEditing && setTempSuffix(e.target.value)}
+                                                disabled={!isNamingEditing}
+                                                className={`flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 ${!isNamingEditing ? 'bg-slate-50 cursor-not-allowed opacity-80' : 'bg-white'}`}
+                                            />
+                                            <div className="w-20 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
+                                                <span className="text-xs font-bold text-slate-500">.pdf</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Tag Chips */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {['{{EmployeeName}}', '{{EmployeeID}}', '{{Month}}', '{{MonthShort}}', '{{Year}}', '{{CompanyName}}', '{{PayPeriod}}'].map(tag => {
+                                            const currentSuffix = isNamingEditing ? tempSuffix : namingPatternSuffix;
+                                            const isSelected = currentSuffix.includes(tag);
+                                            return (
+                                                <button
+                                                    key={tag}
+                                                    onClick={() => handleTagClick(tag)}
+                                                    disabled={!isNamingEditing}
+                                                    className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1.5 ${
+                                                        !isNamingEditing
+                                                            ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed'
+                                                            : isSelected
+                                                                ? 'bg-sky-100 text-sky-700 border-sky-200 shadow-sm'
+                                                                : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300 hover:text-sky-600'
+                                                    }`}
+                                                >
+                                                    {isSelected && <Check size={12} className="stroke-[3]" />}
+                                                    {tag}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Preview */}
+                                    <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-100 p-3 rounded-xl overflow-hidden">
+                                        <div className="bg-emerald-100 p-1 rounded">
+                                            <Info size={14} className="text-emerald-700" />
+                                        </div>
+                                        <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Preview:</span>
+                                        <span className="font-bold text-emerald-700 truncate font-mono text-xs">
+                                            {generateNamingPreview(isNamingEditing ? tempSuffix : namingPatternSuffix)}
+                                        </span>
+                                    </div>
+
+                                    {/* Reset Action */}
+                                    {isNamingEditing && (
+                                        <div className="flex justify-start">
+                                            <button
+                                                onClick={resetNamingToDefault}
+                                                className="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline uppercase tracking-wider"
+                                            >
+                                                Reset to Default Pattern
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
-                                <p className="text-sm text-slate-500 mt-1">Configure the default naming format for payslip PDFs sent to employees.</p>
                             </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            {/* Input */}
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PDF Filename Pattern</label>
-                                <div className="flex shadow-sm rounded-lg overflow-hidden">
-                                    <div className="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 text-sm font-medium text-slate-500 flex items-center select-none">
-                                        Payslip_
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={isNamingEditing ? tempSuffix : namingPatternSuffix}
-                                        onChange={(e) => isNamingEditing && setTempSuffix(e.target.value)}
-                                        disabled={!isNamingEditing}
-                                        className={`flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 ${!isNamingEditing ? 'bg-slate-50 cursor-not-allowed opacity-80' : 'bg-white'}`}
-                                    />
-                                    <div className="w-16 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
-                                        <span className="text-xs font-bold text-slate-500">.pdf</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tag Chips */}
-                            <div className="flex flex-wrap gap-2">
-                                {['{{EmployeeName}}', '{{EmployeeID}}', '{{Month}}', '{{MonthShort}}', '{{Year}}', '{{CompanyName}}', '{{PayPeriod}}'].map(tag => {
-                                    const currentSuffix = isNamingEditing ? tempSuffix : namingPatternSuffix;
-                                    const isSelected = currentSuffix.includes(tag);
-                                    return (
-                                        <button
-                                            key={tag}
-                                            onClick={() => handleTagClick(tag)}
-                                            disabled={!isNamingEditing}
-                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1.5 ${
-                                                !isNamingEditing
-                                                    ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed'
-                                                    : isSelected
-                                                        ? 'bg-sky-100 text-sky-700 border-sky-200 shadow-sm'
-                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300 hover:text-sky-600'
-                                            }`}
-                                        >
-                                            {isSelected && <Check size={12} className="stroke-[3]" />}
-                                            {tag}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Preview */}
-                            <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-100 p-3 rounded-lg">
-                                <span className="text-emerald-600 font-medium text-xs uppercase tracking-wider">Preview:</span>
-                                <span className="font-bold text-emerald-700 truncate">
-                                    {generateNamingPreview(isNamingEditing ? tempSuffix : namingPatternSuffix)}
-                                </span>
-                            </div>
-
-                            {/* Edit Actions */}
-                            {isNamingEditing && (
-                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                                    <button
-                                        onClick={resetNamingToDefault}
-                                        className="text-sm font-medium text-slate-500 hover:text-sky-600 hover:underline mr-2"
-                                    >
-                                        Reset to Default
-                                    </button>
-                                    <button
-                                        onClick={handleCancelNamingFormat}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSaveNamingFormat}
-                                        className="px-6 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 shadow-sm transition-colors"
-                                    >
-                                        Save Settings
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
