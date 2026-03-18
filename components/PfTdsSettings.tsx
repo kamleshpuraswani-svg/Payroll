@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Activity, Shield, Building2, ChevronDown, ChevronRight, 
     Edit2, Check, X, Info, Calendar, Lightbulb, Eye, Calculator,
-    Plus, Search, User, Briefcase, AlertCircle, Mail
+    Plus, Search, User, Briefcase, AlertCircle, Mail, Landmark
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -335,7 +335,7 @@ const PfTdsSettings: React.FC = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-8 animate-in fade-in">
+                                    <div className={`${!enablePf ? 'opacity-40 pointer-events-none' : ''} space-y-8 animate-in fade-in`}>
                                         <p className="text-sm text-slate-500 -mt-2">
                                             Any organisation with 20 or more employees must register for the Employee Provident Fund (EPF) scheme, a retirement benefit plan for all salaried employees.
                                         </p>
@@ -641,8 +641,8 @@ const PfTdsSettings: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         )}
                     </div>
 
@@ -695,7 +695,7 @@ const PfTdsSettings: React.FC = () => {
                                 {!enableTds && !isEditingTds ? (
                                     <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
                                         <div className="p-4 bg-slate-100 rounded-full text-slate-400 grayscale">
-                                            <Building2 size={48} strokeWidth={1.5} />
+                                            <Landmark size={48} strokeWidth={1.5} />
                                         </div>
                                         <div>
                                             <h4 className="text-lg font-bold text-slate-400">TDS is currently Disabled</h4>
@@ -703,29 +703,30 @@ const PfTdsSettings: React.FC = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                        {/* Top Toggle Section */}
-                                        <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-slate-800">Enable TDS on Salaries</h3>
-                                                <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                                                    Automatically calculate and deduct TDS on salaries as per Income Tax rules. Required for Form 24Q filing.
-                                                </p>
+                                    <div className={`space-y-8 animate-in fade-in ${!enableTds ? 'opacity-40 pointer-events-none' : ''}`}>
+                                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                            {/* Top Toggle Section */}
+                                            <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-slate-800">Enable TDS on Salaries</h3>
+                                                    <p className="text-sm text-slate-500 mt-1 max-w-xl">
+                                                        Automatically calculate and deduct TDS on salaries as per Income Tax rules. Required for Form 24Q filing.
+                                                    </p>
+                                                </div>
+                                                <label className={`relative inline-flex items-center mt-1 ${isEditingTds ? 'cursor-pointer' : 'cursor-default opacity-80'}`}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={enableTds} 
+                                                        onChange={() => isEditingTds && setEnableTds(!enableTds)} 
+                                                        disabled={!isEditingTds}
+                                                        className="sr-only peer" 
+                                                    />
+                                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                </label>
                                             </div>
-                                            <label className={`relative inline-flex items-center mt-1 ${isEditingTds ? 'cursor-pointer' : 'cursor-default opacity-80'}`}>
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={enableTds} 
-                                                    onChange={() => isEditingTds && setEnableTds(!enableTds)} 
-                                                    disabled={!isEditingTds}
-                                                    className="sr-only peer" 
-                                                />
-                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                            </label>
-                                        </div>
 
-                                        {enableTds && (
-                                            <div className="p-8 space-y-8 animate-in slide-in-from-top-2">
+                                            {enableTds && (
+                                                <div className="p-8 space-y-8 animate-in slide-in-from-top-2">
                                                 {/* Form Fields */}
                                                 <div className="grid grid-cols-1 gap-6">
                                                     {/* TAN */}
@@ -870,10 +871,12 @@ const PfTdsSettings: React.FC = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                            </div>
+                                                    </div>
+                                                </div>
                                         )}
                                     </div>
-                                )}
+                                </div>
+                            )}
                             </div>
                         )}
                     </div>
