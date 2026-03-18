@@ -154,87 +154,81 @@ const PfTdsSettings: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8">
-            <div className="max-w-7xl mx-auto space-y-8">
-                {/* Header Section */}
-                <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-5">
-                        <div className="p-4 bg-sky-500 rounded-2xl shadow-lg shadow-sky-200">
-                            <Building2 className="text-white" size={32} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">PF & TDS Settings</h2>
-                            <p className="text-slate-500 font-medium text-sm mt-1">Manage PF & TDS configurations for your organization</p>
-                        </div>
+        <div className="h-full overflow-y-auto bg-[#F8FAFC]">
+            <div className="p-4 lg:p-8 w-full space-y-8 animate-in fade-in duration-300 pb-20">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">PF & TDS Settings</h2>
+                        <p className="text-slate-500 mt-1 text-sm font-medium">Manage PF and TDS configurations for your organization.</p>
                     </div>
-                    
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <select 
+                    <div className="flex items-center gap-4">
+                        <div className="relative group/select">
+                            <select
                                 value={selectedTarget}
                                 onChange={(e) => setSelectedTarget(e.target.value)}
-                                className="pl-4 pr-10 py-3 bg-slate-50 border-none rounded-2xl text-sm font-black text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 transition-all appearance-none"
+                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all appearance-none shadow-sm min-w-[180px]"
                             >
-                                <optgroup label="Business Units">
-                                    {BUSINESS_UNITS.map(bu => <option key={bu} value={`bu:${bu}`}>{bu}</option>)}
+                                <optgroup label="Business Units" className="font-bold text-slate-900 bg-white">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`} className="font-semibold py-2 italic">{bu}</option>
+                                    ))}
                                 </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => <option key={pg.id} value={`pg:${pg.id}`}>{pg.name}</option>)}
+                                <optgroup label="Payroll Paygroups" className="font-bold text-slate-900 bg-white">
+                                    {paygroups.map(pg => (
+                                        <option key={pg.id} value={`pg:${pg.id}`} className="font-semibold py-2 italic text-emerald-600">
+                                            {pg.name}
+                                        </option>
+                                    ))}
                                 </optgroup>
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover/select:text-indigo-500 transition-colors" size={16} />
                         </div>
                     </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl w-fit border border-slate-200 shadow-sm">
+                {/* Standard Tab Navigation */}
+                <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200 shadow-sm">
                     <button 
-                        onClick={() => setActiveTab('pf')}
-                        className={`flex items-center gap-3 px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 uppercase tracking-wider ${activeTab === 'pf' ? 'bg-white text-sky-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                        onClick={() => setActiveTab('pf')} 
+                        className={`flex items-center gap-3 px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${activeTab === 'pf' ? 'bg-white text-sky-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
                     >
-                        <Activity size={18} />
+                        <Shield size={16} />
                         PF Settings
                     </button>
                     <button 
-                        onClick={() => setActiveTab('tds')}
-                        className={`flex items-center gap-3 px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 uppercase tracking-wider ${activeTab === 'tds' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                        onClick={() => setActiveTab('tds')} 
+                        className={`flex items-center gap-3 px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${activeTab === 'tds' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
                     >
-                        <Calculator size={18} />
+                        <Calculator size={16} />
                         TDS Settings
                     </button>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {activeTab === 'pf' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* PF Section */}
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
-                                <div className="p-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/10">
-                                    <div className="flex items-center gap-5">
-                                        <div className="p-3.5 rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-100">
-                                            <Activity size={24} strokeWidth={2.5} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Provident Fund Configuration</h3>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Configure Employee Provident Fund (EPF) contribution rules and identifiers.</p>
-                                        </div>
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-8 p-8">
+                                <div className="flex justify-between items-center pb-6 border-b border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <Shield size={20} className="text-sky-600" />
+                                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROVIDENT FUND (PF)</h3>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         {isEditingPf ? (
                                             <div className="flex gap-2">
-                                                <button onClick={handleCancelPf} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
-                                                <button onClick={handleSavePf} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
+                                                <button onClick={handleCancelPf} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                                                <button onClick={handleSavePf} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-all"><Save size={16} /> Save Settings</button>
                                             </div>
                                         ) : (
-                                            <button onClick={handleEditPf} className="p-2.5 text-sky-600 hover:bg-sky-50 rounded-xl transition-all flex items-center gap-2 px-4 font-black text-xs uppercase tracking-widest">
+                                            <button onClick={handleEditPf} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 transition-all">
                                                 <Edit2 size={16} /> Edit Settings
                                             </button>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="p-8 space-y-10">
+                                <div className="space-y-10">
                                 {/* PF Top Toggle - Always visible and interactive in Edit Mode */}
                                 <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
                                     <div className="flex items-center gap-4">
@@ -466,16 +460,14 @@ const PfTdsSettings: React.FC = () => {
                                             </div>
 
                                             {/* Right Column: Sample Calculation */}
-                                            <div className="xl:col-span-4">
-                                                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-8 border border-amber-100 shadow-sm sticky top-32">
-                                                    <div className="flex items-center gap-3 mb-6">
-                                                        <div className="p-2.5 bg-white rounded-2xl shadow-sm text-amber-500">
-                                                            <Calculator size={20} strokeWidth={2.5} />
-                                                        </div>
-                                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Sample EPF Calculation</h4>
+                                            <div className="xl:col-span-4 space-y-6">
+                                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden sticky top-32">
+                                                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
+                                                        <Calculator className="text-sky-600" size={18} />
+                                                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Sample EPF Calculation</h3>
                                                     </div>
                                                     
-                                                    <div className="space-y-5 bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-amber-200/50">
+                                                    <div className="p-6 space-y-6">
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-xs font-bold text-slate-500">Employee Share (12%)</span>
                                                             <span className="text-sm font-black text-slate-800">₹ 2,400</span>
@@ -503,12 +495,14 @@ const PfTdsSettings: React.FC = () => {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="pt-4 border-t-2 border-dashed border-amber-200/50 flex justify-between items-end">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total</span>
-                                                            <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdli ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
+                                                        <div className="pt-4 border-t-2 border-dashed border-slate-100 flex justify-between items-end">
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total Remittance</span>
+                                                            <span className="text-2xl font-black text-sky-600 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdli ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => setShowBelowLimitModal(true)} className="w-full mt-6 py-3.5 bg-white border border-amber-200 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-100"><Calculator size={14} /> PF wages below 15000?</button>
+                                                    <div className="p-4 bg-slate-50 border-t border-slate-100">
+                                                        <button onClick={() => setShowBelowLimitModal(true)} className="w-full py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"><Calculator size={14} /> View wages below limit</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -522,32 +516,27 @@ const PfTdsSettings: React.FC = () => {
                     {activeTab === 'tds' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* TDS Section */}
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
-                                <div className="p-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/10">
-                                    <div className="flex items-center gap-5">
-                                        <div className="p-3.5 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-100">
-                                            <Calculator size={24} strokeWidth={2.5} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">TDS Configuration</h3>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Income Tax withholding & Responsible person</p>
-                                        </div>
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-8 p-8">
+                                <div className="flex justify-between items-center pb-6 border-b border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <Calculator size={20} className="text-indigo-600" />
+                                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">TDS CONFIGURATION</h3>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         {isEditingTds ? (
                                             <div className="flex gap-2">
-                                                <button onClick={handleCancelTds} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
-                                                <button onClick={handleSaveTds} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
+                                                <button onClick={handleCancelTds} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                                                <button onClick={handleSaveTds} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-all"><Save size={16} /> Save Settings</button>
                                             </div>
                                         ) : (
-                                            <button onClick={handleEditTds} className="p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all flex items-center gap-2 px-4 font-black text-xs uppercase tracking-widest">
+                                            <button onClick={handleEditTds} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 transition-all">
                                                 <Edit2 size={16} /> Edit Settings
                                             </button>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="p-8 space-y-10">
+                                <div className="space-y-10">
                                     {/* TDS Top Toggle - Always visible and interactive in Edit Mode */}
                                     <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
                                         <div className="flex items-center gap-4">
