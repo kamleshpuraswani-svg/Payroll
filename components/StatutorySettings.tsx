@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Save, Activity, Shield, Briefcase, ChevronDown, Info, AlertCircle, Check, Calendar, X, Award, Trash2, Calculator, Building2 } from 'lucide-react';
+import { Edit2, Save, Activity, Shield, Briefcase, ChevronDown, Info, AlertCircle, Check, Calendar, X, Award, Trash2, Calculator, Building2, Lightbulb, Eye, User, Mail } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 const BUSINESS_UNITS = [
@@ -43,6 +43,8 @@ const DEPARTMENTS = [
 const StatutorySettings: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showContributionModal, setShowContributionModal] = useState(false);
+    const [showBelowLimitModal, setShowBelowLimitModal] = useState(false);
+    const [showSplitupModal, setShowSplitupModal] = useState(false);
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
@@ -61,16 +63,17 @@ const StatutorySettings: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            const { data, error } = await supabase
+            // 1. Fetch Statutory Settings
+            const { data: statutoryData, error: statutoryError } = await supabase
                 .from('operational_config')
                 .select('config_value')
                 .eq('config_key', `statutory_settings:${selectedTarget}`)
                 .single();
 
-            if (error && error.code !== 'PGRST116') throw error;
+            if (statutoryError && statutoryError.code !== 'PGRST116') throw statutoryError;
             
-            if (data?.config_value) {
-                const config = data.config_value;
+            if (statutoryData?.config_value) {
+                const config = statutoryData.config_value;
                 setEnableEsi(config.enableEsi ?? true);
                 setEsiNumber(config.esiNumber ?? '00-00-000000-000-0000');
                 setEsiEstablishmentName(config.esiEstablishmentName ?? 'TechFlow Systems Pvt Ltd');
@@ -114,8 +117,57 @@ const StatutorySettings: React.FC = () => {
                 setNpsWageCeiling(config.npsWageCeiling ?? false);
                 setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
             }
+
+            // 2. Fetch PF Settings
+            const { data: pfData, error: pfError } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `pf_settings:${selectedTarget}`)
+                .single();
+
+            if (pfError && pfError.code !== 'PGRST116') throw pfError;
+
+            if (pfData?.config_value) {
+                const config = pfData.config_value;
+                setEnablePf(config.enablePf ?? true);
+                setPfNumber(config.pfNumber ?? 'AA/AAA/1234567/000');
+                setPfEstablishmentName(config.establishmentName ?? 'TechFlow Systems Pvt Ltd');
+                setEpfJoiningDate(config.epfJoiningDate ?? '2023-01-12');
+                setPfEmpRate(config.empRate ?? '12% of Actual PF Wage');
+                setPfEmprRate(config.emprRate ?? '12% of Actual PF Wage');
+                setPfEmpLimit(config.empLimit ?? '1800');
+                setPfEmprLimit(config.emprLimit ?? '1800');
+                setIncludeEmprContriPf(config.includeEmprContri ?? true);
+                setIncludeEdli(config.includeEdli ?? false);
+                setIncludeAdminCharges(config.includeAdminCharges ?? false);
+                setOverridePfRate(config.overrideRate ?? false);
+                setPfProrateRestricted(config.prorateRestricted ?? false);
+                setPfConsiderComponents(config.considerComponents ?? true);
+                setPfBelowLimitComponents(config.belowLimitComponents ?? ['Basic Salary', 'Dearness Allowances (DA)']);
+            }
+
+            // 3. Fetch TDS Settings
+            const { data: tdsData, error: tdsError } = await supabase
+                .from('operational_config')
+                .select('config_value')
+                .eq('config_key', `tds_settings:${selectedTarget}`)
+                .single();
+
+            if (tdsError && tdsError.code !== 'PGRST116') throw tdsError;
+
+            if (tdsData?.config_value) {
+                const config = tdsData.config_value;
+                setEnableTds(config.enableTds ?? true);
+                setTan(config.tan ?? 'DELA12345B');
+                setDefaultRegime(config.defaultRegime ?? 'New Regime');
+                setLinkDeclarations(config.linkDeclarations ?? true);
+                setChallanReminder(config.challanReminder ?? true);
+                setRespName(config.respName ?? 'Rajesh Kumar');
+                setRespDesg(config.respDesg ?? 'Finance Manager');
+                setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
+            }
         } catch (err) {
-            console.error('Error fetching statutory settings:', err);
+            console.error('Error fetching settings:', err);
         }
     };
 
@@ -185,6 +237,33 @@ const StatutorySettings: React.FC = () => {
     const [npsWageCeiling, setNpsWageCeiling] = useState(false);
     const [npsIncludeInCtc, setNpsIncludeInCtc] = useState(true);
 
+    // PF State
+    const [enablePf, setEnablePf] = useState(true);
+    const [pfNumber, setPfNumber] = useState('AA/AAA/1234567/000');
+    const [pfEstablishmentName, setPfEstablishmentName] = useState('TechFlow Systems Pvt Ltd');
+    const [epfJoiningDate, setEpfJoiningDate] = useState('2023-01-12');
+    const [pfEmpRate, setPfEmpRate] = useState('12% of Actual PF Wage');
+    const [pfEmprRate, setPfEmprRate] = useState('12% of Actual PF Wage');
+    const [pfEmpLimit, setPfEmpLimit] = useState('1800');
+    const [pfEmprLimit, setPfEmprLimit] = useState('1800');
+    const [includeEmprContriPf, setIncludeEmprContriPf] = useState(true);
+    const [includeEdli, setIncludeEdli] = useState(false);
+    const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
+    const [overridePfRate, setOverridePfRate] = useState(false);
+    const [pfProrateRestricted, setPfProrateRestricted] = useState(false);
+    const [pfConsiderComponents, setPfConsiderComponents] = useState(true);
+    const [pfBelowLimitComponents, setPfBelowLimitComponents] = useState<string[]>(['Basic Salary', 'Dearness Allowances (DA)']);
+
+    // TDS State
+    const [enableTds, setEnableTds] = useState(true);
+    const [tan, setTan] = useState('DELA12345B');
+    const [defaultRegime, setDefaultRegime] = useState('New Regime');
+    const [linkDeclarations, setLinkDeclarations] = useState(true);
+    const [challanReminder, setChallanReminder] = useState(true);
+    const [respName, setRespName] = useState('Rajesh Kumar');
+    const [respDesg, setRespDesg] = useState('Finance Manager');
+    const [respEmail, setRespEmail] = useState('rajesh.k@techflow.com');
+
     // Backup State for Cancel
     const [backupState, setBackupState] = useState<any>(null);
 
@@ -210,14 +289,19 @@ const StatutorySettings: React.FC = () => {
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
             enableLwf, lwfState,
             ptState, ptNumber,
-            enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
+            enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc,
+            // PF
+            enablePf, pfNumber, pfEstablishmentName, epfJoiningDate, pfEmpRate, pfEmprRate, pfEmpLimit, pfEmprLimit, includeEmprContriPf, includeEdli, includeAdminCharges, overridePfRate, pfProrateRestricted, pfConsiderComponents, pfBelowLimitComponents: [...pfBelowLimitComponents],
+            // TDS
+            enableTds, tan, defaultRegime, linkDeclarations, challanReminder, respName, respDesg, respEmail
         });
         setIsEditing(true);
     };
 
     const handleSave = async () => {
         try {
-            const configValue = {
+            // 1. Save Statutory Settings
+            const statutoryConfig = {
                 enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents,
                 enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
                 selectedGratuityDepts, gratuityCalculationComponents,
@@ -231,18 +315,44 @@ const StatutorySettings: React.FC = () => {
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
             };
 
-            const { error } = await supabase
+            await supabase
                 .from('operational_config')
                 .upsert({
                     config_key: `statutory_settings:${selectedTarget}`,
-                    config_value: configValue,
+                    config_value: statutoryConfig,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'config_key' });
 
-            if (error) throw error;
+            // 2. Save PF Settings
+            const pfConfig = {
+                enablePf, pfNumber, establishmentName: pfEstablishmentName, epfJoiningDate, empRate: pfEmpRate, emprRate: pfEmprRate, empLimit: pfEmpLimit, emprLimit: pfEmprLimit, includeEmprContri: includeEmprContriPf, includeEdli, includeAdminCharges, overrideRate: overridePfRate, prorateRestricted: pfProrateRestricted, considerComponents: pfConsiderComponents, belowLimitComponents: pfBelowLimitComponents
+            };
+
+            await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `pf_settings:${selectedTarget}`,
+                    config_value: pfConfig,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            // 3. Save TDS Settings
+            const tdsConfig = {
+                enableTds, tan, defaultRegime, linkDeclarations, challanReminder,
+                respName, respDesg, respEmail
+            };
+
+            await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `tds_settings:${selectedTarget}`,
+                    config_value: tdsConfig,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
             setIsEditing(false);
         } catch (err) {
-            console.error('Error saving statutory settings:', err);
+            console.error('Error saving settings:', err);
             alert('Failed to save settings. Please try again.');
         }
     };
@@ -295,6 +405,33 @@ const StatutorySettings: React.FC = () => {
             setNpsEmprRate(backupState.npsEmprRate);
             setNpsWageCeiling(backupState.npsWageCeiling);
             setNpsIncludeInCtc(backupState.npsIncludeInCtc);
+
+            // PF
+            setEnablePf(backupState.enablePf);
+            setPfNumber(backupState.pfNumber);
+            setPfEstablishmentName(backupState.pfEstablishmentName);
+            setEpfJoiningDate(backupState.epfJoiningDate);
+            setPfEmpRate(backupState.pfEmpRate);
+            setPfEmprRate(backupState.pfEmprRate);
+            setPfEmpLimit(backupState.pfEmpLimit);
+            setPfEmprLimit(backupState.pfEmprLimit);
+            setIncludeEmprContriPf(backupState.includeEmprContriPf);
+            setIncludeEdli(backupState.includeEdli);
+            setIncludeAdminCharges(backupState.includeAdminCharges);
+            setOverridePfRate(backupState.overridePfRate);
+            setPfProrateRestricted(backupState.pfProrateRestricted);
+            setPfConsiderComponents(backupState.pfConsiderComponents);
+            setPfBelowLimitComponents(backupState.pfBelowLimitComponents);
+
+            // TDS
+            setEnableTds(backupState.enableTds);
+            setTan(backupState.tan);
+            setDefaultRegime(backupState.defaultRegime);
+            setLinkDeclarations(backupState.linkDeclarations);
+            setChallanReminder(backupState.challanReminder);
+            setRespName(backupState.respName);
+            setRespDesg(backupState.respDesg);
+            setRespEmail(backupState.respEmail);
         }
         setIsEditing(false);
     };
@@ -333,6 +470,15 @@ const StatutorySettings: React.FC = () => {
         if (!isEditing) return;
         setIncludedServicePeriods(prev =>
             prev.includes(period) ? prev.filter(p => p !== period) : [...prev, period]
+        );
+    };
+
+    const togglePfBelowLimitComponent = (component: string) => {
+        if (!isEditing) return;
+        setPfBelowLimitComponents(prev =>
+            prev.includes(component)
+                ? prev.filter(c => c !== component)
+                : [...prev, component]
         );
     };
 
@@ -1054,7 +1200,243 @@ const StatutorySettings: React.FC = () => {
                         )}
                     </div>
 
-                    {/* 3. LWF Settings */}
+                    {/* 3. Provident Fund (PF) */}
+                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <Activity size={20} className="text-sky-600" />
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROVIDENT FUND (PF)</h3>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked={enablePf} onChange={() => isEditing && setEnablePf(!enablePf)} disabled={!isEditing} className="sr-only peer" />
+                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                            </label>
+                        </div>
+
+                        {enablePf && (
+                            <div className="space-y-10 animate-in fade-in">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">EPF Number</label>
+                                        <input type="text" value={pfNumber} onChange={(e) => setPfNumber(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name</label>
+                                        <input type="text" value={pfEstablishmentName} onChange={(e) => setPfEstablishmentName(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">EPF Joining Date</label>
+                                        <div className="relative">
+                                            <input type="date" value={epfJoiningDate} onChange={(e) => setEpfJoiningDate(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50" />
+                                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 border border-blue-100 bg-blue-50/30 rounded-xl space-y-4">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="flex gap-3">
+                                            <div className="p-2 bg-blue-100 rounded-lg shrink-0 h-fit">
+                                                <Lightbulb className="text-blue-600" size={18} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-slate-800">Understanding PF Contribution Calculations</h4>
+                                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                                    Calculations are performed on 'Actual PF Wage' (Sum of Basic, DA, and other specific components). 
+                                                    Employer's 12% is split into EPF (3.67%) and EPS (8.33%). 
+                                                    Employee's 12% goes entirely to EPF.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowSplitupModal(true)}
+                                            className="px-3 py-1.5 bg-white border border-blue-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 transition-colors flex items-center gap-1.5 shrink-0"
+                                        >
+                                            <Eye size={14} /> View Splitup
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                    {/* Employee Contribution */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-1.5 h-6 bg-sky-500 rounded-full"></div>
+                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">EMPLOYEE CONTRIBUTION</h4>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="block text-sm font-bold text-slate-700">PF Contribution Rate</label>
+                                            <div className="space-y-4">
+                                                {[
+                                                    { label: '12% of Actual PF Wage', sub: 'Calculated on total PF-applicable earnings' },
+                                                    { label: '12% of Restricted PF Wage', sub: 'Capped at statutory limit of ₹15,000 pm (Max ₹1,800)' }
+                                                ].map((rate) => (
+                                                    <label key={rate.label} className={`flex items-start gap-3 p-4 border rounded-xl transition-all ${isEditing ? 'cursor-pointer hover:border-sky-300 hover:bg-sky-50/30' : 'cursor-default'} ${pfEmpRate === rate.label ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/20' : 'border-slate-200 bg-white'}`}>
+                                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${pfEmpRate === rate.label ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                            {pfEmpRate === rate.label && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                        </div>
+                                                        <input type="radio" name="pfEmpRate" checked={pfEmpRate === rate.label} onChange={() => isEditing && setPfEmpRate(rate.label)} className="hidden" disabled={!isEditing} />
+                                                        <div className="space-y-1">
+                                                            <div className="text-sm font-bold text-slate-800">{rate.label}</div>
+                                                            <div className="text-xs text-slate-500">{rate.sub}</div>
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {pfEmpRate === '12% of Actual PF Wage' && (
+                                            <div className="pt-2">
+                                                <label className="flex items-center gap-2 mb-2">
+                                                    <span className="text-sm font-bold text-slate-700">Deduction Limit (User Defined)</span>
+                                                    <Info size={14} className="text-slate-400" />
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                                                    <input type="number" value={pfEmpLimit} onChange={(e) => setPfEmpLimit(e.target.value)} disabled={!isEditing} className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-slate-400 disabled:bg-slate-50" />
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 mt-2 italic font-medium">Use '0' for no limit deduction.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Employer Contribution */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-1.5 h-6 bg-slate-900 rounded-full"></div>
+                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">EMPLOYER CONTRIBUTION</h4>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="block text-sm font-bold text-slate-700">PF Contribution Rate</label>
+                                            <div className="space-y-4">
+                                                {[
+                                                    { label: '12% of Actual PF Wage', sub: 'Calculated on total PF-applicable earnings' },
+                                                    { label: '12% of Restricted PF Wage', sub: 'Capped at statutory limit of ₹15,000 pm (Max ₹1,800)' }
+                                                ].map((rate) => (
+                                                    <label key={rate.label} className={`flex items-start gap-3 p-4 border rounded-xl transition-all ${isEditing ? 'cursor-pointer hover:border-slate-900/10 hover:bg-slate-50' : 'cursor-default'} ${pfEmprRate === rate.label ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900/10' : 'border-slate-200 bg-white'}`}>
+                                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${pfEmprRate === rate.label ? 'border-slate-900 shadow-sm' : 'border-slate-300'}`}>
+                                                            {pfEmprRate === rate.label && <div className="w-2.5 h-2.5 rounded-full bg-slate-900" />}
+                                                        </div>
+                                                        <input type="radio" name="pfEmprRate" checked={pfEmprRate === rate.label} onChange={() => isEditing && setPfEmprRate(rate.label)} className="hidden" disabled={!isEditing} />
+                                                        <div className="space-y-1">
+                                                            <div className="text-sm font-bold text-slate-800">{rate.label}</div>
+                                                            <div className="text-xs text-slate-500">{rate.sub}</div>
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-5 pt-2">
+                                            <label className="flex items-center gap-3 cursor-pointer group">
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEmprContriPf ? 'bg-slate-900 border-slate-900' : 'border-slate-300 bg-white'}`}>
+                                                    {includeEmprContriPf && <Check size={14} className="text-white stroke-[3]" />}
+                                                </div>
+                                                <input type="checkbox" className="hidden" checked={includeEmprContriPf} onChange={() => isEditing && setIncludeEmprContriPf(!includeEmprContriPf)} disabled={!isEditing} />
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Include Employer's contribution in CTC</span>
+                                            </label>
+
+                                            <label className="flex items-center gap-3 cursor-pointer group">
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEdli ? 'bg-slate-900 border-slate-900' : 'border-slate-300 bg-white'}`}>
+                                                    {includeEdli && <Check size={14} className="text-white stroke-[3]" />}
+                                                </div>
+                                                <input type="checkbox" className="hidden" checked={includeEdli} onChange={() => isEditing && setIncludeEdli(!includeEdli)} disabled={!isEditing} />
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Calculate EDLI Charges (Max ₹75/mo)</span>
+                                            </label>
+
+                                            <label className="flex items-center gap-3 cursor-pointer group">
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeAdminCharges ? 'bg-slate-900 border-slate-900' : 'border-slate-300 bg-white'}`}>
+                                                    {includeAdminCharges && <Check size={14} className="text-white stroke-[3]" />}
+                                                </div>
+                                                <input type="checkbox" className="hidden" checked={includeAdminCharges} onChange={() => isEditing && setIncludeAdminCharges(!includeAdminCharges)} disabled={!isEditing} />
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Include Admin Charges (0.50% of Wage)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6 pt-6 border-t border-slate-100">
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Advanced Configurations</h4>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className={`p-5 rounded-2xl border transition-all ${overridePfRate ? 'bg-amber-50/50 border-amber-200 ring-1 ring-amber-500/10' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <h5 className="text-sm font-bold text-slate-800">Override PF Contribution Rate</h5>
+                                                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                                        Enable this to override the default rate at individual employee profile level.
+                                                    </p>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" checked={overridePfRate} onChange={() => isEditing && setOverridePfRate(!overridePfRate)} disabled={!isEditing} className="sr-only peer" />
+                                                    <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className={`p-5 rounded-2xl border transition-all ${pfProrateRestricted ? 'bg-indigo-50/50 border-indigo-200 ring-1 ring-indigo-500/10' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <h5 className="text-sm font-bold text-slate-800">Pro-rate Restricted PF Wage</h5>
+                                                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                                        During Loss of Pay (LOP), should the ₹15,000 statutory limit be pro-rated accordingly?
+                                                    </p>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" checked={pfProrateRestricted} onChange={() => isEditing && setPfProrateRestricted(!pfProrateRestricted)} disabled={!isEditing} className="sr-only peer" />
+                                                    <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6 pt-6 border-t border-slate-100">
+                                    <div className="flex justify-between items-end pr-1">
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">PF Wage Components</h4>
+                                            <p className="text-[11px] text-slate-500 font-medium">Select components to be considered for PF calculation when Actual PF Wage &lt; ₹15,000 pm.</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowBelowLimitModal(true)}
+                                            className="text-[11px] font-black text-sky-600 hover:text-sky-700 uppercase tracking-wider flex items-center gap-1 transition-colors"
+                                        >
+                                            How it works? <Info size={12} />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {[
+                                            'Basic Salary',
+                                            'Dearness Allowances (DA)',
+                                            'Special Allowance',
+                                            'Conveyance Allowance',
+                                            'Medical Allowance',
+                                            'HRA'
+                                        ].map(item => (
+                                            <label key={item} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'cursor-pointer hover:border-sky-200 hover:bg-sky-50/50' : 'cursor-default'} ${pfBelowLimitComponents.includes(item) ? 'border-sky-200 bg-sky-50/50 shadow-sm' : 'border-slate-200 bg-white'}`}>
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${pfBelowLimitComponents.includes(item) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                    {pfBelowLimitComponents.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    className="hidden"
+                                                    checked={pfBelowLimitComponents.includes(item)}
+                                                    onChange={() => togglePfBelowLimitComponent(item)}
+                                                    disabled={!isEditing}
+                                                />
+                                                <span className={`text-xs font-semibold ${pfBelowLimitComponents.includes(item) ? 'text-sky-900' : 'text-slate-600'}`}>{item}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 4. LWF Settings */}
                     <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-3">
@@ -1091,7 +1473,7 @@ const StatutorySettings: React.FC = () => {
                         )}
                     </div>
 
-                    {/* 4. Professional Tax */}
+                    {/* 5. Professional Tax */}
                     <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-8 border-b border-slate-100 pb-4">PROFESSIONAL TAX</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1128,7 +1510,7 @@ const StatutorySettings: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* 5. NPS Settings */}
+                    {/* 6. NPS Settings */}
                     <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
@@ -1248,8 +1630,210 @@ const StatutorySettings: React.FC = () => {
                             </div>
                         )}
                     </div>
+                    {/* 7. TDS Settings */}
+                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <Building2 size={20} className="text-sky-600" />
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">TDS CONFIGURATION</h3>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked={enableTds} onChange={() => isEditing && setEnableTds(!enableTds)} disabled={!isEditing} className="sr-only peer" />
+                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                            </label>
+                        </div>
+
+                        {enableTds && (
+                            <div className="space-y-8 animate-in fade-in">
+                                <p className="text-sm text-slate-500 -mt-4">
+                                    Configure Tax Deducted at Source (TDS) parameters and filing details as per Income Tax rules.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">TAN (Tax Deduction Account Number)</label>
+                                        <input
+                                            type="text"
+                                            value={tan}
+                                            onChange={(e) => setTan(e.target.value)}
+                                            disabled={!isEditing}
+                                            placeholder="e.g., DELA12345B"
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50 font-mono uppercase"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Default Tax Regime</label>
+                                        <div className="relative">
+                                            <select
+                                                value={defaultRegime}
+                                                onChange={(e) => setDefaultRegime(e.target.value)}
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none focus:outline-none focus:border-slate-400 disabled:bg-slate-50 disabled:cursor-not-allowed bg-white"
+                                            >
+                                                <option>New Regime</option>
+                                                <option>Old Regime</option>
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${linkDeclarations ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {linkDeclarations && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={linkDeclarations} onChange={() => isEditing && setLinkDeclarations(!linkDeclarations)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Link Investment Declarations for calculation</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${challanReminder ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {challanReminder && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={challanReminder} onChange={() => isEditing && setChallanReminder(!challanReminder)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">TDS Challan Deposit Reminder</span>
+                                    </label>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100">
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                        <User size={14} className="text-sky-600" /> Responsible Person (For TRACES)
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Full Name</label>
+                                            <input type="text" value={respName} onChange={e => setRespName(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50" placeholder="Name" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Designation</label>
+                                            <input type="text" value={respDesg} onChange={e => setRespDesg(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50" placeholder="Designation" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Email Address</label>
+                                            <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400 disabled:bg-slate-50" placeholder="official@company.com" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            {/* PF Splitup Modal */}
+            {showSplitupModal && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight">PF Contribution Splitup</h3>
+                                <p className="text-xs text-slate-400 font-bold mt-0.5 uppercase tracking-widest underline decoration-sky-300 underline-offset-4">Employer's 12% Breakdown</p>
+                            </div>
+                            <button onClick={() => setShowSplitupModal(false)} className="p-2 hover:bg-white hover:shadow-md rounded-full transition-all text-slate-400 hover:text-rose-500">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-8">
+                            <div className="space-y-6">
+                                <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <span className="text-xs font-black text-indigo-900 uppercase tracking-widest">EPS Contribution</span>
+                                        <span className="bg-indigo-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">8.33%</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-indigo-700/70 leading-relaxed italic">
+                                        Goes to Employee Pension Scheme. Capped at ₹1,250 pm (8.33% of ₹15,000).
+                                    </p>
+                                </div>
+
+                                <div className="p-5 bg-sky-50 border border-sky-100 rounded-2xl">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <span className="text-xs font-black text-sky-900 uppercase tracking-widest">EPF Contribution</span>
+                                        <span className="bg-sky-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">3.67%</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-sky-700/70 leading-relaxed italic">
+                                        Goes to Employee Provident Fund account. Remainder of employer's 12% after EPS.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-4 bg-slate-900 rounded-2xl p-4 shadow-xl">
+                                    <div className="p-2.5 bg-white/10 rounded-xl">
+                                        <Calculator className="text-white" size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Employer PF</p>
+                                        <p className="text-lg font-black text-white">8.33% + 3.67% = 12%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* PF Below Limit Modal */}
+            {showBelowLimitModal && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight leading-none">PF Wage Components</h3>
+                                <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest flex items-center gap-1.5">
+                                    <Info size={12} className="text-sky-500" /> Statutory Calculation Guide
+                                </p>
+                            </div>
+                            <button onClick={() => setShowBelowLimitModal(false)} className="p-2 hover:bg-white hover:shadow-md rounded-full transition-all text-slate-400 hover:text-rose-500">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shrink-0 mt-1">
+                                        <span className="text-sky-700 font-black text-xs">01</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-slate-800 uppercase tracking-tight">The ₹15,000 Threshold</h4>
+                                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                            If an employee's total 'Actual PF Wage' is less than ₹15,000 per month, the PF calculation must consider specific salary components as defined here.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4">
+                                    <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shrink-0 mt-1">
+                                        <span className="text-sky-700 font-black text-xs">02</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Mandatory Components</h4>
+                                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                            As per the EPF Act, 'Basic Salary' and 'Dearness Allowance (DA)' are always mandatory for PF calculation, regardless of the wage amount.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4">
+                                    <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shrink-0 mt-1">
+                                        <span className="text-sky-700 font-black text-xs">03</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Inclusion Logic</h4>
+                                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                            All components selected in the UI will be summed up to determine the 'Actual PF Wage'. If this sum exceeds ₹15,000, then the selected 'PF Contribution Rate' logic (Actual vs Restricted) will apply.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl">
+                                <p className="text-xs text-amber-800 font-bold italic leading-relaxed">
+                                    "It is recommended to include Special Allowance to avoid legal disputes regarding 'Universal Wage' definition, especially for low-wage employees."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Contribution Period Modal */}
             {showContributionModal && (
