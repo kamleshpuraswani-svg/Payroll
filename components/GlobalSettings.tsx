@@ -35,6 +35,7 @@ import LoanAdvancesTypes from './LoanAdvancesTypes';
 import FnFSettlementTemplate from './FnFSettlementTemplate';
 import ExpenseSettings from './ExpenseSettings';
 import PayrollPaygroup from './PayrollPaygroup';
+import PfTdsSettings from './PfTdsSettings';
 
 interface GlobalSettingsProps {
    userRole?: string;
@@ -55,11 +56,13 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },
       { id: 'bank', label: 'Bank Disbursal Format', icon: CreditCard },
-      { id: 'pf-settings', label: 'PF Settings', icon: Shield },
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
+      ...(userRole === 'HR_MANAGER' ? [{ id: 'pf-tds', label: 'PF & TDS Settings', icon: Shield }] : [
+          { id: 'pf-settings', label: 'PF Settings', icon: Shield },
+          { id: 'tds-settings', label: 'TDS Settings', icon: Landmark }
+      ]),
       { id: 'statutory-bonus', label: 'Statutory Bonus', icon: Award },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
-      { id: 'tds-settings', label: 'TDS Settings', icon: Landmark },
    ];
 
    const renderContent = () => {
@@ -78,6 +81,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          case 'bank': return <HRBankDisbursalTemplate />;
          case 'pf-settings': return <PFSettings />;
          case 'statutory': return <StatutorySettings />;
+         case 'pf-tds': return <PfTdsSettings />;
          case 'statutory-bonus': return <StatutoryBonusSettings />;
          case 'it-declaration': return <IncomeTaxDeclarationSettings />;
          case 'tds-settings': return <TDSSettings />;
