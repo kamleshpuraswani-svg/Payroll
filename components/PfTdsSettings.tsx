@@ -190,16 +190,16 @@ const PfTdsSettings: React.FC = () => {
                 <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200 shadow-sm">
                     <button 
                         onClick={() => setActiveTab('pf')} 
-                        className={`flex items-center gap-3 px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${activeTab === 'pf' ? 'bg-white text-sky-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
+                        className={`flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 ${activeTab === 'pf' ? 'bg-white text-sky-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
                     >
-                        <Shield size={16} />
+                        <Shield size={18} />
                         PF Settings
                     </button>
                     <button 
                         onClick={() => setActiveTab('tds')} 
-                        className={`flex items-center gap-3 px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${activeTab === 'tds' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
+                        className={`flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 ${activeTab === 'tds' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
                     >
-                        <Calculator size={16} />
+                        <Calculator size={18} />
                         TDS Settings
                     </button>
                 </div>
