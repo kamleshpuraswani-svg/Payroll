@@ -12,10 +12,10 @@ interface PaySchedule {
     payDate: string;
     status: 'Active' | 'Inactive';
     effectiveDate?: string;
-    targetId?: string; // id of paygroup or BU
     targetType?: 'Paygroup' | 'BusinessUnit';
     created_by?: string;
     last_modified_by?: string;
+    processingDate?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -101,6 +101,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     // Semi-Monthly Specific State
     const [smFirstType, setSmFirstType] = useState<'15th' | 'custom'>('15th');
     const [smFirstCustomDay, setSmFirstCustomDay] = useState('15');
+    const [processingDate, setProcessingDate] = useState('1');
 
     const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>('last');
     const [smSecondCustomDay, setSmSecondCustomDay] = useState('16'); // Default to 16th of following month if custom
@@ -124,6 +125,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             if (initialData.effectiveDate) {
                 setEffectiveDate(initialData.effectiveDate);
             }
+            if (initialData.processingDate) {
+                setProcessingDate(initialData.processingDate);
+            }
         }
     }, [initialData]);
 
@@ -142,6 +146,13 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         nextMonthYearForDropdown++;
     }
     const daysInNextMonth = new Date(nextMonthYearForDropdown, nextMonthIndexForDropdown + 1, 0).getDate();
+
+    // Reset processing date if it exceeds current month's days
+    useEffect(() => {
+        if (parseInt(processingDate) > daysInSelectedMonth) {
+            setProcessingDate(daysInSelectedMonth.toString());
+        }
+    }, [daysInSelectedMonth]);
 
     // Generate Pay Date Options based on Frequency & Selections
     const payDateOptions = useMemo(() => {
@@ -254,7 +265,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             name: initialData?.name || (frequency === 'Monthly' ? 'New Monthly Schedule' : `${frequency} Schedule`),
             status: initialData?.status || 'Active',
             payDate: payDateDesc,
-            effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate
+            effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
+            processingDate: frequency === 'Monthly' ? processingDate : undefined
         }, { targetId, targetType });
     };
 
@@ -566,6 +578,24 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                         {errors.startMonth && <p className="text-xs text-rose-500 mt-1">{errors.startMonth}</p>}
                                     </div>
+
+                                    {frequency === 'Monthly' && (
+                                        <div className="animate-in fade-in slide-in-from-top-2">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
+                                            <div className="relative">
+                                                <select
+                                                    value={processingDate}
+                                                    onChange={(e) => setProcessingDate(e.target.value)}
+                                                    className="w-full border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20"
+                                                >
+                                                    {Array.from({ length: daysInSelectedMonth }, (_, i) => i + 1).map(d => (
+                                                        <option key={d} value={d}>{d}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Select a pay date for your first payroll <span className="text-rose-500">*</span></label>
