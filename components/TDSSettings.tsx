@@ -42,7 +42,6 @@ const TDSSettings: React.FC = () => {
                 setEnableTds(config.enableTds ?? true);
                 setTan(config.tan ?? 'DELA12345B');
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
-                setLinkDeclarations(config.linkDeclarations ?? true);
                 setRespName(config.respName ?? 'Rajesh Kumar');
                 setRespDesg(config.respDesg ?? 'Finance Manager');
                 setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
@@ -61,7 +60,6 @@ const TDSSettings: React.FC = () => {
     const [enableTds, setEnableTds] = useState(true);
     const [tan, setTan] = useState('DELA12345B');
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
-    const [linkDeclarations, setLinkDeclarations] = useState(true);
     
     // Responsible Person
     const [respName, setRespName] = useState('Rajesh Kumar');
@@ -73,7 +71,7 @@ const TDSSettings: React.FC = () => {
 
     const handleEdit = () => {
         setBackup({
-            enableTds, tan, defaultRegime, linkDeclarations,
+            enableTds, tan, defaultRegime,
             respName, respDesg, respEmail
         });
         setIsEditing(true);
@@ -84,7 +82,6 @@ const TDSSettings: React.FC = () => {
             setEnableTds(backup.enableTds);
             setTan(backup.tan);
             setDefaultRegime(backup.defaultRegime);
-            setLinkDeclarations(backup.linkDeclarations);
             setRespName(backup.respName);
             setRespDesg(backup.respDesg);
             setRespEmail(backup.respEmail);
@@ -95,7 +92,7 @@ const TDSSettings: React.FC = () => {
     const handleSave = async () => {
         try {
             const configValue = {
-                enableTds, tan, defaultRegime, linkDeclarations,
+                enableTds, tan, defaultRegime,
                 respName, respDesg, respEmail
             };
 
@@ -198,7 +195,8 @@ const TDSSettings: React.FC = () => {
                     {enableTds && (
                         <div className="p-8 space-y-8 animate-in slide-in-from-top-2">
                             {/* Form Fields */}
-                            <div className="grid grid-cols-1 gap-6">
+                            {/* TAN & Tax Regime Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* TAN */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -241,26 +239,7 @@ const TDSSettings: React.FC = () => {
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
                                 </div>
-
-                                {/* Link Declarations Toggle */}
-                                <div className="p-4 border border-slate-200 rounded-xl bg-slate-50 flex items-start justify-between gap-4">
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-800">Link Investment Declarations</h4>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            Use employee declarations for TDS calculation. Ensures accurate exemptions (80C, 80D, HRA, etc.) are applied.
-                                        </p>
-                                    </div>
-                                    <label className={`relative inline-flex items-center shrink-0 ${isEditing ? 'cursor-pointer' : 'cursor-default opacity-80'}`}>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={linkDeclarations} 
-                                            onChange={() => isEditing && setLinkDeclarations(!linkDeclarations)} 
-                                            disabled={!isEditing}
-                                            className="sr-only peer" 
-                                        />
-                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-                                    </label>
-                                </div>
+                            </div>
 
                                 {/* Responsible Person */}
                                 <div className="pt-4 border-t border-slate-100">
@@ -311,16 +290,16 @@ const TDSSettings: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* Info Banner */}
-                            <div className="space-y-6 pt-4 border-t border-slate-100">
-                                <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 flex items-start gap-3">
-                                    <Info size={20} className="text-sky-600 mt-0.5 shrink-0" />
-                                    <p className="text-sm text-sky-800 leading-relaxed">
-                                        TAN is mandatory for generating Form 24Q. Link declarations to reduce employee TDS burden by factoring in their tax-saving investments automatically.
-                                    </p>
+
+                                {/* Info Banner */}
+                                <div className="space-y-6 pt-4 border-t border-slate-100">
+                                    <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 flex items-start gap-3">
+                                        <Info size={20} className="text-sky-600 mt-0.5 shrink-0" />
+                                        <p className="text-sm text-sky-800 leading-relaxed">
+                                            TAN is mandatory for generating Form 24Q. Tax Regime determines the default tax slab calculation for employees when no specific declarations are linked.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
