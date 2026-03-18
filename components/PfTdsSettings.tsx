@@ -46,7 +46,6 @@ const PfTdsSettings: React.FC = () => {
     const [tan, setTan] = useState('DELA12345B');
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
     const [linkDeclarations, setLinkDeclarations] = useState(true);
-    const [challanReminder, setChallanReminder] = useState(true);
     const [respName, setRespName] = useState('Rajesh Kumar');
     const [respDesg, setRespDesg] = useState('Finance Manager');
     const [respEmail, setRespEmail] = useState('rajesh.k@techflow.com');
@@ -100,7 +99,6 @@ const PfTdsSettings: React.FC = () => {
                 setTan(config.tan ?? 'DELA12345B');
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setLinkDeclarations(config.linkDeclarations ?? true);
-                setChallanReminder(config.challanReminder ?? true);
                 setRespName(config.respName ?? 'Rajesh Kumar');
                 setRespDesg(config.respDesg ?? 'Finance Manager');
                 setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
@@ -131,14 +129,14 @@ const PfTdsSettings: React.FC = () => {
     };
 
     const handleEditTds = () => {
-        setBackupTds({ enableTds, tan, defaultRegime, linkDeclarations, challanReminder, respName, respDesg, respEmail });
+        setBackupTds({ enableTds, tan, defaultRegime, linkDeclarations, respName, respDesg, respEmail });
         setIsEditingTds(true);
         setActiveTab('tds');
     };
 
     const handleSaveTds = async () => {
         try {
-            const configValue = { enableTds, tan, defaultRegime, linkDeclarations, challanReminder, respName, respDesg, respEmail };
+            const configValue = { enableTds, tan, defaultRegime, linkDeclarations, respName, respDesg, respEmail };
             const { error } = await supabase.from('operational_config').upsert({ config_key: `tds_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
             if (error) throw error;
             setIsEditingTds(false);
@@ -147,7 +145,7 @@ const PfTdsSettings: React.FC = () => {
 
     const handleCancelTds = () => {
         if (backupTds) {
-            setEnableTds(backupTds.enableTds); setTan(backupTds.tan); setDefaultRegime(backupTds.defaultRegime); setLinkDeclarations(backupTds.linkDeclarations); setChallanReminder(backupTds.challanReminder); setRespName(backupTds.respName); setRespDesg(backupTds.respDesg); setRespEmail(backupTds.respEmail);
+            setEnableTds(backupTds.enableTds); setTan(backupTds.tan); setDefaultRegime(backupTds.defaultRegime); setLinkDeclarations(backupTds.linkDeclarations); setRespName(backupTds.respName); setRespDesg(backupTds.respDesg); setRespEmail(backupTds.respEmail);
         }
         setIsEditingTds(false);
     };
@@ -598,18 +596,6 @@ const PfTdsSettings: React.FC = () => {
                                                         </div>
                                                         <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
                                                             <input type="checkbox" checked={linkDeclarations} onChange={() => isEditingTds && setLinkDeclarations(!linkDeclarations)} className="sr-only peer" />
-                                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div className="p-6 bg-slate-50/50 rounded-xl border border-slate-100 space-y-4">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Challan Reminders</h4>
-                                                            <p className="text-[10px] font-bold text-slate-400 mt-1 leading-relaxed">Send automatic alerts to finance team before monthly TDS payment deadline</p>
-                                                        </div>
-                                                        <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
-                                                            <input type="checkbox" checked={challanReminder} onChange={() => isEditingTds && setChallanReminder(!challanReminder)} className="sr-only peer" />
                                                             <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
                                                         </label>
                                                     </div>

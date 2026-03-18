@@ -43,7 +43,6 @@ const TDSSettings: React.FC = () => {
                 setTan(config.tan ?? 'DELA12345B');
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setLinkDeclarations(config.linkDeclarations ?? true);
-                setChallanReminder(config.challanReminder ?? true);
                 setRespName(config.respName ?? 'Rajesh Kumar');
                 setRespDesg(config.respDesg ?? 'Finance Manager');
                 setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
@@ -63,7 +62,6 @@ const TDSSettings: React.FC = () => {
     const [tan, setTan] = useState('DELA12345B');
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
     const [linkDeclarations, setLinkDeclarations] = useState(true);
-    const [challanReminder, setChallanReminder] = useState(true);
     
     // Responsible Person
     const [respName, setRespName] = useState('Rajesh Kumar');
@@ -75,7 +73,7 @@ const TDSSettings: React.FC = () => {
 
     const handleEdit = () => {
         setBackup({
-            enableTds, tan, defaultRegime, linkDeclarations, challanReminder,
+            enableTds, tan, defaultRegime, linkDeclarations,
             respName, respDesg, respEmail
         });
         setIsEditing(true);
@@ -87,7 +85,6 @@ const TDSSettings: React.FC = () => {
             setTan(backup.tan);
             setDefaultRegime(backup.defaultRegime);
             setLinkDeclarations(backup.linkDeclarations);
-            setChallanReminder(backup.challanReminder);
             setRespName(backup.respName);
             setRespDesg(backup.respDesg);
             setRespEmail(backup.respEmail);
@@ -98,7 +95,7 @@ const TDSSettings: React.FC = () => {
     const handleSave = async () => {
         try {
             const configValue = {
-                enableTds, tan, defaultRegime, linkDeclarations, challanReminder,
+                enableTds, tan, defaultRegime, linkDeclarations,
                 respName, respDesg, respEmail
             };
 
@@ -263,24 +260,6 @@ const TDSSettings: React.FC = () => {
                                         />
                                         <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
                                     </label>
-                                </div>
-
-                                {/* TDS Challan Reminder */}
-                                <div className="flex items-center justify-between py-2">
-                                    <label className="text-sm font-bold text-slate-700">TDS Challan Deposit Reminder</label>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-slate-500">Send reminders before due date</span>
-                                        <label className={`relative inline-flex items-center ${isEditing ? 'cursor-pointer' : 'cursor-default opacity-80'}`}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={challanReminder} 
-                                                onChange={() => isEditing && setChallanReminder(!challanReminder)} 
-                                                disabled={!isEditing}
-                                                className="sr-only peer" 
-                                            />
-                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-                                        </label>
-                                    </div>
                                 </div>
 
                                 {/* Responsible Person */}
