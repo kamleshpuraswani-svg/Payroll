@@ -162,13 +162,13 @@ const PfTdsSettings: React.FC = () => {
         <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header Section */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-5">
-                        <div className="p-4 bg-sky-500 rounded-3xl shadow-lg shadow-sky-200">
+                        <div className="p-4 bg-sky-500 rounded-2xl shadow-lg shadow-sky-200">
                             <Building2 className="text-white" size={32} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Statutory Settings</h2>
+                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Statutory Settings</h2>
                             <p className="text-slate-500 font-medium text-sm mt-1">Manage PF & TDS configurations for your organization</p>
                         </div>
                     </div>
@@ -194,7 +194,7 @@ const PfTdsSettings: React.FC = () => {
 
                 <div className="space-y-6">
                     {/* PF Section */}
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500 group">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500 group">
                         <div 
                             className={`p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors ${pfExpanded ? 'bg-slate-50/30 border-b border-slate-100' : ''}`}
                             onClick={() => setPfExpanded(!pfExpanded)}
@@ -212,7 +212,7 @@ const PfTdsSettings: React.FC = () => {
                                 {isEditingPf ? (
                                     <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                                         <button onClick={handleCancelPf} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
-                                        <button onClick={handleSavePf} className="px-6 py-2 bg-sky-500 text-white rounded-xl font-black text-xs shadow-lg shadow-sky-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
+                                        <button onClick={handleSavePf} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
                                     </div>
                                 ) : (
                                     <button onClick={e => { e.stopPropagation(); handleEditPf(); }} className="p-2.5 text-sky-600 hover:bg-sky-50 rounded-xl transition-all"><Edit2 size={18} /></button>
@@ -225,166 +225,156 @@ const PfTdsSettings: React.FC = () => {
 
                         {pfExpanded && (
                             <div className="p-8 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
-                                {!enablePf && !isEditingPf ? (
-                                    <div className="py-16 flex flex-col items-center text-center">
-                                        <div className="bg-slate-50 p-8 rounded-full mb-6 border border-slate-100 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                            <Shield size={56} className="text-slate-300" strokeWidth={1.5} />
+                                <div className={`space-y-10 transition-all duration-500 ${!enablePf ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                    {/* PF Top Toggle */}
+                                    <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl transition-all ${enablePf ? 'bg-sky-500 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>
+                                                <Shield size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Enable Provident Fund</h4>
+                                                <p className="text-[10px] text-slate-400 font-bold">Calculation and deduction of EPF on monthly salaries</p>
+                                            </div>
                                         </div>
-                                        <h3 className="text-2xl font-black text-slate-400">Provident Fund is Disabled</h3>
-                                        <p className="text-slate-400 mt-2 max-w-sm font-medium">Enable PF settings to configure contribution rates and establishment details.</p>
+                                        <label className={`relative inline-flex items-center cursor-pointer ${!isEditingPf && 'cursor-default opacity-80'}`}>
+                                            <input type="checkbox" checked={enablePf} onChange={() => isEditingPf && setEnablePf(!enablePf)} className="sr-only peer" />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                                        </label>
                                     </div>
-                                ) : (
-                                    <div className={`space-y-10 transition-all duration-500 ${!enablePf ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                                        {/* PF Top Toggle */}
-                                        <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`p-3 rounded-2xl transition-all ${enablePf ? 'bg-sky-500 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>
-                                                    <Shield size={20} />
+
+                                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+                                        {/* Form Fields */}
+                                        <div className="xl:col-span-8 space-y-10">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Code (Registration Number)</label>
+                                                    <input type="text" value={pfNumber} onChange={e => setPfNumber(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all placeholder:text-slate-300 disabled:opacity-70" placeholder="AA/AAA/1234567/000" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Enable Provident Fund</h4>
-                                                    <p className="text-[10px] text-slate-400 font-bold">Calculation and deduction of EPF on monthly salaries</p>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Establishment Name</label>
+                                                    <input type="text" value={establishmentName} onChange={e => setEstablishmentName(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Registration Date</label>
+                                                    <div className="relative">
+                                                        <input type="date" value={epfJoiningDate} onChange={e => setEpfJoiningDate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <label className={`relative inline-flex items-center cursor-pointer ${!isEditingPf && 'pointer-events-none opacity-50'}`}>
-                                                <input type="checkbox" checked={enablePf} onChange={() => isEditingPf && setEnablePf(!enablePf)} className="sr-only peer" />
-                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500 shadow-inner"></div>
-                                            </label>
-                                        </div>
 
-                                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                                            {/* Form Fields */}
-                                            <div className="xl:col-span-8 space-y-10">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                    <div>
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Code (Registration Number)</label>
-                                                        <input type="text" value={pfNumber} onChange={e => setPfNumber(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all placeholder:text-slate-300 disabled:opacity-70" placeholder="AA/AAA/1234567/000" />
+                                            <div className="pt-8 border-t border-slate-100 space-y-8">
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Rate Configuration</h4>
+                                                            <Info size={14} className="text-slate-300" />
+                                                        </div>
+                                                        <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup Breakdown</button>
                                                     </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Establishment Name</label>
-                                                        <input type="text" value={establishmentName} onChange={e => setEstablishmentName(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Registration Date</label>
-                                                        <div className="relative">
-                                                            <input type="date" value={epfJoiningDate} onChange={e => setEpfJoiningDate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                        <div className="space-y-4">
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Employee Rate</label>
+                                                            <select value={empRate} onChange={e => setEmpRate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-offset-2 ring-offset-white ring-1 ring-slate-100">
+                                                                <option>12% of Actual PF Wage</option>
+                                                                <option>12% of Restricted PF Wage</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-4">
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Employer Rate</label>
+                                                            <select value={emprRate} onChange={e => setEmprRate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-offset-2 ring-offset-white ring-1 ring-slate-100">
+                                                                <option>12% of Actual PF Wage</option>
+                                                                <option>12% of Restricted PF Wage</option>
+                                                            </select>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="pt-8 border-t border-slate-100 space-y-8">
-                                                    <div>
-                                                        <div className="flex justify-between items-center mb-6">
-                                                            <div className="flex items-center gap-2">
-                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Rate Configuration</h4>
-                                                                <Info size={14} className="text-slate-300" />
-                                                            </div>
-                                                            <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup Breakdown</button>
+                                                <div className="p-8 bg-slate-50/50 rounded-xl border border-slate-100 space-y-6">
+                                                    <label className="flex items-start gap-4 cursor-pointer group/item">
+                                                        <div onClick={() => isEditingPf && setIncludeEmprContri(!includeEmprContri)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                            {includeEmprContri && <Check size={14} strokeWidth={4} />}
                                                         </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                            <div className="space-y-4">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Employee Rate</label>
-                                                                <select value={empRate} onChange={e => setEmpRate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-offset-2 ring-offset-white ring-1 ring-slate-100">
-                                                                    <option>12% of Actual PF Wage</option>
-                                                                    <option>12% of Restricted PF Wage</option>
-                                                                </select>
-                                                            </div>
-                                                            <div className="space-y-4">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Employer Rate</label>
-                                                                <select value={emprRate} onChange={e => setEmprRate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-offset-2 ring-offset-white ring-1 ring-slate-100">
-                                                                    <option>12% of Actual PF Wage</option>
-                                                                    <option>12% of Restricted PF Wage</option>
-                                                                </select>
-                                                            </div>
+                                                        <div className="space-y-1">
+                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include Employer contribution in CTC</span>
+                                                            <p className="text-[10px] font-bold text-slate-400">Employer's share of PF will be reflected as a pay component in salary structure</p>
                                                         </div>
+                                                    </label>
+
+                                                    {includeEmprContri && (
+                                                        <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
+                                                            <label className="flex items-center gap-3 cursor-pointer group/sub">
+                                                                <div onClick={() => isEditingPf && setIncludeEdli(!includeEdli)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeEdli ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
+                                                                    {includeEdli && <Check size={12} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Include EDLI contribution (0.50% of Wage)</span>
+                                                            </label>
+                                                            <label className="flex items-center gap-3 cursor-pointer group/sub">
+                                                                <div onClick={() => isEditingPf && setIncludeAdminCharges(!includeAdminCharges)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeAdminCharges ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
+                                                                    {includeAdminCharges && <Check size={12} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Include EPF Admin Charges (0.50% of Wage)</span>
+                                                            </label>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Right Column: Sample Calculation */}
+                                        <div className="xl:col-span-4">
+                                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-8 border border-amber-100 shadow-sm sticky top-32">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="p-2.5 bg-white rounded-2xl shadow-sm text-amber-500">
+                                                        <Calculator size={20} strokeWidth={2.5} />
                                                     </div>
-
-                                                    <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 space-y-6">
-                                                        <label className="flex items-start gap-4 cursor-pointer group/item">
-                                                            <div onClick={() => isEditingPf && setIncludeEmprContri(!includeEmprContri)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
-                                                                {includeEmprContri && <Check size={14} strokeWidth={4} />}
+                                                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Sample EPF Calculation</h4>
+                                                </div>
+                                                
+                                                <div className="space-y-5 bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-amber-200/50">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-xs font-bold text-slate-500">Employee Share (12%)</span>
+                                                        <span className="text-sm font-black text-slate-800">₹ 2,400</span>
+                                                    </div>
+                                                    <div className="h-px bg-amber-200/30 w-full" />
+                                                    <div className="space-y-3">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-xs font-bold text-slate-500">EPS Share (8.33%)</span>
+                                                            <span className="text-sm font-black text-slate-800">₹ 1,250</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-xs font-bold text-slate-500">EPF Share (3.67%)</span>
+                                                            <span className="text-sm font-black text-slate-800">₹ 1,150</span>
+                                                        </div>
+                                                        {includeEdli && (
+                                                            <div className="flex justify-between items-center text-[10px] text-indigo-500 font-bold">
+                                                                <span>EDLI (0.50%)</span>
+                                                                <span>₹ 75</span>
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include Employer contribution in CTC</span>
-                                                                <p className="text-[10px] font-bold text-slate-400">Employer's share of PF will be reflected as a pay component in salary structure</p>
-                                                            </div>
-                                                        </label>
-
-                                                        {includeEmprContri && (
-                                                            <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
-                                                                <label className="flex items-center gap-3 cursor-pointer group/sub">
-                                                                    <div onClick={() => isEditingPf && setIncludeEdli(!includeEdli)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeEdli ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
-                                                                        {includeEdli && <Check size={12} strokeWidth={4} />}
-                                                                    </div>
-                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Include EDLI contribution (0.50% of Wage)</span>
-                                                                </label>
-                                                                <label className="flex items-center gap-3 cursor-pointer group/sub">
-                                                                    <div onClick={() => isEditingPf && setIncludeAdminCharges(!includeAdminCharges)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeAdminCharges ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
-                                                                        {includeAdminCharges && <Check size={12} strokeWidth={4} />}
-                                                                    </div>
-                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Include EPF Admin Charges (0.50% of Wage)</span>
-                                                                </label>
+                                                        )}
+                                                        {includeAdminCharges && (
+                                                            <div className="flex justify-between items-center text-[10px] text-indigo-500 font-bold">
+                                                                <span>Admin Charges</span>
+                                                                <span>₹ 100</span>
                                                             </div>
                                                         )}
                                                     </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Right Column: Sample Calculation */}
-                                            <div className="xl:col-span-4">
-                                                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-3xl p-8 border border-amber-100 shadow-sm sticky top-32">
-                                                    <div className="flex items-center gap-3 mb-6">
-                                                        <div className="p-2.5 bg-white rounded-2xl shadow-sm text-amber-500">
-                                                            <Calculator size={20} strokeWidth={2.5} />
-                                                        </div>
-                                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Sample EPF Calculation</h4>
+                                                    <div className="pt-4 border-t-2 border-dashed border-amber-200/50 flex justify-between items-end">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total</span>
+                                                        <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdli ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
                                                     </div>
-                                                    
-                                                    <div className="space-y-5 bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-amber-200/50">
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="text-xs font-bold text-slate-500">Employee Share (12%)</span>
-                                                            <span className="text-sm font-black text-slate-800">₹ 2,400</span>
-                                                        </div>
-                                                        <div className="h-px bg-amber-200/30 w-full" />
-                                                        <div className="space-y-3">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-xs font-bold text-slate-500">EPS Share (8.33%)</span>
-                                                                <span className="text-sm font-black text-slate-800">₹ 1,250</span>
-                                                            </div>
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-xs font-bold text-slate-500">EPF Share (3.67%)</span>
-                                                                <span className="text-sm font-black text-slate-800">₹ 1,150</span>
-                                                            </div>
-                                                            {includeEdli && (
-                                                                <div className="flex justify-between items-center text-[10px] text-indigo-500 font-bold">
-                                                                    <span>EDLI (0.50%)</span>
-                                                                    <span>₹ 75</span>
-                                                                </div>
-                                                            )}
-                                                            {includeAdminCharges && (
-                                                                <div className="flex justify-between items-center text-[10px] text-indigo-500 font-bold">
-                                                                    <span>Admin Charges</span>
-                                                                    <span>₹ 100</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="pt-4 border-t-2 border-dashed border-amber-200/50 flex justify-between items-end">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total</span>
-                                                            <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdli ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
-                                                        </div>
-                                                    </div>
-                                                    <button onClick={() => setShowBelowLimitModal(true)} className="w-full mt-6 py-3.5 bg-white border border-amber-200 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-100"><Calculator size={14} /> PF wages below 15000?</button>
                                                 </div>
+                                                <button onClick={() => setShowBelowLimitModal(true)} className="w-full mt-6 py-3.5 bg-white border border-amber-200 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-100"><Calculator size={14} /> PF wages below 15000?</button>
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>
 
                     {/* TDS Section */}
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500 group">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500 group">
                         <div 
                             className={`p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors ${tdsExpanded ? 'bg-slate-50/30 border-b border-slate-100' : ''}`}
                             onClick={() => setTdsExpanded(!tdsExpanded)}
@@ -402,7 +392,7 @@ const PfTdsSettings: React.FC = () => {
                                 {isEditingTds ? (
                                     <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                                         <button onClick={handleCancelTds} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
-                                        <button onClick={handleSaveTds} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-black text-xs shadow-lg shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
+                                        <button onClick={handleSaveTds} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
                                     </div>
                                 ) : (
                                     <button onClick={e => { e.stopPropagation(); handleEditTds(); }} className="p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><Edit2 size={18} /></button>
@@ -415,121 +405,111 @@ const PfTdsSettings: React.FC = () => {
 
                         {tdsExpanded && (
                             <div className="p-8 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
-                                {!enableTds && !isEditingTds ? (
-                                    <div className="py-16 flex flex-col items-center text-center">
-                                        <div className="bg-slate-50 p-8 rounded-full mb-6 border border-slate-100 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                            <Landmark size={56} className="text-slate-300" strokeWidth={1.5} />
+                                <div className={`space-y-10 transition-all duration-500 ${!enableTds ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                    {/* TDS Top Toggle */}
+                                    <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl transition-all ${enableTds ? 'bg-indigo-600 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>
+                                                <Calculator size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Enable TDS on Salaries</h4>
+                                                <p className="text-[10px] text-slate-400 font-bold">Automatic tax deduction based on Income Tax slabs</p>
+                                            </div>
                                         </div>
-                                        <h3 className="text-2xl font-black text-slate-400">TDS Configuration is Disabled</h3>
-                                        <p className="text-slate-400 mt-2 max-w-sm font-medium">Enable TDS settings to configure TAN and tax withholding parameters.</p>
+                                        <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'cursor-default opacity-80'}`}>
+                                            <input type="checkbox" checked={enableTds} onChange={() => isEditingTds && setEnableTds(!enableTds)} className="sr-only peer" />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                                        </label>
                                     </div>
-                                ) : (
-                                    <div className={`space-y-10 transition-all duration-500 ${!enableTds ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                                        {/* TDS Top Toggle */}
-                                        <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`p-3 rounded-2xl transition-all ${enableTds ? 'bg-indigo-600 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>
-                                                    <Calculator size={20} />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Enable TDS on Salaries</h4>
-                                                    <p className="text-[10px] text-slate-400 font-bold">Automatic tax deduction based on Income Tax slabs</p>
-                                                </div>
-                                            </div>
-                                            <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
-                                                <input type="checkbox" checked={enableTds} onChange={() => isEditingTds && setEnableTds(!enableTds)} className="sr-only peer" />
-                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
-                                            </label>
-                                        </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                            <div className="space-y-10">
-                                                <div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN (Tax Deduction Account Number)</label>
-                                                    <input type="text" value={tan} onChange={e => setTan(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:normal-case disabled:opacity-70" placeholder="e.g., DELA12345B" />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Default Tax Regime</label>
-                                                    <div className="relative">
-                                                        <select value={defaultRegime} onChange={e => setDefaultRegime(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 ring-offset-2 ring-offset-white ring-1 ring-slate-100">
-                                                            <option>New Regime</option>
-                                                            <option>Old Regime</option>
-                                                        </select>
-                                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                    </div>
-                                                </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                        <div className="space-y-10">
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN (Tax Deduction Account Number)</label>
+                                                <input type="text" value={tan} onChange={e => setTan(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:normal-case disabled:opacity-70" placeholder="e.g., DELA12345B" />
                                             </div>
-
-                                            <div className="space-y-6">
-                                                <div className="p-6 bg-slate-50/50 rounded-3xl border border-slate-100 space-y-4">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Link Declarations</h4>
-                                                            <p className="text-[10px] font-bold text-slate-400 mt-1 leading-relaxed">Consider employee tax-saving investments for TDS computation automatically</p>
-                                                        </div>
-                                                        <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
-                                                            <input type="checkbox" checked={linkDeclarations} onChange={() => isEditingTds && setLinkDeclarations(!linkDeclarations)} className="sr-only peer" />
-                                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div className="p-6 bg-slate-50/50 rounded-3xl border border-slate-100 space-y-4">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Challan Reminders</h4>
-                                                            <p className="text-[10px] font-bold text-slate-400 mt-1 leading-relaxed">Send automatic alerts to finance team before monthly TDS payment deadline</p>
-                                                        </div>
-                                                        <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
-                                                            <input type="checkbox" checked={challanReminder} onChange={() => isEditingTds && setChallanReminder(!challanReminder)} className="sr-only peer" />
-                                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
-                                                        </label>
-                                                    </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Default Tax Regime</label>
+                                                <div className="relative">
+                                                    <select value={defaultRegime} onChange={e => setDefaultRegime(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 ring-offset-2 ring-offset-white ring-1 ring-slate-100">
+                                                        <option>New Regime</option>
+                                                        <option>Old Regime</option>
+                                                    </select>
+                                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="pt-10 border-t border-slate-100 space-y-8">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                                                    <User size={18} strokeWidth={2.5} />
-                                                </div>
-                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person (TRACES)</h4>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                                <div className="space-y-4">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Full Name</label>
-                                                    <div className="relative group">
-                                                        <input type="text" value={respName} onChange={e => setRespName(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="e.g. Rajesh Kumar" />
-                                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
+                                        <div className="space-y-6">
+                                            <div className="p-6 bg-slate-50/50 rounded-xl border border-slate-100 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Link Declarations</h4>
+                                                        <p className="text-[10px] font-bold text-slate-400 mt-1 leading-relaxed">Consider employee tax-saving investments for TDS computation automatically</p>
                                                     </div>
-                                                </div>
-                                                <div className="space-y-4">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Designation</label>
-                                                    <div className="relative group">
-                                                        <input type="text" value={respDesg} onChange={e => setRespDesg(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="e.g. Finance Head" />
-                                                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-4 lg:col-span-1">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Official Email</label>
-                                                    <div className="relative group">
-                                                        <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="name@company.com" />
-                                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
-                                                    </div>
+                                                    <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
+                                                        <input type="checkbox" checked={linkDeclarations} onChange={() => isEditingTds && setLinkDeclarations(!linkDeclarations)} className="sr-only peer" />
+                                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
+                                                    </label>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <div className="bg-sky-50 border border-sky-100 rounded-3xl p-6 flex items-start gap-5">
-                                            <div className="p-2 bg-white rounded-2xl shadow-sm text-sky-500">
-                                                <Info size={20} strokeWidth={2.5} />
+                                            <div className="p-6 bg-slate-50/50 rounded-xl border border-slate-100 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Challan Reminders</h4>
+                                                        <p className="text-[10px] font-bold text-slate-400 mt-1 leading-relaxed">Send automatic alerts to finance team before monthly TDS payment deadline</p>
+                                                    </div>
+                                                    <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'pointer-events-none opacity-50'}`}>
+                                                        <input type="checkbox" checked={challanReminder} onChange={() => isEditingTds && setChallanReminder(!challanReminder)} className="sr-only peer" />
+                                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
+                                                    </label>
+                                                </div>
                                             </div>
-                                            <p className="text-[13px] text-sky-800 leading-relaxed font-bold">
-                                                TAN is mandatory for generating Form 24Q. Link investment declarations to automatically factor in employee tax-saving investments for accurate withholding.
-                                            </p>
                                         </div>
                                     </div>
-                                )}
+
+                                    <div className="pt-10 border-t border-slate-100 space-y-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                                                <User size={18} strokeWidth={2.5} />
+                                            </div>
+                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person (TRACES)</h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Full Name</label>
+                                                <div className="relative group">
+                                                    <input type="text" value={respName} onChange={e => setRespName(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="e.g. Rajesh Kumar" />
+                                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Designation</label>
+                                                <div className="relative group">
+                                                    <input type="text" value={respDesg} onChange={e => setRespDesg(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="e.g. Finance Head" />
+                                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 lg:col-span-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Official Email</label>
+                                                <div className="relative group">
+                                                    <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="name@company.com" />
+                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-sky-50 border border-sky-100 rounded-xl p-6 flex items-start gap-5">
+                                        <div className="p-2 bg-white rounded-2xl shadow-sm text-sky-500">
+                                            <Info size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <p className="text-[13px] text-sky-800 leading-relaxed font-bold">
+                                            TAN is mandatory for generating Form 24Q. Link investment declarations to automatically factor in employee tax-saving investments for accurate withholding.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -539,7 +519,7 @@ const PfTdsSettings: React.FC = () => {
             {/* PF Splitup Modal */}
             {showSplitupModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg flex flex-col animate-in zoom-in-95 duration-300 border border-slate-200 overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col animate-in zoom-in-95 duration-300 border border-slate-200 overflow-hidden">
                         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="text-xl font-black text-slate-800 tracking-tight">Employer Rate Splitup</h3>
@@ -571,7 +551,7 @@ const PfTdsSettings: React.FC = () => {
                             </table>
                         </div>
                         <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button onClick={() => setShowSplitupModal(false)} className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all uppercase tracking-widest">Close Distribution</button>
+                            <button onClick={() => setShowSplitupModal(false)} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all uppercase tracking-widest">Close Distribution</button>
                         </div>
                     </div>
                 </div>
@@ -580,14 +560,14 @@ const PfTdsSettings: React.FC = () => {
             {/* PF Below Limit Modal */}
             {showBelowLimitModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 flex flex-col">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 flex flex-col">
                         <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-sky-500 text-white rounded-[20px] shadow-lg shadow-sky-100">
+                                <div className="p-3 bg-sky-500 text-white rounded-2xl shadow-lg shadow-sky-100">
                                     <Calculator size={24} strokeWidth={2.5} />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">EPF Calculation Model</h3>
+                                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight">EPF Calculation Model</h3>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">When Wage is below ₹15,000</p>
                                 </div>
                             </div>
@@ -599,7 +579,7 @@ const PfTdsSettings: React.FC = () => {
                                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Calculated on these components</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     {['Basic Salary', 'HRA', 'Dearness Allowances (DA)'].map(comp => (
-                                        <label key={comp} onClick={() => toggleBelowLimitComponent(comp)} className={`flex items-center gap-3 p-4 border-2 rounded-3xl cursor-pointer transition-all ${belowLimitComponents.includes(comp) ? 'bg-sky-50 border-sky-400 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
+                                        <label key={comp} onClick={() => toggleBelowLimitComponent(comp)} className={`flex items-center gap-3 p-4 border-2 rounded-2xl cursor-pointer transition-all ${belowLimitComponents.includes(comp) ? 'bg-sky-50 border-sky-400 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
                                             <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${belowLimitComponents.includes(comp) ? 'bg-sky-500 border-sky-500 text-white' : 'bg-slate-50 border-slate-200'}`}>
                                                 {belowLimitComponents.includes(comp) && <Check size={14} strokeWidth={4} />}
                                             </div>
@@ -609,7 +589,7 @@ const PfTdsSettings: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-amber-50 rounded-[32px] p-6 border-2 border-amber-100/50 flex gap-4">
+                            <div className="bg-amber-50 rounded-2xl p-6 border-2 border-amber-100/50 flex gap-4">
                                 <Info size={24} className="text-amber-500 shrink-0" />
                                 <p className="text-sm text-amber-900 leading-relaxed font-bold">
                                     Note: When actual wage calculation is active, the contribution is computed using the combined total of selected components without any statutory capping.
@@ -619,7 +599,7 @@ const PfTdsSettings: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Employee Share (12%)</h4>
-                                    <div className="p-6 bg-slate-50 rounded-[28px] border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-xl transition-all">
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-xl transition-all">
                                         <span className="text-sm font-bold text-slate-500 italic">EPF Share</span>
                                         <span className="text-xl font-black text-indigo-700">₹ 1,440</span>
                                     </div>
@@ -627,11 +607,11 @@ const PfTdsSettings: React.FC = () => {
                                 <div className="space-y-4">
                                     <h4 className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Employer Share (12%)</h4>
                                     <div className="space-y-3">
-                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                                             <span className="text-xs font-bold text-slate-500 italic">EPS Share</span>
                                             <span className="text-base font-black text-sky-700">₹ 1,000</span>
                                         </div>
-                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                                             <span className="text-xs font-bold text-slate-500 italic">EPF Share</span>
                                             <span className="text-base font-black text-sky-700">₹ 440</span>
                                         </div>
@@ -649,7 +629,7 @@ const PfTdsSettings: React.FC = () => {
                         </div>
 
                         <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button onClick={() => setShowBelowLimitModal(false)} className="px-12 py-4 bg-slate-900 text-white rounded-3xl font-black text-sm shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest">Got it</button>
+                            <button onClick={() => setShowBelowLimitModal(false)} className="px-12 py-4 bg-slate-900 text-white rounded-xl font-black text-sm shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest">Got it</button>
                         </div>
                     </div>
                 </div>
