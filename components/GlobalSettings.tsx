@@ -56,8 +56,10 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },
       { id: 'bank', label: 'Bank Disbursal Format', icon: CreditCard },
+      { id: 'pf-settings', label: 'PF Settings', icon: Shield },
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'pf-tds', label: 'PF & TDS Settings', icon: Landmark },
+      { id: 'tds-settings', label: 'TDS Settings', icon: Landmark },
       { id: 'statutory-bonus', label: 'Statutory Bonus', icon: Award },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
    ];
@@ -76,8 +78,10 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
 
          case 'payslip': return <HRSalarySlipTemplate />;
          case 'bank': return <HRBankDisbursalTemplate />;
+         case 'pf-settings': return <PFSettings />;
          case 'statutory': return <StatutorySettings />;
          case 'pf-tds': return <PfTdsSettings />;
+         case 'tds-settings': return <TDSSettings />;
          case 'statutory-bonus': return <StatutoryBonusSettings />;
          case 'it-declaration': return <IncomeTaxDeclarationSettings />;
          default: return <div className="p-8">Select a module</div>;
