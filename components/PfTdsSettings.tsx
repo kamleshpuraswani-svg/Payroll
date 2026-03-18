@@ -214,37 +214,30 @@ const PfTdsSettings: React.FC = () => {
                                         <Shield size={20} className="text-sky-600" />
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROVIDENT FUND (PF)</h3>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        {isEditingPf ? (
-                                            <div className="flex gap-2">
-                                                <button onClick={handleCancelPf} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                                                <button onClick={handleSavePf} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-all"><Save size={16} /> Save Settings</button>
-                                            </div>
-                                        ) : (
-                                            <button onClick={handleEditPf} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 transition-all">
-                                                <Edit2 size={16} /> Edit Settings
-                                            </button>
-                                        )}
+                                    <div className="flex items-center gap-6">
+                                        <div className="flex items-center gap-3 pr-6 border-r border-slate-200">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enable PF</span>
+                                            <label className={`relative inline-flex items-center cursor-pointer ${!isEditingPf && 'cursor-default opacity-80'}`}>
+                                                <input type="checkbox" checked={enablePf} onChange={() => isEditingPf && setEnablePf(!enablePf)} className="sr-only peer" />
+                                                <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                                            </label>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            {isEditingPf ? (
+                                                <div className="flex gap-2">
+                                                    <button onClick={handleCancelPf} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                                                    <button onClick={handleSavePf} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-all"><Save size={16} /> Save Settings</button>
+                                                </div>
+                                            ) : (
+                                                <button onClick={handleEditPf} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 transition-all">
+                                                    <Edit2 size={16} /> Edit Settings
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-10">
-                                {/* PF Top Toggle - Always visible and interactive in Edit Mode */}
-                                <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl transition-all ${enablePf ? 'bg-sky-500 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>
-                                            <Shield size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Enable Provident Fund</h4>
-                                            <p className="text-[10px] text-slate-400 font-bold">Calculation and deduction of EPF on monthly salaries</p>
-                                        </div>
-                                    </div>
-                                    <label className={`relative inline-flex items-center cursor-pointer ${!isEditingPf && 'cursor-default opacity-80'}`}>
-                                        <input type="checkbox" checked={enablePf} onChange={() => isEditingPf && setEnablePf(!enablePf)} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
-                                    </label>
-                                </div>
 
                                 {enablePf && (
                                     <div className="space-y-10 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -522,37 +515,30 @@ const PfTdsSettings: React.FC = () => {
                                         <Calculator size={20} className="text-indigo-600" />
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">TDS CONFIGURATION</h3>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        {isEditingTds ? (
-                                            <div className="flex gap-2">
-                                                <button onClick={handleCancelTds} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                                                <button onClick={handleSaveTds} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-all"><Save size={16} /> Save Settings</button>
-                                            </div>
-                                        ) : (
-                                            <button onClick={handleEditTds} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 transition-all">
-                                                <Edit2 size={16} /> Edit Settings
-                                            </button>
-                                        )}
+                                    <div className="flex items-center gap-6">
+                                        <div className="flex items-center gap-3 pr-6 border-r border-slate-200">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enable TDS</span>
+                                            <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'cursor-default opacity-80'}`}>
+                                                <input type="checkbox" checked={enableTds} onChange={() => isEditingTds && setEnableTds(!enableTds)} className="sr-only peer" />
+                                                <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                                            </label>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            {isEditingTds ? (
+                                                <div className="flex gap-2">
+                                                    <button onClick={handleCancelTds} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                                                    <button onClick={handleSaveTds} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-all"><Save size={16} /> Save Settings</button>
+                                                </div>
+                                            ) : (
+                                                <button onClick={handleEditTds} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 transition-all">
+                                                    <Edit2 size={16} /> Edit Settings
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-10">
-                                    {/* TDS Top Toggle - Always visible and interactive in Edit Mode */}
-                                    <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-2xl transition-all ${enableTds ? 'bg-indigo-600 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>
-                                                <Calculator size={20} />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Enable TDS on Salaries</h4>
-                                                <p className="text-[10px] text-slate-400 font-bold">Automatic tax deduction based on Income Tax slabs</p>
-                                            </div>
-                                        </div>
-                                        <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'cursor-default opacity-80'}`}>
-                                            <input type="checkbox" checked={enableTds} onChange={() => isEditingTds && setEnableTds(!enableTds)} className="sr-only peer" />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
-                                        </label>
-                                    </div>
 
                                     {enableTds && (
                                         <div className="space-y-10 animate-in fade-in slide-in-from-top-2 duration-300">
