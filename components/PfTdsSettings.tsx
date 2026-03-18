@@ -17,9 +17,6 @@ const PfTdsSettings: React.FC = () => {
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
     const [paygroups, setPaygroups] = useState<any[]>([]);
 
-    // Tab Management State
-    const [activeTab, setActiveTab] = useState<'pf' | 'tds'>('pf');
-
     // Editing State per section
     const [isEditingPf, setIsEditingPf] = useState(false);
     const [isEditingTds, setIsEditingTds] = useState(false);
@@ -107,7 +104,6 @@ const PfTdsSettings: React.FC = () => {
     const handleEditPf = () => {
         setBackupPf({ enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, considerComponents, belowLimitComponents: [...belowLimitComponents] });
         setIsEditingPf(true);
-        setActiveTab('pf');
     };
 
     const handleSavePf = async () => {
@@ -129,7 +125,6 @@ const PfTdsSettings: React.FC = () => {
     const handleEditTds = () => {
         setBackupTds({ enableTds, tan, defaultRegime, respName, respDesg, respEmail });
         setIsEditingTds(true);
-        setActiveTab('tds');
     };
 
     const handleSaveTds = async () => {
@@ -186,27 +181,9 @@ const PfTdsSettings: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Standard Tab Navigation */}
-                <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200 shadow-sm">
-                    <button 
-                        onClick={() => setActiveTab('pf')} 
-                        className={`flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 ${activeTab === 'pf' ? 'bg-white text-sky-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
-                    >
-                        <Shield size={18} />
-                        PF Settings
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('tds')} 
-                        className={`flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 ${activeTab === 'tds' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}`}
-                    >
-                        <Calculator size={18} />
-                        TDS Settings
-                    </button>
-                </div>
 
-                <div className="space-y-8">
-                    {activeTab === 'pf' && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-12">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* PF Section */}
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-8 p-8">
                                 <div className="flex justify-between items-center pb-6 border-b border-slate-100">
@@ -499,14 +476,12 @@ const PfTdsSettings: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {activeTab === 'tds' && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
                             {/* TDS Section */}
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-8 p-8">
                                 <div className="flex justify-between items-center pb-6 border-b border-slate-100">
@@ -601,8 +576,7 @@ const PfTdsSettings: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* PF Splitup Modal */}
