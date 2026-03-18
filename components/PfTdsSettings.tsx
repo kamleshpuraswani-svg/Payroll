@@ -194,7 +194,7 @@ const PfTdsSettings: React.FC = () => {
 
                 <div className="space-y-6">
                     {/* PF Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500 group">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
                         <div 
                             className={`p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors ${pfExpanded ? 'bg-slate-50/30 border-b border-slate-100' : ''}`}
                             onClick={() => setPfExpanded(!pfExpanded)}
@@ -290,9 +290,9 @@ const PfTdsSettings: React.FC = () => {
                                                             <div className="flex items-center gap-3 flex-wrap">
                                                                 <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
                                                                     Limit employee's PF contribution amount maximum of
-                                                                    <div className="group relative">
+                                                                    <div className="group/info relative">
                                                                         <Info size={14} className="text-slate-300 cursor-help" />
-                                                                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-center leading-relaxed font-bold border border-slate-800">
+                                                                        <div className="invisible group-hover/info:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-center leading-relaxed font-bold border border-slate-800 pointer-events-none">
                                                                             If no capping set, then actual contribution will be deducted as Employee Contribution. If Zero, then actual deduction will be considered.
                                                                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
                                                                         </div>
@@ -318,9 +318,9 @@ const PfTdsSettings: React.FC = () => {
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex items-center gap-2">
                                                                 <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate</h4>
-                                                                <div className="group relative">
+                                                                <div className="group/rate relative">
                                                                     <Info size={14} className="text-slate-300 cursor-help" />
-                                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-left leading-relaxed font-bold border border-slate-800">
+                                                                    <div className="invisible group-hover/rate:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-left leading-relaxed font-bold border border-slate-800 pointer-events-none">
                                                                         <div className="mb-2 italic text-sky-400">Options:</div>
                                                                         <div className="mb-2">1. 12% of Actual PF Wage - Calculates based on employee's full Basic + DA.</div>
                                                                         <div>2. 12% of Restricted PF Wage - Calculates based on statutory wage ceiling (₹15,000).</div>
@@ -509,7 +509,7 @@ const PfTdsSettings: React.FC = () => {
                     </div>
 
                     {/* TDS Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500 group">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
                         <div 
                             className={`p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors ${tdsExpanded ? 'bg-slate-50/30 border-b border-slate-100' : ''}`}
                             onClick={() => setTdsExpanded(!tdsExpanded)}
