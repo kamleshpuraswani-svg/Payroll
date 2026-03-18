@@ -215,11 +215,10 @@ const PfTdsSettings: React.FC = () => {
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROVIDENT FUND (PF)</h3>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <div className="flex items-center gap-3 pr-6 border-r border-slate-200">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enable PF</span>
+                                        <div className="flex items-center pr-6 border-r border-slate-200">
                                             <label className={`relative inline-flex items-center cursor-pointer ${!isEditingPf && 'cursor-default opacity-80'}`}>
                                                 <input type="checkbox" checked={enablePf} onChange={() => isEditingPf && setEnablePf(!enablePf)} className="sr-only peer" />
-                                                <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
                                             </label>
                                         </div>
                                         <div className="flex items-center gap-4">
@@ -516,11 +515,10 @@ const PfTdsSettings: React.FC = () => {
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">TDS CONFIGURATION</h3>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <div className="flex items-center gap-3 pr-6 border-r border-slate-200">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enable TDS</span>
+                                        <div className="flex items-center pr-6 border-r border-slate-200">
                                             <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'cursor-default opacity-80'}`}>
                                                 <input type="checkbox" checked={enableTds} onChange={() => isEditingTds && setEnableTds(!enableTds)} className="sr-only peer" />
-                                                <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
                                             </label>
                                         </div>
                                         <div className="flex items-center gap-4">
