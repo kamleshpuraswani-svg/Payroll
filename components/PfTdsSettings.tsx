@@ -17,9 +17,8 @@ const PfTdsSettings: React.FC = () => {
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
     const [paygroups, setPaygroups] = useState<any[]>([]);
 
-    // Section Expand/Collapse State
-    const [pfExpanded, setPfExpanded] = useState(true);
-    const [tdsExpanded, setTdsExpanded] = useState(false);
+    // Tab Management State
+    const [activeTab, setActiveTab] = useState<'pf' | 'tds'>('pf');
 
     // Editing State per section
     const [isEditingPf, setIsEditingPf] = useState(false);
@@ -112,7 +111,7 @@ const PfTdsSettings: React.FC = () => {
     const handleEditPf = () => {
         setBackupPf({ enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, considerComponents, belowLimitComponents: [...belowLimitComponents] });
         setIsEditingPf(true);
-        setPfExpanded(true);
+        setActiveTab('pf');
     };
 
     const handleSavePf = async () => {
@@ -134,7 +133,7 @@ const PfTdsSettings: React.FC = () => {
     const handleEditTds = () => {
         setBackupTds({ enableTds, tan, defaultRegime, linkDeclarations, challanReminder, respName, respDesg, respEmail });
         setIsEditingTds(true);
-        setTdsExpanded(true);
+        setActiveTab('tds');
     };
 
     const handleSaveTds = async () => {
@@ -192,39 +191,54 @@ const PfTdsSettings: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    {/* PF Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
-                        <div 
-                            className={`p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors ${pfExpanded ? 'bg-slate-50/30 border-b border-slate-100' : ''}`}
-                            onClick={() => setPfExpanded(!pfExpanded)}
-                        >
-                            <div className="flex items-center gap-5">
-                                <div className={`p-3.5 rounded-2xl transition-all duration-300 ${pfExpanded ? 'bg-sky-500 text-white shadow-lg shadow-sky-100' : 'bg-sky-50 text-sky-600'}`}>
-                                    <Activity size={24} strokeWidth={2.5} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">PF Settings</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Configure Employee Provident Fund (EPF) contribution rules and identifiers.</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                {isEditingPf ? (
-                                    <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                                        <button onClick={handleCancelPf} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
-                                        <button onClick={handleSavePf} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
-                                    </div>
-                                ) : (
-                                    <button onClick={e => { e.stopPropagation(); handleEditPf(); }} className="p-2.5 text-sky-600 hover:bg-sky-50 rounded-xl transition-all"><Edit2 size={18} /></button>
-                                )}
-                                <div className={`p-2 rounded-lg transition-transform duration-500 ${pfExpanded ? 'rotate-180 bg-sky-50 text-sky-600' : 'text-slate-300'}`}>
-                                    <ChevronDown size={20} />
-                                </div>
-                            </div>
-                        </div>
+                {/* Tab Navigation */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl w-fit border border-slate-200 shadow-sm">
+                    <button 
+                        onClick={() => setActiveTab('pf')}
+                        className={`flex items-center gap-3 px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 uppercase tracking-wider ${activeTab === 'pf' ? 'bg-white text-sky-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        <Activity size={18} />
+                        PF Settings
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('tds')}
+                        className={`flex items-center gap-3 px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 uppercase tracking-wider ${activeTab === 'tds' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        <Calculator size={18} />
+                        TDS Settings
+                    </button>
+                </div>
 
-                        {pfExpanded && (
-                            <div className="p-8 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="space-y-6">
+                    {activeTab === 'pf' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* PF Section */}
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
+                                <div className="p-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/10">
+                                    <div className="flex items-center gap-5">
+                                        <div className="p-3.5 rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-100">
+                                            <Activity size={24} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Provident Fund Configuration</h3>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Configure Employee Provident Fund (EPF) contribution rules and identifiers.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        {isEditingPf ? (
+                                            <div className="flex gap-2">
+                                                <button onClick={handleCancelPf} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
+                                                <button onClick={handleSavePf} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
+                                            </div>
+                                        ) : (
+                                            <button onClick={handleEditPf} className="p-2.5 text-sky-600 hover:bg-sky-50 rounded-xl transition-all flex items-center gap-2 px-4 font-black text-xs uppercase tracking-widest">
+                                                <Edit2 size={16} /> Edit Settings
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="p-8 space-y-10">
                                 {/* PF Top Toggle - Always visible and interactive in Edit Mode */}
                                 <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
                                     <div className="flex items-center gap-4">
@@ -504,42 +518,40 @@ const PfTdsSettings: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* TDS Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
-                        <div 
-                            className={`p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors ${tdsExpanded ? 'bg-slate-50/30 border-b border-slate-100' : ''}`}
-                            onClick={() => setTdsExpanded(!tdsExpanded)}
-                        >
-                            <div className="flex items-center gap-5">
-                                <div className={`p-3.5 rounded-2xl transition-all duration-300 ${tdsExpanded ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-indigo-50 text-indigo-600'}`}>
-                                    <Calculator size={24} strokeWidth={2.5} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">TDS Configuration</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Income Tax withholding & Responsible person</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                {isEditingTds ? (
-                                    <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                                        <button onClick={handleCancelTds} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
-                                        <button onClick={handleSaveTds} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
-                                    </div>
-                                ) : (
-                                    <button onClick={e => { e.stopPropagation(); handleEditTds(); }} className="p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><Edit2 size={18} /></button>
-                                )}
-                                <div className={`p-2 rounded-lg transition-transform duration-500 ${tdsExpanded ? 'rotate-180 bg-indigo-50 text-indigo-600' : 'text-slate-300'}`}>
-                                    <ChevronDown size={20} />
                                 </div>
                             </div>
                         </div>
+                    )}
 
-                        {tdsExpanded && (
-                            <div className="p-8 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                    {activeTab === 'tds' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* TDS Section */}
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
+                                <div className="p-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/10">
+                                    <div className="flex items-center gap-5">
+                                        <div className="p-3.5 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-100">
+                                            <Calculator size={24} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">TDS Configuration</h3>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Income Tax withholding & Responsible person</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        {isEditingTds ? (
+                                            <div className="flex gap-2">
+                                                <button onClick={handleCancelTds} className="px-5 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-all uppercase tracking-wider">Cancel</button>
+                                                <button onClick={handleSaveTds} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-wider"><Save size={14} /> Save</button>
+                                            </div>
+                                        ) : (
+                                            <button onClick={handleEditTds} className="p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all flex items-center gap-2 px-4 font-black text-xs uppercase tracking-widest">
+                                                <Edit2 size={16} /> Edit Settings
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="p-8 space-y-10">
                                 {/* TDS Top Toggle - Always visible and interactive in Edit Mode */}
                                 <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-between items-center group/toggle">
                                     <div className="flex items-center gap-4">
@@ -648,10 +660,9 @@ const PfTdsSettings: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                        )}
+                        </div>
                     </div>
-                </div>
-            </div>
+                )}
 
             {/* PF Splitup Modal */}
             {showSplitupModal && (
@@ -772,7 +783,9 @@ const PfTdsSettings: React.FC = () => {
                 </div>
             )}
         </div>
-    );
+    </div>
+</div>
+);
 };
 
 export default PfTdsSettings;
