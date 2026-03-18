@@ -262,43 +262,112 @@ const PfTdsSettings: React.FC = () => {
                                                             <input type="date" value={epfJoiningDate} onChange={e => setEpfJoiningDate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
                                                         </div>
                                                     </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5 flex items-center gap-1.5">
+                                                            Deduction Cycle 
+                                                            <Info size={12} className="text-slate-300" />
+                                                        </label>
+                                                        <input type="text" value="Monthly" disabled className="w-full px-5 py-3.5 bg-slate-100 border-none rounded-2xl text-sm font-bold text-slate-500 cursor-not-allowed uppercase tracking-widest" />
+                                                    </div>
                                                 </div>
 
-                                                <div className="pt-8 border-t border-slate-100 space-y-8">
-                                                    <div>
-                                                        <div className="flex justify-between items-center mb-6">
-                                                            <div className="flex items-center gap-2">
-                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Rate Configuration</h4>
-                                                                <Info size={14} className="text-slate-300" />
-                                                            </div>
-                                                            <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup Breakdown</button>
+                                                <div className="pt-8 border-t border-slate-100 space-y-12">
+                                                    {/* Employee Contribution */}
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employee Contribution Rate</h4>
+                                                            <button onClick={() => setShowBelowLimitModal(true)} className="text-[10px] font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest flex items-center gap-1.5 p-1 hover:bg-sky-50 rounded-lg">
+                                                                <Calculator size={14} /> PF wages below 15000?
+                                                            </button>
                                                         </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                            <div className="space-y-4">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Employee Rate</label>
-                                                                <select value={empRate} onChange={e => setEmpRate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-offset-2 ring-offset-white ring-1 ring-slate-100">
+                                                        <div className="space-y-4">
+                                                            <div className="relative w-full md:w-80">
+                                                                <select disabled className="w-full px-5 py-3.5 bg-slate-100 border-none rounded-2xl text-sm font-bold text-slate-500 appearance-none cursor-not-allowed">
                                                                     <option>12% of Actual PF Wage</option>
-                                                                    <option>12% of Restricted PF Wage</option>
                                                                 </select>
+                                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                                             </div>
-                                                            <div className="space-y-4">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Employer Rate</label>
-                                                                <select value={emprRate} onChange={e => setEmprRate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-offset-2 ring-offset-white ring-1 ring-slate-100">
-                                                                    <option>12% of Actual PF Wage</option>
-                                                                    <option>12% of Restricted PF Wage</option>
-                                                                </select>
+                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                                <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                                                                    Limit employee's PF contribution amount maximum of
+                                                                    <div className="group relative">
+                                                                        <Info size={14} className="text-slate-300 cursor-help" />
+                                                                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-center leading-relaxed font-bold border border-slate-800">
+                                                                            If no capping set, then actual contribution will be deducted as Employee Contribution. If Zero, then actual deduction will be considered.
+                                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </span>
+                                                                <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
+                                                                    <div className="px-3 py-2 bg-slate-200/50 text-[10px] font-black text-slate-500 border-r border-slate-100">INR</div>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={empLimit} 
+                                                                        onChange={e => setEmpLimit(e.target.value)} 
+                                                                        disabled={!isEditingPf} 
+                                                                        className="w-24 px-3 py-2 bg-transparent text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70" 
+                                                                    />
+                                                                </div>
+                                                                <span className="text-sm font-bold text-slate-600">monthly.</span>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="p-8 bg-slate-50/50 rounded-xl border border-slate-100 space-y-6">
+                                                    {/* Employer Contribution */}
+                                                    <div className="space-y-6">
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate</h4>
+                                                                <div className="group relative">
+                                                                    <Info size={14} className="text-slate-300 cursor-help" />
+                                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-left leading-relaxed font-bold border border-slate-800">
+                                                                        <div className="mb-2 italic text-sky-400">Options:</div>
+                                                                        <div className="mb-2">1. 12% of Actual PF Wage - Calculates based on employee's full Basic + DA.</div>
+                                                                        <div>2. 12% of Restricted PF Wage - Calculates based on statutory wage ceiling (₹15,000).</div>
+                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup</button>
+                                                        </div>
+                                                        <div className="space-y-4">
+                                                            <div className="relative w-full md:w-80">
+                                                                <select 
+                                                                    value={emprRate} 
+                                                                    onChange={e => setEmprRate(e.target.value)} 
+                                                                    disabled={!isEditingPf} 
+                                                                    className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-1 ring-slate-100"
+                                                                >
+                                                                    <option>12% of Actual PF Wage</option>
+                                                                    <option>12% of Restricted PF Wage</option>
+                                                                </select>
+                                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                            </div>
+                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                                <span className="text-sm font-bold text-slate-600">Limit employer's PF contribution amount maximum of</span>
+                                                                <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
+                                                                    <div className="px-3 py-2 bg-slate-200/50 text-[10px] font-black text-slate-500 border-r border-slate-100">INR</div>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={emprLimit} 
+                                                                        onChange={e => setEmprLimit(e.target.value)} 
+                                                                        disabled={!isEditingPf} 
+                                                                        className="w-24 px-3 py-2 bg-transparent text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70" 
+                                                                    />
+                                                                </div>
+                                                                <span className="text-sm font-bold text-slate-600">monthly.</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Additional Configurations */}
+                                                    <div className="space-y-4 pt-4">
                                                         <label className="flex items-start gap-4 cursor-pointer group/item">
                                                             <div onClick={() => isEditingPf && setIncludeEmprContri(!includeEmprContri)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
                                                                 {includeEmprContri && <Check size={14} strokeWidth={4} />}
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include Employer contribution in CTC</span>
-                                                                <p className="text-[10px] font-bold text-slate-400">Employer's share of PF will be reflected as a pay component in salary structure</p>
+                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's contribution in employee's salary structure</span>
                                                             </div>
                                                         </label>
 
@@ -308,16 +377,80 @@ const PfTdsSettings: React.FC = () => {
                                                                     <div onClick={() => isEditingPf && setIncludeEdli(!includeEdli)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeEdli ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
                                                                         {includeEdli && <Check size={12} strokeWidth={4} />}
                                                                     </div>
-                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Include EDLI contribution (0.50% of Wage)</span>
+                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                                                        Include employer's EDLI contribution in employee's salary structure
+                                                                        <div className="group/tip relative">
+                                                                            <Info size={14} className="text-slate-300 cursor-help" />
+                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-bold">
+                                                                                EDLI Contribution is 0.50 % of PF Wage. Max Employer Contribution is 75.
+                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </span>
                                                                 </label>
                                                                 <label className="flex items-center gap-3 cursor-pointer group/sub">
                                                                     <div onClick={() => isEditingPf && setIncludeAdminCharges(!includeAdminCharges)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeAdminCharges ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
                                                                         {includeAdminCharges && <Check size={12} strokeWidth={4} />}
                                                                     </div>
-                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Include EPF Admin Charges (0.50% of Wage)</span>
+                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                                                        Include admin charges in employee's salary structure
+                                                                        <div className="group/tip relative">
+                                                                            <Info size={14} className="text-slate-300 cursor-help" />
+                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-bold">
+                                                                                EPF Admin Charges is 0.50% of PF Wage.
+                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </span>
                                                                 </label>
                                                             </div>
                                                         )}
+
+                                                        <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
+                                                            <div onClick={() => isEditingPf && setOverrideRate(!overrideRate)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${overrideRate ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                {overrideRate && <Check size={14} strokeWidth={4} />}
+                                                            </div>
+                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Override PF contribution rate at employee level</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {/* LOP Configuration Section */}
+                                                    <div className="pt-10 border-t border-slate-100 space-y-6">
+                                                        <div className="flex items-center gap-2.5 text-slate-800 font-black text-[10px] uppercase tracking-[0.2em]">
+                                                            <AlertCircle size={16} className="text-sky-600" />
+                                                            PF Configuration when LOP Applied
+                                                        </div>
+
+                                                        <div className="space-y-6">
+                                                            <label className="flex items-start gap-4 cursor-pointer group/item">
+                                                                <div onClick={() => isEditingPf && setProrateRestricted(!prorateRestricted)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${prorateRestricted ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                    {prorateRestricted && <Check size={14} strokeWidth={4} />}
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Pro-rate Restricted PF Wage</span>
+                                                                        <div className="group/tip relative">
+                                                                            <Info size={14} className="text-slate-300 cursor-help" />
+                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-xl z-50 text-center font-bold">
+                                                                                Restricted PF Wage allows you to limit the EPF contribution to 15,000 even if the employees' PF Wage is greater than that.
+                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-[10px] font-bold text-slate-400">PF contribution will be pro-rated based on the number of days worked by the employee.</p>
+                                                                </div>
+                                                            </label>
+
+                                                            <label className="flex items-start gap-4 cursor-pointer group/item">
+                                                                <div onClick={() => isEditingPf && setConsiderComponents(!considerComponents)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${considerComponents ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                    {considerComponents && <Check size={14} strokeWidth={4} />}
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight block">Consider all applicable salary components if PF wage is less than ₹15,000 after Loss of Pay</span>
+                                                                    <p className="text-[10px] font-bold text-slate-400">PF wage will be computed using the salary earned in that month rather than the structure amount.</p>
+                                                                </div>
+                                                            </label>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

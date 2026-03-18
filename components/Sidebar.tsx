@@ -151,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       label: 'Configuration',
       icon: <Sliders size={20} />,
       subItems: [
-        { id: 'hr-statutory', label: 'Statutory Settings', viewState: ViewState.SETTINGS },
+        { id: 'hr-statutory', label: 'PF & TDS Settings', viewState: ViewState.SETTINGS },
         { id: 'hr-operational', label: 'Operational Config', viewState: ViewState.HR_OPERATIONAL_CONFIG },
       ]
     }
