@@ -971,12 +971,9 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             ) : filteredSchedules.map((schedule) => (
                                 <tr key={schedule.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-4 py-3">
-                                        <div className="flex flex-col">
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold w-fit">
-                                                <CalendarIcon size={12} /> {schedule.frequency}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 mt-1 font-medium">{schedule.name}</span>
-                                        </div>
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold w-fit">
+                                            <CalendarIcon size={12} /> {schedule.frequency}
+                                        </span>
                                     </td>
                                     <td className="px-4 py-3 text-slate-600">{schedule.payDate}</td>
                                     <td className="px-4 py-3">
