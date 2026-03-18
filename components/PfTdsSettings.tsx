@@ -168,7 +168,7 @@ const PfTdsSettings: React.FC = () => {
                             <Building2 className="text-white" size={32} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Statutory Settings</h2>
+                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">PF & TDS Settings</h2>
                             <p className="text-slate-500 font-medium text-sm mt-1">Manage PF & TDS configurations for your organization</p>
                         </div>
                     </div>
@@ -204,8 +204,8 @@ const PfTdsSettings: React.FC = () => {
                                     <Activity size={24} strokeWidth={2.5} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">EPF & Establishment</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Provident Fund Registration & Rates</p>
+                                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">PF Settings</h3>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Configure Employee Provident Fund (EPF) contribution rules and identifiers.</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
