@@ -14,6 +14,8 @@ interface PaySchedule {
     effectiveDate?: string;
     targetId?: string; // id of paygroup or BU
     targetType?: 'Paygroup' | 'BusinessUnit';
+    created_by?: string;
+    last_modified_by?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -48,7 +50,9 @@ const MOCK_SCHEDULES: PaySchedule[] = [
         payPeriodStart: '1st & 16th',
         payPeriodEnd: '15th & Last Day',
         payDate: '15th & Last',
-        status: 'Active'
+        status: 'Active',
+        created_by: 'System',
+        last_modified_by: 'Admin'
     }
 ];
 
@@ -941,9 +945,10 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                         <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500">
                             <tr>
                                 <th className="px-4 py-3">Schedule Name</th>
-                                <th className="px-4 py-3">Frequency</th>
                                 <th className="px-4 py-3">Pay Day</th>
                                 <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Created By</th>
+                                <th className="px-4 py-3">Last Modified By</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -965,11 +970,13 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                 </tr>
                             ) : filteredSchedules.map((schedule) => (
                                 <tr key={schedule.id} className="hover:bg-slate-50 transition-colors group">
-                                    <td className="px-4 py-3 font-semibold text-slate-800">{schedule.name}</td>
                                     <td className="px-4 py-3">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold">
-                                            <CalendarIcon size={12} /> {schedule.frequency}
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold w-fit">
+                                                <CalendarIcon size={12} /> {schedule.frequency}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 mt-1 font-medium">{schedule.name}</span>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-slate-600">{schedule.payDate}</td>
                                     <td className="px-4 py-3">
@@ -978,6 +985,8 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             {schedule.status}
                                         </span>
                                     </td>
+                                    <td className="px-4 py-3 text-slate-500 font-medium">{schedule.created_by || 'Admin'}</td>
+                                    <td className="px-4 py-3 text-slate-500 font-medium">{schedule.last_modified_by || 'System'}</td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-3">
                                             {userRole === 'HR_MANAGER' && (
