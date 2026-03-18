@@ -591,7 +591,7 @@ const PfTdsSettings: React.FC = () => {
                                                     </div>
                                                     <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person (TRACES)</h4>
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-4">
                                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Full Name</label>
                                                         <div className="relative group">
@@ -606,7 +606,7 @@ const PfTdsSettings: React.FC = () => {
                                                             <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
                                                         </div>
                                                     </div>
-                                                    <div className="space-y-4 lg:col-span-1">
+                                                    <div className="space-y-4">
                                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Official Email</label>
                                                         <div className="relative group">
                                                             <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="name@company.com" />

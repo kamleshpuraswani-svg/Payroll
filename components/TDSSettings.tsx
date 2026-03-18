@@ -275,7 +275,7 @@ const TDSSettings: React.FC = () => {
                                                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                                             </div>
                                         </div>
-                                        <div className="md:col-span-2">
+                                        <div className="space-y-4">
                                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Email Address</label>
                                             <div className="relative">
                                                 <input 
