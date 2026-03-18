@@ -26,9 +26,11 @@ import HRSalaryStructure from './HRSalaryStructure';
 import HRTaxConfiguration from './HRTaxConfiguration';
 import HRSalarySlipTemplate from './HRSalarySlipTemplate';
 import HRBankDisbursalTemplate from './HRBankDisbursalTemplate';
+import PFSettings from './PFSettings';
 import StatutorySettings from './StatutorySettings';
 import StatutoryBonusSettings from './StatutoryBonusSettings';
 import IncomeTaxDeclarationSettings from './IncomeTaxDeclarationSettings';
+import TDSSettings from './TDSSettings';
 import LoanAdvancesTypes from './LoanAdvancesTypes';
 import FnFSettlementTemplate from './FnFSettlementTemplate';
 import ExpenseSettings from './ExpenseSettings';
@@ -53,9 +55,11 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },
       { id: 'bank', label: 'Bank Disbursal Format', icon: CreditCard },
+      { id: 'pf-settings', label: 'PF Settings', icon: Shield },
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'statutory-bonus', label: 'Statutory Bonus', icon: Award },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
+      { id: 'tds-settings', label: 'TDS Settings', icon: Landmark },
    ];
 
    const renderContent = () => {
@@ -72,9 +76,11 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
 
          case 'payslip': return <HRSalarySlipTemplate />;
          case 'bank': return <HRBankDisbursalTemplate />;
+         case 'pf-settings': return <PFSettings />;
          case 'statutory': return <StatutorySettings />;
          case 'statutory-bonus': return <StatutoryBonusSettings />;
          case 'it-declaration': return <IncomeTaxDeclarationSettings />;
+         case 'tds-settings': return <TDSSettings />;
          default: return <div className="p-8">Select a module</div>;
       }
    };
