@@ -92,18 +92,47 @@ interface AddPayScheduleModalProps {
 
 const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole, isSaving, paygroups, selectedTarget }) => {
     // Form State
-    const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>('Weekly');
-    const [weeklyPayDay, setWeeklyPayDay] = useState('Fri');
+    const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>(initialData?.frequency || 'Weekly');
+    const [weeklyPayDay, setWeeklyPayDay] = useState(() => {
+        if (initialData?.frequency === 'Weekly' && initialData?.payDate?.startsWith('Every ')) {
+            return initialData.payDate.replace('Every ', '').substring(0, 3);
+        }
+        return 'Fri';
+    });
     const [calcBase, setCalcBase] = useState('Actual days in a month');
-    const [startMonthStr, setStartMonthStr] = useState('December 2025');
-    const [firstPayDate, setFirstPayDate] = useState('');
-    const [effectiveDate, setEffectiveDate] = useState('');
-    const [localSelectedTarget, setLocalSelectedTarget] = useState(selectedTarget === 'all' ? '' : selectedTarget);
+    const [startMonthStr, setStartMonthStr] = useState(initialData?.startMonthStr || 'December 2025');
+    const [firstPayDate, setFirstPayDate] = useState(() => {
+        if (!initialData?.firstPayDate) return '';
+        
+        // Format recovery logic for date picker
+        if (initialData.firstPayDate.includes(' ') && !initialData.firstPayDate.includes('-')) {
+            try {
+                const d = new Date(initialData.firstPayDate);
+                if (!isNaN(d.getTime())) {
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+            } catch (e) {
+                console.error('Error recovering date:', e);
+            }
+        }
+        return initialData.firstPayDate;
+    });
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
+    const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
+        if (initialData?.targetId && initialData?.targetType) {
+            const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
+            return `${prefix}:${initialData.targetId}`;
+        }
+        return selectedTarget === 'all' ? '' : selectedTarget;
+    });
 
     // Semi-Monthly Specific State
     const [smFirstType, setSmFirstType] = useState<'15th' | 'custom'>('15th');
     const [smFirstCustomDay, setSmFirstCustomDay] = useState('15');
-    const [processingDate, setProcessingDate] = useState('1');
+    const [processingDate, setProcessingDate] = useState(initialData?.processingDate || '1');
 
     const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>('last');
     const [smSecondCustomDay, setSmSecondCustomDay] = useState('16'); // Default to 16th of following month if custom
@@ -111,52 +140,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     // Validation State
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-    // Initialize state from initialData if present
-    useEffect(() => {
-        if (initialData) {
-            setFrequency(initialData.frequency);
-            if (initialData.targetId && initialData.targetType) {
-                const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
-                setLocalSelectedTarget(`${prefix}:${initialData.targetId}`);
-            }
-            // Attempt to parse other fields if they match standard formats
-            if (initialData.frequency === 'Weekly' && initialData.payDate.startsWith('Every ')) {
-                const day = initialData.payDate.replace('Every ', '').substring(0, 3);
-                setWeeklyPayDay(day);
-            }
-            if (initialData.effectiveDate) {
-                setEffectiveDate(initialData.effectiveDate);
-            }
-            if (initialData.processingDate) {
-                setProcessingDate(initialData.processingDate);
-            }
-            if (initialData.firstPayDate) {
-                // If it's a date string but not in YYYY-MM-DD (like "05 December 2025"), 
-                // we need to convert it for the HTML date picker if currently in Monthly
-                if (initialData.firstPayDate.includes(' ') && !initialData.firstPayDate.includes('-')) {
-                   try {
-                       const d = new Date(initialData.firstPayDate);
-                       if (!isNaN(d.getTime())) {
-                           const yyyy = d.getFullYear();
-                           const mm = String(d.getMonth() + 1).padStart(2, '0');
-                           const dd = String(d.getDate()).padStart(2, '0');
-                           setFirstPayDate(`${yyyy}-${mm}-${dd}`);
-                       } else {
-                           setFirstPayDate(initialData.firstPayDate);
-                       }
-                   } catch (e) {
-                       setFirstPayDate(initialData.firstPayDate);
-                   }
-                } else {
-                    setFirstPayDate(initialData.firstPayDate);
-                }
-            }
-            if (initialData.startMonthStr) {
-                setStartMonthStr(initialData.startMonthStr);
-            }
-        }
-    }, [initialData]);
-
+    // Initialization logic removed as it's now in useState initializers
+    
     const monthOptions = useMemo(() => getMonthOptions(), []);
 
     // Derived Date Objects
