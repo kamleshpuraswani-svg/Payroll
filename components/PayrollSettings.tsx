@@ -303,7 +303,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 addHistory('Frequency', initialData.frequency, frequency);
                 hasChanged = true;
             }
-            if (initialData.payDate !== payDateDesc) {
+            // Normalize Pay Date for comparison (e.g., "Every Friday" vs "Every Fri")
+            const normalizePayDate = (val: string) => {
+                if (val.startsWith('Every ')) {
+                    return val.substring(0, 9); // "Every Fri"
+                }
+                return val;
+            };
+
+            if (normalizePayDate(initialData.payDate) !== normalizePayDate(payDateDesc)) {
                 addHistory('Pay Date', initialData.payDate, payDateDesc);
                 hasChanged = true;
             }
@@ -318,7 +326,14 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 addHistory('Target', oldTargetName || 'Unknown', newTargetName || 'Unknown');
                 hasChanged = true;
             }
-            if (initialData.firstPayDate !== firstPayDate) {
+            // Normalize Dates for comparison (ISO vs Display)
+            const getTimestamp = (val: string) => {
+                if (!val) return 0;
+                const d = new Date(val);
+                return isNaN(d.getTime()) ? 0 : d.setHours(0, 0, 0, 0);
+            };
+
+            if (getTimestamp(initialData.firstPayDate) !== getTimestamp(firstPayDate)) {
                 addHistory('First Payroll Date', initialData.firstPayDate, firstPayDate);
                 hasChanged = true;
             }
