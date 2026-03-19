@@ -16,6 +16,8 @@ interface PaySchedule {
     created_by?: string;
     last_modified_by?: string;
     processingDate?: string;
+    firstPayDate?: string;
+    startMonthStr?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -127,6 +129,12 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             }
             if (initialData.processingDate) {
                 setProcessingDate(initialData.processingDate);
+            }
+            if (initialData.firstPayDate) {
+                setFirstPayDate(initialData.firstPayDate);
+            }
+            if (initialData.startMonthStr) {
+                setStartMonthStr(initialData.startMonthStr);
             }
         }
     }, [initialData]);
@@ -254,6 +262,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             if (initialData.processingDate !== (frequency === 'Monthly' ? processingDate : undefined)) hasChanged = true;
             if (initialData.targetId !== targetId) hasChanged = true;
             if (initialData.targetType !== targetType) hasChanged = true;
+            if (initialData.firstPayDate !== firstPayDate) hasChanged = true;
+            if (initialData.startMonthStr !== startMonthStr) hasChanged = true;
         }
 
         // Validate Effective Month for HR Manager only if changes are made
@@ -277,7 +287,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             status: initialData?.status || 'Active',
             payDate: payDateDesc,
             effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
-            processingDate: frequency === 'Monthly' ? processingDate : undefined
+            processingDate: frequency === 'Monthly' ? processingDate : undefined,
+            firstPayDate,
+            startMonthStr
         }, { targetId, targetType });
     };
 
