@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2, ArrowLeft } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface PaySchedule {
@@ -390,18 +390,28 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100">
-                    <h3 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Pay Schedule' : 'Add Pay Schedule'}</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-100 rounded-full">
-                        <X size={20} />
-                    </button>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full animate-in slide-in-from-right-2 duration-300">
+            <div className="bg-slate-50 border-b border-slate-200">
+                {/* Header with Back Button */}
+                <div className="flex justify-between items-center px-6 py-4">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={onClose} 
+                            className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all group border border-slate-200 bg-white"
+                            title="Back to List"
+                        >
+                            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                        </button>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">{initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule'}</h3>
+                            <p className="text-xs text-slate-500 font-medium">Configure payment cycles and processing rules</p>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto p-8">
+            <div className="flex-1 overflow-y-auto bg-white">
+                <div className="p-8">
                     <div className="flex flex-col lg:flex-row gap-8">
                         <div className="flex-1">
                             <div className="space-y-8">
@@ -939,15 +949,46 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         }
     };
 
+    if (isModalOpen) {
+        return (
+            <div className="p-4 lg:p-6 w-full space-y-6">
+                <div className="flex items-center gap-2 mb-2">
+                    <button 
+                        onClick={() => {
+                            setIsModalOpen(false);
+                            setEditingSchedule(null);
+                        }}
+                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                        Pay Schedule Configuration
+                    </button>
+                    <ChevronDown className="text-slate-300 -rotate-90" size={16} />
+                    <span className="text-slate-800 font-bold">{editingSchedule ? 'Edit Schedule' : 'Create New'}</span>
+                </div>
+                <AddPayScheduleModal
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingSchedule(null);
+                    }}
+                    onSave={handleSave}
+                    initialData={editingSchedule}
+                    userRole={userRole || 'ADMIN'}
+                    isSaving={isSaving}
+                    paygroups={paygroups}
+                    selectedTarget={selectedTarget}
+                />
+            </div>
+        );
+    }
     return (
         <div className="p-4 lg:p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
-
             {/* List Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Pay Schedule Configuration</h1>
                     <p className="text-slate-500 mt-1">Define and manage pay frequencies across client companies.</p>
                 </div>
+                {/* ... (rest of the header) */}
                 <div className="flex items-center gap-3">
                     {userRole === 'HR_MANAGER' && (
                         <div className="relative">
@@ -1090,19 +1131,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     </table>
                 </div>
             </div>
-
-            {/* Modal */}
-            {isModalOpen && (
-                <AddPayScheduleModal
-                    onClose={() => { setIsModalOpen(false); setEditingSchedule(null); }}
-                    onSave={handleSave}
-                    initialData={editingSchedule}
-                    userRole={userRole}
-                    isSaving={isSaving}
-                    paygroups={paygroups}
-                    selectedTarget={selectedTarget}
-                />
-            )}
         </div>
     );
 };
