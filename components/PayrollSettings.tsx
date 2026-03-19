@@ -460,33 +460,37 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 <div className="flex justify-between items-center px-6 py-4">
                     <div className="flex items-center gap-4">
                         <button 
-                            onClick={onClose} 
+                            onClick={() => {
+                                if (activeTab === 'History') {
+                                    setActiveTab('Configuration');
+                                } else {
+                                    onClose();
+                                }
+                            }} 
                             className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all group border border-slate-200 bg-white"
-                            title="Back to List"
+                            title={activeTab === 'History' ? 'Back to Config' : 'Back to List'}
                         >
                             <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                         </button>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">{initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule'}</h3>
-                            <p className="text-xs text-slate-500 font-medium">Configure payment cycles and processing rules</p>
+                            <h3 className="text-xl font-bold text-slate-800">
+                                {activeTab === 'History' ? 'Change History' : (initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule')}
+                            </h3>
+                            <p className="text-xs text-slate-500 font-medium">
+                                {activeTab === 'History' ? 'Audit log and modification history' : 'Configure payment cycles and processing rules'}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Tab Switcher */}
-                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
-                        <button
-                            onClick={() => setActiveTab('Configuration')}
-                            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'Configuration' ? 'bg-white text-sky-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-                        >
-                            <CalendarIcon size={16} /> Configuration
-                        </button>
+                    {/* Change History Button (only in Config tab and for HR_MANAGER/ADMIN) */}
+                    {activeTab === 'Configuration' && initialData && (
                         <button
                             onClick={() => setActiveTab('History')}
-                            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'History' ? 'bg-white text-sky-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-sky-600 hover:bg-sky-50 border border-slate-200 rounded-lg transition-all bg-white shadow-sm"
                         >
                             <Clock size={16} /> Change History
                         </button>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -802,13 +806,20 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                             <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                        <Clock className="text-sky-600" size={20} />
                                         Audit Log & Modification History
                                     </h4>
                                     <p className="text-sm text-slate-500">Track all changes made to this pay schedule configuration</p>
                                 </div>
-                                <div className="px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100">
-                                    {history.length} {history.length === 1 ? 'Record' : 'Records'} Found
+                                <div className="flex items-center gap-3">
+                                    <div className="px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100">
+                                        {history.length} {history.length === 1 ? 'Record' : 'Records'} Found
+                                    </div>
+                                    <button 
+                                        onClick={() => setActiveTab('Configuration')}
+                                        className="px-4 py-1.5 bg-white text-slate-600 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-50 transition-colors"
+                                    >
+                                        Back to Configuration
+                                    </button>
                                 </div>
                             </div>
 
