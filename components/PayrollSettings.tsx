@@ -304,6 +304,10 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         isPayDay = true;
                     }
                 }
+                
+                if (processingDate && d === parseInt(processingDate)) {
+                    isPayDay = true;
+                }
             } else if (frequency === 'Semi-Monthly') {
                 // Logic for Semi-Monthly Highlights
 
@@ -581,7 +585,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                     {frequency === 'Monthly' && (
                                         <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                                Monthly Salary Processing Date <span className="text-rose-500">*</span>
+                                                <div className="group relative">
+                                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 w-48 text-center bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-normal leading-relaxed pointer-events-none z-50">
+                                                        Select the date each month when salary will be processed
+                                                    </div>
+                                                </div>
+                                            </label>
                                             <div className="relative">
                                                 <select
                                                     value={processingDate}
@@ -622,30 +634,30 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                         {errors.firstPayDate && <p className="text-xs text-rose-500 mt-1">{errors.firstPayDate}</p>}
                                     </div>
-                                </div>
 
-                                {userRole === 'HR_MANAGER' && (
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                            Effective Date <span className="text-rose-500">*</span>
-                                            <div className="group relative">
-                                                <Info size={14} className="text-slate-400 cursor-help" />
-                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                                    Select the effective date for these changes.
+                                    {userRole === 'HR_MANAGER' && (
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                                Effective Date <span className="text-rose-500">*</span>
+                                                <div className="group relative">
+                                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                        Select the effective date for these changes.
+                                                    </div>
                                                 </div>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="date"
+                                                    value={effectiveDate}
+                                                    onChange={(e) => setEffectiveDate(e.target.value)}
+                                                    className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                />
                                             </div>
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="date"
-                                                value={effectiveDate}
-                                                onChange={(e) => setEffectiveDate(e.target.value)}
-                                                className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                            />
+                                            {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
                                         </div>
-                                        {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
 
                             <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8 space-y-2">
