@@ -131,7 +131,25 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 setProcessingDate(initialData.processingDate);
             }
             if (initialData.firstPayDate) {
-                setFirstPayDate(initialData.firstPayDate);
+                // If it's a date string but not in YYYY-MM-DD (like "05 December 2025"), 
+                // we need to convert it for the HTML date picker if currently in Monthly
+                if (initialData.firstPayDate.includes(' ') && !initialData.firstPayDate.includes('-')) {
+                   try {
+                       const d = new Date(initialData.firstPayDate);
+                       if (!isNaN(d.getTime())) {
+                           const yyyy = d.getFullYear();
+                           const mm = String(d.getMonth() + 1).padStart(2, '0');
+                           const dd = String(d.getDate()).padStart(2, '0');
+                           setFirstPayDate(`${yyyy}-${mm}-${dd}`);
+                       } else {
+                           setFirstPayDate(initialData.firstPayDate);
+                       }
+                   } catch (e) {
+                       setFirstPayDate(initialData.firstPayDate);
+                   }
+                } else {
+                    setFirstPayDate(initialData.firstPayDate);
+                }
             }
             if (initialData.startMonthStr) {
                 setStartMonthStr(initialData.startMonthStr);
@@ -874,7 +892,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         setIsSaving(true);
         let updatedSchedules: PaySchedule[];
 
-        if (editingSchedule) {
+        if (editingSchedule && !editingSchedule.id.startsWith('mock-')) {
             updatedSchedules = schedules.map(s => s.id === editingSchedule.id ? { ...s, ...scheduleData } : s);
         } else {
             const newSchedule = {
