@@ -3,6 +3,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2, ArrowLeft } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
+interface ChangeHistory {
+    id: string;
+    timestamp: string;
+    changedBy: string;
+    field: string;
+    oldValue: string;
+    newValue: string;
+}
+
 interface PaySchedule {
     id: string;
     name: string;
@@ -13,11 +22,13 @@ interface PaySchedule {
     status: 'Active' | 'Inactive';
     effectiveDate?: string;
     targetType?: 'Paygroup' | 'BusinessUnit';
+    targetId?: string;
     created_by?: string;
     last_modified_by?: string;
     processingDate?: string;
     firstPayDate?: string;
     startMonthStr?: string;
+    history?: ChangeHistory[];
 }
 
 const BUSINESS_UNITS = [
@@ -91,6 +102,9 @@ interface AddPayScheduleModalProps {
 }
 
 const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSave, initialData, userRole, isSaving, paygroups, selectedTarget }) => {
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
+
     // Form State
     const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>(initialData?.frequency || 'Weekly');
     const [weeklyPayDay, setWeeklyPayDay] = useState(() => {
@@ -99,7 +113,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         }
         return 'Fri';
     });
-    const [calcBase, setCalcBase] = useState('Actual days in a month');
+    const [calcBase, setCalcBase] = useState(initialData?.payPeriodStart === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month');
     const [startMonthStr, setStartMonthStr] = useState(initialData?.startMonthStr || 'December 2025');
     const [firstPayDate, setFirstPayDate] = useState(() => {
         if (!initialData?.firstPayDate) return '';
@@ -227,6 +241,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         }
     }, [payDateOptions, frequency]);
 
+    const history = initialData?.history || [];
+
     const handleSave = () => {
         const newErrors: { [key: string]: string } = {};
 
@@ -256,17 +272,60 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
         const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
 
+        // Change Detection for History
+        const newHistoryRecords: ChangeHistory[] = [];
+        const timestamp = new Date().toLocaleString('en-IN', { 
+            day: '2-digit', month: 'short', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit', hour12: true 
+        });
+        const changedBy = userRole === 'HR_MANAGER' ? 'HR Manager' : 'Admin';
+
+        const addHistory = (field: string, oldVal: string, newVal: string) => {
+            if (oldVal !== newVal) {
+                newHistoryRecords.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    timestamp,
+                    changedBy,
+                    field,
+                    oldValue: oldVal || 'Not set',
+                    newValue: newVal || 'Not set'
+                });
+            }
+        };
+
         let hasChanged = false;
         if (!initialData) {
             hasChanged = true;
         } else {
-            if (initialData.frequency !== frequency) hasChanged = true;
-            if (initialData.payDate !== payDateDesc) hasChanged = true;
-            if (initialData.processingDate !== (frequency === 'Monthly' ? processingDate : undefined)) hasChanged = true;
-            if (initialData.targetId !== targetId) hasChanged = true;
-            if (initialData.targetType !== targetType) hasChanged = true;
-            if (initialData.firstPayDate !== firstPayDate) hasChanged = true;
-            if (initialData.startMonthStr !== startMonthStr) hasChanged = true;
+            if (initialData.frequency !== frequency) {
+                addHistory('Frequency', initialData.frequency, frequency);
+                hasChanged = true;
+            }
+            if (initialData.payDate !== payDateDesc) {
+                addHistory('Pay Date', initialData.payDate, payDateDesc);
+                hasChanged = true;
+            }
+            if (initialData.processingDate !== (frequency === 'Monthly' ? processingDate : undefined)) {
+                addHistory('Salary Processing Date', initialData.processingDate || 'None', processingDate || 'None');
+                hasChanged = true;
+            }
+            if (initialData.firstPayDate !== firstPayDate) {
+                addHistory('First Payroll Date', initialData.firstPayDate, firstPayDate);
+                hasChanged = true;
+            }
+            if (initialData.startMonthStr !== startMonthStr) {
+                addHistory('Start Month', initialData.startMonthStr, startMonthStr);
+                hasChanged = true;
+            }
+            const initialCalcBase = initialData.payPeriodStart === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month';
+            if (initialCalcBase !== calcBase) {
+                addHistory('Calculation Base', initialCalcBase, calcBase);
+                hasChanged = true;
+            }
+            if (initialData.effectiveDate !== effectiveDate) {
+                addHistory('Effective Month', initialData.effectiveDate || 'None', effectiveDate || 'None');
+                hasChanged = true;
+            }
         }
 
         // Validate Effective Month for HR Manager only if changes are made
@@ -281,18 +340,23 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
+            setActiveTab('Configuration'); // Switch back to see errors
             return;
         }
+
+        const updatedHistory = [...newHistoryRecords, ...(initialData?.history || [])];
 
         onSave({
             frequency,
             name: initialData?.name || (frequency === 'Monthly' ? 'New Monthly Schedule' : `${frequency} Schedule`),
             status: initialData?.status || 'Active',
             payDate: payDateDesc,
+            payPeriodStart: calcBase,
             effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
             processingDate: frequency === 'Monthly' ? processingDate : undefined,
             firstPayDate,
-            startMonthStr
+            startMonthStr,
+            history: updatedHistory
         }, { targetId, targetType });
     };
 
@@ -407,12 +471,30 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                             <p className="text-xs text-slate-500 font-medium">Configure payment cycles and processing rules</p>
                         </div>
                     </div>
+
+                    {/* Tab Switcher */}
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                        <button
+                            onClick={() => setActiveTab('Configuration')}
+                            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'Configuration' ? 'bg-white text-sky-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                        >
+                            <CalendarIcon size={16} /> Configuration
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('History')}
+                            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'History' ? 'bg-white text-sky-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                        >
+                            <Clock size={16} /> Change History
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto bg-white">
                 <div className="p-8">
-                    <div className="flex flex-col lg:flex-row gap-8">
+                    {activeTab === 'Configuration' ? (
+                        <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in slide-in-from-left-2 duration-300">
+
                         <div className="flex-1">
                             <div className="space-y-8">
                                 {/* Target Selection */}
@@ -714,6 +796,91 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                             {renderCalendar()}
                         </div>
                     </div>
+                    ) : (
+                        /* History View */
+                        <div className="animate-in fade-in slide-in-from-right-2 duration-300">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <Clock className="text-sky-600" size={20} />
+                                        Audit Log & Modification History
+                                    </h4>
+                                    <p className="text-sm text-slate-500">Track all changes made to this pay schedule configuration</p>
+                                </div>
+                                <div className="px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100">
+                                    {history.length} {history.length === 1 ? 'Record' : 'Records'} Found
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[60vh] overflow-y-auto">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200 sticky top-0 z-10">
+                                            <tr>
+                                                <th className="px-6 py-4">Date & Time</th>
+                                                <th className="px-6 py-4">Changed By</th>
+                                                <th className="px-6 py-4">Field Changed</th>
+                                                <th className="px-6 py-4">Old Value</th>
+                                                <th className="px-6 py-4">New Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {history.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-16 text-center">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="p-4 bg-slate-50 rounded-2xl text-slate-300">
+                                                                <Clock size={40} strokeWidth={1.5} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-slate-800 font-bold">No changes have been recorded yet.</p>
+                                                                <p className="text-slate-400 text-xs mt-1">Modifications to this schedule will appear here once saved.</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                history.map((record) => (
+                                                    <tr key={record.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-slate-800 font-semibold">{record.timestamp.split(', ')[0]}</div>
+                                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{record.timestamp.split(', ')[1]}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold text-xs shadow-sm">
+                                                                {record.changedBy}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 font-bold text-sky-700 whitespace-nowrap">
+                                                            {record.field}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="max-w-[150px] truncate text-slate-400 line-through decoration-slate-300" title={record.oldValue}>
+                                                                {record.oldValue}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="max-w-[150px] truncate text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50" title={record.newValue}>
+                                                                {record.newValue}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-8 flex items-start gap-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                                <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                <div className="text-xs text-amber-700 leading-relaxed">
+                                    <p className="font-bold mb-1">Audit Policy</p>
+                                    All modifications to payroll schedules are tracked for compliance and security. These logs cannot be deleted or modified by users.
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
