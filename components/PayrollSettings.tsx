@@ -881,17 +881,19 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
-                    <button onClick={onClose} disabled={isSaving} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">Cancel</button>
-                    <button 
-                        onClick={handleSave} 
-                        disabled={isSaving}
-                        className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
-                    >
-                        {isSaving && <Loader2 size={16} className="animate-spin" />}
-                        {isSaving ? 'Saving...' : 'Save'}
-                    </button>
-                </div>
+                {activeTab === 'Configuration' && (
+                    <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
+                        <button onClick={onClose} disabled={isSaving} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">Cancel</button>
+                        <button 
+                            onClick={handleSave} 
+                            disabled={isSaving}
+                            className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
+                        >
+                            {isSaving && <Loader2 size={16} className="animate-spin" />}
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
