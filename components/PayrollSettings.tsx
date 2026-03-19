@@ -414,7 +414,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             payPeriodStart: calcBase === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month',
             firstPayDate: newFirstPayDate,
             startMonthStr,
-            processingDate: frequency === 'Monthly' ? processingDate : undefined,
+            processingDate: frequency === 'Semi-Monthly' ? processingDate : undefined,
             effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
             history: [...(initialData?.history || []), ...newHistoryRecords]
         }, { targetId, targetType });
@@ -774,12 +774,10 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         {errors.startMonthStr && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.startMonthStr}</p>}
                                     </div>
 
-                                    {frequency === 'Monthly' && (
+                                        {frequency === 'Monthly' && (
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                                When would you like to pay? <span className="text-rose-500">*</span>
-                                            </label>
-                                            <div className="flex items-center gap-4">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">When would you like to pay? <span className="text-rose-500">*</span></label>
+                                            <div className="flex items-center gap-6">
                                                 <div className="relative w-24">
                                                     <select
                                                         disabled={userRole === 'HR_MANAGER'}
@@ -788,34 +786,38 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                         className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
                                                     >
                                                         {Array.from({ length: 31 }, (_, i) => (
-                                                            <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                                            <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
                                                         ))}
                                                     </select>
                                                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                                                 </div>
                                                 
-                                                <div className="flex items-center gap-4 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                                                    <label className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-all ${payDateMonthType === 'same' ? 'bg-white shadow-sm text-sky-700' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                <div className="flex items-center gap-6">
+                                                    <label className="flex items-center gap-2.5 cursor-pointer group">
+                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'same' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
+                                                            {payDateMonthType === 'same' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                        </div>
                                                         <input
                                                             type="radio"
                                                             className="hidden"
                                                             name="payDateMonthType"
-                                                            value="same"
                                                             checked={payDateMonthType === 'same'}
                                                             onChange={() => setPayDateMonthType('same')}
                                                         />
-                                                        <span className="text-xs font-bold">of same month</span>
+                                                        <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>of same month</span>
                                                     </label>
-                                                    <label className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-all ${payDateMonthType === 'following' ? 'bg-white shadow-sm text-sky-700' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                    <label className="flex items-center gap-2.5 cursor-pointer group">
+                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'following' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
+                                                            {payDateMonthType === 'following' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                        </div>
                                                         <input
                                                             type="radio"
                                                             className="hidden"
                                                             name="payDateMonthType"
-                                                            value="following"
                                                             checked={payDateMonthType === 'following'}
                                                             onChange={() => setPayDateMonthType('following')}
                                                         />
-                                                        <span className="text-xs font-bold">of following month</span>
+                                                        <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>of following month</span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -824,31 +826,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {frequency === 'Monthly' && (
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                                Monthly Salary Processing Date <span className="text-rose-500">*</span>
-                                                <div className="group relative">
-                                                    <Info size={14} className="text-slate-400 cursor-help" />
-                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 w-48 text-center bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-normal leading-relaxed pointer-events-none z-50">
-                                                        Select the date each month when salary will be processed
-                                                    </div>
-                                                </div>
-                                            </label>
-                                            <div className="relative">
-                                                <select
-                                                    value={processingDate}
-                                                    onChange={(e) => setProcessingDate(e.target.value)}
-                                                    className="w-full border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20"
-                                                >
-                                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                        <option key={d} value={String(d)}>{d}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Select a pay date for your first payroll <span className="text-rose-500">*</span></label>
