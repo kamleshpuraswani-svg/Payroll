@@ -297,6 +297,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         if (!initialData) {
             hasChanged = true;
         } else {
+            const initialTarget = initialData.targetType === 'Paygroup' ? `pg:${initialData.targetId}` : `bu:${initialData.targetId}`;
+            
             if (initialData.frequency !== frequency) {
                 addHistory('Frequency', initialData.frequency, frequency);
                 hasChanged = true;
@@ -307,6 +309,13 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             }
             if (initialData.processingDate !== (frequency === 'Monthly' ? processingDate : undefined)) {
                 addHistory('Salary Processing Date', initialData.processingDate || 'None', processingDate || 'None');
+                hasChanged = true;
+            }
+            if (initialTarget !== localSelectedTarget) {
+                const oldTargetName = initialData.targetType === 'Paygroup' ? paygroups.find(pg => pg.id === initialData.targetId)?.name : initialData.targetId;
+                const [newType, newId] = localSelectedTarget.split(':');
+                const newTargetName = newType === 'pg' ? paygroups.find(pg => pg.id === newId)?.name : newId;
+                addHistory('Target', oldTargetName || 'Unknown', newTargetName || 'Unknown');
                 hasChanged = true;
             }
             if (initialData.firstPayDate !== firstPayDate) {
@@ -324,13 +333,14 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             }
             if (initialData.effectiveDate !== effectiveDate) {
                 addHistory('Effective Month', initialData.effectiveDate || 'None', effectiveDate || 'None');
-                hasChanged = true;
+                // Note: Changing ONLY the effective month does NOT set hasChanged to true 
+                // to avoid triggering the mandatory validation error on itself.
             }
         }
 
         // Validate Effective Month for HR Manager only if changes are made
         if (userRole === 'HR_MANAGER' && hasChanged && !effectiveDate) {
-            newErrors.effectiveDate = "Effective month is required";
+            newErrors.effectiveDate = "Effective month is mandatory when changes are made.";
         }
 
         // Validate Target
@@ -502,8 +512,10 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         <div className="flex-1">
                             <div className="space-y-8">
                                 {/* Target Selection */}
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                                <div className="w-full lg:w-1/2">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                                        Business Unit or Paygroup <span className="text-red-500">*</span>
+                                    </label>
                                     <div className="relative">
                                         <select
                                             disabled={userRole === 'HR_MANAGER'}
