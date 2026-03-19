@@ -229,21 +229,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         if (!startMonthStr) newErrors.startMonth = "Start month is required";
         if (!firstPayDate) newErrors.firstPayDate = "Pay date is required";
 
-        // Validate Effective Date for HR Manager
-        if (userRole === 'HR_MANAGER' && !effectiveDate) {
-            newErrors.effectiveDate = "Effective date is required";
-        }
-
-        // Validate Target
-        if (!localSelectedTarget) {
-            newErrors.target = "Business Unit or Paygroup is required";
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-
         // Determine final pay date description
         let payDateDesc = '';
         if (frequency === 'Weekly') payDateDesc = `Every ${weeklyPayDay}`;
@@ -259,6 +244,32 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
         const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+
+        let hasChanged = false;
+        if (!initialData) {
+            hasChanged = true;
+        } else {
+            if (initialData.frequency !== frequency) hasChanged = true;
+            if (initialData.payDate !== payDateDesc) hasChanged = true;
+            if (initialData.processingDate !== (frequency === 'Monthly' ? processingDate : undefined)) hasChanged = true;
+            if (initialData.targetId !== targetId) hasChanged = true;
+            if (initialData.targetType !== targetType) hasChanged = true;
+        }
+
+        // Validate Effective Month for HR Manager only if changes are made
+        if (userRole === 'HR_MANAGER' && hasChanged && !effectiveDate) {
+            newErrors.effectiveDate = "Effective month is required";
+        }
+
+        // Validate Target
+        if (!localSelectedTarget) {
+            newErrors.target = "Business Unit or Paygroup is required";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
 
         onSave({
             frequency,
@@ -638,21 +649,24 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     {userRole === 'HR_MANAGER' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                                Effective Date <span className="text-rose-500">*</span>
+                                                Effective Month <span className="text-rose-500">*</span>
                                                 <div className="group relative">
                                                     <Info size={14} className="text-slate-400 cursor-help" />
                                                     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                                        Select the effective date for these changes.
+                                                        Select the effective month for these changes.
                                                     </div>
                                                 </div>
                                             </label>
                                             <div className="relative">
-                                                <input
-                                                    type="date"
+                                                <select
                                                     value={effectiveDate}
                                                     onChange={(e) => setEffectiveDate(e.target.value)}
-                                                    className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                                />
+                                                    className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                >
+                                                    <option value="">Select effective month</option>
+                                                    {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                             </div>
                                             {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
                                         </div>
