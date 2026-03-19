@@ -474,21 +474,21 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         </button>
                         <div>
                             <h3 className="text-xl font-bold text-slate-800">
-                                {activeTab === 'History' ? 'Change History' : (initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule')}
+                                {activeTab === 'History' ? 'Audit History' : (initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule')}
                             </h3>
                             <p className="text-xs text-slate-500 font-medium">
-                                {activeTab === 'History' ? 'Audit log and modification history' : 'Configure payment cycles and processing rules'}
+                                {activeTab === 'History' ? '' : 'Configure payment cycles and processing rules'}
                             </p>
                         </div>
                     </div>
 
-                    {/* Change History Button (only in Config tab and for HR_MANAGER/ADMIN) */}
+                    {/* Audit History Button (only in Config tab and for HR_MANAGER/ADMIN) */}
                     {activeTab === 'Configuration' && initialData && (
                         <button
                             onClick={() => setActiveTab('History')}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-sky-600 hover:bg-sky-50 border border-slate-200 rounded-lg transition-all bg-white shadow-sm"
                         >
-                            <Clock size={16} /> Change History
+                            <Clock size={16} /> Audit History
                         </button>
                     )}
                 </div>
@@ -803,13 +803,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                     ) : (
                         /* History View */
                         <div className="animate-in fade-in slide-in-from-right-2 duration-300">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                        Audit Log & Modification History
-                                    </h4>
-                                    <p className="text-sm text-slate-500">Track all changes made to this pay schedule configuration</p>
-                                </div>
+                            <div className="flex items-center justify-end mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100">
                                         {history.length} {history.length === 1 ? 'Record' : 'Records'} Found
@@ -828,8 +822,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200 sticky top-0 z-10">
                                             <tr>
-                                                <th className="px-6 py-4">Date & Time</th>
-                                                <th className="px-6 py-4">Changed By</th>
+                                                <th className="px-6 py-4">Last Modified By</th>
                                                 <th className="px-6 py-4">Field Changed</th>
                                                 <th className="px-6 py-4">Old Value</th>
                                                 <th className="px-6 py-4">New Value</th>
@@ -845,7 +838,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             </div>
                                                             <div>
                                                                 <p className="text-slate-800 font-bold">No changes have been recorded yet.</p>
-                                                                <p className="text-slate-400 text-xs mt-1">Modifications to this schedule will appear here once saved.</p>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -854,13 +846,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 history.map((record) => (
                                                     <tr key={record.id} className="hover:bg-slate-50/50 transition-colors group">
                                                         <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="text-slate-800 font-semibold">{record.timestamp.split(', ')[0]}</div>
-                                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{record.timestamp.split(', ')[1]}</div>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold text-xs shadow-sm">
-                                                                {record.changedBy}
-                                                            </span>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold text-xs shadow-sm">
+                                                                    {record.changedBy}
+                                                                </span>
+                                                                <div className="flex flex-col">
+                                                                    <div className="text-[11px] text-slate-700 font-bold">{record.timestamp.split(', ')[0]}</div>
+                                                                    <div className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{record.timestamp.split(', ')[1]}</div>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-4 font-bold text-sky-700 whitespace-nowrap">
                                                             {record.field}
@@ -880,14 +874,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             )}
                                         </tbody>
                                     </table>
-                                </div>
-                            </div>
-                            
-                            <div className="mt-8 flex items-start gap-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                                <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                                <div className="text-xs text-amber-700 leading-relaxed">
-                                    <p className="font-bold mb-1">Audit Policy</p>
-                                    All modifications to payroll schedules are tracked for compliance and security. These logs cannot be deleted or modified by users.
                                 </div>
                             </div>
                         </div>
