@@ -594,7 +594,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                 {/* Frequency */}
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-3">When do you pay your employees? <span className="text-rose-500">*</span></label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-3">Pay Schedule <span className="text-rose-500">*</span></label>
                                     <div className="flex gap-6">
                                         {['Weekly', 'Semi-Monthly', 'Monthly'].map(f => (
                                             <label key={f} className={`flex items-center gap-2.5 cursor-pointer group ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -718,7 +718,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 {/* Common Bottom Fields */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                        Calculate monthly salary based on? <span className="text-rose-500">*</span>
+                                        Calculate salary based on? <span className="text-rose-500">*</span>
                                         <Info size={14} className="text-slate-400 cursor-help" />
                                     </label>
                                     <div className="space-y-3">
