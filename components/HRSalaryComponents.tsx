@@ -358,8 +358,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
                 <div className="p-8 space-y-8 overflow-y-auto flex-1">
                     {/* Target Selection */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                    <div className="w-1/2">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                         <div className="relative">
                             <select
                                 disabled
@@ -690,8 +690,8 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 </div>
                 <div className="p-8 space-y-6 overflow-y-auto flex-1">
                     {/* Target Selection */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                    <div className="w-1/2">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                         <div className="relative">
                             <select
                                 disabled
@@ -942,8 +942,8 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 
                 <div className="p-8 space-y-6 overflow-y-auto flex-1">
                     {/* Target Selection */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Associate with Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                    <div className="w-1/2">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
                         <div className="relative">
                             <select
                                 disabled
