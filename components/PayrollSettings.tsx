@@ -676,7 +676,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             disabled={smFirstType !== 'custom'}
                                                             className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
                                                         >
-                                                            {Array.from({ length: daysInSelectedMonth }, (_, i) => i + 1).map(d => (
+                                                            {Array.from({ length: 16 }, (_, i) => i + 1).map(d => (
                                                                 <option key={d} value={d}>{d}</option>
                                                             ))}
                                                         </select>
@@ -709,7 +709,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             disabled={smSecondType !== 'custom'}
                                                             className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
                                                         >
-                                                            {Array.from({ length: daysInNextMonth }, (_, i) => i + 1).map(d => (
+                                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(d => (
                                                                 <option key={d} value={d}>{d}</option>
                                                             ))}
                                                         </select>
