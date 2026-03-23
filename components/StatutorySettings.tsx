@@ -80,6 +80,7 @@ const StatutorySettings: React.FC = () => {
                 setIncludeEmprContriEsi(config.includeEmprContriEsi ?? true);
                 setEsiMappedComponents(config.esiMappedComponents ?? ESI_COMPONENTS);
                 setEsiMaxMonthlySalary(config.esiMaxMonthlySalary ?? '21,000');
+                setAllowEsiOverride(config.allowEsiOverride ?? false);
                 setEnableGratuity(config.enableGratuity ?? false);
                 setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
                 setGratuityMode(config.gratuityMode ?? 'all');
@@ -135,6 +136,7 @@ const StatutorySettings: React.FC = () => {
     const [includeEmprContriEsi, setIncludeEmprContriEsi] = useState(true);
     const [esiMappedComponents, setEsiMappedComponents] = useState<string[]>(ESI_COMPONENTS);
     const [esiMaxMonthlySalary, setEsiMaxMonthlySalary] = useState('21,000');
+    const [allowEsiOverride, setAllowEsiOverride] = useState(false);
 
     // Gratuity State
     const [enableGratuity, setEnableGratuity] = useState(false);
@@ -201,7 +203,7 @@ const StatutorySettings: React.FC = () => {
 
     const handleEdit = () => {
         setBackupState({
-            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary,
+            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary, allowEsiOverride,
             enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria: [...gratuityCriteria],
             selectedGratuityDepts: [...selectedGratuityDepts], gratuityCalculationComponents: [...gratuityCalculationComponents],
             minServicePeriod, customServiceYears,
@@ -220,7 +222,7 @@ const StatutorySettings: React.FC = () => {
     const handleSave = async () => {
         try {
             const configValue = {
-                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary,
+                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary, allowEsiOverride,
                 enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
                 selectedGratuityDepts, gratuityCalculationComponents,
                 minServicePeriod, customServiceYears,
@@ -260,6 +262,7 @@ const StatutorySettings: React.FC = () => {
             setIncludeEmprContriEsi(backupState.includeEmprContriEsi);
             setEsiMappedComponents(backupState.esiMappedComponents);
             setEsiMaxMonthlySalary(backupState.esiMaxMonthlySalary);
+            setAllowEsiOverride(backupState.allowEsiOverride);
 
             setEnableGratuity(backupState.enableGratuity);
             setIncludeInCtcGratuity(backupState.includeInCtcGratuity);
@@ -549,6 +552,14 @@ const StatutorySettings: React.FC = () => {
                                         </div>
                                         <input type="checkbox" className="hidden" checked={includeEmprContriEsi} onChange={() => isEditing && setIncludeEmprContriEsi(!includeEmprContriEsi)} disabled={!isEditing} />
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer's contribution in employee's salary structure.</span>
+                                    </label>
+
+                                    <label className="flex items-start gap-3 cursor-pointer group pt-2">
+                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${allowEsiOverride ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {allowEsiOverride && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={allowEsiOverride} onChange={() => isEditing && setAllowEsiOverride(!allowEsiOverride)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Allow overriding of ESI at salary structure level.</span>
                                     </label>
 
                                     <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-6 mt-4">
