@@ -292,7 +292,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
             return `${prefix}:${initialData.targetId}`;
         }
-        return selectedTarget === 'all' ? '' : selectedTarget;
+        return selectedTarget === 'all' ? "bu:MindInventory" : selectedTarget;
     });
 
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
@@ -688,7 +688,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
             return `${prefix}:${initialData.targetId}`;
         }
-        return selectedTarget === 'all' ? '' : selectedTarget;
+        return selectedTarget === 'all' ? "bu:MindInventory" : selectedTarget;
     });
 
     // Calculation Method State
@@ -939,7 +939,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
             return `${prefix}:${initialData.targetId}`;
         }
-        return selectedTarget === 'all' ? '' : selectedTarget;
+        return selectedTarget === 'all' ? "bu:MindInventory" : selectedTarget;
     });
 
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
@@ -1167,7 +1167,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 
 const HRSalaryComponents: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Earnings');
-    const [selectedTarget, setSelectedTarget] = useState(`bu:${BUSINESS_UNITS[0]}`);
+    const [selectedTarget, setSelectedTarget] = useState('all');
     const [paygroups, setPaygroups] = useState<any[]>([]);
 
     // Initialize state
@@ -1368,6 +1368,7 @@ const HRSalaryComponents: React.FC = () => {
             frequency: data.frequency,
             consider_epf: data.considerEPF,
             consider_esi: data.considerESI,
+            consider_gratuity: data.considerGratuity,
             effective_date: data.effectiveDate,
             deduction_type: data.deductionType,
             show_in_payslip: data.showInPayslip,
