@@ -971,7 +971,8 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
-    const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
+    const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? true);
+    const [taxTreatment, setTaxTreatment] = useState(initialData?.taxable && initialData.taxable !== 'Tax Deductible' ? initialData.taxable : 'Fully Taxable');
     const [error, setError] = useState<string | null>(null);
 
     const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
@@ -1014,7 +1015,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             category: 'Reimbursements',
             calcMethod: calcMethod,
             calculation: calcMethod === 'Flat' ? `Fixed Amount` : `${amount}% of ${selectedComponents.join(', ')}`,
-            taxable: 'Partially Exempt',
+            taxable: taxTreatment as any,
         };
 
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
@@ -1079,19 +1080,42 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         )}
                     </div>
 
-                    {/* Nature of Pay */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
-                        <div className="flex gap-6">
-                            {['Fixed', 'Variable'].map(type => (
-                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
-                                    <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
-                                </label>
-                            ))}
+                    {/* Nature of Pay & Tax Treatment */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-6">
+                                {['Fixed', 'Variable'].map(type => (
+                                    <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
+                                            {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                        </div>
+                                        <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
+                                        <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <select
+                                    value={taxTreatment}
+                                    onChange={(e) => setTaxTreatment(e.target.value as any)}
+                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white text-slate-700"
+                                >
+                                    <option value="Fully Taxable">Fully Taxable</option>
+                                    <option value="Fully Exempt">Fully Exempt</option>
+                                    <option value="Partially Exempt">Partially Exempt</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-1.5">
+                                {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
+                                {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
+                                {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                            </p>
                         </div>
                     </div>
 
