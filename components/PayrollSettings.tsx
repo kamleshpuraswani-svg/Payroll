@@ -739,7 +739,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 onChange={() => setCalcBase('Actual days in a month')}
                                                 className="hidden"
                                             />
-                                            <span className="text-sm text-slate-700">Actual days in a month</span>
+                                            <span className="text-sm text-slate-700">{frequency === 'Weekly' ? 'Actual days in a week' : 'Actual days in a month'}</span>
                                         </label>
                                         <label className="flex items-center gap-2.5 cursor-pointer group">
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Organisation working days' ? 'border-sky-600' : 'border-slate-300'}`}>
@@ -752,7 +752,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 onChange={() => setCalcBase('Organisation working days')}
                                                 className="hidden"
                                             />
-                                            <span className="text-sm text-slate-700">Organisation working days (per month)</span>
+                                            <span className="text-sm text-slate-700">Organisation working days (per {frequency === 'Weekly' ? 'week' : 'month'})</span>
                                         </label>
                                     </div>
                                     {calcBase === 'Organisation working days' && (
@@ -817,6 +817,27 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                         {errors.startMonthStr && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.startMonthStr}</p>}
                                     </div>
+
+                                    {frequency === 'Weekly' && (
+                                        <div className="animate-in fade-in slide-in-from-right-2">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">First Pay Date <span className="text-rose-500">*</span></label>
+                                            <div className="relative">
+                                                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500" size={18} />
+                                                <select
+                                                    value={firstPayDate}
+                                                    onChange={(e) => setFirstPayDate(e.target.value)}
+                                                    className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                >
+                                                    <option value="">Select pay date</option>
+                                                    {payDateOptions.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                            {errors.firstPayDate && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.firstPayDate}</p>}
+                                        </div>
+                                    )}
 
                                         {frequency === 'Monthly' && (
                                         <div>
