@@ -46,6 +46,8 @@ interface SalaryComponent {
     isSystem?: boolean;
     targetId?: string;
     targetType?: 'Paygroup' | 'BusinessUnit';
+    isProRata?: boolean;
+    deductionTiming?: 'Pre-tax' | 'Post-tax';
 }
 
 const BUSINESS_UNITS = [
@@ -678,7 +680,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
-    const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
+    const [isProRata, setIsProRata] = useState(initialData?.isProRata ?? false);
+    const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? true);
+    const [deductionTiming, setDeductionTiming] = useState<'Pre-tax' | 'Post-tax'>(initialData?.deductionTiming || 'Post-tax');
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
     const [deductionType, setDeductionType] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deductionType || 'Statutory');
     const [error, setError] = useState<string | null>(null);
@@ -724,6 +728,8 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             category: 'Deductions',
             calculation: calcMethod === 'Flat' ? `Flat ₹${amountOrPercent}` : `${amountOrPercent}% of ${selectedComponents.join(', ')}`,
             taxable: 'Tax Deductible',
+            isProRata,
+            deductionTiming
         };
 
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
@@ -898,7 +904,41 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                             ))}
                         </div>
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Timing <span className="text-rose-500">*</span></label>
+                        <div className="flex gap-6">
+                            {(['Pre-tax', 'Post-tax'] as const).map(timing => (
+                                <label key={timing} className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deductionTiming === timing ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {deductionTiming === timing && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input
+                                        type="radio"
+                                        className="hidden"
+                                        checked={deductionTiming === timing}
+                                        onChange={() => setDeductionTiming(timing)}
+                                    />
+                                    <span className="text-sm text-slate-700 font-medium">{timing === 'Pre-tax' ? 'Pre-tax deduction' : 'Post-tax deduction'}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                            Pre-tax — deducted before income tax calculation, reducing taxable income (e.g. PF, NPS). <br />
+                            Post-tax — deducted after income tax calculation (e.g. loan recovery, salary advance).
+                        </p>
+                    </div>
                     <div className="pt-2 flex flex-col gap-3">
+                        <label className="flex items-start gap-2 cursor-pointer group">
+                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? "bg-purple-600 border-purple-600" : "border-slate-300 bg-white group-hover:border-purple-400"}`}>
+                                {isProRata && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
+                            <div>
+                                <span className="text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
+                                <p className="text-xs text-slate-500">Deduction will be adjusted based on employee working days.</p>
+                            </div>
+                        </label>
                         <label className="flex items-center gap-2 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
                                 {showInPayslip && <Check size={14} className="text-white" />}
@@ -1212,7 +1252,10 @@ const HRSalaryComponents: React.FC = () => {
                 lastModified: item.last_updated_by,
                 isSystem: item.is_system,
                 targetId: item.target_id,
-                targetType: item.target_type
+                targetType: item.target_type,
+                considerGratuity: item.consider_gratuity,
+                isProRata: item.is_pro_rata,
+                deductionTiming: item.deduction_timing
             }));
             setComponents(mappedData);
         }
@@ -1374,6 +1417,8 @@ const HRSalaryComponents: React.FC = () => {
             show_in_payslip: data.showInPayslip,
             target_id: data.targetId,
             target_type: data.targetType,
+            is_pro_rata: data.isProRata,
+            deduction_timing: data.deductionTiming,
             last_updated_by: 'Admin'
         } as any;
 
