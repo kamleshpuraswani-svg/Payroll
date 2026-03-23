@@ -998,6 +998,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
     const [selectedTarget, setSelectedTarget] = useState<string>(`bu:${BUSINESS_UNITS[0]}`);
+    const [deactivatingSchedule, setDeactivatingSchedule] = useState<PaySchedule | null>(null);
 
     const filteredSchedules = useMemo(() => {
         if (selectedTarget === 'all') return schedules;
@@ -1059,11 +1060,23 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         fetchConfig();
     }, []);
 
-    const handleStatusToggle = async (id: string) => {
+    const handleStatusToggle = (id: string) => {
         const scheduleToToggle = filteredSchedules.find(s => s.id === id);
         if (!scheduleToToggle) return;
 
         const isActivating = scheduleToToggle.status === 'Inactive' || !scheduleToToggle.status;
+        
+        if (!isActivating) {
+            setDeactivatingSchedule(scheduleToToggle);
+            return;
+        }
+
+        processStatusToggle(id, isActivating);
+    };
+
+    const processStatusToggle = async (id: string, isActivating: boolean) => {
+        const scheduleToToggle = filteredSchedules.find(s => s.id === id);
+        if (!scheduleToToggle) return;
         
         if (isActivating) {
             // Check if any other schedule for the same target is already active
@@ -1387,9 +1400,51 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            {/* Deactivation Confirmation Modal */}
+            {deactivatingSchedule && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="flex-shrink-0 w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 border border-rose-100">
+                                    <AlertCircle size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-900 leading-tight">Deactivate Pay Schedule?</h3>
+                                    <p className="text-sm text-slate-500 font-medium mt-1">Status: <span className="text-rose-600 font-bold uppercase tracking-wider text-[10px]">Deactivation Pending</span></p>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-100">
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    Are you sure you want to deactivate the <span className="font-bold text-slate-900">{deactivatingSchedule.frequency}</span> pay schedule? This will remove all its settings and configuration. <span className="text-rose-600 font-bold">This action cannot be undone.</span>
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setDeactivatingSchedule(null)}
+                                    className="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        processStatusToggle(deactivatingSchedule.id, false);
+                                        setDeactivatingSchedule(null);
+                                    }}
+                                    className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 transition-all active:scale-95 shadow-lg shadow-rose-200"
+                                >
+                                    Deactivate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-    );
+    </div>
+);
 };
 
 export default PayrollSettings;
