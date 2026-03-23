@@ -684,6 +684,16 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                     </div>
                                                 </label>
                                             </div>
+                                            <p className="text-[11px] text-sky-600 font-medium italic mt-2.5 bg-sky-50/50 px-3 py-1.5 rounded-lg border border-sky-100/50 w-fit">
+                                                Salary will be processed on {smFirstType === '15th' ? '15th' : (() => {
+                                                    const n = parseInt(smFirstCustomDay);
+                                                    const j = n % 10, k = n % 100;
+                                                    if (j === 1 && k !== 11) return n + "st";
+                                                    if (j === 2 && k !== 12) return n + "nd";
+                                                    if (j === 3 && k !== 13) return n + "rd";
+                                                    return n + "th";
+                                                })()} of every month.
+                                            </p>
                                         </div>
 
                                         {/* 2nd Period Config */}
@@ -717,6 +727,14 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                     </div>
                                                 </label>
                                             </div>
+                                            <p className="text-[11px] text-sky-600 font-medium italic mt-2.5 bg-sky-50/50 px-3 py-1.5 rounded-lg border border-sky-100/50 w-fit">
+                                                Salary will be processed on {smSecondType === 'last' ? 'the last day of every month' : (() => {
+                                                    const n = parseInt(smSecondCustomDay);
+                                                    const j = n % 10, k = n % 100;
+                                                    const suffix = (j === 1 && k !== 11) ? "st" : (j === 2 && k !== 12) ? "nd" : (j === 3 && k !== 13) ? "rd" : "th";
+                                                    return n + suffix + " of every following month";
+                                                })()}.
+                                            </p>
                                         </div>
                                     </div>
                                 )}
@@ -839,6 +857,32 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                     )}
 
+                                    {frequency === 'Semi-Monthly' && userRole === 'HR_MANAGER' && (
+                                        <div className="animate-in fade-in slide-in-from-right-2">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                                Effective Month <span className="text-rose-500">*</span>
+                                                <div className="group relative">
+                                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 text-center">
+                                                        The month from which this pay schedule configuration will be applied.
+                                                    </div>
+                                                </div>
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    value={effectiveDate}
+                                                    onChange={(e) => setEffectiveDate(e.target.value)}
+                                                    className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                >
+                                                    <option value="">Select effective month</option>
+                                                    {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                            {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
+                                        </div>
+                                    )}
+
                                         {frequency === 'Monthly' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
@@ -912,7 +956,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     )}
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {userRole === 'HR_MANAGER' && (
+                                    {userRole === 'HR_MANAGER' && frequency !== 'Semi-Monthly' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
                                                 Effective Month <span className="text-rose-500">*</span>
