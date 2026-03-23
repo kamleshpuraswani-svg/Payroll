@@ -37,6 +37,7 @@ interface SalaryComponent {
     // New fields for Earnings list view
     considerEPF?: boolean;
     considerESI?: boolean;
+    considerGratuity?: boolean;
     lastModified?: string;
     created?: string;
     effectiveDate?: string;
@@ -305,12 +306,14 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     // Configurations
-    const [isTaxable, setIsTaxable] = useState(initialData?.taxable !== 'Fully Exempt');
+    const [isTaxable, setIsTaxable] = useState(initialData?.taxable && initialData.taxable !== 'Fully Exempt' ? true : false);
+    const [taxTreatment, setTaxTreatment] = useState(initialData?.taxable || 'Fully Taxable');
     const [taxPreference, setTaxPreference] = useState('Subsequent');
     const [isProRata, setIsProRata] = useState(true);
     const [epfContribution, setEpfContribution] = useState<'Always' | 'Limit'>('Always');
     const [isConsiderEPF, setIsConsiderEPF] = useState(initialData?.considerEPF ?? true);
     const [isConsiderESI, setIsConsiderESI] = useState(initialData?.considerESI ?? true);
+    const [isConsiderGratuity, setIsConsiderGratuity] = useState(initialData?.considerGratuity ?? true);
     const [showInPayslip, setShowInPayslip] = useState(true);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
 
@@ -335,9 +338,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             calculation: natureOfPay === 'Fixed'
                 ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : `${amount}% of ${selectedComponents.join(', ')}`)
                 : 'Variable',
-            taxable: isTaxable ? 'Fully Taxable' : 'Fully Exempt',
+            taxable: isTaxable ? taxTreatment : 'Fully Exempt',
             considerEPF: isConsiderEPF,
             considerESI: isConsiderESI,
+            considerGratuity: isConsiderGratuity,
             status: isActive,
             category: 'Earnings'
         };
@@ -506,44 +510,78 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         <h3 className="font-bold text-slate-800 text-sm">Other Configurations</h3>
 
                         {/* Taxable */}
-                        <div className="space-y-3">
-                            <label className="flex items-start gap-2 cursor-pointer">
-                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isTaxable ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                    {isTaxable && <Check size={14} className="text-white" />}
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2">Taxable earning <span className="text-rose-500">*</span></label>
+                                <div className="flex gap-6">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
+                                            {isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                        </div>
+                                        <input type="radio" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(true)} />
+                                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors {!isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
+                                            {!isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                        </div>
+                                        <input type="radio" className="hidden" checked={!isTaxable} onChange={() => setIsTaxable(false)} />
+                                        <span className="text-sm text-slate-700 font-medium">No</span>
+                                    </label>
                                 </div>
-                                <input type="checkbox" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(!isTaxable)} />
-                                <div>
-                                    <span className="block text-sm font-bold text-slate-700">Taxable earning</span>
-                                    <span className="block text-xs text-slate-500 mt-0.5">The income tax amount will be divided equally and deducted every month across the financial year.</span>
-                                </div>
-                            </label>
+                            </div>
 
-                            {/* Tax Deduction Preference for Variable Pay */}
-                            {natureOfPay === 'Variable' && isTaxable && (
-                                <div className="ml-7 space-y-2 animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-xs font-bold text-slate-500 mb-1">Tax Deduction Preference <span className="text-rose-500">*</span></label>
-                                    <div className="space-y-2">
-                                        <label className="flex items-start gap-2 cursor-pointer">
-                                            <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center transition-colors ${taxPreference === 'Subsequent' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                                {taxPreference === 'Subsequent' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                            </div>
-                                            <input type="radio" className="hidden" checked={taxPreference === 'Subsequent'} onChange={() => setTaxPreference('Subsequent')} />
-                                            <div>
-                                                <span className="text-sm text-slate-700 font-medium">Deduct tax in subsequent payrolls of the financial year</span>
-                                                <p className="text-xs text-slate-500">The income tax amount will be divided equally and deducted every month.</p>
-                                            </div>
-                                        </label>
-                                        <label className="flex items-start gap-2 cursor-pointer">
-                                            <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center transition-colors ${taxPreference === 'Same' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                                {taxPreference === 'Same' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                            </div>
-                                            <input type="radio" className="hidden" checked={taxPreference === 'Same'} onChange={() => setTaxPreference('Same')} />
-                                            <div>
-                                                <span className="text-sm text-slate-700 font-medium">Deduct tax in same payroll</span>
-                                                <p className="text-xs text-slate-500">The entire income tax amount will be deducted when it is paid.</p>
-                                            </div>
-                                        </label>
+                            {isTaxable && (
+                                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                    <div className="w-1/2">
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <select
+                                                value={taxTreatment}
+                                                onChange={(e) => setTaxTreatment(e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none bg-white"
+                                            >
+                                                <option value="Fully Taxable">Fully Taxable</option>
+                                                <option value="Partially Exempt">Partially Exempt</option>
+                                                <option value="Fully Exempt">Fully Exempt</option>
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-1.5">
+                                            {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
+                                            {taxTreatment === 'Partially Exempt' && "Entire amount is exempt from income tax."}
+                                            {taxTreatment === 'Fully Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                                        </p>
                                     </div>
+
+                                    {/* Tax Deduction Preference for Variable Pay */}
+                                    {natureOfPay === 'Variable' && (
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold text-slate-500 mb-1">Tax Deduction Preference <span className="text-rose-500">*</span></label>
+                                            <div className="space-y-2">
+                                                <label className="flex items-start gap-2 cursor-pointer">
+                                                    <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center transition-colors ${taxPreference === 'Subsequent' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                        {taxPreference === 'Subsequent' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                    </div>
+                                                    <input type="radio" className="hidden" checked={taxPreference === 'Subsequent'} onChange={() => setTaxPreference('Subsequent')} />
+                                                    <div>
+                                                        <span className="text-sm text-slate-700 font-medium">Deduct tax in subsequent payrolls of the financial year</span>
+                                                        <p className="text-xs text-slate-500">The income tax amount will be divided equally and deducted every month.</p>
+                                                    </div>
+                                                </label>
+                                                <label className="flex items-start gap-2 cursor-pointer">
+                                                    <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center transition-colors ${taxPreference === 'Same' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                        {taxPreference === 'Same' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                    </div>
+                                                    <input type="radio" className="hidden" checked={taxPreference === 'Same'} onChange={() => setTaxPreference('Same')} />
+                                                    <div>
+                                                        <span className="text-sm text-slate-700 font-medium">Deduct tax in same payroll</span>
+                                                        <p className="text-xs text-slate-500">The entire income tax amount will be deducted when it is paid.</p>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -569,7 +607,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <input type="checkbox" className="hidden" checked={isConsiderEPF} onChange={() => setIsConsiderEPF(!isConsiderEPF)} />
                                 <div>
                                     <span className="block text-sm font-bold text-slate-700">Consider for EPF Contribution</span>
-                                    <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
+                                    <span className="block text-xs text-slate-500 mt-0.5">This will be included when calculating the employee's EPF contribution.</span>
                                 </div>
                             </label>
 
@@ -594,13 +632,26 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         </div>
 
                         {/* ESI & Payslip */}
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderESI ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {isConsiderESI && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={isConsiderESI} onChange={() => setIsConsiderESI(!isConsiderESI)} />
-                            <span className="text-sm font-bold text-slate-700">Consider for ESI Contribution</span>
-                        </label>
+                        <div className="space-y-4">
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderESI ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isConsiderESI && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isConsiderESI} onChange={() => setIsConsiderESI(!isConsiderESI)} />
+                                <span className="text-sm font-bold text-slate-700">Consider for ESI Contribution</span>
+                            </label>
+
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderGratuity ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isConsiderGratuity && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isConsiderGratuity} onChange={() => setIsConsiderGratuity(!isConsiderGratuity)} />
+                                <div>
+                                    <span className="block text-sm font-bold text-slate-700">Consider for Gratuity</span>
+                                    <span className="block text-xs text-slate-500 mt-0.5">This component will be included in gratuity computation.</span>
+                                </div>
+                            </label>
+                        </div>
 
                         <label className="flex items-center gap-2 cursor-pointer">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
