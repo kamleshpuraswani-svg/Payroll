@@ -846,11 +846,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                     )}
                                 </div>
-
-
-
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div />
                                     {userRole === 'HR_MANAGER' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
@@ -876,6 +872,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
                                         </div>
                                     )}
+                                    <div />
                                 </div>
                             </div>
 
