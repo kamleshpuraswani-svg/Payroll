@@ -285,7 +285,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
-    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
     const [error, setError] = useState<string | null>(null);
     const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
         if (initialData?.targetId && initialData?.targetType) {
@@ -930,7 +930,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
-    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
     const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? false);
     const [error, setError] = useState<string | null>(null);
 
