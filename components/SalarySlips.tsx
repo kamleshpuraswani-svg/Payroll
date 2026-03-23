@@ -258,7 +258,7 @@ const MOCK_PAYSLIPS: Record<string, PayslipData> = {
 
 const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export const PayslipsModule: React.FC = () => {
+export const SalarySlipsModule: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState('2025');
   const [activeMonth, setActiveMonth] = useState('Nov 2025');
   const [showValues, setShowValues] = useState(false);
@@ -655,4 +655,4 @@ const InfoItem = ({ label, value, isWarning }: { label: string, value: string, i
   </div>
 );
 
-export default PayslipsModule;
+export default SalarySlipsModule;

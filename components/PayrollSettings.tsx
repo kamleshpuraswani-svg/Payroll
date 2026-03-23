@@ -776,7 +776,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                         {frequency === 'Monthly' && (
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">When would you like to pay? <span className="text-rose-500">*</span></label>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
                                             <div className="flex items-center gap-6">
                                                 <div className="relative w-24">
                                                     <select
@@ -804,7 +804,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             checked={payDateMonthType === 'same'}
                                                             onChange={() => setPayDateMonthType('same')}
                                                         />
-                                                        <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>of same month</span>
+                                                        <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Same month</span>
                                                     </label>
                                                     <label className="flex items-center gap-2.5 cursor-pointer group">
                                                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'following' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
@@ -817,10 +817,33 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             checked={payDateMonthType === 'following'}
                                                             onChange={() => setPayDateMonthType('following')}
                                                         />
-                                                        <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>of following month</span>
+                                                        <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Following month</span>
                                                     </label>
                                                 </div>
                                             </div>
+                                            {startMonthStr && payDateDay && (
+                                                <p className="text-[11px] text-slate-400 font-medium italic mt-2.5">
+                                                    {(() => {
+                                                        const currentM = startMonthStr.split(' ')[0];
+                                                        const getNextMonth = (s: string) => {
+                                                            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                            const idx = months.indexOf(s);
+                                                            return idx === -1 ? "Next month" : months[(idx + 1) % 12];
+                                                        };
+                                                        const getOrd = (d: string) => {
+                                                            const n = parseInt(d);
+                                                            const j = n % 10, k = n % 100;
+                                                            if (j === 1 && k !== 11) return n + "st";
+                                                            if (j === 2 && k !== 12) return n + "nd";
+                                                            if (j === 3 && k !== 13) return n + "rd";
+                                                            return n + "th";
+                                                        };
+                                                        const nxtM = getNextMonth(currentM);
+                                                        const ordDay = getOrd(payDateDay);
+                                                        return `Same month — salary for ${currentM} is paid on ${ordDay} ${currentM}. Following month — salary for ${currentM} is paid on ${ordDay} ${nxtM}.`;
+                                                    })()}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>

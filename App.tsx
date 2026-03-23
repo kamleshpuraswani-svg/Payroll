@@ -27,7 +27,7 @@ import ExpenseSettings from './components/ExpenseSettings';
 // New Component Imports
 import TaxPlanning from './components/TaxPlanning';
 import Reimbursements from './components/Reimbursements';
-import Payslips from './components/Payslips';
+import SalarySlips from './components/SalarySlips';
 import SalaryBreakdown from './components/SalaryBreakdown';
 import TaxDocuments from './components/TaxDocuments';
 import { supabase } from './services/supabaseClient';
@@ -269,7 +269,7 @@ const App: React.FC = () => {
                     onNavigateToReimbursements={() => setCurrentView(ViewState.EMP_REIMBURSEMENTS)}
                   />
                 )}
-                {currentView === ViewState.EMP_PAYSLIPS && <Payslips />}
+                {currentView === ViewState.EMP_PAYSLIPS && <SalarySlips />}
                 {currentView === ViewState.EMP_TAX_PLANNING && <TaxPlanning />}
                 {currentView === ViewState.EMP_SALARY_BREAKDOWN && <SalaryBreakdown />}
                 {currentView === ViewState.EMP_REIMBURSEMENTS && <Reimbursements />}

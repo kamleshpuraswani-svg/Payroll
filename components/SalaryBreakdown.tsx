@@ -158,7 +158,7 @@ export const SalaryBreakdownModule: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Salary_Breakdown_${effectiveDate.split(' ')[0]}_${effectiveDate.split(' ')[1]}.txt`;
+      link.download = `Salary_Slip_Breakdown_${effectiveDate.split(' ')[0]}_${effectiveDate.split(' ')[1]}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

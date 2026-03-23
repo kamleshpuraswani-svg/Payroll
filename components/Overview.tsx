@@ -111,7 +111,7 @@ const Overview: React.FC<OverviewProps> = ({ onNavigateToTaxPlanning, onNavigate
 
   const handleDownloadSlip = () => {
     const content = `COLLABCRM SYSTEMS PVT LTD
-Payslip for the month of December 2025
+Salary Slip for the month of December 2025
 
 Employee Name: Priya Sharma
 Employee ID: TF00123
@@ -138,7 +138,7 @@ NET PAYABLE        : ₹ 78,200
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'Payslip_Dec_2025.txt';
+    link.download = 'Salary_Slip_Dec_2025.txt';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

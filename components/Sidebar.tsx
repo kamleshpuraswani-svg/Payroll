@@ -171,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         },
         {
           id: 'emp-payslips',
-          label: 'Payslips',
+          label: 'Salary Slips',
           viewState: ViewState.EMP_PAYSLIPS
         },
         {
