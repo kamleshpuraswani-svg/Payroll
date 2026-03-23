@@ -75,18 +75,18 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const getMonthOptions = () => {
     const options = [];
-    let currentYear = 2025;
-    let currentMonth = 11; // December (0-indexed)
+    const now = new Date();
+    let currentMonth = now.getMonth();
+    let currentYear = now.getFullYear();
 
-    // Generate from Dec 2025 to Dec 2026
-    while (currentYear < 2027 || (currentYear === 2026 && currentMonth <= 11)) {
+    // Generate for the next 24 months
+    for (let i = 0; i < 24; i++) {
         options.push(`${MONTHS[currentMonth]} ${currentYear}`);
         currentMonth++;
         if (currentMonth > 11) {
             currentMonth = 0;
             currentYear++;
         }
-        if (currentYear === 2027) break;
     }
     return options;
 };
@@ -753,7 +753,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Start your first payroll from <span className="text-rose-500">*</span></label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">First Payroll Month <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                             <select
@@ -780,12 +780,11 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             <div className="flex items-center gap-6">
                                                 <div className="relative w-24">
                                                     <select
-                                                        disabled={userRole === 'HR_MANAGER'}
                                                         value={payDateDay}
                                                         onChange={(e) => setPayDateDay(e.target.value)}
                                                         className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
                                                     >
-                                                        {Array.from({ length: 31 }, (_, i) => (
+                                                        {Array.from({ length: daysInSelectedMonth }, (_, i) => (
                                                             <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
                                                         ))}
                                                     </select>
@@ -848,42 +847,18 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     )}
                                 </div>
 
+
+
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Select a pay date for your first payroll <span className="text-rose-500">*</span></label>
-                                        <div className="relative">
-                                            {frequency === 'Monthly' ? (
-                                                <input
-                                                    type="date"
-                                                    value={firstPayDate}
-                                                    onChange={(e) => setFirstPayDate(e.target.value)}
-                                                    className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                                />
-                                            ) : (
-                                                <>
-                                                    <select
-                                                        value={firstPayDate}
-                                                        onChange={(e) => setFirstPayDate(e.target.value)}
-                                                        className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                                    >
-                                                        {payDateOptions.map(d => <option key={d} value={d}>{d}</option>)}
-                                                    </select>
-                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                                </>
-                                            )}
-                                        </div>
-                                        {errors.firstPayDate && <p className="text-xs text-rose-500 mt-1">{errors.firstPayDate}</p>}
-                                    </div>
-
+                                    <div />
                                     {userRole === 'HR_MANAGER' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
                                                 Effective Month <span className="text-rose-500">*</span>
                                                 <div className="group relative">
                                                     <Info size={14} className="text-slate-400 cursor-help" />
-                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                                        Select the effective month for these changes.
+                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 text-center">
+                                                        The month from which this pay schedule configuration will be applied.
                                                     </div>
                                                 </div>
                                             </label>
