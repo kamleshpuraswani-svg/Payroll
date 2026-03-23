@@ -28,6 +28,8 @@ interface PaySchedule {
     processingDate?: string;
     firstPayDate?: string;
     startMonthStr?: string;
+    excludeWeekOffs?: boolean;
+    excludeHolidays?: boolean;
     history?: ChangeHistory[];
 }
 
@@ -135,6 +137,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         return initialData.firstPayDate;
     });
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || '');
+    const [excludeWeekOffs, setExcludeWeekOffs] = useState(initialData?.excludeWeekOffs || false);
+    const [excludeHolidays, setExcludeHolidays] = useState(initialData?.excludeHolidays || false);
     const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
         if (initialData?.targetId && initialData?.targetType) {
             const prefix = initialData.targetType === 'Paygroup' ? 'pg' : 'bu';
@@ -416,6 +420,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             startMonthStr,
             processingDate: frequency === 'Semi-Monthly' ? processingDate : undefined,
             effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
+            excludeWeekOffs: calcBase === 'Organisation working days' ? excludeWeekOffs : undefined,
+            excludeHolidays: calcBase === 'Organisation working days' ? excludeHolidays : undefined,
             history: [...(initialData?.history || []), ...newHistoryRecords]
         }, { targetId, targetType });
     };
@@ -749,6 +755,44 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             <span className="text-sm text-slate-700">Organisation working days (per month)</span>
                                         </label>
                                     </div>
+                                    {calcBase === 'Organisation working days' && (
+                                        <div className="mt-5 space-y-4 pl-7 animate-in fade-in slide-in-from-top-2 duration-300 border-l-2 border-sky-100">
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-sm font-bold text-slate-700 w-64 uppercase tracking-tight text-[11px]">Exclude week offs</span>
+                                                <div className="flex gap-6">
+                                                    {['Yes', 'No'].map(opt => (
+                                                        <button 
+                                                            key={opt}
+                                                            onClick={() => setExcludeWeekOffs(opt === 'Yes')}
+                                                            className={`flex items-center gap-2.5 cursor-pointer group transition-all`}
+                                                        >
+                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${excludeWeekOffs === (opt === 'Yes') ? 'border-sky-600 bg-sky-50' : 'border-slate-300 group-hover:border-slate-400'}`}>
+                                                                {excludeWeekOffs === (opt === 'Yes') && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 shadow-sm" />}
+                                                            </div>
+                                                            <span className={`text-sm ${excludeWeekOffs === (opt === 'Yes') ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{opt}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-sm font-bold text-slate-700 w-64 uppercase tracking-tight text-[11px]">Exclude public/national holidays</span>
+                                                <div className="flex gap-6">
+                                                    {['Yes', 'No'].map(opt => (
+                                                        <button 
+                                                            key={opt}
+                                                            onClick={() => setExcludeHolidays(opt === 'Yes')}
+                                                            className={`flex items-center gap-2.5 cursor-pointer group transition-all`}
+                                                        >
+                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${excludeHolidays === (opt === 'Yes') ? 'border-sky-600 bg-sky-50' : 'border-slate-300 group-hover:border-slate-400'}`}>
+                                                                {excludeHolidays === (opt === 'Yes') && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 shadow-sm" />}
+                                                            </div>
+                                                            <span className={`text-sm ${excludeHolidays === (opt === 'Yes') ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{opt}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
