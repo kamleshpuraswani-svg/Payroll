@@ -1441,7 +1441,7 @@ const HRSalaryComponents: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <div className="relative">
+                            <div className="relative hidden">
                                 <select
                                     value={selectedTarget}
                                     onChange={(e) => setSelectedTarget(e.target.value)}
