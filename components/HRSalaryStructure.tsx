@@ -849,7 +849,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         {/* Reimbursements Section */}
                         <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
                             <div className="px-6 py-3 bg-amber-50 border-b border-amber-100">
-                                <h3 className="font-bold text-amber-800 text-sm">4. Reimbursements</h3>
+                                <h3 className="font-bold text-amber-800 text-sm">3. Reimbursements</h3>
                             </div>
                             <div className="p-4 space-y-2">
                                 {reimbursements.map((comp, idx) => (
