@@ -1605,6 +1605,7 @@ const HRSalaryComponents: React.FC = () => {
                                                     <th className="px-6 py-4">Calculation Method</th>
                                                     <th className="px-6 py-4">Deduction Type</th>
                                                     <th className="px-6 py-4">Deduction Frequency</th>
+                                                    <th className="px-6 py-4">Deduction Timing</th>
                                                 </>
                                             )}
                                             <th className="px-6 py-4">Status</th>
@@ -1680,6 +1681,7 @@ const HRSalaryComponents: React.FC = () => {
                                                             <td className="px-6 py-4 text-slate-600 font-medium">{item.calculation || '-'}</td>
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.deductionType || '-'}</td>
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.frequency || '-'}</td>
+                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.deductionTiming || '-'}</td>
                                                         </>
                                                     )}
                                                     <td className="px-6 py-4">
