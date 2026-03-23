@@ -1186,7 +1186,7 @@ const HRSalaryComponents: React.FC = () => {
         const { data, error } = await supabase
             .from('salary_components')
             .select('*')
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: false });
 
         if (error) {
             console.error('Error fetching components:', error);
@@ -1377,33 +1377,38 @@ const HRSalaryComponents: React.FC = () => {
             last_updated_by: 'Admin'
         } as any;
 
-        if (editingComponent) {
-            const isMock = editingComponent.id.startsWith('mock-');
-            if (isMock) {
+        try {
+            if (editingComponent) {
+                const isMock = editingComponent.id.startsWith('mock-');
+                if (isMock) {
+                    payload.created_by = 'Admin';
+                    const { error } = await supabase
+                        .from('salary_components')
+                        .insert([payload]);
+
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase
+                        .from('salary_components')
+                        .update(payload)
+                        .eq('id', editingComponent.id);
+
+                    if (error) throw error;
+                }
+            } else {
                 payload.created_by = 'Admin';
                 const { error } = await supabase
                     .from('salary_components')
                     .insert([payload]);
 
-                if (error) console.error('Error inserting component:', error);
-            } else {
-                const { error } = await supabase
-                    .from('salary_components')
-                    .update(payload)
-                    .eq('id', editingComponent.id);
-
-                if (error) console.error('Error updating component:', error);
+                if (error) throw error;
             }
-        } else {
-            payload.created_by = 'Admin';
-            const { error } = await supabase
-                .from('salary_components')
-                .insert([payload]);
-
-            if (error) console.error('Error inserting component:', error);
+            fetchComponents();
+            handleCancel();
+        } catch (err: any) {
+            console.error('Error saving component:', err);
+            alert(`Failed to save component: ${err.message || 'Unknown error'}`);
         }
-        fetchComponents();
-        handleCancel();
     };
 
     const handleCancel = () => {
