@@ -79,6 +79,7 @@ const StatutorySettings: React.FC = () => {
                 setEsiEmprRate(config.esiEmprRate ?? '3.25%');
                 setIncludeEmprContriEsi(config.includeEmprContriEsi ?? true);
                 setEsiMappedComponents(config.esiMappedComponents ?? ESI_COMPONENTS);
+                setEsiMaxMonthlySalary(config.esiMaxMonthlySalary ?? '21,000');
                 setEnableGratuity(config.enableGratuity ?? false);
                 setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
                 setGratuityMode(config.gratuityMode ?? 'all');
@@ -133,6 +134,7 @@ const StatutorySettings: React.FC = () => {
     const [esiEmprRate, setEsiEmprRate] = useState('3.25%');
     const [includeEmprContriEsi, setIncludeEmprContriEsi] = useState(true);
     const [esiMappedComponents, setEsiMappedComponents] = useState<string[]>(ESI_COMPONENTS);
+    const [esiMaxMonthlySalary, setEsiMaxMonthlySalary] = useState('21,000');
 
     // Gratuity State
     const [enableGratuity, setEnableGratuity] = useState(false);
@@ -199,7 +201,7 @@ const StatutorySettings: React.FC = () => {
 
     const handleEdit = () => {
         setBackupState({
-            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents],
+            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary,
             enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria: [...gratuityCriteria],
             selectedGratuityDepts: [...selectedGratuityDepts], gratuityCalculationComponents: [...gratuityCalculationComponents],
             minServicePeriod, customServiceYears,
@@ -218,7 +220,7 @@ const StatutorySettings: React.FC = () => {
     const handleSave = async () => {
         try {
             const configValue = {
-                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents,
+                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary,
                 enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
                 selectedGratuityDepts, gratuityCalculationComponents,
                 minServicePeriod, customServiceYears,
@@ -257,6 +259,7 @@ const StatutorySettings: React.FC = () => {
             setEsiEmprRate(backupState.esiEmprRate);
             setIncludeEmprContriEsi(backupState.includeEmprContriEsi);
             setEsiMappedComponents(backupState.esiMappedComponents);
+            setEsiMaxMonthlySalary(backupState.esiMaxMonthlySalary);
 
             setEnableGratuity(backupState.enableGratuity);
             setIncludeInCtcGratuity(backupState.includeInCtcGratuity);
@@ -401,7 +404,7 @@ const StatutorySettings: React.FC = () => {
                         </div>
 
                         <p className="text-sm text-slate-500 -mt-2 mb-6">
-                            Organisations having 10 or more employees must register for Employee State Insurance (ESI). This scheme provides cash allowances and medical benefits for employees whose monthly salary is less than ₹21,00,000. If the employee gets a salary revision which increases their monthly salary above ₹21,000, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).
+                            Organisations having 10 or more employees must register for Employee State Insurance (ESI). This scheme provides cash allowances and medical benefits for employees whose monthly salary is less than ₹{esiMaxMonthlySalary}. If the employee gets a salary revision which increases their monthly salary above ₹{esiMaxMonthlySalary}, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).
                         </p>
 
                         {enableEsi && (
@@ -452,6 +455,21 @@ const StatutorySettings: React.FC = () => {
                                             </div>
                                         </label>
                                         <input type="text" value="Monthly" disabled className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Maximum monthly gross salary eligible for ESI</label>
+                                        <div className="relative">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
+                                            <input
+                                                type="text"
+                                                value={esiMaxMonthlySalary}
+                                                onChange={(e) => setEsiMaxMonthlySalary(e.target.value)}
+                                                disabled={!isEditing}
+                                                className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 font-bold focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -535,7 +553,7 @@ const StatutorySettings: React.FC = () => {
 
                                     <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-6 mt-4">
                                         <p className="text-sm text-slate-700 leading-relaxed">
-                                            <span className="font-bold">Note:</span> ESI deductions will be made only if the employee’s monthly salary is less than or equal to ₹21,000. If the employee gets a salary revision which increases their monthly salary above ₹21,000, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).
+                                            <span className="font-bold">Note:</span> ESI deductions will be made only if the employee’s monthly salary is less than or equal to ₹{esiMaxMonthlySalary}. If the employee gets a salary revision which increases their monthly salary above ₹{esiMaxMonthlySalary}, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).
                                         </p>
                                     </div>
                                 </div>
