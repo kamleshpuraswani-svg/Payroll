@@ -42,6 +42,7 @@ interface Structure {
     status: 'Active' | 'Draft' | 'Archived' | 'Inactive';
     createdBy?: string;
     lastModified: string;
+    effectiveFrom?: string;
     earnings: SalaryComponent[];
     deductions: SalaryComponent[];
     benefits: SalaryComponent[];
@@ -367,6 +368,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 deductions: d.deductions || [],
                 benefits: d.benefits || [],
                 reimbursements: d.reimbursements || [],
+                effectiveFrom: d.effective_from || '',
                 employeeCount: d.employeeCount || 0,
                 lastModified: d.last_modified ? new Date(d.last_modified).toLocaleDateString() : 'Just now',
                 targetId: d.target_id,
@@ -402,6 +404,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     const [deductions, setDeductions] = useState<SalaryComponent[]>([]);
     const [benefits, setBenefits] = useState<SalaryComponent[]>([]);
     const [reimbursements, setReimbursements] = useState<SalaryComponent[]>([]);
+    const [effectiveFrom, setEffectiveFrom] = useState('');
     const [currentStatus, setCurrentStatus] = useState<'Active' | 'Draft' | 'Inactive' | 'Archived'>('Draft');
     const [errors, setErrors] = useState<{ name?: string, earnings?: string, deductions?: string }>({});
 
@@ -428,6 +431,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeductions([]);
         setBenefits([]);
         setReimbursements([]);
+        setEffectiveFrom(new Date().toLocaleString('default', { month: 'short', year: 'numeric' }));
         setCurrentStatus('Draft');
         setErrors({});
         setLocalSelectedTarget(selectedTarget === 'all' ? '' : selectedTarget);
@@ -445,6 +449,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeductions(structure.deductions);
         setBenefits(structure.benefits);
         setReimbursements(structure.reimbursements);
+        setEffectiveFrom((structure as any).effectiveFrom || '');
         setCurrentStatus(structure.status);
         setLocalSelectedTarget(structure.targetId ? `${structure.targetType === 'Paygroup' ? 'pg' : 'bu'}:${structure.targetId}` : '');
         setErrors({});
@@ -498,6 +503,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             deductions,
             benefits,
             reimbursements,
+            effective_from: effectiveFrom,
             target_id: localSelectedTarget ? localSelectedTarget.split(':')[1] : null,
             target_type: localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null
         };
@@ -687,7 +693,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                     <div className="space-y-6">
                         {/* Basic Info */}
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Structure Name <span className="text-rose-500">*</span></label>
                                     {isReadOnly ? (
@@ -731,7 +737,33 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Effective From <span className="text-rose-500">*</span></label>
+                                    {isReadOnly ? (
+                                        <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">{effectiveFrom || '-'}</div>
+                                    ) : (
+                                        <div className="relative">
+                                            <select
+                                                value={effectiveFrom}
+                                                onChange={(e) => setEffectiveFrom(e.target.value)}
+                                                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
+                                            >
+                                                {(() => {
+                                                    const options = [];
+                                                    const now = new Date();
+                                                    for (let i = 0; i <= 12; i++) {
+                                                        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                                                        const label = d.toLocaleString('default', { month: 'short', year: 'numeric' });
+                                                        options.push(<option key={label} value={label}>{label}</option>);
+                                                    }
+                                                    return options;
+                                                })()}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="md:col-span-3">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 text-center sm:text-left">Target Assignment Rules</label>
                                     <div className="flex gap-4 flex-wrap">
                                         <MultiSelect
@@ -761,24 +793,29 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <div className="flex items-center gap-3 mb-1.5">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase">Description</label>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'Active' ? 'bg-emerald-100 text-emerald-700' : currentStatus === 'Draft' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                                        {currentStatus}
-                                    </span>
+                            <div className="flex flex-col md:flex-row gap-6 md:items-end">
+                                <div className="md:w-1/2">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label>
+                                    {isReadOnly ? (
+                                        <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">{description || '-'}</div>
+                                    ) : (
+                                        <textarea
+                                            value={description}
+                                            onChange={e => setDescription(e.target.value)}
+                                            rows={2}
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
+                                            placeholder="Brief description of this salary structure..."
+                                        />
+                                    )}
                                 </div>
-                                {isReadOnly ? (
-                                    <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">{description || '-'}</div>
-                                ) : (
-                                    <textarea
-                                        value={description}
-                                        onChange={e => setDescription(e.target.value)}
-                                        rows={2}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
-                                        placeholder="Brief description of this salary structure..."
-                                    />
-                                )}
+                                <div className="pb-1">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-tight">Status</label>
+                                        <span className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider inline-flex items-center justify-center border ${currentStatus === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : currentStatus === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                            {currentStatus}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -870,6 +907,35 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                 {!isReadOnly && (
                                     <button onClick={() => openAddModal('reimbursements')} className="w-full py-2 border-2 border-dashed border-amber-100 rounded-lg text-amber-600 text-sm font-medium hover:bg-amber-50 transition-colors flex items-center justify-center gap-2">
                                         <Plus size={16} /> Add Reimbursement Component
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Employer Contributions Section */}
+                        <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                            <div className="px-6 py-3 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+                                <h3 className="font-bold text-blue-800 text-sm">4. Employer Contributions</h3>
+                            </div>
+                            <div className="p-4 space-y-2">
+                                {benefits.map((comp, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-lg shadow-sm group">
+                                        {!isReadOnly && <GripVertical size={16} className="text-slate-300 cursor-move" />}
+                                        <div className="flex-1">
+                                            <div className="text-sm font-semibold text-slate-800">{comp.name}</div>
+                                            <div className="text-xs text-slate-500">{comp.calculation}</div>
+                                        </div>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{comp.type}</span>
+                                        {!isReadOnly && (
+                                            <button onClick={() => removeComponent(comp.id, benefits, setBenefits)} className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded transition-colors">
+                                                <X size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {!isReadOnly && (
+                                    <button onClick={() => openAddModal('benefits')} className="w-full py-2 border-2 border-dashed border-blue-100 rounded-lg text-blue-600 text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
+                                        <Plus size={16} /> Add Employer Contribution
                                     </button>
                                 )}
                             </div>
