@@ -30,7 +30,8 @@ import {
     Info,
     ChevronDown,
     Filter,
-    BarChart2
+    BarChart2,
+    Eye
 } from 'lucide-react';
 import StatCard from './StatCard';
 import ApprovalsPanel from './ApprovalsPanel';
@@ -722,6 +723,10 @@ const HRDashboard: React.FC = () => {
     const [isECRModalOpen, setIsECRModalOpen] = useState(false);
     const [isPFECRFiled, setIsPFECRFiled] = useState(false);
 
+    // Pending Payroll Slide-over State
+    const [isPendingPanelOpen, setIsPendingPanelOpen] = useState(false);
+    const [activePendingFilter, setActivePendingFilter] = useState<'All' | 'On Hold' | 'Draft'>('All');
+
     // Mock Company for RunPayrollModal
     const currentCompany: Company = {
         id: 'TF-1024',
@@ -733,6 +738,19 @@ const HRDashboard: React.FC = () => {
         business_unit: 'Digital Technology',
         last_payroll_run: '31 Oct 2025'
     };
+
+    // Mock Pending Employees Data
+    const pendingEmployees = [
+        { id: 'EMP-001', name: 'Alka Sharma', initials: 'AS', color: 'bg-emerald-100 text-emerald-700', dept: 'Engineering', lastUpdatedBy: 'Jane Manager', status: 'Draft', pendingDays: 2, netSalary: '₹ 85,000' },
+        { id: 'EMP-002', name: 'Ravi Kumar', initials: 'RK', color: 'bg-blue-100 text-blue-700', dept: 'Sales', lastUpdatedBy: 'System', holdReason: 'Missing Bank Details', status: 'On Hold', pendingDays: 5, netSalary: '₹ 62,500' },
+        { id: 'EMP-003', name: 'Priya Singh', initials: 'PS', color: 'bg-indigo-100 text-indigo-700', dept: 'Operations', lastUpdatedBy: 'John HR', holdReason: 'Attendance Discrepancy', status: 'On Hold', pendingDays: 3, netSalary: '₹ 54,200' },
+        { id: 'EMP-004', name: 'Amit Patel', initials: 'AP', color: 'bg-purple-100 text-purple-700', dept: 'Engineering', lastUpdatedBy: 'Jane Manager', status: 'Draft', pendingDays: 1, netSalary: '₹ 92,000' },
+        { id: 'EMP-005', name: 'Sneha Gupta', initials: 'SG', color: 'bg-rose-100 text-rose-700', dept: 'Marketing', lastUpdatedBy: 'System', holdReason: 'Tax Proofs Pending', status: 'On Hold', pendingDays: 4, netSalary: '₹ 71,000' },
+    ];
+
+    const filteredPendingEmployees = activePendingFilter === 'All' 
+        ? pendingEmployees 
+        : pendingEmployees.filter(emp => emp.status === activePendingFilter);
 
     // Function to get data based on range
     const getGraphData = useMemo(() => {
@@ -893,12 +911,21 @@ const HRDashboard: React.FC = () => {
                     {[
                         { label: 'Total Eligible', val: '450', sub: 'Current Month', icon: <Users size={16} />, color: 'bg-blue-50 text-blue-700' },
                         { label: 'Processed', val: '400', sub: 'Current Month', icon: <CheckCircle size={16} />, color: 'bg-emerald-50 text-emerald-700' },
-                        { label: 'Pending', val: '50', sub: 'On Hold/Draft', icon: <Clock size={16} />, color: 'bg-amber-50 text-amber-700' },
+                        { label: 'Pending', val: '50', sub: 'On Hold/Draft', icon: <Clock size={16} />, color: 'bg-amber-50 text-amber-700', showEye: true, onAction: () => setIsPendingPanelOpen(true) },
                         { label: 'Total Payroll Cost', val: '₹ 1.85 Cr', sub: 'Gross Salary', icon: <DollarSign size={16} />, color: 'bg-purple-50 text-purple-700' },
                         { label: 'Net Payable', val: '₹ 1.42 Cr', sub: 'After Deductions', icon: <Briefcase size={16} />, color: 'bg-indigo-50 text-indigo-700' },
                         { label: 'Next Pay Cycle', val: '30 Nov', sub: 'Upcoming', icon: <Calendar size={16} />, color: 'bg-rose-50 text-rose-700' },
                     ].map((kpi, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow relative group">
+                            {kpi.showEye && (
+                                <button
+                                    onClick={kpi.onAction}
+                                    className="absolute top-4 right-4 text-slate-300 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="View details"
+                                >
+                                    <Eye size={16} />
+                                </button>
+                            )}
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-xs font-semibold text-slate-500 uppercase">{kpi.label}</span>
                                 <div className={`p-1.5 rounded-lg ${kpi.color}`}>{kpi.icon}</div>
@@ -1523,6 +1550,131 @@ const HRDashboard: React.FC = () => {
             {/* 8. TDS Full Report Modal */}
             {isTdsReportOpen && (
                 <TdsFullReportModal onClose={() => setIsTdsReportOpen(false)} data={tdsGraphData} />
+            )}
+
+            {/* Pending Payroll Slide-over Panel */}
+            {isPendingPanelOpen && (
+                <>
+                    <div 
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[80] animate-in fade-in duration-200"
+                        onClick={() => setIsPendingPanelOpen(false)}
+                    />
+                    <div className="fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl z-[90] flex flex-col animate-in slide-in-from-right duration-300">
+                        {/* Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-slate-50">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-800">Pending Payroll</h2>
+                                <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                                    <Users size={14} />
+                                    {pendingEmployees.length} employees · On Hold & Draft
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setIsPendingPanelOpen(false)}
+                                className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Filter Tabs */}
+                        <div className="px-6 py-4 border-b border-slate-100 bg-white">
+                            <div className="flex gap-2">
+                                {['All', 'On Hold', 'Draft'].map((filter) => {
+                                    const count = filter === 'All' 
+                                        ? pendingEmployees.length 
+                                        : pendingEmployees.filter(e => e.status === filter).length;
+                                    
+                                    const isActive = activePendingFilter === filter;
+                                    
+                                    return (
+                                        <button
+                                            key={filter}
+                                            onClick={() => setActivePendingFilter(filter as any)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                isActive 
+                                                    ? 'bg-purple-100 text-purple-700 shadow-inner' 
+                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                        >
+                                            {filter} ({count})
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Employee List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+                            {filteredPendingEmployees.map((emp) => (
+                                <div key={emp.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4 hover:border-purple-200 transition-colors group">
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${emp.color}`}>
+                                        {emp.initials}
+                                    </div>
+                                    
+                                    <div className="flex-1 min-w-0 flex justify-between gap-4">
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                                {emp.name}
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500">
+                                                    {emp.id}
+                                                </span>
+                                            </h4>
+                                            <p className="text-sm text-slate-500 font-medium mt-0.5">{emp.dept}</p>
+                                            
+                                            <div className="mt-2 text-xs">
+                                                <span className="text-slate-400 block">Last updated by {emp.lastUpdatedBy}</span>
+                                                {emp.holdReason && (
+                                                    <span className="text-rose-500 font-medium block mt-0.5 flex items-center gap-1">
+                                                        <AlertCircle size={12} /> {emp.holdReason}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="text-right flex flex-col items-end justify-between">
+                                            <div>
+                                                <div className="font-black text-slate-800 text-lg">{emp.netSalary}</div>
+                                                <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Net Salary</div>
+                                            </div>
+                                            
+                                            <div className="mt-3 flex flex-col items-end gap-1.5">
+                                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${
+                                                    emp.status === 'On Hold' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-purple-100 text-purple-700 border border-purple-200'
+                                                }`}>
+                                                    {emp.status}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                                    <Clock size={10} /> Pending {emp.pendingDays}d
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            {filteredPendingEmployees.length === 0 && (
+                                <div className="text-center py-12 px-4">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200">
+                                        <CheckCircle size={24} className="text-slate-400" />
+                                    </div>
+                                    <h3 className="text-slate-800 font-bold mb-1">No pending payrolls</h3>
+                                    <p className="text-sm text-slate-500">All employees in this category have been processed.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-5 border-t border-slate-100 bg-white flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+                            <span className="text-sm font-bold text-slate-500">
+                                Showing {filteredPendingEmployees.length} of {pendingEmployees.length} employees
+                            </span>
+                            <button className="px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-md shadow-purple-200">
+                                Process All
+                            </button>
+                        </div>
+                    </div>
+                </>
             )}
 
         </div>
