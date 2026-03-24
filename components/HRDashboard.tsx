@@ -911,24 +911,26 @@ const HRDashboard: React.FC = () => {
                     {[
                         { label: 'Total Eligible', val: '450', sub: 'Current Month', icon: <Users size={16} />, color: 'bg-blue-50 text-blue-700' },
                         { label: 'Processed', val: '400', sub: 'Current Month', icon: <CheckCircle size={16} />, color: 'bg-emerald-50 text-emerald-700' },
-                        { label: 'Pending', val: '50', sub: 'On Hold/Draft', icon: <Clock size={16} />, color: 'bg-amber-50 text-amber-700', showEye: true, onAction: () => setIsPendingPanelOpen(true) },
+                        { label: 'Pending', val: '50', sub: 'On Hold', icon: <Clock size={16} />, color: 'bg-amber-50 text-amber-700', showEye: true, onAction: () => setIsPendingPanelOpen(true) },
                         { label: 'Total Payroll Cost', val: '₹ 1.85 Cr', sub: 'Gross Salary', icon: <DollarSign size={16} />, color: 'bg-purple-50 text-purple-700' },
                         { label: 'Net Payable', val: '₹ 1.42 Cr', sub: 'After Deductions', icon: <Briefcase size={16} />, color: 'bg-indigo-50 text-indigo-700' },
                         { label: 'Next Pay Cycle', val: '30 Nov', sub: 'Upcoming', icon: <Calendar size={16} />, color: 'bg-rose-50 text-rose-700' },
                     ].map((kpi, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow relative group">
-                            {kpi.showEye && (
-                                <button
-                                    onClick={kpi.onAction}
-                                    className="absolute top-4 right-4 text-slate-300 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100"
-                                    title="View details"
-                                >
-                                    <Eye size={16} />
-                                </button>
-                            )}
+                        <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-xs font-semibold text-slate-500 uppercase">{kpi.label}</span>
-                                <div className={`p-1.5 rounded-lg ${kpi.color}`}>{kpi.icon}</div>
+                                <div className={`p-1.5 rounded-lg flex items-center gap-2 ${kpi.color}`}>
+                                    {kpi.icon}
+                                    {kpi.showEye && (
+                                        <button
+                                            onClick={kpi.onAction}
+                                            className="hover:opacity-70 transition-opacity cursor-pointer"
+                                            title="View details"
+                                        >
+                                            <Eye size={16} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             <div>
                                 <div className="text-xl font-bold text-slate-800">{kpi.val}</div>
@@ -1566,7 +1568,7 @@ const HRDashboard: React.FC = () => {
                                 <h2 className="text-xl font-bold text-slate-800">Pending Payroll</h2>
                                 <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
                                     <Users size={14} />
-                                    {pendingEmployees.length} employees · On Hold & Draft
+                                    {pendingEmployees.length} employees · On Hold
                                 </p>
                             </div>
                             <button 
@@ -1623,9 +1625,8 @@ const HRDashboard: React.FC = () => {
                                             <p className="text-sm text-slate-500 font-medium mt-0.5">{emp.dept}</p>
                                             
                                             <div className="mt-2 text-xs">
-                                                <span className="text-slate-400 block">Last updated by {emp.lastUpdatedBy}</span>
                                                 {emp.holdReason && (
-                                                    <span className="text-rose-500 font-medium block mt-0.5 flex items-center gap-1">
+                                                    <span className="text-rose-500 font-medium block flex items-center gap-1">
                                                         <AlertCircle size={12} /> {emp.holdReason}
                                                     </span>
                                                 )}
@@ -1639,11 +1640,9 @@ const HRDashboard: React.FC = () => {
                                             </div>
                                             
                                             <div className="mt-3 flex flex-col items-end gap-1.5">
-                                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${
-                                                    emp.status === 'On Hold' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-purple-100 text-purple-700 border border-purple-200'
-                                                }`}>
-                                                    {emp.status}
-                                                </span>
+                                                <button className="text-[10px] font-bold px-3 py-1.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors">
+                                                    Process
+                                                </button>
                                                 <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
                                                     <Clock size={10} /> Pending {emp.pendingDays}d
                                                 </span>
