@@ -32,8 +32,8 @@ const ExpenseSettings: React.FC = () => {
     const [showEntityDropdown, setShowEntityDropdown] = useState(false);
 
     // Hardcoded fallbacks
-    const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA'];
-    const FALLBACK_DESIGS = ['Software Engineer', 'Product Manager', 'Designer', 'Accountant', 'HR Associate', 'Sales Lead', 'QA Analyst'];
+    const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA', 'Customer Success', 'Design', 'Legal', 'Administration'];
+    const FALLBACK_DESIGS = ['Software Engineer', 'Senior Software Engineer', 'Tech Lead', 'Product Manager', 'Designer', 'Senior Designer', 'Accountant', 'Finance Manager', 'HR Associate', 'HR Manager', 'Sales Lead', 'Sales Executive', 'QA Analyst', 'Business Analyst', 'Operations Manager', 'Director'];
 
     useEffect(() => {
         fetchData();
@@ -382,7 +382,7 @@ const ExpenseSettings: React.FC = () => {
                                             <Calendar size={16} className="text-slate-400" />
                                         </div>
                                         <input
-                                            type="month"
+                                            type="date"
                                             name="effectiveFrom"
                                             defaultValue={editingExpense?.effective_from || ""}
                                             className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer"
@@ -402,7 +402,7 @@ const ExpenseSettings: React.FC = () => {
                             {/* Entity Search & Selection */}
                             <div className="space-y-5 pt-2">
                                 <div className="space-y-2 relative">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation <span className="text-sky-500 text-[10px] ml-1 lowercase font-semibold">(Search to filter)</span></label>
+                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation</label>
                                     <div className="relative mt-1">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <Search size={18} className="text-slate-400" />
@@ -516,6 +516,12 @@ const ExpenseSettings: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Info helper text */}
+                                <p className="text-xs text-slate-400 font-medium mt-2 flex items-start gap-1.5 leading-relaxed">
+                                    <span className="text-sky-400 mt-0.5 flex-shrink-0">ℹ</span>
+                                    If an employee matches both a department rule and a designation rule for the same category, the designation limit will be applied automatically.
+                                </p>
                             </div>
                         </div>
 
