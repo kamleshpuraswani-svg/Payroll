@@ -395,7 +395,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
                         <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
-                            <Plus size={16} /> Create New Bank Format
+                            Create New Bank Format
                         </button>
                     </div>
                 </div>
@@ -464,7 +464,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                 </div>
 
                 <div className="text-center text-xs text-slate-400 mt-4">
-                    1,156 companies are currently using this default disbursal format · Last published: 03 Dec 2025 · Supports HDFC, ICICI, Axis, SBI, Yes Bank
+                    
                 </div>
             </div>
         );

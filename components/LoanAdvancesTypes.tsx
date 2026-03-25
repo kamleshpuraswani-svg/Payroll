@@ -226,16 +226,13 @@ const LoanAdvancesTypes: React.FC = () => {
 
         let isMaxAmountValid = true;
         
-        // Skip max amount validation for Salary Advance, we will enforce a default
-        if (!isSalaryAdvance) {
-            if (amountType === 'Fixed') {
-                if (!fixedVal || parseFloat(fixedVal.replace(/,/g, '')) <= 0) isMaxAmountValid = false;
-            }
-            if (amountType === 'Multiple' && (!multiFactor || !multiBasis)) isMaxAmountValid = false;
+        if (amountType === 'Fixed') {
+            if (!fixedVal || parseFloat(fixedVal.replace(/,/g, '')) <= 0) isMaxAmountValid = false;
+        }
+        if (amountType === 'Multiple' && (!multiFactor || !multiBasis)) isMaxAmountValid = false;
 
-            if (!isMaxAmountValid) {
-                newErrors.maxAmount = 'Max Amount Limit is required.';
-            }
+        if (!isMaxAmountValid) {
+            newErrors.maxAmount = 'Max Amount Limit is required.';
         }
 
         if (currentLoan.name === 'Loan') {
@@ -245,14 +242,17 @@ const LoanAdvancesTypes: React.FC = () => {
             if (!currentLoan.maxTenure || currentLoan.maxTenure <= 0) {
                 newErrors.maxTenure = 'Max Tenure is required (min 1 month).';
             }
-            if (currentLoan.maxTenure && currentLoan.maxTenure > 24) {
-                newErrors.maxTenure = 'Max tenure allowed is 24 months.';
+            if (currentLoan.maxTenure && currentLoan.maxTenure > 48) {
+                newErrors.maxTenure = 'Max tenure allowed is 48 months.';
             }
         }
 
         if (isSalaryAdvance) {
-            if (currentLoan.maxTenure && currentLoan.maxTenure > 3) {
-                newErrors.maxTenure = 'Max tenure allowed is 3 months.';
+            if (!currentLoan.maxTenure || currentLoan.maxTenure <= 0) {
+                newErrors.maxTenure = 'Max Tenure is required (min 1 month).';
+            }
+            if (currentLoan.maxTenure && currentLoan.maxTenure > 6) {
+                newErrors.maxTenure = 'Max tenure allowed is 6 months.';
             }
         }
 
@@ -261,14 +261,9 @@ const LoanAdvancesTypes: React.FC = () => {
             return;
         }
 
-        let finalMaxAmount = '';
-        if (isSalaryAdvance) {
-            finalMaxAmount = '2 months gross salary';
-        } else {
-            finalMaxAmount = amountType === 'Fixed'
-                ? fixedVal
-                : `${multiFactor} months ${multiBasis}`;
-        }
+        let finalMaxAmount = amountType === 'Fixed'
+            ? fixedVal
+            : `${multiFactor} months ${multiBasis}`;
 
         setIsLoading(true);
         try {
@@ -477,12 +472,12 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="font-medium text-slate-800">
-                                                        {item.name === 'Salary Advance' ? '--' : item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}
+                                                        {item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
-                                                        {item.name === 'Salary Advance' ? '3 Months' : (item.name === 'Loan' ? '24 Months' : `${item.maxTenure} Months`)}
+                                                        {item.name === 'Salary Advance' ? '--' : (item.name === 'Loan' ? '48 Months' : `${item.maxTenure} Months`)}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -627,24 +622,24 @@ const LoanAdvancesTypes: React.FC = () => {
                                         value={currentLoan.maxTenure}
                                         onChange={e => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (currentLoan.name === 'Salary Advance' && val > 3) {
-                                                setErrors(prev => ({ ...prev, maxTenure: 'For Salary Advance show 3m only' }));
+                                            if (currentLoan.name === 'Salary Advance' && val > 6) {
+                                                setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 6 months.' }));
                                                 return;
                                             }
-                                            if (currentLoan.name === 'Loan' && val > 24) {
-                                                setErrors(prev => ({ ...prev, maxTenure: 'For Loan show 24m only' }));
+                                            if (currentLoan.name === 'Loan' && val > 48) {
+                                                setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 48 months.' }));
                                                 return;
                                             }
                                             setCurrentLoan({ ...currentLoan, maxTenure: val });
                                             if (errors.maxTenure) setErrors({ ...errors, maxTenure: undefined });
                                         }}
-                                        className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 border-slate-200`}
+                                        className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${errors.maxTenure ? 'border-rose-500' : 'border-slate-200'}`}
                                     />
                                     {currentLoan.name === 'Salary Advance' && (
-                                        <p className="text-[10px] text-slate-400 mt-1">For Salary Advance show 3m only</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">Max tenure allowed is 6 months.</p>
                                     )}
                                     {currentLoan.name === 'Loan' && (
-                                        <p className="text-[10px] text-slate-400 mt-1">For Loan show 24m only</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">Max tenure allowed is 48 months.</p>
                                     )}
                                     {errors.maxTenure && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxTenure}</p>}
                                 </div>
@@ -667,8 +662,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 )}
 
                                 {/* Max Amount Limit - Enhanced Section */}
-                                {currentLoan.name !== 'Salary Advance' && (
-                                    <div className="md:col-span-2 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                <div className="md:col-span-2 bg-slate-50 p-5 rounded-xl border border-slate-200">
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Max Amount Limit <span className="text-rose-500">*</span></label>
 
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-4">
@@ -762,7 +756,6 @@ const LoanAdvancesTypes: React.FC = () => {
                                             <span className="text-xs text-slate-500">Preview: <span className="font-bold text-slate-700">{amountType === 'Fixed' ? `Max Limit: ₹ ${fixedVal || '0'}` : `Max Limit: ${multiFactor} months ${multiBasis}`}</span></span>
                                         </div>
                                     </div>
-                                )}
 
                                 <div className="md:col-span-2">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label>

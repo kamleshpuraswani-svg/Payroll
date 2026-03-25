@@ -757,116 +757,12 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
                         <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
-                            <Plus size={16} /> Create Salary Slip
+                            Create Salary Slip
                         </button>
                     </div>
                 </div>
 
-                {/* Payslip Naming Format Section */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="mb-6 border-b border-slate-100 pb-4 flex justify-between items-start">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-slate-800 text-lg">Payslip Naming Format</h3>
-                                {!isNamingEditing && (
-                                    <button
-                                        onClick={handleEditNamingFormat}
-                                        className="p-1.5 bg-slate-50 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
-                                        title="Edit Naming Format"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                )}
-                            </div>
-                            <p className="text-sm text-slate-500 mt-1">Configure the default naming format for payslip files (PDF) and email subjects sent to employees.</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        {/* Filename Configuration */}
-                        <div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PDF Filename Pattern</label>
-                                    <div className="flex shadow-sm rounded-lg overflow-hidden">
-                                        <div className="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 text-sm font-medium text-slate-500 flex items-center select-none">
-                                            Payslip_
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={isNamingEditing ? tempSuffix : namingPatternSuffix}
-                                            onChange={(e) => isNamingEditing && setTempSuffix(e.target.value)}
-                                            disabled={!isNamingEditing}
-                                            className={`flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${!isNamingEditing ? 'bg-slate-50 cursor-not-allowed opacity-80' : 'bg-white'}`}
-                                        />
-                                        <div className="w-24 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
-                                            <span className="text-xs font-bold text-slate-500">.pdf</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Chips */}
-                                <div className="flex flex-wrap gap-2">
-                                    {['{{EmployeeName}}', '{{EmployeeID}}', '{{Month}}', '{{MonthShort}}', '{{Year}}', '{{CompanyName}}', '{{PayPeriod}}'].map(tag => {
-                                        const currentSuffix = isNamingEditing ? tempSuffix : namingPatternSuffix;
-                                        const isSelected = currentSuffix.includes(tag);
-
-                                        return (
-                                            <button
-                                                key={tag}
-                                                onClick={() => handleTagClick(tag)}
-                                                disabled={!isNamingEditing}
-                                                className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1.5 ${!isNamingEditing
-                                                    ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed'
-                                                    : isSelected
-                                                        ? 'bg-purple-100 text-purple-700 border-purple-200 shadow-sm'
-                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-purple-300 hover:text-purple-600'
-                                                    }`}
-                                            >
-                                                {isSelected && <Check size={12} className="stroke-[3]" />}
-                                                {tag}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Preview */}
-                                <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-100 p-3 rounded-lg">
-                                    <span className="text-emerald-600 font-medium text-xs uppercase tracking-wider">Preview:</span>
-                                    <span className="font-bold text-emerald-700 truncate">
-                                        {generatePreview(isNamingEditing ? tempSuffix : namingPatternSuffix)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bottom Actions */}
-                        {isNamingEditing && (
-                            <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-slate-100 min-h-[60px]">
-                                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-2">
-                                    <button
-                                        onClick={resetToDefault}
-                                        className="text-sm font-medium text-slate-500 hover:text-purple-600 hover:underline mr-2"
-                                    >
-                                        Reset to Default
-                                    </button>
-                                    <button
-                                        onClick={handleCancelNamingFormat}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSaveNamingFormat}
-                                        className="px-6 py-2 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 shadow-sm transition-colors"
-                                    >
-                                        Save Settings
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                {/* Payslip Naming Format Section removed */}
 
                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                     <table className="w-full text-left text-sm text-slate-600">

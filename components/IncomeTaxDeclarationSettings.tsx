@@ -1494,27 +1494,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <p className="text-[10px] text-slate-400 mt-2 font-medium italic">For final TDS adjustment and 24Q filing</p>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Allowed File Types</label>
-                                    <div className="flex wrap gap-2">
-                                        {['PDF', 'JPG', 'PNG', 'ZIP'].map(type => {
-                                            const isSelected = allowedFileTypes.includes(type);
-                                            return (
-                                                <button
-                                                    key={type}
-                                                    onClick={() => isEditingProof && toggleFileType(type)}
-                                                    disabled={!isEditingProof}
-                                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all uppercase ${
-                                                        isSelected 
-                                                            ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm' 
-                                                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
-                                                    } ${isEditingProof ? 'cursor-pointer hover:border-purple-300' : 'cursor-default opacity-80'}`}
-                                                >
-                                                    {type}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 mt-2">Max file size: 5MB per document</p>
+                                    
                                 </div>
                             </div>
 
