@@ -591,12 +591,12 @@ const ExpenseSettings: React.FC = () => {
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
-                            <button
+                            {/* <button
                                 onClick={() => setIsShowCategoriesDialog(true)}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
                             >
                                 <Receipt size={16} /> EXPENSE CATEGORIES
-                            </button>
+                            </button> */}
                             <button
                                 onClick={() => {
                                     setEditingExpense(null);

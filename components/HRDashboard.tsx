@@ -1579,33 +1579,6 @@ const HRDashboard: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Filter Tabs */}
-                        <div className="px-6 py-4 border-b border-slate-100 bg-white">
-                            <div className="flex gap-2">
-                                {['All', 'On Hold', 'Draft'].map((filter) => {
-                                    const count = filter === 'All' 
-                                        ? pendingEmployees.length 
-                                        : pendingEmployees.filter(e => e.status === filter).length;
-                                    
-                                    const isActive = activePendingFilter === filter;
-                                    
-                                    return (
-                                        <button
-                                            key={filter}
-                                            onClick={() => setActivePendingFilter(filter as any)}
-                                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                                                isActive 
-                                                    ? 'bg-purple-100 text-purple-700 shadow-inner' 
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                            }`}
-                                        >
-                                            {filter} ({count})
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
                         {/* Employee List */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
                             {filteredPendingEmployees.map((emp) => (
