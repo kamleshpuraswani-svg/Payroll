@@ -753,13 +753,6 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         <option key={bu} value={`bu:${bu}`}>{bu}</option>
                                     ))}
                                 </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`}>
-                                            {pg.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>

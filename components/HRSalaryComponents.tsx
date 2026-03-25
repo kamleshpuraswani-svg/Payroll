@@ -379,13 +379,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         <option key={bu} value={`bu:${bu}`}>{bu}</option>
                                     ))}
                                 </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`}>
-                                            {pg.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
@@ -760,13 +753,6 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                 <optgroup label="Business Units">
                                     {BUSINESS_UNITS.map(bu => (
                                         <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`}>
-                                            {pg.name}
-                                        </option>
                                     ))}
                                 </optgroup>
                             </select>
@@ -1578,13 +1564,6 @@ const HRSalaryComponents: React.FC = () => {
                                             <option key={bu} value={`bu:${bu}`}>{bu}</option>
                                         ))}
                                     </optgroup>
-                                    <optgroup label="Payroll Paygroups">
-                                        {paygroups.map(pg => (
-                                            <option key={pg.id} value={`pg:${pg.id}`}>
-                                                {pg.name}
-                                            </option>
-                                        ))}
-                                    </optgroup>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
@@ -1729,10 +1708,12 @@ const HRSalaryComponents: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusClick(item.id, item.status)}
-                                                        className={`p-1.5 rounded-md transition-colors ${item.status ? 'text-emerald-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                                                        title={item.status ? "Deactivate" : "Activate"}
+                                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${item.status ? 'bg-sky-500' : 'bg-slate-200'}`}
+                                                        title={item.status ? 'Deactivate' : 'Activate'}
                                                     >
-                                                        <Power size={16} />
+                                                        <span
+                                                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${item.status ? 'translate-x-5' : 'translate-x-1'}`}
+                                                        />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteClick(item.id)}

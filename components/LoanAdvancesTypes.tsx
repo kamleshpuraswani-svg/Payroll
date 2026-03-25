@@ -428,13 +428,6 @@ const LoanAdvancesTypes: React.FC = () => {
                                                     <option key={bu} value={`bu:${bu}`}>{bu}</option>
                                                 ))}
                                             </optgroup>
-                                            <optgroup label="Payroll Paygroups">
-                                                {paygroups.map(pg => (
-                                                    <option key={pg.id} value={`pg:${pg.id}`}>
-                                                        {pg.name}
-                                                    </option>
-                                                ))}
-                                            </optgroup>
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
@@ -489,7 +482,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
-                                                        {item.maxTenure} Months
+                                                        {item.name === 'Salary Advance' ? '3 Months' : (item.name === 'Loan' ? '24 Months' : `${item.maxTenure} Months`)}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -635,14 +628,11 @@ const LoanAdvancesTypes: React.FC = () => {
                                         onChange={e => {
                                             const val = parseInt(e.target.value) || 0;
                                             if (currentLoan.name === 'Salary Advance' && val > 3) {
-                                                setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 3 months.' }));
-                                                // Do not update state to effectively block input visually (or allow it but show error)
-                                                // The requirement says "should not allow me to enter it and show error".
-                                                // Returning here blocks the state update for values > 3.
+                                                setErrors(prev => ({ ...prev, maxTenure: 'For Salary Advance show 3m only' }));
                                                 return;
                                             }
                                             if (currentLoan.name === 'Loan' && val > 24) {
-                                                setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 24 months.' }));
+                                                setErrors(prev => ({ ...prev, maxTenure: 'For Loan show 24m only' }));
                                                 return;
                                             }
                                             setCurrentLoan({ ...currentLoan, maxTenure: val });
@@ -651,10 +641,10 @@ const LoanAdvancesTypes: React.FC = () => {
                                         className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 border-slate-200`}
                                     />
                                     {currentLoan.name === 'Salary Advance' && (
-                                        <p className="text-[10px] text-slate-400 mt-1">Max tenure allowed is 3 months.</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">For Salary Advance show 3m only</p>
                                     )}
                                     {currentLoan.name === 'Loan' && (
-                                        <p className="text-[10px] text-slate-400 mt-1">Max tenure allowed is 24 months.</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">For Loan show 24m only</p>
                                     )}
                                     {errors.maxTenure && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxTenure}</p>}
                                 </div>

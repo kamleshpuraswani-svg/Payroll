@@ -284,18 +284,6 @@ export default function HRTaxConfiguration() {
           </div>
         </div>
 
-        {/* Compliance Alert - Only for Current Year */}
-        {selectedYear === '2025-2026' && (
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle className="text-blue-600 mt-0.5 shrink-0" size={20} />
-            <div>
-              <h3 className="text-sm font-bold text-blue-900">FY 2025–26 Compliance Updates Available</h3>
-              <p className="text-xs text-blue-700 mt-1">
-                New tax slabs auto-populated from latest budget. Review before saving.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Draft Alert - For Future Year */}
         {selectedYear === '2026-2027' && isDraftMode && (

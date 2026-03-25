@@ -585,13 +585,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                     <option key={bu} value={`bu:${bu}`}>{bu}</option>
                                                 ))}
                                             </optgroup>
-                                            <optgroup label="Payroll Paygroups">
-                                                {paygroups.map(pg => (
-                                                    <option key={pg.id} value={`pg:${pg.id}`}>
-                                                        {pg.name}
-                                                    </option>
-                                                ))}
-                                            </optgroup>
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
@@ -1381,13 +1374,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         <option key={bu} value={`bu:${bu}`}>{bu}</option>
                                     ))}
                                 </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`}>
-                                            {pg.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
@@ -1494,13 +1480,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 title="Edit Schedule"
                                             >
                                                 <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(schedule.id)}
-                                                className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                                title="Delete Schedule"
-                                            >
-                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </td>

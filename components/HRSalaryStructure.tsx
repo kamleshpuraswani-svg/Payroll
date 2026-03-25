@@ -726,13 +726,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                                     <option key={bu} value={`bu:${bu}`}>{bu} (Business Unit)</option>
                                                 ))}
                                             </optgroup>
-                                            <optgroup label="Payroll Paygroups">
-                                                {paygroups.map(pg => (
-                                                    <option key={pg.id} value={`pg:${pg.id}`}>
-                                                        {pg.name} (Paygroup)
-                                                    </option>
-                                                ))}
-                                            </optgroup>
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
@@ -993,13 +986,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                             <optgroup label="Business Units">
                                 {BUSINESS_UNITS.map(bu => (
                                     <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                ))}
-                            </optgroup>
-                            <optgroup label="Payroll Paygroups">
-                                {paygroups.map(pg => (
-                                    <option key={pg.id} value={`pg:${pg.id}`}>
-                                        {pg.name}
-                                    </option>
                                 ))}
                             </optgroup>
                         </select>

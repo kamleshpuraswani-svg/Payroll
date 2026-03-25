@@ -168,13 +168,6 @@ const PfTdsSettings: React.FC = () => {
                                         <option key={bu} value={`bu:${bu}`} className="font-semibold py-2 italic">{bu}</option>
                                     ))}
                                 </optgroup>
-                                <optgroup label="Payroll Paygroups" className="font-bold text-slate-900 bg-white">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`} className="font-semibold py-2 italic text-emerald-600">
-                                            {pg.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover/select:text-indigo-500 transition-colors" size={16} />
                         </div>

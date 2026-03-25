@@ -179,13 +179,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setProofDeadlineTo(config.proofDeadlineTo ? new Date(config.proofDeadlineTo) : new Date(2026, 1, 28));
                 setProofGraceEnabled(config.proofGraceEnabled ?? false);
                 setProofGraceDate(config.proofGraceDate ? new Date(config.proofGraceDate) : new Date(2026, 2, 10));
-                setMandatoryProof(config.mandatoryProof ?? true);
                 setAutoReject(config.autoReject ?? false);
                 setNotifyRejection(config.notifyRejection ?? true);
-                setAutoAdjustTDS(config.autoAdjustTDS ?? true);
                 setAllowedFileTypes(config.allowedFileTypes ?? ['PDF', 'JPG', 'PNG']);
                 setProofApprovers(config.proofApprovers ?? ["Rajesh Kumar (Finance Head)"]);
-                setPoiPayrollMonth(config.poiPayrollMonth ?? 'March');
                 setMandateComments(config.mandateComments ?? true);
                 setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
                 setNpsWageCeiling(config.npsWageCeiling ?? false);
@@ -254,15 +251,12 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [proofDeadlineTo, setProofDeadlineTo] = useState(new Date(2026, 1, 28)); // Feb 28, 2026
     const [proofGraceEnabled, setProofGraceEnabled] = useState(false);
     const [proofGraceDate, setProofGraceDate] = useState(new Date(2026, 2, 10)); // March 10, 2026
-    const [mandatoryProof, setMandatoryProof] = useState(true);
     const [autoReject, setAutoReject] = useState(false);
     const [notifyRejection, setNotifyRejection] = useState(true);
-    const [autoAdjustTDS, setAutoAdjustTDS] = useState(true);
     const [allowedFileTypes, setAllowedFileTypes] = useState<string[]>(['PDF', 'JPG', 'PNG']);
     const [proofApprovers, setProofApprovers] = useState<string[]>(["Rajesh Kumar (Finance Head)"]);
     const [selectedProofApprover, setSelectedProofApprover] = useState("");
     
-    const [poiPayrollMonth, setPoiPayrollMonth] = useState('March');
     const [mandateComments, setMandateComments] = useState(true);
 
     const [npsIncludeInCtc, setNpsIncludeInCtc] = useState(true);
@@ -328,8 +322,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
                 deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
-                mandatoryProof, autoReject, notifyRejection, autoAdjustTDS, allowedFileTypes,
-                proofApprovers, poiPayrollMonth, mandateComments, npsIncludeInCtc, npsWageCeiling
+                autoReject, notifyRejection, allowedFileTypes,
+                proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling
             };
 
             const { error } = await supabase
@@ -354,8 +348,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         setProofBackup({ 
             proofEnabled, proofDeadlineFrom, proofDeadlineTo, 
             proofGraceEnabled, proofGraceDate: new Date(proofGraceDate),
-            mandatoryProof, autoReject, notifyRejection, autoAdjustTDS, allowedFileTypes,
-            poiPayrollMonth, mandateComments, npsIncludeInCtc, npsWageCeiling,
+            autoReject, notifyRejection, allowedFileTypes,
+            mandateComments, npsIncludeInCtc, npsWageCeiling,
             proofApprovers: [...proofApprovers]
         });
         setIsEditingProof(true);
@@ -368,12 +362,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setProofDeadlineTo(new Date(proofBackup.proofDeadlineTo));
             setProofGraceEnabled(proofBackup.proofGraceEnabled);
             setProofGraceDate(new Date(proofBackup.proofGraceDate));
-            setMandatoryProof(proofBackup.mandatoryProof);
             setAutoReject(proofBackup.autoReject);
             setNotifyRejection(proofBackup.notifyRejection);
-            setAutoAdjustTDS(proofBackup.autoAdjustTDS);
             setAllowedFileTypes(proofBackup.allowedFileTypes);
-            setPoiPayrollMonth(proofBackup.poiPayrollMonth);
             setMandateComments(proofBackup.mandateComments);
             setNpsIncludeInCtc(proofBackup.npsIncludeInCtc);
             setNpsWageCeiling(proofBackup.npsWageCeiling);
@@ -392,8 +383,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
                 deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
-                mandatoryProof, autoReject, notifyRejection, autoAdjustTDS, allowedFileTypes,
-                proofApprovers, poiPayrollMonth, mandateComments, npsIncludeInCtc, npsWageCeiling
+                autoReject, notifyRejection, allowedFileTypes,
+                proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling
             };
 
             const { error } = await supabase
@@ -793,13 +784,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <optgroup label="Business Units">
                                     {BUSINESS_UNITS.map(bu => (
                                         <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`}>
-                                            {pg.name}
-                                        </option>
                                     ))}
                                 </optgroup>
                             </select>
@@ -1612,22 +1596,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                             {/* Row 2: Toggles Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 pt-2">
-                                <label className={`flex items-center justify-between group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                    <span className="text-sm font-bold text-slate-700">Mandatory for All Declarations</span>
-                                    <div className="relative inline-flex items-center">
-                                        <input type="checkbox" checked={mandatoryProof} onChange={() => isEditingProof && setMandatoryProof(!mandatoryProof)} disabled={!isEditingProof} className="sr-only peer" />
-                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-                                    </div>
-                                </label>
-
-                                <label className={`flex items-center justify-between group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                    <span className="text-sm font-bold text-slate-700">Link to TDS Adjustment</span>
-                                    <div className="relative inline-flex items-center">
-                                        <input type="checkbox" checked={autoAdjustTDS} onChange={() => isEditingProof && setAutoAdjustTDS(!autoAdjustTDS)} disabled={!isEditingProof} className="sr-only peer" />
-                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-                                    </div>
-                                </label>
-                                <p className="text-xs text-slate-500 -mt-4 col-span-1 md:col-start-2">Auto-adjust TDS based on verified proofs</p>
 
                                 <div className="col-span-1 md:col-span-2 bg-rose-50 border border-rose-100 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
@@ -1655,31 +1623,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Payroll Month Processing */}
-                            <div className="pt-6 border-t border-slate-100">
-                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                                    <div className="flex-1">
-                                         <label className="block text-sm font-bold text-slate-800 mb-2">Process payroll with approved POI amount from</label>
-                                         <p className="text-sm text-emerald-600 leading-relaxed">
-                                            The approved POI amount will be considered for the payroll from <span className="font-bold bg-emerald-50 px-1 rounded">{poiPayrollMonth}</span> onwards to calculate and deduct income tax amount in subsequent payrolls.
-                                         </p>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <div className="relative">
-                                            <select
-                                                value={poiPayrollMonth}
-                                                onChange={(e) => setPoiPayrollMonth(e.target.value)}
-                                                disabled={!isEditingProof}
-                                                className="appearance-none pl-4 pr-10 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white focus:outline-none focus:border-purple-500 disabled:bg-slate-50 min-w-[140px]"
-                                            >
-                                                {months.map(m => <option key={m} value={m}>{m}</option>)}
-                                            </select>
-                                            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                        <span className="text-sm text-slate-500 whitespace-nowrap">for upcoming years.</span>
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* Other Configs */}
                             <div className="pt-6 border-t border-slate-100">
