@@ -704,7 +704,9 @@ const ExpenseSettings: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex flex-wrap gap-2">
-                                                {cat.applicable_to.map((ent: any, i: number) => (
+                                                {cat.applicable_to
+                                                    .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
+                                                    .map((ent: any, i: number) => (
                                                     <div key={i} className="flex flex-col gap-0.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg shadow-sm min-w-[140px]">
                                                         <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1 mb-1">
                                                             <div className="text-slate-400">
@@ -764,7 +766,7 @@ const ExpenseSettings: React.FC = () => {
                                                 </button>
                                                 <button onClick={() => {
                                                     setEditingExpense(cat);
-                                                    setSelectedEntities(cat.applicable_to || []);
+                                                    setSelectedEntities((cat.applicable_to || []).filter((ent: any) => ent.type === 'dept' || ent.type === 'desig'));
                                                     setIsAddingExpense(true);
                                                 }} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all">
                                                     <Edit2 size={16} />
