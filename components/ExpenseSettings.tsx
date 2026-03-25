@@ -206,9 +206,8 @@ const ExpenseSettings: React.FC = () => {
     const handleSaveExpense = async (e: React.FormEvent) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget as HTMLFormElement);
-        const categoryId = formData.get('category') as string;
+        const categoryName = formData.get('category_name') as string;
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
-        const frequency = formData.get('frequency') as string;
         const effectiveFrom = formData.get('effectiveFrom') as string;
 
         // Check if at least one entity is added with limits
@@ -219,24 +218,35 @@ const ExpenseSettings: React.FC = () => {
 
         setIsSaving(true);
         try {
-            const configData = {
+            const configData: any = {
                 status: status,
                 applicable_to: selectedEntities,
-                frequency: frequency || 'Monthly',
                 effective_from: effectiveFrom || null,
                 updated_at: new Date().toISOString(),
                 last_updated_by: 'HR Manager'
             };
 
-            const targetId = editingExpense ? editingExpense.id : categoryId;
-            if (!targetId) throw new Error('Category is required');
+            if (categoryName) {
+                configData.name = categoryName;
+            }
 
-            const { error } = await supabase
-                .from('expense_categories')
-                .update(configData)
-                .eq('id', targetId);
+            if (editingExpense) {
+                const { error } = await supabase
+                    .from('expense_categories')
+                    .update(configData)
+                    .eq('id', editingExpense.id);
 
-            if (error) throw error;
+                if (error) throw error;
+            } else {
+                if (!categoryName) throw new Error('Expense Category Name is required');
+                
+                const { error } = await supabase
+                    .from('expense_categories')
+                    .insert([configData]);
+
+                if (error) throw error;
+            }
+
             await fetchData();
             setIsAddingExpense(false);
             setEditingExpense(null);
@@ -244,7 +254,11 @@ const ExpenseSettings: React.FC = () => {
             setEntitySearch('');
         } catch (error: any) {
             console.error('Error saving expense config:', error);
-            alert(`Failed to save configuration: ${error.message || 'Unknown error'}`);
+            if (error?.code === '23505') {
+                alert('An Expense Category with this name already exists. Please choose a different name.');
+            } else {
+                alert(`Failed to save configuration: ${error.message || 'Unknown error'}`);
+            }
         } finally {
             setIsSaving(false);
         }
@@ -344,50 +358,24 @@ const ExpenseSettings: React.FC = () => {
                                 Basic Details
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                                {!editingExpense && (
-                                    <div className="space-y-1.5 md:col-span-2">
-                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Expense Category <span className="text-rose-500">*</span></label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                                <Receipt size={16} className="text-slate-400" />
-                                            </div>
-                                            <select
-                                                name="category"
-                                                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
-                                                required
-                                            >
-                                                <option value="">Select Category...</option>
-                                                {categories.map(cat => (
-                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Frequency</label>
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense Category Name <span className="text-rose-500">*</span></label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                            <Repeat size={16} className="text-slate-400" />
+                                            <Receipt size={16} className="text-slate-400" />
                                         </div>
-                                        <select
-                                            name="frequency"
-                                            defaultValue={editingExpense?.frequency || "Monthly"}
-                                            className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
-                                        >
-                                            <option value="Monthly">Monthly</option>
-                                            <option value="Quarterly">Quarterly</option>
-                                            <option value="Half-Yearly">Half-Yearly</option>
-                                            <option value="Annually">Annually</option>
-                                            <option value="Per Incident">Per Incident</option>
-                                        </select>
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        <input
+                                            type="text"
+                                            name="category_name"
+                                            defaultValue={editingExpense?.name || ""}
+                                            placeholder="e.g. Travel & Conveyance"
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                            required
+                                        />
                                     </div>
                                 </div>
-
-                                <div className="space-y-1.5">
+                                
+                                <div className="space-y-1.5 md:col-span-2">
                                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effective From</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -550,8 +538,7 @@ const ExpenseSettings: React.FC = () => {
                                     <ShieldCheck size={20} />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <label className="text-base font-black text-slate-800">Rule Status</label>
-                                    <p className="text-xs text-slate-500 font-semibold">Enable or disable this expense rule entirely</p>
+                                    <label className="text-base font-black text-slate-800">Status</label>
                                 </div>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer scale-110 mr-2">
@@ -699,11 +686,6 @@ const ExpenseSettings: React.FC = () => {
 
                 {/* ── Expense Configurations Section ── */}
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <div>
-                        <h2 className="text-xl font-black text-slate-800">Expense Configurations</h2>
-                        <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-wider">Overrides and eligibility for specific groups</p>
-                    </div>
-
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-slate-100">
