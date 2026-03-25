@@ -212,7 +212,7 @@ const ExpenseSettings: React.FC = () => {
 
         // Check if at least one entity is added with limits
         if (selectedEntities.length === 0) {
-            alert('Please add at least one Department, Designation, or Employee to this configuration.');
+            alert('Please select at least one Department or Designation before saving.');
             return;
         }
 
@@ -322,7 +322,7 @@ const ExpenseSettings: React.FC = () => {
                             <h2 className="text-xl font-bold text-slate-800 tracking-tight">
                                 {editingExpense ? 'Edit Expense Rule' : 'Add Expense Rule'}
                             </h2>
-                            <p className="text-sm text-slate-500 mt-0.5">Configure category, frequency, and custom target limits.</p>
+                            <p className="text-sm text-slate-500 mt-0.5">Define expense category name, effective date, and applicable departments or designations.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -355,7 +355,7 @@ const ExpenseSettings: React.FC = () => {
                         <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 relative overflow-hidden">
                             <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                                 <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">1</span> 
-                                Basic Details
+                                Expense Category & Settings
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                 <div className="space-y-1.5 md:col-span-2">
@@ -402,7 +402,7 @@ const ExpenseSettings: React.FC = () => {
                             {/* Entity Search & Selection */}
                             <div className="space-y-5 pt-2">
                                 <div className="space-y-2 relative">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Add Target <span className="text-sky-500 text-[10px] ml-1 lowercase font-semibold">(Search for Dept, Designation, or Employee)</span></label>
+                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation <span className="text-sky-500 text-[10px] ml-1 lowercase font-semibold">(Search to filter)</span></label>
                                     <div className="relative mt-1">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <Search size={18} className="text-slate-400" />
@@ -444,22 +444,10 @@ const ExpenseSettings: React.FC = () => {
                                                     {desig}
                                                 </div>
                                             ))}
-
-                                            {/* Employees */}
-                                            <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2 mt-2">
-                                                <User size={12} className="text-slate-500" />
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Employees</span>
-                                            </div>
-                                            {allEmployees.filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase())).map(emp => (
-                                                <div key={`emp-${emp.id}`} onClick={() => addEntityToSelection('emp', emp)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
-                                                    {emp.name} ({emp.eid})
-                                                </div>
-                                            ))}
                                             
                                             {/* No Results */}
                                             {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 &&
-                                             availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 &&
-                                             allEmployees.filter(e => e.name.toLowerCase().includes(entitySearch.toLowerCase()) || e.eid.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 && (
+                                             availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 && (
                                                 <div className="px-5 py-4 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
                                                     No matches found
                                                 </div>
@@ -524,7 +512,7 @@ const ExpenseSettings: React.FC = () => {
                                                 <Search size={20} />
                                             </div>
                                             <h4 className="text-sm font-bold text-slate-600">No targets added</h4>
-                                            <p className="text-xs font-semibold text-slate-400 mt-1 max-w-xs text-center">Search and select a department, designation, or employee to set specific limits.</p>
+                                            <p className="text-xs font-semibold text-slate-400 mt-1 max-w-xs text-center">Search and select a department or designation to set specific expense limits.</p>
                                         </div>
                                     )}
                                 </div>
