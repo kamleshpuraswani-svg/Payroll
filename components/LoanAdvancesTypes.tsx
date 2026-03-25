@@ -557,6 +557,8 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 checked={currentLoan.name === 'Salary Advance'}
                                                 onChange={() => {
                                                     setCurrentLoan({ ...currentLoan, name: 'Salary Advance', maxTenure: 0, repaymentMonth: currentLoan.repaymentMonth || monthOptions[0] });
+                                                    setAmountType('Multiple');
+                                                    setMultiBasis('Net Salary');
                                                     if (errors.name) setErrors({ ...errors, name: undefined });
                                                     // Clear Loan specific errors
                                                     setErrors(prev => ({ ...prev, interestRate: undefined, maxTenure: undefined }));
@@ -666,22 +668,24 @@ const LoanAdvancesTypes: React.FC = () => {
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Max Amount Limit <span className="text-rose-500">*</span></label>
 
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-4">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Fixed' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
-                                                    {amountType === 'Fixed' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                                </div>
-                                                <input
-                                                    type="radio"
-                                                    className="hidden"
-                                                    checked={amountType === 'Fixed'}
-                                                    onChange={() => {
-                                                        setAmountType('Fixed');
-                                                        const val = fixedVal || '';
-                                                        setCurrentLoan({ ...currentLoan, maxAmount: val });
-                                                    }}
-                                                />
-                                                <span className={`text-sm font-medium ${amountType === 'Fixed' ? 'text-purple-900' : 'text-slate-600'}`}>Fixed Amount</span>
-                                            </label>
+                                            {currentLoan.name !== 'Salary Advance' && (
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Fixed' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
+                                                        {amountType === 'Fixed' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                    </div>
+                                                    <input
+                                                        type="radio"
+                                                        className="hidden"
+                                                        checked={amountType === 'Fixed'}
+                                                        onChange={() => {
+                                                            setAmountType('Fixed');
+                                                            const val = fixedVal || '';
+                                                            setCurrentLoan({ ...currentLoan, maxAmount: val });
+                                                        }}
+                                                    />
+                                                    <span className={`text-sm font-medium ${amountType === 'Fixed' ? 'text-purple-900' : 'text-slate-600'}`}>Fixed Amount</span>
+                                                </label>
+                                            )}
                                             <label className="flex items-center gap-2 cursor-pointer">
                                                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${amountType === 'Multiple' ? 'border-purple-600 bg-white' : 'border-slate-300 bg-white'}`}>
                                                     {amountType === 'Multiple' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
@@ -741,9 +745,15 @@ const LoanAdvancesTypes: React.FC = () => {
                                                         }}
                                                         className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
                                                     >
-                                                        <option>Basic Salary</option>
-                                                        <option>Gross Salary</option>
-                                                        <option>Net Salary</option>
+                                                        {currentLoan.name === 'Salary Advance' ? (
+                                                            <option>Net Salary</option>
+                                                        ) : (
+                                                            <>
+                                                                <option>Basic Salary</option>
+                                                                <option>Gross Salary</option>
+                                                                <option>Net Salary</option>
+                                                            </>
+                                                        )}
                                                     </select>
                                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                                 </div>
