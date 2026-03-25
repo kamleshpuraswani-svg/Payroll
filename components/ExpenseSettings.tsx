@@ -218,12 +218,14 @@ const ExpenseSettings: React.FC = () => {
 
         setIsSaving(true);
         try {
+            const [targetType, targetId] = selectedTarget.split(':');
             const configData: any = {
                 status: status,
                 applicable_to: selectedEntities,
                 effective_from: effectiveFrom || null,
                 updated_at: new Date().toISOString(),
-                last_updated_by: 'HR Manager'
+                last_updated_by: 'HR Manager',
+                created_by: 'HR Manager'
             };
 
             if (categoryName) {
@@ -239,6 +241,8 @@ const ExpenseSettings: React.FC = () => {
                 if (error) throw error;
             } else {
                 if (!categoryName) throw new Error('Expense Category Name is required');
+                configData.target_type = targetType;
+                configData.target_id = targetId;
                 
                 const { error } = await supabase
                     .from('expense_categories')
