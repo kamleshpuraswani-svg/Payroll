@@ -51,6 +51,7 @@ interface TemplateSettings {
     employerContributionPosition?: 'Footer' | 'Separate Section';
     passwordProtect: boolean;
     salaryStructure?: string;
+    decimalPlaces?: string;
 }
 
 interface PayslipTemplate {
@@ -132,7 +133,8 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showYTD: true,
             ytdStartMonth: 'April',
             showEmployerContribution: false,
-            passwordProtect: true
+            passwordProtect: true,
+            decimalPlaces: '2'
         }
     },
     {
@@ -164,7 +166,8 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             dateFormat: 'DD MMM YYYY',
             showYTD: false,
             showEmployerContribution: false,
-            passwordProtect: false
+            passwordProtect: false,
+            decimalPlaces: '2'
         }
     }
 ];
@@ -855,9 +858,6 @@ const HRSalarySlipTemplate: React.FC = () => {
                 <div className="flex items-center gap-4">
                     <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20} /></button>
                     <div>
-                        <div className="text-xs text-slate-500 flex gap-2 items-center">
-                            <span>Payslip Template</span>
-                        </div>
                         {isReadOnly ? (
                             <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
                         ) : (
@@ -882,7 +882,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                             <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
                             <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
-                                <Save size={16} /> Publish
+                                <Save size={16} /> Save
                             </button>
                         </>
                     )}
@@ -893,7 +893,7 @@ const HRSalarySlipTemplate: React.FC = () => {
             <div className="px-6 border-b border-slate-200 bg-white shrink-0">
                 <div className="flex gap-6">
                     <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview & History</button>
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview</button>
                 </div>
             </div>
 
@@ -1090,25 +1090,51 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         <option value="2">Internship Stipend</option>
                                     </select>
 
-                                    <div className="space-y-4">
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Show YTD Columns</span>
-                                            <div onClick={() => toggleSetting('showYTD', 'YTD')} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showYTD ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showYTD ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Employer Contribution</span>
-                                            <div onClick={() => toggleSetting('showEmployerContribution', 'EMPLOYER')} className={`w-9 h-5 rounded-full relative transition-colors ${settings.showEmployerContribution ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.showEmployerContribution ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <span className="text-sm text-slate-700">Password Protect PDF</span>
-                                            <div onClick={() => toggleSetting('passwordProtect', 'PASSWORD')} className={`w-9 h-5 rounded-full relative transition-colors ${settings.passwordProtect ? 'bg-purple-600' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${settings.passwordProtect ? 'translate-x-4' : ''}`} />
-                                            </div>
-                                        </label>
+                                    <div className="mt-6">
+                                        <label className="block text-sm font-bold text-slate-800 uppercase mb-3">DISPLAY SETTINGS</label>
+                                        <div className="space-y-4">
+                                            <label className="flex items-start justify-between cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+                                                <div>
+                                                    <div className="font-bold text-slate-800 text-base">Show YTD Columns</div>
+                                                    <div className="text-sm text-slate-600 mt-1">Add year-to-date totals section</div>
+                                                </div>
+                                                <div className="mt-1">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={settings.showYTD}
+                                                        onChange={() => toggleSetting('showYTD', 'YTD')}
+                                                        className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-start justify-between cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+                                                <div>
+                                                    <div className="font-bold text-slate-800 text-base">Password Protect PDF</div>
+                                                    <div className="text-sm text-slate-600 mt-1">Secure PDF with password</div>
+                                                </div>
+                                                <div className="mt-1">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={settings.passwordProtect}
+                                                        onChange={() => toggleSetting('passwordProtect', 'PASSWORD')}
+                                                        className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-8">
+                                        <label className="block text-base font-bold text-slate-800 mb-3">Decimal Places</label>
+                                        <div className="relative">
+                                            <input 
+                                                type="number"
+                                                value={settings.decimalPlaces || '2'}
+                                                onChange={(e) => setSettings({...settings, decimalPlaces: e.target.value})}
+                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-base font-medium bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
