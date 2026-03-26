@@ -1112,94 +1112,135 @@ export const RunPayrollModal: React.FC<{
    const ModalContainer = isPage ? React.Fragment : 'div';
    const containerProps = isPage ? {} : { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200" };
 
+   const stepDescriptions: Record<number, string> = {
+      1: 'Pay cycle & employees',
+      2: 'Leaves & working days',
+      3: 'Arrears & deductions',
+      4: 'Final salary register',
+      5: 'Totals & approvals',
+      6: 'Payslips & bank sheet'
+   };
+
+   const stepTitles: Record<number, string> = {
+      1: 'Pay period & employees',
+      2: 'Attendance & Time Data',
+      3: 'Salary Adjustments',
+      4: 'Review & Verify',
+      5: 'Finalize & Lock',
+      6: 'Disburse Salaries'
+   };
+
+   const stepSubtitles: Record<number, string> = {
+      1: 'Set the payroll cycle dates and select which employees to include in this run.',
+      2: 'Review imported biometric attendance and verify paydays.',
+      3: 'Add bonuses, recover LOPs, or process ad-hoc deductions.',
+      4: 'Preview final salary calculations before locking.',
+      5: 'Approve payroll totals to lock editing and generate files.',
+      6: 'Distribute payslips and process bank transfer file.'
+   };
+
    const innerContent = (
       <>
-         {/* Header */}
-         <div className="bg-white border-b border-slate-200 px-8 py-5 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
-                  <CreditCard size={20} />
-               </div>
-               <div>
-                  <h2 className="text-lg font-bold text-slate-800">Run Payroll {readOnly && <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-2">Read Only</span>}</h2>
-                  <p className="text-xs text-slate-500">For {company.name} • Nov 2025</p>
-               </div>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-slate-400 transition-colors">
-               <X size={20} />
-            </button>
+         <div className="flex w-full h-full bg-slate-50 relative flex-col">
+            {/* Top Header */}
+         <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0 sticky top-0 z-20">
+             <div className="flex items-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                 <h2 className="text-lg font-bold text-slate-800">{company.name}</h2>
+                 <span className="text-slate-300">/</span>
+                 <p className="text-sm text-slate-600">Payroll • Nov 2025</p>
+                 {readOnly && <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-2">Read Only</span>}
+             </div>
+             <div className="flex items-center gap-3">
+                 <button onClick={onClose} className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                     <X size={16} className="text-slate-400" /> Cancel
+                 </button>
+                 <button className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+                     <MoreHorizontal size={16} />
+                 </button>
+             </div>
          </div>
 
-         {/* Stepper */}
-         <div className="bg-slate-50 px-8 py-6 border-b border-slate-200 shrink-0">
-            <div className="flex items-center justify-between max-w-4xl mx-auto relative">
-               <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -z-10"></div>
-               {[
-                  { id: 1, label: 'Period' },
-                  { id: 2, label: 'Attendance' },
-                  { id: 3, label: 'Adjustments' },
-                  { id: 4, label: 'Review' },
-                  { id: 5, label: 'Finalize' },
-                  { id: 6, label: 'Disburse' }
-               ].map((step) => {
-                  const isActive = step.id === currentStep;
-                  const isCompleted = step.id < currentStep;
-                  return (
-                     <button
-                        key={step.id}
-                        onClick={() => setCurrentStep(step.id)}
-                        disabled={step.id > currentStep && !readOnly} // Allow jumping if readOnly or visited
-                        className="flex flex-col items-center gap-2 group focus:outline-none disabled:opacity-60"
-                     >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ring-4 ring-white transition-all ${isActive ? 'bg-sky-600 text-white ring-sky-100 scale-110' :
-                           isCompleted ? 'bg-emerald-500 text-white' :
-                              'bg-white border-2 border-slate-300 text-slate-400 group-hover:border-sky-300'
-                           }`}>
-                           {isCompleted ? <Check size={16} /> : step.id}
-                        </div>
-                        <span className={`text-xs font-bold transition-colors ${isActive ? 'text-sky-700' : 'text-slate-500'}`}>{step.label}</span>
-                     </button>
-                  );
-               })}
-            </div>
+         <div className="flex flex-1 overflow-hidden">
+             {/* Left Sidebar (Stepper) */}
+             <div className="w-64 bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 relative">
+                <div className="relative pt-2 pl-2">
+                   {/* Vertical Line */}
+                   <div className="absolute left-[24px] top-6 bottom-6 w-px border-l-2 border-dashed border-slate-200"></div>
+                   
+                   {[
+                      { id: 1, label: 'Period' },
+                      { id: 2, label: 'Attendance' },
+                      { id: 3, label: 'Adjustments' },
+                      { id: 4, label: 'Review' },
+                      { id: 5, label: 'Finalise' },
+                      { id: 6, label: 'Disburse' }
+                   ].map((step) => {
+                      const isActive = step.id === currentStep;
+                      const isCompleted = step.id < currentStep;
+                      return (
+                         <div key={step.id} className="relative mb-6 last:mb-0 bg-white">
+                            <div 
+                               className={`flex items-start gap-4 cursor-pointer group p-3 transition-colors ${isActive ? 'bg-blue-50/60 rounded-xl rounded-l-none -ml-5 pl-5 border-l-4 border-blue-600' : 'hover:bg-slate-50 rounded-xl -ml-5 pl-5 border-l-4 border-transparent'}`}
+                               onClick={() => (isCompleted || !readOnly) && setCurrentStep(step.id)}
+                            >
+                               <div className={`relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-all outline outline-4 outline-white ${isActive ? 'bg-blue-600 text-white' : isCompleted ? 'bg-white border-2 border-slate-300 text-slate-500' : 'bg-white border-2 border-slate-200 text-slate-400'}`}>
+                                  {step.id}
+                               </div>
+                               <div className={`mt-0.5 ${isActive ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 transition-opacity'}`}>
+                                  <div className={`text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-800'}`}>{step.label}</div>
+                                  <div className="text-xs text-slate-500 mt-0.5 leading-snug">{stepDescriptions[step.id]}</div>
+                               </div>
+                            </div>
+                         </div>
+                      );
+                   })}
+                </div>
+             </div>
+
+             {/* Right Content Area */}
+             <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 overflow-hidden relative">
+                 <div className="flex-1 overflow-y-auto p-8">
+                     <div className="max-w-4xl mx-auto">
+                         {/* Dynamic Header based on step */}
+                         <div className="mb-8 pl-4">
+                            <h2 className="text-2xl font-bold text-slate-800">{stepTitles[currentStep]}</h2>
+                            <p className="text-slate-500 mt-1">{stepSubtitles[currentStep]}</p>
+                         </div>
+
+                         {renderStepContent()}
+                     </div>
+                 </div>
+
+                 {/* Sticky Footer */}
+                 <div className="bg-white border-t border-slate-200 px-8 py-5 flex justify-between items-center shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] sticky bottom-0 z-20">
+                     {currentStep > 1 && currentStep < 6 ? (
+                        <button onClick={handleBack} className="px-6 py-2.5 text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm">
+                           <ChevronLeft size={16} /> Back
+                        </button>
+                     ) : <div />}
+                     
+                     {currentStep === 5 ? (
+                        <button
+                           onClick={handleNext}
+                           disabled={(!isConfirmed && !readOnly) || readOnly}
+                           className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                           <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
+                        </button>
+                     ) : currentStep === 6 ? (
+                        <button onClick={onClose} className="px-8 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all">
+                           Finish <CheckCircle size={16} />
+                        </button>
+                     ) : (
+                        <button onClick={handleNext} className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all">
+                           {getStepButtonLabel()} <ArrowRight size={16} />
+                        </button>
+                     )}
+                 </div>
+             </div>
          </div>
 
-         {/* Content */}
-         <div className="flex-1 p-8 overflow-y-auto bg-slate-50/30">
-            {renderStepContent()}
-         </div>
-
-         {/* Footer */}
-         <div className="bg-white border-t border-slate-200 px-8 py-4 flex justify-between items-center shrink-0">
-            {currentStep > 1 && currentStep < 6 ? (
-               <button onClick={handleBack} className="px-6 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
-                  <ChevronLeft size={16} /> Back
-               </button>
-            ) : currentStep === 6 && !readOnly ? (
-               <div />
-            ) : (
-               <button onClick={onClose} className="px-6 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors">
-                  {readOnly ? 'Close' : 'Cancel'}
-               </button>
-            )}
-
-            {currentStep === 5 ? (
-               <button
-                  onClick={handleNext}
-                  disabled={(!isConfirmed && !readOnly) || readOnly} // Disable if readOnly or not confirmed
-                  className="px-8 py-2.5 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 shadow-md shadow-purple-200 flex items-center gap-2 transition-all transform hover:translate-x-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-               >
-                  <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
-               </button>
-            ) : currentStep === 6 ? (
-               <button onClick={onClose} className="px-8 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-md shadow-emerald-200 flex items-center gap-2 transition-all transform hover:translate-x-1">
-                  Finish <CheckCircle size={16} />
-               </button>
-            ) : (
-               <button onClick={handleNext} className="px-8 py-2.5 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-700 shadow-md shadow-sky-200 flex items-center gap-2 transition-all transform hover:translate-x-1">
-                  {getStepButtonLabel()} <ArrowRight size={16} />
-               </button>
-            )}
          </div>
 
          {/* Alerts Modal */}
