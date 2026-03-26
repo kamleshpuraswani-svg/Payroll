@@ -45,6 +45,7 @@ interface FnFTemplateSettings {
     showYTD: boolean;
     includeForm16: boolean;
     passwordProtect: boolean;
+    decimalPlaces?: string;
 }
 
 interface FnFHeaderConfig {
@@ -119,7 +120,8 @@ const MOCK_FNF_TEMPLATES: FnFTemplate[] = [
             showGratuityBreakdown: true,
             showYTD: false,
             includeForm16: true,
-            passwordProtect: true
+            passwordProtect: true,
+            decimalPlaces: '2'
         }
     }
 ];
@@ -870,7 +872,10 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
     };
 
     const parseAmount = (amt: string) => parseFloat(amt.replace(/,/g, '')) || 0;
-    const formatCurrency = (amt: number) => amt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const formatCurrency = (amt: number) => {
+        const decimals = parseInt(settings.decimalPlaces || '0', 10);
+        return amt.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    };
 
     // --- RENDER LIST ---
     if (view === 'LIST') {
@@ -915,7 +920,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                             <Settings size={16} /> Leave Encashment Settings
                         </button>
                         <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2">
-                            <Plus size={16} /> Create Payslip
+                            Create Payslip
                         </button>
                     </div>
                 </div>
@@ -1005,9 +1010,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                 <div className="flex items-center gap-4">
                     <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft size={20} /></button>
                     <div>
-                        <div className="text-xs text-slate-500 font-medium">
-                            F&F Template
-                        </div>
                         {isReadOnly ? (
                             <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
                         ) : (
@@ -1044,7 +1046,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                 <div className="flex gap-6">
                     <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
                     <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview</button>
-                    <button onClick={() => setActiveTab('CONFIG')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'CONFIG' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Configuration</button>
                 </div>
             </div>
 
@@ -1154,6 +1155,62 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                         </div>
                                     </div>
 
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right: Settings Panel */}
+                        <div className="w-80 border-l border-slate-200 bg-white flex flex-col overflow-y-auto">
+                            <div className="p-6">
+                                <h3 className="text-sm font-bold text-slate-800 mb-6">Settings</h3>
+                                
+                                <div className="space-y-8">
+                                    <div className="mt-6">
+                                        <label className="block text-sm font-bold text-slate-800 uppercase mb-3">DISPLAY SETTINGS</label>
+                                        <div className="space-y-4">
+                                            <label className="flex items-start justify-between cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+                                                <div>
+                                                    <div className="font-bold text-slate-800 text-base">Show YTD Columns</div>
+                                                    <div className="text-sm text-slate-600 mt-1">Add year-to-date totals section</div>
+                                                </div>
+                                                <div className="mt-1">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={settings.showYTD}
+                                                        onChange={(e) => setSettings({...settings, showYTD: e.target.checked})}
+                                                        className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-start justify-between cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+                                                <div>
+                                                    <div className="font-bold text-slate-800 text-base">Password Protect PDF</div>
+                                                    <div className="text-sm text-slate-600 mt-1">Secure PDF with password</div>
+                                                </div>
+                                                <div className="mt-1">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={settings.passwordProtect}
+                                                        onChange={(e) => setSettings({...settings, passwordProtect: e.target.checked})}
+                                                        className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-8">
+                                        <label className="block text-base font-bold text-slate-800 mb-3">Decimal Places</label>
+                                        <div className="relative">
+                                            <input 
+                                                type="number"
+                                                value={settings.decimalPlaces || '2'}
+                                                onChange={(e) => setSettings({...settings, decimalPlaces: e.target.value})}
+                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-base font-medium bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

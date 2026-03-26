@@ -734,7 +734,10 @@ const HRSalarySlipTemplate: React.FC = () => {
     };
 
     const parseAmount = (amt: string) => parseFloat(amt.replace(/,/g, '')) || 0;
-    const formatCurrency = (amt: number) => amt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const formatCurrency = (amt: number) => {
+        const decimals = parseInt(settings.decimalPlaces || '0', 10);
+        return amt.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    };
 
     // --- RENDER LIST ---
     if (view === 'LIST') {
