@@ -432,7 +432,7 @@ export const RunPayrollModal: React.FC<{
       return matchesSearch && matchesBU;
    });
 
-   const availableBUs = Array.from(new Set(payrollEmployees.map(e => e.business_unit || 'CollabCRM')));
+   const availableBUs = ["Mindinventory", "300 Minds", "CollabCRM", "Dots & Boxes"];
 
    const eligibleCount = payrollEmployees.filter(e => e.payrollStatus === 'Eligible').length;
    const onHoldCount = payrollEmployees.filter(e => e.payrollStatus === 'On Hold').length;
