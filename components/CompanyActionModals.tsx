@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
    X,
    Building,
@@ -21,6 +21,7 @@ import {
    Filter,
    ArrowRight,
    ChevronLeft,
+   ChevronDown,
    Lock,
    Info,
    AlertCircle,
@@ -217,6 +218,76 @@ export const PayrollAlertsModal: React.FC<{ isOpen: boolean; onClose: () => void
    );
 };
 
+// --- MultiSelect Component ---
+const MultiSelect: React.FC<{
+    label: string;
+    options: string[];
+    selected: string[];
+    onChange: (selected: string[]) => void;
+    disabled?: boolean;
+}> = ({ label, options, selected, onChange, disabled }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const toggleOption = (opt: string) => {
+        if (selected.includes(opt)) {
+            onChange(selected.filter(i => i !== opt));
+        } else {
+            onChange([...selected, opt]);
+        }
+    };
+
+    return (
+        <div className="flex-1 min-w-[200px]" ref={containerRef}>
+            <div className="relative">
+                <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`w-full px-3 py-2 border rounded-lg text-sm flex justify-between items-center transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${disabled ? 'bg-slate-50 border-slate-200 text-slate-400' : 'bg-white border-slate-200 hover:border-sky-300'}`}
+                >
+                    <span className={`truncate pr-4 ${selected.length > 0 ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>
+                        {selected.length > 0 ? selected.join(', ') : label}
+                    </span>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isOpen && !disabled && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        <div className="max-h-60 overflow-y-auto p-1 text-sm">
+                            {options.map(opt => (
+                                <div
+                                    key={opt}
+                                    onClick={() => toggleOption(opt)}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selected.includes(opt) ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
+                                >
+                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${selected.includes(opt) ? 'bg-sky-600 border-sky-600' : 'bg-white border-slate-300'}`}>
+                                        {selected.includes(opt) && <Check size={12} className="text-white" />}
+                                    </div>
+                                    <span className="truncate">{opt}</span>
+                                </div>
+                            ))}
+                            {options.length === 0 && (
+                                <div className="p-3 text-center text-slate-400 text-xs">No options available</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // --- Run Payroll Modal (Full 6-Step Wizard) ---
 export const RunPayrollModal: React.FC<{
    isOpen?: boolean;
@@ -234,7 +305,7 @@ export const RunPayrollModal: React.FC<{
       MOCK_EMPLOYEES.map(e => ({ ...e, payrollStatus: 'Eligible' as 'Eligible' | 'On Hold' }))
    );
    const [empSearch, setEmpSearch] = useState('');
-   const [selectedBU, setSelectedBU] = useState('');
+   const [selectedBUs, setSelectedBUs] = useState<string[]>([]);
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
 
    // Step 6 States
@@ -357,7 +428,7 @@ export const RunPayrollModal: React.FC<{
    const filteredEmployees = payrollEmployees.filter(e => {
       const matchesSearch = `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
          e.employee_id.toLowerCase().includes(empSearch.toLowerCase());
-      const matchesBU = selectedBU ? (e.business_unit || 'CollabCRM') === selectedBU : true;
+      const matchesBU = selectedBUs.length > 0 ? selectedBUs.includes(e.business_unit || 'CollabCRM') : true;
       return matchesSearch && matchesBU;
    });
 
@@ -481,16 +552,13 @@ export const RunPayrollModal: React.FC<{
                                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                               />
                            </div>
-                           <select
-                              value={selectedBU}
-                              onChange={(e) => setSelectedBU(e.target.value)}
-                              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white min-w-[150px]"
-                           >
-                              <option value="">All Business Units</option>
-                              {availableBUs.map(bu => (
-                                 <option key={bu} value={bu}>{bu}</option>
-                              ))}
-                           </select>
+                           <MultiSelect
+                              label="All Business Units"
+                              options={availableBUs}
+                              selected={selectedBUs}
+                              onChange={setSelectedBUs}
+                              disabled={readOnly}
+                           />
                            {selectedEmpIds.length > 0 && !readOnly && (
                               <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
                                  <button onClick={() => bulkAction('Hold')} className="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5">
