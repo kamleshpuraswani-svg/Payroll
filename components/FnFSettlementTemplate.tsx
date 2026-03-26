@@ -46,6 +46,7 @@ interface FnFTemplateSettings {
     includeForm16: boolean;
     passwordProtect: boolean;
     decimalPlaces?: string;
+    salaryStructure?: string;
 }
 
 interface FnFHeaderConfig {
@@ -1164,6 +1165,46 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                             <div className="p-6">
                                 <h3 className="text-sm font-bold text-slate-800 mb-6">Settings</h3>
                                 
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">Salary Structure Mapping</label>
+                                    <select
+                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors mb-6"
+                                        value={settings.salaryStructure || ''}
+                                        onChange={(e) => {
+                                            if (view !== 'VIEW') {
+                                                const val = e.target.value;
+                                                setSettings({ ...settings, salaryStructure: val });
+                                                if (val === '1') {
+                                                    setSections(prev => ({
+                                                        ...prev,
+                                                        earnings: [
+                                                            { id: 'e1', name: 'Basic Salary', amount: '25,000', type: 'Fixed' },
+                                                            { id: 'e2', name: 'House Rent Allowance', amount: '12,500', type: 'Fixed' },
+                                                            { id: 'e3', name: 'Special Allowance', amount: '8,500', type: 'Fixed' },
+                                                        ],
+                                                        deductions: [
+                                                            { id: 'd1', name: 'PF (Employee)', amount: '1,800', type: 'Variable' },
+                                                            { id: 'd2', name: 'Professional Tax', amount: '200', type: 'Variable' },
+                                                            { id: 'd3', name: 'Income Tax (TDS)', amount: '0', type: 'Variable' },
+                                                        ]
+                                                    }));
+                                                } else if (val === '2') {
+                                                    setSections(prev => ({
+                                                        ...prev,
+                                                        earnings: [{ id: 'e99', name: 'Stipend', amount: '15,000', type: 'Fixed' }],
+                                                        deductions: []
+                                                    }));
+                                                }
+                                            }
+                                        }}
+                                        disabled={isReadOnly}
+                                    >
+                                        <option value="">Select Structure</option>
+                                        <option value="1">Standard IT Structure 2025</option>
+                                        <option value="2">Internship Stipend</option>
+                                    </select>
+                                </div>
+
                                 <div className="space-y-8">
                                     <div className="mt-6">
                                         <label className="block text-sm font-bold text-slate-800 uppercase mb-3">DISPLAY SETTINGS</label>
