@@ -391,13 +391,16 @@ const AddFnFComponentModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     section: 'earnings' | 'deductions' | null;
-    onAdd: (items: ComponentItem[]) => void
-}> = ({ isOpen, onClose, section, onAdd }) => {
+    existingItems: ComponentItem[];
+    onSave: (names: string[]) => void
+}> = ({ isOpen, onClose, section, existingItems, onSave }) => {
     const [selected, setSelected] = useState<string[]>([]);
 
     useEffect(() => {
-        if (isOpen) setSelected([]);
-    }, [isOpen]);
+        if (isOpen) {
+            setSelected(existingItems.map(i => i.name));
+        }
+    }, [isOpen, existingItems]);
 
     if (!isOpen || !section) return null;
 
@@ -412,14 +415,8 @@ const AddFnFComponentModal: React.FC<{
         setSelected(prev => prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]);
     };
 
-    const handleAdd = () => {
-        const newItems: ComponentItem[] = selected.map(name => ({
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-            name,
-            amount: '0',
-            type: 'Variable'
-        }));
-        onAdd(newItems);
+    const handleSave = () => {
+        onSave(selected);
         onClose();
     };
 
@@ -439,8 +436,8 @@ const AddFnFComponentModal: React.FC<{
                 </div>
                 <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100">
                     <button onClick={onClose} className="flex-1 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">Cancel</button>
-                    <button onClick={handleAdd} disabled={selected.length === 0} className="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-                        Add Selected ({selected.length})
+                    <button onClick={handleSave} className="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors shadow-sm">
+                        Save Selected ({selected.length})
                     </button>
                 </div>
             </div>
@@ -860,12 +857,30 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
         );
     };
 
-    const addComponent = (items: ComponentItem[]) => {
+    const saveComponents = (names: string[]) => {
         if (!addComponentModal.section) return;
-        setSections(prev => ({
-            ...prev,
-            [addComponentModal.section!]: [...prev[addComponentModal.section!], ...items]
-        }));
+        setSections(prev => {
+            const currentSectionItems = prev[addComponentModal.section!];
+            
+            // Keep existing ones that are still selected
+            const keptItems = currentSectionItems.filter(i => names.includes(i.name));
+            
+            // Newly added ones
+            const existingNames = currentSectionItems.map(i => i.name);
+            const newNames = names.filter(n => !existingNames.includes(n));
+            
+            const newItems: ComponentItem[] = newNames.map(name => ({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name,
+                amount: '0',
+                type: 'Variable'
+            }));
+            
+            return {
+                ...prev,
+                [addComponentModal.section!]: [...keptItems, ...newItems]
+            };
+        });
     };
 
     const removeComponent = (section: keyof typeof sections, id: string) => {
@@ -1416,7 +1431,8 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                 isOpen={addComponentModal.isOpen}
                 onClose={() => setAddComponentModal({ isOpen: false, section: null })}
                 section={addComponentModal.section}
-                onAdd={addComponent}
+                existingItems={addComponentModal.section ? sections[addComponentModal.section] : []}
+                onSave={saveComponents}
             />
         </div>
     );
