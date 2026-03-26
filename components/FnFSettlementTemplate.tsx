@@ -1002,10 +1002,6 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                     </table>
                 </div>
 
-                <div className="text-center text-xs text-slate-400 mt-4">
-                    1,156 companies are currently using this default F&F template · Last published: 03 Dec 2025
-                </div>
-
                 <LeaveEncashmentModal
                     isOpen={showLeaveEncashmentModal}
                     onClose={() => setShowLeaveEncashmentModal(false)}

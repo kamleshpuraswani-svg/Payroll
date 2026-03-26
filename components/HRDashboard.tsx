@@ -1426,51 +1426,7 @@ const HRDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Statutory Alerts */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                        <h3 className="font-bold text-slate-800 mb-4">Statutory Filings Due</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 p-1 bg-rose-100 rounded text-rose-600"><AlertCircle size={14} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-800">PF ECR Filing (Oct 2025)</p>
-                                    {isPFECRFiled ? (
-                                        <p className="text-xs text-emerald-600 font-medium">Completed on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
-                                    ) : (
-                                        <p className="text-xs text-rose-600 font-medium">Due in 2 days (15 Nov)</p>
-                                    )}
-                                </div>
-                                {!isPFECRFiled && (
-                                    <button
-                                        onClick={() => setIsECRModalOpen(true)}
-                                        className="px-3 py-1 text-xs border border-slate-200 rounded hover:bg-slate-50 transition-colors"
-                                    >
-                                        File Now
-                                    </button>
-                                )}
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 p-1 bg-amber-100 rounded text-amber-600"><AlertCircle size={14} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-800">Professional Tax (Gujarat)</p>
-                                    <p className="text-xs text-amber-600 font-medium">Due in 5 days (20 Nov)</p>
-                                </div>
-                                <button
-                                    onClick={() => setIsPTModalOpen(true)}
-                                    className="px-3 py-1 text-xs border border-slate-200 rounded hover:bg-slate-50 transition-colors"
-                                >
-                                    View
-                                </button>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 p-1 bg-emerald-100 rounded text-emerald-600"><CheckCircle size={14} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-800">TDS Payment (Oct 2025)</p>
-                                    <p className="text-xs text-emerald-600">Completed on 07 Nov</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
             </div>
