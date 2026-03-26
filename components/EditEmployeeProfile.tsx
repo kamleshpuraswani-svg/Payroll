@@ -469,15 +469,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <Building size={18} className="text-slate-400" /> Bank Information
                      </h3>
-                     {bankVerified ? (
-                        <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
-                           <CheckCircle size={12} /> Verified
-                        </span>
-                     ) : (
-                        <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
-                           <AlertCircle size={12} /> Pending Verification
-                        </span>
-                     )}
                   </div>
                   <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                      <div>

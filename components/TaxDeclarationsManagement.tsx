@@ -1262,7 +1262,7 @@ const TaxDeclarationsManagement: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-4">Employee Name & ID</th>
                                     <th className="px-6 py-4">Declaration Type</th>
-                                    <th className="px-6 py-4">Declared Amt</th>
+                                    <th className="px-6 py-4">Declared Amount</th>
                                     <th className="px-6 py-4">Submitted Date</th>
                                     <th className="px-6 py-4 text-center">Proofs</th>
                                     <th className="px-6 py-4">Status</th>

@@ -775,14 +775,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                             disabled={isReadOnly}
                                             info={infoMessage}
                                         />
-                                        <MultiSelect
-                                            label="Employees"
-                                            options={EMPLOYEES_LIST}
-                                            selected={selectedEmployees}
-                                            onChange={setSelectedEmployees}
-                                            disabled={isReadOnly}
-                                            info="Assign specific employees directly."
-                                        />
                                     </div>
                                 </div>
                             </div>

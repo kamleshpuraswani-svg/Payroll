@@ -455,9 +455,6 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
                     <Building size={18} className="text-slate-400" /> Bank & Payment Details
                   </h3>
-                  <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
-                    <CheckCircle size={12} /> KYC Verified
-                  </span>
                 </div>
                 <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
                   <div>

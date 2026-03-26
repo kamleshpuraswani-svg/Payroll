@@ -1223,13 +1223,14 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
 
-                                <th className="px-6 py-4">Employee</th>
+                                <th className="px-6 py-4">Name</th>
                                 <th className="px-6 py-4">Joining Date</th>
                                 <th className="px-6 py-4">Department</th>
                                 <th className="px-6 py-4">Designation</th>
                                 <th className="px-6 py-4">Business Unit</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Structure</th>
+                                <th className="px-6 py-4">Salary Structure</th>
+                                <th className="px-6 py-4">CTC Status</th>
 
                                 <th className="px-6 py-4">Created By</th>
                                 <th className="px-6 py-4 whitespace-nowrap">Last Modified By</th>
@@ -1301,6 +1302,11 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                                     <td className="px-6 py-4">
                                         <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 font-bold uppercase tracking-tight">
                                             {emp?.salary_structure_name || 'Standard'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-[10px] px-2 py-0.5 rounded border font-bold uppercase tracking-tight ${emp?.salary_structure_name ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
+                                            {emp?.salary_structure_name ? 'Assigned' : 'Pending'}
                                         </span>
                                     </td>
 
