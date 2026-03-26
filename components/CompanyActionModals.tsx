@@ -301,9 +301,14 @@ export const RunPayrollModal: React.FC<{
    const [isAlertsOpen, setIsAlertsOpen] = useState(false);
 
    // Step 1: Employee Selection State
-   const [payrollEmployees, setPayrollEmployees] = useState(() =>
-      MOCK_EMPLOYEES.map(e => ({ ...e, payrollStatus: 'Eligible' as 'Eligible' | 'On Hold' }))
-   );
+   const [payrollEmployees, setPayrollEmployees] = useState(() => {
+      const bus = ["Mindinventory", "300 Minds", "CollabCRM", "Dots & Boxes"];
+      return MOCK_EMPLOYEES.map((e, i) => ({ 
+         ...e, 
+         business_unit: bus[i % bus.length],
+         payrollStatus: 'Eligible' as 'Eligible' | 'On Hold' 
+      }));
+   });
    const [empSearch, setEmpSearch] = useState('');
    const [selectedBUs, setSelectedBUs] = useState<string[]>([]);
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
