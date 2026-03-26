@@ -234,6 +234,7 @@ export const RunPayrollModal: React.FC<{
       MOCK_EMPLOYEES.map(e => ({ ...e, payrollStatus: 'Eligible' as 'Eligible' | 'On Hold' }))
    );
    const [empSearch, setEmpSearch] = useState('');
+   const [selectedBU, setSelectedBU] = useState('');
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
 
    // Step 6 States
@@ -353,10 +354,14 @@ export const RunPayrollModal: React.FC<{
    };
 
    // Step 1: Selection Logic
-   const filteredEmployees = payrollEmployees.filter(e =>
-      `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
-      e.employee_id.toLowerCase().includes(empSearch.toLowerCase())
-   );
+   const filteredEmployees = payrollEmployees.filter(e => {
+      const matchesSearch = `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
+         e.employee_id.toLowerCase().includes(empSearch.toLowerCase());
+      const matchesBU = selectedBU ? (e.business_unit || 'CollabCRM') === selectedBU : true;
+      return matchesSearch && matchesBU;
+   });
+
+   const availableBUs = Array.from(new Set(payrollEmployees.map(e => e.business_unit || 'CollabCRM')));
 
    const eligibleCount = payrollEmployees.filter(e => e.payrollStatus === 'Eligible').length;
    const onHoldCount = payrollEmployees.filter(e => e.payrollStatus === 'On Hold').length;
@@ -476,6 +481,16 @@ export const RunPayrollModal: React.FC<{
                                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                               />
                            </div>
+                           <select
+                              value={selectedBU}
+                              onChange={(e) => setSelectedBU(e.target.value)}
+                              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white min-w-[150px]"
+                           >
+                              <option value="">All Business Units</option>
+                              {availableBUs.map(bu => (
+                                 <option key={bu} value={bu}>{bu}</option>
+                              ))}
+                           </select>
                            {selectedEmpIds.length > 0 && !readOnly && (
                               <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
                                  <button onClick={() => bulkAction('Hold')} className="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5">
