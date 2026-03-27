@@ -362,7 +362,7 @@ const LoanAdvancesTypes: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                Loan & Advances Types
+                                Loan & Advances
                             </h1>
                             <p className="text-slate-500 mt-1">Configure types of loans and advances available for employees.</p>
                         </div>
@@ -426,12 +426,14 @@ const LoanAdvancesTypes: React.FC = () => {
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
+                                    {/* Hidden: Add Loan Type button (can be restored later)
                                     <button
                                         onClick={handleAddNew}
                                         className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm font-bold shadow-sm shadow-purple-100"
                                     >
                                         Add Loan Type
                                     </button>
+                                    */}
                                 </div>
                             </div>
 
