@@ -768,23 +768,58 @@ export const RunPayrollModal: React.FC<{
 
          case 3: // ADJUSTMENTS
             return (
-               <div className="flex gap-6 h-full overflow-hidden">
-                  {/* Left: Main Table */}
-                  <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="relative flex-1 max-w-md">
-                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                           <input
-                              type="text"
-                              placeholder="Search employee..."
-                              value={adjustmentSearch}
-                              onChange={(e) => setAdjustmentSearch(e.target.value)}
-                              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                           />
-                        </div>
+               <div className="flex flex-col h-full space-y-4">
+                  <div className="grid grid-cols-6 gap-4">
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
+                        <p className="text-lg font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
                      </div>
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Reimbursements</p>
+                        <p className="text-lg font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.reimb)}</p>
+                     </div>
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
+                        <p className="text-lg font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
+                     </div>
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Deductions</p>
+                        <p className="text-lg font-bold text-rose-600 truncate">- ₹{formatLakh(summary.deduct)}</p>
+                     </div>
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
+                        <p className="text-lg font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
+                     </div>
+                     <div className={`p-4 rounded-xl border shadow-sm ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+                        <p className={`text-[10px] font-bold uppercase mb-1 leading-tight ${netImpact >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>Net Impact</p>
+                        <p className={`text-lg font-bold truncate ${netImpact >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
+                           {netImpact >= 0 ? '+' : '-'} ₹{formatLakh(Math.abs(netImpact))}
+                        </p>
+                     </div>
+                  </div>
 
-                     <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
+                  <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                     <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                           type="text"
+                           placeholder="Search employee..."
+                           value={adjustmentSearch}
+                           onChange={(e) => setAdjustmentSearch(e.target.value)}
+                           className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all shadow-sm"
+                        />
+                     </div>
+                     {!readOnly && (
+                        <button
+                           onClick={() => setShowLopModal(true)}
+                           className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 rounded-lg text-sm font-bold transition-all shadow-sm"
+                        >
+                           <MinusCircle size={16} /> Recover LOP
+                        </button>
+                     )}
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
                         <table className="w-full text-sm text-left">
                            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
                               <tr>
@@ -883,53 +918,6 @@ export const RunPayrollModal: React.FC<{
                         </table>
                      </div>
                   </div>
-
-                  {/* Right: Summary Panel */}
-                  <div className="w-80 flex flex-col gap-4">
-
-                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 sticky top-0">
-                        <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-2">Adjustment Summary</h3>
-
-                        <div className="space-y-3">
-                           <div className="flex justify-between text-sm">
-                              <span className="text-slate-500">Total Bonus</span>
-                              <span className="font-medium text-emerald-600">+ ₹ {formatLakh(summary.bonus)}</span>
-                           </div>
-                           <div className="flex justify-between text-sm">
-                              <span className="text-slate-500">Reimbursements</span>
-                              <span className="font-medium text-emerald-600">+ ₹ {formatLakh(summary.reimb)}</span>
-                           </div>
-                           <div className="flex justify-between text-sm">
-                              <span className="text-slate-500">Total LOP Reversal</span>
-                              <span className="font-medium text-emerald-600">+ ₹ {formatLakh(summary.lopReversal)}</span>
-                           </div>
-                           <div className="flex justify-between text-sm">
-                              <span className="text-slate-500">Total Deductions</span>
-                              <span className="font-medium text-rose-600">- ₹ {formatLakh(summary.deduct)}</span>
-                           </div>
-                           <div className="flex justify-between text-sm">
-                              <span className="text-slate-500">Total TDS Deductions</span>
-                              <span className="font-medium text-rose-600">- ₹ {formatLakh(summary.tds)}</span>
-                           </div>
-                           <div className="pt-2 border-t border-slate-100 flex justify-between font-bold text-slate-800">
-                              <span>Net Impact</span>
-                              <span>{netImpact >= 0 ? '+' : '-'} ₹ {formatLakh(netImpact)}</span>
-                           </div>
-                        </div>
-
-                        {!readOnly && (
-                           <div className="pt-4 space-y-2">
-                              <button
-                                 onClick={() => setShowLopModal(true)}
-                                 className="w-full py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-                              >
-                                 <MinusCircle size={14} /> Recover LOP
-                              </button>
-                           </div>
-                        )}
-                     </div>
-                  </div>
-               </div>
             );
 
          case 4: // REVIEW
