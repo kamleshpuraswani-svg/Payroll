@@ -498,6 +498,28 @@ export const RunPayrollModal: React.FC<{
       { id: 10, name: 'Kavita Reddy', days: 21, leaves: 0, lop: 1, pendingLeaves: 1 },
    ];
 
+   const handleExport = () => {
+      const headers = ["Employee Name", "Working Days", "Present Days", "Leave Days", "LOP Days", "Payable Days"];
+      const data = attendanceData.map(row => [
+         row.name,
+         22,
+         row.days,
+         row.leaves || 0,
+         row.lop || 0,
+         row.days + (row.leaves || 0)
+      ]);
+      const csvContent = [headers, ...data].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `attendance_data_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+   };
+
    const filteredAdjustments = adjustments.filter(row =>
       row.name.toLowerCase().includes(adjustmentSearch.toLowerCase())
    );
@@ -532,7 +554,7 @@ export const RunPayrollModal: React.FC<{
       switch (currentStep) {
          case 1: // PERIOD
             return (
-               <div className="max-w-4xl mx-auto space-y-6">
+               <div className="w-full space-y-6">
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                      <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
                         <Calendar size={16} className="text-sky-600" /> Payroll Period
@@ -669,7 +691,7 @@ export const RunPayrollModal: React.FC<{
 
          case 2: // ATTENDANCE
             return (
-               <div className="max-w-4xl mx-auto space-y-6">
+               <div className="w-full space-y-6">
                   <div className="flex items-center justify-between">
                      <h3 className="text-lg font-bold text-slate-800">Attendance & Time Data</h3>
                   </div>
@@ -696,6 +718,7 @@ export const RunPayrollModal: React.FC<{
                                  <Upload size={16} /> Upload CSV
                               </button>
                               <button
+                                 onClick={handleExport}
                                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
                               >
                                  <Download size={16} /> Export
@@ -761,7 +784,7 @@ export const RunPayrollModal: React.FC<{
                         </div>
                      </div>
 
-                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex-1 overflow-y-auto">
+                     <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
                         <table className="w-full text-sm text-left">
                            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
                               <tr>
@@ -911,7 +934,7 @@ export const RunPayrollModal: React.FC<{
 
          case 4: // REVIEW
             return (
-               <div className="space-y-6">
+               <div className="w-full space-y-6 pb-20">
                   <div className="grid grid-cols-4 gap-4">
                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                         <p className="text-xs font-bold text-slate-400 uppercase mb-1">Total Gross</p>
@@ -941,7 +964,7 @@ export const RunPayrollModal: React.FC<{
                      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><FileText size={16} /> Final Register Preview</h3>
                         <div className="flex gap-2">
-                           <button className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                           <button onClick={handleExport} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 flex items-center gap-2 transition-colors">
                               <Download size={14} /> Export
                            </button>
                         </div>
@@ -985,7 +1008,7 @@ export const RunPayrollModal: React.FC<{
 
          case 5: // FINALIZE
             return (
-               <div className="space-y-6">
+               <div className="w-full space-y-8">
                   <div className="flex items-center justify-between">
                      <h3 className="text-lg font-bold text-slate-800">Final Approval & Lock</h3>
                      <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">Draft Mode</span>
@@ -1240,7 +1263,7 @@ export const RunPayrollModal: React.FC<{
              {/* Right Content Area */}
              <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 overflow-hidden relative">
                  <div className="flex-1 overflow-y-auto p-8">
-                     <div className="max-w-4xl mx-auto">
+                     <div className="w-full">
                          {/* Dynamic Header based on step */}
                          <div className="mb-8 pl-4">
                             <h2 className="text-2xl font-bold text-slate-800">{stepTitles[currentStep]}</h2>
