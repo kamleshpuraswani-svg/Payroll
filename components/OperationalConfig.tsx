@@ -214,8 +214,9 @@ const OperationalConfig: React.FC = () => {
                 }
 
                 if (eligibility && eligibility.config_value) {
-                    setApprovalSourceSettings(eligibility.config_value.approval_source_settings || {
-                        employees: []
+                    const settings = eligibility.config_value.approval_source_settings;
+                    setApprovalSourceSettings({
+                        employees: settings?.employees || []
                     });
                 }
             }
@@ -563,7 +564,7 @@ const OperationalConfig: React.FC = () => {
                                                 className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer text-sm"
                                             >
                                                 <option value="" disabled>Search employee...</option>
-                                                {allEmployees.filter(emp => !approvalSourceSettings.employees.find(s => s.id === emp.id)).map(emp => (
+                                                {allEmployees.filter(emp => !(approvalSourceSettings.employees || []).find(s => s.id === emp.id)).map(emp => (
                                                     <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
                                                 ))}
                                             </select>
@@ -574,9 +575,9 @@ const OperationalConfig: React.FC = () => {
                                     </div>
 
                                     {/* Selected Items List */}
-                                    {approvalSourceSettings.employees.length > 0 && (
+                                    {(approvalSourceSettings.employees || []).length > 0 && (
                                         <div className="mt-4 flex flex-wrap gap-2">
-                                            {approvalSourceSettings.employees.map(emp => (
+                                            {(approvalSourceSettings.employees || []).map(emp => (
                                                 <div key={emp.id} className="flex items-center gap-2 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-lg text-xs font-bold">
                                                     <div className="flex items-center gap-1.5">
                                                         <Search size={12} className="opacity-70" />
