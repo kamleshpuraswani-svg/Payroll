@@ -30,6 +30,7 @@ import {
    Edit,
    Settings,
    Clock,
+   RotateCcw,
    Upload,
    PieChart,
    UserCheck,
@@ -43,7 +44,6 @@ import {
    MoreHorizontal,
    MinusCircle,
    Play,
-   RotateCcw,
    DollarSign,
    Edit2,
    PauseCircle,
@@ -353,6 +353,11 @@ export const RunPayrollModal: React.FC<{
    const [selectedLopEmp, setSelectedLopEmp] = useState('');
    const [showAttendanceUpload, setShowAttendanceUpload] = useState(false);
 
+   // Row-level LOP Reversal State
+   const [showRowLopModal, setShowRowLopModal] = useState(false);
+   const [rowLopTargetId, setRowLopTargetId] = useState<number | null>(null);
+   const [rowLopDays, setRowLopDays] = useState('0');
+
    // If not page mode, check isOpen
    if (!isPage && !isOpen) return null;
    if (!company) return null;
@@ -377,6 +382,28 @@ export const RunPayrollModal: React.FC<{
    const handleAdjustmentChange = (id: number, field: string, val: string) => {
       const num = parseFloat(val) || 0;
       setAdjustments(prev => prev.map(row => row.id === id ? { ...row, [field]: num } : row));
+   };
+
+   const handleRowLopClick = (id: number) => {
+      setRowLopTargetId(id);
+      setRowLopDays('1'); // Default to 1 day
+      setShowRowLopModal(true);
+   };
+
+   const confirmRowLopReversal = () => {
+      if (rowLopTargetId !== null) {
+         const emp = adjustments.find(e => e.id === rowLopTargetId);
+         if (emp) {
+            const daysNum = parseFloat(rowLopDays) || 0;
+            const amount = Math.round((emp.gross / 30) * daysNum);
+            setAdjustments(prev => prev.map(row => 
+               row.id === rowLopTargetId ? { ...row, lopReversal: row.lopReversal + amount } : row
+            ));
+         }
+         setShowRowLopModal(false);
+         setRowLopTargetId(null);
+         setRowLopDays('0');
+      }
    };
 
    const toggleEdit = (id: number) => {
@@ -952,13 +979,22 @@ export const RunPayrollModal: React.FC<{
                                        ₹{total.toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                       <button
-                                          onClick={() => toggleEdit(row.id)}
-                                          className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
-                                          title={row.isEditing ? "Save Changes" : "Edit Row"}
-                                       >
-                                          {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
-                                       </button>
+                                       <div className="flex items-center justify-center gap-2">
+                                          <button
+                                             onClick={() => handleRowLopClick(row.id)}
+                                             className="p-1.5 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all"
+                                             title="Recover LOP for this employee"
+                                          >
+                                             <RotateCcw size={18} />
+                                          </button>
+                                          <button
+                                             onClick={() => toggleEdit(row.id)}
+                                             className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                                             title={row.isEditing ? "Save Changes" : "Edit Row"}
+                                          >
+                                             {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
+                                          </button>
+                                       </div>
                                     </td>
                                  </tr>
                               );
@@ -1405,6 +1441,59 @@ export const RunPayrollModal: React.FC<{
                         className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 shadow-sm"
                      >
                         Add Bonus
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* Row-Level LOP Reversal Modal */}
+         {showRowLopModal && rowLopTargetId && !readOnly && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden border border-amber-100">
+                  <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-amber-50/50">
+                     <div className="flex items-center gap-2">
+                        <RotateCcw size={18} className="text-amber-600" />
+                        <h3 className="font-bold text-amber-900 text-sm">Reverse LOP</h3>
+                     </div>
+                     <button onClick={() => setShowRowLopModal(false)}><X size={18} className="text-slate-400 hover:text-slate-600" /></button>
+                  </div>
+                  <div className="p-6 space-y-5">
+                     <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Target Employee</p>
+                        <p className="text-sm font-bold text-slate-800">{adjustments.find(e => e.id === rowLopTargetId)?.name}</p>
+                     </div>
+                     
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Number of Days to Reverse</label>
+                        <div className="relative">
+                           <input
+                              type="number"
+                              step="0.5"
+                              value={rowLopDays}
+                              onChange={(e) => setRowLopDays(e.target.value)}
+                              autoFocus
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                              placeholder="0"
+                           />
+                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">Days</span>
+                        </div>
+                     </div>
+
+                     <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 flex justify-between items-center">
+                        <span className="text-xs font-bold text-emerald-700 uppercase">Calculated Reversal</span>
+                        <span className="text-lg font-bold text-emerald-800">
+                           ₹ {Math.round((adjustments.find(e => e.id === rowLopTargetId)?.gross || 0) / 30 * (parseFloat(rowLopDays) || 0)).toLocaleString()}
+                        </span>
+                     </div>
+                  </div>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+                     <button onClick={() => setShowRowLopModal(false)} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
+                     <button
+                        onClick={confirmRowLopReversal}
+                        className="px-6 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700 shadow-md shadow-amber-200/50 transition-all font-bold"
+                     >
+                        Confirm Reversal
                      </button>
                   </div>
                </div>
