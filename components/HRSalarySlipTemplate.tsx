@@ -57,7 +57,7 @@ interface TemplateSettings {
 interface PayslipTemplate {
     id: string;
     name: string;
-    status: 'Published' | 'Draft' | 'Inactive';
+    status: 'Active' | 'Draft' | 'Inactive';
     isActive: boolean;
     createdBy: string;
     lastModified: string;
@@ -97,7 +97,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
     {
         id: '1',
         name: 'Standard Executive Payslip',
-        status: 'Published',
+        status: 'Active',
         isActive: true,
         createdBy: 'HR Manager',
         lastModified: '03 Dec 2025',
@@ -569,7 +569,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                 const formattedTemplates: PayslipTemplate[] = data.map(item => ({
                     id: item.id,
                     name: item.name,
-                    status: item.status as 'Published' | 'Draft',
+                    status: item.status as 'Active' | 'Draft' | 'Inactive',
                     isActive: item.is_active,
                     createdBy: item.created_by || 'HR Manager',
                     lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -630,7 +630,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         setView('VIEW');
     };
 
-    const handleSave = async (status: 'Published' | 'Draft') => {
+    const handleSave = async (status: 'Active' | 'Draft') => {
         // Validation
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
@@ -694,13 +694,37 @@ const HRSalarySlipTemplate: React.FC = () => {
         if (!template) return;
 
         const newActiveState = !template.isActive;
+        const newStatus = newActiveState ? 'Active' : 'Inactive';
         try {
-            const { error } = await supabase
-                .from('document_templates')
-                .update({ is_active: newActiveState })
-                .eq('id', id);
-            if (error) throw error;
-            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState } : t));
+            if (template.id.length < 5) {
+                // Mock -> Real Promotion
+                const [targetType, targetId] = selectedTarget.split(':');
+                const { error } = await supabase
+                    .from('document_templates')
+                    .insert([{
+                        type: 'salary_slip',
+                        name: template.name,
+                        status: newStatus,
+                        is_active: newActiveState,
+                        target_type: targetType,
+                        target_id: targetId,
+                        content: { sections: template.sections, headerConfig: template.headerConfig },
+                        settings: template.settings,
+                        created_by: 'HR Manager',
+                        last_updated_by: 'HR Manager'
+                    }]);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .update({ 
+                        is_active: newActiveState,
+                        status: newStatus
+                    })
+                    .eq('id', id);
+                if (error) throw error;
+            }
+            await fetchTemplates();
         } catch (err) {
             console.error('Error toggling active state:', err);
         }
@@ -801,10 +825,11 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                                'bg-slate-50 text-slate-700 border-slate-100'
                                             }`}>
-                                            {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                            {t.status === 'Active' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
                                             {t.status}
                                         </span>
                                     </td>
@@ -816,17 +841,17 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end items-center gap-3">
-                                            <button
+                                        <div className="flex justify-end items-center gap-4">
+                                            <div
                                                 onClick={(e) => { e.stopPropagation(); toggleTemplateActive(t.id); }}
-                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${t.isActive ? 'bg-purple-600' : 'bg-slate-300'}`}
-                                                title={t.isActive ? "Deactivate Template" : "Activate Template"}
+                                                className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${t.isActive ? 'bg-purple-600' : 'bg-slate-200'}`}
                                             >
-                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${t.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
-                                            </button>
-                                            <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
+                                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${t.isActive ? 'translate-x-5' : ''}`} />
+                                            </div>
+                                            <div className="flex justify-end gap-2 text-slate-400">
+                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded" title="View"><Eye size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded" title="Edit"><Edit2 size={16} /></button>
+                                                <button onClick={(e) => handleDeleteTemplate(t.id, e)} className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded" title="Delete"><Trash2 size={16} /></button>
                                             </div>
                                         </div>
                                     </td>
@@ -884,8 +909,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                         <>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                             <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
-                            <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
-                                <Save size={16} /> Save
+                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
+                                <Save size={16} /> Submit
                             </button>
                         </>
                     )}
