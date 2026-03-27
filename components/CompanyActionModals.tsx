@@ -303,9 +303,20 @@ export const RunPayrollModal: React.FC<{
    // Step 1: Employee Selection State
    const [payrollEmployees, setPayrollEmployees] = useState(() => {
       const bus = ["Mindinventory", "300 Minds", "CollabCRM", "Dots & Boxes"];
+      const designations: Record<string, string> = {
+         'Software Engineering': 'Senior Engineer',
+         'Sales': 'Account Executive',
+         'Product': 'Product Manager',
+         'DevOps': 'Systems Engineer',
+         'QA': 'QA Lead',
+         'Finance': 'Finance Associate',
+         'Design': 'Senior Designer',
+         'Marketing': 'Marketing Specialist'
+      };
       return MOCK_EMPLOYEES.map((e, i) => ({ 
          ...e, 
          business_unit: bus[i % bus.length],
+         designation: designations[e.department] || 'Specialist',
          payrollStatus: 'Eligible' as 'Eligible' | 'On Hold' 
       }));
    });
@@ -590,8 +601,9 @@ export const RunPayrollModal: React.FC<{
                                        className="rounded text-sky-600 focus:ring-sky-500 cursor-pointer disabled:opacity-50"
                                     />
                                  </th>
-                                 <th className="px-4 py-3">Employee Details</th>
-                                 <th className="px-4 py-3">Status</th>
+                                 <th className="px-4 py-3">Employee Name</th>
+                                 <th className="px-4 py-3">Designation</th>
+                                 <th className="px-4 py-3">Department</th>
                                  {!readOnly && <th className="px-4 py-3 text-right">Action</th>}
                               </tr>
                            </thead>
@@ -614,16 +626,12 @@ export const RunPayrollModal: React.FC<{
                                           </div>
                                           <div>
                                              <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
-                                             <div className="text-xs text-slate-500">{emp.department} • {emp.employee_id}</div>
+                                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{emp.employee_id}</div>
                                           </div>
                                        </div>
                                     </td>
-                                    <td className="px-4 py-3">
-                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${emp.payrollStatus === 'Eligible' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                                          {emp.payrollStatus === 'Eligible' ? <CheckCircle size={12} /> : <PauseCircle size={12} />}
-                                          {emp.payrollStatus}
-                                       </span>
-                                    </td>
+                                    <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
+                                    <td className="px-4 py-3 text-slate-500">{emp.department}</td>
                                     {!readOnly && (
                                        <td className="px-4 py-3 text-right">
                                           <button
@@ -642,7 +650,7 @@ export const RunPayrollModal: React.FC<{
                               ))}
                               {filteredEmployees.length === 0 && (
                                  <tr>
-                                    <td colSpan={readOnly ? 3 : 4} className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan={readOnly ? 4 : 5} className="px-6 py-12 text-center text-slate-400 italic">
                                        No employees found matching "{empSearch}"
                                     </td>
                                  </tr>
