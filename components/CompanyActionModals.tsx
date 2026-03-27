@@ -675,8 +675,12 @@ export const RunPayrollModal: React.FC<{
                            <AlertCircle size={24} />
                         </div>
                         <div>
-                           <div className="text-amber-800 font-bold text-lg">2 Anomalies Found</div>
-                           <div className="text-amber-600 text-xs font-medium">Employees have pending leave requests that require approval.</div>
+                           <div className="text-amber-800 font-bold text-lg">
+                              {attendanceData.filter(e => e.pendingLeaves > 0).length} Employees with Pending Leaves
+                           </div>
+                           <div className="text-amber-600 text-[11px] font-medium leading-tight">
+                              Employees have pending leave requests that require approval before payroll can be finalized.
+                           </div>
                         </div>
                      </div>
                   </div>
