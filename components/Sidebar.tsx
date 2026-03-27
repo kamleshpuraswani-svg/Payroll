@@ -140,12 +140,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       icon: <ClipboardCheck size={20} />,
       viewState: ViewState.PAYROLL_APPROVAL
     },
-    {
-      id: 'hr-docs',
-      label: 'Documents',
-      icon: <Briefcase size={20} />,
-      viewState: ViewState.HR_DOCUMENTS
-    },
+    // Hidden: Documents menu item (can be restored later)
+    // {
+    //   id: 'hr-docs',
+    //   label: 'Documents',
+    //   icon: <Briefcase size={20} />,
+    //   viewState: ViewState.HR_DOCUMENTS
+    // },
     {
       id: 'configuration',
       label: 'Configuration',
