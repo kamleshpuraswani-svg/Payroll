@@ -244,15 +244,20 @@ const BankDisbursalTemplate: React.FC = () => {
         if (!template) return;
 
         const newActiveState = !template.isActive;
+        const newStatus = newActiveState ? 'Active' : 'Inactive';
 
         try {
             const { error } = await supabase
                 .from('document_templates')
-                .update({ is_active: newActiveState })
+                .update({ 
+                    is_active: newActiveState,
+                    status: newStatus,
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', id);
 
             if (error) throw error;
-            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newActiveState ? 'Active' : 'Inactive' } : t));
+            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newStatus } : t));
         } catch (err) {
             console.error('Error toggling status:', err);
         }
@@ -571,11 +576,11 @@ const BankDisbursalTemplate: React.FC = () => {
                                             >
                                                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${t.isActive ? 'translate-x-5' : ''}`} />
                                             </div>
-                                            <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-end gap-2 text-slate-400">
                                                 <button onClick={(e) => { e.stopPropagation(); handleDownloadSample(t.columns, t.settings); }} className="p-1.5 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 rounded" title="Download Format"><Download size={16} /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded"><Eye size={16} /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded"><Edit2 size={16} /></button>
-                                                <button onClick={(e) => handleDeleteTemplate(t.id, e)} className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded"><Trash2 size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleView(t); }} className="p-1.5 hover:bg-sky-50 text-slate-500 hover:text-sky-600 rounded" title="View"><Eye size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }} className="p-1.5 hover:bg-purple-50 text-slate-500 hover:text-purple-600 rounded" title="Edit"><Edit2 size={16} /></button>
+                                                <button onClick={(e) => handleDeleteTemplate(t.id, e)} className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded" title="Delete"><Trash2 size={16} /></button>
                                             </div>
                                         </div>
                                     </td>

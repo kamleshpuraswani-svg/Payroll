@@ -88,10 +88,10 @@ const MOCK_FNF_TEMPLATES: FnFTemplate[] = [
     {
         id: '1',
         name: 'Standard F&F Settlement',
-        status: 'Active',
+        status: 'Draft',
         createdBy: 'Super Admin',
         lastUpdatedBy: '03 Dec 2025',
-        isActive: true,
+        isActive: false,
         headerConfig: {
             logoPosition: 'Left',
             showLogo: true,
@@ -824,13 +824,18 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
         if (!template) return;
 
         const newActiveState = !template.isActive;
+        const newStatus = newActiveState ? 'Active' : 'Inactive';
         try {
             const { error } = await supabase
                 .from('document_templates')
-                .update({ is_active: newActiveState })
+                .update({ 
+                    is_active: newActiveState,
+                    status: newStatus,
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', id);
             if (error) throw error;
-            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newActiveState ? 'Active' : 'Inactive' } : t));
+            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newStatus } : t));
         } catch (err) {
             console.error('Error toggling active state:', err);
         }
