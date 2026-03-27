@@ -576,11 +576,11 @@ export const RunPayrollModal: React.FC<{
    }
 
    const previewEmployees = [
-      { id: 1, name: 'Priya Sharma', role: 'Senior Engineer', gross: 154166, bonus: 0, expenseReimbursement: 2500, loanRecovery: 18500, salaryAdvanceRecovery: 0, status: 'OK' },
-      { id: 2, name: 'Arjun Mehta', role: 'Sales Manager', gross: 200000, bonus: 15000, expenseReimbursement: 5000, loanRecovery: 24000, salaryAdvanceRecovery: 0, status: 'OK' },
-      { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', gross: 131666, bonus: 0, expenseReimbursement: 0, loanRecovery: 15800, salaryAdvanceRecovery: 0, status: 'Issue' },
-      { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', gross: 176666, bonus: 0, expenseReimbursement: 1200, loanRecovery: 21200, salaryAdvanceRecovery: 0, status: 'OK' },
-      { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', gross: 158333, bonus: 5000, expenseReimbursement: 0, loanRecovery: 19000, salaryAdvanceRecovery: 0, status: 'OK' },
+      { id: 1, name: 'Priya Sharma', role: 'Senior Engineer', gross: 154166, lopReversal: 10278, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 12500, actualTds: 12500 },
+      { id: 2, name: 'Arjun Mehta', role: 'Sales Manager', gross: 200000, lopReversal: 0, bonus: 25000, expenseReimbursement: 8400, arrears: 0, loanRecovery: 5000, salaryAdvanceRecovery: 0, proposedTds: 18000, actualTds: 18000 },
+      { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', gross: 131666, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 5000, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 8500, actualTds: 8500 },
+      { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', gross: 176666, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 2000, salaryAdvanceRecovery: 1000, proposedTds: 16200, actualTds: 16200 },
+      { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', gross: 158333, lopReversal: 0, bonus: 5000, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 14000, actualTds: 14000 },
    ];
 
    const renderStepContent = () => {
@@ -1017,75 +1017,81 @@ export const RunPayrollModal: React.FC<{
          case 4: // REVIEW
             return (
                <div className="w-full space-y-6 pb-20">
-                  <div className="grid grid-cols-4 gap-4">
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-1">Total Gross</p>
-                        <p className="text-xl font-bold text-slate-800">₹ 82.08 L</p>
-                     </div>
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-1">Deductions</p>
-                        <p className="text-xl font-bold text-rose-600">₹ 9.85 L</p>
-                     </div>
-                     <div className="bg-white p-4 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm">
-                        <p className="text-xs font-bold text-emerald-700 uppercase mb-1">Net Payout</p>
-                        <p className="text-xl font-bold text-emerald-800">₹ 72.23 L</p>
-                     </div>
-                     <div
-                        onClick={() => setIsAlertsOpen(true)}
-                        className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3 cursor-pointer hover:border-amber-300 hover:shadow-md transition-all group"
-                     >
-                        <div className="p-2 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-100 transition-colors"><AlertCircle size={20} /></div>
-                        <div>
-                           <p className="text-xs font-bold text-slate-400 uppercase group-hover:text-amber-600 transition-colors">Alerts</p>
-                           <p className="text-sm font-bold text-amber-600">3 Issues</p>
-                        </div>
-                     </div>
-                  </div>
+                   {/* KPI Summary - 3 Cards */}
+                   <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                         <p className="text-xs font-bold text-slate-400 uppercase mb-1">Total Gross</p>
+                         <p className="text-2xl font-bold text-slate-800">₹ 82.08 L</p>
+                      </div>
+                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                         <p className="text-xs font-bold text-slate-400 uppercase mb-1">Deductions</p>
+                         <p className="text-2xl font-bold text-rose-600">₹ 9.85 L</p>
+                      </div>
+                      <div className="bg-white p-5 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm">
+                         <p className="text-xs font-bold text-emerald-700 uppercase mb-1">Net Payout</p>
+                         <p className="text-2xl font-bold text-emerald-800">₹ 72.23 L</p>
+                      </div>
+                   </div>
 
-                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                     <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><FileText size={16} /> Final Register Preview</h3>
-                        <div className="flex gap-2">
-                           <button onClick={handleExport} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 flex items-center gap-2 transition-colors">
-                              <Download size={14} /> Export
-                           </button>
-                        </div>
-                     </div>
-                     <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-                           <tr>
-                              <th className="px-6 py-3 w-1/4">Employee</th>
-                              <th className="px-4 py-3 text-right">Gross</th>
-                              <th className="px-4 py-3 text-right">Bonus</th>
-                              <th className="px-4 py-3 text-right">Deductions</th>
-                              <th className="px-4 py-3 text-right">Net Pay</th>
-                              <th className="px-4 py-3 text-center">Status</th>
-                           </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                           {previewEmployees.map((emp) => (
-                              <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
-                                 <td className="px-6 py-3">
-                                    <div className="flex flex-col">
-                                       <span className="font-bold text-slate-800">{emp.name}</span>
-                                       <span className="text-xs text-slate-500">{emp.role}</span>
-                                    </div>
-                                 </td>
-                                 <td className="px-4 py-3 text-right">₹ {emp.gross.toLocaleString()}</td>
-                                 <td className="px-4 py-3 text-right text-emerald-600">{emp.bonus > 0 ? `+${emp.bonus.toLocaleString()}` : '-'}</td>
-                                 <td className="px-4 py-3 text-right text-rose-600">- {(emp.loanRecovery + emp.salaryAdvanceRecovery).toLocaleString()}</td>
-                                 <td className="px-4 py-3 text-right font-bold text-slate-800">
-                                    ₹ {(emp.gross + emp.bonus + (emp.expenseReimbursement || 0) - (emp.loanRecovery + emp.salaryAdvanceRecovery)).toLocaleString()}
-                                 </td>
-                                 <td className="px-4 py-3 text-center">
-                                    {emp.status === 'OK' ? <CheckCircle size={16} className="text-emerald-500 mx-auto" /> : <AlertTriangle size={16} className="text-rose-500 mx-auto" />}
-                                 </td>
-                              </tr>
-                           ))}
-                        </tbody>
-                     </table>
-                  </div>
-               </div>
+                   <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><FileText size={16} /> Final Register Preview</h3>
+                         <div className="flex gap-2">
+                            <button onClick={handleExport} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                               <Download size={14} /> Export
+                            </button>
+                         </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                         <table className="w-full text-xs text-left min-w-[1400px]">
+                            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                               <tr>
+                                  <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 w-[250px]">Employee Name</th>
+                                  <th className="px-4 py-4 text-right">Gross</th>
+                                  <th className="px-4 py-4 text-right text-emerald-600">LOP Reversal</th>
+                                  <th className="px-4 py-4 text-right">Bonus</th>
+                                  <th className="px-4 py-4 text-right">Expense Reimb.</th>
+                                  <th className="px-4 py-4 text-right">Arrears</th>
+                                  <th className="px-4 py-4 text-right text-rose-600">Loan Recovery</th>
+                                  <th className="px-4 py-4 text-right text-rose-600">Salary Adv. Recovery</th>
+                                  <th className="px-4 py-4 text-right">Proposed TDS</th>
+                                  <th className="px-4 py-4 text-right text-rose-500">Actual TDS</th>
+                                  <th className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/50">Net Pay</th>
+                               </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                               {previewEmployees.map((emp) => {
+                                  // Net Pay = Gross + LOP Reversal + Bonus + Reimb + Arrears - Loan - Advance - TDS
+                                  const netPay = emp.gross + (emp.lopReversal || 0) + (emp.bonus || 0) + (emp.expenseReimbursement || 0) + (emp.arrears || 0) - (emp.loanRecovery || 0) - (emp.salaryAdvanceRecovery || 0) - (emp.actualTds || 0);
+                                  
+                                  return (
+                                     <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                                           <div className="flex flex-col">
+                                              <span className="font-bold text-slate-800">{emp.name}</span>
+                                              <span className="text-[10px] text-slate-500 font-medium">{emp.role}</span>
+                                           </div>
+                                        </td>
+                                        <td className="px-4 py-4 text-right font-medium">₹{emp.gross.toLocaleString()}</td>
+                                        <td className="px-4 py-4 text-right text-emerald-600 font-bold">{emp.lopReversal > 0 ? `₹${emp.lopReversal.toLocaleString()}` : '-'}</td>
+                                        <td className="px-4 py-4 text-right text-slate-700">{emp.bonus > 0 ? `₹${emp.bonus.toLocaleString()}` : '-'}</td>
+                                        <td className="px-4 py-4 text-right text-slate-700">{emp.expenseReimbursement > 0 ? `₹${emp.expenseReimbursement.toLocaleString()}` : '-'}</td>
+                                        <td className="px-4 py-4 text-right text-slate-700">{emp.arrears > 0 ? `₹${emp.arrears.toLocaleString()}` : '-'}</td>
+                                        <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.loanRecovery > 0 ? `-₹${emp.loanRecovery.toLocaleString()}` : '-'}</td>
+                                        <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.salaryAdvanceRecovery > 0 ? `-₹${emp.salaryAdvanceRecovery.toLocaleString()}` : '-'}</td>
+                                        <td className="px-4 py-4 text-right text-slate-400 font-medium italic">₹{emp.proposedTds.toLocaleString()}</td>
+                                        <td className="px-4 py-4 text-right text-rose-500 font-bold">₹{emp.actualTds.toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/30">
+                                           ₹{netPay.toLocaleString()}
+                                        </td>
+                                     </tr>
+                                  );
+                               })}
+                            </tbody>
+                         </table>
+                      </div>
+                   </div>
+                </div>
             );
 
          case 5: // FINALIZE
