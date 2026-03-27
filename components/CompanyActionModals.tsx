@@ -833,7 +833,6 @@ export const RunPayrollModal: React.FC<{
                      <table className="w-full text-sm text-left table-fixed min-w-[1200px]">
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
                            <tr>
-                              <th className="px-4 py-3 w-20">Actions</th>
                               <th className="px-4 py-3 w-48">Employee Name</th>
                               <th className="px-2 py-3 text-right w-24">Gross</th>
                               <th className="px-2 py-3 text-right text-emerald-600 w-24">LOP Reversal</th>
@@ -845,6 +844,7 @@ export const RunPayrollModal: React.FC<{
                               <th className="px-2 py-3 text-right w-24">Proposed TDS</th>
                               <th className="px-2 py-3 text-right w-24">Actual TDS</th>
                               <th className="px-4 py-3 text-right font-bold bg-slate-100 w-32">Final Gross</th>
+                              <th className="px-4 py-3 w-20 text-center">Actions</th>
                            </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-medium">
@@ -852,15 +852,6 @@ export const RunPayrollModal: React.FC<{
                               const total = row.gross + row.bonus + row.arrears + row.expenseReimbursement - row.loanRecovery - row.salaryAdvanceRecovery - row.actualTds - row.lop + row.lopReversal + row.other;
                               return (
                                  <tr key={row.id} className={`hover:bg-slate-50/80 transition-colors group ${row.isEditing ? 'bg-purple-50/30' : ''}`}>
-                                    <td className="px-4 py-3">
-                                       <button
-                                          onClick={() => toggleEdit(row.id)}
-                                          className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
-                                          title={row.isEditing ? "Save Changes" : "Edit Row"}
-                                       >
-                                          {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
-                                       </button>
-                                    </td>
                                     <td className="px-4 py-3 text-slate-800 truncate">{row.name}</td>
                                     <td className="px-2 py-3 text-right text-slate-500">₹{row.gross.toLocaleString()}</td>
                                     <td className="px-2 py-3 text-right">
@@ -959,6 +950,15 @@ export const RunPayrollModal: React.FC<{
                                     </td>
                                     <td className="px-4 py-3 text-right font-bold text-slate-800 bg-slate-50 group-hover:bg-slate-100 transition-colors">
                                        ₹{total.toLocaleString()}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                       <button
+                                          onClick={() => toggleEdit(row.id)}
+                                          className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                                          title={row.isEditing ? "Save Changes" : "Edit Row"}
+                                       >
+                                          {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
+                                       </button>
                                     </td>
                                  </tr>
                               );
