@@ -984,7 +984,7 @@ const ExpenseManagement: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-3 border-b border-slate-200">Employee Name & ID</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Type</th>
-                                    <th className="px-6 py-3 border-b border-slate-200">Claimed Amount</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Claim Amount</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Date</th>
                                     <th className="px-6 py-3 border-b border-slate-200 text-center">Proofs</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Status</th>

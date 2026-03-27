@@ -951,7 +951,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                             onClick={() => setIsNewRequestOpen(true)}
                             className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 shadow-sm transition-all ml-2"
                         >
-                            <Plus size={16} /> New Request
+                            New Request
                         </button>
                     </div>
 
