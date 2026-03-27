@@ -669,18 +669,13 @@ export const RunPayrollModal: React.FC<{
                      <h3 className="text-lg font-bold text-slate-800">Attendance & Time Data</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4 shadow-sm">
-                        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
-                           <AlertCircle size={24} />
+                  <div className="flex">
+                     <div className="bg-amber-50 border border-amber-200 rounded-xl py-2.5 px-4 flex items-center gap-3 shadow-sm border-l-4 border-l-amber-400">
+                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0">
+                           <AlertCircle size={18} />
                         </div>
-                        <div>
-                           <div className="text-amber-800 font-bold text-lg">
-                              {attendanceData.filter(e => e.pendingLeaves > 0).length} Employees with Pending Leaves
-                           </div>
-                           <div className="text-amber-600 text-[11px] font-medium leading-tight">
-                              Employees have pending leave requests that require approval before payroll can be finalized.
-                           </div>
+                        <div className="text-amber-900 font-bold text-sm whitespace-nowrap">
+                           {attendanceData.filter(e => e.pendingLeaves > 0).length} Employees with Pending Leaves
                         </div>
                      </div>
                   </div>
