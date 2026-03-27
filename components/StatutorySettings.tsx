@@ -41,7 +41,9 @@ const DEPARTMENTS = [
 ];
 
 const StatutorySettings: React.FC = () => {
-    const [isEditing, setIsEditing] = useState(false);
+    const [editingSection, setEditingSection] = useState<string | null>(null);
+    const isEditing = editingSection !== null;
+    const setIsEditing = (val: boolean) => { if (!val) setEditingSection(null); };
     const [showContributionModal, setShowContributionModal] = useState(false);
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
@@ -216,7 +218,7 @@ const StatutorySettings: React.FC = () => {
             ptState, ptNumber,
             enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
         });
-        setIsEditing(true);
+        // isEditing is now derived from editingSection
     };
 
     const handleSave = async () => {
@@ -367,36 +369,32 @@ const StatutorySettings: React.FC = () => {
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
-                        {isEditing && (
-                            <button
-                                onClick={handleCancel}
-                                className="px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                            >
-                                Cancel
-                            </button>
-                        )}
-                        <button
-                            onClick={() => isEditing ? handleSave() : handleEdit()}
-                            className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors ${isEditing ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} h-[42px]`}
-                        >
-                            {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
-                            {isEditing ? 'Save Settings' : 'Edit Settings'}
-                        </button>
+
                     </div>
                 </div>
 
                 <div className="w-full space-y-6">
                     {/* 1. ESI Settings */}
-                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                    <div className={`bg-white p-8 rounded-xl border shadow-sm ${editingSection === 'esi' ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-3">
                                 <Activity size={20} className="text-sky-600" />
                                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">EMPLOYEE STATE INSURANCE (ESI)</h3>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked={enableEsi} onChange={() => isEditing && setEnableEsi(!enableEsi)} disabled={!isEditing} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                            </label>
+                            <div className="flex items-center gap-3">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked={enableEsi} onChange={() => editingSection === 'esi' && setEnableEsi(!enableEsi)} disabled={editingSection !== 'esi'} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                                </label>
+                                {editingSection === 'esi' ? (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleCancel} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+                                        <button onClick={() => handleSave()} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-emerald-600 text-white hover:bg-emerald-700"><Save size={14} /> Save</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => { handleEdit(); setEditingSection('esi'); }} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" disabled={isEditing && editingSection !== 'esi'}><Edit2 size={14} /> Edit</button>
+                                )}
+                            </div>
                         </div>
 
                         <p className="text-sm text-slate-500 -mt-2 mb-6">
@@ -566,16 +564,26 @@ const StatutorySettings: React.FC = () => {
                     </div>
 
                     {/* 2. Gratuity Settings */}
-                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                    <div className={`bg-white p-8 rounded-xl border shadow-sm ${editingSection === 'gratuity' ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-3">
                                 <Award size={20} className="text-sky-600" />
                                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">GRATUITY</h3>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked={enableGratuity} onChange={() => isEditing && setEnableGratuity(!enableGratuity)} disabled={!isEditing} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                            </label>
+                            <div className="flex items-center gap-3">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked={enableGratuity} onChange={() => editingSection === 'gratuity' && setEnableGratuity(!enableGratuity)} disabled={editingSection !== 'gratuity'} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                                </label>
+                                {editingSection === 'gratuity' ? (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleCancel} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+                                        <button onClick={() => handleSave()} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-emerald-600 text-white hover:bg-emerald-700"><Save size={14} /> Save</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => { handleEdit(); setEditingSection('gratuity'); }} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" disabled={isEditing && editingSection !== 'gratuity'}><Edit2 size={14} /> Edit</button>
+                                )}
+                            </div>
                         </div>
 
                         <p className="text-sm text-slate-500 -mt-2 mb-6">
@@ -1077,16 +1085,26 @@ const StatutorySettings: React.FC = () => {
                     </div>
 
                     {/* 3. LWF Settings */}
-                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                    <div className={`bg-white p-8 rounded-xl border shadow-sm ${editingSection === 'lwf' ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-3">
                                 <Shield size={20} className="text-sky-600" />
                                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">LABOUR WELFARE FUND (LWF)</h3>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked={enableLwf} onChange={() => isEditing && setEnableLwf(!enableLwf)} disabled={!isEditing} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                            </label>
+                            <div className="flex items-center gap-3">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked={enableLwf} onChange={() => editingSection === 'lwf' && setEnableLwf(!enableLwf)} disabled={editingSection !== 'lwf'} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                                </label>
+                                {editingSection === 'lwf' ? (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleCancel} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+                                        <button onClick={() => handleSave()} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-emerald-600 text-white hover:bg-emerald-700"><Save size={14} /> Save</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => { handleEdit(); setEditingSection('lwf'); }} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" disabled={isEditing && editingSection !== 'lwf'}><Edit2 size={14} /> Edit</button>
+                                )}
+                            </div>
                         </div>
 
                         {enableLwf && (
@@ -1114,8 +1132,18 @@ const StatutorySettings: React.FC = () => {
                     </div>
 
                     {/* 4. Professional Tax */}
-                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-8 border-b border-slate-100 pb-4">PROFESSIONAL TAX</h3>
+                    <div className={`bg-white p-8 rounded-xl border shadow-sm ${editingSection === 'pt' ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROFESSIONAL TAX</h3>
+                            {editingSection === 'pt' ? (
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleCancel} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+                                    <button onClick={() => handleSave()} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-emerald-600 text-white hover:bg-emerald-700"><Save size={14} /> Save</button>
+                                </div>
+                            ) : (
+                                <button onClick={() => { handleEdit(); setEditingSection('pt'); }} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" disabled={isEditing && editingSection !== 'pt'}><Edit2 size={14} /> Edit</button>
+                            )}
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">PT State</label>
@@ -1151,16 +1179,26 @@ const StatutorySettings: React.FC = () => {
                     </div>
 
                     {/* 5. NPS Settings */}
-                    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                    <div className={`bg-white p-8 rounded-xl border shadow-sm ${editingSection === 'nps' ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
                                 <Briefcase size={20} className="text-sky-600" />
                                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">NATIONAL PENSION SYSTEM (NPS)</h3>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked={enableNps} onChange={() => isEditing && setEnableNps(!enableNps)} disabled={!isEditing} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                            </label>
+                            <div className="flex items-center gap-3">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked={enableNps} onChange={() => editingSection === 'nps' && setEnableNps(!enableNps)} disabled={editingSection !== 'nps'} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                                </label>
+                                {editingSection === 'nps' ? (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleCancel} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+                                        <button onClick={() => handleSave()} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-emerald-600 text-white hover:bg-emerald-700"><Save size={14} /> Save</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => { handleEdit(); setEditingSection('nps'); }} className="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" disabled={isEditing && editingSection !== 'nps'}><Edit2 size={14} /> Edit</button>
+                                )}
+                            </div>
                         </div>
 
                         {enableNps && (

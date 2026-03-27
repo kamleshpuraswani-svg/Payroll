@@ -46,7 +46,7 @@ interface TemplateSettings {
 interface PayslipTemplate {
     id: string;
     name: string;
-    status: 'Published' | 'Draft';
+    status: 'Active' | 'Inactive' | 'Draft';
     isActive: boolean;
     createdBy: string;
     lastModified: string;
@@ -86,7 +86,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
     {
         id: '1',
         name: 'Standard Executive Payslip',
-        status: 'Published',
+        status: 'Active',
         isActive: true,
         createdBy: 'Admin',
         lastModified: '03 Dec 2025',
@@ -468,7 +468,7 @@ const SalarySlipTemplate: React.FC = () => {
         setView('VIEW');
     };
 
-    const handleSave = (status: 'Published' | 'Draft') => {
+    const handleSave = (status: 'Active' | 'Draft') => {
         // Validation
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
@@ -512,7 +512,7 @@ const SalarySlipTemplate: React.FC = () => {
     };
 
     const toggleTemplateActive = (id: string) => {
-        setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive } : t));
+        setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive, status: !t.isActive ? 'Active' : 'Inactive' } : t));
     };
 
     const addComponent = (items: ComponentItem[]) => {
@@ -559,10 +559,11 @@ const SalarySlipTemplate: React.FC = () => {
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            t.status === 'Inactive' ? 'bg-slate-50 text-slate-600 border-slate-200' :
                                             'bg-amber-50 text-amber-700 border-amber-100'
                                             }`}>
-                                            {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                            {t.status === 'Active' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
                                             {t.status}
                                         </span>
                                     </td>
@@ -633,7 +634,7 @@ const SalarySlipTemplate: React.FC = () => {
                         <>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                             <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
-                            <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
+                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2">
                                 <Save size={16} /> Publish
                             </button>
                         </>

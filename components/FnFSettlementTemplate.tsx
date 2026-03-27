@@ -70,7 +70,7 @@ interface FnFHeaderConfig {
 interface FnFTemplate {
     id: string;
     name: string;
-    status: 'Published' | 'Draft';
+    status: 'Active' | 'Inactive' | 'Draft';
     createdBy: string;
     lastUpdatedBy: string;
     isActive: boolean;
@@ -88,7 +88,7 @@ const MOCK_FNF_TEMPLATES: FnFTemplate[] = [
     {
         id: '1',
         name: 'Standard F&F Settlement',
-        status: 'Published',
+        status: 'Active',
         createdBy: 'Super Admin',
         lastUpdatedBy: '03 Dec 2025',
         isActive: true,
@@ -491,7 +491,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                 const formattedTemplates: FnFTemplate[] = data.map(item => ({
                     id: item.id,
                     name: item.name,
-                    status: item.status as 'Published' | 'Draft',
+                    status: item.is_active ? 'Active' : (item.status === 'Draft' ? 'Draft' : 'Inactive'),
                     isActive: item.is_active,
                     createdBy: item.created_by || 'Admin',
                     lastUpdatedBy: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -769,7 +769,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
         setView('VIEW');
     };
 
-    const handleSave = async (status: 'Published' | 'Draft') => {
+    const handleSave = async (status: 'Active' | 'Draft') => {
         if (!templateName.trim()) {
             setValidationError('Template Name is required');
             return;
@@ -830,7 +830,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                 .update({ is_active: newActiveState })
                 .eq('id', id);
             if (error) throw error;
-            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState } : t));
+            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newActiveState ? 'Active' : 'Inactive' } : t));
         } catch (err) {
             console.error('Error toggling active state:', err);
         }
@@ -972,10 +972,11 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            t.status === 'Inactive' ? 'bg-slate-50 text-slate-600 border-slate-200' :
                                             'bg-amber-50 text-amber-700 border-amber-100'
                                             }`}>
-                                            {t.status === 'Published' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                            {t.status === 'Active' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
                                             {t.status}
                                         </span>
                                     </td>
@@ -1045,7 +1046,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                         <>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                             <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
-                            <button onClick={() => handleSave('Published')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will instantly update F&F template for all companies using default">
+                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will instantly update F&F template for all companies using default">
                                 <Save size={16} /> {userRole === 'HR_MANAGER' ? 'Save' : 'Publish'}
                             </button>
                         </>
