@@ -27,6 +27,7 @@ import {
    AlertCircle,
    Printer,
    CheckCircle,
+   Edit,
    Settings,
    Clock,
    Upload,
@@ -333,12 +334,12 @@ export const RunPayrollModal: React.FC<{
    // Step 3 State & Modals
    const [adjustmentSearch, setAdjustmentSearch] = useState('');
    const [adjustments, setAdjustments] = useState([
-      { id: 1, name: 'Priya Sharma', gross: 154166, bonus: 0, arrears: 0, deduction: 0, reimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 12500, actualTds: 12500 },
-      { id: 2, name: 'Arjun Mehta', gross: 180000, bonus: 25000, arrears: 0, deduction: 5000, reimbursement: 8400, lop: 0, lopReversal: 0, other: 0, proposedTds: 18000, actualTds: 18000 },
-      { id: 3, name: 'Neha Kapoor', gross: 131666, bonus: 0, arrears: 5000, deduction: 0, reimbursement: 0, lop: 4500, lopReversal: 0, other: 0, proposedTds: 8500, actualTds: 8500 },
-      { id: 4, name: 'Rohan Desai', gross: 176666, bonus: 0, arrears: 0, deduction: 2000, reimbursement: 0, lop: 0, lopReversal: 0, other: 1000, proposedTds: 16200, actualTds: 16200 },
-      { id: 5, name: 'Vikram Singh', gross: 158333, bonus: 5000, arrears: 0, deduction: 0, reimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 14000, actualTds: 14000 },
-      { id: 6, name: 'Ananya Patel', gross: 147500, bonus: 0, arrears: 0, deduction: 1000, reimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 11000, actualTds: 11000 },
+      { id: 1, name: 'Priya Sharma', gross: 154166, bonus: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 12500, actualTds: 12500, isEditing: false },
+      { id: 2, name: 'Arjun Mehta', gross: 180000, bonus: 25000, arrears: 0, loanRecovery: 5000, salaryAdvanceRecovery: 0, expenseReimbursement: 8400, lop: 0, lopReversal: 0, other: 0, proposedTds: 18000, actualTds: 18000, isEditing: false },
+      { id: 3, name: 'Neha Kapoor', gross: 131666, bonus: 0, arrears: 5000, loanRecovery: 0, salaryAdvanceRecovery: 0, expenseReimbursement: 0, lop: 4500, lopReversal: 0, other: 0, proposedTds: 8500, actualTds: 8500, isEditing: false },
+      { id: 4, name: 'Rohan Desai', gross: 176666, bonus: 0, arrears: 0, loanRecovery: 2000, salaryAdvanceRecovery: 1000, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 1000, proposedTds: 16200, actualTds: 16200, isEditing: false },
+      { id: 5, name: 'Vikram Singh', gross: 158333, bonus: 5000, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 14000, actualTds: 14000, isEditing: false },
+      { id: 6, name: 'Ananya Patel', gross: 147500, bonus: 0, arrears: 0, loanRecovery: 1000, salaryAdvanceRecovery: 500, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 11000, actualTds: 11000, isEditing: false },
    ]);
    const [showBonusModal, setShowBonusModal] = useState(false);
    const [showLopModal, setShowLopModal] = useState(false);
@@ -376,6 +377,10 @@ export const RunPayrollModal: React.FC<{
    const handleAdjustmentChange = (id: number, field: string, val: string) => {
       const num = parseFloat(val) || 0;
       setAdjustments(prev => prev.map(row => row.id === id ? { ...row, [field]: num } : row));
+   };
+
+   const toggleEdit = (id: number) => {
+      setAdjustments(prev => prev.map(row => row.id === id ? { ...row, isEditing: !row.isEditing } : row));
    };
 
    const handleAddBonus = () => {
@@ -527,13 +532,14 @@ export const RunPayrollModal: React.FC<{
    // Derived Summary
    const summary = {
       bonus: adjustments.reduce((s, i) => s + i.bonus, 0),
-      reimb: adjustments.reduce((s, i) => s + i.reimbursement, 0),
-      deduct: adjustments.reduce((s, i) => s + i.deduction, 0), // Focusing on editable deduction column for summary line
+      expenseReimb: adjustments.reduce((s, i) => s + i.expenseReimbursement, 0),
+      loanRecovery: adjustments.reduce((s, i) => s + i.loanRecovery, 0),
+      salaryAdvance: adjustments.reduce((s, i) => s + i.salaryAdvanceRecovery, 0),
       arrears: adjustments.reduce((s, i) => s + i.arrears, 0),
       lopReversal: adjustments.reduce((s, i) => s + i.lopReversal, 0),
       tds: adjustments.reduce((s, i) => s + i.actualTds, 0),
    };
-   const netImpact = summary.bonus + summary.reimb + summary.arrears + summary.lopReversal - summary.deduct - summary.tds;
+   const netImpact = summary.bonus + summary.expenseReimb + summary.arrears + summary.lopReversal - summary.loanRecovery - summary.salaryAdvance - summary.tds;
 
    const formatLakh = (val: number) => {
       const abs = Math.abs(val);
@@ -543,11 +549,11 @@ export const RunPayrollModal: React.FC<{
    }
 
    const previewEmployees = [
-      { id: 1, name: 'Priya Sharma', role: 'Senior Engineer', gross: 154166, bonus: 0, reimb: 2500, deduction: 18500, status: 'OK' },
-      { id: 2, name: 'Arjun Mehta', role: 'Sales Manager', gross: 200000, bonus: 15000, reimb: 5000, deduction: 24000, status: 'OK' },
-      { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', gross: 131666, bonus: 0, reimb: 0, deduction: 15800, status: 'Issue' },
-      { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', gross: 176666, bonus: 0, reimb: 1200, deduction: 21200, status: 'OK' },
-      { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', gross: 158333, bonus: 5000, reimb: 0, deduction: 19000, status: 'OK' },
+      { id: 1, name: 'Priya Sharma', role: 'Senior Engineer', gross: 154166, bonus: 0, expenseReimbursement: 2500, loanRecovery: 18500, salaryAdvanceRecovery: 0, status: 'OK' },
+      { id: 2, name: 'Arjun Mehta', role: 'Sales Manager', gross: 200000, bonus: 15000, expenseReimbursement: 5000, loanRecovery: 24000, salaryAdvanceRecovery: 0, status: 'OK' },
+      { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', gross: 131666, bonus: 0, expenseReimbursement: 0, loanRecovery: 15800, salaryAdvanceRecovery: 0, status: 'Issue' },
+      { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', gross: 176666, bonus: 0, expenseReimbursement: 1200, loanRecovery: 21200, salaryAdvanceRecovery: 0, status: 'OK' },
+      { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', gross: 158333, bonus: 5000, expenseReimbursement: 0, loanRecovery: 19000, salaryAdvanceRecovery: 0, status: 'OK' },
    ];
 
    const renderStepContent = () => {
@@ -769,30 +775,34 @@ export const RunPayrollModal: React.FC<{
          case 3: // ADJUSTMENTS
             return (
                <div className="flex flex-col h-full space-y-4">
-                  <div className="grid grid-cols-6 gap-4">
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                  <div className="grid grid-cols-7 gap-3">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
-                        <p className="text-lg font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
+                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
                      </div>
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Reimbursements</p>
-                        <p className="text-lg font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.reimb)}</p>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimb.</p>
+                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.expenseReimb)}</p>
                      </div>
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
-                        <p className="text-lg font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
+                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
                      </div>
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Deductions</p>
-                        <p className="text-lg font-bold text-rose-600 truncate">- ₹{formatLakh(summary.deduct)}</p>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan Recovery</p>
+                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery)}</p>
                      </div>
-                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Salary Advance</p>
+                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.salaryAdvance)}</p>
+                     </div>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
-                        <p className="text-lg font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
+                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
                      </div>
-                     <div className={`p-4 rounded-xl border shadow-sm ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+                     <div className={`p-3 rounded-xl border shadow-sm ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
                         <p className={`text-[10px] font-bold uppercase mb-1 leading-tight ${netImpact >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>Net Impact</p>
-                        <p className={`text-lg font-bold truncate ${netImpact >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
+                        <p className={`text-base font-bold truncate ${netImpact >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
                            {netImpact >= 0 ? '+' : '-'} ₹{formatLakh(Math.abs(netImpact))}
                         </p>
                      </div>
@@ -820,104 +830,152 @@ export const RunPayrollModal: React.FC<{
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
-                        <table className="w-full text-sm text-left">
-                           <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-                              <tr>
-                                 <th className="px-4 py-3">Employee Name</th>
-                                 <th className="px-2 py-3 text-right">Gross Salary</th>
-                                 <th className="px-2 py-3 text-right">LOP Deduction</th>
-                                 <th className="px-2 py-3 text-right text-emerald-600">LOP Reversal</th>
-                                 <th className="px-2 py-3 text-right w-24">Bonus</th>
-                                 <th className="px-2 py-3 text-right w-24">Reimb.</th>
-                                 <th className="px-2 py-3 text-right w-24">Arrears</th>
-                                 <th className="px-2 py-3 text-right w-24">Deduction</th>
-                                 <th className="px-2 py-3 text-right w-24">Proposed TDS</th>
-                                 <th className="px-2 py-3 text-right w-24">Actual TDS</th>
-                                 <th className="px-4 py-3 text-right font-bold bg-slate-100">Final Gross</th>
-                              </tr>
-                           </thead>
-                           <tbody className="divide-y divide-slate-100">
-                              {filteredAdjustments.length > 0 ? filteredAdjustments.map((row) => {
-                                 const total = row.gross + row.bonus + row.arrears + (row.reimbursement || 0) - row.deduction - row.actualTds - row.lop + row.lopReversal + row.other;
-                                 return (
-                                    <tr key={row.id} className="hover:bg-slate-50 group">
-                                       <td className="px-4 py-3 font-medium text-slate-800">{row.name}</td>
-                                       <td className="px-2 py-3 text-right text-slate-500">₹{row.gross.toLocaleString()}</td>
-                                       <td className="px-2 py-3 text-right text-rose-600 font-medium">
-                                          {row.lop > 0 ? `- ₹${row.lop.toLocaleString()}` : '-'}
-                                       </td>
-                                       <td className="px-2 py-3 text-right">
+                     <table className="w-full text-sm text-left table-fixed min-w-[1200px]">
+                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+                           <tr>
+                              <th className="px-4 py-3 w-20">Actions</th>
+                              <th className="px-4 py-3 w-48">Employee Name</th>
+                              <th className="px-2 py-3 text-right w-24">Gross</th>
+                              <th className="px-2 py-3 text-right text-emerald-600 w-24">LOP Reversal</th>
+                              <th className="px-2 py-3 text-right w-24">Bonus</th>
+                              <th className="px-2 py-3 text-right w-40">Expense Reimbursement</th>
+                              <th className="px-2 py-3 text-right w-24">Arrears</th>
+                              <th className="px-2 py-3 text-right text-rose-600 w-28">Loan Recovery</th>
+                              <th className="px-2 py-3 text-right text-rose-600 w-32">Salary Advance Recovery</th>
+                              <th className="px-2 py-3 text-right w-24">Proposed TDS</th>
+                              <th className="px-2 py-3 text-right w-24">Actual TDS</th>
+                              <th className="px-4 py-3 text-right font-bold bg-slate-100 w-32">Final Gross</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                           {filteredAdjustments.length > 0 ? filteredAdjustments.map((row) => {
+                              const total = row.gross + row.bonus + row.arrears + row.expenseReimbursement - row.loanRecovery - row.salaryAdvanceRecovery - row.actualTds - row.lop + row.lopReversal + row.other;
+                              return (
+                                 <tr key={row.id} className={`hover:bg-slate-50/80 transition-colors group ${row.isEditing ? 'bg-purple-50/30' : ''}`}>
+                                    <td className="px-4 py-3">
+                                       <button
+                                          onClick={() => toggleEdit(row.id)}
+                                          className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                                          title={row.isEditing ? "Save Changes" : "Edit Row"}
+                                       >
+                                          {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
+                                       </button>
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-800 truncate">{row.name}</td>
+                                    <td className="px-2 py-3 text-right text-slate-500">₹{row.gross.toLocaleString()}</td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
                                           <input
                                              type="number"
-                                             readOnly={readOnly}
                                              value={row.lopReversal || ''}
                                              onChange={(e) => handleAdjustmentChange(row.id, 'lopReversal', e.target.value)}
-                                             className="w-full text-right p-1 border border-slate-200 rounded text-emerald-600 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none bg-transparent placeholder:text-slate-300 disabled:border-transparent disabled:bg-transparent"
-                                             placeholder="-"
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-emerald-600 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
                                           />
-                                       </td>
-                                       <td className="px-2 py-3 text-right">
+                                       ) : (
+                                          <span className="text-emerald-600">{row.lopReversal > 0 ? `₹${row.lopReversal.toLocaleString()}` : '-'}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
                                           <input
                                              type="number"
-                                             readOnly={readOnly}
                                              value={row.bonus || ''}
                                              onChange={(e) => handleAdjustmentChange(row.id, 'bonus', e.target.value)}
-                                             className="w-full text-right p-1 border border-slate-200 rounded text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none bg-transparent disabled:border-transparent" placeholder="-"
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-slate-800 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
                                           />
-                                       </td>
-                                       <td className="px-2 py-3 text-right">
+                                       ) : (
+                                          <span>{row.bonus > 0 ? `₹${row.bonus.toLocaleString()}` : '-'}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
                                           <input
                                              type="number"
-                                             readOnly={readOnly}
-                                             value={row.reimbursement || ''}
-                                             onChange={(e) => handleAdjustmentChange(row.id, 'reimbursement', e.target.value)}
-                                             className="w-full text-right p-1 border border-slate-200 rounded text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none bg-transparent disabled:border-transparent" placeholder="-"
+                                             value={row.expenseReimbursement || ''}
+                                             onChange={(e) => handleAdjustmentChange(row.id, 'expenseReimbursement', e.target.value)}
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-slate-800 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
                                           />
-                                       </td>
-                                       <td className="px-2 py-3 text-right">
+                                       ) : (
+                                          <span>{row.expenseReimbursement > 0 ? `₹${row.expenseReimbursement.toLocaleString()}` : '-'}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
                                           <input
                                              type="number"
-                                             readOnly={readOnly}
                                              value={row.arrears || ''}
                                              onChange={(e) => handleAdjustmentChange(row.id, 'arrears', e.target.value)}
-                                             className="w-full text-right p-1 border border-slate-200 rounded text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none bg-transparent disabled:border-transparent" placeholder="-"
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-slate-800 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
                                           />
-                                       </td>
-                                       <td className="px-2 py-3 text-right">
+                                       ) : (
+                                          <span>{row.arrears > 0 ? `₹${row.arrears.toLocaleString()}` : '-'}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
                                           <input
                                              type="number"
-                                             readOnly={readOnly}
-                                             value={row.deduction || ''}
-                                             onChange={(e) => handleAdjustmentChange(row.id, 'deduction', e.target.value)}
-                                             className="w-full text-right p-1 border border-slate-200 rounded text-rose-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none bg-transparent disabled:border-transparent" placeholder="-"
+                                             value={row.loanRecovery || ''}
+                                             onChange={(e) => handleAdjustmentChange(row.id, 'loanRecovery', e.target.value)}
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-rose-600 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
                                           />
-                                       </td>
-                                       <td className="px-2 py-3 text-right text-slate-500">
-                                          {row.proposedTds}
-                                       </td>
-                                       <td className="px-2 py-3 text-right">
+                                       ) : (
+                                          <span className="text-rose-600">{row.loanRecovery > 0 ? `- ₹${row.loanRecovery.toLocaleString()}` : '-'}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
                                           <input
                                              type="number"
-                                             readOnly={readOnly}
+                                             value={row.salaryAdvanceRecovery || ''}
+                                             onChange={(e) => handleAdjustmentChange(row.id, 'salaryAdvanceRecovery', e.target.value)}
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-rose-600 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
+                                          />
+                                       ) : (
+                                          <span className="text-rose-600">{row.salaryAdvanceRecovery > 0 ? `- ₹${row.salaryAdvanceRecovery.toLocaleString()}` : '-'}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-2 py-3 text-right text-slate-500">
+                                       ₹{row.proposedTds.toLocaleString()}
+                                    </td>
+                                    <td className="px-2 py-3 text-right">
+                                       {row.isEditing ? (
+                                          <input
+                                             type="number"
                                              value={row.actualTds || ''}
                                              onChange={(e) => handleAdjustmentChange(row.id, 'actualTds', e.target.value)}
-                                             className="w-full text-right p-1 border border-slate-200 rounded text-rose-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none bg-transparent disabled:border-transparent" placeholder="-"
+                                             className="w-full text-right p-1.5 border border-purple-200 rounded-lg text-rose-600 font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all"
+                                             placeholder="0"
                                           />
-                                       </td>
-                                       <td className="px-4 py-3 text-right font-bold text-slate-800 bg-slate-50 group-hover:bg-slate-100">
-                                          ₹{total.toLocaleString()}
-                                       </td>
-                                    </tr>
-                                 );
-                              }) : (
-                                 <tr>
-                                    <td colSpan={11} className="px-4 py-8 text-center text-slate-400">No employees found.</td>
+                                       ) : (
+                                          <span className="text-rose-600">₹{row.actualTds.toLocaleString()}</span>
+                                       )}
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-bold text-slate-800 bg-slate-50 group-hover:bg-slate-100 transition-colors">
+                                       ₹{total.toLocaleString()}
+                                    </td>
                                  </tr>
-                              )}
-                           </tbody>
-                        </table>
-                     </div>
+                              );
+                           }) : (
+                              <tr>
+                                 <td colSpan={12} className="px-4 py-12 text-center text-slate-400">
+                                    <div className="flex flex-col items-center gap-2">
+                                       <Search size={32} className="text-slate-200" />
+                                       <p>No employees found matching your search.</p>
+                                    </div>
+                                 </td>
+                              </tr>
+                           )}
+                        </tbody>
+                     </table>
                   </div>
+               </div>
             );
 
          case 4: // REVIEW
@@ -978,10 +1036,10 @@ export const RunPayrollModal: React.FC<{
                                     </div>
                                  </td>
                                  <td className="px-4 py-3 text-right">₹ {emp.gross.toLocaleString()}</td>
-                                 <td className="px-4 py-3 text-right text-emerald-600">{emp.bonus > 0 ? `+${emp.bonus}` : '-'}</td>
-                                 <td className="px-4 py-3 text-right text-rose-600">- {emp.deduction.toLocaleString()}</td>
+                                 <td className="px-4 py-3 text-right text-emerald-600">{emp.bonus > 0 ? `+${emp.bonus.toLocaleString()}` : '-'}</td>
+                                 <td className="px-4 py-3 text-right text-rose-600">- {(emp.loanRecovery + emp.salaryAdvanceRecovery).toLocaleString()}</td>
                                  <td className="px-4 py-3 text-right font-bold text-slate-800">
-                                    ₹ {(emp.gross + emp.bonus + emp.reimb - emp.deduction).toLocaleString()}
+                                    ₹ {(emp.gross + emp.bonus + (emp.expenseReimbursement || 0) - (emp.loanRecovery + emp.salaryAdvanceRecovery)).toLocaleString()}
                                  </td>
                                  <td className="px-4 py-3 text-center">
                                     {emp.status === 'OK' ? <CheckCircle size={16} className="text-emerald-500 mx-auto" /> : <AlertTriangle size={16} className="text-rose-500 mx-auto" />}
