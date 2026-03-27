@@ -826,16 +826,40 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
         const newActiveState = !template.isActive;
         const newStatus = newActiveState ? 'Active' : 'Inactive';
         try {
-            const { error } = await supabase
+            // Try updating first
+            const { data, error } = await supabase
                 .from('document_templates')
                 .update({ 
                     is_active: newActiveState,
                     status: newStatus,
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', id);
+                .eq('id', id)
+                .select();
+
             if (error) throw error;
-            setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newStatus } : t));
+
+            // If no record was updated, it's a mock template. Create it now.
+            if (!data || data.length === 0) {
+                const { error: insertError } = await supabase
+                    .from('document_templates')
+                    .insert({
+                        name: template.name,
+                        type: 'fnf_settlement',
+                        is_active: newActiveState,
+                        status: newStatus,
+                        content: {
+                            sections: template.sections,
+                            headerConfig: template.headerConfig
+                        },
+                        settings: template.settings,
+                        updated_at: new Date().toISOString()
+                    });
+                if (insertError) throw insertError;
+                await fetchTemplates();
+            } else {
+                setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: newActiveState, status: newStatus } : t));
+            }
         } catch (err) {
             console.error('Error toggling active state:', err);
         }
