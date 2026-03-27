@@ -667,9 +667,6 @@ export const RunPayrollModal: React.FC<{
                <div className="max-w-4xl mx-auto space-y-6">
                   <div className="flex items-center justify-between">
                      <h3 className="text-lg font-bold text-slate-800">Attendance & Time Data</h3>
-                     <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 text-xs font-bold">
-                        <CheckCircle size={14} /> Synced with Biometrics
-                     </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -690,9 +687,9 @@ export const RunPayrollModal: React.FC<{
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                            <tr>
                               <th className="px-6 py-3">Employee Name</th>
-                              <th className="px-4 py-3 text-center">Days Present</th>
-                              <th className="px-4 py-3 text-center">Leaves</th>
-                              <th className="px-4 py-3 text-center">LOP</th>
+                              <th className="px-4 py-3 text-center">Working Days</th>
+                              <th className="px-4 py-3 text-center">Leave Days</th>
+                              <th className="px-4 py-3 text-center">LOP Days</th>
                               <th className="px-4 py-3 text-right">Payable Days</th>
                            </tr>
                         </thead>
