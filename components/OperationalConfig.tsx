@@ -628,7 +628,12 @@ const OperationalConfig: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
                                         Submission Deadline (Date)
-                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                        <div className="group relative">
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case text-center">
+                                                The day of each month by which expense claims must be submitted.
+                                            </div>
+                                        </div>
                                     </label>
                                     <select
                                         value={expenseSettings.deadline_claims_date}
@@ -643,7 +648,12 @@ const OperationalConfig: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
                                         Back-dated Claims Limit (Months)
-                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                        <div className="group relative">
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case text-center">
+                                                Employees cannot claim expenses older than this period.
+                                            </div>
+                                        </div>
                                     </label>
                                     <select
                                         value={expenseSettings.backdated_limit_months}
