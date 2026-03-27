@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle, Edit2, Check } from 'lucide-react';
+import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle, Edit2, Check, MinusCircle } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface SelectedEmployee {
@@ -28,11 +28,7 @@ const DEPARTMENTS = [
     "Operations"
 ];
 
-const BUSINESS_UNITS = [
-    "MindInventory",
-    "300 Minds",
-    "CollabCRM"
-];
+// Removed BUSINESS_UNITS constant as it is no longer needed for Naming Format
 
 const OperationalConfig: React.FC = () => {
     const [isHierarchyExpanded, setIsHierarchyExpanded] = useState(true);
@@ -70,7 +66,7 @@ const OperationalConfig: React.FC = () => {
     const [isNamingEditing, setIsNamingEditing] = useState(false);
     const [tempSuffix, setTempSuffix] = useState('');
     const [paygroups, setPaygroups] = useState<any[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
+    const [selectedTarget, setSelectedTarget] = useState('default');
     const [isLoadingNaming, setIsLoadingNaming] = useState(false);
     const [isNamingSaving, setIsNamingSaving] = useState(false);
 
@@ -457,7 +453,7 @@ const OperationalConfig: React.FC = () => {
                         <div className="max-w-3xl space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5">
-                                    Notify for Payroll Approval <span className="text-red-500">*</span>
+                                    Select Payroll Approver <span className="text-red-500">*</span>
                                     <Info size={14} className="text-slate-400 cursor-help" />
                                 </label>
                                 <div className="relative">
@@ -486,39 +482,48 @@ const OperationalConfig: React.FC = () => {
                             {selectedEmployees.length > 0 && (
                                 <div className="space-y-3">
                                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approval Workflow</p>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         {selectedEmployees.map((emp, index) => (
-                                            <div
-                                                key={emp.id}
-                                                className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-3 rounded-lg group hover:border-sky-200 hover:bg-sky-50 transition-all"
-                                            >
-                                                <div className="flex flex-col gap-0.5 text-slate-400">
-                                                    <button
-                                                        disabled={index === 0}
-                                                        onClick={() => moveEmployee(index, 'up', 'payroll')}
-                                                        className="hover:text-sky-600 disabled:opacity-30 p-0.5"
-                                                    >
-                                                        <ArrowUp size={14} />
-                                                    </button>
-                                                    <button
-                                                        disabled={index === selectedEmployees.length - 1}
-                                                        onClick={() => moveEmployee(index, 'down', 'payroll')}
-                                                        className="hover:text-sky-600 disabled:opacity-30 p-0.5"
-                                                    >
-                                                        <ArrowDown size={14} />
-                                                    </button>
+                                            <div key={emp.id} className="flex items-center gap-3 group">
+                                                {/* Grip Icon */}
+                                                <div className="flex flex-col gap-1 text-slate-400">
+                                                    <div className="p-1.5 rounded hover:bg-slate-100 cursor-grab active:cursor-grabbing">
+                                                        <GripVertical size={20} className="text-slate-300" />
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex-1">
-                                                    <div className="text-sm font-medium text-slate-700">{emp.name}</div>
-                                                    <div className="text-xs text-slate-500">Employee ID: {emp.eid} • Level {index + 1}</div>
+                                                {/* Name Box */}
+                                                <div className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 shadow-sm group-hover:border-sky-200 group-hover:shadow-sky-50 transition-all">
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <div className="text-sm font-semibold text-slate-700">{emp.name}</div>
+                                                            <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">Employee ID: {emp.eid} • Level {index + 1}</div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button 
+                                                                disabled={index === 0}
+                                                                onClick={() => moveEmployee(index, 'up', 'payroll')}
+                                                                className="p-1 hover:text-sky-600 disabled:opacity-30"
+                                                            >
+                                                                <ArrowUp size={14} />
+                                                            </button>
+                                                            <button 
+                                                                disabled={index === selectedEmployees.length - 1}
+                                                                onClick={() => moveEmployee(index, 'down', 'payroll')}
+                                                                className="p-1 hover:text-sky-600 disabled:opacity-30"
+                                                            >
+                                                                <ArrowDown size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
+                                                {/* Remove Button */}
                                                 <button
                                                     onClick={() => removeEmployee(emp.id, 'payroll')}
-                                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-all"
+                                                    className="text-slate-300 hover:text-red-500 transition-all p-1"
                                                 >
-                                                    <X size={16} />
+                                                    <MinusCircle size={24} />
                                                 </button>
                                             </div>
                                         ))}
@@ -725,20 +730,6 @@ const OperationalConfig: React.FC = () => {
                             </div>
                             
                             <div className="flex items-center gap-3">
-                                <div className="relative">
-                                    <select
-                                        value={selectedTarget}
-                                        onChange={(e) => setSelectedTarget(e.target.value)}
-                                        className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none shadow-sm"
-                                    >
-                                        <optgroup label="Business Units">
-                                            {BUSINESS_UNITS.map(bu => (
-                                                <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                            ))}
-                                        </optgroup>
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                </div>
 
                                 {isNamingEditing ? (
                                     <div className="flex items-center gap-2">
