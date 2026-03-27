@@ -486,11 +486,11 @@ export const RunPayrollModal: React.FC<{
 
    // Mock Data
    const attendanceData = [
-      { id: 1, name: 'Priya Sharma', days: 22, leaves: 0, lop: 0, payable: 22 },
-      { id: 2, name: 'Arjun Mehta', days: 20, leaves: 0, lop: 2, payable: 20 },
-      { id: 3, name: 'Rohan Desai', days: 21, leaves: 1, lop: 0, payable: 22 },
-      { id: 4, name: 'Neha Kapoor', days: 18, leaves: 0, lop: 4, payable: 18 },
-      { id: 5, name: 'Vikram Singh', days: 21, leaves: 0, lop: 1, payable: 21 },
+      { id: 1, name: 'Priya Sharma', days: 22, leaves: 0, lop: 0, pendingLeaves: 0 },
+      { id: 2, name: 'Arjun Mehta', days: 20, leaves: 0, lop: 2, pendingLeaves: 1 },
+      { id: 3, name: 'Rohan Desai', days: 21, leaves: 1, lop: 0, pendingLeaves: 0 },
+      { id: 4, name: 'Neha Kapoor', days: 18, leaves: 0, lop: 4, pendingLeaves: 1 },
+      { id: 5, name: 'Vikram Singh', days: 21, leaves: 0, lop: 1, pendingLeaves: 0 },
    ];
 
    const filteredAdjustments = adjustments.filter(row =>
@@ -669,15 +669,34 @@ export const RunPayrollModal: React.FC<{
                      <h3 className="text-lg font-bold text-slate-800">Attendance & Time Data</h3>
                   </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4 shadow-sm">
+                        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
+                           <AlertCircle size={24} />
+                        </div>
+                        <div>
+                           <div className="text-amber-800 font-bold text-lg">2 Anomalies Found</div>
+                           <div className="text-amber-600 text-xs font-medium">Employees have pending leave requests that require approval.</div>
+                        </div>
+                     </div>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                      <div className="flex gap-3 w-full sm:w-auto">
                         {!readOnly && (
-                           <button
-                              onClick={() => setShowAttendanceUpload(true)}
-                              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
-                           >
-                              <Upload size={16} /> Upload CSV
-                           </button>
+                           <>
+                              <button
+                                 onClick={() => setShowAttendanceUpload(true)}
+                                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
+                              >
+                                 <Upload size={16} /> Upload CSV
+                              </button>
+                              <button
+                                 className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
+                              >
+                                 <Download size={16} /> Export
+                              </button>
+                           </>
                         )}
                      </div>
                   </div>
@@ -696,14 +715,14 @@ export const RunPayrollModal: React.FC<{
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                            {attendanceData.map((row) => (
-                              <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                                 <td className="px-6 py-3 font-medium text-slate-800">{row.name}</td>
-                                 <td className="px-4 py-3 text-center text-indigo-600 font-bold bg-indigo-50/30">22</td>
-                                 <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
-                                 <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
-                                 <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop || '-'}</td>
-                                 <td className="px-4 py-3 text-right font-bold text-slate-800">{row.payable}</td>
-                              </tr>
+                                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                                  <td className="px-6 py-3 font-medium text-slate-800">{row.name}</td>
+                                  <td className="px-4 py-3 text-center text-indigo-600 font-bold bg-indigo-50/30">22</td>
+                                  <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
+                                  <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
+                                  <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop || '-'}</td>
+                                  <td className="px-4 py-3 text-right font-bold text-slate-800">{row.days + (row.leaves || 0)}</td>
+                               </tr>
                            ))}
                         </tbody>
                      </table>
