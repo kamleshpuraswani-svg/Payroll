@@ -491,6 +491,11 @@ export const RunPayrollModal: React.FC<{
       { id: 3, name: 'Rohan Desai', days: 21, leaves: 1, lop: 0, pendingLeaves: 0 },
       { id: 4, name: 'Neha Kapoor', days: 18, leaves: 0, lop: 4, pendingLeaves: 1 },
       { id: 5, name: 'Vikram Singh', days: 21, leaves: 0, lop: 1, pendingLeaves: 0 },
+      { id: 6, name: 'Ananya Iyer', days: 22, leaves: 0, lop: 0, pendingLeaves: 0 },
+      { id: 7, name: 'Rahul Verma', days: 19, leaves: 2, lop: 1, pendingLeaves: 1 },
+      { id: 8, name: 'Sanya Malhotra', days: 22, leaves: 0, lop: 0, pendingLeaves: 0 },
+      { id: 9, name: 'Amit Shah', days: 20, leaves: 1, lop: 1, pendingLeaves: 0 },
+      { id: 10, name: 'Kavita Reddy', days: 21, leaves: 0, lop: 1, pendingLeaves: 1 },
    ];
 
    const filteredAdjustments = adjustments.filter(row =>
@@ -714,8 +719,17 @@ export const RunPayrollModal: React.FC<{
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                            {attendanceData.map((row) => (
-                                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="px-6 py-3 font-medium text-slate-800">{row.name}</td>
+                                <tr key={row.id} className={`hover:bg-slate-50 transition-colors ${row.pendingLeaves > 0 ? 'bg-amber-50/50' : ''}`}>
+                                  <td className="px-6 py-3">
+                                     <div className="flex items-center gap-2">
+                                        <span className="font-medium text-slate-800">{row.name}</span>
+                                        {row.pendingLeaves > 0 && (
+                                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200 shadow-sm animate-pulse">
+                                              <Clock size={10} /> Pending
+                                           </span>
+                                        )}
+                                     </div>
+                                  </td>
                                   <td className="px-4 py-3 text-center text-indigo-600 font-bold bg-indigo-50/30">22</td>
                                   <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
                                   <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
