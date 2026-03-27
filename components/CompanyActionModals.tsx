@@ -1460,12 +1460,12 @@ export const RunPayrollModal: React.FC<{
                   </div>
                   <div className="p-6 space-y-5">
                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Target Employee</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Employee Name</p>
                         <p className="text-sm font-bold text-slate-800">{adjustments.find(e => e.id === rowLopTargetId)?.name}</p>
                      </div>
                      
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Number of Days to Reverse</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Number of Days to Reversed</label>
                         <div className="relative">
                            <input
                               type="number"
@@ -1473,7 +1473,7 @@ export const RunPayrollModal: React.FC<{
                               value={rowLopDays}
                               onChange={(e) => setRowLopDays(e.target.value)}
                               autoFocus
-                              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="0"
                            />
                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">Days</span>
@@ -1481,7 +1481,7 @@ export const RunPayrollModal: React.FC<{
                      </div>
 
                      <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 flex justify-between items-center">
-                        <span className="text-xs font-bold text-emerald-700 uppercase">Calculated Reversal</span>
+                        <span className="text-xs font-bold text-emerald-700 uppercase">Calculated Reversal Amount</span>
                         <span className="text-lg font-bold text-emerald-800">
                            ₹ {Math.round((adjustments.find(e => e.id === rowLopTargetId)?.gross || 0) / 30 * (parseFloat(rowLopDays) || 0)).toLocaleString()}
                         </span>
@@ -1491,9 +1491,9 @@ export const RunPayrollModal: React.FC<{
                      <button onClick={() => setShowRowLopModal(false)} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                      <button
                         onClick={confirmRowLopReversal}
-                        className="px-6 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700 shadow-md shadow-amber-200/50 transition-all font-bold"
+                        className="px-8 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all font-bold"
                      >
-                        Confirm Reversal
+                        Submit
                      </button>
                   </div>
                </div>
