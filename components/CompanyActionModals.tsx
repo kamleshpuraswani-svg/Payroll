@@ -687,7 +687,8 @@ export const RunPayrollModal: React.FC<{
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                            <tr>
                               <th className="px-6 py-3">Employee Name</th>
-                              <th className="px-4 py-3 text-center">Working Days</th>
+                              <th className="px-4 py-3 text-center text-indigo-600 font-bold">Working Days</th>
+                              <th className="px-4 py-3 text-center">Present Days</th>
                               <th className="px-4 py-3 text-center">Leave Days</th>
                               <th className="px-4 py-3 text-center">LOP Days</th>
                               <th className="px-4 py-3 text-right">Payable Days</th>
@@ -697,6 +698,7 @@ export const RunPayrollModal: React.FC<{
                            {attendanceData.map((row) => (
                               <tr key={row.id} className="hover:bg-slate-50 transition-colors">
                                  <td className="px-6 py-3 font-medium text-slate-800">{row.name}</td>
+                                 <td className="px-4 py-3 text-center text-indigo-600 font-bold bg-indigo-50/30">22</td>
                                  <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
                                  <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
                                  <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop || '-'}</td>
