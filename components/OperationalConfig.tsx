@@ -413,6 +413,13 @@ const OperationalConfig: React.FC = () => {
                         </div>
                     )}
                     <button
+                        onClick={() => fetchConfig()}
+                        disabled={isSaving || isLoading}
+                        className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-100 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
                         onClick={handleSaveConfig}
                         disabled={isSaving || isLoading}
                         className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-sky-100 active:scale-95"
@@ -422,7 +429,7 @@ const OperationalConfig: React.FC = () => {
                         ) : (
                             <Save size={18} />
                         )}
-                        {isSaving ? 'Syncing...' : 'Save All Changes'}
+                        {isSaving ? 'Syncing...' : 'Save'}
                     </button>
                 </div>
             </div>
