@@ -55,7 +55,7 @@ interface LoanRequest {
         ctc: string;
         avatar: string;
     };
-    type: 'Personal Loan' | 'Salary Advance' | 'Festival Advance' | 'Emergency Aid';
+    type: 'Salary Advance' | 'Loan';
     requestedAmount: number;
     approvedAmount?: number;
     requestDate: string;
@@ -97,7 +97,7 @@ const MOCK_LOANS: LoanRequest[] = [
     {
         id: 'LN-002',
         employee: { name: 'Arjun Mehta', id: 'AC04567', department: 'Sales', ctc: '₹24.0 L', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-        type: 'Personal Loan',
+        type: 'Loan',
         requestedAmount: 100000,
         approvedAmount: 100000,
         requestDate: '10 Dec 2025',
@@ -118,7 +118,7 @@ const MOCK_LOANS: LoanRequest[] = [
     {
         id: 'LN-003',
         employee: { name: 'Neha Kapoor', id: 'SU00234', department: 'Product', ctc: '₹15.8 L', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-        type: 'Festival Advance',
+        type: 'Loan',
         requestedAmount: 30000,
         requestDate: '15 Dec 2025',
         status: 'Requested',
@@ -147,7 +147,7 @@ const MOCK_LOANS: LoanRequest[] = [
     {
         id: 'LN-005',
         employee: { name: 'Ananya Patel', id: 'TF01145', department: 'QA', ctc: '₹14.7 L', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-        type: 'Personal Loan',
+        type: 'Loan',
         requestedAmount: 80000,
         approvedAmount: 0,
         requestDate: '12 Dec 2025',
@@ -176,8 +176,7 @@ const getStatusColor = (status: string) => {
 const getTypeColor = (type: string) => {
     switch (type) {
         case 'Salary Advance': return 'text-blue-700 bg-blue-50 border-blue-100';
-        case 'Personal Loan': return 'text-purple-700 bg-purple-50 border-purple-100';
-        case 'Festival Advance': return 'text-orange-700 bg-orange-50 border-orange-100';
+        case 'Loan': return 'text-purple-700 bg-purple-50 border-purple-100';
         default: return 'text-slate-700 bg-slate-50 border-slate-100';
     }
 };
@@ -857,7 +856,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                     ctc: String(selectedEmp.ctc || 'N/A'),
                     avatar: selectedEmp.avatar_url
                 },
-                type: data.loanType === 'Salary Advance' ? 'Salary Advance' : 'Personal Loan',
+                type: data.loanType === 'Salary Advance' ? 'Salary Advance' : 'Loan',
                 requestedAmount: data.amount,
                 requestDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
                 status: 'Requested',

@@ -968,12 +968,12 @@ const ExpenseManagement: React.FC = () => {
                             <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
                                 Status <ChevronDown size={14} />
                             </button>
-                            <button
-                                onClick={() => setIsAddingExpense(true)}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 flex items-center gap-2 shadow-md shadow-purple-100 transition-all ml-auto"
-                            >
-                                <PlusIcon size={16} /> Add Expense for Employee
-                            </button>
+                                <button
+                                    onClick={() => setIsAddingExpense(true)}
+                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 font-bold flex items-center gap-2 shadow-md shadow-purple-100 transition-all ml-auto"
+                                >
+                                    Add Expense for Employee
+                                </button>
                         </div>
                     </div>
 
@@ -984,7 +984,7 @@ const ExpenseManagement: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-3 border-b border-slate-200">Employee Name & ID</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Type</th>
-                                    <th className="px-6 py-3 border-b border-slate-200">Claimed Amt</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Claimed Amount</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Date</th>
                                     <th className="px-6 py-3 border-b border-slate-200 text-center">Proofs</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Status</th>

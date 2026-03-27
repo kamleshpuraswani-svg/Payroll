@@ -43,6 +43,7 @@ import { MOCK_COMPANIES } from '../constants';
 interface PastPayroll {
     id: string;
     month: string;
+    businessUnit: string;
     processedDate: string;
     employeeCount: number;
     grossAmount: string;
@@ -51,11 +52,11 @@ interface PastPayroll {
 }
 
 const MOCK_HISTORY: PastPayroll[] = [
-    { id: 'PR-102', month: 'October 2025', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', netPay: '₹ 1.40 Cr', status: 'Paid' },
-    { id: 'PR-101', month: 'September 2025', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', netPay: '₹ 1.38 Cr', status: 'Paid' },
-    { id: 'PR-100', month: 'August 2025', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', netPay: '₹ 1.36 Cr', status: 'Paid' },
-    { id: 'PR-099', month: 'July 2025', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', netPay: '₹ 1.34 Cr', status: 'Paid' },
-    { id: 'PR-098', month: 'June 2025', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', netPay: '₹ 1.32 Cr', status: 'Paid' },
+    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', netPay: '₹ 1.40 Cr', status: 'Paid' },
+    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', netPay: '₹ 1.38 Cr', status: 'Paid' },
+    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', netPay: '₹ 1.36 Cr', status: 'Paid' },
+    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', netPay: '₹ 1.34 Cr', status: 'Paid' },
+    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', netPay: '₹ 1.32 Cr', status: 'Paid' },
 ];
 
 const MOCK_24Q_HISTORY = [
@@ -1083,6 +1084,7 @@ const PayrollManager: React.FC = () => {
                         <thead className="bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 border-b border-slate-100">
                             <tr>
                                 <th className="px-8 py-4">Payroll Month</th>
+                                <th className="px-6 py-4">Business Unit</th>
                                 <th className="px-6 py-4">Employees</th>
                                 <th className="px-6 py-4">Gross Amount</th>
                                 <th className="px-6 py-4">Net Payout</th>
@@ -1101,6 +1103,9 @@ const PayrollManager: React.FC = () => {
                                             <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">In Progress</div>
                                         </div>
                                     </div>
+                                </td>
+                                <td className="px-6 py-5">
+                                    <div className="text-sm font-bold text-slate-700">Mindinventory, 300 Minds</div>
                                 </td>
                                 <td className="px-6 py-5 font-bold text-slate-600">452</td>
                                 <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr (Est)</td>
@@ -1145,6 +1150,9 @@ const PayrollManager: React.FC = () => {
                                                 <div className="text-[10px] text-slate-400 font-mono">ID: {payroll.id}</div>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="text-sm font-medium text-slate-600">{payroll.businessUnit}</div>
                                     </td>
                                     <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
                                     <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
