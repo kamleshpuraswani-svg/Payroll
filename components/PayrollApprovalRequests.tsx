@@ -299,8 +299,8 @@ const PayrollApprovalRequests: React.FC = () => {
                      <th className="px-6 py-4 text-right">Gross Payroll Cost</th>
                      <th className="px-6 py-4 text-right">Net Payable</th>
                      <th className="px-6 py-4">Status</th>
-                     <th className="px-6 py-4">Initiated By</th>
-                     <th className="px-6 py-4">Last Updated</th>
+                     <th className="px-6 py-4">Created By</th>
+                     <th className="px-6 py-4">Last Modified By</th>
                      <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                </thead>
