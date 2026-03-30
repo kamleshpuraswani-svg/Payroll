@@ -893,13 +893,16 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                         {isReadOnly ? (
                             <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
                         ) : (
-                            <input
-                                type="text"
-                                value={templateName}
-                                onChange={e => setTemplateName(e.target.value)}
-                                placeholder="Enter Template Name"
-                                className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
-                            />
+                            <div className="flex items-center gap-1">
+                                <input
+                                    type="text"
+                                    value={templateName}
+                                    onChange={e => setTemplateName(e.target.value)}
+                                    placeholder="Enter Template Name"
+                                    className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
+                                />
+                                {!isReadOnly && <span className="text-red-500 font-bold text-lg ml-1">*</span>}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -1045,7 +1048,7 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                 <h3 className="text-sm font-bold text-slate-800 mb-6">Settings</h3>
                                 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">Salary Structure Mapping</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">Salary Structure Mapping <span className="text-red-500 ml-1">*</span></label>
                                     <select
                                         className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors mb-6"
                                         value={settings.salaryStructure || ''}

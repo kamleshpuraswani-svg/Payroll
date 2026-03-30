@@ -889,13 +889,16 @@ const HRSalarySlipTemplate: React.FC = () => {
                         {isReadOnly ? (
                             <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
                         ) : (
-                            <input
-                                type="text"
-                                value={templateName}
-                                onChange={e => setTemplateName(e.target.value)}
-                                placeholder="Enter Template Name"
-                                className={`text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1 min-w-[300px] w-full ${validationError && !validationError.includes('Earnings') ? 'border-rose-300 bg-rose-50' : ''}`}
-                            />
+                            <div className="flex items-center gap-1">
+                                <input
+                                    type="text"
+                                    value={templateName}
+                                    onChange={e => setTemplateName(e.target.value)}
+                                    placeholder="Enter Template Name"
+                                    className={`text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1 min-w-[300px] ${validationError && !validationError.includes('Earnings') ? 'border-rose-300 bg-rose-50' : ''}`}
+                                />
+                                {!isReadOnly && <span className="text-red-500 font-bold text-lg ml-1">*</span>}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -1074,7 +1077,9 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <div className="space-y-6">
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">Salary Structure Mapping</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">
+                                        Salary Structure Mapping <span className="text-red-500 ml-1">*</span>
+                                    </label>
                                     <select
                                         className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors mb-6"
                                         value={settings.salaryStructure || ''}

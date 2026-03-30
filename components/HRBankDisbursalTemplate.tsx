@@ -560,13 +560,16 @@ const HRBankDisbursalTemplate: React.FC = () => {
                         {isReadOnly ? (
                             <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
                         ) : (
-                            <input
-                                type="text"
-                                value={templateName}
-                                onChange={e => setTemplateName(e.target.value)}
-                                placeholder="Enter Template Name"
-                                className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
-                            />
+                            <div className="flex items-center gap-1">
+                                <input
+                                    type="text"
+                                    value={templateName}
+                                    onChange={e => setTemplateName(e.target.value)}
+                                    placeholder="Enter Template Name"
+                                    className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1"
+                                />
+                                <span className="text-red-500 font-bold text-lg ml-1">*</span>
+                            </div>
                         )}
                     </div>
                 </div>

@@ -634,13 +634,16 @@ const BankDisbursalTemplate: React.FC = () => {
                             {isReadOnly ? (
                                 <h2 className="text-lg font-bold text-slate-800">{templateName}</h2>
                             ) : (
-                                <input
-                                    type="text"
-                                    value={templateName}
-                                    onChange={e => setTemplateName(e.target.value)}
-                                    placeholder="Enter Template Name"
-                                    className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1 min-w-[200px]"
-                                />
+                                <div className="flex items-center gap-1">
+                                    <input
+                                        type="text"
+                                        value={templateName}
+                                        onChange={e => setTemplateName(e.target.value)}
+                                        placeholder="Enter Template Name"
+                                        className="text-lg font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-purple-500 focus:outline-none bg-transparent px-1 min-w-[200px]"
+                                    />
+                                    {!isReadOnly && <span className="text-red-500 font-bold text-lg ml-1">*</span>}
+                                </div>
                             )}
                             <div className="h-6 w-px bg-slate-200 mx-1" />
                             {isReadOnly ? (
