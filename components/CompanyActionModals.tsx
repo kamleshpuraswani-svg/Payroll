@@ -31,6 +31,7 @@ import {
    Settings,
    Clock,
    Undo,
+   Hourglass,
    Upload,
    PieChart,
    UserCheck,
@@ -1163,24 +1164,40 @@ export const RunPayrollModal: React.FC<{
                   </div>
 
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                     <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                        <UserCheck size={16} className="text-indigo-500" /> Approval Workflow
+                     <h4 className="text-sm font-bold text-slate-700 mb-6 flex items-center gap-2">
+                        <UserCheck size={16} className="text-indigo-500" /> Approval Hierarchy
                      </h4>
-                     <div className="flex items-center gap-4">
-                        <div className="flex-1 flex items-center gap-4 p-4 border border-emerald-200 bg-emerald-50 rounded-xl shadow-sm">
-                           <div className="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700 font-bold">KS</div>
-                           <div>
-                              <p className="text-sm font-bold text-slate-800">Kavita Sharma (HR)</p>
-                              <p className="text-xs text-emerald-600 flex items-center gap-1"><CheckCircle size={10} /> Approved</p>
+                     <div className="flex items-center gap-6">
+                        <div className="flex-1 p-4 border border-emerald-200 bg-emerald-50/50 rounded-2xl relative">
+                           <div className="flex items-center gap-4 mb-4">
+                              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg border-2 border-white shadow-sm">KS</div>
+                              <div>
+                                 <p className="text-sm font-bold text-slate-800">Kavita Sharma</p>
+                                 <p className="text-[11px] text-slate-400 font-medium">HR Manager</p>
+                              </div>
                            </div>
+                           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-emerald-100 rounded-full text-[11px] font-bold text-emerald-600 shadow-sm mb-2">
+                              <CheckCircle size={12} /> Approved
+                           </div>
+                           <p className="text-[10px] text-slate-400 font-medium">27 Mar 2026 · 11:42 AM</p>
                         </div>
-                        <ChevronRight className="text-slate-300" />
-                        <div className="flex-1 flex items-center gap-4 p-4 border border-dashed border-slate-300 rounded-xl bg-slate-50">
-                           <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold">RK</div>
-                           <div>
-                              <p className="text-sm font-bold text-slate-800">Rajesh Kumar (Finance)</p>
-                              <p className="text-xs text-amber-600 flex items-center gap-1"><Clock size={10} /> Pending</p>
+
+                        <div className="text-slate-300">
+                           <ChevronRight size={24} strokeWidth={3} />
+                        </div>
+
+                        <div className="flex-1 p-4 border border-slate-200 bg-white rounded-2xl relative">
+                           <div className="flex items-center gap-4 mb-4">
+                              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg border-2 border-white shadow-sm">RK</div>
+                              <div>
+                                 <p className="text-sm font-bold text-slate-800">Rajesh Kumar</p>
+                                 <p className="text-[11px] text-slate-400 font-medium">Finance Head</p>
+                              </div>
                            </div>
+                           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[11px] font-bold text-amber-700 shadow-sm mb-2">
+                              <Hourglass size={12} /> Pending approval
+                           </div>
+                           <p className="text-[10px] text-slate-400 font-medium">Reminder sent · 30 Mar 2026</p>
                         </div>
                      </div>
                   </div>
