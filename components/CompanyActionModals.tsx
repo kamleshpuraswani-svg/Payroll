@@ -30,7 +30,7 @@ import {
    Edit,
    Settings,
    Clock,
-   History,
+   Undo,
    Upload,
    PieChart,
    UserCheck,
@@ -851,7 +851,7 @@ export const RunPayrollModal: React.FC<{
                            onClick={() => setShowLopModal(true)}
                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 rounded-lg text-sm font-bold transition-all shadow-sm"
                         >
-                           <MinusCircle size={16} /> Recover LOP
+                           <Undo size={16} className="text-amber-600" /> Recover LOP
                         </button>
                      )}
                   </div>
@@ -985,7 +985,7 @@ export const RunPayrollModal: React.FC<{
                                              className="p-1.5 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all"
                                              title="Recover LOP for this employee"
                                           >
-                                             <History size={18} />
+                                             <Undo size={18} />
                                           </button>
                                           <button
                                              onClick={() => toggleEdit(row.id)}
@@ -1459,7 +1459,7 @@ export const RunPayrollModal: React.FC<{
                <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden border border-amber-100">
                   <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-amber-50/50">
                      <div className="flex items-center gap-2">
-                        <History size={18} className="text-amber-600" />
+                        <Undo size={18} className="text-amber-600" />
                         <h3 className="font-bold text-amber-900 text-sm">Reverse LOP</h3>
                      </div>
                      <button onClick={() => setShowRowLopModal(false)}><X size={18} className="text-slate-400 hover:text-slate-600" /></button>
