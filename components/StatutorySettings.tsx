@@ -405,7 +405,7 @@ const StatutorySettings: React.FC = () => {
                             <div className="space-y-8 animate-in fade-in">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">ESIC Employer Code/Insurance Number</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">ESIC Employer Code/Insurance Number <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
                                             value={esiNumber}
@@ -415,7 +415,7 @@ const StatutorySettings: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
                                             value={esiEstablishmentName}
@@ -428,7 +428,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date of Coverage / Applicability Date</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date of Coverage / Applicability Date <span className="text-rose-500">*</span></label>
                                         <input
                                             type="date"
                                             value={esiCoverageDate}
@@ -453,7 +453,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Maximum monthly gross salary eligible for ESI</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Maximum monthly gross salary eligible for ESI <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
                                             <input
@@ -509,7 +509,7 @@ const StatutorySettings: React.FC = () => {
                                     {/* Component Mapping Section */}
                                     <div className="border-t border-slate-100 pt-6">
                                         <div className="flex items-center gap-2 mb-4">
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Component Mapping:</h4>
+                                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Component Mapping: <span className="text-rose-500">*</span></h4>
                                             <div className="group relative inline-block">
                                                 <Info size={14} className="text-slate-400 cursor-help" />
                                                 <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
