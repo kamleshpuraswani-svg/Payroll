@@ -159,17 +159,58 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             ],
             deductions: [],
             reimbursements: [],
-            summary: []
+            summary: [
+                { id: 's1', name: 'Net Stipend', amount: '15,000', type: 'Fixed' }
+            ]
         },
         settings: {
             currency: 'INR',
-            dateFormat: 'DD MMM YYYY',
+            dateFormat: 'DD-MM-YYYY',
             showYTD: false,
             showEmployerContribution: false,
             passwordProtect: false,
+            decimalPlaces: '0'
+        }
+    },
+    {
+        id: '3',
+        name: 'Management Bonus Payout',
+        status: 'Active',
+        isActive: true,
+        createdBy: 'Sunita Gupta',
+        lastModified: '2 weeks ago',
+        lastModifiedBy: 'HR Manager',
+        headerConfig: {
+            logoPosition: 'Right',
+            showLogo: true,
+            showCompanyName: true,
+            showCompanyAddress: true,
+            payslipTitle: 'Performance Bonus',
+            employeeFields: { name: true, id: true, designation: true, department: true, doj: false, bankAccount: true, pan: true, uan: true, location: true }
+        },
+        sections: {
+            earnings: [
+                { id: 'e1', name: 'Basic Salary', amount: '80,000', type: 'Fixed' },
+                { id: 'e4', name: 'Performance Bonus', amount: '1,20,000', type: 'Variable' },
+            ],
+            deductions: [
+                { id: 'd3', name: 'Income Tax', amount: '35,000', type: 'Variable' },
+            ],
+            reimbursements: [],
+            summary: [
+                { id: 's1', name: 'Net Payout', amount: '1,65,000', type: 'Fixed' }
+            ]
+        },
+        settings: {
+            currency: 'INR',
+            dateFormat: 'MMMM YYYY',
+            showYTD: true,
+            ytdStartMonth: 'April',
+            showEmployerContribution: true,
+            passwordProtect: true,
             decimalPlaces: '2'
         }
-    }
+    },
 ];
 
 // --- Sub-Components ---

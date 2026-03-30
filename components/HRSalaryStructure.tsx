@@ -140,6 +140,38 @@ const MOCK_STRUCTURES: Structure[] = [
         benefits: [],
         reimbursements: []
     },
+    {
+        id: '3',
+        name: 'Sales Commission Structure',
+        description: 'Base + Performance based commission',
+        departments: ['Sales', 'Marketing'],
+        designations: ['Sales Manager', 'Sales Executive'],
+        employees: [],
+        employeeCount: 85,
+        status: 'Active',
+        createdBy: 'Rohan Desai',
+        lastModified: '5 days ago',
+        earnings: [MASTER_COMPONENTS.earnings[0], MASTER_COMPONENTS.earnings[1], { id: 'm7', name: 'Sales Commission', calculation: 'Performance Based', type: 'Variable', taxStatus: 'Taxable' }],
+        deductions: [MASTER_COMPONENTS.deductions[0], MASTER_COMPONENTS.deductions[2]],
+        benefits: [MASTER_COMPONENTS.benefits[2]],
+        reimbursements: [MASTER_COMPONENTS.reimbursements[0]]
+    },
+    {
+        id: '4',
+        name: 'Leadership Compensation Plan',
+        description: 'Comprehensive package for leadership roles',
+        departments: ['Management'],
+        designations: ['Director', 'VP'],
+        employees: [],
+        employeeCount: 12,
+        status: 'Active',
+        createdBy: 'Sunita Gupta',
+        lastModified: '1 month ago',
+        earnings: [MASTER_COMPONENTS.earnings[0], MASTER_COMPONENTS.earnings[1], MASTER_COMPONENTS.earnings[2], MASTER_COMPONENTS.earnings[5]],
+        deductions: [MASTER_COMPONENTS.deductions[0], MASTER_COMPONENTS.deductions[2]],
+        benefits: [MASTER_COMPONENTS.benefits[0], MASTER_COMPONENTS.benefits[1], MASTER_COMPONENTS.benefits[2]],
+        reimbursements: [MASTER_COMPONENTS.reimbursements[0], MASTER_COMPONENTS.reimbursements[1]]
+    },
 ];
 
 // --- Helper Components ---

@@ -640,26 +640,6 @@ const ExpenseSettings: React.FC = () => {
                             <p className="text-sm text-slate-500 mt-1">Set up and manage expense categories and their global limits.</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <select
-                                    value={selectedTarget}
-                                    onChange={(e) => setSelectedTarget(e.target.value)}
-                                    className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
-                                >
-                                    <optgroup label="Business Units">
-                                        {BUSINESS_UNITS.map(bu => (
-                                            <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                        ))}
-                                    </optgroup>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                            </div>
-                            {/* <button
-                                onClick={() => setIsShowCategoriesDialog(true)}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
-                            >
-                                <Receipt size={16} /> EXPENSE CATEGORIES
-                            </button> */}
                             <button
                                 onClick={() => {
                                     setEditingExpense(null);
