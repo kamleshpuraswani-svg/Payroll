@@ -331,6 +331,7 @@ export const RunPayrollModal: React.FC<{
    const [generationProgress, setGenerationProgress] = useState(0);
    const [payslipsGenerated, setPayslipsGenerated] = useState(false);
    const [emailsSent, setEmailsSent] = useState(false);
+   const [bankFileDownloaded, setBankFileDownloaded] = useState(false);
 
    // Step 3 State & Modals
    const [adjustmentSearch, setAdjustmentSearch] = useState('');
@@ -378,6 +379,28 @@ export const RunPayrollModal: React.FC<{
             setPayslipsGenerated(true);
          }
       }, 200);
+   };
+
+   const handleDownloadBankFile = () => {
+      const headers = ["Beneficiary Name", "Account Number", "IFSC Code", "Amount", "Remarks"];
+      const data = adjustments.map(emp => [
+         emp.name,
+         `XXXXXX${Math.floor(Math.random() * 10000)}`,
+         "HDFC0001234",
+         emp.gross - emp.actualTds + emp.bonus + emp.arrears + emp.lopReversal - emp.loanRecovery - emp.salaryAdvanceRecovery + emp.expenseReimbursement,
+         "Salary Nov 2025"
+      ]);
+      const csvContent = [headers, ...data].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `bank_disbursal_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setBankFileDownloaded(true);
    };
 
    const handleAdjustmentChange = (id: number, field: string, val: string) => {
@@ -1297,10 +1320,15 @@ export const RunPayrollModal: React.FC<{
                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
                         <div className="flex items-start justify-between mb-4">
                            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Download size={20} /></div>
+                           {bankFileDownloaded && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
                         </div>
                         <h3 className="font-bold text-slate-800">3. Bank Disbursal</h3>
-                        <button disabled={readOnly} className="mt-auto w-full py-2 border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                           <Download size={16} /> Download File
+                        <button 
+                           onClick={handleDownloadBankFile} 
+                           disabled={readOnly} 
+                           className={`mt-auto w-full py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${bankFileDownloaded ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                        >
+                           {bankFileDownloaded ? <><CheckCircle size={16} /> File Downloaded</> : <><Download size={16} /> Download File</>}
                         </button>
                      </div>
                   </div>
