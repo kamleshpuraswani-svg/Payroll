@@ -1225,7 +1225,7 @@ export const RunPayrollModal: React.FC<{
                               className="rounded text-indigo-600 focus:ring-indigo-500 w-5 h-5 cursor-pointer disabled:opacity-50 border-slate-300"
                            />
                            <span className="text-[11px] font-semibold text-slate-600 group-hover:text-indigo-600 transition-colors">
-                              I confirm that all figures are accurate and authorise locking this payroll run for Nov 2025
+                              I confirm that all figures are accurate and authorise locking this payroll
                            </span>
                         </label>
                      </div>
@@ -1242,7 +1242,6 @@ export const RunPayrollModal: React.FC<{
                         <Award size={32} className="text-emerald-500" />
                      </div>
                      <h2 className="text-2xl font-bold text-emerald-900">November 2025 Payroll Successfully Locked!</h2>
-                     <p className="text-emerald-700 mt-1">All calculations are finalized. You can now proceed with disbursement.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
@@ -1252,7 +1251,6 @@ export const RunPayrollModal: React.FC<{
                            {payslipsGenerated && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
                         </div>
                         <h3 className="font-bold text-slate-800">1. Generate Payslips</h3>
-                        <p className="text-xs text-slate-500 mt-1 mb-4">Create PDF payslips for all 1,842 employees.</p>
 
                         <div className="mt-auto">
                            {!payslipsGenerated ? (
@@ -1301,20 +1299,12 @@ export const RunPayrollModal: React.FC<{
                            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Download size={20} /></div>
                         </div>
                         <h3 className="font-bold text-slate-800">3. Bank Disbursal</h3>
-                        <p className="text-xs text-slate-500 mt-1 mb-4">Download formatted file for HDFC/ICICI upload.</p>
                         <button disabled={readOnly} className="mt-auto w-full py-2 border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                            <Download size={16} /> Download File
                         </button>
                      </div>
                   </div>
 
-                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 mt-4">
-                     <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Recent Activity</h4>
-                     <div className="flex gap-4 text-sm">
-                        <p className="text-slate-600"><span className="font-bold text-slate-800">Kavita Sharma</span> locked payroll at 3:42 PM.</p>
-                        <p className="text-slate-600"><span className="font-bold text-slate-800">Rajesh Kumar</span> approved at 3:38 PM.</p>
-                     </div>
-                  </div>
                </div>
             );
 
