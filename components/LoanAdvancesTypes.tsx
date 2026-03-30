@@ -31,6 +31,8 @@ interface LoanType {
     repaymentMonth?: string;
     createdAt?: string;
     updatedAt?: string;
+    targetId?: string;
+    targetType?: string;
 }
 
 const MOCK_LOAN_TYPES: LoanType[] = [
@@ -101,10 +103,71 @@ const LoanAdvancesTypes: React.FC = () => {
         setIsLoading(false);
     };
 
+    const handleAutoCreateDefaults = async (targetId: string, targetType: string, hasLoan: boolean, hasSalaryAdvance: boolean) => {
+        setIsLoading(true);
+        const defaults = [];
+        
+        if (!hasLoan) {
+            defaults.push({
+                name: 'Loan',
+                interest_rate: 0,
+                max_amount: '0',
+                max_tenure: 48,
+                status: false,
+                description: 'Default loan type for employees.',
+                approvers: [],
+                repayment_month: monthOptions[0],
+                target_id: targetId,
+                target_type: targetType
+            });
+        }
+        
+        if (!hasSalaryAdvance) {
+            defaults.push({
+                name: 'Salary Advance',
+                interest_rate: 0,
+                max_amount: '2 months Net Salary',
+                max_tenure: 3,
+                status: false,
+                description: 'Advance against upcoming salary.',
+                approvers: [],
+                repayment_month: monthOptions[0],
+                target_id: targetId,
+                target_type: targetType
+            });
+        }
+
+        if (defaults.length > 0) {
+            try {
+                const { error } = await supabase
+                    .from('loan_types')
+                    .insert(defaults);
+                if (error) throw error;
+                await fetchLoanTypes();
+            } catch (err) {
+                console.error('Error auto-creating loan types:', err);
+            }
+        }
+    };
+
     useEffect(() => {
         fetchLoanTypes();
         fetchPaygroups();
     }, []);
+
+    useEffect(() => {
+        if (!isLoading && loanTypes.length >= 0) {
+            const [targetTypeRaw, targetId] = selectedTarget.split(':');
+            if (targetTypeRaw === 'bu' && targetId !== 'MindInventory') {
+                const hasLoan = loanTypes.some(t => t.name === 'Loan' && t.targetId === targetId);
+                const hasSalaryAdvance = loanTypes.some(t => t.name === 'Salary Advance' && t.targetId === targetId);
+                
+                if (!hasLoan || !hasSalaryAdvance) {
+                    handleAutoCreateDefaults(targetId, 'BusinessUnit', hasLoan, hasSalaryAdvance);
+                }
+            }
+        }
+    }, [selectedTarget, loanTypes.length, isLoading]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [currentLoan, setCurrentLoan] = useState<Partial<LoanType>>({});
