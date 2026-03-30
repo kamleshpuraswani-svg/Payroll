@@ -1197,16 +1197,37 @@ export const RunPayrollModal: React.FC<{
                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[11px] font-bold text-amber-700 shadow-sm mb-2">
                               <Hourglass size={12} /> Pending approval
                            </div>
-                           <p className="text-[10px] text-slate-400 font-medium">Reminder sent · 30 Mar 2026</p>
                         </div>
                      </div>
                   </div>
 
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4">
-                     <div className="p-3 bg-amber-100 text-amber-600 rounded-full"><Lock size={24} /></div>
-                     <div className="flex-1">
-                        <h4 className="text-sm font-bold text-amber-900">Confirm & Lock</h4>
-                        <p className="text-xs text-amber-800 mt-1">Once locked, payroll cannot be edited. Payslips and bank files will be generated.</p>
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                     <div className="flex items-start gap-4 mb-6">
+                        <div className="p-2.5 bg-slate-50 text-slate-400 rounded-lg border border-slate-100 italic">
+                           <Lock size={20} />
+                        </div>
+                        <div className="flex-1">
+                           <h4 className="text-sm font-bold text-slate-800">Confirm & lock payroll</h4>
+                           <p className="text-[11px] text-slate-400 mt-1 leading-relaxed max-w-2xl">
+                              Once locked, payroll cannot be edited. Payslips and bank disbursal files will be generated automatically. 
+                              All approvals must be complete before you can lock.
+                           </p>
+                        </div>
+                     </div>
+                     
+                     <div className="pt-6 border-t border-slate-100">
+                        <label className="flex items-center gap-3 cursor-pointer group w-full">
+                           <input
+                              type="checkbox"
+                              checked={isConfirmed}
+                              onChange={e => setIsConfirmed(e.target.checked)}
+                              disabled={readOnly}
+                              className="rounded text-indigo-600 focus:ring-indigo-500 w-5 h-5 cursor-pointer disabled:opacity-50 border-slate-300"
+                           />
+                           <span className="text-[11px] font-semibold text-slate-600 group-hover:text-indigo-600 transition-colors">
+                              I confirm that all figures are accurate and authorise locking this payroll run for Nov 2025
+                           </span>
+                        </label>
                      </div>
                   </div>
                </div>
