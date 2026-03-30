@@ -892,7 +892,7 @@ const OperationalConfig: React.FC = () => {
                         <div className="max-w-4xl space-y-10">
                             <div>
                                 <h4 className="font-bold text-slate-800 text-lg tracking-tight">Daily Rate Configuration</h4>
-                                <p className="text-sm text-slate-500 mt-1">Configure which salary components contribute to the daily rate calculation during F&F settlement.</p>
+                                <p className="text-sm text-slate-500 mt-1">Configure which salary components contribute to the daily rate calculation during F&F settlement. These are used for leave balance encashment calculation during year end processing, full & final settlement etc.</p>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
