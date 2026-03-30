@@ -1093,18 +1093,72 @@ export const RunPayrollModal: React.FC<{
                      <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">Draft Mode</span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Total Gross</p>
-                        <p className="text-3xl font-bold text-slate-800">₹ 18.42 Cr</p>
+                  <div className="grid grid-cols-3 gap-6">
+                     <div className="bg-white p-6 rounded-xl border border-slate-200 border-t-4 border-t-blue-600 shadow-sm space-y-4">
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total Gross</p>
+                           <p className="text-3xl font-bold text-slate-800 tracking-tight">₹ 18.42 Cr</p>
+                        </div>
+                        <div className="pt-4 border-t border-slate-100 space-y-2">
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Base salaries</span>
+                              <span className="text-slate-700">₹ 17.90 Cr</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Bonuses & arrears</span>
+                              <span className="text-slate-700">₹ 38.40 K</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Expense reimb.</span>
+                              <span className="text-slate-700">₹ 8.40 K</span>
+                           </div>
+                        </div>
                      </div>
-                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Deductions</p>
-                        <p className="text-3xl font-bold text-rose-600">₹ 3.74 Cr</p>
+
+                     <div className="bg-white p-6 rounded-xl border border-slate-200 border-t-4 border-t-rose-600 shadow-sm space-y-4">
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total Deductions</p>
+                           <p className="text-3xl font-bold text-rose-600 tracking-tight">₹ 3.74 Cr</p>
+                        </div>
+                        <div className="pt-4 border-t border-slate-100 space-y-2">
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">TDS</span>
+                              <span className="text-slate-700">₹ 2.90 Cr</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">PF (employer + employee)</span>
+                              <span className="text-slate-700">₹ 72.40 K</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Loan & advance recovery</span>
+                              <span className="text-slate-700">₹ 9.50 K</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">LOP deductions</span>
+                              <span className="text-slate-700">₹ 0</span>
+                           </div>
+                        </div>
                      </div>
-                     <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
-                        <p className="text-xs font-bold text-emerald-700 uppercase mb-2">Net Payable</p>
-                        <p className="text-3xl font-bold text-emerald-800">₹ 14.68 Cr</p>
+
+                     <div className="bg-white p-6 rounded-xl border border-slate-200 border-t-4 border-t-emerald-600 shadow-sm space-y-4">
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Net Payable</p>
+                           <p className="text-3xl font-bold text-emerald-800 tracking-tight">₹ 14.68 Cr</p>
+                        </div>
+                        <div className="pt-4 border-t border-slate-100 space-y-2">
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Employees included</span>
+                              <span className="text-slate-700">450</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Avg. net per employee</span>
+                              <span className="text-slate-700">₹ 3.26 L</span>
+                           </div>
+                           <div className="flex justify-between text-[11px] font-medium">
+                              <span className="text-slate-400">Pay period</span>
+                              <span className="text-slate-700">1-30 Nov 2025</span>
+                           </div>
+                        </div>
                      </div>
                   </div>
 
