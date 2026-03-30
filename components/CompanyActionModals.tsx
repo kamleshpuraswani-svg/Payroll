@@ -846,14 +846,6 @@ export const RunPayrollModal: React.FC<{
                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all shadow-sm"
                         />
                      </div>
-                     {!readOnly && (
-                        <button
-                           onClick={() => setShowLopModal(true)}
-                           className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 rounded-lg text-sm font-bold transition-all shadow-sm"
-                        >
-                           <Undo size={16} className="text-amber-600" /> Recover LOP
-                        </button>
-                     )}
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
@@ -1097,8 +1089,7 @@ export const RunPayrollModal: React.FC<{
          case 5: // FINALIZE
             return (
                <div className="w-full space-y-8">
-                  <div className="flex items-center justify-between">
-                     <h3 className="text-lg font-bold text-slate-800">Final Approval & Lock</h3>
+                  <div className="flex items-center justify-end">
                      <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">Draft Mode</span>
                   </div>
 
@@ -1146,16 +1137,6 @@ export const RunPayrollModal: React.FC<{
                         <h4 className="text-sm font-bold text-amber-900">Confirm & Lock</h4>
                         <p className="text-xs text-amber-800 mt-1">Once locked, payroll cannot be edited. Payslips and bank files will be generated.</p>
                      </div>
-                     <label className="flex items-center gap-2 cursor-pointer group" title="Check this box to enable locking">
-                        <input
-                           type="checkbox"
-                           checked={isConfirmed}
-                           onChange={e => setIsConfirmed(e.target.checked)}
-                           disabled={readOnly}
-                           className="rounded text-indigo-600 focus:ring-indigo-500 w-5 h-5 cursor-pointer disabled:opacity-50"
-                        />
-                        <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">I confirm accuracy</span>
-                     </label>
                   </div>
                </div>
             );
