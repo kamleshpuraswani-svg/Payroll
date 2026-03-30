@@ -1157,6 +1157,10 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
         (emp?.department || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const unassignedCtcCount = (employees || []).filter(emp => 
+        !emp.salary_structure_name || emp.salary_structure_name === 'Not Assigned'
+    ).length;
+
     const toggleSelection = (id: string) => {
         if (selectedEmployeeIds.includes(id)) {
             setSelectedEmployeeIds(prev => prev.filter(i => i !== id));
@@ -1186,6 +1190,19 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
                 </div>
                 <div className="flex gap-2">
                     {/* Assign Salary Structure button temporarily removed for HR Manager */}
+                </div>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all cursor-default">
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                        <AlertTriangle size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">CTC Unassigned</p>
+                        <h3 className="text-2xl font-black text-slate-800 leading-tight">{unassignedCtcCount}</h3>
+                    </div>
                 </div>
             </div>
 
