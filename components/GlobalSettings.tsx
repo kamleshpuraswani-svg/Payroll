@@ -51,7 +51,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'components', label: 'Salary Components', icon: Layers },
       { id: 'structure', label: 'Salary Structures', icon: Briefcase },
       { id: 'tax-config', label: 'Tax Regime Overview', icon: Calculator },
-      { id: 'loan-types', label: 'Loan & Advances', icon: Banknote },
+      { id: 'loan-types', label: 'Loans & Advances', icon: Banknote },
       { id: 'expenses-config', label: 'Expenses Management', icon: Receipt },
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },

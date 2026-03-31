@@ -33,6 +33,13 @@ interface LoanType {
     updatedAt?: string;
     targetId?: string;
     targetType?: string;
+    isEligibilityAfterJoining?: boolean;
+    eligibilityJoiningType?: 'probation' | 'days';
+    eligibilityJoiningDays?: number;
+    isEligibilitySalaryRange?: boolean;
+    eligibilitySalaryMin?: string;
+    eligibilitySalaryMax?: string;
+    isEligibilityNoticePeriod?: boolean;
 }
 
 const MOCK_LOAN_TYPES: LoanType[] = [
@@ -96,7 +103,14 @@ const LoanAdvancesTypes: React.FC = () => {
                 createdAt: item.created_at,
                 updatedAt: item.updated_at,
                 targetId: item.target_id,
-                targetType: item.target_type
+                targetType: item.target_type,
+                isEligibilityAfterJoining: item.isEligibilityAfterJoining,
+                eligibilityJoiningType: item.eligibilityJoiningType,
+                eligibilityJoiningDays: item.eligibilityJoiningDays,
+                isEligibilitySalaryRange: item.isEligibilitySalaryRange,
+                eligibilitySalaryMin: item.eligibilitySalaryMin,
+                eligibilitySalaryMax: item.eligibilitySalaryMax,
+                isEligibilityNoticePeriod: item.isEligibilityNoticePeriod
             }));
             setLoanTypes(mappedData);
         }
@@ -185,6 +199,15 @@ const LoanAdvancesTypes: React.FC = () => {
     // Approver Selection State
     const [selectedApprover, setSelectedApprover] = useState('');
 
+    // Eligibility Criteria State
+    const [isEligibilityAfterJoining, setIsEligibilityAfterJoining] = useState(false);
+    const [eligibilityJoiningType, setEligibilityJoiningType] = useState<'probation' | 'days'>('probation');
+    const [eligibilityJoiningDays, setEligibilityJoiningDays] = useState(0);
+    const [isEligibilitySalaryRange, setIsEligibilitySalaryRange] = useState(false);
+    const [eligibilitySalaryMin, setEligibilitySalaryMin] = useState('');
+    const [eligibilitySalaryMax, setEligibilitySalaryMax] = useState('');
+    const [isEligibilityNoticePeriod, setIsEligibilityNoticePeriod] = useState(false);
+
     // Helper to generate next 12 months for repayment dropdown
     const getRepaymentMonthOptions = () => {
         const options = [];
@@ -228,6 +251,15 @@ const LoanAdvancesTypes: React.FC = () => {
         setErrors({});
         setIsEditing(true);
         setSelectedApprover('');
+
+        // Reset eligibility
+        setIsEligibilityAfterJoining(false);
+        setEligibilityJoiningType('probation');
+        setEligibilityJoiningDays(0);
+        setIsEligibilitySalaryRange(false);
+        setEligibilitySalaryMin('');
+        setEligibilitySalaryMax('');
+        setIsEligibilityNoticePeriod(false);
     };
 
     const handleEdit = (loan: LoanType) => {
@@ -252,6 +284,15 @@ const LoanAdvancesTypes: React.FC = () => {
         setErrors({});
         setIsEditing(true);
         setSelectedApprover('');
+
+        // Set eligibility from loan
+        setIsEligibilityAfterJoining(loan.isEligibilityAfterJoining ?? false);
+        setEligibilityJoiningType(loan.eligibilityJoiningType ?? 'probation');
+        setEligibilityJoiningDays(loan.eligibilityJoiningDays ?? 0);
+        setIsEligibilitySalaryRange(loan.isEligibilitySalaryRange ?? false);
+        setEligibilitySalaryMin(loan.eligibilitySalaryMin ?? '');
+        setEligibilitySalaryMax(loan.eligibilitySalaryMax ?? '');
+        setIsEligibilityNoticePeriod(loan.isEligibilityNoticePeriod ?? false);
     };
 
     const handleDuplicate = (loan: LoanType) => {
@@ -344,7 +385,16 @@ const LoanAdvancesTypes: React.FC = () => {
                 repayment_month: (currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') ? (currentLoan.repaymentMonth || monthOptions[0]) : null,
                 updated_at: new Date().toISOString(),
                 target_id: targetId,
-                target_type: targetType
+                target_type: targetType,
+                // Eligibility Criteria fields (using camelCase for payload as database columns might not exist yet, 
+                // but this ensures local state sync if the backend supports it eventually)
+                isEligibilityAfterJoining: isEligibilityAfterJoining,
+                eligibilityJoiningType: eligibilityJoiningType,
+                eligibilityJoiningDays: eligibilityJoiningDays,
+                isEligibilitySalaryRange: isEligibilitySalaryRange,
+                eligibilitySalaryMin: eligibilitySalaryMin,
+                eligibilitySalaryMax: eligibilitySalaryMax,
+                isEligibilityNoticePeriod: isEligibilityNoticePeriod
             };
 
             let error;
@@ -425,7 +475,7 @@ const LoanAdvancesTypes: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                Loan & Advances
+                                Loans & Advances
                             </h1>
                             <p className="text-slate-500 mt-1">Configure types of loans and advances available for employees.</p>
                         </div>
@@ -910,6 +960,122 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Eligibility Criteria Section */}
+                                <div className="md:col-span-2">
+                                    <div className="flex flex-col gap-1 mb-4">
+                                        <h3 className="text-sm font-bold text-slate-800">Eligibility Criteria</h3>
+                                        <p className="text-[11px] text-slate-500 font-medium">Loan Eligibility Criteria & Interest rate calculation under this loan policy</p>
+                                    </div>
+                                    
+                                    <div className="space-y-5">
+                                        {/* Eligibility After Joining */}
+                                        <div className="space-y-3">
+                                            <label className="flex items-start gap-3 cursor-pointer group">
+                                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${isEligibilityAfterJoining ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                                    {isEligibilityAfterJoining && <CheckCircle size={14} className="text-white" />}
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="hidden" 
+                                                    checked={isEligibilityAfterJoining} 
+                                                    onChange={() => setIsEligibilityAfterJoining(!isEligibilityAfterJoining)} 
+                                                />
+                                                <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700 transition-colors">Employees are eligible for loans after</span>
+                                            </label>
+                                            
+                                            {isEligibilityAfterJoining && (
+                                                <div className="pl-8 space-y-3 animate-in fade-in slide-in-from-top-1">
+                                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${eligibilityJoiningType === 'probation' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                            {eligibilityJoiningType === 'probation' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                        </div>
+                                                        <input 
+                                                            type="radio" 
+                                                            className="hidden" 
+                                                            checked={eligibilityJoiningType === 'probation'} 
+                                                            onChange={() => setEligibilityJoiningType('probation')} 
+                                                        />
+                                                        <span className="text-sm font-medium text-slate-600">Probation Period</span>
+                                                    </label>
+                                                    
+                                                    <div className="flex items-center gap-3">
+                                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${eligibilityJoiningType === 'days' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                                {eligibilityJoiningType === 'days' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                            </div>
+                                                            <input 
+                                                                type="radio" 
+                                                                className="hidden" 
+                                                                checked={eligibilityJoiningType === 'days'} 
+                                                                onChange={() => setEligibilityJoiningType('days')} 
+                                                            />
+                                                            <div className="flex items-center gap-2">
+                                                                <input 
+                                                                    type="number" 
+                                                                    value={eligibilityJoiningDays}
+                                                                    onChange={(e) => setEligibilityJoiningDays(parseInt(e.target.value) || 0)}
+                                                                    className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-purple-500"
+                                                                />
+                                                                <span className="text-sm font-medium text-slate-600">days from joining</span>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Salary Range Eligibility */}
+                                        <div className="space-y-3">
+                                            <label className="flex items-start gap-3 cursor-pointer group">
+                                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${isEligibilitySalaryRange ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                                    {isEligibilitySalaryRange && <CheckCircle size={14} className="text-white" />}
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="hidden" 
+                                                    checked={isEligibilitySalaryRange} 
+                                                    onChange={() => setIsEligibilitySalaryRange(!isEligibilitySalaryRange)} 
+                                                />
+                                                <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700 transition-colors">Employees are eligible if annual salary is in the range of</span>
+                                            </label>
+                                            
+                                            {isEligibilitySalaryRange && (
+                                                <div className="pl-8 flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
+                                                    <input 
+                                                        type="text" 
+                                                        value={eligibilitySalaryMin}
+                                                        onChange={(e) => setEligibilitySalaryMin(e.target.value)}
+                                                        className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-purple-500"
+                                                        placeholder="Min"
+                                                    />
+                                                    <span className="text-slate-400">-</span>
+                                                    <input 
+                                                        type="text" 
+                                                        value={eligibilitySalaryMax}
+                                                        onChange={(e) => setEligibilitySalaryMax(e.target.value)}
+                                                        className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-purple-500"
+                                                        placeholder="Max"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Notice Period Eligibility */}
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${isEligibilityNoticePeriod ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                                {isEligibilityNoticePeriod && <CheckCircle size={14} className="text-white" />}
+                                            </div>
+                                            <input 
+                                                type="checkbox" 
+                                                className="hidden" 
+                                                checked={isEligibilityNoticePeriod} 
+                                                onChange={() => setIsEligibilityNoticePeriod(!isEligibilityNoticePeriod)} 
+                                            />
+                                            <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700 transition-colors">Employees in notice period are eligible</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
