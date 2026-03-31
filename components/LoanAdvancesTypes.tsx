@@ -102,13 +102,7 @@ const LoanAdvancesTypes: React.FC = () => {
                 createdAt: item.created_at,
                 updatedAt: item.updated_at,
                 targetId: item.target_id,
-                targetType: item.target_type,
-                isEligibilityAfterJoining: item.isEligibilityAfterJoining,
-                eligibilityJoiningType: item.eligibilityJoiningType,
-                eligibilityJoiningDays: item.eligibilityJoiningDays,
-                isEligibilitySalaryRange: item.isEligibilitySalaryRange,
-                eligibilitySalaryMin: item.eligibilitySalaryMin,
-                eligibilitySalaryMax: item.eligibilitySalaryMax
+                targetType: item.target_type
             }));
             setLoanTypes(mappedData);
         }
@@ -380,15 +374,7 @@ const LoanAdvancesTypes: React.FC = () => {
                 repayment_month: (currentLoan.name === 'Salary Advance' || currentLoan.name === 'Loan') ? (currentLoan.repaymentMonth || monthOptions[0]) : null,
                 updated_at: new Date().toISOString(),
                 target_id: targetId,
-                target_type: targetType,
-                // Eligibility Criteria fields (using camelCase for payload as database columns might not exist yet, 
-                // but this ensures local state sync if the backend supports it eventually)
-                isEligibilityAfterJoining: isEligibilityAfterJoining,
-                eligibilityJoiningType: eligibilityJoiningType,
-                eligibilityJoiningDays: eligibilityJoiningDays,
-                isEligibilitySalaryRange: isEligibilitySalaryRange,
-                eligibilitySalaryMin: eligibilitySalaryMin,
-                eligibilitySalaryMax: eligibilitySalaryMax
+                target_type: targetType
             };
 
             let error;
