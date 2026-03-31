@@ -572,7 +572,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
-                                                        {item.name === 'Salary Advance' ? '--' : (item.name === 'Loan' ? '48 Months' : `${item.maxTenure} Months`)}
+                                                        {item.maxTenure ? `${item.maxTenure} Months` : '--'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
