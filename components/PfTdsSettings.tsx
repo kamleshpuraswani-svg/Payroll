@@ -510,11 +510,11 @@ const PfTdsSettings: React.FC = () => {
                                         <div className="space-y-10 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                                 <div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN (Tax Deduction Account Number)</label>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN (Tax Deduction Account Number) <span className="text-rose-500">*</span></label>
                                                     <input type="text" value={tan} onChange={e => setTan(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:normal-case disabled:opacity-70" placeholder="e.g., DELA12345B" />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Default Tax Regime</label>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Default Tax Regime <span className="text-rose-500">*</span></label>
                                                     <div className="relative">
                                                         <select value={defaultRegime} onChange={e => setDefaultRegime(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 ring-offset-2 ring-offset-white ring-1 ring-slate-100">
                                                             <option>New Regime</option>
@@ -530,7 +530,7 @@ const PfTdsSettings: React.FC = () => {
                                                     <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                                                         <User size={18} strokeWidth={2.5} />
                                                     </div>
-                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person (TRACES)</h4>
+                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person (TRACES) <span className="text-rose-500">*</span></h4>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-4">
@@ -557,14 +557,6 @@ const PfTdsSettings: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="bg-sky-50 border border-sky-100 rounded-xl p-6 flex items-start gap-5">
-                                                <div className="p-2 bg-white rounded-2xl shadow-sm text-sky-500">
-                                                    <Info size={20} strokeWidth={2.5} />
-                                                </div>
-                                                <p className="text-[13px] text-sky-800 leading-relaxed font-bold">
-                                                    TAN is mandatory for generating Form 24Q. Tax Regime determines the default tax slab calculation for employees when no specific declarations are linked.
-                                                </p>
-                                            </div>
                                         </div>
                                     )}
                                 </div>
