@@ -215,15 +215,15 @@ const PfTdsSettings: React.FC = () => {
                                             <div className="xl:col-span-8 space-y-10">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div>
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Code (Registration Number)</label>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Code (Registration Number) <span className="text-rose-500">*</span></label>
                                                         <input type="text" value={pfNumber} onChange={e => setPfNumber(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all placeholder:text-slate-300 disabled:opacity-70" placeholder="AA/AAA/1234567/000" />
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Establishment Name</label>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Establishment Name <span className="text-rose-500">*</span></label>
                                                         <input type="text" value={establishmentName} onChange={e => setEstablishmentName(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Registration Date</label>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">EPF Registration Date <span className="text-rose-500">*</span></label>
                                                         <div className="relative">
                                                             <input type="date" value={epfJoiningDate} onChange={e => setEpfJoiningDate(e.target.value)} disabled={!isEditingPf} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" />
                                                         </div>
@@ -283,7 +283,7 @@ const PfTdsSettings: React.FC = () => {
                                                     <div className="space-y-6">
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex items-center gap-2">
-                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate</h4>
+                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate <span className="text-rose-500">*</span></h4>
                                                                 <div className="group/rate relative">
                                                                     <Info size={14} className="text-slate-300 cursor-help" />
                                                                     <div className="invisible group-hover/rate:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-left leading-relaxed font-bold border border-slate-800 pointer-events-none">
@@ -607,7 +607,7 @@ const PfTdsSettings: React.FC = () => {
                                 </table>
                             </div>
                             <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
-                                <button onClick={() => setShowSplitupModal(false)} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all uppercase tracking-widest">Close Distribution</button>
+                                <button onClick={() => setShowSplitupModal(false)} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all uppercase tracking-widest">Close</button>
                             </div>
                         </div>
                     </div>
