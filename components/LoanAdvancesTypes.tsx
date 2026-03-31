@@ -710,8 +710,8 @@ const LoanAdvancesTypes: React.FC = () => {
                                 <div>
                                     <div className="flex items-center gap-3">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                                        <span className="text-sm font-medium text-slate-700">Default rate of interest will be</span>
-                                        <div className={`flex border rounded-lg overflow-hidden transition-all ml-auto ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
+                                        <span className="text-sm font-medium text-slate-700">Interest Rate</span>
+                                        <div className={`flex border rounded-lg overflow-hidden transition-all ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
                                             <input
                                                 type="number"
                                                 value={currentLoan.interestRate}
