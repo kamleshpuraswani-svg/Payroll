@@ -708,20 +708,31 @@ const LoanAdvancesTypes: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
-                                        Interest Rate (% p.a.) {currentLoan.name === 'Loan' && <span className="text-rose-500">*</span>}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={currentLoan.interestRate}
-                                        onChange={e => {
-                                            setCurrentLoan({ ...currentLoan, interestRate: parseFloat(e.target.value) || 0 });
-                                            if (errors.interestRate) setErrors({ ...errors, interestRate: undefined });
-                                        }}
-                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                    />
-                                    {errors.interestRate && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> {errors.interestRate}</p>}
-                                    <p className="text-[10px] text-slate-400 mt-1">Set 0 for interest-free advances.</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                                        <span className="text-sm font-medium text-slate-700">Default rate of interest will be</span>
+                                        <div className={`flex border rounded-lg overflow-hidden transition-all ml-auto ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
+                                            <input
+                                                type="number"
+                                                value={currentLoan.interestRate}
+                                                onChange={e => {
+                                                    setCurrentLoan({ ...currentLoan, interestRate: parseFloat(e.target.value) || 0 });
+                                                    if (errors.interestRate) setErrors({ ...errors, interestRate: undefined });
+                                                }}
+                                                className="w-20 px-3 py-2 text-sm focus:outline-none"
+                                            />
+                                            <div className="px-3 py-2 bg-slate-50 border-l border-slate-200 text-slate-500 text-sm flex items-center justify-center font-medium">
+                                                %
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {errors.interestRate && (
+                                        <div className="mt-1.5 space-y-1 ml-5">
+                                            <p className="text-xs text-rose-500">Default interest rate is required</p>
+                                            <p className="text-xs text-rose-500">Interest calculation rate is required</p>
+                                        </div>
+                                    )}
+                                    <p className="text-[10px] text-slate-400 mt-1 ml-5">Set 0 for interest-free advances.</p>
                                 </div>
 
                                 <div>
