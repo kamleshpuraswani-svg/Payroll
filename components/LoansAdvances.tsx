@@ -962,12 +962,13 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                 <tr>
                                     <th className="px-6 py-3">Employee Name & ID</th>
                                     <th className="px-6 py-3">Loan Type</th>
-                                    <th className="px-6 py-3 text-right">Requested</th>
-                                    <th className="px-6 py-3 text-right">Approved</th>
-                                    <th className="px-6 py-3">Req. Date</th>
+                                    <th className="px-6 py-3 text-right">Requested Amount</th>
+                                    <th className="px-6 py-3 text-right">Approved Amount</th>
+                                    <th className="px-6 py-3">Requested Date</th>
                                     <th className="px-6 py-3">Status</th>
-                                    <th className="px-6 py-3 text-right">EMI / Total</th>
-                                    <th className="px-6 py-3 text-right">Balance</th>
+                                    <th className="px-6 py-3 text-right">Monthly EMI Amount</th>
+                                    <th className="px-6 py-3 text-right">Total EMIs</th>
+                                    <th className="px-6 py-3 text-right">Balance Remaining</th>
                                     <th className="px-4 py-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -999,13 +1000,11 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                 {loan.status}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4 text-right text-slate-600 font-bold">
+                                            {loan.emiAmount ? `₹${loan.emiAmount.toLocaleString()}` : '—'}
+                                        </td>
                                         <td className="px-6 py-4 text-right text-slate-600">
-                                            {loan.emiAmount ? (
-                                                <>
-                                                    <span className="font-bold">₹{loan.emiAmount.toLocaleString()}</span>
-                                                    <span className="text-xs text-slate-400"> / {loan.totalEmis}</span>
-                                                </>
-                                            ) : '—'}
+                                            {loan.totalEmis || '—'}
                                         </td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">
                                             {loan.remainingBalance !== undefined ? `₹${loan.remainingBalance.toLocaleString()}` : '—'}
@@ -1036,9 +1035,6 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                             <XCircle size={14} />
                                                         </button>
                                                     </>
-                                                )}
-                                                {loan.status === 'Active' && (
-                                                    <button className="p-1.5 hover:bg-slate-200 rounded text-slate-500" title="Statement"><Download size={14} /></button>
                                                 )}
                                             </div>
                                         </td>
