@@ -39,7 +39,6 @@ interface LoanType {
     isEligibilitySalaryRange?: boolean;
     eligibilitySalaryMin?: string;
     eligibilitySalaryMax?: string;
-    isEligibilityNoticePeriod?: boolean;
 }
 
 const MOCK_LOAN_TYPES: LoanType[] = [
@@ -109,8 +108,7 @@ const LoanAdvancesTypes: React.FC = () => {
                 eligibilityJoiningDays: item.eligibilityJoiningDays,
                 isEligibilitySalaryRange: item.isEligibilitySalaryRange,
                 eligibilitySalaryMin: item.eligibilitySalaryMin,
-                eligibilitySalaryMax: item.eligibilitySalaryMax,
-                isEligibilityNoticePeriod: item.isEligibilityNoticePeriod
+                eligibilitySalaryMax: item.eligibilitySalaryMax
             }));
             setLoanTypes(mappedData);
         }
@@ -206,7 +204,6 @@ const LoanAdvancesTypes: React.FC = () => {
     const [isEligibilitySalaryRange, setIsEligibilitySalaryRange] = useState(false);
     const [eligibilitySalaryMin, setEligibilitySalaryMin] = useState('');
     const [eligibilitySalaryMax, setEligibilitySalaryMax] = useState('');
-    const [isEligibilityNoticePeriod, setIsEligibilityNoticePeriod] = useState(false);
 
     // Helper to generate next 12 months for repayment dropdown
     const getRepaymentMonthOptions = () => {
@@ -259,7 +256,6 @@ const LoanAdvancesTypes: React.FC = () => {
         setIsEligibilitySalaryRange(false);
         setEligibilitySalaryMin('');
         setEligibilitySalaryMax('');
-        setIsEligibilityNoticePeriod(false);
     };
 
     const handleEdit = (loan: LoanType) => {
@@ -292,7 +288,6 @@ const LoanAdvancesTypes: React.FC = () => {
         setIsEligibilitySalaryRange(loan.isEligibilitySalaryRange ?? false);
         setEligibilitySalaryMin(loan.eligibilitySalaryMin ?? '');
         setEligibilitySalaryMax(loan.eligibilitySalaryMax ?? '');
-        setIsEligibilityNoticePeriod(loan.isEligibilityNoticePeriod ?? false);
     };
 
     const handleDuplicate = (loan: LoanType) => {
@@ -393,8 +388,7 @@ const LoanAdvancesTypes: React.FC = () => {
                 eligibilityJoiningDays: eligibilityJoiningDays,
                 isEligibilitySalaryRange: isEligibilitySalaryRange,
                 eligibilitySalaryMin: eligibilitySalaryMin,
-                eligibilitySalaryMax: eligibilitySalaryMax,
-                isEligibilityNoticePeriod: isEligibilityNoticePeriod
+                eligibilitySalaryMax: eligibilitySalaryMax
             };
 
             let error;
@@ -1062,20 +1056,6 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Notice Period Eligibility */}
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${isEligibilityNoticePeriod ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                                {isEligibilityNoticePeriod && <CheckCircle size={14} className="text-white" />}
-                                            </div>
-                                            <input 
-                                                type="checkbox" 
-                                                className="hidden" 
-                                                checked={isEligibilityNoticePeriod} 
-                                                onChange={() => setIsEligibilityNoticePeriod(!isEligibilityNoticePeriod)} 
-                                            />
-                                            <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700 transition-colors">Employees in notice period are eligible</span>
-                                        </label>
                                     </div>
                                 </div>
                             </div>
