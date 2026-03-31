@@ -402,34 +402,40 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
     // Handle role-based defaults for Employee
     useEffect(() => {
         const fetchDefaults = async () => {
-            if (userRole === 'EMPLOYEE') {
+            try {
+                // Fetch live config from Supabase for all roles now
+                const { data: loanTypes } = await supabase
+                    .from('loan_types')
+                    .select('*');
+
+                if (loanTypes) {
+                    const config = loanTypes.find(lt => lt.name === loanType);
+                    if (config) {
+                        setInterestRate(String(config.interest_rate || (loanType === 'Loan' ? '10.5' : '0')));
+                        setMaxTenure(String(config.max_tenure || (loanType === 'Loan' ? '12' : '3')));
+                        
+                        // Handle Approvers
+                        if (config.approvers && Array.isArray(config.approvers)) {
+                            // Map approver IDs to full employee objects if possible, 
+                            // or just use the data from config if it's already structured
+                            const mappedApprovers = config.approvers.map((app: any) => ({
+                                id: app.id || app.employee_id,
+                                first_name: app.name?.split(' ')[0] || app.first_name,
+                                last_name: app.name?.split(' ').slice(1).join(' ') || app.last_name
+                            }));
+                            setApprovers(mappedApprovers);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching loan defaults:', err);
+                // Fallback to hardcoded defaults
                 if (loanType === 'Loan') {
                     setInterestRate('10.5');
                     setMaxTenure('12');
                 } else {
                     setInterestRate('0');
                     setMaxTenure('3');
-                }
-
-                // Fetch live config from Supabase
-                try {
-                    const { data } = await supabase
-                        .from('operational_config')
-                        .select('*')
-                        .eq('config_key', 'payroll_approval_hierarchy')
-                        .single();
-
-                    if (data && data.config_value && data.config_value.approvers) {
-                        setApprovers(data.config_value.approvers);
-                    } else {
-                        // Fallback
-                        setApprovers([
-                            { id: 'TF001', name: 'Kamlesh Puraswani' },
-                            { id: 'ADMIN', name: 'Admin' }
-                        ]);
-                    }
-                } catch (err) {
-                    console.error('Error fetching loan defaults:', err);
                 }
             }
         };
@@ -665,7 +671,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
 
                         {/* Reason/Purpose */}
                         <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">Reason/Purpose</label>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">Reason/Purpose <span className="text-rose-500">*</span></label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
@@ -676,7 +682,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
 
                         {/* Approval Flow Section */}
                         <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow (Hierarchy)</label>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow</label>
                             <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/30 space-y-4">
                                 {userRole !== 'EMPLOYEE' && (
                                     <div className="flex gap-3">
@@ -969,6 +975,8 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                     <th className="px-6 py-3 text-right">Monthly EMI Amount</th>
                                     <th className="px-6 py-3 text-right">Total EMIs</th>
                                     <th className="px-6 py-3 text-right">Balance Remaining</th>
+                                    <th className="px-6 py-3">Created By</th>
+                                    <th className="px-6 py-3">Last Modified By</th>
                                     <th className="px-4 py-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -1008,6 +1016,14 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         </td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">
                                             {loan.remainingBalance !== undefined ? `₹${loan.remainingBalance.toLocaleString()}` : '—'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-slate-600">HR Manager</span>
+                                            {loan.requestDate && <p className="text-[10px] text-slate-400 mt-0.5">{loan.requestDate}</p>}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-slate-600">HR Manager</span>
+                                            {loan.requestDate && <p className="text-[10px] text-slate-400 mt-0.5">{loan.requestDate}</p>}
                                         </td>
                                         <td className="px-4 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
