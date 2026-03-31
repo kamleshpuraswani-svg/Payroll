@@ -808,10 +808,10 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
 
         const activeCount = baseLoans.filter(l => ['Approved', 'Active', 'Repaying'].includes(l.status)).length;
         const totalOutstanding = baseLoans.reduce((acc, l) => acc + (l.remainingBalance || 0), 0);
-        const requestedThisMonth = baseLoans.filter(l => l.requestDate.includes('2026') || l.requestDate.includes('Dec 2025')).length; // Mock logic
-        const overdueCount = baseLoans.filter(l => l.repaymentSchedule?.some(emi => emi.status === 'Overdue')).length;
+        const totalLoanIssued = 520000; // Dummy amount
+        const overdueAmount = 45000; // Dummy amount
 
-        return { activeCount, totalOutstanding, requestedThisMonth, overdueCount };
+        return { activeCount, totalOutstanding, totalLoanIssued, overdueAmount };
     }, [allLoans, userRole, currentEmployeeId]);
 
     const handleUpdateLoan = (updatedLoan: LoanRequest) => {
@@ -884,12 +884,12 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                     <span className="text-xl font-bold text-orange-600">₹{(metricsData.totalOutstanding / 100000).toFixed(2)}L</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Requested This Month</span>
-                    <span className="text-xl font-bold text-slate-800">{metricsData.requestedThisMonth}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Loan Amount Issued</span>
+                    <span className="text-xl font-bold text-slate-800">₹{(metricsData.totalLoanIssued / 100000).toFixed(2)}L</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overdue EMIs</span>
-                    <span className="text-xl font-bold text-rose-600 flex items-center gap-1"><AlertCircle size={16} /> {metricsData.overdueCount}</span>
+                    <span className="text-xl font-bold text-rose-600 flex items-center gap-1"><AlertCircle size={16} /> ₹{metricsData.overdueAmount.toLocaleString()}</span>
                 </div>
             </div>
 
