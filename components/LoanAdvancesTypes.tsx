@@ -961,7 +961,6 @@ const LoanAdvancesTypes: React.FC = () => {
                                 <div className="md:col-span-2">
                                     <div className="flex flex-col gap-1 mb-4">
                                         <h3 className="text-sm font-bold text-slate-800">Eligibility Criteria</h3>
-                                        <p className="text-[11px] text-slate-500 font-medium">Loan Eligibility Criteria & Interest rate calculation under this loan policy</p>
                                     </div>
                                     
                                     <div className="space-y-5">
