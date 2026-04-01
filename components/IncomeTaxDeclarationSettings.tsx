@@ -1676,7 +1676,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         <AlertCircle size={20} className="text-rose-500" />
                                         <div>
                                             <span className="text-sm font-bold text-rose-800 block">Auto-reject if no proof by deadline</span>
-                                            <span className="text-xs text-rose-600">Declarations without proofs will be rejected after {formatDate(proofDeadlineTo)}</span>
+                                            <span className="text-xs text-rose-600">Declarations without proofs will be rejected after {proofCutoffDay} {proofCutoffMonth} 2026</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-6">
