@@ -55,7 +55,7 @@ interface ExpenseClaim {
         ctc: string;
         avatar: string;
     };
-    type: 'Medical' | 'Telephone' | 'LTA' | 'Books' | 'Fuel';
+    type: 'Medical' | 'Telephone' | 'LTA' | 'Books' | 'Fuel' | 'Travel' | 'Meal';
     amount: number;
     submittedDate: string;
     proofs: ClaimProof[];
@@ -540,6 +540,7 @@ const DownloadClaimModal: React.FC<{
 const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> = ({ onChangeView }) => {
     const [employees, setEmployees] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
+    const [claims, setClaims] = useState<ExpenseClaim[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
 
     const [selectedClaim, setSelectedClaim] = useState<ExpenseClaim | null>(null);
@@ -570,6 +571,45 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                 .eq('status', 'Active')
                 .order('name');
             if (catData) setCategories(catData);
+
+            // Fetch real claims
+            const { data: claimData } = await supabase
+                .from('reimbursement_claims')
+                .select('*')
+                .order('submitted_at', { ascending: false });
+
+            if (claimData && empData) {
+                const mappedClaims: ExpenseClaim[] = claimData.map(c => {
+                    const emp = empData.find(e => e.id === c.employee_id);
+                    return {
+                        id: c.id,
+                        employee: {
+                            name: emp?.name || 'Unknown Employee',
+                            id: emp?.eid || emp?.id || 'N/A',
+                            department: emp?.department || 'N/A',
+                            ctc: 'N/A',
+                            avatar: emp?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+                        },
+                        type: (c.category === 'Travel' ? 'LTA' : c.category) as any,
+                        amount: c.total_amount,
+                        submittedDate: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+                        status: (c.status.charAt(0).toUpperCase() + c.status.slice(1)) as any,
+                        proofs: (c.items || []).filter((it: any) => it.receiptName).map((it: any, i: number) => ({
+                            id: `p-${i}`,
+                            name: it.receiptName,
+                            type: 'pdf',
+                            size: '0 KB'
+                        })),
+                        requestedOn: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+                        activityLog: [
+                            { text: 'Submitted by employee', date: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'N/A' }
+                        ]
+                    };
+                });
+                setClaims([...mappedClaims, ...MOCK_CLAIMS]);
+            } else {
+                setClaims(MOCK_CLAIMS);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -583,10 +623,10 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
 
     // Summary Stats
     const stats = [
-        { label: 'Total Claims', val: '184', color: 'text-slate-800' },
-        { label: 'Pending Review', val: '68', color: 'text-orange-600' },
-        { label: 'Approved (Full/Partial)', val: '92', color: 'text-emerald-600' },
-        { label: 'Total Approved Amount', val: '₹18.42L', color: 'text-purple-600' },
+        { label: 'Total Claims', val: claims.length.toString(), color: 'text-slate-800' },
+        { label: 'Pending Review', val: claims.filter(c => c.status === 'Pending').length.toString(), color: 'text-orange-600' },
+        { label: 'Approved (Full/Partial)', val: claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').length.toString(), color: 'text-emerald-600' },
+        { label: 'Total Approved Amount', val: `₹${(claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').reduce((s, c) => s + (c.approvedAmount || c.amount), 0) / 100000).toFixed(2)}L`, color: 'text-purple-600' },
     ];
 
     const handleActionConfirm = (action: 'FULL' | 'PARTIAL' | 'REJECT' | 'INFO', amount?: number, reason?: string) => {
@@ -690,7 +730,12 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {MOCK_CLAIMS.map((claim) => (
+                                {claims
+                                    .filter(c => 
+                                        c.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                        c.type.toLowerCase().includes(searchTerm.toLowerCase())
+                                    )
+                                    .map((claim) => (
                                     <tr
                                         key={claim.id}
                                         onClick={() => setViewClaim(claim)}
