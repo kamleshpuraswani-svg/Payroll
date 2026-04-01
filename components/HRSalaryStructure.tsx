@@ -524,21 +524,32 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             return;
         }
 
-        const payload = {
+        const payload: any = {
             name: structureName,
             description,
             departments: selectedDepartments,
             designations: selectedDesignations,
-            // employees: selectedEmployees, // removed as it is not a column in the database
             status: status,
             earnings,
             deductions,
             benefits,
             reimbursements,
-            effective_from: effectiveFrom,
-            target_id: localSelectedTarget ? localSelectedTarget.split(':')[1] : null,
-            target_type: localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null
         };
+
+        // Check if columns exist in the database before sending them
+        // This handles cases where the user hasn't run the migration yet
+        const { data: sample } = structures.length > 0 ? { data: structures[0] } : await supabase.from('salary_structures').select('*').limit(1).single();
+        
+        if (sample) {
+            if ('effective_from' in sample) payload.effective_from = effectiveFrom;
+            if ('target_id' in sample) payload.target_id = localSelectedTarget ? localSelectedTarget.split(':')[1] : null;
+            if ('target_type' in sample) payload.target_type = localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null;
+        } else {
+            // Fallback if no data, assume they exist but wrap in try-catch or just send and let it fail normally
+            payload.effective_from = effectiveFrom;
+            payload.target_id = localSelectedTarget ? localSelectedTarget.split(':')[1] : null;
+            payload.target_type = localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null;
+        }
 
         let savedId = activeStructureId;
 
