@@ -55,13 +55,14 @@ interface ExpenseClaim {
         ctc: string;
         avatar: string;
     };
-    type: 'Medical' | 'Telephone' | 'LTA' | 'Books' | 'Fuel' | 'Travel' | 'Meal';
+    category: string;
     amount: number;
     submittedDate: string;
     proofs: ClaimProof[];
     status: 'Pending' | 'Approved' | 'Partially Approved' | 'Rejected' | 'More Info Requested';
     approvedAmount?: number;
     requestedOn: string;
+    lastModifiedBy: string;
     activityLog: { text: string; date: string }[];
 }
 
@@ -73,24 +74,18 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         employee: {
             name: 'Priya Sharma',
             id: 'TF00912',
-            department: 'Software Engineering',
-            ctc: '₹18.5 L',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+            department: 'Sales',
+            ctc: '₹24.0 L',
+            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
         },
-        type: 'Medical',
+        category: 'Medical',
         amount: 15400,
         submittedDate: '18 Dec 2025',
-        proofs: [
-            { id: 'p1', name: 'Apollo_Pharmacy_Bill.pdf', type: 'pdf', size: '1.2 MB' },
-            { id: 'p2', name: 'Dr_Consultation.jpg', type: 'jpg', size: '850 KB' },
-            { id: 'p3', name: 'Lab_Report.pdf', type: 'pdf', size: '2.1 MB' },
-            { id: 'p4', name: 'Opticals_Receipt.pdf', type: 'pdf', size: '500 KB' }
-        ],
+        proofs: Array(4).fill({ id: 'x', name: 'Bill.pdf', type: 'pdf', size: '1.2 MB' }),
         status: 'Pending',
         requestedOn: '18 Dec 2025',
-        activityLog: [
-            { text: 'Submitted by employee', date: '18 Dec 2025, 10:30 AM' }
-        ]
+        lastModifiedBy: '18 Dec 2025',
+        activityLog: [{ text: 'Submitted by employee', date: '18 Dec 2025' }]
     },
     {
         id: 'EXP-002',
@@ -101,7 +96,7 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
             ctc: '₹24.0 L',
             avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
         },
-        type: 'Telephone',
+        category: 'Telephone',
         amount: 8200,
         submittedDate: '15 Dec 2025',
         proofs: [
@@ -110,6 +105,7 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         ],
         status: 'More Info Requested',
         requestedOn: '15 Dec 2025',
+        lastModifiedBy: '15 Dec 2025',
         activityLog: [
             { text: 'Submitted by employee', date: '15 Dec 2025' },
             { text: 'HR requested clarification: Missing Oct bill', date: '16 Dec 2025' }
@@ -124,13 +120,14 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
             ctc: '₹15.8 L',
             avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
         },
-        type: 'LTA',
+        category: 'LTA',
         amount: 45000,
         submittedDate: '12 Dec 2025',
         proofs: Array(6).fill({ id: 'x', name: 'Travel_Ticket.pdf', type: 'pdf', size: '1.5 MB' }),
         status: 'Partially Approved',
         approvedAmount: 38000,
         requestedOn: '12 Dec 2025',
+        lastModifiedBy: '12 Dec 2025',
         activityLog: [
             { text: 'Submitted by employee', date: '12 Dec 2025' },
             { text: 'Approved partial amount (Policy limit)', date: '14 Dec 2025' }
@@ -145,15 +142,16 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
             ctc: '₹21.2 L',
             avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
         },
-        type: 'Books',
+        category: 'Books',
         amount: 4800,
         submittedDate: '10 Dec 2025',
-        proofs: Array(3).fill({ id: 'x', name: 'Amazon_Invoice.pdf', type: 'pdf', size: '200 KB' }),
+        proofs: Array(3).fill({ id: 'x', name: 'Amazon_Invoice.pdf', type: 'pdf', size: '320 KB' }),
         status: 'Approved',
-        requestedOn: '11 Dec 2025',
+        requestedOn: '10 Dec 2025',
+        lastModifiedBy: '11 Dec 2025',
         activityLog: [
             { text: 'Submitted by employee', date: '10 Dec 2025' },
-            { text: 'Auto-approved (Under limit)', date: '11 Dec 2025' }
+            { text: 'Approved by HR', date: '11 Dec 2025' }
         ]
     },
     {
@@ -161,19 +159,20 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         employee: {
             name: 'Ananya Patel',
             id: 'TF01145',
-            department: 'QA',
-            ctc: '₹14.7 L',
-            avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+            department: 'Finance',
+            ctc: '₹14.5 L',
+            avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
         },
-        type: 'Fuel',
+        category: 'Fuel',
         amount: 12000,
         submittedDate: '08 Dec 2025',
-        proofs: Array(5).fill({ id: 'x', name: 'Fuel_Station_Bill.jpg', type: 'jpg', size: '1.1 MB' }),
+        proofs: Array(5).fill({ id: 'x', name: 'Petrol_Bill.pdf', type: 'pdf', size: '250 KB' }),
         status: 'Rejected',
-        requestedOn: '09 Dec 2025',
+        requestedOn: '08 Dec 2025',
+        lastModifiedBy: '09 Dec 2025',
         activityLog: [
             { text: 'Submitted by employee', date: '08 Dec 2025' },
-            { text: 'Rejected: Dates mismatch with attendance', date: '09 Dec 2025' }
+            { text: 'Rejected: Duplicate bill', date: '09 Dec 2025' }
         ]
     }
 ];
@@ -184,10 +183,12 @@ const getClaimTypeColor = (type: string) => {
     switch (type) {
         case 'Medical': return 'bg-orange-50 text-orange-700 border-orange-100';
         case 'Telephone': return 'bg-blue-50 text-blue-700 border-blue-100';
-        case 'LTA': return 'bg-green-50 text-green-700 border-green-100';
+        case 'LTA':
+        case 'Travel': return 'bg-green-50 text-green-700 border-green-100';
         case 'Books': return 'bg-purple-50 text-purple-700 border-purple-100';
         case 'Fuel': return 'bg-slate-100 text-slate-700 border-slate-200';
-        default: return 'bg-slate-50 text-slate-600';
+        case 'Meal': return 'bg-amber-50 text-amber-700 border-amber-100';
+        default: return 'bg-slate-50 text-slate-600 border-slate-100';
     }
 };
 
@@ -206,9 +207,11 @@ const getClaimIcon = (type: string) => {
     switch (type) {
         case 'Medical': return <Activity size={14} />;
         case 'Telephone': return <Smartphone size={14} />;
-        case 'LTA': return <MapPin size={14} />;
+        case 'LTA':
+        case 'Travel': return <MapPin size={14} />;
         case 'Books': return <BookOpen size={14} />;
         case 'Fuel': return <Fuel size={14} />;
+        case 'Meal': return <Activity size={14} />; // Using Activity for now or should I use a better icon?
         default: return <FileText size={14} />;
     }
 };
@@ -257,7 +260,7 @@ const ViewClaimModal: React.FC<{
                         <div className="space-y-3">
                             <div className="flex justify-between p-3 border border-slate-100 rounded-lg">
                                 <span className="text-sm text-slate-600">Claim Type</span>
-                                <span className="text-sm font-bold text-slate-800">{claim.type}</span>
+                                <span className="text-sm font-bold text-slate-800">{claim.category}</span>
                             </div>
                             <div className="flex justify-between p-3 border border-slate-100 rounded-lg">
                                 <span className="text-sm text-slate-600">Claimed Amount</span>
@@ -344,14 +347,14 @@ const EditClaimModal: React.FC<{
     onSave: (claim: ExpenseClaim) => void;
 }> = ({ claim, onClose, onSave }) => {
     const [amount, setAmount] = useState(claim.amount);
-    const [type, setType] = useState(claim.type);
+    const [type, setType] = useState(claim.category);
     const [date, setDate] = useState(claim.submittedDate); // Assuming strict formatting in real app
 
     const handleSave = () => {
         onSave({
             ...claim,
             amount,
-            type,
+            category: type,
             submittedDate: date
         });
         onClose();
@@ -442,7 +445,7 @@ const ApproveClaimModal: React.FC<{
                         </div>
                         <div className="text-right">
                             <p className="text-xs font-bold text-slate-400 uppercase">Type</p>
-                            <p className="text-sm font-semibold text-slate-700">{claim.type}</p>
+                            <p className="text-sm font-semibold text-slate-700">{claim.category}</p>
                         </div>
                     </div>
 
@@ -590,7 +593,7 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                             ctc: 'N/A',
                             avatar: emp?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
                         },
-                        type: (c.category === 'Travel' ? 'LTA' : c.category) as any,
+                        category: c.category,
                         amount: c.total_amount,
                         submittedDate: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
                         status: (c.status.charAt(0).toUpperCase() + c.status.slice(1)) as any,
@@ -601,6 +604,7 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                             size: '0 KB'
                         })),
                         requestedOn: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+                        lastModifiedBy: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
                         activityLog: [
                             { text: 'Submitted by employee', date: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'N/A' }
                         ]
@@ -685,22 +689,22 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
 
                     {/* Toolbar */}
                     <div className="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center bg-white">
-                        <div className="relative flex-1 min-w-[200px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search employee, claim type..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                            />
-                        </div>
+                                <div className="relative flex-1 min-w-[200px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search employee, claim category..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                    />
+                                </div>
                         <div className="flex gap-2">
                             <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
                                 Employee <ChevronDown size={14} />
                             </button>
                             <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                Claim Type <ChevronDown size={14} />
+                                Claim Category <ChevronDown size={14} />
                             </button>
                             <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
                                 Status <ChevronDown size={14} />
@@ -720,12 +724,12 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                             <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     <th className="px-6 py-3 border-b border-slate-200">Employee Name & ID</th>
-                                    <th className="px-6 py-3 border-b border-slate-200">Claim Type</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Claim Category</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Amount</th>
-                                    <th className="px-6 py-3 border-b border-slate-200">Date</th>
-                                    <th className="px-6 py-3 border-b border-slate-200 text-center">Proofs</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Expense Date</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Status</th>
-                                    <th className="px-6 py-3 border-b border-slate-200">Req. On</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Created By</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Last Modified By</th>
                                     <th className="px-4 py-3 border-b border-slate-200 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -733,7 +737,7 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                 {claims
                                     .filter(c => 
                                         c.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                        c.type.toLowerCase().includes(searchTerm.toLowerCase())
+                                        c.category.toLowerCase().includes(searchTerm.toLowerCase())
                                     )
                                     .map((claim) => (
                                     <tr
@@ -751,23 +755,19 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${getClaimTypeColor(claim.type)}`}>
-                                                {getClaimIcon(claim.type)} {claim.type}
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${getClaimTypeColor(claim.category)}`}>
+                                                {getClaimIcon(claim.category)} {claim.category}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-bold text-slate-700">₹{claim.amount.toLocaleString('en-IN')}</td>
                                         <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{claim.submittedDate}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-bold">
-                                                <Paperclip size={12} /> {claim.proofs.length}
-                                            </span>
-                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusBadge(claim.status)}`}>
                                                 {claim.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500">{claim.requestedOn}</td>
+                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{claim.requestedOn}</td>
+                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{claim.lastModifiedBy}</td>
                                         <td className="px-4 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button
