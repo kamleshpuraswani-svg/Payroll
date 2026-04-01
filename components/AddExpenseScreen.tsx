@@ -90,10 +90,13 @@ export const AddExpenseScreen: React.FC<{
         try {
             const employee = employees.find(e => e.id === selectedEmployeeId);
 
-            // In a real app, we would loop and insert items or a master record
+            // Generate a unique ID (e.g., EXP-1680584000)
+            const claimId = `EXP-${Date.now()}`;
+
             const { error } = await supabase
                 .from('reimbursement_claims')
                 .insert({
+                    id: claimId,
                     employee_id: selectedEmployeeId,
                     title: `Claim by ${employee?.name || 'Employee'}`,
                     category: selectedCategory?.name || 'Other',
@@ -126,16 +129,16 @@ export const AddExpenseScreen: React.FC<{
                     <h3 className="font-bold text-slate-800 text-xl">Add New Claim</h3>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={onClose} className="px-4 py-2 text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all">
+                    <button 
+                        onClick={onClose} 
+                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 flex items-center gap-2 transition-all"
+                    >
                         <X size={16} /> Cancel
-                    </button>
-                    <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center gap-2 transition-all">
-                        <Save size={16} /> Save as Draft
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={isSubmitting || !selectedEmployeeId || expenseItems.length === 0}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
                     >
                         <Send size={16} /> {isSubmitting ? 'Submitting...' : 'Submit'}
                     </button>
@@ -306,7 +309,7 @@ export const AddExpenseScreen: React.FC<{
                                     onClick={handleAddItem}
                                     className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
                                 >
-                                    <Plus size={18} /> Add to List
+                                    <Plus size={18} /> Add
                                 </button>
                             </div>
                         </div>
@@ -385,11 +388,14 @@ export const AddExpenseScreen: React.FC<{
                                     {expenseItems.length > 0 && (
                                         <tfoot className="bg-slate-50/50">
                                             <tr>
-                                                <td className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Total Claim Amount</td>
-                                                <td className="px-6 py-4 text-center text-lg font-black text-indigo-600">
-                                                    ₹{expenseItems.reduce((s, i) => s + i.amount, 0).toLocaleString()}
+                                                <td colSpan={4} className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-6">
+                                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Claim Amount</span>
+                                                        <span className="text-xl font-black text-indigo-600">
+                                                            ₹{expenseItems.reduce((s, i) => s + i.amount, 0).toLocaleString()}
+                                                        </span>
+                                                    </div>
                                                 </td>
-                                                <td colSpan={2}></td>
                                             </tr>
                                         </tfoot>
                                     )}
