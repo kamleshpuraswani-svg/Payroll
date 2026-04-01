@@ -1062,16 +1062,30 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     ? targetId 
                                     : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
                                 
-                                const savedForTarget = structures.filter(s => s.targetId === targetId && s.targetType === targetType);
+                                const savedForTarget = structures.filter(s => {
+                                    if (selectedTarget === 'all') return true;
+                                    const [tTypeRaw, tId] = selectedTarget.split(':');
+                                    const tType = tTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+                                    
+                                    // Match by target specifically
+                                    if (s.targetId === tId && s.targetType === tType) return true;
+                                    
+                                    // Fallback for older records or records with missing target info
+                                    // If we are looking at a BusinessUnit, include records where target is null
+                                    if (tType === 'BusinessUnit' && (!s.targetId || s.targetType === 'BusinessUnit')) return true;
+                                    
+                                    return false;
+                                });
                                 
+                                console.log(`Target: ${selectedTarget}, Saved count for target: ${savedForTarget.length}`);
+
                                 const defaultsForTarget = MOCK_STRUCTURES
                                     .filter(mock => {
-                                        // Priority: Always show SAVED structures. 
-                                        // Hide MOCK if a saved structure with the SAME BASE NAME already exists.
                                         const baseExists = savedForTarget.some(saved => {
                                             const savedNameLower = saved.name.toLowerCase();
                                             const mockNameLower = mock.name.toLowerCase();
                                             const prefixedMockLower = `${targetName} - ${mock.name}`.toLowerCase();
+                                            // Exact match or prefixed match
                                             return savedNameLower === mockNameLower || savedNameLower === prefixedMockLower;
                                         });
                                         return !baseExists;
@@ -1084,9 +1098,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                         targetId: targetId
                                     }));
                                 
+                                console.log(`Mock templates to show: ${defaultsForTarget.length}`);
                                 allStructures = [...defaultsForTarget, ...savedForTarget];
                             }
-                            console.log('Rendering list with allStructures:', allStructures);
+                            console.log('Final allStructures for target:', allStructures);
                             return allStructures;
                         })().map((item) => {
                             const isArchived = item.status === 'Archived';
