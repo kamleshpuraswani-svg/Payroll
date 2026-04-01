@@ -12,6 +12,7 @@ import TaxDeclarationsManagement from './components/TaxDeclarationsManagement';
 import PayrollManager from './components/PayrollManager';
 import PayrollApprovalRequests from './components/PayrollApprovalRequests';
 import ExpenseManagement from './components/ExpenseManagement';
+import { AddExpenseScreen } from './components/AddExpenseScreen';
 import LoansAdvances from './components/LoansAdvances';
 import AiAssistant from './components/AiAssistant';
 import PayrollSettings from './components/PayrollSettings';
@@ -245,7 +246,26 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_PAYROLL_RUN && <PayrollManager />}
                 {currentView === ViewState.PAYROLL_APPROVAL && <PayrollApprovalRequests />}
                 {currentView === ViewState.HR_DOCUMENTS && <DocumentsManager />}
-                {currentView === ViewState.HR_EXPENSES && <ExpenseManagement />}
+                {currentView === ViewState.HR_EXPENSES && <ExpenseManagement onChangeView={setCurrentView} />}
+                {currentView === ViewState.HR_ADD_EXPENSE && (
+                  <AddExpenseScreen
+                    onClose={() => setCurrentView(ViewState.HR_EXPENSES)}
+                    employees={employees.map(e => ({ ...e, name: `${e.first_name} ${e.last_name}`, eid: e.employee_id }))}
+                    categories={[
+                      { id: '1', name: 'Travel' },
+                      { id: '2', name: 'Meal' },
+                      { id: '3', name: 'Mobile' },
+                      { id: '4', name: 'Broadband' },
+                      { id: '5', name: 'Learning' },
+                      { id: '6', name: 'Other' }
+                    ]}
+                    onSuccess={(msg) => {
+                      // Success toast logic is inside components, 
+                      // for now we'll just navigate back
+                      setCurrentView(ViewState.HR_EXPENSES);
+                    }}
+                  />
+                )}
                 {currentView === ViewState.HR_EXPENSES_CONFIG && <ExpenseSettings />}
                 {currentView === ViewState.LOANS_ADVANCES && <LoansAdvances userRole={userRole} />}
                 {currentView === ViewState.SETTINGS && <GlobalSettings userRole={userRole} />}
@@ -280,7 +300,7 @@ const App: React.FC = () => {
 
             {/* Fallback for Work In Progress Views */}
             {((userRole === 'SUPER_ADMIN' && ![ViewState.DASHBOARD, ViewState.PAYROLL, ViewState.TAX, ViewState.SALARY, ViewState.TEMPLATE_SETUP].includes(currentView)) ||
-              (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS, ViewState.HR_OPERATIONAL_CONFIG].includes(currentView)) ||
+              (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.HR_ADD_EXPENSE, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS, ViewState.HR_OPERATIONAL_CONFIG].includes(currentView)) ||
               (userRole === 'EMPLOYEE' && ![ViewState.EMP_OVERVIEW, ViewState.EMP_PAYROLL_CORNER, ViewState.EMP_TAX_PLANNING, ViewState.EMP_REIMBURSEMENTS, ViewState.EMP_PAYSLIPS, ViewState.EMP_SALARY_BREAKDOWN, ViewState.EMP_TAX_DOCUMENTS, ViewState.EMP_LOANS_ADVANCES].includes(currentView))) && (
                 <div className="flex flex-col items-center justify-center h-full text-slate-400">
                   <div className="p-6 rounded-full bg-slate-100 mb-4">

@@ -35,6 +35,7 @@ import {
     AlertCircle as AlertIcon,
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { ViewState } from '../types';
 
 // --- Types ---
 
@@ -533,310 +534,10 @@ const DownloadClaimModal: React.FC<{
     );
 };
 
-// --- Add Expense Modal ---
-
-const AddExpenseModal: React.FC<{
-    onClose: () => void;
-    employees: any[];
-    categories: any[];
-    onSuccess: (message: string) => void;
-}> = ({ onClose, employees, categories, onSuccess }) => {
-    const [step, setStep] = useState(1);
-    const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<any>(null);
-    const [expenseItems, setExpenseItems] = useState<any[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Form state for current item
-    const [merchant, setMerchant] = useState('');
-    const [amount, setAmount] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [description, setDescription] = useState('');
-
-    const handleAddItem = () => {
-        if (!amount || !description || !selectedCategory) {
-            if (!selectedCategory) alert('Please select a category first.');
-            return;
-        }
-
-        const newItem = {
-            id: Math.random().toString(36).substr(2, 9),
-            category: selectedCategory.name,
-            merchant,
-            amount: parseFloat(amount),
-            date,
-            description
-        };
-
-        setExpenseItems([...expenseItems, newItem]);
-        // Reset item form
-        setMerchant('');
-        setAmount('');
-        setDescription('');
-    };
-
-    const handleRemoveItem = (id: string) => {
-        setExpenseItems(expenseItems.filter(item => item.id !== id));
-    };
-
-    const handleSubmit = async () => {
-        if (!selectedEmployeeId || expenseItems.length === 0) return;
-
-        const employee = employees.find(e => e.id === selectedEmployeeId);
-        if (!employee) {
-            alert('Selected employee not found in local data.');
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const { error } = await supabase
-                .from('approvals')
-                .insert(expenseItems.map(item => ({
-                    // Legacy columns
-                    employee_name: employee.name,
-                    company_name: employee.company_name || 'N/A',
-                    avatar_url: employee.avatar_url,
-                    type: 'Reimbursement Claim',
-                    submitted_time: 'Just now',
-                    amount: `₹${item.amount.toLocaleString()}`,
-                    details: `${item.category}: ${item.merchant || 'General'}`,
-                    status: 'Pending',
-                    // New column (requires schema update)
-                    employee_id: employee.id
-                })));
-
-            if (error) throw error;
-            onSuccess('Expense claim submitted successfully for the employee!');
-            onClose();
-        } catch (error: any) {
-            console.error('Error submitting expense:', error);
-            alert(`Failed to submit expense claim: ${error.message || 'Please check your database schema or internet connection.'}`);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="px-8 py-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
-                    <div className="flex items-center gap-4">
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors border border-slate-200">
-                            <ArrowLeft size={18} />
-                        </button>
-                        <h3 className="font-bold text-slate-800 text-xl">Add New Claim</h3>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="px-4 py-2 text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all">
-                            <X size={16} /> Cancel
-                        </button>
-                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center gap-2 transition-all">
-                            <Save size={16} /> Save as Draft
-                        </button>
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || !selectedEmployeeId || expenseItems.length === 0}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
-                        >
-                            <Send size={16} /> {isSubmitting ? 'Submitting...' : 'Submit'}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-slate-50/30">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-                        {/* Select Employee */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Employee Name</label>
-                            <div className="relative">
-                                <select
-                                    value={selectedEmployeeId}
-                                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm appearance-none cursor-pointer pr-10"
-                                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394a3b8\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
-                                >
-                                    <option value="">Select Employee Name</option>
-                                    {employees.map(emp => (
-                                        <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Select Category */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</label>
-                            <div className="relative">
-                                <select
-                                    value={selectedCategory?.id || ''}
-                                    onChange={(e) => {
-                                        const cat = categories.find(c => c.id === e.target.value);
-                                        setSelectedCategory(cat);
-                                    }}
-                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm appearance-none cursor-pointer pr-10"
-                                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394a3b8\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
-                                >
-                                    <option value="">Select Category</option>
-                                    {categories.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-300">
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                                {/* Form */}
-                                <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Merchant / Payee (Optional)</label>
-                                        <input
-                                            type="text"
-                                            value={merchant}
-                                            onChange={(e) => setMerchant(e.target.value)}
-                                            placeholder="Uber, Airtel, etc."
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount *</label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                                <input
-                                                    type="number"
-                                                    value={amount}
-                                                    onChange={(e) => setAmount(e.target.value)}
-                                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-800"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date *</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="date"
-                                                    value={date}
-                                                    onChange={(e) => setDate(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-800"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description *</label>
-                                        <textarea
-                                            rows={3}
-                                            value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
-                                            placeholder="Business purpose..."
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-700 resize-none"
-                                            required
-                                        ></textarea>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Receipt</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-blue-200 transition-colors cursor-pointer bg-slate-50/50 group">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Paperclip size={20} className="text-slate-400 group-hover:text-blue-500" />
-                                                <span className="text-xs font-bold text-slate-500 group-hover:text-blue-600">Upload Receipt</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={handleAddItem}
-                                        className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
-                                    >
-                                        <PlusIcon size={16} /> Add Item
-                                    </button>
-                                </div>
-
-                                {/* Item List Table */}
-                                <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full min-h-[400px]">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-slate-50/50 border-b border-slate-100">
-                                            <tr>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Expense Details</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Receipt</th>
-                                                <th className="px-6 py-4 text-right"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {expenseItems.map(item => (
-                                                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
-                                                                {getClaimIcon(item.category)}
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-bold text-slate-800">{item.merchant || 'General'}</p>
-                                                                <p className="text-[10px] font-bold text-slate-400 line-clamp-1">{item.description}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-xs font-bold text-slate-500">{item.date}</td>
-                                                    <td className="px-6 py-4 text-sm font-black text-slate-800">₹{item.amount.toLocaleString()}</td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className="text-[10px] font-black text-slate-300 italic">No receipt</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button
-                                                            onClick={() => handleRemoveItem(item.id)}
-                                                            className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {expenseItems.length === 0 && (
-                                                <tr>
-                                                    <td colSpan={5} className="px-6 py-20 text-center">
-                                                        <div className="flex flex-col items-center gap-4">
-                                                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-                                                                <Plus size={32} />
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-slate-400">No expense items added yet.</h4>
-                                                                <p className="text-xs text-slate-400 mt-1">Use the form on the left to add items.</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                    {expenseItems.length > 0 && (
-                                        <div className="mt-auto p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-                                            <div className="text-right">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Amount</p>
-                                                <p className="text-3xl font-black text-slate-800 mt-1">
-                                                    ₹{expenseItems.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // --- Main Container ---
 
-const ExpenseManagement: React.FC = () => {
-    const [isAddingExpense, setIsAddingExpense] = useState(false);
+const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> = ({ onChangeView }) => {
     const [employees, setEmployees] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
@@ -965,7 +666,7 @@ const ExpenseManagement: React.FC = () => {
                                 Status <ChevronDown size={14} />
                             </button>
                                 <button
-                                    onClick={() => setIsAddingExpense(true)}
+                                    onClick={() => onChangeView(ViewState.HR_ADD_EXPENSE)}
                                     className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 font-bold flex items-center gap-2 shadow-md shadow-purple-100 transition-all ml-auto"
                                 >
                                     Add Expense for Employee
@@ -1158,19 +859,7 @@ const ExpenseManagement: React.FC = () => {
                 />
             )}
 
-            {/* Add Expense Modal */}
-            {isAddingExpense && (
-                <AddExpenseModal
-                    onClose={() => setIsAddingExpense(false)}
-                    employees={employees}
-                    categories={categories}
-                    onSuccess={(msg) => {
-                        setShowSuccessToast({ message: msg, type: 'success' });
-                        setTimeout(() => setShowSuccessToast(null), 3000);
-                        fetchData(); // Refresh data
-                    }}
-                />
-            )}
+            {/* Add Expense Screen removed - now controlled via App routing */}
 
         </div>
     );
