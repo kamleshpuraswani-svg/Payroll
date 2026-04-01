@@ -96,6 +96,7 @@ const App: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingClaimId, setEditingClaimId] = useState<string | undefined>(undefined);
 
   // Fetch initial data from Supabase
   useEffect(() => {
@@ -246,10 +247,22 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_PAYROLL_RUN && <PayrollManager />}
                 {currentView === ViewState.PAYROLL_APPROVAL && <PayrollApprovalRequests />}
                 {currentView === ViewState.HR_DOCUMENTS && <DocumentsManager />}
-                {currentView === ViewState.HR_EXPENSES && <ExpenseManagement onChangeView={setCurrentView} />}
+                {currentView === ViewState.HR_EXPENSES && (
+                  <ExpenseManagement 
+                    onChangeView={setCurrentView} 
+                    onEditClaim={(id) => {
+                      setEditingClaimId(id);
+                      setCurrentView(ViewState.HR_ADD_EXPENSE);
+                    }}
+                  />
+                )}
                 {currentView === ViewState.HR_ADD_EXPENSE && (
                   <AddExpenseScreen
-                    onClose={() => setCurrentView(ViewState.HR_EXPENSES)}
+                    editId={editingClaimId}
+                    onClose={() => {
+                      setEditingClaimId(undefined);
+                      setCurrentView(ViewState.HR_EXPENSES);
+                    }}
                     employees={employees
                       .filter(e => e.status === 'Active')
                       .map(e => ({ 
@@ -266,8 +279,7 @@ const App: React.FC = () => {
                       { id: '6', name: 'Other' }
                     ]}
                     onSuccess={(msg) => {
-                      // Success toast logic is inside components, 
-                      // for now we'll just navigate back
+                      setEditingClaimId(undefined);
                       setCurrentView(ViewState.HR_EXPENSES);
                     }}
                   />

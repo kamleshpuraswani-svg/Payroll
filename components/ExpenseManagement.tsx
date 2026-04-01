@@ -551,8 +551,10 @@ const DownloadClaimModal: React.FC<{
 
 
 // --- Main Container ---
-
-const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> = ({ onChangeView }) => {
+const ExpenseManagement: React.FC<{ 
+    onChangeView: (view: ViewState) => void,
+    onEditClaim?: (id: string) => void 
+}> = ({ onChangeView, onEditClaim }) => {
     const [employees, setEmployees] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [claims, setClaims] = useState<ExpenseClaim[]>([]);
@@ -560,7 +562,6 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
 
     const [selectedClaim, setSelectedClaim] = useState<ExpenseClaim | null>(null);
     const [viewClaim, setViewClaim] = useState<ExpenseClaim | null>(null);
-    const [editClaim, setEditClaim] = useState<ExpenseClaim | null>(null);
     const [approveClaim, setApproveClaim] = useState<ExpenseClaim | null>(null);
     const [downloadClaim, setDownloadClaim] = useState<ExpenseClaim | null>(null);
 
@@ -677,10 +678,7 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
     };
 
     const handleSaveEdit = (updatedClaim: ExpenseClaim) => {
-        // In real app, update state/API here
-        setShowSuccessToast({ message: 'Claim updated successfully', type: 'success' });
-        setTimeout(() => setShowSuccessToast(null), 3000);
-        setEditClaim(null); // Close edit modal
+        // This is now handled in AddExpenseScreen
     };
 
     const handleDownloadProof = (proof: ClaimProof) => {
@@ -815,29 +813,24 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                <button
-                                                    className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
-                                                    title="Edit Claim"
-                                                    onClick={(e) => { e.stopPropagation(); setEditClaim(claim); }}
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
+                                                {['PENDING', 'MORE INFO REQUESTED'].includes(claim.status.toUpperCase()) && (
+                                                    <button
+                                                        className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
+                                                        title="Edit Claim"
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            if (onEditClaim) onEditClaim(claim.id);
+                                                        }}
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setApproveClaim(claim); }}
                                                     className="p-1.5 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 rounded"
                                                     title="Approve"
                                                 >
                                                     <CheckCircle size={14} />
-                                                </button>
-                                                <button
-                                                    className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
-                                                    title="Download"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDownloadClaim(claim);
-                                                    }}
-                                                >
-                                                    <Download size={14} />
                                                 </button>
                                             </div>
                                         </td>
@@ -919,15 +912,6 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                     onClose={() => setViewClaim(null)}
                     onViewProof={(proof) => setViewingProof(proof)}
                     onDownloadProof={(proof) => handleDownloadProof(proof)}
-                />
-            )}
-
-            {/* Edit Claim Modal */}
-            {editClaim && (
-                <EditClaimModal
-                    claim={editClaim}
-                    onClose={() => setEditClaim(null)}
-                    onSave={handleSaveEdit}
                 />
             )}
 

@@ -1,418 +1,468 @@
-
-import React, { useState } from 'react';
-import {
-    ArrowLeft,
-    X,
-    Save,
-    Send,
+import React, { useState, useEffect } from 'react';
+import { 
+    Plus, 
+    Trash2, 
+    ArrowLeft, 
+    Send, 
+    MapPin, 
     Briefcase,
-    MessageSquare,
     DollarSign,
     Calendar,
-    Paperclip,
-    CheckCircle,
-    Plus,
-    Trash2,
-    ImageIcon,
-    FileText,
     ChevronDown,
-    MapPin,
+    Image as ImageIcon,
+    Upload,
+    Paperclip,
+    X,
+    FileText,
+    CheckCircle,
+    Activity,
     Smartphone,
     BookOpen,
-    Fuel,
-    Activity
+    Fuel
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
-export const AddExpenseScreen: React.FC<{
+export interface AddExpenseScreenProps {
     onClose: () => void;
+    onSuccess?: (message: string) => void;
     employees: any[];
     categories: any[];
-    onSuccess: (message: string) => void;
-}> = ({ onClose, employees, categories, onSuccess }) => {
+    editId?: string;
+}
+
+export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId }) => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [expenseItems, setExpenseItems] = useState<any[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Form state for current item
-    const [amount, setAmount] = useState('');
     const [expenseFromDate, setExpenseFromDate] = useState(new Date().toISOString().split('T')[0]);
     const [expenseToDate, setExpenseToDate] = useState(new Date().toISOString().split('T')[0]);
-    const [projectClient, setProjectClient] = useState('');
+    
+    // Form state for current item
     const [merchant, setMerchant] = useState('');
-    const [description, setDescription] = useState('');
+    const [project, setProject] = useState('');
+    const [amount, setAmount] = useState('');
+    const [reason, setReason] = useState('');
     const [receipt, setReceipt] = useState<File | null>(null);
+    
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFetchingData, setIsFetchingData] = useState(false);
+
+    useEffect(() => {
+        if (editId) {
+            fetchClaimData();
+        }
+    }, [editId]);
+
+    const fetchClaimData = async () => {
+        setIsFetchingData(true);
+        try {
+            const { data, error } = await supabase
+                .from('reimbursement_claims')
+                .select('*')
+                .eq('id', editId)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                setSelectedEmployeeId(data.employee_id || '');
+                const cat = categories.find(c => c.name === data.category);
+                setSelectedCategory(cat || null);
+                
+                if (data.submitted_at) {
+                    const date = new Date(data.submitted_at).toISOString().split('T')[0];
+                    setExpenseFromDate(date);
+                    setExpenseToDate(date);
+                }
+
+                // Map data items to our internal format if needed
+                const items = (data.items || []).map((item: any) => ({
+                    ...item,
+                    id: item.id || Date.now() + Math.random()
+                }));
+                setExpenseItems(items);
+            }
+        } catch (error) {
+            console.error('Error fetching claim data:', error);
+        } finally {
+            setIsFetchingData(false);
+        }
+    };
 
     const handleAddItem = () => {
-        if (!selectedCategory) {
-            alert('Please select an expense category first.');
-            return;
-        }
-        if (!amount || !description) return;
-
+        if (!merchant || !amount || !reason) return;
+        
         const newItem = {
-            id: Date.now().toString(),
-            category: selectedCategory.name,
-            amount: parseFloat(amount),
-            expenseFromDate,
-            expenseToDate,
-            projectClient,
+            id: Date.now(),
             merchant,
-            description,
-            receiptName: receipt?.name || null
+            project,
+            amount: parseFloat(amount),
+            reason,
+            receiptName: receipt ? receipt.name : null,
+            fromDate: expenseFromDate,
+            toDate: expenseToDate
         };
-
+        
         setExpenseItems([...expenseItems, newItem]);
-        // Reset item form
-        setAmount('');
+        // Reset item fields
         setMerchant('');
-        setProjectClient('');
-        setDescription('');
+        setProject('');
+        setAmount('');
+        setReason('');
         setReceipt(null);
     };
 
-    const handleRemoveItem = (id: string) => {
+    const handleRemoveItem = (id: number | string) => {
         setExpenseItems(expenseItems.filter(item => item.id !== id));
     };
 
     const handleSubmit = async () => {
-        if (!selectedEmployeeId) {
-            alert('Please select an employee.');
-            return;
-        }
-        if (expenseItems.length === 0) {
-            alert('Please add at least one expense item.');
-            return;
-        }
-
+        if (!selectedEmployeeId || !selectedCategory || expenseItems.length === 0) return;
+        
         setIsSubmitting(true);
         try {
             const employee = employees.find(e => e.id === selectedEmployeeId);
+            const employeeName = employee?.name || 'Employee';
+            const totalAmount = expenseItems.reduce((sum, item) => sum + item.amount, 0);
 
-            // Generate a unique ID (e.g., EXP-1680584000)
-            const claimId = `EXP-${Date.now()}`;
+            if (!editId) {
+                // Insert mode
+                const { error } = await supabase
+                    .from('reimbursement_claims')
+                    .insert([{
+                        employee_id: selectedEmployeeId,
+                        category: selectedCategory.name,
+                        total_amount: totalAmount,
+                        status: 'pending',
+                        submitted_at: new Date().toISOString(),
+                        items: expenseItems,
+                        title: `Claim by ${employeeName}`
+                    }]);
 
-            const { error } = await supabase
-                .from('reimbursement_claims')
-                .insert({
-                    id: claimId,
-                    employee_id: selectedEmployeeId,
-                    title: `Claim by ${employee?.name || 'Employee'}`,
-                    category: selectedCategory?.name || 'Other',
-                    total_amount: expenseItems.reduce((sum, item) => sum + item.amount, 0),
-                    status: 'pending',
-                    items: expenseItems,
-                    submitted_at: new Date().toISOString()
-                });
+                if (error) throw error;
+                if (onSuccess) onSuccess('Claim submitted successfully');
+            } else {
+                // Update mode
+                const { error } = await supabase
+                    .from('reimbursement_claims')
+                    .update({
+                        employee_id: selectedEmployeeId,
+                        category: selectedCategory.name,
+                        total_amount: totalAmount,
+                        items: expenseItems,
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', editId);
 
-            if (error) throw error;
-
-            onSuccess('Expense claim submitted successfully for the employee!');
+                if (error) throw error;
+                if (onSuccess) onSuccess('Claim updated successfully');
+            }
             onClose();
         } catch (error: any) {
             console.error('Error submitting expense:', error);
-            alert(`Failed to submit expense claim: ${error.message || 'Please check your database schema or internet connection.'}`);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="flex flex-col h-full min-h-screen bg-white animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-right duration-300">
             {/* Header */}
-            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
-                <div className="flex items-center gap-4">
+            <div className="h-20 border-b border-slate-100 px-8 flex items-center justify-between bg-white shrink-0">
+                <div className="flex items-center gap-6">
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors border border-slate-200">
                         <ArrowLeft size={18} />
                     </button>
-                    <h3 className="font-bold text-slate-800 text-xl">Add New Claim</h3>
+                    <h3 className="font-bold text-slate-800 text-xl">{editId ? 'Edit Claim' : 'Add New Claim'}</h3>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
-                        onClick={onClose} 
-                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 flex items-center gap-2 transition-all"
+                        onClick={onClose}
+                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all"
                     >
-                        <X size={16} /> Cancel
+                        Cancel
                     </button>
-                    <button
+                    <button 
                         onClick={handleSubmit}
                         disabled={isSubmitting || !selectedEmployeeId || expenseItems.length === 0}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
                     >
-                        <Send size={16} /> {isSubmitting ? 'Submitting...' : 'Submit'}
+                        <Send size={16} /> {isSubmitting ? 'Submitting...' : (editId ? 'Update' : 'Submit')}
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-slate-50">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-                    {/* Select Employee */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Employee <span className="text-rose-500">*</span></label>
-                        <div className="relative group">
-                            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                            <select
-                                value={selectedEmployeeId}
-                                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer"
-                            >
-                                <option value="">Choose an employee...</option>
-                                {employees.map(emp => (
-                                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                        </div>
+            <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
+                {isFetchingData ? (
+                    <div className="flex items-center justify-center py-20">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                        <span className="ml-3 text-slate-500 font-medium">Loading claim details...</span>
                     </div>
-
-                    {/* Select Category */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Category <span className="text-rose-500">*</span></label>
-                        <div className="relative group">
-                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                            <select
-                                value={selectedCategory?.id || ''}
-                                onChange={(e) => {
-                                    const cat = categories.find(c => String(c.id) === e.target.value);
-                                    setSelectedCategory(cat);
-                                }}
-                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer"
-                            >
-                                <option value="">Choose a category...</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                        </div>
-                    </div>
-
-                    {/* Expense from date */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense from date <span className="text-rose-500">*</span></label>
-                        <div className="relative group">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                            <input
-                                type="date"
-                                value={expenseFromDate}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setExpenseFromDate(val);
-                                    setExpenseToDate(val);
-                                }}
-                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Expense to date */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense to date <span className="text-rose-500">*</span></label>
-                        <div className="relative group">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                            <input
-                                type="date"
-                                value={expenseToDate}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setExpenseFromDate(val);
-                                    setExpenseToDate(val);
-                                }}
-                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense details</h3>
-
-                    <div className="flex flex-col lg:flex-row gap-8 items-start">
-                        {/* Add Item Form */}
-                        <div className="w-full lg:w-1/3 shrink-0 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
-                            <div className="space-y-5">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Merchant / Payee</label>
-                                    <div className="relative group">
-                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Uber, Amazon, etc."
-                                            value={merchant}
-                                            onChange={(e) => setMerchant(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Project / client</label>
-                                    <div className="relative group">
-                                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Project X, Client Y"
-                                            value={projectClient}
-                                            onChange={(e) => setProjectClient(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Amount <span className="text-rose-500">*</span></label>
-                                    <div className="relative group">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                        <input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                            className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Reason/Description <span className="text-rose-500">*</span></label>
-                                    <div className="relative group">
-                                        <MessageSquare className="absolute left-3 top-3 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
-                                        <textarea
-                                            placeholder="Business purpose of this expense..."
-                                            value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
-                                            rows={3}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Bill / Receipt</label>
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex-1 relative">
-                                            <input
-                                                type="file"
-                                                id="receipt-upload-screen"
-                                                className="hidden"
-                                                onChange={(e) => setReceipt(e.target.files?.[0] || null)}
-                                            />
-                                            <label
-                                                htmlFor="receipt-upload-screen"
-                                                className="flex items-center justify-center gap-2 w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:text-indigo-500 hover:border-indigo-500 hover:bg-indigo-50 transition-all cursor-pointer group"
-                                            >
-                                                <Paperclip size={16} className="group-hover:rotate-12 transition-transform" />
-                                                <span className="text-xs font-bold uppercase tracking-wider">{receipt ? receipt.name : 'Upload Receipt'}</span>
-                                            </label>
-                                        </div>
-                                        {receipt && (
-                                            <button onClick={() => setReceipt(null)} className="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
-                                                <X size={18} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={handleAddItem}
-                                    className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
-                                >
-                                    <Plus size={18} /> Add
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Items Table */}
-                        <div className="flex-1 w-full bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h4 className="font-bold text-slate-700">Expense Items List</h4>
-                                <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-500">{expenseItems.length} items added</span>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                                        <tr>
-                                            <th className="px-6 py-4">Expense Details</th>
-                                            <th className="px-6 py-4 text-center">Amount</th>
-                                            <th className="px-6 py-4 text-center">Receipt</th>
-                                            <th className="px-6 py-4 text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {expenseItems.map((item) => (
-                                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                                                            {item.category === 'Medical' && <Activity size={18} />}
-                                                            {item.category === 'Telephone' && <Smartphone size={18} />}
-                                                            {item.category === 'LTA' && <MapPin size={18} />}
-                                                            {item.category === 'Books' && <BookOpen size={18} />}
-                                                            {item.category === 'Fuel' && <Fuel size={18} />}
-                                                            {!['Medical', 'Telephone', 'LTA', 'Books', 'Fuel'].includes(item.category) && <DollarSign size={18} />}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-bold text-slate-800">{item.merchant || 'General Expense'}</p>
-                                                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                                <span>{item.expenseFromDate} - {item.expenseToDate}</span>
-                                                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                                <span className="truncate max-w-[150px]">{item.projectClient ? `${item.projectClient}: ` : ''}{item.description}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-center font-black text-slate-900">₹{item.amount.toLocaleString()}</td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {item.receiptName ? (
-                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold border border-emerald-100">
-                                                            <CheckCircle size={12} /> ATTACHED
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] text-slate-300 font-bold">NO RECEIPT</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <button onClick={() => handleRemoveItem(item.id)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+                            {/* Select Employee */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Employee <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <select
+                                        value={selectedEmployeeId}
+                                        onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Choose an employee...</option>
+                                        {employees.map(emp => (
+                                            <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
                                         ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                            </div>
 
-                                        {expenseItems.length === 0 && (
-                                            <tr>
-                                                <td colSpan={4} className="px-6 py-16 text-center">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-                                                            <DollarSign size={32} />
-                                                        </div>
-                                                        <p className="text-slate-400 font-medium">No items added to this claim yet.</p>
-                                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Fill the form on the left to start</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                    {expenseItems.length > 0 && (
-                                        <tfoot className="bg-slate-50/50">
-                                            <tr>
-                                                <td colSpan={4} className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-6">
-                                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Claim Amount</span>
-                                                        <span className="text-xl font-black text-indigo-600">
-                                                            ₹{expenseItems.reduce((s, i) => s + i.amount, 0).toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tfoot>
-                                    )}
-                                </table>
+                            {/* Select Category */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Category <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <select
+                                        value={selectedCategory?.id || ''}
+                                        onChange={(e) => {
+                                            const cat = categories.find(c => String(c.id) === e.target.value);
+                                            setSelectedCategory(cat);
+                                        }}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Choose a category...</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            {/* Expense from date */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense from date <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <input
+                                        type="date"
+                                        value={expenseFromDate}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setExpenseFromDate(val);
+                                            setExpenseToDate(val);
+                                        }}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Expense to date */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense to date <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <input
+                                        type="date"
+                                        value={expenseToDate}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setExpenseFromDate(val);
+                                            setExpenseToDate(val);
+                                        }}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+
+                        <div className="space-y-6 mt-10">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense details</h3>
+
+                            <div className="flex flex-col lg:flex-row gap-8 items-start">
+                                {/* Add Item Form */}
+                                <div className="w-full lg:w-1/3 shrink-0 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Merchant / Payee</label>
+                                            <div className="relative group">
+                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. Uber, Amazon, etc."
+                                                    value={merchant}
+                                                    onChange={(e) => setMerchant(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Project / client</label>
+                                            <div className="relative group">
+                                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. Project X, Client Y"
+                                                    value={project}
+                                                    onChange={(e) => setProject(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Amount <span className="text-rose-500">*</span></label>
+                                            <div className="relative group">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm font-bold">₹</div>
+                                                <input 
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                    value={amount}
+                                                    onChange={(e) => setAmount(e.target.value)}
+                                                    className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold text-slate-700"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Reason/Description <span className="text-rose-500">*</span></label>
+                                            <textarea 
+                                                rows={3}
+                                                placeholder="Business purpose of this expense..."
+                                                value={reason}
+                                                onChange={(e) => setReason(e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all resize-none shadow-blue-100 font-bold"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Bill / Receipt</label>
+                                            <div className="relative group">
+                                                <input
+                                                    type="file"
+                                                    id="receipt-upload"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files ? e.target.files[0] : null;
+                                                        setReceipt(file);
+                                                    }}
+                                                />
+                                                <label 
+                                                    htmlFor="receipt-upload"
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-purple-400 hover:text-purple-500 hover:bg-white transition-all cursor-pointer uppercase tracking-widest"
+                                                >
+                                                    {receipt ? (
+                                                        <>
+                                                            <Paperclip size={14} /> {receipt.name.length > 20 ? receipt.name.substring(0, 17) + '...' : receipt.name}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Upload size={14} /> UPLOAD RECEIPT
+                                                        </>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            onClick={handleAddItem}
+                                            disabled={!merchant || !amount || !reason}
+                                            className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            <Plus size={18} /> ADD
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Items List Container */}
+                                <div className="flex-1 w-full bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+                                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                        <h4 className="text-sm font-bold text-slate-800">Expense Items List</h4>
+                                        <div className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase">
+                                            {expenseItems.length} items added
+                                        </div>
+                                    </div>
+
+                                    {expenseItems.length === 0 ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500 opacity-40">
+                                                <DollarSign size={32} />
+                                            </div>
+                                            <p className="text-slate-400 text-sm max-w-[200px] font-bold leading-relaxed">No items added to this claim yet.</p>
+                                            <p className="text-[10px] text-slate-300 uppercase mt-4 tracking-widest font-black">fill the form on the left to start</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 overflow-auto">
+                                            <table className="w-full text-left text-sm border-collapse">
+                                                <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0 z-10 border-b border-slate-100">
+                                                    <tr>
+                                                        <th className="px-6 py-3">Expense Details</th>
+                                                        <th className="px-6 py-3">Amount</th>
+                                                        <th className="px-6 py-3">Receipt</th>
+                                                        <th className="px-4 py-3 text-right font-black">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {expenseItems.map((item, idx) => (
+                                                        <tr key={item.id || idx} className="group hover:bg-slate-50/50 transition-colors">
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                                                                        {selectedCategory?.name === 'Medical' && <Activity size={14} />}
+                                                                        {selectedCategory?.name === 'Mobile' && <Smartphone size={14} />}
+                                                                        {selectedCategory?.name === 'Travel' && <MapPin size={14} />}
+                                                                        {selectedCategory?.name === 'Learning' && <BookOpen size={14} />}
+                                                                        {selectedCategory?.name === 'Meal' && <Fuel size={14} />}
+                                                                        {(!selectedCategory || !['Medical', 'Mobile', 'Travel', 'Learning', 'Meal'].includes(selectedCategory.name)) && <DollarSign size={14} />}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-bold text-slate-700">{item.merchant || 'General'}</span>
+                                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{item.project ? `${item.project} • ` : ''}{item.reason || item.description}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 font-black text-slate-800">
+                                                                ₹{(item.amount || 0).toLocaleString('en-IN')}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {item.receiptName ? (
+                                                                    <div className="flex items-center gap-1.5 text-emerald-500 font-black text-[10px] uppercase">
+                                                                        <CheckCircle size={12} /> ATTACHED
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter opacity-50">NO RECEIPT</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-4 py-4 text-right">
+                                                                <button 
+                                                                    onClick={() => handleRemoveItem(item.id)}
+                                                                    className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                    
+                                    {expenseItems.length > 0 && (
+                                        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center shrink-0">
+                                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total amount</span>
+                                            <span className="text-lg font-black text-blue-600">₹{expenseItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString('en-IN')}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
