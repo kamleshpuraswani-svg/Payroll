@@ -146,6 +146,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             if (data?.config_value) {
                 const config = data.config_value;
                 setInvEnabled(config.invEnabled ?? true);
+                setInvStartDay(config.invStartDay ?? '1');
+                setInvEndDay(config.invEndDay ?? '22');
+                setCutoffMonth(config.cutoffMonth ?? 'January');
+                setCutoffDay(config.cutoffDay ?? '22');
                 setInvDeadlineFrom(config.invDeadlineFrom ? new Date(config.invDeadlineFrom) : new Date(2026, 0, 1));
                 setInvDeadlineTo(config.invDeadlineTo ? new Date(config.invDeadlineTo) : new Date(2026, 0, 15));
                 setGracePeriodEnabled(config.gracePeriodEnabled ?? false);
@@ -199,6 +203,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     // --- Investment Declaration State ---
     const [isEditingInv, setIsEditingInv] = useState(false);
     const [invEnabled, setInvEnabled] = useState(true);
+    const [invStartDay, setInvStartDay] = useState('1');
+    const [invEndDay, setInvEndDay] = useState('22');
+    const [cutoffMonth, setCutoffMonth] = useState('January');
+    const [cutoffDay, setCutoffDay] = useState('22');
     const [invDeadlineFrom, setInvDeadlineFrom] = useState(new Date(2026, 0, 1)); // Jan 1, 2026
     const [invDeadlineTo, setInvDeadlineTo] = useState(new Date(2026, 0, 15)); // Jan 15, 2026
     const [gracePeriodEnabled, setGracePeriodEnabled] = useState(false);
@@ -269,7 +277,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     // -- Handlers for Investment Declaration --
     const handleEditInv = () => {
         setInvBackup({ 
-            invEnabled, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate: new Date(gracePeriodDate), declarationFrequency, limits: JSON.parse(JSON.stringify(limits)), 
+            invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate: new Date(gracePeriodDate), declarationFrequency, limits: JSON.parse(JSON.stringify(limits)), 
             defaultRegime, allowSwitch, switchLockDate,
             notifyRelease, emailReminder, notifyLock,
             invApprovers: [...invApprovers],
@@ -286,6 +294,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const handleCancelInv = () => {
         if(invBackup) {
             setInvEnabled(invBackup.invEnabled);
+            setInvStartDay(invBackup.invStartDay || '1');
+            setInvEndDay(invBackup.invEndDay || '22');
+            setCutoffMonth(invBackup.cutoffMonth || 'January');
+            setCutoffDay(invBackup.cutoffDay || '22');
             setInvDeadlineFrom(new Date(invBackup.invDeadlineFrom));
             setInvDeadlineTo(new Date(invBackup.invDeadlineTo));
             setGracePeriodEnabled(invBackup.gracePeriodEnabled);
@@ -316,7 +328,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const handleSaveInv = async () => {
         try {
             const configValue = {
-                invEnabled, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
+                invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
                 limits, defaultRegime, allowSwitch, switchLockDate,
                 notifyRelease, emailReminder, notifyLock, invApprovers,
                 tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
@@ -377,7 +389,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const handleSaveProof = async () => {
         try {
             const configValue = {
-                invEnabled, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
+                invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
                 limits, defaultRegime, allowSwitch, switchLockDate,
                 notifyRelease, emailReminder, notifyLock, invApprovers,
                 tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
@@ -831,97 +843,110 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     {invEnabled && (
                         <div className="p-8 space-y-8 animate-in slide-in-from-top-2">
 
-                            {/* Declaration Settings Section */}
+                            {/* Declaration Settings Overhaul */}
                             <div className="pt-2">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Declaration Settings</h4>
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Declaration Frequency</label>
-                                        <div className="flex gap-8">
-                                            {['Monthly', 'Annually'].map((option) => (
-                                                <label key={option} className={`flex items-center gap-2.5 ${isEditingInv ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${declarationFrequency === option ? 'border-indigo-600' : 'border-slate-300 group-hover:border-indigo-400'}`}>
-                                                        {declarationFrequency === option && <div className="w-2.5 h-2.5 rounded-full bg-indigo-600" />}
-                                                    </div>
-                                                    <input 
-                                                        type="radio" 
-                                                        name="declarationFrequency" 
-                                                        value={option}
-                                                        checked={declarationFrequency === option} 
-                                                        onChange={() => isEditingInv && setDeclarationFrequency(option)} 
-                                                        className="hidden" 
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-100 pb-2">Declaration Settings</h4>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Monthly Window */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                                                <Clock size={16} className="text-indigo-600" />
+                                            </div>
+                                            <h4 className="text-sm font-bold text-slate-800">Monthly window</h4>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 max-w-sm">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start date</label>
+                                                <div className="relative">
+                                                    <select
                                                         disabled={!isEditingInv}
-                                                    />
-                                                    <span className={`text-sm ${declarationFrequency === option ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{option}</span>
-                                                </label>
-                                            ))}
+                                                        value={invStartDay}
+                                                        onChange={(e) => setInvStartDay(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                                            <option key={day} value={day}>{day}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End date</label>
+                                                <div className="relative">
+                                                    <select
+                                                        disabled={!isEditingInv}
+                                                        value={invEndDay}
+                                                        onChange={(e) => setInvEndDay(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                                            <option key={day} value={day}>{day}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Declaration Deadline</label>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                                            <DatePicker 
-                                                label="From Date" 
-                                                date={invDeadlineFrom} 
-                                                onChange={setInvDeadlineFrom} 
-                                                disabled={!isEditingInv}
-                                                required
-                                            />
-                                            <DatePicker 
-                                                label="To Date" 
-                                                date={invDeadlineTo} 
-                                                onChange={setInvDeadlineTo} 
-                                                disabled={!isEditingInv}
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Grace Period Field */}
-                                        <div className="mt-6 space-y-4">
-                                            <div className="flex items-center justify-between max-w-2xl bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                                                <span className="text-sm font-bold text-slate-700">Grace period after deadline?</span>
-                                                <label className={`relative inline-flex items-center ${isEditingInv ? 'cursor-pointer' : 'cursor-default'}`}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={gracePeriodEnabled} 
-                                                        onChange={() => isEditingInv && setGracePeriodEnabled(!gracePeriodEnabled)} 
-                                                        disabled={!isEditingInv} 
-                                                        className="sr-only peer" 
-                                                    />
-                                                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                                                </label>
+                                    {/* Financial Year Cutoff Date */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                                                <Calendar size={16} className="text-rose-600" />
                                             </div>
-                                            {gracePeriodEnabled && (
-                                                <div className="max-sm animate-in fade-in slide-in-from-top-2">
-                                                    <DatePicker 
-                                                        label="Grace Period End Date" 
-                                                        date={gracePeriodDate} 
-                                                        onChange={setGracePeriodDate} 
+                                            <h4 className="text-sm font-bold text-slate-800">Financial year cutoff date</h4>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 max-w-sm">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month</label>
+                                                <div className="relative">
+                                                    <select
                                                         disabled={!isEditingInv}
-                                                        required
-                                                        subLabel="Allows submissions for a limited time after the official deadline"
-                                                    />
+                                                        value={cutoffMonth}
+                                                        onChange={(e) => setCutoffMonth(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {["January", "February", "March"].map(m => (
+                                                            <option key={m} value={m}>{m}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                                 </div>
-                                            )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End date</label>
+                                                <div className="relative">
+                                                    <select
+                                                        disabled={!isEditingInv}
+                                                        value={cutoffDay}
+                                                        onChange={(e) => setCutoffDay(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {Array.from({ length: 31 }, (_, i) => i + i).map(day => (
+                                                            <option key={day+1} value={day+1}>{day+1}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        {declarationFrequency === 'Monthly' && (
-                                            <div className="mt-4 flex items-start gap-3 bg-blue-50 border border-blue-100 p-4 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                                                <Info size={18} className="text-blue-600 mt-0.5 shrink-0" />
-                                                <p className="text-sm text-blue-800 font-medium leading-relaxed">
-                                                    Investment Declaration window will be active from <span className="font-bold underline decoration-blue-300 underline-offset-2">{getOrdinalDay(invDeadlineFrom)}</span> to <span className="font-bold underline decoration-blue-300 underline-offset-2">{getOrdinalDay(invDeadlineTo)}</span>.
-                                                </p>
-                                            </div>
-                                        )}
-                                        {declarationFrequency === 'Annually' && (
-                                            <div className="mt-4 flex items-start gap-3 bg-blue-50 border border-blue-100 p-4 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                                                <Info size={18} className="text-blue-600 mt-0.5 shrink-0" />
-                                                <p className="text-sm text-blue-800 font-medium leading-relaxed">
-                                                    Investment Declaration window will be active from <span className="font-bold underline decoration-blue-300 underline-offset-2">{formatDate(invDeadlineFrom)}</span> to <span className="font-bold underline decoration-blue-300 underline-offset-2">{formatDate(invDeadlineTo)}</span>.
-                                                </p>
-                                            </div>
-                                        )}
+                                {/* Dynamic info text box */}
+                                <div className="mt-8 p-4 bg-amber-50/50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                        <Info size={20} className="text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <h5 className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-1">Investment Declaration Period</h5>
+                                        <p className="text-sm font-medium text-amber-900/80 leading-relaxed">
+                                            Employees can declare investments from the <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invEndDay)))}</span> of every month until the yearly cutoff on <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffDay)))} {cutoffMonth}</span>. After this period, no further declarations will be accepted for the current financial year.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

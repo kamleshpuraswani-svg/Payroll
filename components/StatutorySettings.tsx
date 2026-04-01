@@ -108,6 +108,8 @@ const StatutorySettings: React.FC = () => {
                 setCustomMaxGratuityAmount(config.customMaxGratuityAmount ?? '20,00,000');
                 setEnableLwf(config.enableLwf ?? true);
                 setLwfState(config.lwfState ?? 'Karnataka');
+                setLwfEstablishmentId(config.lwfEstablishmentId ?? '');
+                setLwfRegistrationDate(config.lwfRegistrationDate ?? '');
                 setPtState(config.ptState ?? 'Karnataka');
                 setPtNumber(config.ptNumber ?? '');
                 setEnableNps(config.enableNps ?? true);
@@ -176,6 +178,8 @@ const StatutorySettings: React.FC = () => {
     // LWF State
     const [enableLwf, setEnableLwf] = useState(true);
     const [lwfState, setLwfState] = useState('Karnataka');
+    const [lwfEstablishmentId, setLwfEstablishmentId] = useState('');
+    const [lwfRegistrationDate, setLwfRegistrationDate] = useState('');
 
     // PT State
     const [ptState, setPtState] = useState('Karnataka');
@@ -214,7 +218,7 @@ const StatutorySettings: React.FC = () => {
             yearsCalculationMode, includedServicePeriods: [...includedServicePeriods], lwpLimitDays,
             maxGratuityType, customMaxGratuityAmount,
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
-            enableLwf, lwfState,
+            enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
             ptState, ptNumber,
             enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
         });
@@ -232,7 +236,7 @@ const StatutorySettings: React.FC = () => {
                 deathDisablementServiceType, deathDisablementMinYears,
                 yearsCalculationMode, includedServicePeriods, lwpLimitDays,
                 maxGratuityType, customMaxGratuityAmount,
-                enableLwf, lwfState,
+                enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
                 ptState, ptNumber,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
             };
@@ -294,6 +298,8 @@ const StatutorySettings: React.FC = () => {
 
             setEnableLwf(backupState.enableLwf);
             setLwfState(backupState.lwfState);
+            setLwfEstablishmentId(backupState.lwfEstablishmentId);
+            setLwfRegistrationDate(backupState.lwfRegistrationDate);
             setPtState(backupState.ptState);
             setPtNumber(backupState.ptNumber);
             setEnableNps(backupState.enableNps);
@@ -1126,6 +1132,27 @@ const StatutorySettings: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Deduction Cycle</label>
                                     <input type="text" value="Half Yearly" disabled className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Establishment ID</label>
+                                    <input
+                                        type="text"
+                                        value={lwfEstablishmentId}
+                                        onChange={(e) => setLwfEstablishmentId(e.target.value)}
+                                        disabled={!isEditing}
+                                        placeholder="Enter Establishment ID"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Registration Date</label>
+                                    <input
+                                        type="date"
+                                        value={lwfRegistrationDate}
+                                        onChange={(e) => setLwfRegistrationDate(e.target.value)}
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                    />
                                 </div>
                             </div>
                         )}
