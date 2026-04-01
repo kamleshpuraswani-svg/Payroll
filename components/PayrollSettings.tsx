@@ -1088,27 +1088,58 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
                                                 
                                                 // Start with current simplified state
+                                                // Map old labels to new ones if they appear in history
                                                 const histState: any = {
-                                                    'Frequency': frequency,
-                                                    'Target': paygroups.find(pg => pg.id === initialData?.targetId)?.name || initialData?.targetId || 'Not set',
-                                                    'Pay Date': initialData?.payDate || 'Not set',
-                                                    'Start Month': startMonthStr,
-                                                    'First Payroll Date': firstPayDate,
-                                                    'Salary Processing Date': processingDate || 'Not set',
-                                                    'Calculation Base': calcBase,
-                                                    'Pay Period End': initialData?.payPeriodEnd || 'Not set'
+                                                    'Pay Schedule': frequency,
+                                                    'Business Unit': paygroups.find(pg => pg.id === initialData?.targetId)?.name || initialData?.targetId || 'Not set',
+                                                    'Monthly Salary Processing Date': initialData?.payDate || 'Not set',
+                                                    'First Payroll Month': startMonthStr,
+                                                    'Effective Month': effectiveDate || 'Not set',
+                                                    'Calculate salary based on?': calcBase,
+                                                    'Pay Schedule Period': initialData?.payPeriodEnd || 'Not set'
                                                 };
 
                                                 // Replay history backwards from current to selected
                                                 if (selectedIndex > 0) {
                                                     for (let i = 0; i < selectedIndex; i++) {
                                                         const record = history[i];
-                                                        histState[record.field] = record.oldValue;
+                                                        // Map legacy history field names to new labels
+                                                        let label = record.field;
+                                                        if (label === 'Frequency') label = 'Pay Schedule';
+                                                        if (label === 'Target') label = 'Business Unit';
+                                                        if (label === 'Pay Date') label = 'Monthly Salary Processing Date';
+                                                        if (label === 'Start Month') label = 'First Payroll Month';
+                                                        if (label === 'First Payroll Date') label = 'Effective Month';
+                                                        if (label === 'Calculation Base') label = 'Calculate salary based on?';
+                                                        if (label === 'Pay Period End') label = 'Pay Schedule Period';
+
+                                                        histState[label] = record.oldValue;
                                                     }
                                                 }
 
                                                 const renderField = (label: string) => {
-                                                    const isModifiedInThisVersion = selectedRecordId ? history[selectedIndex]?.field === label : (selectedIndex === 0 && history.length > 0 && history[0].field === label);
+                                                    // Map current label back to what might be in the selected record's 'field' property
+                                                    const recordField = history[selectedIndex]?.field;
+                                                    const isModifiedInThisVersion = selectedRecordId ? (
+                                                        recordField === label || 
+                                                        (label === 'Pay Schedule' && recordField === 'Frequency') ||
+                                                        (label === 'Business Unit' && recordField === 'Target') ||
+                                                        (label === 'Monthly Salary Processing Date' && recordField === 'Pay Date') ||
+                                                        (label === 'First Payroll Month' && recordField === 'Start Month') ||
+                                                        (label === 'Effective Month' && recordField === 'First Payroll Date') ||
+                                                        (label === 'Calculate salary based on?' && recordField === 'Calculation Base') ||
+                                                        (label === 'Pay Schedule Period' && recordField === 'Pay Period End')
+                                                    ) : (selectedIndex === 0 && history.length > 0 && (
+                                                        history[0].field === label ||
+                                                        (label === 'Pay Schedule' && history[0].field === 'Frequency') ||
+                                                        (label === 'Business Unit' && history[0].field === 'Target') ||
+                                                        (label === 'Monthly Salary Processing Date' && history[0].field === 'Pay Date') ||
+                                                        (label === 'First Payroll Month' && history[0].field === 'Start Month') ||
+                                                        (label === 'Effective Month' && history[0].field === 'First Payroll Date') ||
+                                                        (label === 'Calculate salary based on?' && history[0].field === 'Calculation Base') ||
+                                                        (label === 'Pay Schedule Period' && history[0].field === 'Pay Period End')
+                                                    ));
+
                                                     const value = histState[label];
 
                                                     return (
@@ -1124,14 +1155,13 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                                 return (
                                                     <>
-                                                        {renderField('Frequency')}
-                                                        {renderField('Target')}
-                                                        {renderField('Pay Date')}
-                                                        {renderField('Start Month')}
-                                                        {renderField('First Payroll Date')}
-                                                        {renderField('Salary Processing Date')}
-                                                        {renderField('Calculation Base')}
-                                                        {renderField('Pay Period End')}
+                                                        {renderField('Pay Schedule')}
+                                                        {renderField('Business Unit')}
+                                                        {renderField('Monthly Salary Processing Date')}
+                                                        {renderField('First Payroll Month')}
+                                                        {renderField('Effective Month')}
+                                                        {renderField('Calculate salary based on?')}
+                                                        {renderField('Pay Schedule Period')}
                                                     </>
                                                 );
                                             })()}
@@ -1145,7 +1175,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 <div className="w-full lg:w-[320px] bg-slate-50 p-6 overflow-y-auto">
                                     <div className="mb-6">
                                         <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Version History</h4>
-                                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed">View and compare previous configuration versions.</p>
+                                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed">View previous of pay schedules.</p>
                                     </div>
 
                                     <div className="space-y-3">
