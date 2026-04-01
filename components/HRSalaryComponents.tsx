@@ -1572,7 +1572,7 @@ const HRSalaryComponents: React.FC = () => {
                                 onClick={() => setIsAdding(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
                             >
-                                <Plus size={16} /> Add Component
+                                Add Component
                             </button>
                         </div>
                     </div>
