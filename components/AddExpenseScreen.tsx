@@ -146,7 +146,7 @@ export const AddExpenseScreen: React.FC<{
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-slate-50">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Select Employee */}
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Employee <span className="text-rose-500">*</span></label>
@@ -187,6 +187,34 @@ export const AddExpenseScreen: React.FC<{
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
                     </div>
+
+                    {/* Expense from date */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense from date <span className="text-rose-500">*</span></label>
+                        <div className="relative group">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                            <input
+                                type="date"
+                                value={expenseFromDate}
+                                onChange={(e) => setExpenseFromDate(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Expense to date */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense to date <span className="text-rose-500">*</span></label>
+                        <div className="relative group">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                            <input
+                                type="date"
+                                value={expenseToDate}
+                                onChange={(e) => setExpenseToDate(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-6">
@@ -207,33 +235,6 @@ export const AddExpenseScreen: React.FC<{
                                             onChange={(e) => setMerchant(e.target.value)}
                                             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                                         />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-1">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense from date <span className="text-rose-500">*</span></label>
-                                        <div className="relative group">
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
-                                            <input
-                                                type="date"
-                                                value={expenseFromDate}
-                                                onChange={(e) => setExpenseFromDate(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense to date <span className="text-rose-500">*</span></label>
-                                        <div className="relative group">
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
-                                            <input
-                                                type="date"
-                                                value={expenseToDate}
-                                                onChange={(e) => setExpenseToDate(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                            />
-                                        </div>
                                     </div>
                                 </div>
 
