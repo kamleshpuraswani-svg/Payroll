@@ -412,9 +412,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             newErrors.effectiveDate = "Effective month is mandatory when changes are made.";
         }
 
-        // Validate Target
         if (!localSelectedTarget) {
-            newErrors.target = "Business Unit or Paygroup is required";
+            newErrors.target = "Business Unit is required";
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -596,7 +595,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 {/* Target Selection */}
                                 <div className="w-full lg:w-1/2">
                                     <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Business Unit or Paygroup <span className="text-red-500">*</span>
+                                        Business Unit <span className="text-red-500">*</span>
                                     </label>
                                     <div className="relative">
                                         <select

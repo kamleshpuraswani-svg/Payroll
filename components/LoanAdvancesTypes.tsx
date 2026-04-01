@@ -704,6 +704,18 @@ const LoanAdvancesTypes: React.FC = () => {
                         <div className="p-8 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Business Unit</label>
+                                    <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700">
+                                        {(() => {
+                                            const [type, id] = selectedTarget.split(':');
+                                            if (type === 'bu') return id;
+                                            const pg = paygroups.find(p => p.id === id);
+                                            return pg ? pg.name : id;
+                                        })()}
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Loan Type <span className="text-rose-500">*</span></label>
                                     <div className="flex flex-wrap gap-4">
                                         <label className={`flex items-center gap-3 px-4 py-3 border rounded-xl transition-all ${currentLoan.name === 'Salary Advance' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'} ${currentLoan.id ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>

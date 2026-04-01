@@ -723,9 +723,11 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         </button>
                         {!isReadOnly ? (
                             <>
-                                <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
-                                    Save as Draft
-                                </button>
+                        {!isReadOnly && !activeStructureId && (
+                            <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
+                                Save as Draft
+                            </button>
+                        )}
                                 <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
                                     <Save size={16} /> {publishLabel}
                                 </button>
@@ -763,7 +765,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Business Unit <span className="text-rose-500">*</span></label>
                                     <div className="relative">
                                         <select
                                             disabled={true}
