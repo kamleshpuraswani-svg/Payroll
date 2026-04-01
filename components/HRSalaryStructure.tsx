@@ -17,7 +17,9 @@ import {
     Check,
     Building2,
     Sigma,
-    ChevronDown
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -379,6 +381,8 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     const [view, setView] = useState<'LIST' | 'VIEW' | 'EDITOR'>(initialView);
 
     const [structures, setStructures] = useState<Structure[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState(`bu:${BUSINESS_UNITS[0]}`);
@@ -1019,7 +1023,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                     <div className="relative">
                         <select
                             value={selectedTarget}
-                            onChange={(e) => setSelectedTarget(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedTarget(e.target.value);
+                                setCurrentPage(1); // Reset to first page on target change
+                            }}
                             className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none shadow-sm"
                         >
                             <optgroup label="Business Units">
@@ -1063,18 +1070,11 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
                                 
                                 const savedForTarget = structures.filter(s => {
-                                    if (selectedTarget === 'all') return true;
                                     const [tTypeRaw, tId] = selectedTarget.split(':');
                                     const tType = tTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
                                     
-                                    // Match by target specifically
-                                    if (s.targetId === tId && s.targetType === tType) return true;
-                                    
-                                    // Fallback for older records or records with missing target info
-                                    // If we are looking at a BusinessUnit, include records where target is null
-                                    if (tType === 'BusinessUnit' && (!s.targetId || s.targetType === 'BusinessUnit')) return true;
-                                    
-                                    return false;
+                                    // Strictly match by target
+                                    return s.targetId === tId && s.targetType === tType;
                                 });
                                 
                                 console.log(`Target: ${selectedTarget}, Saved count for target: ${savedForTarget.length}`);
@@ -1099,11 +1099,20 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     }));
                                 
                                 console.log(`Mock templates to show: ${defaultsForTarget.length}`);
-                                allStructures = [...defaultsForTarget, ...savedForTarget];
+                            allStructures = [...defaultsForTarget, ...savedForTarget];
+                            } else {
+                                // If "all" is selected, show only global structures (no target)
+                                allStructures = structures.filter(s => !s.targetId);
                             }
-                            console.log('Final allStructures for target:', allStructures);
-                            return allStructures;
-                        })().map((item) => {
+
+                            // Apply Pagination
+                            const totalItems = allStructures.length;
+                            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+                            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                            const paginatedData = allStructures.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+                            return { paginatedData, totalItems, totalPages, startIndex };
+                        })().paginatedData.map((item) => {
                             const isArchived = item.status === 'Archived';
 
                             return (
@@ -1157,6 +1166,79 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         })}
                     </tbody>
                 </table>
+
+                {(() => {
+                    const allS = (() => {
+                        let allStructures = [...structures];
+                        if (selectedTarget !== 'all') {
+                            const [targetTypeRaw, targetId] = selectedTarget.split(':');
+                            const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+                            const targetName = targetType === 'BusinessUnit' ? targetId : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
+                            const savedForTarget = structures.filter(s => {
+                                if (selectedTarget === 'all') return true;
+                                const [tTypeRaw, tId] = selectedTarget.split(':');
+                                const tType = tTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+                                if (s.targetId === tId && s.targetType === tType) return true;
+                                if (tType === 'BusinessUnit' && (!s.targetId || s.targetType === 'BusinessUnit')) return true;
+                                return false;
+                            });
+                            const defaultsForTarget = MOCK_STRUCTURES.filter(mock => !savedForTarget.some(saved => {
+                                const savedNameLower = saved.name.toLowerCase();
+                                const mockNameLower = mock.name.toLowerCase();
+                                const prefixedMockLower = `${targetName} - ${mock.name}`.toLowerCase();
+                                return savedNameLower === mockNameLower || savedNameLower === prefixedMockLower;
+                            })).map(s => ({ ...s, id: `mock-${s.id}-${targetId}`, name: `${targetName} - ${s.name}`, targetType, targetId: targetId }));
+                            allStructures = [...defaultsForTarget, ...savedForTarget];
+                        }
+                        return allStructures;
+                    })();
+
+                    const totalItems = allS.length;
+                    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+                    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                    const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
+
+                    if (totalItems === 0) return null;
+
+                    return (
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-sm text-slate-500">
+                                Showing <span className="font-medium text-slate-700">{totalItems > 0 ? startIndex + 1 : 0}</span> to{' '}
+                                <span className="font-medium text-slate-700">{endIndex}</span> of{' '}
+                                <span className="font-medium text-slate-700">{totalItems}</span> entries
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={16} className="text-slate-600" />
+                                </button>
+                                {[...Array(totalPages)].map((_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => setCurrentPage(i + 1)}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                            currentPage === i + 1
+                                                ? 'bg-purple-600 text-white shadow-sm'
+                                                : 'text-slate-600 hover:bg-white border border-transparent hover:border-slate-200'
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={16} className="text-slate-600" />
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             <ConfirmationModal

@@ -571,11 +571,10 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
     const fetchData = async () => {
         setIsLoadingData(true);
         try {
-            // Fetch employees
+            // Fetch employees (all, to ensure past/transitionary claims match)
             const { data: empData } = await supabase
                 .from('employees')
                 .select('id, name, eid, avatar_url, department, company_name')
-                .eq('status', 'Active')
                 .order('name');
             if (empData) setEmployees(empData);
 
@@ -596,10 +595,14 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
             if (claimData && empData) {
                 const mappedClaims: ExpenseClaim[] = claimData.map(c => {
                     const emp = empData.find(e => e.id === c.employee_id);
+                    
+                    // Fallback name from title if emp mapping fails (AddExpenseScreen sets "Claim by [Name]")
+                    const fallbackNameFromTitle = c.title?.startsWith('Claim by ') ? c.title.replace('Claim by ', '') : 'Unknown Employee';
+
                     return {
                         id: c.id,
                         employee: {
-                            name: emp?.name || 'Unknown Employee',
+                            name: emp?.name || fallbackNameFromTitle,
                             id: emp?.eid || emp?.id || 'N/A',
                             department: emp?.department || 'N/A',
                             ctc: 'N/A',

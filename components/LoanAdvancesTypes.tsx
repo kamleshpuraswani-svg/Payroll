@@ -15,7 +15,9 @@ import {
     Sigma,
     UserPlus,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -179,6 +181,12 @@ const LoanAdvancesTypes: React.FC = () => {
     const [currentLoan, setCurrentLoan] = useState<Partial<LoanType>>({});
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedTarget]);
 
     // New States for Max Amount Configuration
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -547,85 +555,136 @@ const LoanAdvancesTypes: React.FC = () => {
                                     <tbody className="divide-y divide-slate-100">
                                         {isLoading ? (
                                             <tr>
-                                                <td colSpan={6} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                                <td colSpan={8} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                                     <div className="flex flex-col items-center gap-2">
                                                         <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                                         <span>Loading loan types...</span>
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ) : filteredTypes.length > 0 ? filteredTypes.map((item) => (
-                                            <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
-                                                <td className="px-6 py-4 max-w-xs">
-                                                    <div>
-                                                        <p className="font-bold text-slate-800">{item.name}</p>
-                                                        <p className="text-xs text-slate-500 truncate mt-0.5">{item.description}</p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="font-medium text-slate-700">{item.interestRate}%</span> p.a.
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="font-medium text-slate-800">
-                                                        {item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
-                                                        {item.maxTenure ? `${item.maxTenure} Months` : '--'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${item.status ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                                                        {item.status ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="text-slate-600">HR Manager</span>
-                                                    {item.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="text-slate-600">HR Manager</span>
-                                                    {item.updatedAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-3 transition-opacity">
-                                                        <button
-                                                            onClick={() => toggleStatus(item.id)}
-                                                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.status ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                                                            title={item.status ? "Deactivate" : "Activate"}
-                                                        >
-                                                            <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${item.status ? 'translate-x-5' : 'translate-x-1'}`} />
-                                                        </button>
-                                                        <div className="flex items-center gap-1 border-l border-slate-200 pl-3 opacity-60 group-hover:opacity-100">
-                                                            <button
-                                                                onClick={() => handleEdit(item)}
-                                                                className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setDeleteId(item.id)}
-                                                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                                title="Delete"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )) : (
-                                            <tr>
-                                                <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                                    No loan types found. Create one to get started.
-                                                </td>
-                                            </tr>
+                                        ) : (
+                                            (() => {
+                                                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                                                const paginatedData = filteredTypes.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+                                                
+                                                if (paginatedData.length === 0) {
+                                                    return (
+                                                        <tr>
+                                                            <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                                                                No loan types found for this target.
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
+
+                                                return paginatedData.map((item) => (
+                                                    <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
+                                                        <td className="px-6 py-4 max-w-xs">
+                                                            <div>
+                                                                <p className="font-bold text-slate-800">{item.name}</p>
+                                                                <p className="text-xs text-slate-500 truncate mt-0.5">{item.description}</p>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="font-medium text-slate-700">{item.interestRate}%</span> p.a.
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="font-medium text-slate-800">
+                                                                {item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
+                                                                {item.maxTenure ? `${item.maxTenure} Months` : '--'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${item.status ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                                                {item.status ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="text-slate-600">HR Manager</span>
+                                                            {item.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="text-slate-600">HR Manager</span>
+                                                            {item.updatedAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <div className="flex items-center justify-end gap-3 transition-opacity">
+                                                                <button
+                                                                    onClick={() => toggleStatus(item.id)}
+                                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.status ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                                                    title={item.status ? "Deactivate" : "Activate"}
+                                                                >
+                                                                    <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${item.status ? 'translate-x-5' : 'translate-x-1'}`} />
+                                                                </button>
+                                                                <div className="flex items-center gap-1 border-l border-slate-200 pl-3 opacity-60 group-hover:opacity-100">
+                                                                    <button
+                                                                        onClick={() => handleEdit(item)}
+                                                                        className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Edit2 size={16} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setDeleteId(item.id)}
+                                                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ));
+                                            })()
                                         )}
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Pagination */}
+                            {filteredTypes.length > 0 && (
+                                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="text-sm text-slate-500">
+                                        Showing <span className="font-medium text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                                        <span className="font-medium text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filteredTypes.length)}</span> of{' '}
+                                        <span className="font-medium text-slate-700">{filteredTypes.length}</span> entries
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                            disabled={currentPage === 1}
+                                            className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <ChevronLeft size={16} className="text-slate-600" />
+                                        </button>
+                                        {[...Array(Math.ceil(filteredTypes.length / ITEMS_PER_PAGE))].map((_, i) => (
+                                            <button
+                                                key={i + 1}
+                                                onClick={() => setCurrentPage(i + 1)}
+                                                className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                                    currentPage === i + 1
+                                                        ? 'bg-purple-600 text-white shadow-sm'
+                                                        : 'text-slate-600 hover:bg-white border border-transparent hover:border-slate-200'
+                                                }`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredTypes.length / ITEMS_PER_PAGE)))}
+                                            disabled={currentPage === Math.ceil(filteredTypes.length / ITEMS_PER_PAGE)}
+                                            className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <ChevronRight size={16} className="text-slate-600" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </>
                 ) : (

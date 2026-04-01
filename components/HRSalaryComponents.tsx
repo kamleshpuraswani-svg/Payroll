@@ -17,7 +17,10 @@ import {
     Check,
     Info,
     Lock,
-    Building2
+    Building2,
+    ChevronLeft,
+    ChevronRight,
+    ChevronDown as ChevronDownIcon
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -1219,6 +1222,13 @@ const HRSalaryComponents: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Earnings');
     const [selectedTarget, setSelectedTarget] = useState('all');
     const [paygroups, setPaygroups] = useState<any[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, searchQuery, selectedTarget]);
 
     // Initialize state
     const [components, setComponents] = useState<SalaryComponent[]>([]);
@@ -1311,8 +1321,16 @@ const HRSalaryComponents: React.FC = () => {
             allComponents = [...defaultsForTarget, ...savedForTarget];
         }
 
-        return allComponents.filter(c => c.category === activeTab);
-    }, [components, activeTab, selectedTarget]);
+        const filtered = allComponents.filter(c => c.category === activeTab);
+        
+        if (!searchQuery.trim()) return filtered;
+        
+        const query = searchQuery.toLowerCase();
+        return filtered.filter(c => 
+            c.name.toLowerCase().includes(query) || 
+            (c.payslipName && c.payslipName.toLowerCase().includes(query))
+        );
+    }, [components, activeTab, selectedTarget, searchQuery]);
 
     const handleEditClick = (component: SalaryComponent) => {
         setEditingComponent(component);
@@ -1501,7 +1519,7 @@ const HRSalaryComponents: React.FC = () => {
                         {tabs.map((tab) => (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(tab)}
+                                onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
                                 className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
                                     ? 'border-purple-600 text-purple-700 bg-purple-50/50'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
@@ -1543,6 +1561,8 @@ const HRSalaryComponents: React.FC = () => {
                                 <input
                                     type="text"
                                     placeholder="Filter Results..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-slate-400 shadow-sm"
                                 />
                             </div>
@@ -1631,7 +1651,7 @@ const HRSalaryComponents: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : filteredData.length > 0 ? (
-                                    filteredData.map((item) => (
+                                    filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((item) => (
                                         <tr key={item.id} className={`hover:bg-slate-50/80 transition-colors group ${item.isSystem ? 'bg-slate-50/30' : ''}`}>
                                             <td className="px-6 py-4 font-semibold text-slate-800">
                                                 <div className="flex items-center gap-2">
@@ -1750,6 +1770,46 @@ const HRSalaryComponents: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination */}
+                    {filteredData.length > 0 && (
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-sm text-slate-500">
+                                Showing <span className="font-medium text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                                <span className="font-medium text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)}</span> of{' '}
+                                <span className="font-medium text-slate-700">{filteredData.length}</span> entries
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={16} className="text-slate-600" />
+                                </button>
+                                {[...Array(Math.ceil(filteredData.length / ITEMS_PER_PAGE))].map((_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => setCurrentPage(i + 1)}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                            currentPage === i + 1
+                                                ? 'bg-purple-600 text-white shadow-sm'
+                                                : 'text-slate-600 hover:bg-white border border-transparent hover:border-slate-200'
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredData.length / ITEMS_PER_PAGE)))}
+                                    disabled={currentPage === Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
+                                    className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={16} className="text-slate-600" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
