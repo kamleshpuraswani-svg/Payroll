@@ -552,7 +552,6 @@ const LoanAdvancesTypes: React.FC = () => {
                                             <th className="px-6 py-4">Interest Rate</th>
                                             <th className="px-6 py-4">Max Amount</th>
                                             <th className="px-6 py-4">Max Tenure</th>
-                                            <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Created By</th>
                                             <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4 text-right">Actions</th>
@@ -561,7 +560,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                     <tbody className="divide-y divide-slate-100">
                                         {isLoading ? (
                                             <tr>
-                                                <td colSpan={8} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                                <td colSpan={7} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                                     <div className="flex flex-col items-center gap-2">
                                                         <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                                         <span>Loading loan types...</span>
@@ -576,7 +575,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 if (paginatedData.length === 0) {
                                                     return (
                                                         <tr>
-                                                            <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                                                                 No loan types found for this target.
                                                             </td>
                                                         </tr>
@@ -605,16 +604,11 @@ const LoanAdvancesTypes: React.FC = () => {
                                                             </span>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${item.status ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                                                                {item.status ? 'Active' : 'Inactive'}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className="text-slate-600">HR Manager</span>
+                                                            <span className="text-slate-600">{item.createdBy}</span>
                                                             {item.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className="text-slate-600">HR Manager</span>
+                                                            <span className="text-slate-600">{item.updatedBy}</span>
                                                             {item.updatedAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
                                                         </td>
                                                         <td className="px-6 py-4 text-right">

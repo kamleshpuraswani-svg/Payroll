@@ -1577,7 +1577,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             <tr>
                                 <th className="px-4 py-3">Schedule Name</th>
                                 <th className="px-4 py-3">Pay Day</th>
-                                <th className="px-4 py-3">Status</th>
                                 <th className="px-4 py-3">Created By</th>
                                 <th className="px-4 py-3">Last Modified By</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
@@ -1607,12 +1606,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-slate-600">{schedule.payDate}</td>
-                                    <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${schedule.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                            {schedule.status === 'Active' && <CheckCircle size={12} />}
-                                            {schedule.status}
-                                        </span>
-                                    </td>
                                     <td className="px-4 py-3 text-slate-500 font-medium">{schedule.created_by || 'Admin'}</td>
                                     <td className="px-4 py-3 text-slate-500 font-medium">{schedule.last_modified_by || 'System'}</td>
                                     <td className="px-4 py-3 text-right">

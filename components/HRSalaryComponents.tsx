@@ -1612,7 +1612,6 @@ const HRSalaryComponents: React.FC = () => {
                                             <th className="px-6 py-4">Calculation Method</th>
                                             <th className="px-6 py-4">Consider for PF</th>
                                             <th className="px-6 py-4">Consider for ESI</th>
-                                            <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4">Created By</th>
                                         </>
@@ -1631,7 +1630,6 @@ const HRSalaryComponents: React.FC = () => {
                                                     <th className="px-6 py-4">Deduction Timing</th>
                                                 </>
                                             )}
-                                            <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4">Created By</th>
                                         </>
@@ -1643,7 +1641,7 @@ const HRSalaryComponents: React.FC = () => {
                             <tbody className="divide-y divide-slate-100">
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <td colSpan={11} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                                 <span>Loading components...</span>
@@ -1679,11 +1677,6 @@ const HRSalaryComponents: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 font-medium text-slate-700">{item.considerEPF ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-700">{item.considerESI ? 'Yes' : 'No'}</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="font-bold text-slate-700">
-                                                            {item.status ? 'Active' : 'Inactive'}
-                                                        </span>
-                                                    </td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.lastModified || '-'}</td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.created || '-'}</td>
                                                 </>
@@ -1707,11 +1700,6 @@ const HRSalaryComponents: React.FC = () => {
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.deductionTiming || '-'}</td>
                                                         </>
                                                     )}
-                                                    <td className="px-6 py-4">
-                                                        <span className="font-bold text-slate-700">
-                                                            {item.status ? 'Active' : 'Inactive'}
-                                                        </span>
-                                                    </td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.lastModified || '-'}</td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.created || '-'}</td>
                                                 </>
@@ -1759,7 +1747,7 @@ const HRSalaryComponents: React.FC = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <td colSpan={11} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Info size={24} className="opacity-50" />
                                                 <p>No components found for this category.</p>

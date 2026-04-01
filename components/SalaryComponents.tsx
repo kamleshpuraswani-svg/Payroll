@@ -1278,11 +1278,11 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
         // Define headers based on the current tab
         let headers: string[] = [];
         if (activeTab === 'Earnings') {
-            headers = ['Component Name', 'Nature of Pay', 'Calculation Method', 'Value', 'Consider for PF', 'Consider for ESI', 'Status', 'Last Modified', 'Created'];
+            headers = ['Component Name', 'Nature of Pay', 'Calculation Method', 'Value', 'Consider for PF', 'Consider for ESI', 'Last Modified', 'Created'];
         } else if (activeTab === 'Deductions') {
-            headers = ['Component Name', 'Calculation Method', 'Deduction Type', 'Deduction Frequency', 'Taxable', 'Status'];
+            headers = ['Component Name', 'Calculation Method', 'Deduction Type', 'Deduction Frequency', 'Taxable'];
         } else {
-            headers = ['Component Name', 'Nature of Pay', 'Taxable', 'Status'];
+            headers = ['Component Name', 'Nature of Pay', 'Taxable'];
         }
 
         // Map data to rows - simplified CSV escaping
@@ -1295,7 +1295,6 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     `"${item.amount_or_percent || ''}"`,
                     `"${item.consider_epf ? 'Yes' : 'No'}"`,
                     `"${item.consider_esi ? 'Yes' : 'No'}"`,
-                    `"${item.status ? 'Active' : 'Inactive'}"`,
                     `"${(item.last_modified || '').replace(/\n/g, ' ').replace(/"/g, '""')}"`,
                     `"${(item.created || '').replace(/\n/g, ' ').replace(/"/g, '""')}"`
                 ];
@@ -1305,15 +1304,13 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     `"${item.calculation || ''}"`,
                     `"${item.deduction_type || 'Non-Statutory'}"`,
                     `"${item.frequency || 'Recurring'}"`,
-                    `"${item.taxable}"`,
-                    `"${item.status ? 'Active' : 'Inactive'}"`
+                    `"${item.taxable}"`
                 ];
             } else {
                 return [
                     `"${(item.name || '').replace(/"/g, '""')}"`,
                     `"${item.type}"`,
-                    `"${item.taxable}"`,
-                    `"${item.status ? 'Active' : 'Inactive'}"`
+                    `"${item.taxable}"`
                 ];
             }
         });
@@ -1454,7 +1451,6 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             <th className="px-6 py-4">Calculation Method</th>
                                             <th className="px-6 py-4">Consider for PF</th>
                                             <th className="px-6 py-4">Consider for ESI</th>
-                                            <th className="px-6 py-4">Status</th>
                                             {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
                                             <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER' ? 'Last Modified By' : 'Last Modified'}</th>
                                             <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER' ? 'Created By' : 'Created'}</th>
@@ -1525,11 +1521,6 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                     <td className="px-6 py-4">{item.calc_method === 'Flat' ? 'Flat' : (item.calculation || '-')}</td>
                                                     <td className="px-6 py-4">{item.consider_epf ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4">{item.consider_esi ? 'Yes' : 'No'}</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${item.status ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                                                            {item.status ? 'Active' : 'Inactive'}
-                                                        </span>
-                                                    </td>
                                                     {userRole === 'HR_MANAGER' && <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>}
                                                     <td className="px-6 py-4 text-slate-500">{item.last_modified ? new Date(item.last_modified).toLocaleDateString() : '-'}</td>
                                                     <td className="px-6 py-4 text-slate-500">{item.created ? new Date(item.created).toLocaleDateString() : '-'}</td>
@@ -1626,7 +1617,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={activeTab === 'Earnings' ? 9 : 5} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                        <td colSpan={activeTab === 'Earnings' ? 8 : 4} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Info size={24} className="opacity-50" />
                                                 <p>No components found for this category.</p>

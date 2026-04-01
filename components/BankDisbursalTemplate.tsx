@@ -536,7 +536,6 @@ const BankDisbursalTemplate: React.FC = () => {
                                 <th className="px-6 py-4">Template Name</th>
                                 <th className="px-6 py-4">Bank</th>
                                 <th className="px-6 py-4">Format</th>
-                                <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Created By</th>
                                 <th className="px-6 py-4">Last Modified By</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
@@ -545,7 +544,7 @@ const BankDisbursalTemplate: React.FC = () => {
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading templates...</span>
@@ -569,15 +568,6 @@ const BankDisbursalTemplate: React.FC = () => {
                                     <td className="px-6 py-4">
                                         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-200 text-xs font-mono text-slate-600">
                                             <FileSpreadsheet size={12} /> {t.settings.fileType}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                            t.status === 'Inactive' ? 'bg-slate-50 text-slate-600 border-slate-200' :
-                                            'bg-amber-50 text-amber-700 border-amber-100'
-                                            }`}>
-                                            {t.status === 'Active' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                                            {t.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">

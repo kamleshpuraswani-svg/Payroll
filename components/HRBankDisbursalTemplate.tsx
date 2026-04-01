@@ -469,7 +469,6 @@ const HRBankDisbursalTemplate: React.FC = () => {
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
                             <tr>
                                 <th className="px-6 py-4">Template Name</th>
-                                <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Created By</th>
                                 <th className="px-6 py-4">Last Modified By</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
@@ -478,7 +477,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading templates...</span>
@@ -494,15 +493,6 @@ const HRBankDisbursalTemplate: React.FC = () => {
                             ) : templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                                'bg-slate-50 text-slate-700 border-slate-100'
-                                            }`}>
-                                            {t.status === 'Active' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                                            {t.status}
-                                        </span>
-                                    </td>
                                     <td className="px-6 py-4">{t.createdBy}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">

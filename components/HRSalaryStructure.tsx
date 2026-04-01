@@ -1054,7 +1054,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                             <th className="px-6 py-4">Department</th>
                             <th className="px-6 py-4">Designation</th>
                             <th className="px-6 py-4">Employees</th>
-                            <th className="px-6 py-4">Status</th>
                             <th className="px-6 py-4">Created By</th>
                             <th className="px-6 py-4">Last Modified By</th>
                             <th className="px-6 py-4 text-right">Actions</th>
@@ -1127,15 +1126,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                         {item.designations && item.designations.length > 0 ? item.designations.join(', ') : 'All'}
                                     </td>
                                     <td className="px-6 py-4">{item.employeeCount}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${item.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                            item.status === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                                'bg-slate-100 text-slate-500 border-slate-200'
-                                            }`}>
-                                            {item.status === 'Active' ? <CheckCircle size={12} /> : item.status === 'Draft' ? <AlertCircle size={12} /> : <X size={12} />}
-                                            {item.status}
-                                        </span>
-                                    </td>
                                     <td className="px-6 py-4 text-xs text-slate-500">{item.createdBy || 'System'}</td>
                                     <td className="px-6 py-4 text-xs text-slate-500">{item.lastModified}</td>
                                     <td className="px-6 py-4 text-right">
