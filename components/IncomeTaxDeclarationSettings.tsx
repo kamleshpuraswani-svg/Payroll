@@ -925,8 +925,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         onChange={(e) => setCutoffDay(e.target.value)}
                                                         className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
                                                     >
-                                                        {Array.from({ length: 31 }, (_, i) => i + i).map(day => (
-                                                            <option key={day+1} value={day+1}>{day+1}</option>
+                                                        {Array.from({ 
+                                                            length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(cutoffMonth) + 1, 0).getDate() 
+                                                        }, (_, i) => i + 1).map(day => (
+                                                            <option key={day} value={day}>{day}</option>
                                                         ))}
                                                     </select>
                                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
