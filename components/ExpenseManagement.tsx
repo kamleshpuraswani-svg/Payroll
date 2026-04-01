@@ -62,7 +62,9 @@ interface ExpenseClaim {
     status: 'Pending' | 'Approved' | 'Partially Approved' | 'Rejected' | 'More Info Requested';
     approvedAmount?: number;
     requestedOn: string;
+    createdByName: string;
     lastModifiedBy: string;
+    lastModifiedByName: string;
     activityLog: { text: string; date: string }[];
 }
 
@@ -83,8 +85,10 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         submittedDate: '18 Dec 2025',
         proofs: Array(4).fill({ id: 'x', name: 'Bill.pdf', type: 'pdf', size: '1.2 MB' }),
         status: 'Pending',
-        requestedOn: '18 Dec 2025',
-        lastModifiedBy: '18 Dec 2025',
+        requestedOn: '18 Dec 2025, 10:30 AM',
+        createdByName: 'Priya Sharma',
+        lastModifiedBy: '18 Dec 2025, 10:30 AM',
+        lastModifiedByName: 'Priya Sharma',
         activityLog: [{ text: 'Submitted by employee', date: '18 Dec 2025' }]
     },
     {
@@ -104,8 +108,10 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
             { id: 'p2', name: 'Airtel_Bill_Nov.pdf', type: 'pdf', size: '480 KB' }
         ],
         status: 'More Info Requested',
-        requestedOn: '15 Dec 2025',
-        lastModifiedBy: '15 Dec 2025',
+        requestedOn: '15 Dec 2025, 02:15 PM',
+        createdByName: 'Arjun Mehta',
+        lastModifiedBy: '16 Dec 2025, 11:00 AM',
+        lastModifiedByName: 'HR Manager',
         activityLog: [
             { text: 'Submitted by employee', date: '15 Dec 2025' },
             { text: 'HR requested clarification: Missing Oct bill', date: '16 Dec 2025' }
@@ -126,8 +132,10 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         proofs: Array(6).fill({ id: 'x', name: 'Travel_Ticket.pdf', type: 'pdf', size: '1.5 MB' }),
         status: 'Partially Approved',
         approvedAmount: 38000,
-        requestedOn: '12 Dec 2025',
-        lastModifiedBy: '12 Dec 2025',
+        requestedOn: '12 Dec 2025, 09:45 AM',
+        createdByName: 'Neha Kapoor',
+        lastModifiedBy: '14 Dec 2025, 04:30 PM',
+        lastModifiedByName: 'HR Manager',
         activityLog: [
             { text: 'Submitted by employee', date: '12 Dec 2025' },
             { text: 'Approved partial amount (Policy limit)', date: '14 Dec 2025' }
@@ -147,8 +155,10 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         submittedDate: '10 Dec 2025',
         proofs: Array(3).fill({ id: 'x', name: 'Amazon_Invoice.pdf', type: 'pdf', size: '320 KB' }),
         status: 'Approved',
-        requestedOn: '10 Dec 2025',
-        lastModifiedBy: '11 Dec 2025',
+        requestedOn: '10 Dec 2025, 03:20 PM',
+        createdByName: 'Rohan Desai',
+        lastModifiedBy: '11 Dec 2025, 10:15 AM',
+        lastModifiedByName: 'HR Manager',
         activityLog: [
             { text: 'Submitted by employee', date: '10 Dec 2025' },
             { text: 'Approved by HR', date: '11 Dec 2025' }
@@ -168,8 +178,10 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
         submittedDate: '08 Dec 2025',
         proofs: Array(5).fill({ id: 'x', name: 'Petrol_Bill.pdf', type: 'pdf', size: '250 KB' }),
         status: 'Rejected',
-        requestedOn: '08 Dec 2025',
-        lastModifiedBy: '09 Dec 2025',
+        requestedOn: '08 Dec 2025, 11:50 AM',
+        createdByName: 'Ananya Patel',
+        lastModifiedBy: '09 Dec 2025, 02:40 PM',
+        lastModifiedByName: 'HR Manager',
         activityLog: [
             { text: 'Submitted by employee', date: '08 Dec 2025' },
             { text: 'Rejected: Duplicate bill', date: '09 Dec 2025' }
@@ -603,8 +615,10 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                             type: 'pdf',
                             size: '0 KB'
                         })),
-                        requestedOn: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
-                        lastModifiedBy: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+                        requestedOn: c.submitted_at ? new Date(c.submitted_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A',
+                        createdByName: emp?.name || 'Unknown',
+                        lastModifiedBy: c.updated_at ? new Date(c.updated_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : (c.submitted_at ? new Date(c.submitted_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'),
+                        lastModifiedByName: c.status === 'pending' ? (emp?.name || 'Employee') : 'HR Manager',
                         activityLog: [
                             { text: 'Submitted by employee', date: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'N/A' }
                         ]
@@ -627,10 +641,20 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
 
     // Summary Stats
     const stats = [
+        { 
+            label: 'TOTAL CLAIMED (FY)', 
+            val: `₹${(claims.reduce((s, c) => s + c.amount, 0)).toLocaleString('en-IN')}`, 
+            color: 'text-slate-800', 
+            subtitle: 'Apr 2025 – Mar 2026',
+            highlight: true 
+        },
         { label: 'Total Claims', val: claims.length.toString(), color: 'text-slate-800' },
-        { label: 'Pending Review', val: claims.filter(c => c.status === 'Pending').length.toString(), color: 'text-orange-600' },
-        { label: 'Approved (Full/Partial)', val: claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').length.toString(), color: 'text-emerald-600' },
-        { label: 'Total Approved Amount', val: `₹${(claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').reduce((s, c) => s + (c.approvedAmount || c.amount), 0) / 100000).toFixed(2)}L`, color: 'text-purple-600' },
+        { label: 'Pending Approval', val: claims.filter(c => c.status === 'Pending').length.toString(), color: 'text-orange-600' },
+        { 
+            label: 'Approved & Paid', 
+            val: `₹${(claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').reduce((s, c) => s + (c.approvedAmount || c.amount), 0) / 100000).toFixed(2)}L`, 
+            color: 'text-emerald-600' 
+        },
     ];
 
     const handleActionConfirm = (action: 'FULL' | 'PARTIAL' | 'REJECT' | 'INFO', amount?: number, reason?: string) => {
@@ -674,11 +698,12 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
         <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50 animate-in fade-in duration-300 relative">
 
             {/* Top Stats Bar */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
+            <div className="bg-white border-b border-slate-200 px-6 py-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0">
                 {stats.map((stat, i) => (
-                    <div key={i} className="flex flex-col">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</span>
+                    <div key={i} className={`flex flex-col p-3 rounded-xl border ${stat.highlight ? 'border-purple-100 bg-purple-50/30' : 'border-transparent'}`}>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</span>
                         <span className={`text-xl font-bold ${stat.color}`}>{stat.val}</span>
+                        {stat.subtitle && <span className="text-[10px] text-slate-500 mt-1">{stat.subtitle}</span>}
                     </div>
                 ))}
             </div>
@@ -766,8 +791,18 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                                 {claim.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{claim.requestedOn}</td>
-                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{claim.lastModifiedBy}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-700">{claim.createdByName}</span>
+                                                <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.requestedOn}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-700">{claim.lastModifiedByName}</span>
+                                                <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.lastModifiedBy}</span>
+                                            </div>
+                                        </td>
                                         <td className="px-4 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button
