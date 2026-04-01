@@ -56,10 +56,10 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },
       { id: 'bank', label: 'Bank Disbursal Format', icon: CreditCard },
-      { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
+      // { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'pf-tds', label: 'PF & TDS Settings', icon: Landmark },
-      { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
+      // { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
       { id: 'statutory-bonus', label: 'Statutory Bonus', icon: Award },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
    ];
