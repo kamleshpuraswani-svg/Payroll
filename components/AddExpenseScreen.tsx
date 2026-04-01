@@ -92,7 +92,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     };
 
     const handleAddItem = () => {
-        if (!merchant || !amount || !reason) return;
+        if (!amount || !reason) return;
         
         if (editingItemId !== null) {
             // Update existing item
@@ -415,7 +415,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
                                         <button 
                                             onClick={handleAddItem}
-                                            disabled={!merchant || !amount || !reason}
+                                            disabled={!amount || !reason}
                                             className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
                                             {editingItemId !== null ? <CheckCircle size={18} /> : <Plus size={18} />}
