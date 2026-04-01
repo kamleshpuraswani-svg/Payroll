@@ -178,6 +178,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>('last');
     const [smSecondCustomDay, setSmSecondCustomDay] = useState('16'); // Default to 16th of following month if custom
 
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+
     // Validation State
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -1057,79 +1059,145 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         </div>
                     </div>
                     ) : (
-                        /* History View */
+                        /* History View - Redesigned with Sidebar */
                         <div className="animate-in fade-in slide-in-from-right-2 duration-300">
-                            <div className="flex items-center justify-end mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100">
-                                        {history.length} {history.length === 1 ? 'Record' : 'Records'} Found
+                            <div className="flex flex-col lg:flex-row gap-0 border border-slate-200 rounded-3xl overflow-hidden bg-white shadow-sm min-h-[500px]">
+                                {/* Main Content: Configuration Detail (Left) */}
+                                <div className="flex-1 p-8 bg-white border-r border-slate-100">
+                                    <div className="mb-8">
+                                        <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                            Configuration Details
+                                            {(!selectedRecordId || selectedRecordId === (history[0]?.id)) && (
+                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded border border-emerald-100">Current Version</span>
+                                            )}
+                                        </h4>
+                                        <p className="text-sm text-slate-500 mt-1">Reviewing settings applied in this version.</p>
                                     </div>
-                                    <button 
-                                        onClick={() => setActiveTab('Configuration')}
-                                        className="px-4 py-1.5 bg-white text-slate-600 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-50 transition-colors"
-                                    >
-                                        Back to Configuration
-                                    </button>
-                                </div>
-                            </div>
 
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[60vh] overflow-y-auto">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200 sticky top-0 z-10">
-                                            <tr>
-                                                <th className="px-6 py-4">Last Modified By</th>
-                                                <th className="px-6 py-4">Field Changed</th>
-                                                <th className="px-6 py-4">Old Value</th>
-                                                <th className="px-6 py-4">New Value</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {history.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={5} className="px-6 py-16 text-center">
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <div className="p-4 bg-slate-50 rounded-2xl text-slate-300">
-                                                                <Clock size={40} strokeWidth={1.5} />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-slate-800 font-bold">No changes have been recorded yet.</p>
+                                    {history.length === 0 ? (
+                                        <div className="h-full flex flex-col items-center justify-center py-20 text-center">
+                                            <div className="p-4 bg-slate-50 rounded-2xl text-slate-300 mb-4">
+                                                <Clock size={40} strokeWidth={1.5} />
+                                            </div>
+                                            <p className="text-slate-800 font-bold text-lg">No history available</p>
+                                            <p className="text-slate-500 text-sm max-w-xs mt-2">Changes are recorded only when you save updates to an existing configuration.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                            {/* We use a helper to get the value for a specific field at the selected point in time */}
+                                            {(() => {
+                                                const selectedRecord = selectedRecordId ? history.find(r => r.id === selectedRecordId) : history[0];
+                                                
+                                                const renderField = (label: string, fieldName: string, currentValue: string) => {
+                                                    // Find the value in the history for this field
+                                                    const record = selectedRecordId ? history.find(r => r.id === selectedRecordId && r.field === label) : null;
+                                                    const value = record ? record.newValue : (selectedRecordId ? "N/A" : currentValue);
+                                                    const wasChanged = record ? true : false;
+
+                                                    return (
+                                                        <div className="space-y-1.5">
+                                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+                                                            <div className={`text-sm font-medium p-3 rounded-xl border ${wasChanged ? 'bg-sky-50/50 border-sky-100 text-sky-900' : 'bg-slate-50/30 border-slate-100 text-slate-700'}`}>
+                                                                {value || 'Not set'}
+                                                                {wasChanged && <span className="ml-2 text-[10px] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded font-bold">CHANGED</span>}
                                                             </div>
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                history.map((record) => (
-                                                    <tr key={record.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold text-xs shadow-sm">
-                                                                    {record.changedBy}
+                                                    );
+                                                };
+
+                                                return (
+                                                    <>
+                                                        {renderField('Frequency', 'frequency', frequency)}
+                                                        {renderField('Target', 'target', paygroups.find(pg => pg.id === initialData?.targetId)?.name || initialData?.targetId || 'Not set')}
+                                                        {renderField('Pay Date', 'payDate', initialData?.payDate || 'Not set')}
+                                                        {renderField('Start Month', 'startMonthStr', startMonthStr)}
+                                                        {renderField('First Payroll Date', 'firstPayDate', firstPayDate)}
+                                                        {renderField('Salary Processing Date', 'processingDate', processingDate)}
+                                                        {renderField('Calculation Base', 'calcBase', calcBase)}
+                                                        {renderField('Pay Period End', 'payPeriodEnd', initialData?.payPeriodEnd || 'Not set')}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
+
+                                    {selectedRecordId && (
+                                        <div className="mt-12 p-4 bg-sky-50 rounded-2xl border border-sky-100 flex gap-4 animate-in fade-in slide-in-from-bottom-2">
+                                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                                                <Info size={20} className="text-sky-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-sky-900">Historical View</p>
+                                                <p className="text-xs text-sky-700/80 leading-relaxed mt-0.5">
+                                                    You are viewing a previous version of this configuration. Values marked as "CHANGED" were modified in this specific update.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Sidebar: Version History (Right) */}
+                                <div className="w-full lg:w-[320px] bg-slate-50 p-6 overflow-y-auto">
+                                    <div className="mb-6">
+                                        <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Version History</h4>
+                                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed">View and compare previous configuration versions.</p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {history.length === 0 ? (
+                                            <div className="py-12 text-center text-slate-400 text-xs italic">No versions recorded.</div>
+                                        ) : (
+                                            history.map((record, index) => (
+                                                <button
+                                                    key={record.id}
+                                                    onClick={() => setSelectedRecordId(record.id)}
+                                                    className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 group relative
+                                                        ${(selectedRecordId === record.id || (!selectedRecordId && index === 0))
+                                                            ? 'bg-white border-sky-200 shadow-md ring-1 ring-sky-100' 
+                                                            : 'bg-transparent border-slate-200/60 hover:bg-white hover:border-slate-300'}
+                                                    `}
+                                                >
+                                                    <div className="flex flex-col gap-3">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="flex flex-col">
+                                                                <span className={`text-[13px] font-bold ${(selectedRecordId === record.id || (!selectedRecordId && index === 0)) ? 'text-slate-900' : 'text-slate-700'}`}>
+                                                                    {record.timestamp.split(', ')[0]}
                                                                 </span>
-                                                                <div className="flex flex-col">
-                                                                    <div className="text-[11px] text-slate-700 font-bold">{record.timestamp.split(', ')[0]}</div>
-                                                                    <div className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{record.timestamp.split(', ')[1]}</div>
-                                                                </div>
+                                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                                                                    {record.timestamp.split(', ')[1]}
+                                                                </span>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 font-bold text-sky-700 whitespace-nowrap">
-                                                            {record.field}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="max-w-[150px] truncate text-slate-400 line-through decoration-slate-300" title={record.oldValue}>
-                                                                {record.oldValue}
+                                                            {index === 0 && (
+                                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded uppercase border border-emerald-100 shadow-sm shrink-0">Current</span>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+                                                                <span className="text-[11px] font-bold text-sky-700 uppercase tracking-tight">{record.field} Updated</span>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="max-w-[150px] truncate text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50" title={record.newValue}>
-                                                                {record.newValue}
+                                                            <div className="flex flex-col gap-1.5 pl-3.5 border-l border-slate-200 ml-0.5">
+                                                                <span className="text-[10px] text-slate-400 line-through truncate w-full" title={record.oldValue}>{record.oldValue}</span>
+                                                                <span className="text-[11px] text-slate-800 font-bold truncate w-full" title={record.newValue}>{record.newValue}</span>
                                                             </div>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 pt-1">
+                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">
+                                                                {record.changedBy.charAt(0)}
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-slate-500">{record.changedBy}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {(selectedRecordId === record.id || (!selectedRecordId && index === 0)) && (
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-sky-500 rounded-full blur-[2px] opacity-20"></div>
+                                                    )}
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
