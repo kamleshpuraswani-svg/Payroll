@@ -120,6 +120,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
+    const [lateJoinerMonth, setLateJoinerMonth] = useState('February');
+    const [lateJoinerDay, setLateJoinerDay] = useState('22');
+
     const fetchPaygroups = async () => {
         try {
             const { data, error } = await supabase
@@ -190,6 +193,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setMandateComments(config.mandateComments ?? true);
                 setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
                 setNpsWageCeiling(config.npsWageCeiling ?? false);
+                setLateJoinerMonth(config.lateJoinerMonth ?? 'February');
+                setLateJoinerDay(config.lateJoinerDay ?? '22');
             }
         } catch (err) {
             console.error('Error fetching income tax settings:', err);
@@ -286,7 +291,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             distributionMethod,
             tdsWeights: { ...tdsWeights },
             minTdsThreshold,
-            maxTdsCap
+            maxTdsCap,
+            lateJoinerMonth,
+            lateJoinerDay
         });
         setIsEditingInv(true);
     };
@@ -320,6 +327,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setTdsWeights(invBackup.tdsWeights);
             setMinTdsThreshold(invBackup.minTdsThreshold);
             setMaxTdsCap(invBackup.maxTdsCap);
+            setLateJoinerMonth(invBackup.lateJoinerMonth || 'February');
+            setLateJoinerDay(invBackup.lateJoinerDay || '22');
         }
         setIsEditingInv(false);
         setSelectedInvApprover("");
@@ -335,7 +344,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
                 autoReject, notifyRejection, allowedFileTypes,
-                proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling
+                proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
+                lateJoinerMonth, lateJoinerDay
             };
 
             const { error } = await supabase
@@ -396,7 +406,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
                 autoReject, notifyRejection, allowedFileTypes,
-                proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling
+                proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
+                lateJoinerMonth, lateJoinerDay
             };
 
             const { error } = await supabase
@@ -772,14 +783,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
     return (
         <div className="h-full overflow-y-auto bg-slate-50 relative">
-            {/* Top Summary Banner */}
-            <div className="bg-indigo-50 border-b border-indigo-100 py-3 text-center sticky top-0 z-20">
-                <p className="text-sm font-medium text-indigo-900 flex items-center justify-center gap-2">
-                    <Info size={16} className="text-indigo-600"/>
-                    Current Financial Year: <span className="font-bold">2025–26</span> · Declarations open until <span className="font-bold">15 Jan 2026</span>
-                </p>
-            </div>
-
             <div className="p-4 lg:p-8 w-full mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
                 <div className="flex justify-between items-start">
                     <div>
@@ -948,6 +951,63 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         <p className="text-sm font-medium text-amber-900/80 leading-relaxed">
                                             Employees can declare investments from the <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invEndDay)))}</span> of every month until the yearly cutoff on <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffDay)))} {cutoffMonth}</span>. After this period, no further declarations will be accepted for the current financial year.
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Late Joiner Rule Section */}
+                            <div className="pt-2 border-t border-slate-100">
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 pb-2">Late Joiner Declaration Rule</h4>
+                                
+                                <div className="space-y-6">
+                                    <div className="p-4 bg-cyan-50/50 border border-cyan-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
+                                            <Info size={20} className="text-cyan-600" />
+                                        </div>
+                                        <p className="text-sm font-medium text-cyan-900/80 leading-relaxed self-center">
+                                            If employees joins on or after <span className="font-bold underline decoration-cyan-300 underline-offset-2">{getOrdinalDay(new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(cutoffMonth), parseInt(cutoffDay)))} {cutoffMonth}</span> in a financial year, then the earlier of the below dates will apply.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-6 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl max-w-3xl">
+                                        <div className="flex-1">
+                                            <div className="h-11 px-6 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-sm font-bold text-slate-600 shadow-sm italic">
+                                                30 days after date of joining
+                                            </div>
+                                        </div>
+
+                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">OR</div>
+
+                                        <div className="flex-1 flex gap-3">
+                                            <div className="relative flex-1">
+                                                <select
+                                                    disabled={!isEditingInv}
+                                                    value={lateJoinerMonth}
+                                                    onChange={(e) => setLateJoinerMonth(e.target.value)}
+                                                    className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                >
+                                                    {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                            <div className="relative w-24">
+                                                <select
+                                                    disabled={!isEditingInv}
+                                                    value={lateJoinerDay}
+                                                    onChange={(e) => setLateJoinerDay(e.target.value)}
+                                                    className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                >
+                                                    {Array.from({ 
+                                                        length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(lateJoinerMonth) + 1, 0).getDate() 
+                                                    }, (_, i) => i + 1).map(day => (
+                                                        <option key={day} value={day}>{day}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
