@@ -698,9 +698,9 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
         <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50 animate-in fade-in duration-300 relative">
 
             {/* Top Stats Bar */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0">
+            <div className="bg-white border-b border-slate-200 px-6 py-5 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0">
                 {stats.map((stat, i) => (
-                    <div key={i} className={`flex flex-col p-3 rounded-xl border ${stat.highlight ? 'border-purple-100 bg-purple-50/30' : 'border-transparent'}`}>
+                    <div key={i} className={`flex flex-col p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-slate-50/50 ${stat.highlight ? 'bg-purple-50/30' : 'bg-white'}`}>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</span>
                         <span className={`text-xl font-bold ${stat.color}`}>{stat.val}</span>
                         {stat.subtitle && <span className="text-[10px] text-slate-500 mt-1">{stat.subtitle}</span>}

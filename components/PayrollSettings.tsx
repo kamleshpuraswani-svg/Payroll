@@ -165,6 +165,15 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     });
 
     const [processingDate, setProcessingDate] = useState(() => initialData?.processingDate || '7');
+    const [payPeriodEndDate, setPayPeriodEndDate] = useState(() => {
+        // Default to last day of the selected month
+        if (initialData?.payPeriodEnd) {
+            const match = initialData.payPeriodEnd.match(/^\d+/);
+            return match ? match[0] : '28';
+        }
+        return '28';
+    });
+
 
     const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>('last');
     const [smSecondCustomDay, setSmSecondCustomDay] = useState('16'); // Default to 16th of following month if custom
@@ -380,6 +389,10 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 addHistory('Start Month', initialData.startMonthStr, startMonthStr);
                 hasChanged = true;
             }
+            if (frequency === 'Monthly' && initialData.payPeriodEnd !== `${payPeriodEndDate}th`) {
+                addHistory('Pay Period End', initialData.payPeriodEnd || 'Not set', `${payPeriodEndDate}th`);
+                hasChanged = true;
+            }
             const initialCalcBase = initialData.payPeriodStart === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month';
             if (initialCalcBase !== calcBase) {
                 addHistory('Calculation Base', initialCalcBase, calcBase);
@@ -415,7 +428,18 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             targetId,
             targetType,
             payDate: payDateDesc,
-            payPeriodStart: calcBase === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month',
+            payPeriodStart: frequency === 'Monthly' ? (() => {
+                const endDay = parseInt(payPeriodEndDate);
+                const currentM = startMonthStr.split(' ')[0];
+                const currentY = parseInt(startMonthStr.split(' ')[1]);
+                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const mIdx = months.indexOf(currentM);
+                const endDateObj = new Date(currentY, mIdx, endDay);
+                const startDateObj = new Date(endDateObj);
+                startDateObj.setDate(startDateObj.getDate() - 30);
+                return startDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            })() : (calcBase === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month'),
+            payPeriodEnd: frequency === 'Monthly' ? `${payPeriodEndDate}th` : (initialData?.payPeriodEnd || 'Last'),
             firstPayDate: newFirstPayDate,
             startMonthStr,
             processingDate: frequency === 'Semi-Monthly' ? processingDate : undefined,
@@ -877,74 +901,123 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     )}
 
                                         {frequency === 'Monthly' && (
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
-                                            <div className="flex items-center gap-6">
-                                                <div className="relative w-24">
-                                                    <select
-                                                        value={payDateDay}
-                                                        onChange={(e) => setPayDateDay(e.target.value)}
-                                                        className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
-                                                    >
-                                                        {Array.from({ length: daysInSelectedMonth }, (_, i) => (
-                                                            <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                        <div className="space-y-6">
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
+                                                <div className="flex items-center gap-6">
+                                                    <div className="relative w-24">
+                                                        <select
+                                                            value={payDateDay}
+                                                            onChange={(e) => setPayDateDay(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
+                                                        >
+                                                            {Array.from({ length: daysInSelectedMonth }, (_, i) => (
+                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-6">
+                                                        <label className="flex items-center gap-2.5 cursor-pointer group">
+                                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'same' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
+                                                                {payDateMonthType === 'same' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                            </div>
+                                                            <input
+                                                                type="radio"
+                                                                className="hidden"
+                                                                name="payDateMonthType"
+                                                                checked={payDateMonthType === 'same'}
+                                                                onChange={() => setPayDateMonthType('same')}
+                                                            />
+                                                            <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Same month</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2.5 cursor-pointer group">
+                                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'following' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
+                                                                {payDateMonthType === 'following' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                            </div>
+                                                            <input
+                                                                type="radio"
+                                                                className="hidden"
+                                                                name="payDateMonthType"
+                                                                checked={payDateMonthType === 'following'}
+                                                                onChange={() => setPayDateMonthType('following')}
+                                                            />
+                                                            <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Following month</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {startMonthStr && payDateDay && (
+                                                    <p className="text-[11px] text-slate-400 font-medium italic mt-2.5">
+                                                        {(() => {
+                                                            const currentM = startMonthStr.split(' ')[0];
+                                                            const getNextMonth = (s: string) => {
+                                                                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                                const idx = months.indexOf(s);
+                                                                return idx === -1 ? "Next month" : months[(idx + 1) % 12];
+                                                            };
+                                                            const getOrd = (d: string) => {
+                                                                const n = parseInt(d);
+                                                                const j = n % 10, k = n % 100;
+                                                                if (j === 1 && k !== 11) return n + "st";
+                                                                if (j === 2 && k !== 12) return n + "nd";
+                                                                if (j === 3 && k !== 13) return n + "rd";
+                                                                return n + "th";
+                                                            };
+                                                            const nxtM = getNextMonth(currentM);
+                                                            const ordDay = getOrd(payDateDay);
+                                                            return `Same month — salary for ${currentM} is paid on ${ordDay} ${currentM}. Following month — salary for ${currentM} is paid on ${ordDay} ${nxtM}.`;
+                                                        })()}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-2">Pay Schedule Period <span className="text-rose-500">*</span></label>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="relative w-24">
+                                                        <select
+                                                            value={payPeriodEndDate}
+                                                            onChange={(e) => setPayPeriodEndDate(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
+                                                        >
+                                                            {Array.from({ length: daysInSelectedMonth }, (_, i) => (
+                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    </div>
+                                                    <span className="text-sm text-slate-500 font-medium">End Date of the selected month</span>
                                                 </div>
                                                 
-                                                <div className="flex items-center gap-6">
-                                                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'same' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                            {payDateMonthType === 'same' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                        </div>
-                                                        <input
-                                                            type="radio"
-                                                            className="hidden"
-                                                            name="payDateMonthType"
-                                                            checked={payDateMonthType === 'same'}
-                                                            onChange={() => setPayDateMonthType('same')}
-                                                        />
-                                                        <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Same month</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'following' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                            {payDateMonthType === 'following' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                        </div>
-                                                        <input
-                                                            type="radio"
-                                                            className="hidden"
-                                                            name="payDateMonthType"
-                                                            checked={payDateMonthType === 'following'}
-                                                            onChange={() => setPayDateMonthType('following')}
-                                                        />
-                                                        <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Following month</span>
-                                                    </label>
-                                                </div>
+                                                {startMonthStr && payPeriodEndDate && (
+                                                    <div className="mt-3 p-3 bg-sky-50 rounded-lg border border-sky-100 flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                        <Info size={16} className="text-sky-600 mt-0.5 shrink-0" />
+                                                        <p className="text-sm text-sky-800 font-medium leading-relaxed">
+                                                            Your pay schedule is from <span className="font-bold underline decoration-sky-300 decoration-2 underline-offset-2">
+                                                                {(() => {
+                                                                    const endDay = parseInt(payPeriodEndDate);
+                                                                    const currentM = startMonthStr.split(' ')[0];
+                                                                    const currentY = parseInt(startMonthStr.split(' ')[1]);
+                                                                    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                                    const mIdx = months.indexOf(currentM);
+                                                                    
+                                                                    // End Date Date
+                                                                    const endDateObj = new Date(currentY, mIdx, endDay);
+                                                                    
+                                                                    // Start Date = End Date - 30 days (as requested)
+                                                                    // "show a info text like 'Your pay schedule is from <End Date selected by user minus 30 days> to <End date selected by user>'"
+                                                                    const startDateObj = new Date(endDateObj);
+                                                                    startDateObj.setDate(startDateObj.getDate() - 30);
+                                                                    
+                                                                    const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                                                    return `${fmt(startDateObj)} to ${fmt(endDateObj)}`;
+                                                                })()}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
-                                            {startMonthStr && payDateDay && (
-                                                <p className="text-[11px] text-slate-400 font-medium italic mt-2.5">
-                                                    {(() => {
-                                                        const currentM = startMonthStr.split(' ')[0];
-                                                        const getNextMonth = (s: string) => {
-                                                            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                                                            const idx = months.indexOf(s);
-                                                            return idx === -1 ? "Next month" : months[(idx + 1) % 12];
-                                                        };
-                                                        const getOrd = (d: string) => {
-                                                            const n = parseInt(d);
-                                                            const j = n % 10, k = n % 100;
-                                                            if (j === 1 && k !== 11) return n + "st";
-                                                            if (j === 2 && k !== 12) return n + "nd";
-                                                            if (j === 3 && k !== 13) return n + "rd";
-                                                            return n + "th";
-                                                        };
-                                                        const nxtM = getNextMonth(currentM);
-                                                        const ordDay = getOrd(payDateDay);
-                                                        return `Same month — salary for ${currentM} is paid on ${ordDay} ${currentM}. Following month — salary for ${currentM} is paid on ${ordDay} ${nxtM}.`;
-                                                    })()}
-                                                </p>
-                                            )}
                                         </div>
                                     )}
                                 </div>
