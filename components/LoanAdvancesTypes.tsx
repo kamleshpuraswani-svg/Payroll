@@ -409,9 +409,9 @@ const LoanAdvancesTypes: React.FC = () => {
 
             await fetchLoanTypes();
             setIsEditing(false);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error saving loan type:', err);
-            alert('Failed to save loan type.');
+            alert(`Failed to save loan type: ${err.message || 'Unknown error'}`);
         } finally {
             setIsLoading(false);
         }
