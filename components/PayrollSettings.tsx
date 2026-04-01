@@ -1071,7 +1071,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded border border-emerald-100">Current Version</span>
                                             )}
                                         </h4>
-                                        <p className="text-sm text-slate-500 mt-1">Reviewing settings applied in this version.</p>
                                     </div>
 
                                     {history.length === 0 ? (
@@ -1084,22 +1083,40 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                                            {/* We use a helper to get the value for a specific field at the selected point in time */}
+                                            {/* Logic to reconstruct historical state */}
                                             {(() => {
-                                                const selectedRecord = selectedRecordId ? history.find(r => r.id === selectedRecordId) : history[0];
+                                                const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
                                                 
-                                                const renderField = (label: string, fieldName: string, currentValue: string) => {
-                                                    // Find the value in the history for this field
-                                                    const record = selectedRecordId ? history.find(r => r.id === selectedRecordId && r.field === label) : null;
-                                                    const value = record ? record.newValue : (selectedRecordId ? "N/A" : currentValue);
-                                                    const wasChanged = record ? true : false;
+                                                // Start with current simplified state
+                                                const histState: any = {
+                                                    'Frequency': frequency,
+                                                    'Target': paygroups.find(pg => pg.id === initialData?.targetId)?.name || initialData?.targetId || 'Not set',
+                                                    'Pay Date': initialData?.payDate || 'Not set',
+                                                    'Start Month': startMonthStr,
+                                                    'First Payroll Date': firstPayDate,
+                                                    'Salary Processing Date': processingDate || 'Not set',
+                                                    'Calculation Base': calcBase,
+                                                    'Pay Period End': initialData?.payPeriodEnd || 'Not set'
+                                                };
+
+                                                // Replay history backwards from current to selected
+                                                if (selectedIndex > 0) {
+                                                    for (let i = 0; i < selectedIndex; i++) {
+                                                        const record = history[i];
+                                                        histState[record.field] = record.oldValue;
+                                                    }
+                                                }
+
+                                                const renderField = (label: string) => {
+                                                    const isModifiedInThisVersion = selectedRecordId ? history[selectedIndex]?.field === label : (selectedIndex === 0 && history.length > 0 && history[0].field === label);
+                                                    const value = histState[label];
 
                                                     return (
                                                         <div className="space-y-1.5">
                                                             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-                                                            <div className={`text-sm font-medium p-3 rounded-xl border ${wasChanged ? 'bg-sky-50/50 border-sky-100 text-sky-900' : 'bg-slate-50/30 border-slate-100 text-slate-700'}`}>
+                                                            <div className={`text-sm font-medium p-3 rounded-xl border ${isModifiedInThisVersion ? 'bg-sky-50/50 border-sky-100 text-sky-900 shadow-sm' : 'bg-slate-50/30 border-slate-100 text-slate-700'}`}>
                                                                 {value || 'Not set'}
-                                                                {wasChanged && <span className="ml-2 text-[10px] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded font-bold">CHANGED</span>}
+                                                                {isModifiedInThisVersion && <span className="ml-2 text-[10px] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded font-bold">CHANGED</span>}
                                                             </div>
                                                         </div>
                                                     );
@@ -1107,33 +1124,21 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                                                 return (
                                                     <>
-                                                        {renderField('Frequency', 'frequency', frequency)}
-                                                        {renderField('Target', 'target', paygroups.find(pg => pg.id === initialData?.targetId)?.name || initialData?.targetId || 'Not set')}
-                                                        {renderField('Pay Date', 'payDate', initialData?.payDate || 'Not set')}
-                                                        {renderField('Start Month', 'startMonthStr', startMonthStr)}
-                                                        {renderField('First Payroll Date', 'firstPayDate', firstPayDate)}
-                                                        {renderField('Salary Processing Date', 'processingDate', processingDate)}
-                                                        {renderField('Calculation Base', 'calcBase', calcBase)}
-                                                        {renderField('Pay Period End', 'payPeriodEnd', initialData?.payPeriodEnd || 'Not set')}
+                                                        {renderField('Frequency')}
+                                                        {renderField('Target')}
+                                                        {renderField('Pay Date')}
+                                                        {renderField('Start Month')}
+                                                        {renderField('First Payroll Date')}
+                                                        {renderField('Salary Processing Date')}
+                                                        {renderField('Calculation Base')}
+                                                        {renderField('Pay Period End')}
                                                     </>
                                                 );
                                             })()}
                                         </div>
                                     )}
 
-                                    {selectedRecordId && (
-                                        <div className="mt-12 p-4 bg-sky-50 rounded-2xl border border-sky-100 flex gap-4 animate-in fade-in slide-in-from-bottom-2">
-                                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                                                <Info size={20} className="text-sky-600" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-sky-900">Historical View</p>
-                                                <p className="text-xs text-sky-700/80 leading-relaxed mt-0.5">
-                                                    You are viewing a previous version of this configuration. Values marked as "CHANGED" were modified in this specific update.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
+                                    {/* Removed Historical View Box */}
                                 </div>
 
                                 {/* Sidebar: Version History (Right) */}

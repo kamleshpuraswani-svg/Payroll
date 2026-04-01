@@ -172,3 +172,5 @@
 4:55:58 PM [vite] (client) hmr update /components/IncomeTaxDeclarationSettings.tsx, /index.css
 4:59:17 PM [vite] (client) hmr update /components/IncomeTaxDeclarationSettings.tsx, /index.css
 5:09:38 PM [vite] (client) hmr update /components/PayrollSettings.tsx, /index.css
+5:14:04 PM [vite] (client) hmr update /components/PayrollSettings.tsx, /index.css
+5:14:23 PM [vite] (client) hmr update /components/PayrollSettings.tsx, /index.css
