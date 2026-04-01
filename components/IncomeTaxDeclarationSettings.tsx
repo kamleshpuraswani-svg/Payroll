@@ -123,6 +123,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [lateJoinerMonth, setLateJoinerMonth] = useState('February');
     const [lateJoinerDay, setLateJoinerDay] = useState('22');
 
+    const [proofCutoffMonth, setProofCutoffMonth] = useState('January');
+    const [proofCutoffDay, setProofCutoffDay] = useState('22');
+
     const fetchPaygroups = async () => {
         try {
             const { data, error } = await supabase
@@ -195,6 +198,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setNpsWageCeiling(config.npsWageCeiling ?? false);
                 setLateJoinerMonth(config.lateJoinerMonth ?? 'February');
                 setLateJoinerDay(config.lateJoinerDay ?? '22');
+                setProofCutoffMonth(config.proofCutoffMonth ?? 'January');
+                setProofCutoffDay(config.proofCutoffDay ?? '22');
             }
         } catch (err) {
             console.error('Error fetching income tax settings:', err);
@@ -275,6 +280,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [npsIncludeInCtc, setNpsIncludeInCtc] = useState(true);
     const [npsWageCeiling, setNpsWageCeiling] = useState(false);
 
+    const [proofCutoffMonthState, setProofCutoffMonthState] = useState('January');
+    const [proofCutoffDayState, setProofCutoffDayState] = useState('31');
+
     // Backup states for cancel functionality
     const [invBackup, setInvBackup] = useState<any>(null);
     const [proofBackup, setProofBackup] = useState<any>(null);
@@ -345,7 +353,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
                 autoReject, notifyRejection, allowedFileTypes,
                 proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
-                lateJoinerMonth, lateJoinerDay
+                lateJoinerMonth, lateJoinerDay,
+                proofCutoffMonth, proofCutoffDay
             };
 
             const { error } = await supabase
@@ -372,7 +381,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             proofGraceEnabled, proofGraceDate: new Date(proofGraceDate),
             autoReject, notifyRejection, allowedFileTypes,
             mandateComments, npsIncludeInCtc, npsWageCeiling,
-            proofApprovers: [...proofApprovers]
+            proofApprovers: [...proofApprovers],
+            proofCutoffMonth,
+            proofCutoffDay
         });
         setIsEditingProof(true);
     };
@@ -391,6 +402,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setNpsIncludeInCtc(proofBackup.npsIncludeInCtc);
             setNpsWageCeiling(proofBackup.npsWageCeiling);
             setProofApprovers(proofBackup.proofApprovers);
+            setProofCutoffMonth(proofBackup.proofCutoffMonth || 'January');
+            setProofCutoffDay(proofBackup.proofCutoffDay || '22');
         }
         setIsEditingProof(false);
         setSelectedProofApprover("");
@@ -407,7 +420,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
                 autoReject, notifyRejection, allowedFileTypes,
                 proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
-                lateJoinerMonth, lateJoinerDay
+                lateJoinerMonth, lateJoinerDay,
+                proofCutoffMonth, proofCutoffDay
             };
 
             const { error } = await supabase
@@ -1529,55 +1543,49 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                         <div className="p-8 space-y-8 animate-in slide-in-from-top-2">
                             {/* Row 1: Deadline & File Types */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-1">
-                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Proof Submission Deadline</label>
+                                <div className="space-y-6">
+                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Financial year cutoff date</h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <DatePicker 
-                                            label="From Date" 
-                                            date={proofDeadlineFrom} 
-                                            onChange={setProofDeadlineFrom} 
-                                            required
-                                            disabled={!isEditingProof}
-                                        />
-                                        <DatePicker 
-                                            label="To Date" 
-                                            date={proofDeadlineTo} 
-                                            onChange={setProofDeadlineTo} 
-                                            required
-                                            disabled={!isEditingProof}
-                                        />
-                                    </div>
-
-                                    {/* Grace Period Field for POI */}
-                                    <div className="mt-6 space-y-4">
-                                        <div className="flex items-center justify-between max-w-2xl bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                                            <span className="text-sm font-bold text-slate-700">Grace period after deadline?</span>
-                                            <label className={`relative inline-flex items-center ${isEditingProof ? 'cursor-pointer' : 'cursor-default'}`}>
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={proofGraceEnabled} 
-                                                    onChange={() => isEditingProof && setProofGraceEnabled(prev => !prev)} 
-                                                    disabled={!isEditingProof} 
-                                                    className="sr-only peer" 
-                                                />
-                                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                                            </label>
-                                        </div>
-                                        {proofGraceEnabled && (
-                                            <div className="animate-in fade-in slide-in-from-top-2">
-                                                <DatePicker 
-                                                    label="Grace Period End Date" 
-                                                    date={proofGraceDate} 
-                                                    onChange={setProofGraceDate} 
+                                        <div className="flex gap-3">
+                                            <div className="relative flex-1">
+                                                <select
                                                     disabled={!isEditingProof}
-                                                    required
-                                                    subLabel="Allow proof uploads for a short period after the official deadline"
-                                                />
+                                                    value={proofCutoffMonth}
+                                                    onChange={(e) => setProofCutoffMonth(e.target.value)}
+                                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                >
+                                                    {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                             </div>
-                                        )}
+                                            <div className="relative w-24">
+                                                <select
+                                                    disabled={!isEditingProof}
+                                                    value={proofCutoffDay}
+                                                    onChange={(e) => setProofCutoffDay(e.target.value)}
+                                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 text-center shadow-sm"
+                                                >
+                                                    {Array.from({ 
+                                                        length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(proofCutoffMonth) + 1, 0).getDate() 
+                                                    }, (_, i) => i + 1).map(day => (
+                                                        <option key={day} value={day}>{day}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <p className="text-[10px] text-slate-400 mt-2 font-medium italic">For final TDS adjustment and 24Q filing</p>
+                                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                            <AlertTriangle size={20} className="text-amber-600" />
+                                        </div>
+                                        <p className="text-sm font-medium text-amber-900/80 leading-relaxed self-center">
+                                            After this date, declarations made by employees would not be considered for tax calculation if documents are not uploaded.
+                                        </p>
+                                    </div>
                                 </div>
                                 <div>
                                     
