@@ -697,7 +697,7 @@ const LoanAdvancesTypes: React.FC = () => {
 
                         <div className="p-8 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-1">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Business Unit</label>
                                     <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700">
                                         {(() => {
