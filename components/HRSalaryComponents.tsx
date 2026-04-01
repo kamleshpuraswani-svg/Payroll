@@ -1716,9 +1716,14 @@ const HRSalaryComponents: React.FC = () => {
                                                         />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDeleteClick(item.id)}
-                                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                                                        title="Delete"
+                                                        onClick={() => item.name !== 'Basic' && handleDeleteClick(item.id)}
+                                                        disabled={item.name === 'Basic'}
+                                                        className={`p-1.5 rounded-md transition-colors ${
+                                                            item.name === 'Basic' 
+                                                                ? 'text-slate-200 cursor-not-allowed bg-slate-50/50' 
+                                                                : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                                        }`}
+                                                        title={item.name === 'Basic' ? "System defined components cannot be deleted." : "Delete"}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
