@@ -554,7 +554,10 @@ const AddExpenseModal: React.FC<{
     const [description, setDescription] = useState('');
 
     const handleAddItem = () => {
-        if (!amount || !description) return;
+        if (!amount || !description || !selectedCategory) {
+            if (!selectedCategory) alert('Please select a category first.');
+            return;
+        }
 
         const newItem = {
             id: Math.random().toString(36).substr(2, 9),
@@ -684,10 +687,7 @@ const AddExpenseModal: React.FC<{
                         </div>
                     </div>
 
-                    {/* Step 2: Add Expense Details */}
-                    {selectedCategory && (
-                        <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Step 2: Add Expense Details</h4>
+                    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-300">
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                                 {/* Form */}
                                 <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
@@ -825,9 +825,8 @@ const AddExpenseModal: React.FC<{
                                         </div>
                                     )}
                                 </div>
-                            </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
