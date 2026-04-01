@@ -250,7 +250,11 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_ADD_EXPENSE && (
                   <AddExpenseScreen
                     onClose={() => setCurrentView(ViewState.HR_EXPENSES)}
-                    employees={employees.map(e => ({ ...e, name: `${e.first_name} ${e.last_name}`, eid: e.employee_id }))}
+                    employees={employees.map(e => ({ 
+                      ...e, 
+                      name: e.name || `${e.first_name || ''} ${e.last_name || ''}`.trim() || 'No Name', 
+                      eid: e.eid || e.employee_id || 'N/A' 
+                    }))}
                     categories={[
                       { id: '1', name: 'Travel' },
                       { id: '2', name: 'Meal' },
