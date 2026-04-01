@@ -568,10 +568,12 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                  return;
              } else {
                  savedId = data?.id;
+                 setActiveStructureId(savedId);
              }
         }
 
-        alert(activeStructureId && !activeStructureId.startsWith('mock-') ? 'Structure updated successfully!' : 'Structure created successfully!');
+        const isUpdate = activeStructureId && !activeStructureId.startsWith('mock-');
+        alert(isUpdate ? 'Structure updated successfully!' : 'Structure created successfully!');
 
         // --- Propagate Assignments to Employees Table ---
         if (savedId && status === 'Active') {
