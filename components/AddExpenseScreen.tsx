@@ -287,6 +287,12 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                             const val = e.target.value;
                                             setExpenseFromDate(val);
                                             setExpenseToDate(val);
+                                            // Synchronize all existing items to this new date
+                                            setExpenseItems(expenseItems.map(item => ({
+                                                ...item,
+                                                fromDate: val,
+                                                toDate: val
+                                            })));
                                         }}
                                         className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
                                     />
@@ -305,6 +311,12 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                             const val = e.target.value;
                                             setExpenseFromDate(val);
                                             setExpenseToDate(val);
+                                            // Synchronize all existing items to this new date
+                                            setExpenseItems(expenseItems.map(item => ({
+                                                ...item,
+                                                fromDate: val,
+                                                toDate: val
+                                            })));
                                         }}
                                         className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
                                     />
