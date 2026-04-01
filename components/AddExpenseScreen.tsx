@@ -196,7 +196,11 @@ export const AddExpenseScreen: React.FC<{
                             <input
                                 type="date"
                                 value={expenseFromDate}
-                                onChange={(e) => setExpenseFromDate(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setExpenseFromDate(val);
+                                    setExpenseToDate(val);
+                                }}
                                 className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all"
                             />
                         </div>
@@ -210,7 +214,11 @@ export const AddExpenseScreen: React.FC<{
                             <input
                                 type="date"
                                 value={expenseToDate}
-                                onChange={(e) => setExpenseToDate(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setExpenseFromDate(val);
+                                    setExpenseToDate(val);
+                                }}
                                 className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all"
                             />
                         </div>
