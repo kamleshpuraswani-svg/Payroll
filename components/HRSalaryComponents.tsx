@@ -1716,14 +1716,20 @@ const HRSalaryComponents: React.FC = () => {
                                                         />
                                                     </button>
                                                     <button
-                                                        onClick={() => item.name !== 'Basic' && handleDeleteClick(item.id)}
-                                                        disabled={item.name === 'Basic'}
+                                                        onClick={() => {
+                                                            const isBasic = item.name?.trim().toLowerCase() === 'basic';
+                                                            const isRestricted = isBasic || item.isSystem;
+                                                            if (!isRestricted) {
+                                                                handleDeleteClick(item.id);
+                                                            }
+                                                        }}
+                                                        disabled={item.name?.trim().toLowerCase() === 'basic' || item.isSystem}
                                                         className={`p-1.5 rounded-md transition-colors ${
-                                                            item.name === 'Basic' 
+                                                            (item.name?.trim().toLowerCase() === 'basic' || item.isSystem)
                                                                 ? 'text-slate-200 cursor-not-allowed bg-slate-50/50' 
                                                                 : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                                                         }`}
-                                                        title={item.name === 'Basic' ? "System defined components cannot be deleted." : "Delete"}
+                                                        title={(item.name?.trim().toLowerCase() === 'basic' || item.isSystem) ? "System defined components cannot be deleted." : "Delete"}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>

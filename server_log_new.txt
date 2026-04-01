@@ -177,3 +177,4 @@
 5:22:07 PM [vite] (client) hmr update /components/PayrollSettings.tsx, /index.css
 5:25:42 PM [vite] (client) hmr update /components/PayrollSettings.tsx, /index.css
 5:29:52 PM [vite] (client) hmr update /components/HRSalaryComponents.tsx, /index.css
+5:33:21 PM [vite] (client) hmr update /components/HRSalaryComponents.tsx, /index.css
