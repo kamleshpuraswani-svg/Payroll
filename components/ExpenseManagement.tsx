@@ -825,13 +825,15 @@ const ExpenseManagement: React.FC<{
                                                         <Edit2 size={14} />
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setApproveClaim(claim); }}
-                                                    className="p-1.5 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 rounded"
-                                                    title="Approve"
-                                                >
-                                                    <CheckCircle size={14} />
-                                                </button>
+                                                {['PENDING', 'MORE INFO REQUESTED'].includes(claim.status.toUpperCase()) && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setApproveClaim(claim); }}
+                                                        className="p-1.5 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 rounded"
+                                                        title="Approve"
+                                                    >
+                                                        <CheckCircle size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

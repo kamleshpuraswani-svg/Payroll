@@ -18,7 +18,8 @@ import {
     Activity,
     Smartphone,
     BookOpen,
-    Fuel
+    Fuel,
+    Edit2
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -46,6 +47,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFetchingData, setIsFetchingData] = useState(false);
+    const [editingItemId, setEditingItemId] = useState<number | string | null>(null);
 
     useEffect(() => {
         if (editId) {
@@ -92,24 +94,55 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     const handleAddItem = () => {
         if (!merchant || !amount || !reason) return;
         
-        const newItem = {
-            id: Date.now(),
-            merchant,
-            project,
-            amount: parseFloat(amount),
-            reason,
-            receiptName: receipt ? receipt.name : null,
-            fromDate: expenseFromDate,
-            toDate: expenseToDate
-        };
+        if (editingItemId !== null) {
+            // Update existing item
+            const updatedItems = expenseItems.map(item => {
+                if (item.id === editingItemId) {
+                    return {
+                        ...item,
+                        merchant,
+                        project,
+                        amount: parseFloat(amount),
+                        reason,
+                        receiptName: receipt ? receipt.name : item.receiptName,
+                        fromDate: expenseFromDate,
+                        toDate: expenseToDate
+                    };
+                }
+                return item;
+            });
+            setExpenseItems(updatedItems);
+            setEditingItemId(null);
+        } else {
+            // Add new item
+            const newItem = {
+                id: Date.now(),
+                merchant,
+                project,
+                amount: parseFloat(amount),
+                reason,
+                receiptName: receipt ? receipt.name : null,
+                fromDate: expenseFromDate,
+                toDate: expenseToDate
+            };
+            setExpenseItems([...expenseItems, newItem]);
+        }
         
-        setExpenseItems([...expenseItems, newItem]);
         // Reset item fields
         setMerchant('');
         setProject('');
         setAmount('');
         setReason('');
         setReceipt(null);
+    };
+
+    const handleEditItem = (item: any) => {
+        setEditingItemId(item.id);
+        setMerchant(item.merchant || '');
+        setProject(item.project || '');
+        setAmount(String(item.amount));
+        setReason(item.reason || item.description || '');
+        // Note: keeping existing receipt name if no new file is selected
     };
 
     const handleRemoveItem = (id: number | string) => {
@@ -373,8 +406,24 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                             disabled={!merchant || !amount || !reason}
                                             className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
-                                            <Plus size={18} /> ADD
+                                            {editingItemId !== null ? <CheckCircle size={18} /> : <Plus size={18} />}
+                                            {editingItemId !== null ? 'UPDATE ITEM' : 'ADD'}
                                         </button>
+                                        {editingItemId !== null && (
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingItemId(null);
+                                                    setMerchant('');
+                                                    setProject('');
+                                                    setAmount('');
+                                                    setReason('');
+                                                    setReceipt(null);
+                                                }}
+                                                className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500 transition-all"
+                                            >
+                                                Cancel Edit
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -438,12 +487,22 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                                                 )}
                                                             </td>
                                                             <td className="px-4 py-4 text-right">
-                                                                <button 
-                                                                    onClick={() => handleRemoveItem(item.id)}
-                                                                    className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    <button 
+                                                                        onClick={() => handleEditItem(item)}
+                                                                        className={`p-1.5 rounded-lg transition-all ${editingItemId === item.id ? 'text-purple-600 bg-purple-50' : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50'}`}
+                                                                        title="Edit Item"
+                                                                    >
+                                                                        <Edit2 size={14} />
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => handleRemoveItem(item.id)}
+                                                                        className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                                        title="Remove Item"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     ))}
