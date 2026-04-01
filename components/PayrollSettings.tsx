@@ -1172,7 +1172,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 </div>
 
                                 {/* Sidebar: Version History (Right) */}
-                                <div className="w-full lg:w-[320px] bg-slate-50 p-6 overflow-y-auto">
+                                <div className="w-full lg:w-[320px] bg-slate-50 p-6 overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                                     <div className="mb-6">
                                         <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Version History</h4>
                                         <p className="text-[11px] text-slate-400 font-medium leading-relaxed">View previous of pay schedules.</p>
@@ -1192,7 +1192,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             : 'bg-transparent border-slate-200/60 hover:bg-white hover:border-slate-300'}
                                                     `}
                                                 >
-                                                    <div className="flex flex-col gap-3">
+                                                    <div className="flex flex-col gap-4">
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div className="flex flex-col">
                                                                 <span className={`text-[13px] font-bold ${(selectedRecordId === record.id || (!selectedRecordId && index === 0)) ? 'text-slate-900' : 'text-slate-700'}`}>
@@ -1206,20 +1206,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                                 <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded uppercase border border-emerald-100 shadow-sm shrink-0">Current</span>
                                                             )}
                                                         </div>
-                                                        
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-                                                                <span className="text-[11px] font-bold text-sky-700 uppercase tracking-tight">{record.field} Updated</span>
-                                                            </div>
-                                                            <div className="flex flex-col gap-1.5 pl-3.5 border-l border-slate-200 ml-0.5">
-                                                                <span className="text-[10px] text-slate-400 line-through truncate w-full" title={record.oldValue}>{record.oldValue}</span>
-                                                                <span className="text-[11px] text-slate-800 font-bold truncate w-full" title={record.newValue}>{record.newValue}</span>
-                                                            </div>
-                                                        </div>
 
-                                                        <div className="flex items-center gap-2 pt-1">
-                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">
                                                                 {record.changedBy.charAt(0)}
                                                             </div>
                                                             <span className="text-[11px] font-bold text-slate-500">{record.changedBy}</span>
