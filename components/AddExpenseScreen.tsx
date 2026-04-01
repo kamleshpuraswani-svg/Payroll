@@ -37,7 +37,9 @@ export const AddExpenseScreen: React.FC<{
 
     // Form state for current item
     const [amount, setAmount] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [expenseFromDate, setExpenseFromDate] = useState(new Date().toISOString().split('T')[0]);
+    const [expenseToDate, setExpenseToDate] = useState(new Date().toISOString().split('T')[0]);
+    const [projectClient, setProjectClient] = useState('');
     const [merchant, setMerchant] = useState('');
     const [description, setDescription] = useState('');
     const [receipt, setReceipt] = useState<File | null>(null);
@@ -53,7 +55,9 @@ export const AddExpenseScreen: React.FC<{
             id: Date.now().toString(),
             category: selectedCategory.name,
             amount: parseFloat(amount),
-            date,
+            expenseFromDate,
+            expenseToDate,
+            projectClient,
             merchant,
             description,
             receiptName: receipt?.name || null
@@ -63,6 +67,7 @@ export const AddExpenseScreen: React.FC<{
         // Reset item form
         setAmount('');
         setMerchant('');
+        setProjectClient('');
         setDescription('');
         setReceipt(null);
     };
@@ -141,7 +146,7 @@ export const AddExpenseScreen: React.FC<{
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
                     {/* Select Employee */}
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Employee</label>
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Employee <span className="text-rose-500">*</span></label>
                         <div className="relative group">
                             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                             <select
@@ -160,7 +165,7 @@ export const AddExpenseScreen: React.FC<{
 
                     {/* Select Category */}
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Category</label>
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Category <span className="text-rose-500">*</span></label>
                         <div className="relative group">
                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                             <select
@@ -182,7 +187,7 @@ export const AddExpenseScreen: React.FC<{
                 </div>
 
                 <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Add Expense details</h3>
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense details</h3>
 
                     <div className="flex flex-col lg:flex-row gap-8 items-start">
                         {/* Add Item Form */}
@@ -203,27 +208,26 @@ export const AddExpenseScreen: React.FC<{
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Amount <span className="text-rose-500">*</span></label>
-                                        <div className="relative group">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                            <input
-                                                type="number"
-                                                placeholder="0.00"
-                                                value={amount}
-                                                onChange={(e) => setAmount(e.target.value)}
-                                                className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Date <span className="text-rose-500">*</span></label>
+                                    <div className="col-span-1">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense from date <span className="text-rose-500">*</span></label>
                                         <div className="relative group">
                                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                             <input
                                                 type="date"
-                                                value={date}
-                                                onChange={(e) => setDate(e.target.value)}
+                                                value={expenseFromDate}
+                                                onChange={(e) => setExpenseFromDate(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-span-1">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense to date <span className="text-rose-500">*</span></label>
+                                        <div className="relative group">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                            <input
+                                                type="date"
+                                                value={expenseToDate}
+                                                onChange={(e) => setExpenseToDate(e.target.value)}
                                                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                                             />
                                         </div>
@@ -231,7 +235,35 @@ export const AddExpenseScreen: React.FC<{
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Description <span className="text-rose-500">*</span></label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Project / client</label>
+                                    <div className="relative group">
+                                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Project X, Client Y"
+                                            value={projectClient}
+                                            onChange={(e) => setProjectClient(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Amount <span className="text-rose-500">*</span></label>
+                                    <div className="relative group">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            className="w-full pl-7 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Reason/Description <span className="text-rose-500">*</span></label>
                                     <div className="relative group">
                                         <MessageSquare className="absolute left-3 top-3 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                         <textarea
@@ -311,9 +343,9 @@ export const AddExpenseScreen: React.FC<{
                                                         <div>
                                                             <p className="font-bold text-slate-800">{item.merchant || 'General Expense'}</p>
                                                             <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                                <span>{item.date}</span>
+                                                                <span>{item.expenseFromDate} - {item.expenseToDate}</span>
                                                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                                <span className="truncate max-w-[150px]">{item.description}</span>
+                                                                <span className="truncate max-w-[150px]">{item.projectClient ? `${item.projectClient}: ` : ''}{item.description}</span>
                                                             </div>
                                                         </div>
                                                     </div>
