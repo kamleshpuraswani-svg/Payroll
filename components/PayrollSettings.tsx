@@ -1048,7 +1048,24 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                             <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8 space-y-2">
                                 <div>
-                                    Pay Period: <span className="font-medium text-sky-600">01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</span>
+                                    Pay Period: <span className="font-medium text-sky-600">
+                                        {frequency === 'Monthly' && userRole === 'HR_MANAGER' && payPeriodEndDate ? (
+                                            (() => {
+                                                const endDay = parseInt(payPeriodEndDate);
+                                                const currentM = startMonthStr.split(' ')[0];
+                                                const currentY = parseInt(startMonthStr.split(' ')[1]);
+                                                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                const mIdx = months.indexOf(currentM);
+                                                const endDateObj = new Date(currentY, mIdx, endDay);
+                                                const startDateObj = new Date(endDateObj);
+                                                startDateObj.setDate(startDateObj.getDate() - 30);
+                                                const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                                return `${fmt(startDateObj)} - ${fmt(endDateObj)}`;
+                                            })()
+                                        ) : (
+                                            <>01 {startMonthStr.split(' ')[0]} {selectedYear} - {new Date(selectedYear, selectedMonthIndex + 1, 0).getDate()} {startMonthStr.split(' ')[0]} {selectedYear}</>
+                                        )}
+                                    </span>
                                 </div>
                                 <p className="text-[11px] text-slate-400 italic">
                                     If the pay date falls on a holiday or Sunday, payroll will be processed on the previous working day.
