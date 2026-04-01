@@ -816,7 +816,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </button>
                                 )}
                             </div>
-                            <p className="text-sm text-slate-500">Allow employees to declare tax-saving investments under Section 80C, 80D, HRA, etc.</p>
                         </div>
                         <div className="flex items-center gap-4">
                             {isEditingInv ? (
@@ -845,7 +844,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                             {/* Declaration Settings Overhaul */}
                             <div className="pt-2">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-100 pb-2">Declaration Settings</h4>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-100 pb-2">Tax Declaration Due Date</h4>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* Monthly Window */}
@@ -910,7 +909,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         onChange={(e) => setCutoffMonth(e.target.value)}
                                                         className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
                                                     >
-                                                        {["January", "February", "March"].map(m => (
+                                                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
                                                             <option key={m} value={m}>{m}</option>
                                                         ))}
                                                     </select>
