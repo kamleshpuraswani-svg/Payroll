@@ -1578,7 +1578,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2 w-full">
                                         <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                                             <AlertTriangle size={20} className="text-amber-600" />
                                         </div>
@@ -1708,14 +1708,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </div>
                                         <input type="checkbox" className="hidden" checked={mandateComments} onChange={() => isEditingProof && setMandateComments(!mandateComments)} disabled={!isEditingProof} />
                                         <span className="text-sm text-slate-700">Mandate reviewer comments for partial investment amount approval</span>
-                                    </label>
-
-                                    <label className={`flex items-center gap-3 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${npsIncludeInCtc ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {npsIncludeInCtc && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={npsIncludeInCtc} onChange={() => isEditingProof && setNpsIncludeInCtc(!npsIncludeInCtc)} disabled={!isEditingProof} />
-                                        <span className="text-sm text-slate-700">Include employer NPS contribution in employee CTC</span>
                                     </label>
                                 </div>
                             </div>
