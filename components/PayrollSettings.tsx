@@ -991,28 +991,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                     </div>
                                                     <span className="text-sm text-slate-500 font-medium">End Date of the selected month</span>
                                                 </div>
-                                                
-                                                {startMonthStr && payPeriodEndDate && (
-                                                    <div className="mt-3 p-3 bg-sky-50 rounded-lg border border-sky-100 flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                                                        <Info size={16} className="text-sky-600 mt-0.5 shrink-0" />
-                                                        <p className="text-sm text-sky-800 font-medium leading-relaxed">
-                                                            Your pay schedule is from <span className="font-bold underline decoration-sky-300 decoration-2 underline-offset-2">
-                                                                {(() => {
-                                                                    const endDay = parseInt(payPeriodEndDate);
-                                                                    const currentM = startMonthStr.split(' ')[0];
-                                                                    const currentY = parseInt(startMonthStr.split(' ')[1]);
-                                                                    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                                                                    const mIdx = months.indexOf(currentM);
-                                                                    const endDateObj = new Date(currentY, mIdx, endDay);
-                                                                    const startDateObj = new Date(endDateObj);
-                                                                    startDateObj.setDate(startDateObj.getDate() - 30);
-                                                                    const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                                                                    return `${fmt(startDateObj)} to ${fmt(endDateObj)}`;
-                                                                })()}
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {userRole === 'HR_MANAGER' && (
