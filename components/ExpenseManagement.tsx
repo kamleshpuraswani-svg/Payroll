@@ -806,7 +806,7 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                                 <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.lastModifiedBy}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 text-right">
+                                         <td className="px-4 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
@@ -814,6 +814,13 @@ const ExpenseManagement: React.FC<{ onChangeView: (view: ViewState) => void }> =
                                                     onClick={(e) => { e.stopPropagation(); setViewClaim(claim); }}
                                                 >
                                                     <Eye size={14} />
+                                                </button>
+                                                <button
+                                                    className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
+                                                    title="Edit Claim"
+                                                    onClick={(e) => { e.stopPropagation(); setEditClaim(claim); }}
+                                                >
+                                                    <Edit2 size={14} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setApproveClaim(claim); }}
