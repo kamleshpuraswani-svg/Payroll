@@ -663,27 +663,21 @@ const AddExpenseModal: React.FC<{
                     {/* Step 1: Select Category */}
                     <div className="space-y-4">
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Step 1: Select Category</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                            {categories.map(cat => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-3 group relative overflow-hidden ${selectedCategory?.id === cat.id
-                                        ? 'bg-blue-600 border-blue-600 text-white'
-                                        : 'bg-white border-slate-100 hover:border-blue-100 text-slate-600 hover:bg-blue-50/50'
-                                        }`}
-                                >
-                                    <div className={`p-2 rounded-lg ${selectedCategory?.id === cat.id ? 'bg-white/20' : 'bg-slate-50 group-hover:bg-white'} transition-colors`}>
-                                        {getClaimIcon(cat.name)}
-                                    </div>
-                                    <span className="text-[10px] font-black uppercase tracking-wider">{cat.name}</span>
-                                    {selectedCategory?.id === cat.id && (
-                                        <div className="absolute top-1 right-1">
-                                            <Check size={12} className="text-white" />
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
+                        <div className="max-w-xs">
+                            <select
+                                value={selectedCategory?.id || ''}
+                                onChange={(e) => {
+                                    const cat = categories.find(c => c.id === e.target.value);
+                                    setSelectedCategory(cat);
+                                }}
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm appearance-none cursor-pointer"
+                                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394a3b8\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+                            >
+                                <option value="">Select Category</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

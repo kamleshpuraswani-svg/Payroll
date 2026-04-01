@@ -156,21 +156,28 @@ export const ClaimWizard = ({ onCancel, onSubmit, initialData, readOnly = false,
         <div className="p-8 border-b border-slate-100">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Step 1: Select Category</h3>
             
-            <div className="max-w-xs mb-4">
-              <select
-                value={category}
-                onChange={(e) => !readOnly && setCategory(e.target.value as ReimbursementCategory)}
-                disabled={readOnly}
-                className="input-field appearance-none cursor-pointer pr-10"
-                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394a3b8\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
-              >
-                <option value={ReimbursementCategory.TRAVEL}>Travel</option>
-                <option value={ReimbursementCategory.MEAL}>Meal</option>
-                <option value={ReimbursementCategory.MOBILE}>Mobile</option>
-                <option value={ReimbursementCategory.BROADBAND}>Broadband</option>
-                <option value={ReimbursementCategory.LEARNING}>Learning</option>
-                <option value={ReimbursementCategory.OTHER}>Other</option>
-              </select>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
+              {[
+                { id: ReimbursementCategory.TRAVEL, label: 'Travel', icon: <Plane size={18}/> },
+                { id: ReimbursementCategory.MEAL, label: 'Meal', icon: <UtensilsCrossed size={18}/> },
+                { id: ReimbursementCategory.MOBILE, label: 'Mobile', icon: <Smartphone size={18}/> },
+                { id: ReimbursementCategory.BROADBAND, label: 'Broadband', icon: <Wifi size={18}/> },
+                { id: ReimbursementCategory.LEARNING, label: 'Learning', icon: <Briefcase size={18}/> },
+                { id: ReimbursementCategory.OTHER, label: 'Other', icon: <Layers size={18}/> },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => !readOnly && setCategory(cat.id)}
+                  disabled={readOnly}
+                  className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all gap-2
+                    ${category === cat.id ? 'bg-blue-600 text-white border-blue-600 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-blue-100'}
+                    ${readOnly ? 'cursor-default opacity-80' : ''}
+                  `}
+                >
+                  {cat.icon}
+                  <span className="text-[8px] font-black uppercase tracking-widest">{cat.label}</span>
+                </button>
+              ))}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
