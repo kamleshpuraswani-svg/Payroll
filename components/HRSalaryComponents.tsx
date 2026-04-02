@@ -503,7 +503,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span></label>
-                            <div className="relative">
+                            <div className="relative max-w-[110px]">
                                 <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
                                     {calcMethod === 'Percentage' ? '%' : '₹'}
@@ -689,7 +689,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                                     value={sectionMaxLimit}
                                                     onChange={e => setSectionMaxLimit(e.target.value.replace(/[^0-9]/g, ''))}
                                                     placeholder="Enter Amount"
-                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                                    className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
                                                 />
                                             </div>
                                         )}
