@@ -1455,7 +1455,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
         // Define headers based on the current tab
         let headers: string[] = [];
         if (activeTab === 'Earnings') {
-            headers = ['Component Name', 'Nature of Pay', 'Calculation Method', 'Value', 'Consider for PF', 'Consider for ESI', 'Last Modified', 'Created'];
+            headers = ['Component Name', 'Nature of Pay', 'Calculation Method', 'Taxable Earning', 'Value', 'Consider for PF', 'Consider for ESI', 'Last Modified', 'Created'];
         } else if (activeTab === 'Deductions') {
             headers = ['Component Name', 'Calculation Method', 'Deduction Type', 'Deduction Frequency', 'Taxable'];
         } else {
@@ -1469,6 +1469,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     `"${(item.name || '').replace(/"/g, '""')}"`,
                     `"${item.type}"`,
                     `"${item.calc_method === 'Flat' ? 'Flat' : (item.calculation || '')}"`,
+                    `"${item.taxable !== 'Fully Exempt' ? 'Yes' : 'No'}"`,
                     `"${item.amount_or_percent || ''}"`,
                     `"${item.consider_epf ? 'Yes' : 'No'}"`,
                     `"${item.consider_esi ? 'Yes' : 'No'}"`,
@@ -1626,6 +1627,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                     {activeTab === 'Earnings' ? (
                                         <>
                                             <th className="px-6 py-4">Calculation Method</th>
+                                            <th className="px-6 py-4">Taxable Earning</th>
                                             <th className="px-6 py-4">Consider for PF</th>
                                             <th className="px-6 py-4">Consider for ESI</th>
                                             {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
@@ -1696,6 +1698,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             {activeTab === 'Earnings' ? (
                                                 <>
                                                     <td className="px-6 py-4">{item.calc_method === 'Flat' ? 'Flat' : (item.calculation || '-')}</td>
+                                                    <td className="px-6 py-4">{item.taxable !== 'Fully Exempt' ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4">{item.consider_epf ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4">{item.consider_esi ? 'Yes' : 'No'}</td>
                                                     {userRole === 'HR_MANAGER' && <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>}
