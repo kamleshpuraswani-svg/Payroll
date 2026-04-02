@@ -26,6 +26,7 @@ interface SalaryComponent {
     effective_date?: string;
     deduction_type?: 'Statutory' | 'Non-Statutory';
     show_in_payslip?: boolean;
+    round_off_setting?: 'Floor' | 'Ceiling';
 }
 
 interface AddEarningFormProps {
@@ -223,6 +224,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [consider_esi, setConsider_esi] = useState(initialData?.consider_esi ?? true);
     const [showInPayslip, setShowInPayslip] = useState(true);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
+    const [round_off_setting, setRound_off_setting] = useState<'Floor' | 'Ceiling'>(initialData?.round_off_setting || 'Floor');
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = () => {
@@ -249,7 +251,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             consider_epf: consider_epf,
             consider_esi: consider_esi,
             status: isActive,
-            category: 'Earnings'
+            category: 'Earnings',
+            round_off_setting: round_off_setting
         };
         onSave(updatedData);
     };
@@ -413,15 +416,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                     </div>
                 </div>
 
-                <div className="pt-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                            {isActive && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
-                        <span className="text-sm font-medium text-slate-700">Mark as Active</span>
-                    </label>
-                </div>
+
 
                 <div className="pt-6 border-t border-slate-100 space-y-5">
                     <h3 className="font-bold text-slate-800 text-sm">Other Configurations</h3>
@@ -467,6 +462,24 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Round off settings */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Round off settings <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-6">
+                                {['Floor', 'Ceiling'].map((option) => (
+                                    <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${round_off_setting === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                            {round_off_setting === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                        </div>
+                                        <input type="radio" className="hidden" checked={round_off_setting === option} onChange={() => setRound_off_setting(option as any)} />
+                                        <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Pro Rata */}
@@ -534,6 +547,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
                         <span className="text-sm font-bold text-slate-700">Show in Payslip</span>
                     </label>
+
+                    <div className="pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {isActive && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
+                            <span className="text-sm font-medium text-slate-700">Mark as Active</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
