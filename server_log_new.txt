@@ -276,3 +276,4 @@
 10:19:59 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
 10:36:06 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
 10:39:16 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+10:41:28 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css

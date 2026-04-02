@@ -1163,6 +1163,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         <option value="1">Standard IT Structure 2025</option>
                                         <option value="2">Internship Stipend</option>
                                     </select>
+                                </div>
 
                                     <div className="mt-6">
                                         <label className="block text-sm font-bold text-slate-800 uppercase mb-3">DISPLAY SETTINGS</label>
@@ -1210,7 +1211,6 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
                             </div>
                         </div>
                     </>
