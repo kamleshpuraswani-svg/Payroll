@@ -657,26 +657,6 @@ const StatutorySettings: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Gratuity provision rate */}
-                                <div className="space-y-2 pt-4 border-t border-slate-100">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year)</label>
-                                    <div className="max-w-xs relative">
-                                        <input
-                                            type="text"
-                                            value={gratuityProvisionRate}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/[^\d.]/g, '');
-                                                if (val === '' || !isNaN(Number(val))) {
-                                                    setGratuityProvisionRate(val);
-                                                }
-                                            }}
-                                            disabled={!isEditing}
-                                            placeholder="Enter %"
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
-                                        />
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
-                                    </div>
-                                </div>
 
 
 
