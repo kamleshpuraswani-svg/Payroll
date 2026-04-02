@@ -245,3 +245,7 @@
 11:10:49 AM [vite] (client) hmr update /components/SalaryComponents.tsx, /index.css
 11:11:12 AM [vite] (client) hmr update /components/SalaryComponents.tsx, /index.css
 11:11:23 AM [vite] (client) hmr update /components/SalaryComponents.tsx, /index.css
+11:26:03 AM [vite] (client) hmr update /components/HRSalaryStructure.tsx, /index.css
+11:26:21 AM [vite] (client) hmr update /components/HRSalaryStructure.tsx, /index.css
+11:26:43 AM [vite] (client) hmr update /components/HRSalaryStructure.tsx, /index.css
+11:26:57 AM [vite] (client) hmr update /components/SalaryStructure.tsx, /index.css

@@ -594,7 +594,8 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
         }
     };
 
-    const infoMessage = "If no department and designation selected, it will assigned to all employees.";
+    const deptInfo = "If no department is selected, it will be assigned to all the departments.";
+    const desgInfo = "If no designation is selected, it will be assigned to all the designations.";
 
     // Helper Wrapper for embedded scrolling
     const ContentWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -728,30 +729,35 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                                     )}
                                 </div>
                                 <div className="md:col-span-2">
-                                    <MultiSelect
-                                        label="Department"
-                                        options={DEPARTMENTS}
-                                        selected={selectedDepartments}
-                                        onChange={setSelectedDepartments}
-                                        disabled={isReadOnly}
-                                        info={infoMessage}
-                                    />
-                                    <MultiSelect
-                                        label="Designation"
-                                        options={DESIGNATIONS}
-                                        selected={selectedDesignations}
-                                        onChange={setSelectedDesignations}
-                                        disabled={isReadOnly}
-                                        info={infoMessage}
-                                    />
-                                    <MultiSelect
-                                        label="Employees"
-                                        options={EMPLOYEES_LIST}
-                                        selected={selectedEmployees}
-                                        onChange={setSelectedEmployees}
-                                        disabled={isReadOnly}
-                                        info="Assign specific employees directly."
-                                    />
+                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Target Assignment Rules</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <MultiSelect
+                                            label="Department"
+                                            options={DEPARTMENTS}
+                                            selected={selectedDepartments}
+                                            onChange={setSelectedDepartments}
+                                            disabled={isReadOnly}
+                                            info={deptInfo}
+                                        />
+                                        <MultiSelect
+                                            label="Designation"
+                                            options={DESIGNATIONS}
+                                            selected={selectedDesignations}
+                                            onChange={setSelectedDesignations}
+                                            disabled={isReadOnly}
+                                            info={desgInfo}
+                                        />
+                                        <div className="md:col-span-2">
+                                            <MultiSelect
+                                                label="Employees"
+                                                options={EMPLOYEES_LIST}
+                                                selected={selectedEmployees}
+                                                onChange={setSelectedEmployees}
+                                                disabled={isReadOnly}
+                                                info="Assign specific employees directly."
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex flex-col md:flex-row gap-6 md:items-end">

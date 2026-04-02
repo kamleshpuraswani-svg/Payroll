@@ -671,7 +671,41 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         setDeleteConfirmation({ isOpen: false, id: null });
     };
 
-    const infoMessage = "If no department and designation selected, it will assigned to all employees.";
+    const deptInfo = "If no department is selected, it will be assigned to all the departments.";
+    const desgInfo = "If no designation is selected, it will be assigned to all the designations.";
+
+    const allFilteredStructures = React.useMemo(() => {
+        let allS = [...structures];
+        if (selectedTarget !== 'all') {
+            const [targetTypeRaw, targetId] = selectedTarget.split(':');
+            const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+            const targetName = targetType === 'BusinessUnit' ? targetId : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
+            
+            const savedForTarget = structures.filter(s => {
+                const [tTypeRaw, tId] = selectedTarget.split(':');
+                const tType = tTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
+                return s.targetId === tId && s.targetType === tType;
+            });
+
+            const defaultsForTarget = MOCK_STRUCTURES.filter(mock => !savedForTarget.some(saved => {
+                const savedNameLower = saved.name.toLowerCase();
+                const mockNameLower = mock.name.toLowerCase();
+                const prefixedMockLower = `${targetName} - ${mock.name}`.toLowerCase();
+                return savedNameLower === mockNameLower || savedNameLower === prefixedMockLower;
+            })).map(s => ({ 
+                ...s, 
+                id: `mock-${s.id}-${targetId}`, 
+                name: `${targetName} - ${s.name}`, 
+                targetType, 
+                targetId: targetId 
+            }));
+            
+            allS = [...defaultsForTarget, ...savedForTarget];
+        } else {
+            allS = structures.filter(s => !s.targetId);
+        }
+        return allS;
+    }, [structures, selectedTarget, paygroups]);
 
     // Helper Wrapper for embedded scrolling
     const ContentWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -810,15 +844,15 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     )}
                                 </div>
                                 <div className="md:col-span-3">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 text-center sm:text-left">Target Assignment Rules</label>
-                                    <div className="flex gap-4 flex-wrap">
+                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Target Assignment Rules</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <MultiSelect
                                             label="Department"
                                             options={DEPARTMENTS}
                                             selected={selectedDepartments}
                                             onChange={setSelectedDepartments}
                                             disabled={isReadOnly}
-                                            info={infoMessage}
+                                            info={deptInfo}
                                         />
                                         <MultiSelect
                                             label="Designation"
@@ -826,10 +860,12 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                             selected={selectedDesignations}
                                             onChange={setSelectedDesignations}
                                             disabled={isReadOnly}
-                                            info={infoMessage}
+                                            info={desgInfo}
                                         />
+                                        <div className="hidden md:block"></div>
                                     </div>
                                 </div>
+
                             </div>
                             <div className="flex flex-col md:flex-row gap-6 md:items-end">
                                 <div className="md:w-1/2">
@@ -1061,56 +1097,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {(() => {
-                            let allStructures = [...structures];
-                            if (selectedTarget !== 'all') {
-                                const [targetTypeRaw, targetId] = selectedTarget.split(':');
-                                const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
-                                
-                                const targetName = targetType === 'BusinessUnit' 
-                                    ? targetId 
-                                    : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
-                                
-                                const savedForTarget = structures.filter(s => {
-                                    const [tTypeRaw, tId] = selectedTarget.split(':');
-                                    const tType = tTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
-                                    
-                                    // Strictly match by target
-                                    return s.targetId === tId && s.targetType === tType;
-                                });
-                                
-                                console.log(`Target: ${selectedTarget}, Saved count for target: ${savedForTarget.length}`);
-
-                                const defaultsForTarget = MOCK_STRUCTURES
-                                    .filter(mock => {
-                                        const baseExists = savedForTarget.some(saved => {
-                                            const savedNameLower = saved.name.toLowerCase();
-                                            const mockNameLower = mock.name.toLowerCase();
-                                            const prefixedMockLower = `${targetName} - ${mock.name}`.toLowerCase();
-                                            // Exact match or prefixed match
-                                            return savedNameLower === mockNameLower || savedNameLower === prefixedMockLower;
-                                        });
-                                        return !baseExists;
-                                    })
-                                    .map(s => ({
-                                        ...s,
-                                        id: `mock-${s.id}-${targetId}`,
-                                        name: `${targetName} - ${s.name}`,
-                                        targetType,
-                                        targetId: targetId
-                                    }));
-                                
-                                console.log(`Mock templates to show: ${defaultsForTarget.length}`);
-                            allStructures = [...defaultsForTarget, ...savedForTarget];
-                            } else {
-                                // If "all" is selected, show only global structures (no target)
-                                allStructures = structures.filter(s => !s.targetId);
-                            }
-
-                            // Apply Pagination
-                            const totalItems = allStructures.length;
+                            const totalItems = allFilteredStructures.length;
                             const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
                             const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-                            const paginatedData = allStructures.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+                            const paginatedData = allFilteredStructures.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
                             return { paginatedData, totalItems, totalPages, startIndex };
                         })().paginatedData.map((item) => {
@@ -1160,32 +1150,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 </table>
 
                 {(() => {
-                    const allS = (() => {
-                        let allStructures = [...structures];
-                        if (selectedTarget !== 'all') {
-                            const [targetTypeRaw, targetId] = selectedTarget.split(':');
-                            const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
-                            const targetName = targetType === 'BusinessUnit' ? targetId : paygroups.find(p => p.id === targetId)?.name || 'Paygroup';
-                            const savedForTarget = structures.filter(s => {
-                                if (selectedTarget === 'all') return true;
-                                const [tTypeRaw, tId] = selectedTarget.split(':');
-                                const tType = tTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
-                                if (s.targetId === tId && s.targetType === tType) return true;
-                                if (tType === 'BusinessUnit' && (!s.targetId || s.targetType === 'BusinessUnit')) return true;
-                                return false;
-                            });
-                            const defaultsForTarget = MOCK_STRUCTURES.filter(mock => !savedForTarget.some(saved => {
-                                const savedNameLower = saved.name.toLowerCase();
-                                const mockNameLower = mock.name.toLowerCase();
-                                const prefixedMockLower = `${targetName} - ${mock.name}`.toLowerCase();
-                                return savedNameLower === mockNameLower || savedNameLower === prefixedMockLower;
-                            })).map(s => ({ ...s, id: `mock-${s.id}-${targetId}`, name: `${targetName} - ${s.name}`, targetType, targetId: targetId }));
-                            allStructures = [...defaultsForTarget, ...savedForTarget];
-                        }
-                        return allStructures;
-                    })();
-
-                    const totalItems = allS.length;
+                    const totalItems = allFilteredStructures.length;
                     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
                     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
                     const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
