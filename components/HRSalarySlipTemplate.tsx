@@ -1117,7 +1117,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <h3 className="font-bold text-slate-800 mb-6">Settings</h3>
                             <div className="space-y-6">
 
-                                <div className="hidden">
+                                <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">
                                         Salary Structure Mapping <span className="text-red-500 ml-1">*</span>
                                     </label>
@@ -1165,7 +1165,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                     </select>
 
                                     <div className="mt-6">
-                                        <label className="block text-sm font-bold text-slate-800 uppercase mb-3 hidden">DISPLAY SETTINGS</label>
+                                        <label className="block text-sm font-bold text-slate-800 uppercase mb-3">DISPLAY SETTINGS</label>
                                         <div className="space-y-4">
                                             <label className="flex items-start justify-between cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
                                                 <div>
