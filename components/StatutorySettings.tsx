@@ -723,33 +723,35 @@ const StatutorySettings: React.FC = () => {
                                         <div className="space-y-2">
                                             <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Year</label>
                                             <div className="relative">
-                                                <select
+                                                <input
+                                                    type="text"
                                                     value={gratuityTenureYears}
-                                                    onChange={(e) => setGratuityTenureYears(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/[^\d]/g, '');
+                                                        setGratuityTenureYears(val);
+                                                    }}
                                                     disabled={!isEditing}
-                                                    className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
-                                                >
-                                                    {[0,1,2,3,4,5,6,7,8,9,10].map(y => (
-                                                        <option key={y} value={y.toString()}>{y} Years</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                                                    placeholder="Enter years"
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Years</div>
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Month</label>
                                             <div className="relative">
-                                                <select
+                                                <input
+                                                    type="text"
                                                     value={gratuityTenureMonths}
-                                                    onChange={(e) => setGratuityTenureMonths(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/[^\d]/g, '');
+                                                        setGratuityTenureMonths(val);
+                                                    }}
                                                     disabled={!isEditing}
-                                                    className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
-                                                >
-                                                    {Array.from({length: 12}, (_, i) => (
-                                                        <option key={i} value={i.toString()}>{i} Month</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                                                    placeholder="Enter months"
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Months</div>
                                             </div>
                                         </div>
                                     </div>
