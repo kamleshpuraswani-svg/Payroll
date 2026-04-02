@@ -548,8 +548,10 @@ const OperationalConfig: React.FC = () => {
                 )}
             </div>
 
-            {/* Loans & Advances Eligibility Section */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+            {/* Hidden: Loans & Advances Eligibility Section - Restore if required */}
+            {/* 
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-left">
                 <div
                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
                     onClick={() => setIsEligibilityExpanded(!isEligibilityExpanded)}
@@ -562,7 +564,7 @@ const OperationalConfig: React.FC = () => {
 
                 {isEligibilityExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <div className="max-w-3xl space-y-8">
+                        <div className="max-w-3xl space-y-8 text-left">
                             <div className="pt-0 space-y-6">
                                 <div className="pt-0 border-slate-100">
                                     <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
@@ -596,7 +598,6 @@ const OperationalConfig: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Selected Items List */}
                                     {(approvalSourceSettings.employees || []).length > 0 && (
                                         <div className="mt-4 flex flex-wrap gap-2">
                                             {(approvalSourceSettings.employees || []).map(emp => (
@@ -618,6 +619,7 @@ const OperationalConfig: React.FC = () => {
                     </div>
                 )}
             </div>
+            */}
             {/* Expenses Management Section */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div
