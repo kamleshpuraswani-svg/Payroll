@@ -665,71 +665,65 @@ const ExpenseSettings: React.FC = () => {
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {categories.filter(c => c.applicable_to && c.applicable_to.length > 0).map((cat) => (
-                                    <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-5">
-                                            <p className="text-sm font-black text-slate-800">{cat.name}</p>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex flex-wrap gap-2">
-                                                {cat.applicable_to
-                                                    .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
-                                                    .map((ent: any, i: number) => (
-                                                    <div key={i} className="flex flex-col gap-0.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg shadow-sm min-w-[140px]">
-                                                        <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1 mb-1">
-                                                            <div className="text-slate-400">
-                                                                {ent.type === 'dept' ? <Home size={10} /> : ent.type === 'desig' ? <ShieldCheck size={10} /> : <User size={10} />}
-                                                            </div>
-                                                            <span className="text-[10px] font-black text-slate-800 uppercase truncate max-w-[120px]">
-                                                                {ent.name}
-                                                            </span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 gap-0.5">
-                                                            <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
-                                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">LIMIT</span>
-                                                                <span className="text-[10px] font-black text-slate-700">₹{ent.max_limit?.toLocaleString()}</span>
-                                                            </div>
-                                                            <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
-                                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">THRESH.</span>
-                                                                <span className="text-[10px] font-black text-slate-700">₹{ent.receipt_threshold?.toLocaleString()}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
-                                                    {cat.created_by?.[0] || 'H'}
-                                                </div>
-                                                <p className="text-xs font-bold text-slate-600">{cat.created_by || 'HR Manager'}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-sky-50 flex items-center justify-center text-[10px] font-bold text-sky-600">
-                                                    {cat.last_updated_by?.[0] || 'H'}
-                                                </div>
-                                                <div className="space-y-0.5">
-                                                    <p className="text-xs font-bold text-slate-600">{cat.last_updated_by || 'HR Manager'}</p>
-                                                    <p className="text-[9px] font-medium text-slate-400 italic">
-                                                        {new Date(cat.updated_at).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${cat.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                {cat.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5 text-right">
+                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                 </tr>
+                             </thead>
+                             <tbody className="divide-y divide-slate-50">
+                                 {categories.filter(c => c.applicable_to && c.applicable_to.length > 0).map((cat) => (
+                                     <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
+                                         <td className="px-6 py-5">
+                                             <p className="text-sm font-black text-slate-800">{cat.name}</p>
+                                         </td>
+                                         <td className="px-6 py-5">
+                                             <div className="flex flex-wrap gap-2">
+                                                 {cat.applicable_to
+                                                     .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
+                                                     .map((ent: any, i: number) => (
+                                                     <div key={i} className="flex flex-col gap-0.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg shadow-sm min-w-[140px]">
+                                                         <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1 mb-1">
+                                                             <div className="text-slate-400">
+                                                                 {ent.type === 'dept' ? <Home size={10} /> : ent.type === 'desig' ? <ShieldCheck size={10} /> : <User size={10} />}
+                                                             </div>
+                                                             <span className="text-[10px] font-black text-slate-800 uppercase truncate max-w-[120px]">
+                                                                 {ent.name}
+                                                             </span>
+                                                         </div>
+                                                         <div className="grid grid-cols-1 gap-0.5">
+                                                             <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
+                                                                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">LIMIT</span>
+                                                                 <span className="text-[10px] font-black text-slate-700">₹{ent.max_limit?.toLocaleString()}</span>
+                                                             </div>
+                                                             <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
+                                                                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">THRESH.</span>
+                                                                 <span className="text-[10px] font-black text-slate-700">₹{ent.receipt_threshold?.toLocaleString()}</span>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                 ))}
+                                             </div>
+                                         </td>
+                                         <td className="px-6 py-5">
+                                             <div className="flex items-center gap-2">
+                                                 <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                                     {cat.created_by?.[0] || 'H'}
+                                                 </div>
+                                                 <p className="text-xs font-bold text-slate-600">{cat.created_by || 'HR Manager'}</p>
+                                             </div>
+                                         </td>
+                                         <td className="px-6 py-5">
+                                             <div className="flex items-center gap-2">
+                                                 <div className="w-6 h-6 rounded-full bg-sky-50 flex items-center justify-center text-[10px] font-bold text-sky-600">
+                                                     {cat.last_updated_by?.[0] || 'H'}
+                                                 </div>
+                                                 <div className="space-y-0.5">
+                                                     <p className="text-xs font-bold text-slate-600">{cat.last_updated_by || 'HR Manager'}</p>
+                                                     <p className="text-[9px] font-medium text-slate-400 italic">
+                                                         {new Date(cat.updated_at).toLocaleDateString()}
+                                                     </p>
+                                                 </div>
+                                             </div>
+                                         </td>
+                                         <td className="px-6 py-5 text-right">
                                             <div className="flex justify-end items-center gap-3">
                                                 <button
                                                     onClick={() => toggleCategoryStatus(cat.id)}
