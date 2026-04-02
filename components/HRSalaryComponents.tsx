@@ -1750,6 +1750,7 @@ const HRSalaryComponents: React.FC = () => {
                                     {activeTab === 'Earnings' ? (
                                         <>
                                             <th className="px-6 py-4">Calculation Method</th>
+                                            <th className="px-6 py-4">Taxable Earning</th>
                                             <th className="px-6 py-4">Consider for PF</th>
                                             <th className="px-6 py-4">Consider for ESI</th>
                                             <th className="px-6 py-4">Last Modified By</th>
@@ -1815,6 +1816,7 @@ const HRSalaryComponents: React.FC = () => {
                                                             {item.calcMethod === 'Flat' && <span className="text-xs text-slate-500">Rs. {item.amountOrPercent}</span>}
                                                         </div>
                                                     </td>
+                                                    <td className="px-6 py-4 font-medium text-slate-700">{item.taxable !== 'Fully Exempt' ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-700">{item.considerEPF ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-700">{item.considerESI ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.lastModified || '-'}</td>
