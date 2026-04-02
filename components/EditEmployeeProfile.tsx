@@ -240,6 +240,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          pfEmployer,
          gratuity,
          monthlyGross,
+         annualGross,
          taxOld,
          taxNew
       };
@@ -690,6 +691,22 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <td className="px-4 py-3 font-bold">Total CTC</td>
                               <td className="px-4 py-3 text-right opacity-60 text-xs">-</td>
                               <td className="px-4 py-3 text-right font-bold">₹ {formatCurrency(ctc)}</td>
+                           </tr>
+                           <tr>
+                              <td className="px-4 py-2.5 font-bold text-slate-300">Total gross</td>
+                              <td className="px-4 py-2.5 text-right opacity-40 text-xs">-</td>
+                              <td className="px-4 py-2.5 text-right font-bold text-slate-100">₹ {formatCurrency(Math.round(salary.annualGross))}</td>
+                           </tr>
+                           <tr className="bg-slate-900">
+                              <td className="px-4 py-3 font-bold text-emerald-400">Monthly take-home</td>
+                              <td className="px-4 py-3 text-right opacity-40 text-xs">-</td>
+                              <td className="px-4 py-3 text-right font-bold text-emerald-400">
+                                 ₹ {formatCurrency(Math.round(
+                                    salary.monthlyGross - 
+                                    (regime.includes('Old') ? salary.taxOld / 12 : salary.taxNew / 12) - 
+                                    (salary.pfEmployer / 12)
+                                 ))}
+                              </td>
                            </tr>
                         </tfoot>
                      </table>
