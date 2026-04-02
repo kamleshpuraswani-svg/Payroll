@@ -1037,7 +1037,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className="w-full py-2 border border-dashed border-emerald-200 rounded text-xs font-medium text-emerald-600 hover:bg-emerald-50 mt-2">
+                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className="w-full py-2 border border-dashed border-emerald-200 rounded text-xs font-medium text-emerald-600 hover:bg-emerald-50 mt-2 hidden">
                                                         + Add Earning
                                                     </button>
                                                 )}
@@ -1058,7 +1058,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className="w-full py-2 border border-dashed border-rose-200 rounded text-xs font-medium text-rose-600 hover:bg-rose-50 mt-2">
+                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className="w-full py-2 border border-dashed border-rose-200 rounded text-xs font-medium text-rose-600 hover:bg-rose-50 mt-2 hidden">
                                                         + Add Deduction
                                                     </button>
                                                 )}
@@ -1080,7 +1080,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                 </div>
                                             ))}
                                             {!isReadOnly && (
-                                                <button onClick={() => setAddComponentModal({ isOpen: true, section: 'reimbursements' })} className="w-full py-2 border border-dashed border-amber-200 rounded text-xs font-medium text-amber-600 hover:bg-amber-50 mt-2">
+                                                <button onClick={() => setAddComponentModal({ isOpen: true, section: 'reimbursements' })} className="w-full py-2 border border-dashed border-amber-200 rounded text-xs font-medium text-amber-600 hover:bg-amber-50 mt-2 hidden">
                                                     + Add Reimbursement
                                                 </button>
                                             )}
