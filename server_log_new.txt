@@ -257,3 +257,5 @@
 12:33:32 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
 12:34:02 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
 12:34:23 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:40:26 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:40:35 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css

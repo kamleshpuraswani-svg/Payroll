@@ -618,34 +618,29 @@ const StatutorySettings: React.FC = () => {
 
                         {enableGratuity && (
                             <div className="space-y-10 animate-in fade-in">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* Calculation Formula Block */}
-                                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <Calculator size={14} className="text-indigo-600" /> Calculation Formula
-                                        </h4>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-xs font-black text-slate-700 mb-1">Standard Formula:</p>
-                                                <div className="bg-white px-3 py-2 rounded-lg border border-slate-200 font-mono text-[11px] text-indigo-700">
-                                                    Gratuity = (Basic + DA) × Years of Service × 15 / 26
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <p className="text-xs font-black text-slate-700">Example:</p>
-                                                <div className="text-[11px] text-slate-500 space-y-1">
-                                                    <p>• Basic + DA = ₹50,000/month</p>
-                                                    <p>• Service = 10 years 6 months (counted as 11 years)</p>
-                                                    <p>• Gratuity = (50,000 × 11 × 15) / 26 = <span className="text-slate-800 font-bold">₹3,17,307.69</span></p>
-                                                </div>
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 italic">
-                                                The divisor '26' represents average working days per month (excluding Sundays).
-                                            </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                                    {/* Gratuity provision rate */}
+                                    <div className="space-y-2">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year)</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={gratuityProvisionRate}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/[^\d.]/g, '');
+                                                    if (val === '' || !isNaN(Number(val))) {
+                                                        setGratuityProvisionRate(val);
+                                                    }
+                                                }}
+                                                disabled={!isEditing}
+                                                placeholder="Enter %"
+                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
+                                            />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col justify-center">
+                                    <div className="flex flex-col justify-center pb-2.5">
                                         <label className="flex items-center gap-3 cursor-pointer group">
                                             <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeInCtcGratuity ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                 {includeInCtcGratuity && <Check size={14} className="text-white stroke-[3]" />}
