@@ -965,7 +965,7 @@ const HRSalarySlipTemplate: React.FC = () => {
             <div className="px-6 border-b border-slate-200 bg-white shrink-0">
                 <div className="flex gap-6">
                     <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview</button>
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview Sample Slip</button>
                 </div>
             </div>
 
@@ -1117,7 +1117,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <h3 className="font-bold text-slate-800 mb-6">Settings</h3>
                             <div className="space-y-6">
 
-                                <div>
+                                <div className="hidden">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3 text-left">
                                         Salary Structure Mapping <span className="text-red-500 ml-1">*</span>
                                     </label>
@@ -1165,7 +1165,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                     </select>
 
                                     <div className="mt-6">
-                                        <label className="block text-sm font-bold text-slate-800 uppercase mb-3">DISPLAY SETTINGS</label>
+                                        <label className="block text-sm font-bold text-slate-800 uppercase mb-3 hidden">DISPLAY SETTINGS</label>
                                         <div className="space-y-4">
                                             <label className="flex items-start justify-between cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
                                                 <div>
