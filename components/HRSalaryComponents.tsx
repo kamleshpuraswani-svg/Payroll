@@ -1209,7 +1209,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                         )}
                     </div>
 
-                    {/* Nature of Pay & Tax Treatment */}
+                    {/* Nature of Pay */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
@@ -1225,30 +1225,9 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                 ))}
                             </div>
                         </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
-                            <div className="relative">
-                                <select
-                                    value={taxTreatment}
-                                    onChange={(e) => setTaxTreatment(e.target.value as any)}
-                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white text-slate-700"
-                                >
-                                    <option value="Fully Taxable">Fully Taxable</option>
-                                    <option value="Fully Exempt">Fully Exempt</option>
-                                    <option value="Partially Exempt">Partially Exempt</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                            </div>
-                            <p className="text-[10px] text-slate-500 mt-1.5">
-                                {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
-                                {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
-                                {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
-                            </p>
-                        </div>
                     </div>
 
-                    {/* Calculation Method */}
+                    {/* Calculation Method, Enter Amount & Tax Treatment */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
@@ -1321,12 +1300,33 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-800"
                                 />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
                                     {calcMethod === 'Percentage' ? '%' : '₹'}
                                 </div>
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <select
+                                    value={taxTreatment}
+                                    onChange={(e) => setTaxTreatment(e.target.value as any)}
+                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white text-slate-700 font-medium"
+                                >
+                                    <option value="Fully Taxable">Fully Taxable</option>
+                                    <option value="Fully Exempt">Fully Exempt</option>
+                                    <option value="Partially Exempt">Partially Exempt</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-1.5">
+                                {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
+                                {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
+                                {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                            </p>
                         </div>
                     </div>
 
