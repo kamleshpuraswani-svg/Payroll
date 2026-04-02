@@ -52,6 +52,10 @@ interface SalaryComponent {
     isProRata?: boolean;
     deductionTiming?: 'Pre-tax' | 'Post-tax';
     roundOffSetting?: 'Floor' | 'Ceiling';
+    taxComputation?: 'Proportionally' | 'Pay month';
+    incomeTaxSection?: string;
+    sectionMaxLimit?: string;
+    nonTaxableLimit?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -323,6 +327,13 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [showInPayslip, setShowInPayslip] = useState(true);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [roundOffSetting, setRoundOffSetting] = useState<'Floor' | 'Ceiling'>(initialData?.roundOffSetting || 'Floor');
+    const [taxComputation, setTaxComputation] = useState<'Proportionally' | 'Pay month'>(initialData?.taxComputation || 'Proportionally');
+    const [incomeTaxSection, setIncomeTaxSection] = useState(initialData?.incomeTaxSection || '');
+    const [sectionMaxLimit, setSectionMaxLimit] = useState(initialData?.sectionMaxLimit || '');
+    const [nonTaxableLimit, setNonTaxableLimit] = useState(initialData?.nonTaxableLimit || '');
+    const [isCreatingSection, setIsCreatingSection] = useState(false);
+    const [customTaxSection, setCustomTaxSection] = useState('');
+    const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
 
     const handleSave = () => {
         if (!name) {
@@ -351,7 +362,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             considerGratuity: isConsiderGratuity,
             status: isActive,
             category: 'Earnings',
-            roundOffSetting: roundOffSetting
+            roundOffSetting: roundOffSetting,
+            taxComputation: isTaxable ? taxComputation : undefined,
+            incomeTaxSection: isTaxable ? (isCreatingSection ? customTaxSection : incomeTaxSection) : undefined,
+            sectionMaxLimit: (isTaxable && taxTreatment === 'Fully Taxable') ? sectionMaxLimit : undefined,
+            nonTaxableLimit: (isTaxable && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined
         };
 
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
@@ -499,7 +514,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
 
 
-                    <div className="pt-6 border-t border-slate-100 space-y-5">
+                    <div className="pt-6 border-t border-slate-300 space-y-5">
                         <h3 className="font-bold text-slate-800 text-sm">Other Configurations</h3>
 
                         {/* Taxable */}
@@ -546,7 +561,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                             {taxTreatment === 'Fully Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
                                         </p>
                                     </div>
-
                                     {/* Tax Deduction Preference for Variable Pay */}
                                     {natureOfPay === 'Variable' && (
                                         <div className="space-y-2">
@@ -575,6 +589,111 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* Additional Tax Fields */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                        {taxTreatment === 'Partially Exempt' && (
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Non Taxable Limit</label>
+                                                <input
+                                                    type="text"
+                                                    value={nonTaxableLimit}
+                                                    onChange={e => setNonTaxableLimit(e.target.value.replace(/[^0-9]/g, ''))}
+                                                    placeholder="Enter Amount"
+                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-2">Tax computation <span className="text-rose-500">*</span></label>
+                                            <div className="flex gap-6 h-[40px] items-center">
+                                                {['Proportionally', 'Pay month'].map((option) => (
+                                                    <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${taxComputation === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                            {taxComputation === option && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                        </div>
+                                                        <input type="radio" className="hidden" checked={taxComputation === option} onChange={() => setTaxComputation(option as any)} />
+                                                        <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="relative">
+                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
+                                            {isCreatingSection ? (
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={customTaxSection}
+                                                        onChange={e => setCustomTaxSection(e.target.value)}
+                                                        placeholder="Enter Section Name"
+                                                        className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10 font-medium text-slate-700"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        onClick={() => { setIsCreatingSection(false); setCustomTaxSection(''); }}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div
+                                                        onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
+                                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
+                                                    >
+                                                        <span>{incomeTaxSection || 'Select or Create Section'}</span>
+                                                        <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                                    </div>
+                                                    {isSectionDropdownOpen && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
+                                                            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                                <div
+                                                                    onClick={() => { setIsCreatingSection(true); setIsSectionDropdownOpen(false); }}
+                                                                    className="px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-slate-50 cursor-pointer border-b border-slate-100"
+                                                                >
+                                                                    Create section
+                                                                </div>
+                                                                {[
+                                                                    "Section_10(14)(i)",
+                                                                    "Section_10(14)(ii)",
+                                                                    "Section_10(5)",
+                                                                    "Section_17(2)(Viii)",
+                                                                    "Section_10(13)(a)"
+                                                                ].map(section => (
+                                                                    <div
+                                                                        key={section}
+                                                                        onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
+                                                                        className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                                                                    >
+                                                                        {section}
+                                                                        {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {taxTreatment === 'Fully Taxable' && (
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
+                                                <input
+                                                    type="text"
+                                                    value={sectionMaxLimit}
+                                                    onChange={e => setSectionMaxLimit(e.target.value.replace(/[^0-9]/g, ''))}
+                                                    placeholder="Enter Amount"
+                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

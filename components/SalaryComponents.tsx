@@ -27,6 +27,10 @@ interface SalaryComponent {
     deduction_type?: 'Statutory' | 'Non-Statutory';
     show_in_payslip?: boolean;
     round_off_setting?: 'Floor' | 'Ceiling';
+    tax_computation?: 'Proportionally' | 'Pay month';
+    income_tax_section?: string;
+    section_max_limit?: string;
+    non_taxable_limit?: string;
 }
 
 interface AddEarningFormProps {
@@ -217,6 +221,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
     // Configurations
     const [isTaxable, setIsTaxable] = useState(initialData?.taxable !== 'Fully Exempt');
+    const [taxTreatment, setTaxTreatment] = useState<'Fully Taxable' | 'Partially Exempt' | 'Fully Exempt'>(initialData?.tax_treatment || 'Fully Taxable');
     const [taxPreference, setTaxPreference] = useState('Subsequent');
     const [isProRata, setIsProRata] = useState(true);
     const [epfContribution, setEpfContribution] = useState<'Always' | 'Limit'>('Always');
@@ -225,6 +230,13 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [showInPayslip, setShowInPayslip] = useState(true);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [round_off_setting, setRound_off_setting] = useState<'Floor' | 'Ceiling'>(initialData?.round_off_setting || 'Floor');
+    const [tax_computation, setTax_computation] = useState<'Proportionally' | 'Pay month'>(initialData?.tax_computation || 'Proportionally');
+    const [income_tax_section, setIncome_tax_section] = useState(initialData?.income_tax_section || '');
+    const [section_max_limit, setSection_max_limit] = useState(initialData?.section_max_limit || '');
+    const [non_taxable_limit, setNon_taxable_limit] = useState(initialData?.non_taxable_limit || '');
+    const [isCreatingSection, setIsCreatingSection] = useState(false);
+    const [customTaxSection, setCustomTaxSection] = useState('');
+    const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = () => {
@@ -252,7 +264,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             consider_esi: consider_esi,
             status: isActive,
             category: 'Earnings',
-            round_off_setting: round_off_setting
+            round_off_setting: round_off_setting,
+            tax_computation: isTaxable ? tax_computation : undefined,
+            income_tax_section: isTaxable ? (isCreatingSection ? customTaxSection : income_tax_section) : undefined,
+            section_max_limit: (isTaxable && taxTreatment === 'Fully Taxable') ? section_max_limit : undefined,
+            non_taxable_limit: (isTaxable && taxTreatment === 'Partially Exempt') ? non_taxable_limit : undefined
         };
         onSave(updatedData);
     };
@@ -418,21 +434,52 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
 
 
-                <div className="pt-6 border-t border-slate-100 space-y-5">
+                <div className="pt-6 border-t border-slate-300 space-y-5">
                     <h3 className="font-bold text-slate-800 text-sm">Other Configurations</h3>
 
                     {/* Taxable */}
                     <div className="space-y-3">
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isTaxable ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {isTaxable && <Check size={14} className="text-white" />}
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Taxable earning <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(true)} />
+                                    <span className="text-sm text-slate-700 font-medium">Yes</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors {!isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {!isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={!isTaxable} onChange={() => setIsTaxable(false)} />
+                                    <span className="text-sm text-slate-700 font-medium">No</span>
+                                </label>
                             </div>
-                            <input type="checkbox" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(!isTaxable)} />
-                            <div>
-                                <span className="block text-sm font-bold text-slate-700">Taxable earning</span>
-                                <span className="block text-xs text-slate-500 mt-0.5">The income tax amount will be divided equally and deducted every month across the financial year.</span>
+                        </div>
+                        {isTaxable && (
+                            <div className="ml-7 w-1/2 space-y-3 animate-in fade-in slide-in-from-top-2">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <select
+                                        value={taxTreatment}
+                                        onChange={(e) => setTaxTreatment(e.target.value as any)}
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none bg-white font-medium text-slate-700"
+                                    >
+                                        <option value="Fully Taxable">Fully Taxable</option>
+                                        <option value="Partially Exempt">Partially Exempt</option>
+                                        <option value="Fully Exempt">Fully Exempt</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                                <p className="text-xs text-slate-500">
+                                    {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
+                                    {taxTreatment === 'Partially Exempt' && "Entire amount is exempt from income tax."}
+                                    {taxTreatment === 'Fully Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                                </p>
                             </div>
-                        </label>
+                        )}
 
                         {/* Tax Deduction Preference for Variable Pay */}
                         {natureOfPay === 'Variable' && isTaxable && (
@@ -460,6 +507,113 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         </div>
                                     </label>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Additional Tax Fields */}
+                        {isTaxable && (
+                            <div className="ml-7 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                {(taxTreatment === 'Partially Exempt') && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Non Taxable Limit</label>
+                                        <input
+                                            type="text"
+                                            value={non_taxable_limit}
+                                            onChange={e => setNon_taxable_limit(e.target.value.replace(/[^0-9]/g, ''))}
+                                            placeholder="Enter Amount"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Tax computation <span className="text-rose-500">*</span></label>
+                                    <div className="flex gap-6 h-[40px] items-center">
+                                        {['Proportionally', 'Pay month'].map((option) => (
+                                            <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${tax_computation === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                    {tax_computation === option && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                </div>
+                                                <input type="radio" className="hidden" checked={tax_computation === option} onChange={() => setTax_computation(option as any)} />
+                                                <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="relative">
+                                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
+                                    {isCreatingSection ? (
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={customTaxSection}
+                                                onChange={e => setCustomTaxSection(e.target.value)}
+                                                placeholder="Enter Section Name"
+                                                className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10 font-medium text-slate-700"
+                                                autoFocus
+                                            />
+                                            <button
+                                                onClick={() => { setIsCreatingSection(false); setCustomTaxSection(''); }}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div
+                                                onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
+                                            >
+                                                <span>{income_tax_section || 'Select or Create Section'}</span>
+                                                <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                            </div>
+                                            {isSectionDropdownOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-40" onClick={() => setIsSectionDropdownOpen(false)} />
+                                                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                        <div
+                                                            onClick={() => { setIsCreatingSection(true); setIsSectionDropdownOpen(false); }}
+                                                            className="px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-slate-50 cursor-pointer border-b border-slate-100"
+                                                        >
+                                                            Create section
+                                                        </div>
+                                                        {[
+                                                            "Section_10(14)(i)",
+                                                            "Section_10(14)(ii)",
+                                                            "Section_10(5)",
+                                                            "Section_17(2)(Viii)",
+                                                            "Section_10(13)(a)"
+                                                        ].map(section => (
+                                                            <div
+                                                                key={section}
+                                                                onClick={() => { setIncome_tax_section(section); setIsSectionDropdownOpen(false); }}
+                                                                className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                                                            >
+                                                                {section}
+                                                                {income_tax_section === section && <Check size={14} className="text-purple-600" />}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                {(taxTreatment === 'Fully Taxable') && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
+                                        <input
+                                            type="text"
+                                            value={section_max_limit}
+                                            onChange={e => setSection_max_limit(e.target.value.replace(/[^0-9]/g, ''))}
+                                            placeholder="Enter Amount"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
