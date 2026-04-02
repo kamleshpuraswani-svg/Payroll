@@ -45,6 +45,7 @@ const StatutorySettings: React.FC = () => {
     const isEditing = editingSection !== null;
     const setIsEditing = (val: boolean) => { if (!val) setEditingSection(null); };
     const [showContributionModal, setShowContributionModal] = useState(false);
+    const [showGratuityFormulaModal, setShowGratuityFormulaModal] = useState(false);
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
 
@@ -119,6 +120,12 @@ const StatutorySettings: React.FC = () => {
                 setNpsEmprRate(config.npsEmprRate ?? '10');
                 setNpsWageCeiling(config.npsWageCeiling ?? false);
                 setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
+
+                // Initialize new Gratuity UI fields
+                setGratuityProvisionRate(config.gratuityProvisionRate ?? '4.81');
+                setGratuityTenureYears(config.gratuityTenureYears ?? (config.minServicePeriod === 'standard' ? '5' : (config.customServiceYears || '5')));
+                setGratuityTenureMonths(config.gratuityTenureMonths ?? '0');
+                setGratuityTaxFreeLimit(config.gratuityTaxFreeLimit ?? (config.maxGratuityType === 'statutory' ? '20,00,000' : (config.maxGratuityType === 'none' ? '0' : (config.customMaxGratuityAmount || '20,00,000'))));
             }
         } catch (err) {
             console.error('Error fetching statutory settings:', err);
@@ -155,6 +162,12 @@ const StatutorySettings: React.FC = () => {
     const [otherExceptionDetails, setOtherExceptionDetails] = useState('');
     const [deathDisablementServiceType, setDeathDisablementServiceType] = useState<'none' | 'minimum'>('none');
     const [deathDisablementMinYears, setDeathDisablementMinYears] = useState('0');
+
+    // New Gratuity UI fields
+    const [gratuityProvisionRate, setGratuityProvisionRate] = useState('4.81');
+    const [gratuityTenureYears, setGratuityTenureYears] = useState('5');
+    const [gratuityTenureMonths, setGratuityTenureMonths] = useState('0');
+    const [gratuityTaxFreeLimit, setGratuityTaxFreeLimit] = useState('20,00,000');
 
     const [yearsCalculationMode, setYearsCalculationMode] = useState<'completed' | 'nearest' | 'sixMonths'>('completed');
     const [includedServicePeriods, setIncludedServicePeriods] = useState<string[]>([
@@ -217,6 +230,7 @@ const StatutorySettings: React.FC = () => {
             deathDisablementServiceType, deathDisablementMinYears,
             yearsCalculationMode, includedServicePeriods: [...includedServicePeriods], lwpLimitDays,
             maxGratuityType, customMaxGratuityAmount,
+            gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit,
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
             enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
             ptState, ptNumber,
@@ -236,6 +250,7 @@ const StatutorySettings: React.FC = () => {
                 deathDisablementServiceType, deathDisablementMinYears,
                 yearsCalculationMode, includedServicePeriods, lwpLimitDays,
                 maxGratuityType, customMaxGratuityAmount,
+                gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit,
                 enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
                 ptState, ptNumber,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
@@ -282,6 +297,11 @@ const StatutorySettings: React.FC = () => {
             setOtherExceptionDetails(backupState.otherExceptionDetails);
             setDeathDisablementServiceType(backupState.deathDisablementServiceType);
             setDeathDisablementMinYears(backupState.deathDisablementMinYears);
+
+            setGratuityProvisionRate(backupState.gratuityProvisionRate);
+            setGratuityTenureYears(backupState.gratuityTenureYears);
+            setGratuityTenureMonths(backupState.gratuityTenureMonths);
+            setGratuityTaxFreeLimit(backupState.gratuityTaxFreeLimit);
 
             setYearsCalculationMode(backupState.yearsCalculationMode);
             setIncludedServicePeriods(backupState.includedServicePeriods);
@@ -642,163 +662,150 @@ const StatutorySettings: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Gratuity provision rate */}
+                                <div className="space-y-2 pt-4 border-t border-slate-100">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year)</label>
+                                    <div className="max-w-xs relative">
+                                        <input
+                                            type="text"
+                                            value={gratuityProvisionRate}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/[^\d.]/g, '');
+                                                if (val === '' || !isNaN(Number(val))) {
+                                                    setGratuityProvisionRate(val);
+                                                }
+                                            }}
+                                            disabled={!isEditing}
+                                            placeholder="Enter %"
+                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
+                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
+                                    </div>
+                                </div>
+
 
 
                                 {/* Gratuity Calculation Components */}
                                 <div className="space-y-4 pt-4 border-t border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">GRATUITY CALCULATION COMPONENTS</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {GRATUITY_COMPONENTS.map(item => (
-                                            <label key={item} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'cursor-pointer hover:border-sky-200 hover:bg-sky-50/50' : 'cursor-default'} ${gratuityCalculationComponents.includes(item) ? 'border-sky-200 bg-sky-50/50 shadow-sm' : 'border-slate-200 bg-white'}`}>
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${gratuityCalculationComponents.includes(item) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                                    {gratuityCalculationComponents.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
-                                                </div>
-                                                <input
-                                                    type="checkbox"
-                                                    className="hidden"
-                                                    checked={gratuityCalculationComponents.includes(item)}
-                                                    onChange={() => toggleGratuityComponent(item)}
-                                                    disabled={!isEditing}
-                                                />
-                                                <span className={`text-xs font-semibold ${gratuityCalculationComponents.includes(item) ? 'text-sky-900' : 'text-slate-600'}`}>{item}</span>
-                                            </label>
-                                        ))}
+                                    <div className="flex justify-between items-center">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">GRATUITY CALCULATION COMPONENTS</label>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowGratuityFormulaModal(true)}
+                                            className="text-sky-600 hover:text-sky-700 text-xs font-bold underline flex items-center gap-1"
+                                        >
+                                            Gratuity Formula
+                                        </button>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
-                                        <Info size={14} className="text-sky-500" />
-                                        Only Basic + DA is considered as per the GRATUITY Act.
-                                    </p>
-                                </div>
 
-                                {/* Minimum Service Period */}
-                                <div className="space-y-4 pt-4 border-t border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">MINIMUM SERVICE PERIOD FOR GRATUITY ELIGIBILITY</label>
-                                    <div className="flex flex-col gap-4">
-                                        <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${minServicePeriod === 'standard' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                {minServicePeriod === 'standard' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="minServicePeriod"
-                                                checked={minServicePeriod === 'standard'}
-                                                onChange={() => isEditing && setMinServicePeriod('standard')}
-                                                className="hidden"
-                                                disabled={!isEditing}
-                                            />
-                                            <span className={`text-sm ${minServicePeriod === 'standard' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>5 years (Standard As per Gratuity Act - Recommended)</span>
-                                        </label>
-                                        <div className="flex items-center gap-6">
-                                            <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${minServicePeriod === 'custom' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                    {minServicePeriod === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                    <div className="relative">
+                                        <div className={`min-h-[48px] p-2 rounded-xl border flex flex-wrap gap-2 transition-all ${isEditing ? 'bg-white border-slate-200 hover:border-sky-300' : 'bg-slate-50 border-slate-100'}`}>
+                                            {gratuityCalculationComponents.map(comp => (
+                                                <div key={comp} className="flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-700 rounded-lg text-xs font-bold border border-sky-100 shadow-sm animate-in zoom-in-95">
+                                                    {comp}
+                                                    {isEditing && (
+                                                        <button 
+                                                            onClick={() => toggleGratuityComponent(comp)}
+                                                            className="hover:text-rose-500 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                <input
-                                                    type="radio"
-                                                    name="minServicePeriod"
-                                                    checked={minServicePeriod === 'custom'}
-                                                    onChange={() => isEditing && setMinServicePeriod('custom')}
-                                                    className="hidden"
-                                                    disabled={!isEditing}
-                                                />
-                                                <span className={`text-sm ${minServicePeriod === 'custom' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Custom period</span>
-                                            </label>
-                                            {minServicePeriod === 'custom' && (
-                                                <div className="flex items-center gap-3 animate-in slide-in-from-left-2">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={customServiceYears}
-                                                        onChange={(e) => setCustomServiceYears(e.target.value)}
-                                                        disabled={!isEditing}
-                                                        className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50"
-                                                    />
-                                                    <span className="text-sm text-slate-500 font-medium">Years</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                  </div>
-
-
-
-
-
-                                {/* Maximum Gratuity Amount */}
-                                <div className="space-y-4 pt-6 border-t border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">MAXIMUM GRATUITY AMOUNT</label>
-                                    <div className="flex flex-col gap-4">
-                                        <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${maxGratuityType === 'statutory' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                {maxGratuityType === 'statutory' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="maxGratuityType"
-                                                checked={maxGratuityType === 'statutory'}
-                                                onChange={() => isEditing && setMaxGratuityType('statutory')}
-                                                className="hidden"
-                                                disabled={!isEditing}
-                                            />
-                                            <span className={`text-sm ${maxGratuityType === 'statutory' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Yes, ₹20,00,000 (Twenty Lakh Rupees) (As per GRATUITY Act)</span>
-                                        </label>
-                                        <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${maxGratuityType === 'none' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                {maxGratuityType === 'none' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="maxGratuityType"
-                                                checked={maxGratuityType === 'none'}
-                                                onChange={() => isEditing && setMaxGratuityType('none')}
-                                                className="hidden"
-                                                disabled={!isEditing}
-                                            />
-                                            <span className={`text-sm ${maxGratuityType === 'none' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>No Maximum Limit</span>
-                                        </label>
-                                        <div className="flex items-center gap-6">
-                                            <label className={`flex items-center gap-3 ${isEditing ? 'cursor-pointer' : 'cursor-default'} group`}>
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${maxGratuityType === 'custom' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                    {maxGratuityType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                </div>
-                                                <input
-                                                    type="radio"
-                                                    name="maxGratuityType"
-                                                    checked={maxGratuityType === 'custom'}
-                                                    onChange={() => isEditing && setMaxGratuityType('custom')}
-                                                    className="hidden"
-                                                    disabled={!isEditing}
-                                                />
-                                                <span className={`text-sm ${maxGratuityType === 'custom' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Custom</span>
-                                            </label>
-                                            {maxGratuityType === 'custom' && (
-                                                <div className="flex items-center gap-3 animate-in slide-in-from-left-2">
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                                        <input
-                                                            type="text"
-                                                            min="1"
-                                                            value={customMaxGratuityAmount}
-                                                            onChange={(e) => {
-                                                                const raw = e.target.value.replace(/[^\d]/g, '');
-                                                                const formatted = raw ? parseInt(raw).toLocaleString('en-IN') : '';
-                                                                setCustomMaxGratuityAmount(formatted);
-                                                            }}
-                                                            disabled={!isEditing}
-                                                            className="w-40 pl-8 pr-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
-                                                            placeholder="Enter Amount"
-                                                        />
+                                            ))}
+                                            {isEditing && (
+                                                <div className="flex-1 min-w-[200px] relative">
+                                                    <select 
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                        value=""
+                                                        onChange={(e) => {
+                                                            if (e.target.value && !gratuityCalculationComponents.includes(e.target.value)) {
+                                                                toggleGratuityComponent(e.target.value);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="">Add component...</option>
+                                                        {GRATUITY_COMPONENTS.filter(c => !gratuityCalculationComponents.includes(c)).map(c => (
+                                                            <option key={c} value={c}>{c}</option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="h-full flex items-center px-2 text-slate-400 text-xs italic pointer-events-none">
+                                                        Click here to add components...
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
+
+                                    <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5 font-medium italic">
+                                        <Info size={14} className="text-sky-500" />
+                                        Only Basic + DA is considered as per the GRATUITY Act.
+                                    </p>
+                                                  {/* Tenure for gratuity applicability */}
+                                <div className="space-y-4 pt-4 border-t border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tenure for gratuity applicability</label>
+                                    <div className="grid grid-cols-2 max-w-sm gap-6">
+                                        <div className="space-y-2">
+                                            <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Year</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={gratuityTenureYears}
+                                                    onChange={(e) => setGratuityTenureYears(e.target.value)}
+                                                    disabled={!isEditing}
+                                                    className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                >
+                                                    {[0,1,2,3,4,5,6,7,8,9,10].map(y => (
+                                                        <option key={y} value={y.toString()}>{y} Years</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Month</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={gratuityTenureMonths}
+                                                    onChange={(e) => setGratuityTenureMonths(e.target.value)}
+                                                    disabled={!isEditing}
+                                                    className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                >
+                                                    {Array.from({length: 12}, (_, i) => (
+                                                        <option key={i} value={i.toString()}>{i} Month</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+               </div>
+
+
+
+
+
+                                {/* Tax-free gratuity limit (₹) */}
+                                <div className="space-y-4 pt-6 border-t border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tax-free gratuity limit (₹)</label>
+                                    <div className="max-w-xs relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
+                                        <input 
+                                            type="text"
+                                            value={gratuityTaxFreeLimit}
+                                            onChange={(e) => {
+                                                const raw = e.target.value.replace(/[^\d]/g, '');
+                                                const formatted = raw ? parseInt(raw).toLocaleString('en-IN') : '';
+                                                setGratuityTaxFreeLimit(formatted);
+                                            }}
+                                            disabled={!isEditing}
+                                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm transition-all"
+                                            placeholder="Enter Limit"
+                                        />
+                                    </div>
                                     <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 mt-2">
                                         <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
-                                            The statutory limit is revised periodically. Current limit is ₹20 lakhs.
-                                        </p>
-                                        <p className="text-[11px] text-amber-800 font-medium leading-relaxed mt-1">
-                                            Tax Exemption: Up to ₹20 lakhs of gratuity is tax-free for non-government employees.
+                                            Tax Exemption: Up to ₹20 lakhs of gratuity is tax-free for non-government employees as per the GRATUITY Act.
                                         </p>
                                     </div>
                                 </div>
@@ -1111,6 +1118,64 @@ const StatutorySettings: React.FC = () => {
                             <button
                                 onClick={() => setShowContributionModal(false)}
                                 className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-100 transition-colors text-sm shadow-sm"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Gratuity Formula Modal */}
+            {showGratuityFormulaModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col border border-slate-200">
+                        <div className="p-8 space-y-8">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                    <Calculator size={24} />
+                                </div>
+                                <h3 className="font-black text-slate-400 uppercase tracking-[0.2em] text-sm">CALCULATION FORMULA</h3>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <p className="text-base font-black text-slate-800">Standard Formula:</p>
+                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner">
+                                        <p className="font-mono text-lg text-indigo-700 font-bold text-center tracking-wide">
+                                            Gratuity = (Basic + DA) × Years of Service × 15 / 26
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <p className="text-base font-black text-slate-800">Example:</p>
+                                    <ul className="space-y-3 px-2">
+                                        <li className="flex items-center gap-3 text-slate-500 font-semibold">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                            <span>Basic + DA = ₹50,000/month</span>
+                                        </li>
+                                        <li className="flex items-center gap-3 text-slate-500 font-semibold">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                            <span>Service = 10 years 6 months (counted as 11 years)</span>
+                                        </li>
+                                        <li className="flex items-center gap-3 text-slate-500 font-semibold">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                            <span>Gratuity = (50,000 × 11 × 15) / 26 = <span className="text-slate-800 font-black">₹3,17,307.69</span></span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <p className="text-xs text-slate-400 italic font-medium leading-relaxed mt-6">
+                                    The divisor '26' represents average working days per month (excluding Sundays).
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                            <button
+                                onClick={() => setShowGratuityFormulaModal(false)}
+                                className="px-8 py-3 bg-white border border-slate-200 text-slate-700 font-black rounded-xl hover:bg-slate-100 transition-all text-sm shadow-sm active:scale-95"
                             >
                                 Close
                             </button>

@@ -249,3 +249,11 @@
 11:26:21 AM [vite] (client) hmr update /components/HRSalaryStructure.tsx, /index.css
 11:26:43 AM [vite] (client) hmr update /components/HRSalaryStructure.tsx, /index.css
 11:26:57 AM [vite] (client) hmr update /components/SalaryStructure.tsx, /index.css
+11:44:37 AM [vite] (client) hmr update /components/OperationalConfig.tsx, /index.css
+12:13:47 PM [vite] (client) hmr update /components/ExpenseSettings.tsx, /index.css
+12:14:35 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:32:16 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:33:19 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:33:32 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:34:02 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:34:23 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
