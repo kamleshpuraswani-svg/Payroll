@@ -639,14 +639,27 @@ const HRSalarySlipTemplate: React.FC = () => {
     const handleCreate = () => {
         setEditingTemplateId(null);
         setTemplateName('');
+        const now = Date.now();
         setSections({
-            earnings: [],
-            deductions: [],
-            reimbursements: [],
+            earnings: [
+                { id: `e_${now}_1`, name: 'Basic Salary', amount: '25,000', type: 'Fixed' },
+                { id: `e_${now}_2`, name: 'House Rent Allowance', amount: '12,500', type: 'Fixed' },
+                { id: `e_${now}_3`, name: 'Special Allowance', amount: '8,500', type: 'Fixed' },
+            ],
+            deductions: [
+                { id: `d_${now}_1`, name: 'PF (Employee)', amount: '1,800', type: 'Variable' },
+                { id: `d_${now}_2`, name: 'Professional Tax', amount: '200', type: 'Variable' },
+                { id: `d_${now}_3`, name: 'Income Tax (TDS)', amount: '0', type: 'Variable' },
+            ],
+            reimbursements: [
+                { id: `r_${now}_1`, name: 'Fuel & Driver', amount: '0', type: 'Variable' },
+                { id: `r_${now}_2`, name: 'Telephone / Internet', amount: '0', type: 'Variable' },
+                { id: `r_${now}_3`, name: 'Books & Periodicals', amount: '0', type: 'Variable' },
+            ],
             summary: [
-                { id: `s_${Date.now()}_1`, name: 'Gross Earnings', amount: '0', type: 'Fixed' },
-                { id: `s_${Date.now()}_2`, name: 'Total Deductions', amount: '0', type: 'Fixed' },
-                { id: `s_${Date.now()}_3`, name: 'Net Pay', amount: '0', type: 'Fixed' }
+                { id: `s_${now}_1`, name: 'Gross Earnings', amount: '0', type: 'Fixed' },
+                { id: `s_${now}_2`, name: 'Total Deductions', amount: '0', type: 'Fixed' },
+                { id: `s_${now}_3`, name: 'Net Pay', amount: '0', type: 'Fixed' }
             ]
         });
         setSettings(MOCK_TEMPLATES[0].settings); // Defaults
