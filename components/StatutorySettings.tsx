@@ -544,22 +544,70 @@ const StatutorySettings: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                                            {ESI_COMPONENTS.map(comp => (
-                                                <label key={comp} className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer group ${esiMappedComponents.includes(comp) ? 'border-sky-200 bg-sky-50/50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiMappedComponents.includes(comp) ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                                        {esiMappedComponents.includes(comp) && <Check size={14} className="text-white stroke-[3]" />}
-                                                    </div>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="hidden"
-                                                        checked={esiMappedComponents.includes(comp)}
-                                                        onChange={() => toggleEsiComponent(comp)}
-                                                        disabled={!isEditing}
-                                                    />
-                                                    <span className={`text-sm font-semibold transition-colors ${esiMappedComponents.includes(comp) ? 'text-sky-900' : 'text-slate-600'}`}>{comp}</span>
-                                                </label>
+                                        
+                                        <div className={`group relative min-h-[50px] p-2 rounded-xl border flex flex-wrap gap-2 items-center transition-all shadow-sm ${isEditing ? 'bg-white border-slate-200 hover:border-sky-300 focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-50' : 'bg-slate-50 border-slate-100'}`}>
+                                            {esiMappedComponents.map(comp => (
+                                                <div key={comp} className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg text-xs font-bold border border-sky-100 shadow-sm animate-in zoom-in-95 group/tag hover:bg-sky-100 transition-colors">
+                                                    {comp}
+                                                    {isEditing && (
+                                                        <button 
+                                                            onClick={() => toggleEsiComponent(comp)}
+                                                            className="text-sky-400 hover:text-rose-500 transition-colors"
+                                                            title={`Remove ${comp}`}
+                                                        >
+                                                            <X size={14} strokeWidth={2.5} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             ))}
+                                            
+                                            {isEditing && (
+                                                <div className="flex-1 min-w-[120px] relative flex items-center justify-between">
+                                                    <select 
+                                                        className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full"
+                                                        value=""
+                                                        onChange={(e) => {
+                                                            if (e.target.value && !esiMappedComponents.includes(e.target.value)) {
+                                                                toggleEsiComponent(e.target.value);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="" disabled>Add component...</option>
+                                                        {ESI_COMPONENTS.filter(c => !esiMappedComponents.includes(c)).map(c => (
+                                                            <option key={c} value={c}>{c}</option>
+                                                        ))}
+                                                        {ESI_COMPONENTS.filter(c => !esiMappedComponents.includes(c)).length === 0 && (
+                                                            <option disabled>All components added</option>
+                                                        )}
+                                                    </select>
+                                                    
+                                                    <div className="flex-1 px-2 text-slate-400 text-xs italic font-medium pointer-events-none">
+                                                        {esiMappedComponents.length === 0 ? "Select components..." : "Add more..."}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1.5 pr-1 text-slate-300 group-hover:text-slate-400 transition-colors">
+                                                        {esiMappedComponents.length > 0 && (
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setEsiMappedComponents([]);
+                                                                }}
+                                                                className="p-1 hover:text-rose-500 transition-colors bg-white rounded-md hover:bg-rose-50 z-20"
+                                                                title="Clear all"
+                                                            >
+                                                                <X size={16} strokeWidth={2.5} />
+                                                            </button>
+                                                        )}
+                                                        <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
+                                                        <ChevronDown size={18} strokeWidth={2.5} className="group-focus-within:rotate-180 transition-transform duration-200" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {!isEditing && esiMappedComponents.length === 0 && (
+                                                <span className="text-sm text-slate-400 italic px-2 font-medium">No components mapped for ESI</span>
+                                            )}
                                         </div>
                                     </div>
 
