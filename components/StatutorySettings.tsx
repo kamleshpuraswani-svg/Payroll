@@ -86,6 +86,9 @@ const StatutorySettings: React.FC = () => {
                 setAllowEsiOverride(config.allowEsiOverride ?? false);
                 setEsiRoundOff(config.esiRoundOff ?? 'floor');
                 setEsiNegativeArrearImpact(config.esiNegativeArrearImpact ?? false);
+                setEsiProvisionInCtc(config.esiProvisionInCtc ?? true);
+                setEsiProcessOvertime(config.esiProcessOvertime ?? true);
+                setEsiProcessArrear(config.esiProcessArrear ?? true);
                 setEnableGratuity(config.enableGratuity ?? false);
                 setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
                 setGratuityMode(config.gratuityMode ?? 'all');
@@ -152,6 +155,9 @@ const StatutorySettings: React.FC = () => {
     const [allowEsiOverride, setAllowEsiOverride] = useState(false);
     const [esiRoundOff, setEsiRoundOff] = useState<'floor' | 'ceiling'>('floor');
     const [esiNegativeArrearImpact, setEsiNegativeArrearImpact] = useState(false);
+    const [esiProvisionInCtc, setEsiProvisionInCtc] = useState(true);
+    const [esiProcessOvertime, setEsiProcessOvertime] = useState(true);
+    const [esiProcessArrear, setEsiProcessArrear] = useState(true);
 
     // Gratuity State
     const [enableGratuity, setEnableGratuity] = useState(false);
@@ -226,7 +232,7 @@ const StatutorySettings: React.FC = () => {
 
     const handleEdit = () => {
         setBackupState({
-            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact,
+            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact, esiProvisionInCtc, esiProcessOvertime, esiProcessArrear,
             enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria: [...gratuityCriteria],
             selectedGratuityDepts: [...selectedGratuityDepts], gratuityCalculationComponents: [...gratuityCalculationComponents],
             minServicePeriod, customServiceYears,
@@ -246,7 +252,7 @@ const StatutorySettings: React.FC = () => {
     const handleSave = async () => {
         try {
             const configValue = {
-                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact,
+                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact, esiProvisionInCtc, esiProcessOvertime, esiProcessArrear,
                 enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
                 selectedGratuityDepts, gratuityCalculationComponents,
                 minServicePeriod, customServiceYears,
@@ -290,6 +296,9 @@ const StatutorySettings: React.FC = () => {
             setAllowEsiOverride(backupState.allowEsiOverride);
             setEsiRoundOff(backupState.esiRoundOff);
             setEsiNegativeArrearImpact(backupState.esiNegativeArrearImpact);
+            setEsiProvisionInCtc(backupState.esiProvisionInCtc);
+            setEsiProcessOvertime(backupState.esiProcessOvertime);
+            setEsiProcessArrear(backupState.esiProcessArrear);
 
             setEnableGratuity(backupState.enableGratuity);
             setIncludeInCtcGratuity(backupState.includeInCtcGratuity);
@@ -672,6 +681,41 @@ const StatutorySettings: React.FC = () => {
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
                                             </div>
                                         </div>
+                                    </label>
+
+                                    <label className="flex items-start gap-3 cursor-pointer group pt-2">
+                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiProvisionInCtc ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {esiProvisionInCtc && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={esiProvisionInCtc} onChange={() => isEditing && setEsiProvisionInCtc(!esiProvisionInCtc)} disabled={!isEditing} />
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Do you want to provision employer ESI in CTC?</span>
+                                                <div className="group relative inline-block">
+                                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-left leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                        When enabled, the employer's ESI contribution (3.25% of gross salary) is included as part of the employee's CTC package. This ensures the total cost-to-company reflects the actual expense borne by the employer.
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <label className="flex items-start gap-3 cursor-pointer group pt-2">
+                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiProcessOvertime ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {esiProcessOvertime && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={esiProcessOvertime} onChange={() => isEditing && setEsiProcessOvertime(!esiProcessOvertime)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process ESI on overtime</span>
+                                    </label>
+
+                                    <label className="flex items-start gap-3 cursor-pointer group pt-2">
+                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiProcessArrear ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {esiProcessArrear && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={esiProcessArrear} onChange={() => isEditing && setEsiProcessArrear(!esiProcessArrear)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process ESI on arrear</span>
                                     </label>
 
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
