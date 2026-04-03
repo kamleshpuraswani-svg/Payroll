@@ -1386,7 +1386,6 @@ const StatutorySettings: React.FC = () => {
                                         placeholder="Enter Amount"
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                     />
-                                    <p className="mt-1.5 text-[11px] text-slate-400">Minimum allowed amount: ₹1. Only whole numbers allowed.</p>
                                 </div>
                             </div>
                         </div>
@@ -1422,16 +1421,19 @@ const StatutorySettings: React.FC = () => {
                                 </p>
 
                                 {/* Registration ID */}
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Corporate NPS Registration ID</label>
-                                    <input
-                                        type="text"
-                                        value={npsRegistrationId}
-                                        onChange={(e) => setNpsRegistrationId(e.target.value)}
-                                        disabled={!isEditing}
-                                        placeholder="Optional – Enter company NPS ID from PFRDA"
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-300"
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Corporate NPS Registration ID</label>
+                                        <input
+                                            type="text"
+                                            value={npsRegistrationId}
+                                            onChange={(e) => setNpsRegistrationId(e.target.value)}
+                                            disabled={!isEditing}
+                                            placeholder="Optional – Enter company NPS ID from PFRDA"
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-300"
+                                        />
+                                    </div>
+                                    <div></div>
                                 </div>
 
                                 {/* Cycle & Base */}
