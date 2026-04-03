@@ -334,7 +334,9 @@ const StatutorySettings: React.FC = () => {
             gratuityProrationIncompleteYear, gratuityWaiveMinServiceDeathDisablement, gratuityPaymentReminder,
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
             enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
+            lwfProcessBasis, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
             ptState, ptNumber,
+            ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit,
             enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
         });
         // isEditing is now derived from editingSection
@@ -354,7 +356,9 @@ const StatutorySettings: React.FC = () => {
                 gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit, gratuityEmployeeEligibility, gratuityRoundOff,
                 gratuityProrationIncompleteYear, gratuityWaiveMinServiceDeathDisablement, gratuityPaymentReminder,
                 enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
+                lwfProcessBasis, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
                 ptState, ptNumber,
+                ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
             };
 
