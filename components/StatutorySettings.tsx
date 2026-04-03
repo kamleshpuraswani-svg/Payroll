@@ -833,46 +833,28 @@ const StatutorySettings: React.FC = () => {
                             The Payment of Gratuity Act, 1972 is applicable to establishments with 10 or more employees. It is a lump-sum payment made by the employer as a mark of recognition for the service rendered by the employee.
                         </p>
 
-                        {enableGratuity && (
-                            <div className="space-y-10 animate-in fade-in">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                                    {/* Gratuity provision rate */}
-                                    <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={gratuityProvisionRate}
-                                                onChange={(e) => {
-                                                    const val = e.target.value.replace(/[^\d.]/g, '');
-                                                    if (val === '' || !isNaN(Number(val))) {
-                                                        setGratuityProvisionRate(val);
-                                                    }
-                                                }}
-                                                disabled={!isEditing}
-                                                placeholder="Enter %"
-                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
-                                            />
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col justify-center pb-2.5">
-                                        <label className="flex items-center gap-3 cursor-pointer group">
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeInCtcGratuity ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                                {includeInCtcGratuity && <Check size={14} className="text-white stroke-[3]" />}
+                                {enableGratuity && (
+                                    <div className="space-y-10 animate-in fade-in">
+                                        {/* Gratuity provision rate */}
+                                        <div className="space-y-2">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year)</label>
+                                            <div className="relative max-w-[240px]">
+                                                <input
+                                                    type="text"
+                                                    value={gratuityProvisionRate}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/[^\d.]/g, '');
+                                                        if (val === '' || !isNaN(Number(val))) {
+                                                            setGratuityProvisionRate(val);
+                                                        }
+                                                    }}
+                                                    disabled={!isEditing}
+                                                    placeholder="Enter %"
+                                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
                                             </div>
-                                            <input
-                                                type="checkbox"
-                                                className="hidden"
-                                                checked={includeInCtcGratuity}
-                                                onChange={() => isEditing && setIncludeInCtcGratuity(!includeInCtcGratuity)}
-                                                disabled={!isEditing}
-                                            />
-                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include Gratuity in employee's salary structure (CTC).</span>
-                                        </label>
-                                    </div>
-                                </div>
+                                        </div>
 
                                 {/* Gratuity Calculation Components */}
                                 <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -1059,6 +1041,23 @@ const StatutorySettings: React.FC = () => {
                                      </div>
                                  </div>
  
+                                 {/* Include Gratuity in CTC */}
+                                 <div className="pt-8 border-t border-slate-100">
+                                     <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                         <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${includeInCtcGratuity ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                             {includeInCtcGratuity && <Check size={14} className="text-white stroke-[3]" />}
+                                         </div>
+                                         <input 
+                                             type="checkbox" 
+                                             className="hidden" 
+                                             checked={includeInCtcGratuity} 
+                                             onChange={() => isEditing && setIncludeInCtcGratuity(!includeInCtcGratuity)} 
+                                             disabled={!isEditing} 
+                                         />
+                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include Gratuity in employee's salary structure (CTC).</span>
+                                     </label>
+                                 </div>
+
                                  {/* Proration for Incomplete Year of Service */}
                                  <div className="space-y-3 mt-8">
                                      <div className="flex items-center gap-2">
