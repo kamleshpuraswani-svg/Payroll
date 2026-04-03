@@ -32,6 +32,9 @@ const PfTdsSettings: React.FC = () => {
     const [emprLimit, setEmprLimit] = useState('1800');
     const [pfContributionBasis, setPfContributionBasis] = useState<'actual' | 'limit'>('limit');
     const [pfWageCeiling, setPfWageCeiling] = useState('15000');
+    const [pfAdminBasis, setPfAdminBasis] = useState<'pf' | 'pension' | 'edli'>('edli');
+    const [pfAdminContributionBasis, setPfAdminContributionBasis] = useState<'employee' | 'employer' | 'higher'>('employee');
+    const [pfChallanGrossBasis, setPfChallanGrossBasis] = useState<'rate' | 'earning'>('earning');
     const [includeEmprContri, setIncludeEmprContri] = useState(true);
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
@@ -84,6 +87,9 @@ const PfTdsSettings: React.FC = () => {
                 setEmprLimit(config.emprLimit ?? '1800');
                 setPfContributionBasis(config.pfContributionBasis ?? 'limit');
                 setPfWageCeiling(config.pfWageCeiling ?? '15000');
+                setPfAdminBasis(config.pfAdminBasis ?? 'edli');
+                setPfAdminContributionBasis(config.pfAdminContributionBasis ?? 'employee');
+                setPfChallanGrossBasis(config.pfChallanGrossBasis ?? 'earning');
                 setIncludeEmprContri(config.includeEmprContri ?? true);
                 setIncludeEdli(config.includeEdli ?? false);
                 setIncludeAdminCharges(config.includeAdminCharges ?? false);
@@ -110,7 +116,8 @@ const PfTdsSettings: React.FC = () => {
             enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
             includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, 
             considerComponents, belowLimitComponents: [...belowLimitComponents],
-            pfContributionBasis, pfWageCeiling
+            pfContributionBasis, pfWageCeiling,
+            pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
         });
         setIsEditingPf(true);
     };
@@ -121,7 +128,8 @@ const PfTdsSettings: React.FC = () => {
                 enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
                 includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, 
                 considerComponents, belowLimitComponents,
-                pfContributionBasis, pfWageCeiling
+                pfContributionBasis, pfWageCeiling,
+                pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
             };
             const { error } = await supabase.from('operational_config').upsert({ config_key: `pf_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
             if (error) throw error;
@@ -133,6 +141,7 @@ const PfTdsSettings: React.FC = () => {
         if (backupPf) {
             setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit); setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
             setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
+            setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
         }
         setIsEditingPf(false);
     };
@@ -339,6 +348,82 @@ const PfTdsSettings: React.FC = () => {
                                                                     />
                                                                 </div>
                                                                 <span className="text-sm font-bold text-slate-600">monthly.</span>
+                                                            </div>
+
+                                                            {/* New PF Admin Fields */}
+                                                            <div className="space-y-6 pt-4">
+                                                                {/* PF Admin Basis */}
+                                                                <div className="space-y-4">
+                                                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculate PF admin charges based on:</h4>
+                                                                    <div className="flex flex-wrap gap-6">
+                                                                        {[
+                                                                            { id: 'pf', label: 'PF wages' },
+                                                                            { id: 'pension', label: 'Pension wages' },
+                                                                            { id: 'edli', label: 'EDLI wages' }
+                                                                        ].map(opt => (
+                                                                            <label key={opt.id} className="flex items-center gap-3 cursor-pointer group">
+                                                                                <div 
+                                                                                    onClick={() => {
+                                                                                        if (!isEditingPf) return;
+                                                                                        if (pfAdminBasis !== opt.id) {
+                                                                                            window.alert("⚠ Changing this setting may affect PF compliance. Consult your CA or PF consultant before making changes.");
+                                                                                        }
+                                                                                        setPfAdminBasis(opt.id as any);
+                                                                                    }}
+                                                                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${pfAdminBasis === opt.id ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                                >
+                                                                                    {pfAdminBasis === opt.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                                </div>
+                                                                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">{opt.label}</span>
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                    <p className="text-[10px] font-bold text-slate-400 italic">PF admin charges are calculated on PF wages as per current EPFO guidelines.</p>
+                                                                </div>
+
+                                                                {/* Admin Contribution Basis */}
+                                                                <div className="space-y-4">
+                                                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select the contribution basis for PF admin charges:</h4>
+                                                                    <div className="flex flex-wrap gap-6">
+                                                                        {[
+                                                                            { id: 'employee', label: 'Employee’s PF Wages' },
+                                                                            { id: 'employer', label: 'Employer’s PF Wages' },
+                                                                            { id: 'higher', label: 'Higher of the two' }
+                                                                        ].map(opt => (
+                                                                            <label key={opt.id} className="flex items-center gap-3 cursor-pointer group">
+                                                                                <div 
+                                                                                    onClick={() => isEditingPf && setPfAdminContributionBasis(opt.id as any)}
+                                                                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${pfAdminContributionBasis === opt.id ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                                >
+                                                                                    {pfAdminContributionBasis === opt.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                                </div>
+                                                                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">{opt.label}</span>
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* PF Challan Basis */}
+                                                                <div className="space-y-4">
+                                                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">When generating the PF challan, would you like to include 'Gross Rate' or 'Gross Earnings' in the Gross Wages?</h4>
+                                                                    <div className="flex flex-wrap gap-6">
+                                                                        {[
+                                                                            { id: 'rate', label: 'Gross Rate' },
+                                                                            { id: 'earning', label: 'Gross Earning' }
+                                                                        ].map(opt => (
+                                                                            <label key={opt.id} className="flex items-center gap-3 cursor-pointer group">
+                                                                                <div 
+                                                                                    onClick={() => isEditingPf && setPfChallanGrossBasis(opt.id as any)}
+                                                                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${pfChallanGrossBasis === opt.id ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                                >
+                                                                                    {pfChallanGrossBasis === opt.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                                </div>
+                                                                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">{opt.label}</span>
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                    <p className="text-[10px] font-bold text-slate-400 italic">'Gross Earnings' is the standard for statutory ECR filing.</p>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
