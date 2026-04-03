@@ -89,7 +89,7 @@ const StatutorySettings: React.FC = () => {
                 setEsiProvisionInCtc(config.esiProvisionInCtc ?? true);
                 setEsiProcessOvertime(config.esiProcessOvertime ?? true);
                 setEsiProcessArrear(config.esiProcessArrear ?? true);
-                setEnableGratuity(config.enableGratuity ?? false);
+                setEnableGratuity(config.enableGratuity ?? true);
                 setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
                 setGratuityMode(config.gratuityMode ?? 'all');
                 setGratuityCriteria(config.gratuityCriteria ?? ['Permanent employees only']);
@@ -131,6 +131,8 @@ const StatutorySettings: React.FC = () => {
                 setGratuityTenureYears(config.gratuityTenureYears ?? (config.minServicePeriod === 'standard' ? '5' : (config.customServiceYears || '5')));
                 setGratuityTenureMonths(config.gratuityTenureMonths ?? '0');
                 setGratuityTaxFreeLimit(config.gratuityTaxFreeLimit ?? (config.maxGratuityType === 'statutory' ? '20,00,000' : (config.maxGratuityType === 'none' ? '0' : (config.customMaxGratuityAmount || '20,00,000'))));
+                setGratuityEmployeeEligibility(config.gratuityEmployeeEligibility ?? ['Probation', 'Confirmed', 'Notice Period']);
+                setGratuityRoundOff(config.gratuityRoundOff ?? 'ceiling');
             }
         } catch (err) {
             console.error('Error fetching statutory settings:', err);
@@ -160,7 +162,7 @@ const StatutorySettings: React.FC = () => {
     const [esiProcessArrear, setEsiProcessArrear] = useState(true);
 
     // Gratuity State
-    const [enableGratuity, setEnableGratuity] = useState(false);
+    const [enableGratuity, setEnableGratuity] = useState(true);
     const [includeInCtcGratuity, setIncludeInCtcGratuity] = useState(true);
     const [gratuityMode, setGratuityMode] = useState<'all' | 'selective'>('all');
     const [gratuityCriteria, setGratuityCriteria] = useState<string[]>(['Permanent employees only']);
@@ -178,6 +180,8 @@ const StatutorySettings: React.FC = () => {
     const [gratuityTenureYears, setGratuityTenureYears] = useState('5');
     const [gratuityTenureMonths, setGratuityTenureMonths] = useState('0');
     const [gratuityTaxFreeLimit, setGratuityTaxFreeLimit] = useState('20,00,000');
+    const [gratuityEmployeeEligibility, setGratuityEmployeeEligibility] = useState<string[]>(['Probation', 'Confirmed', 'Notice Period']);
+    const [gratuityRoundOff, setGratuityRoundOff] = useState<'floor' | 'ceiling'>('ceiling');
 
     const [yearsCalculationMode, setYearsCalculationMode] = useState<'completed' | 'nearest' | 'sixMonths'>('completed');
     const [includedServicePeriods, setIncludedServicePeriods] = useState<string[]>([
@@ -240,7 +244,7 @@ const StatutorySettings: React.FC = () => {
             deathDisablementServiceType, deathDisablementMinYears,
             yearsCalculationMode, includedServicePeriods: [...includedServicePeriods], lwpLimitDays,
             maxGratuityType, customMaxGratuityAmount,
-            gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit,
+            gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit, gratuityEmployeeEligibility: [...gratuityEmployeeEligibility], gratuityRoundOff,
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
             enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
             ptState, ptNumber,
@@ -260,7 +264,7 @@ const StatutorySettings: React.FC = () => {
                 deathDisablementServiceType, deathDisablementMinYears,
                 yearsCalculationMode, includedServicePeriods, lwpLimitDays,
                 maxGratuityType, customMaxGratuityAmount,
-                gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit,
+                gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit, gratuityEmployeeEligibility, gratuityRoundOff,
                 enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
                 ptState, ptNumber,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
@@ -317,6 +321,8 @@ const StatutorySettings: React.FC = () => {
             setGratuityTenureYears(backupState.gratuityTenureYears);
             setGratuityTenureMonths(backupState.gratuityTenureMonths);
             setGratuityTaxFreeLimit(backupState.gratuityTaxFreeLimit);
+            setGratuityEmployeeEligibility(backupState.gratuityEmployeeEligibility);
+            setGratuityRoundOff(backupState.gratuityRoundOff);
 
             setYearsCalculationMode(backupState.yearsCalculationMode);
             setIncludedServicePeriods(backupState.includedServicePeriods);
@@ -736,7 +742,7 @@ const StatutorySettings: React.FC = () => {
                         )}
                     </div>
 
-                    {/* 2. Gratuity Settings */}
+                       {/* 2. Gratuity Settings */}
                     <div className={`bg-white p-8 rounded-xl border shadow-sm ${editingSection === 'gratuity' ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-3">
@@ -804,9 +810,6 @@ const StatutorySettings: React.FC = () => {
                                     </div>
                                 </div>
 
-
-
-
                                 {/* Gratuity Calculation Components */}
                                 <div className="space-y-4 pt-4 border-t border-slate-100">
                                     <div className="flex justify-between items-center">
@@ -863,54 +866,80 @@ const StatutorySettings: React.FC = () => {
                                         <Info size={14} className="text-sky-500" />
                                         Only Basic + DA is considered as per the GRATUITY Act.
                                     </p>
-                                                  {/* Tenure for gratuity applicability */}
-                                <div className="space-y-4 pt-4 border-t border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tenure for gratuity applicability</label>
-                                    <div className="grid grid-cols-2 max-w-sm gap-6">
-                                        <div className="space-y-2">
-                                            <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Year</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    value={gratuityTenureYears}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.replace(/[^\d]/g, '');
-                                                        setGratuityTenureYears(val);
-                                                    }}
-                                                    disabled={!isEditing}
-                                                    placeholder="Enter years"
-                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
-                                                />
-                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Years</div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-8 border-t border-slate-100">
+                                    {/* Tenure for gratuity applicability */}
+                                    <div className="space-y-4">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tenure for gratuity applicability</label>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Year</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={gratuityTenureYears}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/[^\d]/g, '');
+                                                            setGratuityTenureYears(val);
+                                                        }}
+                                                        disabled={!isEditing}
+                                                        placeholder="Enter years"
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                    />
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Years</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Month</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    value={gratuityTenureMonths}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.replace(/[^\d]/g, '');
-                                                        setGratuityTenureMonths(val);
-                                                    }}
-                                                    disabled={!isEditing}
-                                                    placeholder="Enter months"
-                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
-                                                />
-                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Months</div>
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Month</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={gratuityTenureMonths}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/[^\d]/g, '');
+                                                            setGratuityTenureMonths(val);
+                                                        }}
+                                                        disabled={!isEditing}
+                                                        placeholder="Enter months"
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                    />
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Months</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Employee Eligibility */}
+                                    <div className="space-y-4">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Employee Eligibility</label>
+                                        <div className="flex flex-wrap gap-x-8 gap-y-4 pt-2">
+                                            {['Probation', 'Confirmed', 'Notice Period', 'Intern'].map((item) => (
+                                                <label key={item} className="flex items-center gap-2.5 cursor-pointer group">
+                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${gratuityEmployeeEligibility.includes(item) ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                                        {gratuityEmployeeEligibility.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="hidden" 
+                                                        checked={gratuityEmployeeEligibility.includes(item)}
+                                                        onChange={() => {
+                                                            if (!isEditing) return;
+                                                            setGratuityEmployeeEligibility(prev => 
+                                                                prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+                                                            );
+                                                        }}
+                                                        disabled={!isEditing}
+                                                    />
+                                                    <span className={`text-sm font-semibold transition-colors ${gratuityEmployeeEligibility.includes(item) ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{item}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-               </div>
-
-
-
-
 
                                 {/* Tax-free gratuity limit (₹) */}
-                                <div className="space-y-4 pt-6 border-t border-slate-100">
+                                <div className="space-y-4 pt-8 border-t border-slate-100">
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tax-free gratuity limit (₹)</label>
                                     <div className="max-w-xs relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
@@ -931,6 +960,39 @@ const StatutorySettings: React.FC = () => {
                                         <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
                                             Tax Exemption: Up to ₹20 lakhs of gratuity is tax-free for non-government employees as per the GRATUITY Act.
                                         </p>
+                                    </div>
+                                </div>
+
+                                {/* Round Off Setting */}
+                                <div className="space-y-4 pt-8 border-t border-slate-100">
+                                    <div className="flex items-center gap-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Round Off Setting</label>
+                                        <div className="group relative inline-block">
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                            <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                Gratuity calculations often result in decimal amounts. This setting controls how the final gratuity amount is rounded. Floor: Always rounded down to the nearest rupee (e.g., ₹1,24,856.75 → ₹1,24,856). Ceiling: Always rounded up to the nearest rupee (e.g., ₹1,24,856.10 → ₹1,24,857). Ceiling is recommended to ensure the employee receives the full entitled amount without shortfall.
+                                                <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-8 pt-1">
+                                        {['Floor', 'Ceiling'].map((option) => (
+                                            <label key={option} className="flex items-center gap-2.5 cursor-pointer group">
+                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${gratuityRoundOff === option.toLowerCase() ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                    {gratuityRoundOff === option.toLowerCase() && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                </div>
+                                                <input 
+                                                    type="radio" 
+                                                    className="hidden" 
+                                                    name="gratuityRoundOff"
+                                                    value={option.toLowerCase()}
+                                                    checked={gratuityRoundOff === option.toLowerCase()}
+                                                    onChange={() => isEditing && setGratuityRoundOff(option.toLowerCase() as 'floor' | 'ceiling')}
+                                                    disabled={!isEditing}
+                                                />
+                                                <span className={`text-sm font-semibold transition-colors ${gratuityRoundOff === option.toLowerCase() ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{option}</span>
+                                            </label>
+                                        ))}
                                     </div>
                                 </div>
 
