@@ -141,6 +141,10 @@ const StatutorySettings: React.FC = () => {
                 setGratuityProrationIncompleteYear(config.gratuityProrationIncompleteYear ?? true);
                 setGratuityWaiveMinServiceDeathDisablement(config.gratuityWaiveMinServiceDeathDisablement ?? true);
                 setGratuityPaymentReminder(config.gratuityPaymentReminder ?? true);
+                setPtProcessArrear(config.ptProcessArrear ?? false);
+                setPtExemptionDisabled(config.ptExemptionDisabled ?? true);
+                setPtExemptionSenior(config.ptExemptionSenior ?? false);
+                setPtExemptionLimit(config.ptExemptionLimit ?? '0');
             } else {
                 // Reset to defaults if no config found
                 setEnableEsi(true);
@@ -180,6 +184,10 @@ const StatutorySettings: React.FC = () => {
                 setGratuityProrationIncompleteYear(true);
                 setGratuityWaiveMinServiceDeathDisablement(true);
                 setGratuityPaymentReminder(true);
+                setPtProcessArrear(false);
+                setPtExemptionDisabled(true);
+                setPtExemptionSenior(false);
+                setPtExemptionLimit('0');
                 
                 setEnableLwf(true);
                 setLwfState('Karnataka');
@@ -285,6 +293,10 @@ const StatutorySettings: React.FC = () => {
     // PT State
     const [ptState, setPtState] = useState('Karnataka');
     const [ptNumber, setPtNumber] = useState('');
+    const [ptProcessArrear, setPtProcessArrear] = useState(false);
+    const [ptExemptionDisabled, setPtExemptionDisabled] = useState(true);
+    const [ptExemptionSenior, setPtExemptionSenior] = useState(false);
+    const [ptExemptionLimit, setPtExemptionLimit] = useState('0');
 
     // NPS State
     const [enableNps, setEnableNps] = useState(true);
@@ -427,6 +439,10 @@ const StatutorySettings: React.FC = () => {
             setLwfProvisionCtc(backupState.lwfProvisionCtc);
             setPtState(backupState.ptState);
             setPtNumber(backupState.ptNumber);
+            setPtProcessArrear(backupState.ptProcessArrear);
+            setPtExemptionDisabled(backupState.ptExemptionDisabled);
+            setPtExemptionSenior(backupState.ptExemptionSenior);
+            setPtExemptionLimit(backupState.ptExemptionLimit);
             setEnableNps(backupState.enableNps);
             setNpsRegistrationId(backupState.npsRegistrationId);
             setNpsDeductionCycle(backupState.npsDeductionCycle);
@@ -1288,7 +1304,7 @@ const StatutorySettings: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">PT State</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax State</label>
                                 <div className="relative">
                                     <select
                                         value={ptState}
@@ -1300,10 +1316,36 @@ const StatutorySettings: React.FC = () => {
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
+
+                                <div className="space-y-4 mt-6 pt-6 border-t border-slate-50">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${ptProcessArrear ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {ptProcessArrear && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={ptProcessArrear} onChange={() => isEditing && setPtProcessArrear(!ptProcessArrear)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Calculate Professional Tax Separately for Arrear</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${ptExemptionDisabled ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {ptExemptionDisabled && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={ptExemptionDisabled} onChange={() => isEditing && setPtExemptionDisabled(!ptExemptionDisabled)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">PT Exemption for Physically Disabled Employees</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${ptExemptionSenior ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {ptExemptionSenior && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={ptExemptionSenior} onChange={() => isEditing && setPtExemptionSenior(!ptExemptionSenior)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">State PT Exemption for Senior Citizens</span>
+                                    </label>
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">PT Number</label>
-                                <div className="relative">
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Number</label>
+                                <div className="relative mb-6">
                                     <input
                                         type="text"
                                         value={ptNumber}
@@ -1315,6 +1357,32 @@ const StatutorySettings: React.FC = () => {
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                                         <Edit2 size={16} />
                                     </div>
+                                </div>
+
+                                <div className="pt-0 border-slate-50">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Exemption Limit</label>
+                                    <input
+                                        type="text"
+                                        value={ptExemptionLimit}
+                                        onChange={(e) => {
+                                            if (!isEditing) return;
+                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                            if (val === '') {
+                                                setPtExemptionLimit('0');
+                                            } else {
+                                                setPtExemptionLimit(parseInt(val).toString());
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            if (parseInt(ptExemptionLimit) < 1) {
+                                                setPtExemptionLimit('1');
+                                            }
+                                        }}
+                                        disabled={!isEditing}
+                                        placeholder="Enter Amount"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                    />
+                                    <p className="mt-1.5 text-[11px] text-slate-400">Minimum allowed amount: ₹1. Only whole numbers allowed.</p>
                                 </div>
                             </div>
                         </div>
