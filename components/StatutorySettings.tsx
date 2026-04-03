@@ -1036,6 +1036,7 @@ const StatutorySettings: React.FC = () => {
                                                     onChange={() => isEditing && setGratuityRoundOff(option.toLowerCase() as 'floor' | 'ceiling')}
                                                     disabled={!isEditing}
                                                 />
+                                                <span className={`text-sm font-semibold transition-colors ${gratuityRoundOff === option.toLowerCase() ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{option}</span>
                                              </label>
                                          ))}
                                      </div>
@@ -1059,17 +1060,7 @@ const StatutorySettings: React.FC = () => {
                                  </div>
 
                                  {/* Proration for Incomplete Year of Service */}
-                                 <div className="space-y-3 mt-8">
-                                     <div className="flex items-center gap-2">
-                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Proration for Incomplete Year of Service</label>
-                                         <div className="group relative inline-block">
-                                             <Info size={14} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                 If an employee has completed more than 6 months in their last year of service, it is treated as a full year for gratuity calculation as per the Payment of Gratuity Act, 1972. Example: Service of 7 Years 8 Months → counted as 8 Years since 8 months exceeds 6 months. Service of 7 Years 4 Months → counted as 7 Years since 4 months is below 6 months. Enable is recommended as this is mandated by the Gratuity Act.
-                                                 <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                         </div>
-                                     </div>
+                                 <div className="mt-8">
                                      <label className="flex items-center gap-3 cursor-pointer group w-fit">
                                          <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${gratuityProrationIncompleteYear ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
                                              {gratuityProrationIncompleteYear && <Check size={14} className="text-white stroke-[3]" />}
@@ -1081,22 +1072,21 @@ const StatutorySettings: React.FC = () => {
                                              onChange={() => isEditing && setGratuityProrationIncompleteYear(!gratuityProrationIncompleteYear)}
                                              disabled={!isEditing}
                                          />
-                                         <span className={`text-sm font-semibold transition-colors ${gratuityProrationIncompleteYear ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{gratuityProrationIncompleteYear ? 'Yes' : 'No'}</span>
+                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors flex items-center gap-2">
+                                             Proration for Incomplete Year of Service
+                                             <div className="group relative inline-block">
+                                                 <Info size={14} className="text-slate-400 cursor-help" />
+                                                 <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                     If an employee has completed more than 6 months in their last year of service, it is treated as a full year for gratuity calculation as per the Payment of Gratuity Act, 1972. Example: Service of 7 Years 8 Months → counted as 8 Years since 8 months exceeds 6 months. Service of 7 Years 4 Months → counted as 7 Years since 4 months is below 6 months. Enable is recommended as this is mandated by the Gratuity Act.
+                                                     <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                                 </div>
+                                             </div>
+                                         </span>
                                      </label>
                                  </div>
  
                                  {/* Waive Minimum Service Requirement on Death or Disablement */}
-                                 <div className="space-y-3 mt-6">
-                                     <div className="flex items-center gap-2">
-                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Waive Minimum Service Requirement on Death or Disablement</label>
-                                         <div className="group relative inline-block">
-                                             <Info size={14} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                 As per the Payment of Gratuity Act, 1972, the minimum 5-year service requirement is waived in cases of an employee's death or permanent disablement due to accident or illness. If enabled, gratuity is paid to the nominee or legal heir even if the employee has not completed 5 years of service. Non-compliance in death or disablement cases is a serious legal violation under the Act. Enable is strongly recommended.
-                                                 <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                         </div>
-                                     </div>
+                                 <div className="mt-6">
                                      <label className="flex items-center gap-3 cursor-pointer group w-fit">
                                          <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${gratuityWaiveMinServiceDeathDisablement ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
                                              {gratuityWaiveMinServiceDeathDisablement && <Check size={14} className="text-white stroke-[3]" />}
@@ -1108,22 +1098,21 @@ const StatutorySettings: React.FC = () => {
                                              onChange={() => isEditing && setGratuityWaiveMinServiceDeathDisablement(!gratuityWaiveMinServiceDeathDisablement)}
                                              disabled={!isEditing}
                                          />
-                                         <span className={`text-sm font-semibold transition-colors ${gratuityWaiveMinServiceDeathDisablement ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{gratuityWaiveMinServiceDeathDisablement ? 'Yes' : 'No'}</span>
+                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors flex items-center gap-2">
+                                             Waive Minimum Service Requirement on Death or Disablement
+                                             <div className="group relative inline-block">
+                                                 <Info size={14} className="text-slate-400 cursor-help" />
+                                                 <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                     As per the Payment of Gratuity Act, 1972, the minimum 5-year service requirement is waived in cases of an employee's death or permanent disablement due to accident or illness. If enabled, gratuity is paid to the nominee or legal heir even if the employee has not completed 5 years of service. Non-compliance in death or disablement cases is a serious legal violation under the Act. Enable is strongly recommended.
+                                                     <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                                 </div>
+                                             </div>
+                                         </span>
                                      </label>
                                  </div>
  
                                  {/* Gratuity Payment Due Reminder */}
-                                 <div className="space-y-3 mt-6">
-                                     <div className="flex items-center gap-2">
-                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Gratuity Payment Due Reminder</label>
-                                         <div className="group relative inline-block">
-                                             <Info size={14} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                 As per the Payment of Gratuity Act, 1972, the employer must pay gratuity within 30 days from the date it becomes payable upon resignation, retirement, death, or disablement. When enabled, the system will trigger an alert to the HR team when gratuity payment is due within 30 days of an employee's exit date.
-                                                 <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                         </div>
-                                     </div>
+                                 <div className="mt-6">
                                      <label className="flex items-center gap-3 cursor-pointer group w-fit">
                                          <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${gratuityPaymentReminder ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
                                              {gratuityPaymentReminder && <Check size={14} className="text-white stroke-[3]" />}
@@ -1135,7 +1124,16 @@ const StatutorySettings: React.FC = () => {
                                              onChange={() => isEditing && setGratuityPaymentReminder(!gratuityPaymentReminder)}
                                              disabled={!isEditing}
                                          />
-                                         <span className={`text-sm font-semibold transition-colors ${gratuityPaymentReminder ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{gratuityPaymentReminder ? 'Yes' : 'No'}</span>
+                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors flex items-center gap-2">
+                                             Gratuity Payment Due Reminder
+                                             <div className="group relative inline-block">
+                                                 <Info size={14} className="text-slate-400 cursor-help" />
+                                                 <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                     As per the Payment of Gratuity Act, 1972, the employer must pay gratuity within 30 days from the date it becomes payable upon resignation, retirement, death, or disablement. When enabled, the system will trigger an alert to the HR team when gratuity payment is due within 30 days of an employee's exit date.
+                                                     <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                                 </div>
+                                             </div>
+                                         </span>
                                      </label>
                                  </div>
  
