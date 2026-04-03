@@ -26,10 +26,12 @@ const PfTdsSettings: React.FC = () => {
     const [pfNumber, setPfNumber] = useState('AA/AAA/1234567/000');
     const [establishmentName, setEstablishmentName] = useState('TechFlow Systems Pvt Ltd');
     const [epfJoiningDate, setEpfJoiningDate] = useState('2023-01-12');
-    const [empRate, setEmpRate] = useState('12% of Actual PF Wage');
+    const [empRate, setEmpRate] = useState('12');
     const [emprRate, setEmprRate] = useState('12% of Actual PF Wage');
     const [empLimit, setEmpLimit] = useState('1800');
     const [emprLimit, setEmprLimit] = useState('1800');
+    const [pfContributionBasis, setPfContributionBasis] = useState<'actual' | 'limit'>('limit');
+    const [pfWageCeiling, setPfWageCeiling] = useState('15000');
     const [includeEmprContri, setIncludeEmprContri] = useState(true);
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
@@ -76,10 +78,12 @@ const PfTdsSettings: React.FC = () => {
                 setPfNumber(config.pfNumber ?? 'AA/AAA/1234567/000');
                 setEstablishmentName(config.establishmentName ?? 'TechFlow Systems Pvt Ltd');
                 setEpfJoiningDate(config.epfJoiningDate ?? '2023-01-12');
-                setEmpRate(config.empRate ?? '12% of Actual PF Wage');
+                setEmpRate(config.empRate ?? '12');
                 setEmprRate(config.emprRate ?? '12% of Actual PF Wage');
                 setEmpLimit(config.empLimit ?? '1800');
                 setEmprLimit(config.emprLimit ?? '1800');
+                setPfContributionBasis(config.pfContributionBasis ?? 'limit');
+                setPfWageCeiling(config.pfWageCeiling ?? '15000');
                 setIncludeEmprContri(config.includeEmprContri ?? true);
                 setIncludeEdli(config.includeEdli ?? false);
                 setIncludeAdminCharges(config.includeAdminCharges ?? false);
@@ -102,13 +106,23 @@ const PfTdsSettings: React.FC = () => {
     };
 
     const handleEditPf = () => {
-        setBackupPf({ enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, considerComponents, belowLimitComponents: [...belowLimitComponents] });
+        setBackupPf({ 
+            enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
+            includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, 
+            considerComponents, belowLimitComponents: [...belowLimitComponents],
+            pfContributionBasis, pfWageCeiling
+        });
         setIsEditingPf(true);
     };
 
     const handleSavePf = async () => {
         try {
-            const configValue = { enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, considerComponents, belowLimitComponents };
+            const configValue = { 
+                enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
+                includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, 
+                considerComponents, belowLimitComponents,
+                pfContributionBasis, pfWageCeiling
+            };
             const { error } = await supabase.from('operational_config').upsert({ config_key: `pf_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
             if (error) throw error;
             setIsEditingPf(false);
@@ -118,6 +132,7 @@ const PfTdsSettings: React.FC = () => {
     const handleCancelPf = () => {
         if (backupPf) {
             setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit); setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
+            setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
         }
         setIsEditingPf(false);
     };
@@ -179,7 +194,7 @@ const PfTdsSettings: React.FC = () => {
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* PF Section */}
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-8 p-8">
-                                <div className="flex justify-between items-center pb-6 border-b border-slate-100">
+                                <div className="flex justify-between items-center pb-6 border-b border-slate-300">
                                     <div className="flex items-center gap-3">
                                         <Shield size={20} className="text-sky-600" />
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROVIDENT FUND (PF)</h3>
@@ -237,23 +252,72 @@ const PfTdsSettings: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="pt-8 border-t border-slate-100 space-y-12">
+                                                <div className="pt-10 border-t border-slate-300 space-y-6">
                                                     {/* Employee Contribution */}
                                                     <div className="space-y-6">
                                                         <div className="flex items-center gap-3">
-                                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employee Contribution Rate</h4>
+                                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employee Contribution Rate (%)</h4>
                                                             <button onClick={() => setShowBelowLimitModal(true)} className="text-[10px] font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest flex items-center gap-1.5 p-1 hover:bg-sky-50 rounded-lg">
                                                                 <Calculator size={14} /> PF wages below 15000?
                                                             </button>
                                                         </div>
                                                         <div className="space-y-4">
                                                             <div className="relative w-full md:w-80">
-                                                                <select disabled className="w-full px-5 py-3.5 bg-slate-100 border-none rounded-2xl text-sm font-bold text-slate-500 appearance-none cursor-not-allowed">
-                                                                    <option>12% of Actual PF Wage</option>
-                                                                </select>
-                                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={empRate} 
+                                                                    onChange={e => {
+                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                        setEmpRate(val);
+                                                                    }} 
+                                                                    disabled={!isEditingPf} 
+                                                                    className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all disabled:opacity-70" 
+                                                                    placeholder="12"
+                                                                />
                                                             </div>
-                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                            
+                                                            <div className="space-y-4 pt-2">
+                                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculate Employee PF contribution based on:</h4>
+                                                                <div className="flex flex-col sm:flex-row gap-6">
+                                                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                                                        <div 
+                                                                            onClick={() => isEditingPf && setPfContributionBasis('actual')}
+                                                                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${pfContributionBasis === 'actual' ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                        >
+                                                                            {pfContributionBasis === 'actual' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                        </div>
+                                                                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Actual Earnings (All Employees)</span>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                                                        <div 
+                                                                            onClick={() => isEditingPf && setPfContributionBasis('limit')}
+                                                                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${pfContributionBasis === 'limit' ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                        >
+                                                                            {pfContributionBasis === 'limit' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                        </div>
+                                                                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Specific Contribution Limit (Employee level)</span>
+                                                                    </label>
+                                                                </div>
+
+                                                                {pfContributionBasis === 'limit' && (
+                                                                    <div className="pt-2 animate-in slide-in-from-top-4 duration-300">
+                                                                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">PF Wage Ceiling Limit (₹)</label>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={pfWageCeiling} 
+                                                                            onChange={e => {
+                                                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                                setPfWageCeiling(val);
+                                                                            }} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                            placeholder="15000"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex items-center gap-3 flex-wrap pt-2">
                                                                 <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
                                                                     Limit employee's PF contribution amount maximum of
                                                                     <div className="group/info relative">
@@ -381,7 +445,7 @@ const PfTdsSettings: React.FC = () => {
                                                     </div>
 
                                                     {/* LOP Configuration Section */}
-                                                    <div className="pt-10 border-t border-slate-100 space-y-6">
+                                                    <div className="pt-10 border-t border-slate-300 space-y-6">
                                                         <div className="flex items-center gap-2.5 text-slate-800 font-black text-[10px] uppercase tracking-[0.2em]">
                                                             <AlertCircle size={16} className="text-sky-600" />
                                                             PF Configuration when LOP Applied
@@ -477,7 +541,7 @@ const PfTdsSettings: React.FC = () => {
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
                             {/* TDS Section */}
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-8 p-8">
-                                <div className="flex justify-between items-center pb-6 border-b border-slate-100">
+                                <div className="flex justify-between items-center pb-6 border-b border-slate-300">
                                     <div className="flex items-center gap-3">
                                         <Calculator size={20} className="text-indigo-600" />
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">TDS CONFIGURATION</h3>
@@ -525,7 +589,7 @@ const PfTdsSettings: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="pt-10 border-t border-slate-100 space-y-8">
+                                            <div className="pt-8 border-t border-slate-300 space-y-12">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                                                         <User size={18} strokeWidth={2.5} />
