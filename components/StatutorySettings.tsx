@@ -116,6 +116,11 @@ const StatutorySettings: React.FC = () => {
                 setLwfState(config.lwfState ?? 'Karnataka');
                 setLwfEstablishmentId(config.lwfEstablishmentId ?? '');
                 setLwfRegistrationDate(config.lwfRegistrationDate ?? '');
+                setLwfProcessBasis(config.lwfProcessBasis ?? true);
+                setLwfProcessArrear(config.lwfProcessArrear ?? false);
+                setLwfProcessSettlement(config.lwfProcessSettlement ?? false);
+                setLwfProvisionEmployerCtc(config.lwfProvisionEmployerCtc ?? false);
+                setLwfProvisionCtc(config.lwfProvisionCtc ?? false);
                 setPtState(config.ptState ?? 'Karnataka');
                 setPtNumber(config.ptNumber ?? '');
                 setEnableNps(config.enableNps ?? true);
@@ -180,6 +185,11 @@ const StatutorySettings: React.FC = () => {
                 setLwfState('Karnataka');
                 setLwfEstablishmentId('');
                 setLwfRegistrationDate('');
+                setLwfProcessBasis(true);
+                setLwfProcessArrear(false);
+                setLwfProcessSettlement(false);
+                setLwfProvisionEmployerCtc(false);
+                setLwfProvisionCtc(false);
                 setPtState('Karnataka');
                 setPtNumber('');
                 setEnableNps(true);
@@ -266,6 +276,11 @@ const StatutorySettings: React.FC = () => {
     const [lwfState, setLwfState] = useState('Karnataka');
     const [lwfEstablishmentId, setLwfEstablishmentId] = useState('');
     const [lwfRegistrationDate, setLwfRegistrationDate] = useState('');
+    const [lwfProcessBasis, setLwfProcessBasis] = useState(true);
+    const [lwfProcessArrear, setLwfProcessArrear] = useState(false);
+    const [lwfProcessSettlement, setLwfProcessSettlement] = useState(false);
+    const [lwfProvisionEmployerCtc, setLwfProvisionEmployerCtc] = useState(false);
+    const [lwfProvisionCtc, setLwfProvisionCtc] = useState(false);
 
     // PT State
     const [ptState, setPtState] = useState('Karnataka');
@@ -405,6 +420,11 @@ const StatutorySettings: React.FC = () => {
             setLwfState(backupState.lwfState);
             setLwfEstablishmentId(backupState.lwfEstablishmentId);
             setLwfRegistrationDate(backupState.lwfRegistrationDate);
+            setLwfProcessBasis(backupState.lwfProcessBasis);
+            setLwfProcessArrear(backupState.lwfProcessArrear);
+            setLwfProcessSettlement(backupState.lwfProcessSettlement);
+            setLwfProvisionEmployerCtc(backupState.lwfProvisionEmployerCtc);
+            setLwfProvisionCtc(backupState.lwfProvisionCtc);
             setPtState(backupState.ptState);
             setPtNumber(backupState.ptNumber);
             setEnableNps(backupState.enableNps);
@@ -1206,6 +1226,48 @@ const StatutorySettings: React.FC = () => {
                                         disabled={!isEditing}
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                     />
+                                </div>
+
+                                <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-50 mt-2">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessBasis ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {lwfProcessBasis && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={lwfProcessBasis} onChange={() => isEditing && setLwfProcessBasis(!lwfProcessBasis)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process LWF on basis of</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessArrear ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {lwfProcessArrear && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={lwfProcessArrear} onChange={() => isEditing && setLwfProcessArrear(!lwfProcessArrear)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process LWF on Arrear</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessSettlement ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {lwfProcessSettlement && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={lwfProcessSettlement} onChange={() => isEditing && setLwfProcessSettlement(!lwfProcessSettlement)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process LWF on Settlement</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProvisionEmployerCtc ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {lwfProvisionEmployerCtc && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={lwfProvisionEmployerCtc} onChange={() => isEditing && setLwfProvisionEmployerCtc(!lwfProvisionEmployerCtc)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Do you want to provision LWF employer contribution in Employee CTC?</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProvisionCtc ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                            {lwfProvisionCtc && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={lwfProvisionCtc} onChange={() => isEditing && setLwfProvisionCtc(!lwfProvisionCtc)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Do you want to provision LWF in CTC?</span>
+                                    </label>
                                 </div>
                             </div>
                         )}
