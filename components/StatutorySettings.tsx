@@ -133,6 +133,56 @@ const StatutorySettings: React.FC = () => {
                 setGratuityTaxFreeLimit(config.gratuityTaxFreeLimit ?? (config.maxGratuityType === 'statutory' ? '20,00,000' : (config.maxGratuityType === 'none' ? '0' : (config.customMaxGratuityAmount || '20,00,000'))));
                 setGratuityEmployeeEligibility(config.gratuityEmployeeEligibility ?? ['Probation', 'Confirmed', 'Notice Period']);
                 setGratuityRoundOff(config.gratuityRoundOff ?? 'ceiling');
+            } else {
+                // Reset to defaults if no config found
+                setEnableEsi(true);
+                setEsiNumber('00-00-000000-000-0000');
+                setEsiEstablishmentName('TechFlow Systems Pvt Ltd');
+                setEsiCoverageDate('2023-01-12');
+                setEsiEmpRate('0.75%');
+                setEsiEmprRate('3.25%');
+                setIncludeEmprContriEsi(true);
+                setEsiMappedComponents(ESI_COMPONENTS);
+                setEsiMaxMonthlySalary('21,000');
+                setAllowEsiOverride(false);
+                setEsiRoundOff('floor');
+                setEsiNegativeArrearImpact(false);
+                setEsiProvisionInCtc(true);
+                setEsiProcessOvertime(true);
+                setEsiProcessArrear(true);
+                
+                setEnableGratuity(true);
+                setIncludeInCtcGratuity(true);
+                setGratuityMode('all');
+                setGratuityCriteria(['Permanent employees only']);
+                setSelectedGratuityDepts([]);
+                setGratuityCalculationComponents(['Basic Salary', 'Dearness Allowance (DA)']);
+                setMinServicePeriod('standard');
+                setCustomServiceYears('5');
+                setGratuityExceptions([]);
+                setOtherExceptionDetails('');
+                setDeathDisablementServiceType('none');
+                setDeathDisablementMinYears('0');
+                setGratuityProvisionRate('4.81');
+                setGratuityTenureYears('5');
+                setGratuityTenureMonths('0');
+                setGratuityTaxFreeLimit('20,00,000');
+                setGratuityEmployeeEligibility(['Probation', 'Confirmed', 'Notice Period']);
+                setGratuityRoundOff('ceiling');
+                
+                setEnableLwf(true);
+                setLwfState('Karnataka');
+                setLwfEstablishmentId('');
+                setLwfRegistrationDate('');
+                setPtState('Karnataka');
+                setPtNumber('');
+                setEnableNps(true);
+                setNpsRegistrationId('');
+                setNpsDeductionCycle('Monthly');
+                setNpsEmpRate('10');
+                setNpsEmprRate('10');
+                setNpsWageCeiling(false);
+                setNpsIncludeInCtc(true);
             }
         } catch (err) {
             console.error('Error fetching statutory settings:', err);

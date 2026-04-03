@@ -279,3 +279,15 @@
 10:41:28 PM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
 12:03:24 AM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
 12:12:05 AM [vite] (client) hmr update /components/HRSalarySlipTemplate.tsx, /index.css
+11:00:16 AM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+11:59:41 AM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:00:07 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:00:23 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:21:03 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:21:33 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:40:00 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:40:30 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:41:23 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:42:39 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+12:42:50 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
+1:17:24 PM [vite] (client) hmr update /components/StatutorySettings.tsx, /index.css
