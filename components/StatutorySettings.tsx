@@ -1060,7 +1060,7 @@ const StatutorySettings: React.FC = () => {
                                  </div>
  
                                  {/* Proration for Incomplete Year of Service */}
-                                 <div className="space-y-4 pt-8 border-t border-slate-100">
+                                 <div className="space-y-3 mt-8">
                                      <div className="flex items-center gap-2">
                                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Proration for Incomplete Year of Service</label>
                                          <div className="group relative inline-block">
@@ -1087,7 +1087,7 @@ const StatutorySettings: React.FC = () => {
                                  </div>
  
                                  {/* Waive Minimum Service Requirement on Death or Disablement */}
-                                 <div className="space-y-4 pt-8 border-t border-slate-100">
+                                 <div className="space-y-3 mt-6">
                                      <div className="flex items-center gap-2">
                                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Waive Minimum Service Requirement on Death or Disablement</label>
                                          <div className="group relative inline-block">
@@ -1114,7 +1114,7 @@ const StatutorySettings: React.FC = () => {
                                  </div>
  
                                  {/* Gratuity Payment Due Reminder */}
-                                 <div className="space-y-4 pt-8 border-t border-slate-100">
+                                 <div className="space-y-3 mt-6">
                                      <div className="flex items-center gap-2">
                                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Gratuity Payment Due Reminder</label>
                                          <div className="group relative inline-block">
