@@ -84,6 +84,8 @@ const StatutorySettings: React.FC = () => {
                 setEsiMappedComponents(config.esiMappedComponents ?? ESI_COMPONENTS);
                 setEsiMaxMonthlySalary(config.esiMaxMonthlySalary ?? '21,000');
                 setAllowEsiOverride(config.allowEsiOverride ?? false);
+                setEsiRoundOff(config.esiRoundOff ?? 'floor');
+                setEsiNegativeArrearImpact(config.esiNegativeArrearImpact ?? false);
                 setEnableGratuity(config.enableGratuity ?? false);
                 setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
                 setGratuityMode(config.gratuityMode ?? 'all');
@@ -148,6 +150,8 @@ const StatutorySettings: React.FC = () => {
     const [esiMappedComponents, setEsiMappedComponents] = useState<string[]>(ESI_COMPONENTS);
     const [esiMaxMonthlySalary, setEsiMaxMonthlySalary] = useState('21,000');
     const [allowEsiOverride, setAllowEsiOverride] = useState(false);
+    const [esiRoundOff, setEsiRoundOff] = useState<'floor' | 'ceiling'>('floor');
+    const [esiNegativeArrearImpact, setEsiNegativeArrearImpact] = useState(false);
 
     // Gratuity State
     const [enableGratuity, setEnableGratuity] = useState(false);
@@ -222,7 +226,7 @@ const StatutorySettings: React.FC = () => {
 
     const handleEdit = () => {
         setBackupState({
-            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary, allowEsiOverride,
+            enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact,
             enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria: [...gratuityCriteria],
             selectedGratuityDepts: [...selectedGratuityDepts], gratuityCalculationComponents: [...gratuityCalculationComponents],
             minServicePeriod, customServiceYears,
@@ -242,7 +246,7 @@ const StatutorySettings: React.FC = () => {
     const handleSave = async () => {
         try {
             const configValue = {
-                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary, allowEsiOverride,
+                enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact,
                 enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
                 selectedGratuityDepts, gratuityCalculationComponents,
                 minServicePeriod, customServiceYears,
@@ -284,6 +288,8 @@ const StatutorySettings: React.FC = () => {
             setEsiMappedComponents(backupState.esiMappedComponents);
             setEsiMaxMonthlySalary(backupState.esiMaxMonthlySalary);
             setAllowEsiOverride(backupState.allowEsiOverride);
+            setEsiRoundOff(backupState.esiRoundOff);
+            setEsiNegativeArrearImpact(backupState.esiNegativeArrearImpact);
 
             setEnableGratuity(backupState.enableGratuity);
             setIncludeInCtcGratuity(backupState.includeInCtcGratuity);
@@ -479,7 +485,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Maximum monthly gross salary eligible for ESI <span className="text-rose-500">*</span></label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Monthly gross salary eligible for ESI <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
                                             <input
@@ -611,12 +617,61 @@ const StatutorySettings: React.FC = () => {
                                         </div>
                                     </div>
 
+                                    <div className="flex flex-col gap-2 pt-4">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings</h4>
+                                            <div className="group relative inline-block">
+                                                <Info size={14} className="text-slate-400 cursor-help" />
+                                                <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                    Floor: Rounds decimal down to the nearest whole number (e.g., 3.7 → 3). Ceiling: Rounds decimal up to the nearest whole number (e.g., 3.2 → 4).
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-6 pt-2">
+                                            <label className="flex items-center gap-2 cursor-pointer group">
+                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'floor' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                    {esiRoundOff === 'floor' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                </div>
+                                                <input type="radio" className="hidden" name="esiRoundOff" value="floor" checked={esiRoundOff === 'floor'} onChange={() => isEditing && setEsiRoundOff('floor')} disabled={!isEditing} />
+                                                <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'floor' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Floor</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer group">
+                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'ceiling' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                    {esiRoundOff === 'ceiling' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                </div>
+                                                <input type="radio" className="hidden" name="esiRoundOff" value="ceiling" checked={esiRoundOff === 'ceiling'} onChange={() => isEditing && setEsiRoundOff('ceiling')} disabled={!isEditing} />
+                                                <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'ceiling' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Ceiling</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEmprContriEsi ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                             {includeEmprContriEsi && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={includeEmprContriEsi} onChange={() => isEditing && setIncludeEmprContriEsi(!includeEmprContriEsi)} disabled={!isEditing} />
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer's contribution in employee's salary structure.</span>
+                                    </label>
+
+                                    <label className="flex items-start gap-3 cursor-pointer group pt-2">
+                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiNegativeArrearImpact ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {esiNegativeArrearImpact && <Check size={14} className="text-white stroke-[3]" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={esiNegativeArrearImpact} onChange={() => isEditing && setEsiNegativeArrearImpact(!esiNegativeArrearImpact)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Enable the impact of negative arrear on ESI.</span>
+                                        <div className="group relative inline-block">
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                            <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-left leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                Example:<br/>
+                                                Gross Salary (current month) = ₹18,000<br/>
+                                                Negative Arrear (recovery) = ₹2,000<br/>
+                                                Adjusted Gross = ₹16,000<br/><br/>
+                                                If Yes → ESI = ₹16,000 × 0.75% = ₹120<br/>
+                                                If No → ESI = ₹18,000 × 0.75% = ₹135
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                            </div>
+                                        </div>
                                     </label>
 
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
