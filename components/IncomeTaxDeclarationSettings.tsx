@@ -155,6 +155,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setInvStartDay(config.invStartDay ?? '1');
                 setInvEndDay(config.invEndDay ?? '22');
                 setCutoffMonth(config.cutoffMonth ?? 'January');
+                setCutoffStartDay(config.cutoffStartDay ?? '1');
                 setCutoffDay(config.cutoffDay ?? '22');
                 setInvDeadlineFrom(config.invDeadlineFrom ? new Date(config.invDeadlineFrom) : new Date(2026, 0, 1));
                 setInvDeadlineTo(config.invDeadlineTo ? new Date(config.invDeadlineTo) : new Date(2026, 0, 15));
@@ -216,6 +217,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [invStartDay, setInvStartDay] = useState('1');
     const [invEndDay, setInvEndDay] = useState('22');
     const [cutoffMonth, setCutoffMonth] = useState('January');
+    const [cutoffStartDay, setCutoffStartDay] = useState('1');
     const [cutoffDay, setCutoffDay] = useState('22');
     const [invDeadlineFrom, setInvDeadlineFrom] = useState(new Date(2026, 0, 1)); // Jan 1, 2026
     const [invDeadlineTo, setInvDeadlineTo] = useState(new Date(2026, 0, 15)); // Jan 15, 2026
@@ -290,7 +292,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     // -- Handlers for Investment Declaration --
     const handleEditInv = () => {
         setInvBackup({ 
-            invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate: new Date(gracePeriodDate), declarationFrequency, limits: JSON.parse(JSON.stringify(limits)), 
+            invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffStartDay, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate: new Date(gracePeriodDate), declarationFrequency, limits: JSON.parse(JSON.stringify(limits)), 
             defaultRegime, allowSwitch, switchLockDate,
             notifyRelease, emailReminder, notifyLock,
             invApprovers: [...invApprovers],
@@ -312,6 +314,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setInvStartDay(invBackup.invStartDay || '1');
             setInvEndDay(invBackup.invEndDay || '22');
             setCutoffMonth(invBackup.cutoffMonth || 'January');
+            setCutoffStartDay(invBackup.cutoffStartDay || '1');
             setCutoffDay(invBackup.cutoffDay || '22');
             setInvDeadlineFrom(new Date(invBackup.invDeadlineFrom));
             setInvDeadlineTo(new Date(invBackup.invDeadlineTo));
@@ -345,7 +348,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const handleSaveInv = async () => {
         try {
             const configValue = {
-                invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
+                invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffStartDay, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
                 limits, defaultRegime, allowSwitch, switchLockDate,
                 notifyRelease, emailReminder, notifyLock, invApprovers,
                 tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
@@ -917,7 +920,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             <h4 className="text-sm font-bold text-slate-800">Financial year cutoff date</h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 max-w-sm">
-                                            <div className="space-y-2">
+                                            <div className="col-span-2 space-y-2">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month</label>
                                                 <div className="relative">
                                                     <select
@@ -928,6 +931,22 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                     >
                                                         {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
                                                             <option key={m} value={m}>{m}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start date</label>
+                                                <div className="relative">
+                                                    <select
+                                                        disabled={!isEditingInv}
+                                                        value={cutoffStartDay}
+                                                        onChange={(e) => setCutoffStartDay(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                                            <option key={day} value={day}>{day}</option>
                                                         ))}
                                                     </select>
                                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
@@ -963,7 +982,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <div>
                                         <h5 className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-1">Investment Declaration Period</h5>
                                         <p className="text-sm font-medium text-amber-900/80 leading-relaxed">
-                                            Employees can declare investments from the <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invEndDay)))}</span> of every month until the yearly cutoff on <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffDay)))} {cutoffMonth}</span>. After this period, no further declarations will be accepted for the current financial year.
+                                            Employees can declare investments from the <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invEndDay)))}</span> of every month until the yearly cutoff period from <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffDay)))} {cutoffMonth}</span>. After this period, no further declarations will be accepted for the current financial year.
                                         </p>
                                     </div>
                                 </div>
