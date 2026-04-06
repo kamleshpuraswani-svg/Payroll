@@ -66,7 +66,9 @@ interface ExpenseClaim {
     lastModifiedBy: string;
     lastModifiedByName: string;
     activityLog: { text: string; date: string }[];
+    rejectionReason?: string;
     items?: any[];
+    title?: string;
 }
 
 // --- Mock Data ---
@@ -75,117 +77,129 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
     {
         id: 'EXP-001',
         employee: {
-            name: 'Priya Sharma',
-            id: 'TF00912',
-            department: 'Sales',
-            ctc: '₹24.0 L',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-        },
-        category: 'Medical',
-        amount: 15400,
-        submittedDate: '18 Dec 2025',
-        proofs: Array(4).fill({ id: 'x', name: 'Bill.pdf', type: 'pdf', size: '1.2 MB' }),
-        status: 'Pending',
-        requestedOn: '18 Dec 2025, 10:30 AM',
-        createdByName: 'Priya Sharma',
-        lastModifiedBy: '18 Dec 2025, 10:30 AM',
-        lastModifiedByName: 'Priya Sharma',
-        activityLog: [{ text: 'Submitted by employee', date: '18 Dec 2025' }]
-    },
-    {
-        id: 'EXP-002',
-        employee: {
-            name: 'Arjun Mehta',
-            id: 'AC04567',
-            department: 'Sales',
-            ctc: '₹24.0 L',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-        },
-        category: 'Telephone',
-        amount: 8200,
-        submittedDate: '15 Dec 2025',
-        proofs: [
-            { id: 'p1', name: 'Airtel_Bill_Oct.pdf', type: 'pdf', size: '450 KB' },
-            { id: 'p2', name: 'Airtel_Bill_Nov.pdf', type: 'pdf', size: '480 KB' }
-        ],
-        status: 'Pending',
-        requestedOn: '15 Dec 2025, 02:15 PM',
-        createdByName: 'Arjun Mehta',
-        lastModifiedBy: '16 Dec 2025, 11:00 AM',
-        lastModifiedByName: 'HR Manager',
-        activityLog: [
-            { text: 'Submitted by employee', date: '15 Dec 2025' },
-            { text: 'HR requested clarification: Missing Oct bill', date: '16 Dec 2025' }
-        ]
-    },
-    {
-        id: 'EXP-003',
-        employee: {
-            name: 'Neha Kapoor',
-            id: 'SU00234',
-            department: 'Product',
-            ctc: '₹15.8 L',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-        },
-        category: 'LTA',
-        amount: 45000,
-        submittedDate: '12 Dec 2025',
-        proofs: Array(6).fill({ id: 'x', name: 'Travel_Ticket.pdf', type: 'pdf', size: '1.5 MB' }),
-        status: 'Partially Approved',
-        approvedAmount: 38000,
-        requestedOn: '12 Dec 2025, 09:45 AM',
-        createdByName: 'Neha Kapoor',
-        lastModifiedBy: '14 Dec 2025, 04:30 PM',
-        lastModifiedByName: 'HR Manager',
-        activityLog: [
-            { text: 'Submitted by employee', date: '12 Dec 2025' },
-            { text: 'Approved partial amount (Policy limit)', date: '14 Dec 2025' }
-        ]
-    },
-    {
-        id: 'EXP-004',
-        employee: {
-            name: 'Rohan Desai',
-            id: 'GL07890',
-            department: 'DevOps',
-            ctc: '₹21.2 L',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-        },
-        category: 'Books',
-        amount: 4800,
-        submittedDate: '10 Dec 2025',
-        proofs: Array(3).fill({ id: 'x', name: 'Amazon_Invoice.pdf', type: 'pdf', size: '320 KB' }),
-        status: 'Approved',
-        requestedOn: '10 Dec 2025, 03:20 PM',
-        createdByName: 'Rohan Desai',
-        lastModifiedBy: '11 Dec 2025, 10:15 AM',
-        lastModifiedByName: 'HR Manager',
-        activityLog: [
-            { text: 'Submitted by employee', date: '10 Dec 2025' },
-            { text: 'Approved by HR', date: '11 Dec 2025' }
-        ]
-    },
-    {
-        id: 'EXP-005',
-        employee: {
             name: 'Ananya Patel',
             id: 'TF01145',
             department: 'Finance',
             ctc: '₹14.5 L',
             avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
         },
-        category: 'Fuel',
-        amount: 12000,
-        submittedDate: '08 Dec 2025',
-        proofs: Array(5).fill({ id: 'x', name: 'Petrol_Bill.pdf', type: 'pdf', size: '250 KB' }),
-        status: 'Rejected',
-        requestedOn: '08 Dec 2025, 11:50 AM',
+        category: 'Medical',
+        amount: 12400,
+        submittedDate: '07 Apr 2026',
+        proofs: [{ id: 'p1', name: 'Health_Invoice_A01.pdf', type: 'pdf', size: '1.2 MB' }],
+        status: 'Pending',
+        requestedOn: '07 Apr 2026, 10:30 AM',
         createdByName: 'Ananya Patel',
-        lastModifiedBy: '09 Dec 2025, 02:40 PM',
+        lastModifiedBy: '07 Apr 2026, 10:30 AM',
+        lastModifiedByName: 'Ananya Patel',
+        activityLog: [{ text: 'Submitted by employee', date: '07 Apr 2026' }],
+        items: [
+            { id: 'it1', category: 'Medical', expenseDate: '05 Apr 2026', merchant: 'Apollo Pharmacy', amount: 4500, reason: 'Prescribed Medicines' },
+            { id: 'it2', category: 'Medical', expenseDate: '06 Apr 2026', merchant: 'Care Hospital', amount: 7900, reason: 'Consultation & Tests' }
+        ]
+    },
+    {
+        id: 'EXP-002',
+        employee: {
+            name: 'Priya Sharma',
+            id: 'TF00912',
+            department: 'Sales',
+            ctc: '₹24.0 L',
+            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        },
+        category: 'Travel',
+        amount: 8500,
+        submittedDate: '06 Apr 2026',
+        proofs: [{ id: 'p2', name: 'Uber_Reciept_Travel.pdf', type: 'pdf', size: '450 KB' }],
+        status: 'Partially Approved',
+        approvedAmount: 6000,
+        requestedOn: '06 Apr 2026, 02:15 PM',
+        createdByName: 'Priya Sharma',
+        lastModifiedBy: '06 Apr 2026, 04:30 PM',
         lastModifiedByName: 'HR Manager',
         activityLog: [
-            { text: 'Submitted by employee', date: '08 Dec 2025' },
-            { text: 'Rejected: Duplicate bill', date: '09 Dec 2025' }
+            { text: 'Submitted by employee', date: '06 Apr 2026' },
+            { text: 'Partially approved: Policy limit on travel exceeded', date: '06 Apr 2026' }
+        ],
+        items: [
+            { id: 'it3', category: 'Travel', expenseDate: '04 Apr 2026', merchant: 'Uber', amount: 2500, approvedAmount: 2500, reason: 'Client Visit' },
+            { id: 'it4', category: 'Travel', expenseDate: '05 Apr 2026', merchant: 'Indigo Air', amount: 6000, approvedAmount: 3500, reason: 'Conference Travel' }
+        ]
+    },
+    {
+        id: 'EXP-003',
+        employee: {
+            name: 'Arjun Mehta',
+            id: 'AC04567',
+            department: 'Marketing',
+            ctc: '₹18.0 L',
+            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        },
+        category: 'Broadband',
+        amount: 2200,
+        submittedDate: '05 Apr 2026',
+        proofs: [{ id: 'p3', name: 'Internet_Bill_Mar.pdf', type: 'pdf', size: '280 KB' }],
+        status: 'Approved',
+        requestedOn: '05 Apr 2026, 09:45 AM',
+        createdByName: 'Arjun Mehta',
+        lastModifiedBy: '05 Apr 2026, 11:30 AM',
+        lastModifiedByName: 'HR Manager',
+        activityLog: [
+            { text: 'Submitted by employee', date: '05 Apr 2026' },
+            { text: 'Approved by HR', date: '05 Apr 2026' }
+        ],
+        items: [
+            { id: 'it5', category: 'Broadband', expenseDate: '31 Mar 2026', merchant: 'Jio Fiber', amount: 2200, approvedAmount: 2200, reason: 'WFH Internet Connectivity' }
+        ]
+    },
+    {
+        id: 'EXP-004',
+        employee: {
+            name: 'Sneha Reddy',
+            id: 'PX05678',
+            department: 'HR',
+            ctc: '₹12.0 L',
+            avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        },
+        category: 'Books',
+        amount: 4800,
+        submittedDate: '04 Apr 2026',
+        proofs: [{ id: 'p4', name: 'Amazon_Invoice_Books.pdf', type: 'pdf', size: '320 KB' }],
+        status: 'Pending',
+        requestedOn: '04 Apr 2026, 03:20 PM',
+        createdByName: 'Sneha Reddy',
+        lastModifiedBy: '04 Apr 2026, 03:20 PM',
+        lastModifiedByName: 'Sneha Reddy',
+        activityLog: [{ text: 'Submitted by employee', date: '04 Apr 2026' }],
+        items: [
+            { id: 'it6', category: 'Books', expenseDate: '02 Apr 2026', merchant: 'Amazon', amount: 4800, reason: 'Leadership Development Training Manuals' }
+        ]
+    },
+    {
+        id: 'EXP-005',
+        employee: {
+            name: 'Vikram Singh',
+            id: 'AC03987',
+            department: 'Operations',
+            ctc: '₹16.5 L',
+            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        },
+        category: 'Meal',
+        amount: 1200,
+        submittedDate: '03 Apr 2026',
+        proofs: [{ id: 'p5', name: 'Restaurant_Bill.pdf', type: 'pdf', size: '150 KB' }],
+        status: 'Rejected',
+        requestedOn: '03 Apr 2026, 01:50 PM',
+        createdByName: 'Vikram Singh',
+        lastModifiedBy: '03 Apr 2026, 04:40 PM',
+        lastModifiedByName: 'HR Manager',
+        activityLog: [
+            { text: 'Submitted by employee', date: '03 Apr 2026' },
+            { text: 'Rejected: Personal meal, not as per company policy', date: '03 Apr 2026' }
+        ],
+        rejectionReason: 'Personal meal, not as per company policy',
+        items: [
+            { id: 'it7', category: 'Meal', expenseDate: '01 Apr 2026', merchant: 'Starbucks', amount: 1200, reason: 'Personal refreshment' }
         ]
     }
 ];
@@ -206,12 +220,13 @@ const getClaimTypeColor = (type: string) => {
 };
 
 const getStatusBadge = (status: string) => {
-    switch (status) {
-        case 'Pending': return 'bg-orange-50 text-orange-700 border-orange-100';
-        case 'Approved': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-        case 'Partially Approved': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
-        case 'Rejected': return 'bg-rose-50 text-rose-700 border-rose-100';
-        default: return 'bg-slate-50 text-slate-600';
+    const s = status.toUpperCase().replace(/ /g, '_');
+    switch (s) {
+        case 'PENDING': return 'bg-orange-50 text-orange-700 border-orange-100';
+        case 'APPROVED': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+        case 'PARTIALLY_APPROVED': return 'bg-amber-50 text-amber-700 border-amber-100';
+        case 'REJECTED': return 'bg-rose-50 text-rose-700 border-rose-100';
+        default: return 'bg-slate-50 text-slate-600 border-slate-200';
     }
 };
 
@@ -296,6 +311,14 @@ const ViewClaimPanel: React.FC<{
                             </div>
                         </div>
                     </div>
+
+                    {/* Rejection Reason */}
+                    {claim.rejectionReason && (
+                        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                            <h4 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Rejection Reason</h4>
+                            <p className="text-sm text-rose-800 font-medium">{claim.rejectionReason}</p>
+                        </div>
+                    )}
 
                     {/* Attached Proofs */}
                     <div>
@@ -691,10 +714,19 @@ const ExpenseManagement: React.FC<{
 
             if (claimData && empData) {
                 const mappedClaims: ExpenseClaim[] = claimData.map(c => {
+                    const rawStatus = (c.status || 'pending').toLowerCase();
+                    let displayStatus: 'Pending' | 'Approved' | 'Partially Approved' | 'Rejected' = 'Pending';
+                    
+                    if (rawStatus === 'approved') displayStatus = 'Approved';
+                    else if (rawStatus === 'rejected') displayStatus = 'Rejected';
+                    else if (rawStatus === 'partially_approved' || rawStatus === 'partial') displayStatus = 'Partially Approved';
+
                     const emp = empData.find(e => e.id === c.employee_id);
                     
                     // Fallback name from title if emp mapping fails (AddExpenseScreen sets "Claim by [Name]")
                     const fallbackNameFromTitle = c.title?.startsWith('Claim by ') ? c.title.replace('Claim by ', '') : 'Unknown Employee';
+
+                    const totalApproved = (c.items || []).reduce((sum: number, it: any) => sum + (it.approvedAmount !== undefined ? it.approvedAmount : (it.amount || 0)), 0);
 
                     return {
                         id: c.id,
@@ -707,8 +739,9 @@ const ExpenseManagement: React.FC<{
                         },
                         category: c.category,
                         amount: c.total_amount,
+                        approvedAmount: displayStatus === 'Partially Approved' ? totalApproved : undefined,
                         submittedDate: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
-                        status: (c.status.charAt(0).toUpperCase() + c.status.slice(1)) as any,
+                        status: displayStatus,
                         proofs: (c.items || []).filter((it: any) => it.receiptName).map((it: any, i: number) => ({
                             id: `p-${i}`,
                             name: it.receiptName,
@@ -722,7 +755,8 @@ const ExpenseManagement: React.FC<{
                         activityLog: [
                             { text: 'Submitted by employee', date: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'N/A' }
                         ],
-                        items: c.items || []
+                        items: c.items || [],
+                        title: c.title
                     };
                 });
                 setClaims([...mappedClaims, ...MOCK_CLAIMS]);
@@ -784,6 +818,7 @@ const ExpenseManagement: React.FC<{
                     .update({
                         status: status,
                         items: updatedItems,
+                        title: reason && status === 'rejected' ? `Rejected: ${reason}` : (approveClaim.title || `Claim by ${approveClaim.employee.name}`), // Storing reason in title if no column exists
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', approveClaim.id);
@@ -801,6 +836,7 @@ const ExpenseManagement: React.FC<{
                         status: displayStatus,
                         approvedAmount: amount, // Keep track of the total approved locally
                         items: updatedItems,
+                        rejectionReason: reason,
                         lastModifiedBy: new Date().toLocaleString('en-GB'),
                         lastModifiedByName: 'HR Manager'
                     };
@@ -937,7 +973,7 @@ const ExpenseManagement: React.FC<{
                                         <td className="px-6 py-4 font-bold text-slate-700">₹{claim.amount.toLocaleString('en-IN')}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${getStatusBadge(claim.status)}`}>
-                                                {claim.status}
+                                                {claim.status.replace(/_/g, ' ')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-500 whitespace-nowrap text-center font-bold text-xs">{claim.submittedDate}</td>

@@ -501,7 +501,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     {expenseItems.length === 0 ? (
                                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
                                             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500 opacity-40">
-                                                <Receipt size={32} />
+                                                <FileText size={32} />
                                             </div>
                                             <p className="text-slate-400 text-sm max-w-[200px] font-bold leading-relaxed">No items added to this claim yet.</p>
                                             <p className="text-[10px] text-slate-300 uppercase mt-4 tracking-widest font-black">fill the form on the left to start</p>
