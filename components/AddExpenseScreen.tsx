@@ -318,7 +318,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
                             {/* Expense from date */}
                             <div className="w-full lg:w-48 space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">From Date <span className="text-rose-500">*</span></label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense From Date <span className="text-rose-500">*</span></label>
                                 <div className="relative group">
                                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                     <input
@@ -336,7 +336,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
                             {/* Expense to date */}
                             <div className="w-full lg:w-48 space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">To Date <span className="text-rose-500">*</span></label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense To Date <span className="text-rose-500">*</span></label>
                                 <div className="relative group">
                                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                     <input
