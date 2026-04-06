@@ -38,6 +38,7 @@ const PfTdsSettings: React.FC = () => {
     const [includeEmprContri, setIncludeEmprContri] = useState(true);
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
+    const [employerPensionRate, setEmployerPensionRate] = useState('8.33');
     const [overrideRate, setOverrideRate] = useState(false);
     const [prorateRestricted, setProrateRestricted] = useState(false);
     const [considerComponents, setConsiderComponents] = useState(true);
@@ -93,6 +94,7 @@ const PfTdsSettings: React.FC = () => {
                 setIncludeEmprContri(config.includeEmprContri ?? true);
                 setIncludeEdli(config.includeEdli ?? false);
                 setIncludeAdminCharges(config.includeAdminCharges ?? false);
+                setEmployerPensionRate(config.employerPensionRate ?? '8.33');
                 setOverrideRate(config.overrideRate ?? false);
                 setProrateRestricted(config.prorateRestricted ?? false);
                 setConsiderComponents(config.considerComponents ?? true);
@@ -114,7 +116,7 @@ const PfTdsSettings: React.FC = () => {
     const handleEditPf = () => {
         setBackupPf({ 
             enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
-            includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, 
+            includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, overrideRate, prorateRestricted, 
             considerComponents, belowLimitComponents: [...belowLimitComponents],
             pfContributionBasis, pfWageCeiling,
             pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
@@ -126,7 +128,7 @@ const PfTdsSettings: React.FC = () => {
         try {
             const configValue = { 
                 enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
-                includeEmprContri, includeEdli, includeAdminCharges, overrideRate, prorateRestricted, 
+                includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, overrideRate, prorateRestricted, 
                 considerComponents, belowLimitComponents,
                 pfContributionBasis, pfWageCeiling,
                 pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
@@ -139,7 +141,7 @@ const PfTdsSettings: React.FC = () => {
 
     const handleCancelPf = () => {
         if (backupPf) {
-            setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit); setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
+            setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
             setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
             setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
         }
@@ -476,7 +478,24 @@ const PfTdsSettings: React.FC = () => {
                                                     </div>
 
                                                     {/* Additional Configurations */}
-                                                    <div className="space-y-4 pt-4">
+                                                    <div className="space-y-6 pt-4">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Employer’s pension contribution (%)</label>
+                                                            <input 
+                                                                type="text" 
+                                                                value={employerPensionRate} 
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                        setEmployerPensionRate(val);
+                                                                    }
+                                                                }} 
+                                                                disabled={!isEditingPf} 
+                                                                className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                placeholder="8.33"
+                                                            />
+                                                        </div>
+
                                                         <label className="flex items-start gap-4 cursor-pointer group/item">
                                                             <div onClick={() => isEditingPf && setIncludeEmprContri(!includeEmprContri)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
                                                                 {includeEmprContri && <Check size={14} strokeWidth={4} />}
