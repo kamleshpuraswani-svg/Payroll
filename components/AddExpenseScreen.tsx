@@ -23,6 +23,8 @@ import {
     Edit2
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { MOCK_CLAIMS } from './mockData';
+
 
 export interface AddExpenseScreenProps {
     onClose: () => void;
@@ -75,6 +77,28 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     const fetchClaimData = async () => {
         setIsFetchingData(true);
         try {
+            // Handle mock claims
+            if (editId && editId.toString().startsWith('EXP-')) {
+                const mockClaim = MOCK_CLAIMS.find(c => c.id === editId);
+                if (mockClaim) {
+                    setSelectedEmployeeId(mockClaim.employee.id || '');
+                    const cat = categories.find(c => c.name === mockClaim.category);
+                    setSelectedCategory(cat || null);
+                    
+                    if (mockClaim.submittedDate) {
+                        // Mock dates are already in reasonable format or handled by expenseDate normalization
+                    }
+
+                    const items = (mockClaim.items || []).map((item: any) => ({
+                        ...item,
+                        id: item.id || Date.now() + Math.random()
+                    }));
+                    setExpenseItems(items);
+                    return;
+                }
+            }
+
+            // Real claims from Supabase
             const { data, error } = await supabase
                 .from('reimbursement_claims')
                 .select('*')
