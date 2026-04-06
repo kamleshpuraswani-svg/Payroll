@@ -68,7 +68,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
             if (data) {
                 setSelectedEmployeeId(data.employee_id || '');
-                const cat = categories.find(c => c.name === data.category);
+                const catName = data.category ? data.category.split(', ')[0] : '';
+                const cat = categories.find(c => c.name === catName);
                 setSelectedCategory(cat || null);
                 
                 if (data.submitted_at) {
@@ -105,6 +106,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                         amount: parseFloat(amount),
                         reason,
                         receiptName: receipt ? receipt.name : item.receiptName,
+                        category: selectedCategory?.name || '',
                         fromDate: expenseFromDate,
                         toDate: expenseToDate
                     };
@@ -122,6 +124,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                 amount: parseFloat(amount),
                 reason,
                 receiptName: receipt ? receipt.name : null,
+                category: selectedCategory?.name || '',
                 fromDate: expenseFromDate,
                 toDate: expenseToDate
             };
@@ -131,9 +134,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         // Reset item fields
         setMerchant('');
         setProject('');
-        setAmount('');
         setReason('');
         setReceipt(null);
+        setSelectedCategory(null);
     };
 
     const handleEditItem = (item: any) => {
@@ -142,6 +145,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         setProject(item.project || '');
         setAmount(String(item.amount));
         setReason(item.reason || item.description || '');
+        const cat = categories.find(c => c.name === item.category);
+        setSelectedCategory(cat || null);
         // Note: keeping existing receipt name if no new file is selected
     };
 
@@ -150,7 +155,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     };
 
     const handleSubmit = async () => {
-        if (!selectedEmployeeId || !selectedCategory || expenseItems.length === 0) return;
+        if (!selectedEmployeeId || expenseItems.length === 0) return;
         
         setIsSubmitting(true);
         try {
@@ -160,11 +165,13 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
             if (!editId) {
                 // Insert mode
+                const generatedId = `EXP-${Date.now()}`;
                 const { error } = await supabase
                     .from('reimbursement_claims')
                     .insert([{
+                        id: generatedId,
                         employee_id: selectedEmployeeId,
-                        category: selectedCategory.name,
+                        category: Array.from(new Set(expenseItems.map(item => item.category).filter(Boolean))).join(', '),
                         total_amount: totalAmount,
                         status: 'pending',
                         submitted_at: new Date().toISOString(),
@@ -180,7 +187,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     .from('reimbursement_claims')
                     .update({
                         employee_id: selectedEmployeeId,
-                        category: selectedCategory.name,
+                        category: Array.from(new Set(expenseItems.map(item => item.category).filter(Boolean))).join(', '),
                         total_amount: totalAmount,
                         items: expenseItems,
                         updated_at: new Date().toISOString(),
@@ -193,6 +200,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
             onClose();
         } catch (error: any) {
             console.error('Error submitting expense:', error);
+            alert('Failed to submit expense: ' + (error.message || 'Unknown error'));
         } finally {
             setIsSubmitting(false);
         }
@@ -253,73 +261,50 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 </div>
                             </div>
 
-                            {/* Select Category */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Category <span className="text-rose-500">*</span></label>
-                                <div className="relative group">
-                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                    <select
-                                        value={selectedCategory?.id || ''}
-                                        onChange={(e) => {
-                                            const cat = categories.find(c => String(c.id) === e.target.value);
-                                            setSelectedCategory(cat);
-                                        }}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer"
-                                    >
-                                        <option value="">Choose a category...</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                </div>
-                            </div>
 
-                            {/* Expense from date */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense from date <span className="text-rose-500">*</span></label>
-                                <div className="relative group">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                    <input
-                                        type="date"
-                                        value={expenseFromDate}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setExpenseFromDate(val);
-                                            setExpenseToDate(val);
-                                            // Synchronize all existing items to this new date
-                                            setExpenseItems(expenseItems.map(item => ({
-                                                ...item,
-                                                fromDate: val,
-                                                toDate: val
-                                            })));
-                                        }}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Expense from date */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense from date <span className="text-rose-500">*</span></label>
+                                    <div className="relative group">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                        <input
+                                            type="date"
+                                            value={expenseFromDate}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setExpenseFromDate(val);
+                                                // Synchronize all existing items to this new date
+                                                setExpenseItems(expenseItems.map(item => ({
+                                                    ...item,
+                                                    fromDate: val
+                                                })));
+                                            }}
+                                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Expense to date */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense to date <span className="text-rose-500">*</span></label>
-                                <div className="relative group">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                    <input
-                                        type="date"
-                                        value={expenseToDate}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setExpenseFromDate(val);
-                                            setExpenseToDate(val);
-                                            // Synchronize all existing items to this new date
-                                            setExpenseItems(expenseItems.map(item => ({
-                                                ...item,
-                                                fromDate: val,
-                                                toDate: val
-                                            })));
-                                        }}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
-                                    />
+                                {/* Expense to date */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense to date <span className="text-rose-500">*</span></label>
+                                    <div className="relative group">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                        <input
+                                            type="date"
+                                            value={expenseToDate}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setExpenseToDate(val);
+                                                // Synchronize all existing items to this new date
+                                                setExpenseItems(expenseItems.map(item => ({
+                                                    ...item,
+                                                    toDate: val
+                                                })));
+                                            }}
+                                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -331,6 +316,27 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 {/* Add Item Form */}
                                 <div className="w-full lg:w-1/3 shrink-0 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
                                     <div className="space-y-5">
+                                        {/* Expense category per item */}
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Expense CATEGORY <span className="text-rose-500">*</span></label>
+                                            <div className="relative group">
+                                                <select
+                                                    value={selectedCategory?.id || ""}
+                                                    onChange={(e) => {
+                                                        const catId = e.target.value;
+                                                        const cat = categories.find(c => String(c.id) === catId);
+                                                        setSelectedCategory(cat || null);
+                                                    }}
+                                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold appearance-none cursor-pointer"
+                                                >
+                                                    <option value="">Select category...</option>
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
                                         <div>
                                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Merchant / Payee</label>
                                             <div className="relative group">
@@ -415,7 +421,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
                                         <button 
                                             onClick={handleAddItem}
-                                            disabled={!amount || !reason}
+                                            disabled={!amount || !reason || !selectedCategory}
                                             className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
                                             {editingItemId !== null ? <CheckCircle size={18} /> : <Plus size={18} />}
@@ -473,15 +479,11 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                                             <td className="px-6 py-4">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                                                                        {selectedCategory?.name === 'Medical' && <Activity size={14} />}
-                                                                        {selectedCategory?.name === 'Mobile' && <Smartphone size={14} />}
-                                                                        {selectedCategory?.name === 'Travel' && <MapPin size={14} />}
-                                                                        {selectedCategory?.name === 'Learning' && <BookOpen size={14} />}
-                                                                        {selectedCategory?.name === 'Meal' && <Fuel size={14} />}
-                                                                        {(!selectedCategory || !['Medical', 'Mobile', 'Travel', 'Learning', 'Meal'].includes(selectedCategory.name)) && <DollarSign size={14} />}
+                                                                        <DollarSign size={14} />
                                                                     </div>
                                                                     <div className="flex flex-col">
                                                                         <span className="font-bold text-slate-700">{item.merchant || 'General'}</span>
+                                                                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight bg-slate-100 px-1.5 py-0.5 rounded w-fit mb-1">{item.category}</span>
                                                                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{item.project ? `${item.project} • ` : ''}{item.reason || item.description}</span>
                                                                     </div>
                                                                 </div>

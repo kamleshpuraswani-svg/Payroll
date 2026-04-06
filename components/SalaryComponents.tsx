@@ -222,7 +222,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     // Configurations
     const [isTaxable, setIsTaxable] = useState(initialData?.taxable !== 'Fully Exempt');
     const [taxTreatment, setTaxTreatment] = useState<'Fully Taxable' | 'Partially Exempt' | 'Fully Exempt'>(initialData?.tax_treatment || 'Fully Taxable');
-    const [taxPreference, setTaxPreference] = useState('Subsequent');
     const [isProRata, setIsProRata] = useState(true);
     const [epfContribution, setEpfContribution] = useState<'Always' | 'Limit'>('Always');
     const [consider_epf, setConsider_epf] = useState(initialData?.consider_epf ?? true);
@@ -478,35 +477,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {taxTreatment === 'Partially Exempt' && "Entire amount is exempt from income tax."}
                                     {taxTreatment === 'Fully Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
                                 </p>
-                            </div>
-                        )}
-
-                        {/* Tax Deduction Preference for Variable Pay */}
-                        {natureOfPay === 'Variable' && isTaxable && (
-                            <div className="ml-7 space-y-2 animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-xs font-bold text-slate-500 mb-1">Tax Deduction Preference <span className="text-rose-500">*</span></label>
-                                <div className="space-y-2">
-                                    <label className="flex items-start gap-2 cursor-pointer">
-                                        <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center transition-colors ${taxPreference === 'Subsequent' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {taxPreference === 'Subsequent' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={taxPreference === 'Subsequent'} onChange={() => setTaxPreference('Subsequent')} />
-                                        <div>
-                                            <span className="text-sm text-slate-700 font-medium">Deduct tax in subsequent payrolls of the financial year</span>
-                                            <p className="text-xs text-slate-500">The income tax amount will be divided equally and deducted every month.</p>
-                                        </div>
-                                    </label>
-                                    <label className="flex items-start gap-2 cursor-pointer">
-                                        <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center transition-colors ${taxPreference === 'Same' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {taxPreference === 'Same' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={taxPreference === 'Same'} onChange={() => setTaxPreference('Same')} />
-                                        <div>
-                                            <span className="text-sm text-slate-700 font-medium">Deduct tax in same payroll</span>
-                                            <p className="text-xs text-slate-500">The entire income tax amount will be deducted when it is paid.</p>
-                                        </div>
-                                    </label>
-                                </div>
                             </div>
                         )}
 
