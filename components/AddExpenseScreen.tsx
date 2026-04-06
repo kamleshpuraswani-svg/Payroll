@@ -52,6 +52,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFetchingData, setIsFetchingData] = useState(false);
     const [editingItemId, setEditingItemId] = useState<number | string | null>(null);
+    const [claimStatus, setClaimStatus] = useState('Pending');
 
     useEffect(() => {
         if (editId) {
@@ -84,6 +85,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     setSelectedEmployeeId(mockClaim.employee.id || '');
                     const cat = categories.find(c => c.name === mockClaim.category);
                     setSelectedCategory(cat || null);
+                    setClaimStatus(mockClaim.status);
                     
                     if (mockClaim.submittedDate) {
                         // Mock dates are already in reasonable format or handled by expenseDate normalization
@@ -125,6 +127,13 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     id: item.id || Date.now() + Math.random()
                 }));
                 setExpenseItems(items);
+
+                // Map status
+                const rawStatus = (data.status || 'pending').toLowerCase();
+                if (rawStatus === 'approved') setClaimStatus('Approved');
+                else if (rawStatus === 'rejected') setClaimStatus('Rejected');
+                else if (rawStatus === 'partially_approved' || rawStatus === 'partial') setClaimStatus('Partially Approved');
+                else setClaimStatus('Pending');
             }
         } catch (error) {
             console.error('Error fetching claim data:', error);
@@ -308,50 +317,67 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                             </div>
 
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Expense from date */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense from date <span className="text-rose-500">*</span></label>
-                                    <div className="relative group">
-                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                        <input
-                                            type="date"
-                                            value={expenseFromDate}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setExpenseFromDate(val);
-                                                // Synchronize all existing items to this new date
-                                                setExpenseItems(expenseItems.map(item => ({
-                                                    ...item,
-                                                    fromDate: val
-                                                })));
-                                            }}
-                                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
-                                        />
+                            <div className="flex flex-col md:flex-row items-end justify-between gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+                                    {/* Expense from date */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense from date <span className="text-rose-500">*</span></label>
+                                        <div className="relative group">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                            <input
+                                                type="date"
+                                                value={expenseFromDate}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setExpenseFromDate(val);
+                                                    // Synchronize all existing items to this new date
+                                                    setExpenseItems(expenseItems.map(item => ({
+                                                        ...item,
+                                                        fromDate: val
+                                                    })));
+                                                }}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Expense to date */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense to date <span className="text-rose-500">*</span></label>
+                                        <div className="relative group">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                            <input
+                                                type="date"
+                                                value={expenseToDate}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setExpenseToDate(val);
+                                                    // Synchronize all existing items to this new date
+                                                    setExpenseItems(expenseItems.map(item => ({
+                                                        ...item,
+                                                        toDate: val
+                                                    })));
+                                                }}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Expense to date */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense to date <span className="text-rose-500">*</span></label>
-                                    <div className="relative group">
-                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                        <input
-                                            type="date"
-                                            value={expenseToDate}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setExpenseToDate(val);
-                                                // Synchronize all existing items to this new date
-                                                setExpenseItems(expenseItems.map(item => ({
-                                                    ...item,
-                                                    toDate: val
-                                                })));
-                                            }}
-                                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
-                                        />
+                                {/* Status - Extreme Right */}
+                                {editId && (
+                                    <div className="flex flex-col items-end space-y-2 shrink-0">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Status</label>
+                                        <div className={`px-4 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-[0.1em] shadow-sm ${
+                                            claimStatus.toUpperCase() === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            claimStatus.toUpperCase() === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                            claimStatus.toUpperCase().includes('PARTIAL') ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                            'bg-orange-50 text-orange-700 border-orange-100'
+                                        }`}>
+                                            {claimStatus.replace(/_/g, ' ')}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
