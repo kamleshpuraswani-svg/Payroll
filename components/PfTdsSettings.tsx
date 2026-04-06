@@ -33,6 +33,8 @@ const PfTdsSettings: React.FC = () => {
     const [emprLimit, setEmprLimit] = useState('1800');
     const [pfContributionBasis, setPfContributionBasis] = useState<'actual' | 'limit'>('limit');
     const [pfWageCeiling, setPfWageCeiling] = useState('15000');
+    const [emprPfContributionBasis, setEmprPfContributionBasis] = useState<'actual' | 'limit'>('limit');
+    const [emprPfWageCeiling, setEmprPfWageCeiling] = useState('15000');
     const [pfAdminBasis, setPfAdminBasis] = useState<'pf' | 'pension' | 'edli'>('edli');
     const [pfAdminContributionBasis, setPfAdminContributionBasis] = useState<'employee' | 'employer' | 'higher'>('employee');
     const [pfChallanGrossBasis, setPfChallanGrossBasis] = useState<'rate' | 'earning'>('earning');
@@ -44,6 +46,11 @@ const PfTdsSettings: React.FC = () => {
     const [prorateRestricted, setProrateRestricted] = useState(false);
     const [considerComponents, setConsiderComponents] = useState(true);
     const [belowLimitComponents, setBelowLimitComponents] = useState<string[]>(['Basic Salary', 'Dearness Allowances (DA)']);
+    const [pfAdminRate, setPfAdminRate] = useState('0.5');
+    const [minMonthlyPfAdmin, setMinMonthlyPfAdmin] = useState('500');
+    const [edliRate, setEdliRate] = useState('0.5');
+    const [edliAdminRate, setEdliAdminRate] = useState('0');
+    const [minMonthlyEdliAdmin, setMinMonthlyEdliAdmin] = useState('0');
 
     // TDS Data State
     const [enableTds, setEnableTds] = useState(true);
@@ -94,6 +101,8 @@ const PfTdsSettings: React.FC = () => {
                 setEmprLimit(config.emprLimit ?? '1800');
                 setPfContributionBasis(config.pfContributionBasis ?? 'limit');
                 setPfWageCeiling(config.pfWageCeiling ?? '15000');
+                setEmprPfContributionBasis(config.emprPfContributionBasis ?? 'limit');
+                setEmprPfWageCeiling(config.emprPfWageCeiling ?? '15000');
                 setPfAdminBasis(config.pfAdminBasis ?? 'edli');
                 setPfAdminContributionBasis(config.pfAdminContributionBasis ?? 'employee');
                 setPfChallanGrossBasis(config.pfChallanGrossBasis ?? 'earning');
@@ -105,6 +114,11 @@ const PfTdsSettings: React.FC = () => {
                 setProrateRestricted(config.prorateRestricted ?? false);
                 setConsiderComponents(config.considerComponents ?? true);
                 setBelowLimitComponents(config.belowLimitComponents ?? ['Basic Salary', 'Dearness Allowances (DA)']);
+                setPfAdminRate(config.pfAdminRate ?? '0.5');
+                setMinMonthlyPfAdmin(config.minMonthlyPfAdmin ?? '500');
+                setEdliRate(config.edliRate ?? '0.5');
+                setEdliAdminRate(config.edliAdminRate ?? '0');
+                setMinMonthlyEdliAdmin(config.minMonthlyEdliAdmin ?? '0');
             }
             const { data: tdsData, error: tdsError } = await supabase.from('operational_config').select('config_value').eq('config_key', `tds_settings:${selectedTarget}`).single();
             if (!tdsError && tdsData?.config_value) {
@@ -124,7 +138,9 @@ const PfTdsSettings: React.FC = () => {
                 includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
                 considerComponents, belowLimitComponents: [...belowLimitComponents],
                 pfContributionBasis, pfWageCeiling,
-                pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
+                emprPfContributionBasis, emprPfWageCeiling,
+                pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis,
+                pfAdminRate, minMonthlyPfAdmin, edliRate, edliAdminRate, minMonthlyEdliAdmin
             });
             setIsEditingPf(true);
         };
@@ -136,7 +152,9 @@ const PfTdsSettings: React.FC = () => {
                     includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
                     considerComponents, belowLimitComponents,
                     pfContributionBasis, pfWageCeiling,
-                    pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
+                    emprPfContributionBasis, emprPfWageCeiling,
+                    pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis,
+                    pfAdminRate, minMonthlyPfAdmin, edliRate, edliAdminRate, minMonthlyEdliAdmin
                 };
                 const { error } = await supabase.from('operational_config').upsert({ config_key: `pf_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
                 if (error) throw error;
@@ -148,7 +166,9 @@ const PfTdsSettings: React.FC = () => {
             if (backupPf) {
                 setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setPensionWageLimit(backupPf.pensionWageLimit || '15000'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
                 setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
+                setEmprPfContributionBasis(backupPf.emprPfContributionBasis || 'limit'); setEmprPfWageCeiling(backupPf.emprPfWageCeiling || '15000');
                 setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
+                setPfAdminRate(backupPf.pfAdminRate || '0.5'); setMinMonthlyPfAdmin(backupPf.minMonthlyPfAdmin || '500'); setEdliRate(backupPf.edliRate || '0.5'); setEdliAdminRate(backupPf.edliAdminRate || '0'); setMinMonthlyEdliAdmin(backupPf.minMonthlyEdliAdmin || '0');
             }
             setIsEditingPf(false);
         };
@@ -271,6 +291,14 @@ const PfTdsSettings: React.FC = () => {
                                                 <div className="pt-10 border-t border-slate-300 space-y-6">
                                                     {/* Employee Contribution */}
                                                     <div className="space-y-6">
+                                                        <div className="px-5 py-3 bg-slate-50 border-l-4 border-sky-500 rounded-r-xl flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <User size={16} className="text-sky-600" />
+                                                                <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em]">Employee Contribution Settings</span>
+                                                            </div>
+                                                            <div className="h-px flex-1 bg-slate-200 ml-4"></div>
+                                                        </div>
+
                                                         <div className="flex items-center gap-3">
                                                             <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employee Contribution Rate (%)</h4>
                                                             <button onClick={() => setShowBelowLimitModal(true)} className="text-[10px] font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest flex items-center gap-1.5 p-1 hover:bg-sky-50 rounded-lg">
@@ -437,6 +465,53 @@ const PfTdsSettings: React.FC = () => {
 
                                                     {/* Employer Contribution */}
                                                     <div className="space-y-6">
+                                                        <div className="px-5 py-3 bg-slate-50 border-l-4 border-indigo-500 rounded-r-xl flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <Landmark size={16} className="text-indigo-600" />
+                                                                <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em]">Employer Contribution Settings</span>
+                                                            </div>
+                                                            <div className="h-px flex-1 bg-slate-200 ml-4"></div>
+                                                        </div>
+
+                                                        {/* Pension Fields moved up */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Employer’s pension contribution (%)</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={employerPensionRate} 
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                            setEmployerPensionRate(val);
+                                                                            const pensionNum = parseFloat(val) || 0;
+                                                                            const calculatedRate = (12 - pensionNum).toFixed(2);
+                                                                            const finalRate = calculatedRate.endsWith('.00') ? Math.floor(12 - pensionNum).toString() : calculatedRate;
+                                                                            setEmprRate(finalRate);
+                                                                        }
+                                                                    }} 
+                                                                    disabled={!isEditingPf} 
+                                                                    className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                    placeholder="8.33"
+                                                                />
+                                                            </div>
+
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={pensionWageLimit} 
+                                                                    onChange={e => {
+                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                        setPensionWageLimit(val);
+                                                                    }} 
+                                                                    disabled={!isEditingPf} 
+                                                                    className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                    placeholder="15000"
+                                                                />
+                                                            </div>
+                                                        </div>
+
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex items-center gap-2">
                                                                 <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate <span className="text-rose-500">*</span></h4>
@@ -467,7 +542,49 @@ const PfTdsSettings: React.FC = () => {
                                                                 />
                                                                 <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
                                                             </div>
-                                                            <div className="flex items-center gap-3 flex-wrap">
+
+                                                            <div className="space-y-4 pt-2">
+                                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculate Employer PF contribution based on:</h4>
+                                                                <div className="flex flex-col sm:flex-row gap-6">
+                                                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                                                        <div 
+                                                                            onClick={() => isEditingPf && setEmprPfContributionBasis('actual')}
+                                                                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${emprPfContributionBasis === 'actual' ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                        >
+                                                                            {emprPfContributionBasis === 'actual' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                        </div>
+                                                                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Actual Earnings (All Employees)</span>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                                                        <div 
+                                                                            onClick={() => isEditingPf && setEmprPfContributionBasis('limit')}
+                                                                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${emprPfContributionBasis === 'limit' ? 'border-sky-500 bg-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}
+                                                                        >
+                                                                            {emprPfContributionBasis === 'limit' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                        </div>
+                                                                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Specific Contribution Limit (Employee level)</span>
+                                                                    </label>
+                                                                </div>
+
+                                                                {emprPfContributionBasis === 'limit' && (
+                                                                    <div className="pt-2 animate-in slide-in-from-top-4 duration-300">
+                                                                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">PF Wage Ceiling Limit (₹)</label>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={emprPfWageCeiling} 
+                                                                            onChange={e => {
+                                                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                                setEmprPfWageCeiling(val);
+                                                                            }} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                            placeholder="15000"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex items-center gap-3 flex-wrap py-2">
                                                                 <span className="text-sm font-bold text-slate-600">Limit employer's PF contribution amount maximum of</span>
                                                                 <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
                                                                     <div className="px-3 py-2 bg-slate-200/50 text-[10px] font-black text-slate-500 border-r border-slate-100">INR</div>
@@ -481,43 +598,97 @@ const PfTdsSettings: React.FC = () => {
                                                                 </div>
                                                                 <span className="text-sm font-bold text-slate-600">monthly.</span>
                                                             </div>
+
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">PF admin charges (%)</label>
+                                                                    <div className="relative">
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={pfAdminRate} 
+                                                                            onChange={e => {
+                                                                                const val = e.target.value;
+                                                                                if (/^\d*\.?\d{0,2}$/.test(val)) setPfAdminRate(val);
+                                                                            }} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                            placeholder="0.5"
+                                                                        />
+                                                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Minimum monthly PF admin charges</label>
+                                                                    <div className="flex items-center bg-indigo-50/30 rounded-2xl overflow-hidden px-5 py-3.5">
+                                                                        <span className="text-slate-400 font-bold text-sm mr-2">₹</span>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={minMonthlyPfAdmin} 
+                                                                            onChange={e => setMinMonthlyPfAdmin(e.target.value.replace(/[^0-9]/g, ''))} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70" 
+                                                                            placeholder="500"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">EDLI contribution (%)</label>
+                                                                    <div className="relative">
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={edliRate} 
+                                                                            onChange={e => {
+                                                                                const val = e.target.value;
+                                                                                if (/^\d*\.?\d{0,2}$/.test(val)) setEdliRate(val);
+                                                                            }} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                            placeholder="0.5"
+                                                                        />
+                                                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">EDLI admin charges (%)</label>
+                                                                    <div className="relative">
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={edliAdminRate} 
+                                                                            onChange={e => {
+                                                                                const val = e.target.value;
+                                                                                if (/^\d*\.?\d{0,2}$/.test(val)) setEdliAdminRate(val);
+                                                                            }} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                            placeholder="0"
+                                                                        />
+                                                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Minimum monthly EDLI admin charges</label>
+                                                                    <div className="flex items-center bg-indigo-50/30 rounded-2xl overflow-hidden px-5 py-3.5">
+                                                                        <span className="text-slate-400 font-bold text-sm mr-2">₹</span>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={minMonthlyEdliAdmin} 
+                                                                            onChange={e => setMinMonthlyEdliAdmin(e.target.value.replace(/[^0-9]/g, ''))} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70" 
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
 
                                                     {/* Additional Configurations */}
                                                     <div className="space-y-6 pt-4">
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Employer’s pension contribution (%)</label>
-                                                            <input 
-                                                                type="text" 
-                                                                value={employerPensionRate} 
-                                                                onChange={e => {
-                                                                    const val = e.target.value;
-                                                                    if (/^\d*\.?\d{0,2}$/.test(val)) {
-                                                                        setEmployerPensionRate(val);
-                                                                    }
-                                                                }} 
-                                                                disabled={!isEditingPf} 
-                                                                className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
-                                                                placeholder="8.33"
-                                                            />
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
-                                                            <input 
-                                                                type="text" 
-                                                                value={pensionWageLimit} 
-                                                                onChange={e => {
-                                                                    const val = e.target.value.replace(/[^0-9]/g, '');
-                                                                    setPensionWageLimit(val);
-                                                                }} 
-                                                                disabled={!isEditingPf} 
-                                                                className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
-                                                                placeholder="15000"
-                                                            />
-                                                        </div>
-
                                                         <label className="flex items-start gap-4 cursor-pointer group/item">
                                                             <div onClick={() => isEditingPf && setIncludeEmprContri(!includeEmprContri)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
                                                                 {includeEmprContri && <Check size={14} strokeWidth={4} />}
