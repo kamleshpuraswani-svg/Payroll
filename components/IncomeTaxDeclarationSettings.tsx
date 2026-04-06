@@ -162,7 +162,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setGracePeriodDate(config.gracePeriodDate ? new Date(config.gracePeriodDate) : new Date(2026, 0, 20));
                 setDeclarationFrequency(config.declarationFrequency ?? 'Annually');
                 setInvApprovers(config.invApprovers ?? ["Kavita Sharma (HR)"]);
-                setLimits(config.limits ?? [
+                const defaultLimits = [
                     { id: '1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old' },
                     { id: '2', section: '80CCC', limit: '1,50,000 (within 80C)', description: 'Pension fund contributions', regime: 'Old' },
                     { id: '3', section: '80CCD(1)', limit: '1,50,000 (within 80C)', description: 'Employee NPS contribution', regime: 'Old' },
@@ -191,7 +191,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '26', section: '10(13A)', limit: 'Not available', description: 'HRA', regime: 'New' },
                     { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
                     { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' }
-                ]);
+                ];
+                
+                // Smarter migration: If they have exactly the 2 old defaults, override them with the new 28 entries
+                const isLegacyDefaults = config.limits && config.limits.length === 2 && config.limits[0].description === 'Investments & Expenses';
+                setLimits(!config.limits || config.limits.length === 0 || isLegacyDefaults ? defaultLimits : config.limits);
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setAllowSwitch(config.allowSwitch ?? true);
                 setSwitchLockDate(config.switchLockDate ? new Date(config.switchLockDate) : new Date(2025, 11, 31));
@@ -199,8 +203,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setEmailReminder(config.emailReminder ?? false);
                 setNotifyLock(config.notifyLock ?? true);
                 setTdsAdjustmentMonth(config.tdsAdjustmentMonth ?? 'April');
-                setDeductTdsOnDeclaration(config.deductTdsOnDeclaration ?? true);
-                setConsiderPreviousIncome(config.considerPreviousIncome ?? false);
                 setDeductionPattern(config.deductionPattern ?? 'Monthly');
                 setSelectedTdsMonths(config.selectedTdsMonths ?? ["April", "May", "June", "July", "August", "September", "November", "December", "January", "February"]);
                 setDistributionMethod(config.distributionMethod ?? 'Equal Distribution Across Selected Months');
@@ -215,8 +217,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setProofDeadlineTo(config.proofDeadlineTo ? new Date(config.proofDeadlineTo) : new Date(2026, 1, 28));
                 setProofGraceEnabled(config.proofGraceEnabled ?? false);
                 setProofGraceDate(config.proofGraceDate ? new Date(config.proofGraceDate) : new Date(2026, 2, 10));
-                setAutoReject(config.autoReject ?? false);
-                setNotifyRejection(config.notifyRejection ?? true);
                 setAllowedFileTypes(config.allowedFileTypes ?? ['PDF', 'JPG', 'PNG']);
                 setProofApprovers(config.proofApprovers ?? ["Rajesh Kumar (Finance Head)"]);
                 setMandateComments(config.mandateComments ?? true);
@@ -226,6 +226,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setLateJoinerDay(config.lateJoinerDay ?? '22');
                 setProofCutoffMonth(config.proofCutoffMonth ?? 'January');
                 setProofCutoffDay(config.proofCutoffDay ?? '22');
+                setLockDeclarationsAfterCutoff(config.lockDeclarationsAfterCutoff ?? true);
+                setProofGracePeriodDays(config.proofGracePeriodDays ?? '5');
+                setRejectionReasonMandatory(config.rejectionReasonMandatory ?? false);
+                setProofVerificationMonth(config.proofVerificationMonth ?? 'March');
+                setProofVerificationDay(config.proofVerificationDay ?? '31');
             }
         } catch (err) {
             console.error('Error fetching income tax settings:', err);
@@ -296,8 +301,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
     // TDS Deduction Configuration State
     const [tdsAdjustmentMonth, setTdsAdjustmentMonth] = useState('April');
-    const [deductTdsOnDeclaration, setDeductTdsOnDeclaration] = useState(true);
-    const [considerPreviousIncome, setConsiderPreviousIncome] = useState(false);
     const [deductionPattern, setDeductionPattern] = useState<'Monthly' | 'Quarterly' | 'Custom'>('Monthly');
     const [selectedTdsMonths, setSelectedTdsMonths] = useState<string[]>(["April", "May", "June", "July", "August", "September", "November", "December", "January", "February"]);
     const [distributionMethod, setDistributionMethod] = useState('Equal Distribution Across Selected Months');
@@ -322,8 +325,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [proofDeadlineTo, setProofDeadlineTo] = useState(new Date(2026, 1, 28)); // Feb 28, 2026
     const [proofGraceEnabled, setProofGraceEnabled] = useState(false);
     const [proofGraceDate, setProofGraceDate] = useState(new Date(2026, 2, 10)); // March 10, 2026
-    const [autoReject, setAutoReject] = useState(false);
-    const [notifyRejection, setNotifyRejection] = useState(true);
     const [allowedFileTypes, setAllowedFileTypes] = useState<string[]>(['PDF', 'JPG', 'PNG']);
     const [proofApprovers, setProofApprovers] = useState<string[]>(["Rajesh Kumar (Finance Head)"]);
     const [selectedProofApprover, setSelectedProofApprover] = useState("");
@@ -337,6 +338,15 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [proofCutoffMonthState, setProofCutoffMonthState] = useState('January');
     const [proofCutoffDayState, setProofCutoffDayState] = useState('31');
 
+    // New configuration states
+    const [lockDeclarationsAfterCutoff, setLockDeclarationsAfterCutoff] = useState(true);
+    const [proofGracePeriodDays, setProofGracePeriodDays] = useState('5');
+    const [rejectionReasonMandatory, setRejectionReasonMandatory] = useState(false);
+    const [proofVerificationMonth, setProofVerificationMonth] = useState('March');
+    const [proofVerificationDay, setProofVerificationDay] = useState('31');
+
+    const [isLimitsExpanded, setIsLimitsExpanded] = useState(true);
+
     // Backup states for cancel functionality
     const [invBackup, setInvBackup] = useState<any>(null);
     const [proofBackup, setProofBackup] = useState<any>(null);
@@ -348,14 +358,15 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             defaultRegime, allowSwitch, switchLockDate,
             notifyRelease, emailReminder, notifyLock,
             invApprovers: [...invApprovers],
-            tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
+            tdsAdjustmentMonth,
             deductionPattern, selectedTdsMonths: [...selectedTdsMonths],
             distributionMethod,
             tdsWeights: { ...tdsWeights },
             minTdsThreshold,
             maxTdsCap,
             lateJoinerMonth,
-            lateJoinerDay
+            lateJoinerDay,
+            lockDeclarationsAfterCutoff
         });
         setIsEditingInv(true);
     };
@@ -381,8 +392,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setNotifyLock(invBackup.notifyLock);
             setInvApprovers(invBackup.invApprovers);
             setTdsAdjustmentMonth(invBackup.tdsAdjustmentMonth);
-            setDeductTdsOnDeclaration(invBackup.deductTdsOnDeclaration);
-            setConsiderPreviousIncome(invBackup.considerPreviousIncome);
             setDeductionPattern(invBackup.deductionPattern);
             setSelectedTdsMonths(invBackup.selectedTdsMonths);
             setDistributionMethod(invBackup.distributionMethod);
@@ -391,6 +400,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setMaxTdsCap(invBackup.maxTdsCap);
             setLateJoinerMonth(invBackup.lateJoinerMonth || 'February');
             setLateJoinerDay(invBackup.lateJoinerDay || '22');
+            setLockDeclarationsAfterCutoff(invBackup.lockDeclarationsAfterCutoff ?? true);
         }
         setIsEditingInv(false);
         setSelectedInvApprover("");
@@ -402,13 +412,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
                 limits, defaultRegime, allowSwitch, switchLockDate,
                 notifyRelease, emailReminder, notifyLock, invApprovers,
-                tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
+                tdsAdjustmentMonth,
                 deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
-                autoReject, notifyRejection, allowedFileTypes,
+                allowedFileTypes,
                 proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
                 lateJoinerMonth, lateJoinerDay,
-                proofCutoffMonth, proofCutoffDay
+                proofCutoffMonth, proofCutoffDay,
+                lockDeclarationsAfterCutoff, proofGracePeriodDays, rejectionReasonMandatory, proofVerificationMonth, proofVerificationDay
             };
 
             const { error } = await supabase
@@ -433,11 +444,15 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         setProofBackup({ 
             proofEnabled, proofDeadlineFrom, proofDeadlineTo, 
             proofGraceEnabled, proofGraceDate: new Date(proofGraceDate),
-            autoReject, notifyRejection, allowedFileTypes,
+            allowedFileTypes,
             mandateComments, npsIncludeInCtc, npsWageCeiling,
             proofApprovers: [...proofApprovers],
             proofCutoffMonth,
-            proofCutoffDay
+            proofCutoffDay,
+            proofGracePeriodDays,
+            rejectionReasonMandatory,
+            proofVerificationMonth,
+            proofVerificationDay
         });
         setIsEditingProof(true);
     };
@@ -449,8 +464,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setProofDeadlineTo(new Date(proofBackup.proofDeadlineTo));
             setProofGraceEnabled(proofBackup.proofGraceEnabled);
             setProofGraceDate(new Date(proofBackup.proofGraceDate));
-            setAutoReject(proofBackup.autoReject);
-            setNotifyRejection(proofBackup.notifyRejection);
             setAllowedFileTypes(proofBackup.allowedFileTypes);
             setMandateComments(proofBackup.mandateComments);
             setNpsIncludeInCtc(proofBackup.npsIncludeInCtc);
@@ -458,6 +471,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setProofApprovers(proofBackup.proofApprovers);
             setProofCutoffMonth(proofBackup.proofCutoffMonth || 'January');
             setProofCutoffDay(proofBackup.proofCutoffDay || '22');
+            setProofGracePeriodDays(proofBackup.proofGracePeriodDays || '5');
+            setRejectionReasonMandatory(proofBackup.rejectionReasonMandatory ?? false);
+            setProofVerificationMonth(proofBackup.proofVerificationMonth || 'March');
+            setProofVerificationDay(proofBackup.proofVerificationDay || '31');
         }
         setIsEditingProof(false);
         setSelectedProofApprover("");
@@ -469,13 +486,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
                 limits, defaultRegime, allowSwitch, switchLockDate,
                 notifyRelease, emailReminder, notifyLock, invApprovers,
-                tdsAdjustmentMonth, deductTdsOnDeclaration, considerPreviousIncome,
+                tdsAdjustmentMonth,
                 deductionPattern, selectedTdsMonths, distributionMethod, tdsWeights, minTdsThreshold, maxTdsCap,
                 proofEnabled, proofDeadlineFrom, proofDeadlineTo, proofGraceEnabled, proofGraceDate,
-                autoReject, notifyRejection, allowedFileTypes,
+                allowedFileTypes,
                 proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
                 lateJoinerMonth, lateJoinerDay,
-                proofCutoffMonth, proofCutoffDay
+                proofCutoffMonth, proofCutoffDay,
+                lockDeclarationsAfterCutoff, proofGracePeriodDays, rejectionReasonMandatory, proofVerificationMonth, proofVerificationDay
             };
 
             const { error } = await supabase
@@ -1052,6 +1070,13 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <input type="checkbox" className="hidden" checked={allowSwitch} onChange={() => isEditingInv && setAllowSwitch(!allowSwitch)} disabled={!isEditingInv} />
                                     <span className="text-sm font-semibold text-slate-700">Allow employees to switch tax regime until financial year cutoff date</span>
                                 </label>
+                                <label className={`flex items-center gap-3 cursor-pointer group pt-2 ${!isEditingInv ? 'opacity-70' : ''}`}>
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${lockDeclarationsAfterCutoff ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
+                                        {lockDeclarationsAfterCutoff && <Check size={14} className="text-white" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={lockDeclarationsAfterCutoff} onChange={() => isEditingInv && setLockDeclarationsAfterCutoff(!lockDeclarationsAfterCutoff)} disabled={!isEditingInv} />
+                                    <span className="text-sm font-semibold text-slate-700">Lock declarations after Financial year cutoff date</span>
+                                </label>
                             </div>
 
                             {/* Approval Hierarchy Section */}
@@ -1172,24 +1197,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-4">
                                     <Calculator size={16} className="text-slate-400" /> TDS Deduction Configuration
                                 </h4>
-                                
-                                <div className="space-y-4 pl-1 mb-6">
-                                     <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${deductTdsOnDeclaration ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {deductTdsOnDeclaration && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={deductTdsOnDeclaration} onChange={() => isEditingInv && setDeductTdsOnDeclaration(!deductTdsOnDeclaration)} disabled={!isEditingInv} />
-                                        <span className="text-sm text-slate-700">Enable TDS calculation based on declarations</span>
-                                    </label>
-                                    
-                                    <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${considerPreviousIncome ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {considerPreviousIncome && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={considerPreviousIncome} onChange={() => isEditingInv && setConsiderPreviousIncome(!considerPreviousIncome)} disabled={!isEditingInv} />
-                                        <span className="text-sm text-slate-700">Consider previous employment income for TDS calculation</span>
-                                    </label>
-                                </div>
 
                                 <div className="mt-4 pl-1">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Deduction Pattern</label>
@@ -1428,19 +1435,20 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </button>
                             </div>
                         </div>
-                        {isEditingInv && (
+                        <div className="flex items-center gap-3">
                             <button 
-                                onClick={() => setLimits([...limits, { id: Date.now().toString(), section: '', limit: '', description: '', regime: limitViewRegime }])}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2 active:scale-95"
+                                onClick={() => setIsLimitsExpanded(!isLimitsExpanded)}
+                                className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-600"
                             >
-                                <Plus size={14} strokeWidth={3} /> Add {limitViewRegime} Row
+                                {isLimitsExpanded ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
                             </button>
-                        )}
+                        </div>
                     </div>
-                    <div className="p-8">
+                    {isLimitsExpanded && (
+                        <div className="p-8 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                             <table className="w-full text-left text-sm border-collapse">
-                                <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
+                                        <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
                                     <tr>
                                         <th className="px-6 py-4">Section</th>
                                         <th className="px-6 py-4">Description</th>
@@ -1449,8 +1457,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {(limits as any[]).filter(l => l.regime === limitViewRegime).length > 0 ? (
-                                        (limits as any[]).filter(l => l.regime === limitViewRegime).map((limit, idx) => {
+                                    {(limits as any[]).filter(l => (l.regime || 'Old') === limitViewRegime).length > 0 ? (
+                                        (limits as any[]).filter(l => (l.regime || 'Old') === limitViewRegime).map((limit, idx) => {
                                             const actualIdx = limits.findIndex(l => l.id === limit.id);
                                             return (
                                                 <tr key={limit.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -1526,6 +1534,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </table>
                         </div>
                     </div>
+                    )}
                 </div>
 
                 {/* 3. Proof of Investment Section */}
@@ -1596,6 +1605,31 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    <div className="pt-2">
+                                        <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">Grace Period (Days)</h5>
+                                        <div className="max-w-xs">
+                                            <input 
+                                                type="number"
+                                                disabled={!isEditingProof}
+                                                value={proofGracePeriodDays}
+                                                onChange={(e) => setProofGracePeriodDays(e.target.value)}
+                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                placeholder="e.g. 5"
+                                            />
+                                        </div>
+                                        <p className="mt-2 text-[10px] text-indigo-600 font-bold px-1 italic">
+                                            {(() => {
+                                                const monthsArr = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                const monthIndex = monthsArr.indexOf(proofCutoffMonth);
+                                                const day = parseInt(proofCutoffDay);
+                                                if (monthIndex === -1 || isNaN(day)) return "";
+                                                const date = new Date(2026, monthIndex, day);
+                                                date.setDate(date.getDate() + (parseInt(proofGracePeriodDays) || 0));
+                                                return `Documents can be uploaded until ${date.getDate()} ${monthsArr[date.getMonth()]} 2026`;
+                                            })()}
+                                        </p>
+                                    </div>
 
                                     <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2 w-full">
                                         <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
@@ -1607,7 +1641,37 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    
+                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">POI Verification deadline</h5>
+                                    <div className="flex gap-3">
+                                        <div className="relative w-1/2">
+                                            <select
+                                                disabled={!isEditingProof}
+                                                value={proofVerificationMonth}
+                                                onChange={(e) => setProofVerificationMonth(e.target.value)}
+                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                            >
+                                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                        <div className="relative w-24">
+                                            <select
+                                                disabled={!isEditingProof}
+                                                value={proofVerificationDay}
+                                                onChange={(e) => setProofVerificationDay(e.target.value)}
+                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 text-center shadow-sm"
+                                            >
+                                                {Array.from({ 
+                                                    length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(proofVerificationMonth) + 1, 0).getDate() 
+                                                }, (_, i) => i + 1).map(day => (
+                                                    <option key={day} value={day}>{day}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1687,34 +1751,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Row 2: Toggles Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 pt-2">
-
-                                <div className="col-span-1 md:col-span-2 bg-rose-50 border border-rose-100 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <AlertCircle size={20} className="text-rose-500" />
-                                        <div>
-                                            <span className="text-sm font-bold text-rose-800 block">Auto-reject if no proof by deadline</span>
-                                            <span className="text-xs text-rose-600">Declarations without proofs will be rejected after {proofCutoffDay} {proofCutoffMonth} 2026</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-6">
-                                        <label className={`flex items-center gap-2 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                            <span className="text-xs font-bold text-rose-700">Enable</span>
-                                            <div className="relative inline-flex items-center">
-                                                <input type="checkbox" checked={autoReject} onChange={() => isEditingProof && setAutoReject(!autoReject)} disabled={!isEditingProof} className="sr-only peer" />
-                                                <div className="w-9 h-5 bg-rose-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-rose-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-600"></div>
-                                            </div>
-                                        </label>
-                                        {autoReject && (
-                                            <label className={`flex items-center gap-2 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                                <input type="checkbox" checked={notifyRejection} onChange={() => isEditingProof && setNotifyRejection(!notifyRejection)} disabled={!isEditingProof} className="rounded text-rose-600 focus:ring-rose-500" />
-                                                <span className="text-xs font-bold text-rose-700">Notify on Rejection</span>
-                                            </label>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                            <div className="pt-2"></div>
 
 
                             {/* Other Configs */}
@@ -1727,6 +1764,13 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </div>
                                         <input type="checkbox" className="hidden" checked={mandateComments} onChange={() => isEditingProof && setMandateComments(!mandateComments)} disabled={!isEditingProof} />
                                         <span className="text-sm text-slate-700">Mandate reviewer comments for partial investment amount approval</span>
+                                    </label>
+                                    <label className={`flex items-center gap-3 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${rejectionReasonMandatory ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
+                                            {rejectionReasonMandatory && <Check size={14} className="text-white" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={rejectionReasonMandatory} onChange={() => isEditingProof && setRejectionReasonMandatory(!rejectionReasonMandatory)} disabled={!isEditingProof} />
+                                        <span className="text-sm text-slate-700">Rejection reason mandatory</span>
                                     </label>
                                 </div>
                             </div>
