@@ -296,16 +296,16 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+                        <div className="flex flex-col lg:flex-row items-end gap-8 mb-10 pb-10 border-b border-slate-200/60">
                             {/* Select Employee */}
-                            <div className="space-y-2">
+                            <div className="w-full lg:w-80 space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Employee <span className="text-rose-500">*</span></label>
                                 <div className="relative group">
                                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                     <select
                                         value={selectedEmployeeId}
                                         onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer font-bold"
                                     >
                                         <option value="">Choose an employee...</option>
                                         {employees.map(emp => (
@@ -316,69 +316,56 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 </div>
                             </div>
 
+                            {/* Expense from date */}
+                            <div className="w-full lg:w-48 space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">From Date <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <input
+                                        type="date"
+                                        value={expenseFromDate}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setExpenseFromDate(val);
+                                            setExpenseItems(expenseItems.map(item => ({ ...item, fromDate: val })));
+                                        }}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all font-bold"
+                                    />
+                                </div>
+                            </div>
 
-                            <div className="flex flex-col md:flex-row items-end justify-between gap-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-                                    {/* Expense from date */}
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense from date <span className="text-rose-500">*</span></label>
-                                        <div className="relative group">
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                            <input
-                                                type="date"
-                                                value={expenseFromDate}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setExpenseFromDate(val);
-                                                    // Synchronize all existing items to this new date
-                                                    setExpenseItems(expenseItems.map(item => ({
-                                                        ...item,
-                                                        fromDate: val
-                                                    })));
-                                                }}
-                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
-                                            />
-                                        </div>
-                                    </div>
+                            {/* Expense to date */}
+                            <div className="w-full lg:w-48 space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">To Date <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <input
+                                        type="date"
+                                        value={expenseToDate}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setExpenseToDate(val);
+                                            setExpenseItems(expenseItems.map(item => ({ ...item, toDate: val })));
+                                        }}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all font-bold"
+                                    />
+                                </div>
+                            </div>
 
-                                    {/* Expense to date */}
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense to date <span className="text-rose-500">*</span></label>
-                                        <div className="relative group">
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                                            <input
-                                                type="date"
-                                                value={expenseToDate}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setExpenseToDate(val);
-                                                    // Synchronize all existing items to this new date
-                                                    setExpenseItems(expenseItems.map(item => ({
-                                                        ...item,
-                                                        toDate: val
-                                                    })));
-                                                }}
-                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all shadow-blue-100"
-                                            />
-                                        </div>
+                            {/* Status - Extreme Right */}
+                            {editId && (
+                                <div className="lg:ml-auto space-y-2 text-right">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Current Status</label>
+                                    <div className={`inline-block px-5 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-[0.15em] shadow-sm ${
+                                        claimStatus.toUpperCase() === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                        claimStatus.toUpperCase() === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                        claimStatus.toUpperCase().includes('PARTIAL') ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                        'bg-orange-50 text-orange-700 border-orange-100'
+                                    }`}>
+                                        {claimStatus.replace(/_/g, ' ')}
                                     </div>
                                 </div>
-
-                                {/* Status - Extreme Right */}
-                                {editId && (
-                                    <div className="flex flex-col items-end space-y-2 shrink-0">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Status</label>
-                                        <div className={`px-4 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-[0.1em] shadow-sm ${
-                                            claimStatus.toUpperCase() === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                            claimStatus.toUpperCase() === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-100' :
-                                            claimStatus.toUpperCase().includes('PARTIAL') ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                            'bg-orange-50 text-orange-700 border-orange-100'
-                                        }`}>
-                                            {claimStatus.replace(/_/g, ' ')}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
 
                         <div className="space-y-6 mt-10">
