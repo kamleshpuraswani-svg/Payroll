@@ -163,8 +163,34 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setDeclarationFrequency(config.declarationFrequency ?? 'Annually');
                 setInvApprovers(config.invApprovers ?? ["Kavita Sharma (HR)"]);
                 setLimits(config.limits ?? [
-                    { id: '1', section: '80C', limit: '1,50,000', description: 'Investments & Expenses' },
-                    { id: '2', section: '80D', limit: '25,000', description: 'Medical Insurance' }
+                    { id: '1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old' },
+                    { id: '2', section: '80CCC', limit: '1,50,000 (within 80C)', description: 'Pension fund contributions', regime: 'Old' },
+                    { id: '3', section: '80CCD(1)', limit: '1,50,000 (within 80C)', description: 'Employee NPS contribution', regime: 'Old' },
+                    { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution (over 80C limit)', regime: 'Old' },
+                    { id: '5', section: '80CCD(2)', limit: '10% of salary (no upper cap)', description: 'Employer NPS contribution', regime: 'Old' },
+                    { id: '6', section: '80D', limit: '25,000 (50,000 if senior citizen)', description: 'Medical insurance — Self & Family', regime: 'Old' },
+                    { id: '7', section: '80D', limit: '25,000 (50,000 if senior citizen)', description: 'Medical insurance — Parents', regime: 'Old' },
+                    { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
+                    { id: '9', section: '80DDB', limit: '40,000 (1,00,000 if senior citizen)', description: 'Treatment of specified diseases', regime: 'Old' },
+                    { id: '10', section: '80E', limit: 'Actual (no limit, 8 years)', description: 'Interest on education loan', regime: 'Old' },
+                    { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤35L)', regime: 'Old' },
+                    { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
+                    { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
+                    { id: '14', section: '80GG', limit: 'Min of: ₹5,000/month, 25% of income, rent–10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
+                    { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
+                    { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (non-senior)', regime: 'Old' },
+                    { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (senior citizens)', regime: 'Old' },
+                    { id: '18', section: '80U', limit: '75,000 / 1,25,000 (severe)', description: 'Self disability deduction', regime: 'Old' },
+                    { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
+                    { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 40/50% of salary, rent–10% salary', description: 'HRA exemption', regime: 'Old' },
+                    { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
+                    { id: '22', section: '16(ia)', limit: '75,000 (FY 2024-25 onwards)', description: 'Standard Deduction (salaried)', regime: 'Old' },
+                    { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
+                    { id: '24', section: '80CCD(2)', limit: '14% of salary (govt); 10% (others)', description: 'Employer NPS contribution', regime: 'New' },
+                    { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
+                    { id: '26', section: '10(13A)', limit: 'Not available', description: 'HRA', regime: 'New' },
+                    { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
+                    { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' }
                 ]);
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setAllowSwitch(config.allowSwitch ?? true);
@@ -227,8 +253,34 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     
     // Limits State
     const [limits, setLimits] = useState([
-        { id: '1', section: '80C', limit: '1,50,000', description: 'Investments & Expenses', regime: 'Old' },
-        { id: '2', section: '80D', limit: '25,000', description: 'Medical Insurance', regime: 'Old' }
+        { id: '1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old' },
+        { id: '2', section: '80CCC', limit: '1,50,000 (within 80C)', description: 'Pension fund contributions', regime: 'Old' },
+        { id: '3', section: '80CCD(1)', limit: '1,50,000 (within 80C)', description: 'Employee NPS contribution', regime: 'Old' },
+        { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution (over 80C limit)', regime: 'Old' },
+        { id: '5', section: '80CCD(2)', limit: '10% of salary (no upper cap)', description: 'Employer NPS contribution', regime: 'Old' },
+        { id: '6', section: '80D', limit: '25,000 (50,000 if senior citizen)', description: 'Medical insurance — Self & Family', regime: 'Old' },
+        { id: '7', section: '80D', limit: '25,000 (50,000 if senior citizen)', description: 'Medical insurance — Parents', regime: 'Old' },
+        { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
+        { id: '9', section: '80DDB', limit: '40,000 (1,00,000 if senior citizen)', description: 'Treatment of specified diseases', regime: 'Old' },
+        { id: '10', section: '80E', limit: 'Actual (no limit, 8 years)', description: 'Interest on education loan', regime: 'Old' },
+        { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤35L)', regime: 'Old' },
+        { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
+        { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
+        { id: '14', section: '80GG', limit: 'Min of: ₹5,000/month, 25% of income, rent–10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
+        { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
+        { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (non-senior)', regime: 'Old' },
+        { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (senior citizens)', regime: 'Old' },
+        { id: '18', section: '80U', limit: '75,000 / 1,25,000 (severe)', description: 'Self disability deduction', regime: 'Old' },
+        { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
+        { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 40/50% of salary, rent–10% salary', description: 'HRA exemption', regime: 'Old' },
+        { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
+        { id: '22', section: '16(ia)', limit: '75,000 (FY 2024-25 onwards)', description: 'Standard Deduction (salaried)', regime: 'Old' },
+        { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
+        { id: '24', section: '80CCD(2)', limit: '14% of salary (govt); 10% (others)', description: 'Employer NPS contribution', regime: 'New' },
+        { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
+        { id: '26', section: '10(13A)', limit: 'Not available', description: 'HRA', regime: 'New' },
+        { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
+        { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' }
     ]);
     const [limitViewRegime, setLimitViewRegime] = useState<'Old' | 'New'>('Old');
 
@@ -277,6 +329,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [selectedProofApprover, setSelectedProofApprover] = useState("");
     
     const [mandateComments, setMandateComments] = useState(true);
+    const [showCalcPreview, setShowCalcPreview] = useState(false);
 
     const [npsIncludeInCtc, setNpsIncludeInCtc] = useState(true);
     const [npsWageCeiling, setNpsWageCeiling] = useState(false);
@@ -976,7 +1029,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             <div className="pt-2 border-t border-slate-200 space-y-6">
                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Tax Regime & Switching</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
+                                    <div className="md:col-span-1 max-w-[50%]">
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Default Tax Regime</label>
                                         <div className="relative">
                                             <select 
@@ -991,23 +1044,13 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Switching Window Lock Date</label>
-                                        <DatePicker 
-                                            label="Lock Date" 
-                                            date={switchLockDate} 
-                                            onChange={setSwitchLockDate} 
-                                            disabled={!isEditingInv}
-                                            subLabel="Last date for employees to switch between Old & New regime"
-                                        />
-                                    </div>
                                 </div>
                                 <label className="flex items-center gap-3 cursor-pointer group pt-2">
                                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${allowSwitch ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
                                         {allowSwitch && <Check size={14} className="text-white" />}
                                     </div>
                                     <input type="checkbox" className="hidden" checked={allowSwitch} onChange={() => isEditingInv && setAllowSwitch(!allowSwitch)} disabled={!isEditingInv} />
-                                    <span className="text-sm font-semibold text-slate-700">Allow employees to switch tax regime until lock date</span>
+                                    <span className="text-sm font-semibold text-slate-700">Allow employees to switch tax regime until financial year cutoff date</span>
                                 </label>
                             </div>
 
@@ -1151,7 +1194,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <div className="mt-4 pl-1">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Deduction Pattern</label>
                                     <div className="flex gap-6 mb-4">
-                                        {['Monthly', 'Quarterly', 'Custom'].map((p) => (
+                                        {['Monthly', 'Custom'].map((p) => (
                                             <label key={p} className={`flex items-center gap-2 cursor-pointer group ${!isEditingInv ? 'opacity-70' : ''}`}>
                                                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${deductionPattern === p ? 'border-indigo-600' : 'border-slate-300 group-hover:border-indigo-400'}`}>
                                                     {deductionPattern === p && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
@@ -1166,8 +1209,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         setDeductionPattern(p as any);
                                                         if (p === 'Monthly') {
                                                             setSelectedTdsMonths([...months]);
-                                                        } else if (p === 'Quarterly') {
-                                                            setSelectedTdsMonths(["June", "September", "December", "March"]);
                                                         }
                                                     }} 
                                                 />
@@ -1311,61 +1352,52 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </div>
 
                                         {/* Preview Section */}
-                                        <div className="bg-white rounded-2xl border border-indigo-100 p-6 shadow-sm sticky top-24">
-                                            <div className="flex items-center gap-2 mb-6 text-indigo-600">
-                                                <PieChartIcon size={18} />
-                                                <h5 className="text-xs font-black uppercase tracking-widest">Calculation Preview (Demo Data)</h5>
-                                            </div>
-                                            <div className="mb-6 pb-6 border-b border-slate-200 flex justify-between items-end">
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Projected TDS</p>
-                                                    <p className="text-2xl font-black text-slate-900">₹ 1,20,000</p>
+                                        <div className="space-y-4">
+                                            <button 
+                                                onClick={() => setShowCalcPreview(!showCalcPreview)}
+                                                className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-bold text-sm transition-colors group"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                                                    <PieChartIcon size={16} />
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Method Applied</p>
-                                                    <p className="text-xs font-bold text-indigo-600">{distributionMethod.split(' ')[0]}...</p>
-                                                </div>
-                                            </div>
+                                                <span className="underline decoration-indigo-200 underline-offset-4">Preview Calculation</span>
+                                                <ChevronDown size={16} className={`transition-transform duration-300 ${showCalcPreview ? 'rotate-180' : ''}`} />
+                                            </button>
 
-                                            {getDummyCalculation(distributionMethod)}
-                                            
-                                            <div className="mt-6 pt-6 border-t border-slate-200 space-y-2">
-                                                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
-                                                    <Info size={12} /> System Note
+                                            {showCalcPreview && (
+                                                <div className="bg-white rounded-2xl border border-indigo-100 p-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                                                    <div className="flex items-center gap-2 mb-6 text-indigo-600 border-b border-indigo-50 pb-4">
+                                                        <PieChartIcon size={18} />
+                                                        <h5 className="text-xs font-black uppercase tracking-widest">Calculation Preview (Demo Data)</h5>
+                                                    </div>
+                                                    <div className="mb-6 pb-6 border-b border-slate-200 flex justify-between items-end">
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Projected TDS</p>
+                                                            <p className="text-2xl font-black text-slate-900">₹ 1,20,000</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Method Applied</p>
+                                                            <p className="text-xs font-bold text-indigo-600">{distributionMethod.split(' ')[0]}...</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {getDummyCalculation(distributionMethod)}
+                                                    
+                                                    <div className="mt-6 pt-6 border-t border-slate-200 space-y-2">
+                                                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
+                                                            <Info size={12} /> System Note
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-500 leading-relaxed">
+                                                            This preview is for illustrative purposes only. Actual values will vary per employee based on their salary structure, joined date, and approved declarations.
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500 leading-relaxed">
-                                                    This preview is for illustrative purposes only. Actual values will vary per employee based on their salary structure, joined date, and approved declarations.
-                                                </p>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Other Configurations for Investment Declaration */}
-                            <div className="pt-6 border-t border-slate-200">
-                                <h4 className="text-sm font-bold text-slate-800 mb-4">Other Configurations</h4>
-                                <div className="space-y-4">
-                                    <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${mandateComments ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {mandateComments && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={mandateComments} onChange={() => isEditingInv && setMandateComments(!mandateComments)} disabled={!isEditingInv} />
-                                        <span className="text-sm text-slate-700">Mandate reviewer comments for investment declaration rejection</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* Progress Stats */}
-                            <div className="pt-2 border-t border-slate-200">
-                                <div className="flex justify-between text-xs font-bold text-slate-600 mb-2">
-                                    <span>Declarations Submitted</span>
-                                    <span className="text-emerald-600">1,200/1,842 (65%)</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                    <div className="bg-emerald-50 h-2.5 rounded-full w-[65%]"></div>
-                                </div>
-                            </div>
                         </div>
                     )}
                 </div>
@@ -1411,8 +1443,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
                                     <tr>
                                         <th className="px-6 py-4">Section</th>
-                                        <th className="px-6 py-4">Max Limit (₹)</th>
                                         <th className="px-6 py-4">Description</th>
+                                        <th className="px-6 py-4">Max. Limit (₹)</th>
                                         {isEditingInv && <th className="px-6 py-4 w-16 text-center">Action</th>}
                                     </tr>
                                 </thead>
@@ -1437,6 +1469,21 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                             />
                                                         ) : <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>}
                                                     </td>
+                                                    <td className="px-6 py-4 text-slate-500 text-xs font-medium">
+                                                        {isEditingInv ? (
+                                                            <input 
+                                                                type="text" 
+                                                                value={limit.description} 
+                                                                onChange={(e) => {
+                                                                    const newLimits = [...limits];
+                                                                    newLimits[actualIdx].description = e.target.value;
+                                                                    setLimits(newLimits);
+                                                                }}
+                                                                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                placeholder="Section description..."
+                                                            />
+                                                        ) : limit.description}
+                                                    </td>
                                                     <td className="px-6 py-4 font-black text-slate-800">
                                                         {isEditingInv ? (
                                                             <div className="relative">
@@ -1454,21 +1501,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                 />
                                                             </div>
                                                         ) : <span className="text-indigo-600">₹{limit.limit}</span>}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-slate-500 text-xs font-medium">
-                                                        {isEditingInv ? (
-                                                            <input 
-                                                                type="text" 
-                                                                value={limit.description} 
-                                                                onChange={(e) => {
-                                                                    const newLimits = [...limits];
-                                                                    newLimits[actualIdx].description = e.target.value;
-                                                                    setLimits(newLimits);
-                                                                }}
-                                                                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
-                                                                placeholder="Section description..."
-                                                            />
-                                                        ) : limit.description}
                                                     </td>
                                                     {isEditingInv && (
                                                         <td className="px-6 py-4 text-center">
