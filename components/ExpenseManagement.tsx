@@ -573,7 +573,8 @@ const ExpenseManagement: React.FC<{
                         },
                         category: c.category,
                         amount: c.total_amount,
-                        approvedAmount: displayStatus === 'Partially Approved' ? totalApproved : undefined,
+                        approvedAmount: c.approved_amount || (displayStatus === 'Partially Approved' ? totalApproved : undefined),
+                        rejectionReason: c.rejection_reason,
                         submittedDate: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
                         status: displayStatus,
                         proofs: (c.items || []).filter((it: any) => it.receiptName).map((it: any, i: number) => ({
@@ -652,7 +653,8 @@ const ExpenseManagement: React.FC<{
                     .update({
                         status: status,
                         items: updatedItems,
-                        title: reason && status === 'rejected' ? `Rejected: ${reason}` : (approveClaim.title || `Claim by ${approveClaim.employee.name}`), // Storing reason in title if no column exists
+                        approved_amount: amount,
+                        rejection_reason: reason,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', approveClaim.id);
