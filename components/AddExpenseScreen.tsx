@@ -13,6 +13,7 @@ import {
     Upload,
     Paperclip,
     X,
+    Receipt,
     FileText,
     CheckCircle,
     Activity,
@@ -39,6 +40,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     const [expenseToDate, setExpenseToDate] = useState(new Date().toISOString().split('T')[0]);
     
     // Form state for current item
+    const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
     const [merchant, setMerchant] = useState('');
     const [project, setProject] = useState('');
     const [amount, setAmount] = useState('');
@@ -54,6 +56,21 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
             fetchClaimData();
         }
     }, [editId]);
+
+    // Ensure expenseDate is valid when range changes
+    useEffect(() => {
+        if (expenseFromDate === expenseToDate) {
+            setExpenseDate(expenseFromDate);
+        } else {
+            // If expenseDate is currently out of the new range, reset it to the start
+            const current = new Date(expenseDate);
+            const start = new Date(expenseFromDate);
+            const end = new Date(expenseToDate);
+            if (current < start || current > end) {
+                setExpenseDate(expenseFromDate);
+            }
+        }
+    }, [expenseFromDate, expenseToDate]);
 
     const fetchClaimData = async () => {
         setIsFetchingData(true);
@@ -108,7 +125,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                         receiptName: receipt ? receipt.name : item.receiptName,
                         category: selectedCategory?.name || '',
                         fromDate: expenseFromDate,
-                        toDate: expenseToDate
+                        toDate: expenseToDate,
+                        expenseDate: expenseDate
                     };
                 }
                 return item;
@@ -126,7 +144,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                 receiptName: receipt ? receipt.name : null,
                 category: selectedCategory?.name || '',
                 fromDate: expenseFromDate,
-                toDate: expenseToDate
+                toDate: expenseToDate,
+                expenseDate: expenseDate
             };
             setExpenseItems([...expenseItems, newItem]);
         }
@@ -134,9 +153,11 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         // Reset item fields
         setMerchant('');
         setProject('');
+        setAmount('');
         setReason('');
         setReceipt(null);
         setSelectedCategory(null);
+        setExpenseDate(expenseFromDate);
     };
 
     const handleEditItem = (item: any) => {
@@ -147,6 +168,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         setReason(item.reason || item.description || '');
         const cat = categories.find(c => c.name === item.category);
         setSelectedCategory(cat || null);
+        setExpenseDate(item.expenseDate || (item.fromDate === item.toDate ? item.fromDate : new Date().toISOString().split('T')[0]));
         // Note: keeping existing receipt name if no new file is selected
     };
 
@@ -338,6 +360,23 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                             </div>
                                         </div>
                                         <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Expense Date <span className="text-rose-500">*</span></label>
+                                            <div className="relative group">
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                                                <input
+                                                    type="date"
+                                                    value={expenseDate}
+                                                    min={expenseFromDate}
+                                                    max={expenseToDate}
+                                                    onChange={(e) => setExpenseDate(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold cursor-pointer"
+                                                />
+                                            </div>
+                                            {expenseFromDate === expenseToDate && (
+                                                <p className="text-[9px] text-slate-400 mt-1 italic font-medium">Locked to selected from/to date.</p>
+                                            )}
+                                        </div>
+                                        <div>
                                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Merchant / Payee</label>
                                             <div className="relative group">
                                                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
@@ -374,9 +413,14 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                                     placeholder="0.00"
                                                     value={amount}
                                                     onChange={(e) => setAmount(e.target.value)}
-                                                    className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold text-slate-700"
+                                                    className={`w-full pl-8 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold text-slate-700 ${selectedCategory?.receipt_threshold && parseFloat(amount) > selectedCategory.receipt_threshold ? 'bg-amber-50/30 border-amber-200' : 'bg-slate-50 border-slate-100'}`}
                                                 />
                                             </div>
+                                            {selectedCategory?.receipt_threshold > 0 && parseFloat(amount) > selectedCategory.receipt_threshold && (
+                                                <p className="text-[10px] text-amber-600 mt-1.5 font-bold flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                                                    <FileText size={12} /> Please upload a receipt/bill for expenses over ₹{selectedCategory.receipt_threshold.toLocaleString()}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -457,7 +501,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     {expenseItems.length === 0 ? (
                                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
                                             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500 opacity-40">
-                                                <DollarSign size={32} />
+                                                <Receipt size={32} />
                                             </div>
                                             <p className="text-slate-400 text-sm max-w-[200px] font-bold leading-relaxed">No items added to this claim yet.</p>
                                             <p className="text-[10px] text-slate-300 uppercase mt-4 tracking-widest font-black">fill the form on the left to start</p>
@@ -468,6 +512,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                                 <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0 z-10 border-b border-slate-100">
                                                     <tr>
                                                         <th className="px-6 py-3">Expense Details</th>
+                                                        <th className="px-6 py-3">Expense Category</th>
+                                                        <th className="px-6 py-3">Expense Date</th>
                                                         <th className="px-6 py-3">Amount</th>
                                                         <th className="px-6 py-3">Receipt</th>
                                                         <th className="px-4 py-3 text-right font-black">Action</th>
@@ -477,16 +523,16 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                                     {expenseItems.map((item, idx) => (
                                                         <tr key={item.id || idx} className="group hover:bg-slate-50/50 transition-colors">
                                                             <td className="px-6 py-4">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                                                                        <DollarSign size={14} />
-                                                                    </div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="font-bold text-slate-700">{item.merchant || 'General'}</span>
-                                                                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight bg-slate-100 px-1.5 py-0.5 rounded w-fit mb-1">{item.category}</span>
-                                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{item.project ? `${item.project} • ` : ''}{item.reason || item.description}</span>
-                                                                    </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[11px] font-bold text-slate-700 tracking-tight leading-relaxed">{item.reason || item.description}</span>
+                                                                    {item.project && <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{item.project}</span>}
                                                                 </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight bg-slate-100 px-2 py-1 rounded-md">{item.category}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</span>
                                                             </td>
                                                             <td className="px-6 py-4 font-black text-slate-800">
                                                                 ₹{(item.amount || 0).toLocaleString('en-IN')}

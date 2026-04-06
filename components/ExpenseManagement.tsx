@@ -59,13 +59,14 @@ interface ExpenseClaim {
     amount: number;
     submittedDate: string;
     proofs: ClaimProof[];
-    status: 'Pending' | 'Approved' | 'Partially Approved' | 'Rejected' | 'More Info Requested';
+    status: 'Pending' | 'Approved' | 'Partially Approved' | 'Rejected';
     approvedAmount?: number;
     requestedOn: string;
     createdByName: string;
     lastModifiedBy: string;
     lastModifiedByName: string;
     activityLog: { text: string; date: string }[];
+    items?: any[];
 }
 
 // --- Mock Data ---
@@ -107,7 +108,7 @@ const MOCK_CLAIMS: ExpenseClaim[] = [
             { id: 'p1', name: 'Airtel_Bill_Oct.pdf', type: 'pdf', size: '450 KB' },
             { id: 'p2', name: 'Airtel_Bill_Nov.pdf', type: 'pdf', size: '480 KB' }
         ],
-        status: 'More Info Requested',
+        status: 'Pending',
         requestedOn: '15 Dec 2025, 02:15 PM',
         createdByName: 'Arjun Mehta',
         lastModifiedBy: '16 Dec 2025, 11:00 AM',
@@ -210,7 +211,6 @@ const getStatusBadge = (status: string) => {
         case 'Approved': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
         case 'Partially Approved': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
         case 'Rejected': return 'bg-rose-50 text-rose-700 border-rose-100';
-        case 'More Info Requested': return 'bg-purple-50 text-purple-700 border-purple-100';
         default: return 'bg-slate-50 text-slate-600';
     }
 };
@@ -230,62 +230,68 @@ const getClaimIcon = (type: string) => {
 
 // --- Modals ---
 
-const ViewClaimModal: React.FC<{
+const ViewClaimPanel: React.FC<{
     claim: ExpenseClaim;
     onClose: () => void;
     onViewProof: (proof: ClaimProof) => void;
     onDownloadProof: (proof: ClaimProof) => void;
 }> = ({ claim, onClose, onViewProof, onDownloadProof }) => {
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <>
+            {/* Backdrop */}
+            <div className="fixed inset-0 z-[115] bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-300" onClick={onClose} />
+            
+            {/* Panel */}
+            <div className="fixed inset-y-0 right-0 w-[540px] z-[120] bg-white border-l border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <h3 className="font-bold text-slate-800 text-lg">Claim Details</h3>
-                    <div className="flex items-center gap-2">
-                        <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
-                            <X size={20} />
-                        </button>
+                <div className="h-20 px-8 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg">Claim Details</h3>
                     </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-all border border-slate-100">
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                     {/* Employee Profile Snippet */}
-                    <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                    <div className="flex items-center gap-4 p-5 border border-slate-100 rounded-2xl bg-slate-50/50">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
                             <img src={claim.employee.avatar} alt="" className="w-full h-full object-cover" />
                         </div>
-                        <div>
-                            <h4 className="font-bold text-slate-800">{claim.employee.name}</h4>
-                            <p className="text-xs text-slate-500">{claim.employee.department} • CTC: {claim.employee.ctc}</p>
+                        <div className="flex-1">
+                            <div className="flex items-center justify-between w-full">
+                                <h4 className="font-bold text-slate-800 text-base">{claim.employee.name}</h4>
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black border uppercase tracking-widest ${getStatusBadge(claim.status)}`}>
+                                    {claim.status}
+                                </span>
+                            </div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{claim.employee.department} • ID: {claim.employee.id}</p>
                         </div>
                     </div>
 
                     {/* Claim Summary */}
-                    <div>
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Claim Summary</h4>
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusBadge(claim.status)}`}>
-                                {claim.status}
-                            </span>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">General Information</h4>
                         </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between p-3 border border-slate-100 rounded-lg">
-                                <span className="text-sm text-slate-600">Claim Type</span>
+                        <div className="grid grid-cols-1 gap-3">
+                            <div className="flex justify-between items-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Claim Category</span>
                                 <span className="text-sm font-bold text-slate-800">{claim.category}</span>
                             </div>
-                            <div className="flex justify-between p-3 border border-slate-100 rounded-lg">
-                                <span className="text-sm text-slate-600">Claimed Amount</span>
-                                <span className="text-sm font-bold text-slate-800">₹{claim.amount.toLocaleString()}</span>
+                            <div className="flex justify-between items-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Claimed Amount</span>
+                                <span className="text-sm font-black text-slate-800">₹{claim.amount.toLocaleString('en-IN')}</span>
                             </div>
                             {claim.approvedAmount && (
-                                <div className="flex justify-between p-3 border border-emerald-100 bg-emerald-50 rounded-lg">
-                                    <span className="text-sm text-emerald-800 font-medium">Approved Amount</span>
-                                    <span className="text-sm font-bold text-emerald-800">₹{claim.approvedAmount.toLocaleString()}</span>
+                                <div className="flex justify-between items-center p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Approved Amount</span>
+                                    <span className="text-sm font-black text-emerald-700">₹{claim.approvedAmount.toLocaleString('en-IN')}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between p-3 border border-slate-100 rounded-lg">
-                                <span className="text-sm text-slate-600">Submitted Date</span>
+                            <div className="flex justify-between items-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Submission Date</span>
                                 <span className="text-sm font-bold text-slate-800">{claim.submittedDate}</span>
                             </div>
                         </div>
@@ -293,29 +299,33 @@ const ViewClaimModal: React.FC<{
 
                     {/* Attached Proofs */}
                     <div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Attached Proofs ({claim.proofs.length})</h4>
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attached Receipts ({claim.proofs.length})</h4>
+                        </div>
                         <div className="grid grid-cols-2 gap-3">
                             {claim.proofs.map((proof, i) => (
-                                <div key={i} className="group relative aspect-square border border-slate-200 rounded-xl bg-slate-50 flex flex-col items-center justify-center p-3 text-center transition-all hover:border-purple-300 hover:shadow-sm">
-                                    <FileText size={24} className="text-slate-400 mb-2 group-hover:text-purple-500 transition-colors" />
-                                    <p className="text-[10px] font-medium text-slate-600 line-clamp-2 w-full">{proof.name}</p>
-                                    <span className="text-[9px] text-slate-400 mt-1">{proof.size}</span>
+                                <div key={i} className="group relative border border-slate-100 rounded-2xl bg-slate-50 flex flex-col items-center justify-center p-4 text-center transition-all hover:border-purple-200 hover:bg-white hover:shadow-xl hover:shadow-slate-100">
+                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 mb-3 group-hover:text-purple-500 transition-colors">
+                                        <FileText size={20} />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-slate-600 line-clamp-1 w-full px-2">{proof.name}</p>
+                                    <span className="text-[9px] font-bold text-slate-300 mt-1 uppercase">{proof.size}</span>
 
                                     {/* Overlay Actions */}
-                                    <div className="absolute inset-0 bg-slate-900/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
+                                    <div className="absolute inset-0 bg-slate-900/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2 backdrop-blur-[2px]">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onViewProof(proof); }}
-                                            className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-700 hover:text-purple-600 transition-transform hover:scale-110"
+                                            className="w-10 h-10 bg-white shadow-xl border border-slate-100 rounded-xl text-slate-700 hover:text-purple-600 transition-all hover:scale-110 flex items-center justify-center"
                                             title="View"
                                         >
-                                            <Eye size={16} />
+                                            <Eye size={18} />
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onDownloadProof(proof); }}
-                                            className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-700 hover:text-purple-600 transition-transform hover:scale-110"
+                                            className="w-10 h-10 bg-white shadow-xl border border-slate-100 rounded-xl text-slate-700 hover:text-purple-600 transition-all hover:scale-110 flex items-center justify-center"
                                             title="Download"
                                         >
-                                            <Download size={16} />
+                                            <Download size={18} />
                                         </button>
                                     </div>
                                 </div>
@@ -323,33 +333,62 @@ const ViewClaimModal: React.FC<{
                         </div>
                     </div>
 
-                    {/* Activity Log */}
-                    <div className="pt-6 border-t border-slate-100">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Activity Log</h4>
-                        <div className="space-y-4">
-                            {claim.activityLog.map((log, i) => (
-                                <div key={i} className="flex gap-3 relative group">
-                                    {i !== claim.activityLog.length - 1 && <div className="absolute left-[9px] top-6 bottom-[-20px] w-0.5 bg-slate-100"></div>}
-                                    <div className="w-5 h-5 rounded-full bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center shrink-0 z-10 group-hover:bg-purple-100 transition-colors">
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full group-hover:bg-purple-600 transition-colors"></div>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-700">{log.text}</p>
-                                        <p className="text-[10px] text-slate-400 mt-0.5">{log.date}</p>
-                                    </div>
-                                </div>
-                            ))}
+                    {/* Expense Items List */}
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expense Items List</h4>
+                        <div className="bg-slate-50/50 rounded-2xl border border-slate-100 overflow-hidden">
+                            <table className="w-full text-left text-xs border-collapse font-bold">
+                                <thead className="bg-white border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <tr>
+                                        <th className="px-4 py-3">Expense Date</th>
+                                        <th className="px-4 py-3">Category</th>
+                                        <th className="px-4 py-3 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {(claim.items || []).map((item: any, i: number) => (
+                                        <tr key={i} className="hover:bg-white transition-colors">
+                                            <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                                                {item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-slate-800 line-clamp-1">{item.category}</span>
+                                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5 line-clamp-1">{item.reason || item.description}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex flex-col items-end">
+                                                    {(claim.status === 'Partially Approved' || (item.approvedAmount !== undefined && item.approvedAmount < (item.amount || 0))) ? (
+                                                        <>
+                                                            <span className="text-[9px] text-slate-400 line-through font-bold">₹{(item.amount || 0).toLocaleString('en-IN')}</span>
+                                                            <span className="text-emerald-600 font-black">₹{(item.approvedAmount !== undefined ? item.approvedAmount : item.amount).toLocaleString('en-IN')}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-slate-800 font-black">₹{(item.amount || 0).toLocaleString('en-IN')}</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(!claim.items || claim.items.length === 0) && (
+                                        <tr>
+                                            <td colSpan={3} className="px-4 py-6 text-center text-slate-300 italic font-medium">No individual items recorded</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                    <button onClick={onClose} className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-100 transition-colors text-sm">
+                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0">
+                    <button onClick={onClose} className="px-8 py-3 bg-blue-600 border border-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-blue-500/25">
                         Close
                     </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
@@ -429,16 +468,30 @@ const EditClaimModal: React.FC<{
 const ApproveClaimModal: React.FC<{
     claim: ExpenseClaim;
     onClose: () => void;
-    onConfirm: (action: 'FULL' | 'PARTIAL' | 'REJECT' | 'INFO', amount?: number, reason?: string) => void;
+    onConfirm: (action: 'FULL' | 'PARTIAL' | 'REJECT', amount?: number, reason?: string, itemAmounts?: {[key: string | number]: number}) => void;
 }> = ({ claim, onClose, onConfirm }) => {
-    const [action, setAction] = useState<'FULL' | 'PARTIAL' | 'REJECT' | 'INFO'>('FULL');
-    const [amount, setAmount] = useState<number>(claim.amount);
+    const [action, setAction] = useState<'FULL' | 'PARTIAL' | 'REJECT'>('FULL');
+    const [itemAmounts, setItemAmounts] = useState<{[key: string | number]: number}>(
+        (claim.items || []).reduce((acc: any, item: any, idx: number) => {
+            acc[item.id || idx] = item.amount || 0;
+            return acc;
+        }, {})
+    );
     const [reason, setReason] = useState('');
 
+    const totalApprovedAmount = Object.values(itemAmounts).reduce((sum, val) => sum + val, 0);
+
     const handleSubmit = () => {
-        onConfirm(action, amount, reason);
+        if ((action === 'REJECT' || action === 'PARTIAL') && !reason.trim()) return;
+        onConfirm(action, totalApprovedAmount, reason, itemAmounts);
         onClose();
     };
+
+    const handleItemAmountChange = (id: string | number, val: number) => {
+        setItemAmounts(prev => ({ ...prev, [id]: val }));
+    };
+
+    const isFormValid = action === 'FULL' || (reason.trim().length > 0);
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -449,56 +502,99 @@ const ApproveClaimModal: React.FC<{
                         <X size={20} />
                     </button>
                 </div>
-                <div className="p-6 space-y-6">
-                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center">
+                <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+                    {/* Employee & Base Info */}
+                    <div className="flex items-center gap-4 p-5 border border-slate-100 rounded-2xl bg-white shadow-sm ring-4 ring-slate-50">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+                            <img src={claim.employee.avatar} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-slate-800 text-base">{claim.employee.name}</h4>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded">Submitted: {claim.submittedDate}</span>
+                            </div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{claim.employee.department} • ID: {claim.employee.id}</p>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-xl flex justify-between items-center">
                         <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase">Claimed Amount</p>
-                            <p className="text-xl font-bold text-slate-800">₹{claim.amount.toLocaleString()}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Claimed Amount</p>
+                            <p className="text-xl font-black text-slate-800">₹{claim.amount.toLocaleString('en-IN')}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-bold text-slate-400 uppercase">Type</p>
-                            <p className="text-sm font-semibold text-slate-700">{claim.category}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</p>
+                            <p className="text-sm font-bold text-slate-700">{claim.category}</p>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <label className="block text-xs font-bold text-slate-500 uppercase">Select Action</label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <button onClick={() => setAction('FULL')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'FULL' ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Full Approve</button>
                             <button onClick={() => setAction('PARTIAL')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'PARTIAL' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Partial Approve</button>
                             <button onClick={() => setAction('REJECT')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'REJECT' ? 'bg-rose-50 border-rose-500 text-rose-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Reject</button>
-                            <button onClick={() => setAction('INFO')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'INFO' ? 'bg-purple-50 border-purple-500 text-purple-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Request Info</button>
                         </div>
                     </div>
 
                     {action === 'PARTIAL' && (
-                        <div className="animate-in fade-in slide-in-from-top-2">
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Approved Amount</label>
-                            <input
-                                type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
-                            />
+                        <div className="animate-in fade-in slide-in-from-top-2 border border-yellow-100 bg-yellow-50/30 rounded-2xl overflow-hidden shadow-sm">
+                            <div className="p-3 bg-yellow-50 border-b border-yellow-100 flex justify-between items-center">
+                                <label className="text-[10px] font-black text-yellow-800 uppercase tracking-widest">Adjust Approved Amounts</label>
+                                <span className="text-xs font-black text-yellow-700">Total Approved: ₹{totalApprovedAmount.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="max-h-[220px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                                {(claim.items || []).map((item: any, idx: number) => {
+                                    const itemId = item.id || idx;
+                                    return (
+                                        <div key={itemId} className="flex flex-col gap-2 p-3 bg-white border border-yellow-100/50 rounded-xl">
+                                            <div className="flex justify-between items-start">
+                                                <div className="max-w-[70%]">
+                                                    <p className="text-[10px] font-bold text-slate-700 line-clamp-1 leading-tight">{item.reason || item.description}</p>
+                                                    <p className="text-[9px] text-slate-400 uppercase font-bold mt-0.5 tracking-tight">{item.category} • {item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}</p>
+                                                </div>
+                                                <p className="text-[10px] font-black text-slate-400">Claimed: ₹{(item.amount || 0).toLocaleString('en-IN')}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[11px] font-bold text-slate-400">Approved: ₹</span>
+                                                <input
+                                                    type="number"
+                                                    value={itemAmounts[itemId]}
+                                                    onChange={(e) => handleItemAmountChange(itemId, parseInt(e.target.value) || 0)}
+                                                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 bg-slate-50/50"
+                                                    max={item.amount || 0}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 
-                    {(action === 'REJECT' || action === 'PARTIAL' || action === 'INFO') && (
+                    {(action === 'REJECT' || action === 'PARTIAL') && (
                         <div className="animate-in fade-in slide-in-from-top-2">
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Remarks / Reason</label>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                                Reason <span className="text-rose-500">*</span>
+                            </label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 min-h-[80px] resize-none"
-                                placeholder="Add a note..."
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-300 min-h-[100px] resize-none bg-slate-50/30 font-medium"
+                                placeholder={`Include a reason for ${action === 'REJECT' ? 'rejecting' : 'partial approval'}...`}
+                                required
                             ></textarea>
                         </div>
                     )}
                 </div>
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 text-sm">Cancel</button>
-                    <button onClick={handleSubmit} className="px-6 py-2 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-900 text-sm shadow-sm">
-                        Confirm Action
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 shrink-0">
+                    <button onClick={onClose} className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">Cancel</button>
+                    <button 
+                        onClick={handleSubmit} 
+                        disabled={!isFormValid}
+                        className={`px-8 py-2 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transition-all ${isFormValid ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
+                    >
+                        Confirm
                     </button>
                 </div>
             </div>
@@ -625,7 +721,8 @@ const ExpenseManagement: React.FC<{
                         lastModifiedByName: c.status === 'pending' ? (emp?.name || 'Employee') : 'HR Manager',
                         activityLog: [
                             { text: 'Submitted by employee', date: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'N/A' }
-                        ]
+                        ],
+                        items: c.items || []
                     };
                 });
                 setClaims([...mappedClaims, ...MOCK_CLAIMS]);
@@ -661,20 +758,72 @@ const ExpenseManagement: React.FC<{
         },
     ];
 
-    const handleActionConfirm = (action: 'FULL' | 'PARTIAL' | 'REJECT' | 'INFO', amount?: number, reason?: string) => {
-        let message = '';
-        let type: 'success' | 'error' = 'success';
+    const handleActionConfirm = async (action: 'FULL' | 'PARTIAL' | 'REJECT', amount?: number, reason?: string, itemApprovals?: {[key: string | number]: number}) => {
+        if (!approveClaim) return;
 
-        switch (action) {
-            case 'FULL': message = 'Claim fully approved successfully'; break;
-            case 'PARTIAL': message = `Claim partially approved for ₹${amount}`; break;
-            case 'REJECT': message = 'Claim rejected successfully'; type = 'error'; break;
-            case 'INFO': message = 'Request for information sent to employee'; break;
+        let status: 'approved' | 'partially_approved' | 'rejected' = 'approved';
+        if (action === 'PARTIAL') status = 'partially_approved';
+        if (action === 'REJECT') status = 'rejected';
+
+        // Update items with approved amounts if partial
+        const updatedItems = (approveClaim.items || []).map((item: any, idx: number) => {
+            const itemId = item.id || idx;
+            return {
+                ...item,
+                approvedAmount: action === 'FULL' ? item.amount : (itemApprovals ? itemApprovals[itemId] : item.amount)
+            };
+        });
+
+        // Determine if it's a mock claim (EXP-001, EXP-002, etc.) or a real one
+        const isMock = approveClaim.id.startsWith('EXP-00');
+
+        try {
+            if (!isMock) {
+                const { error } = await supabase
+                    .from('reimbursement_claims')
+                    .update({
+                        status: status,
+                        items: updatedItems,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', approveClaim.id);
+
+                if (error) throw error;
+            }
+
+            // Update local state (works for both real and mock)
+            const displayStatus = (status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')) as any;
+            
+            setClaims(prev => prev.map(c => {
+                if (c.id === approveClaim.id) {
+                    return {
+                        ...c,
+                        status: displayStatus,
+                        approvedAmount: amount, // Keep track of the total approved locally
+                        items: updatedItems,
+                        lastModifiedBy: new Date().toLocaleString('en-GB'),
+                        lastModifiedByName: 'HR Manager'
+                    };
+                }
+                return c;
+            }));
+
+            let message = '';
+            let type: 'success' | 'error' = 'success';
+            switch (action) {
+                case 'FULL': message = 'Claim fully approved successfully'; break;
+                case 'PARTIAL': message = `Claim partially approved for ₹${amount}`; break;
+                case 'REJECT': message = 'Claim rejected successfully'; type = 'error'; break;
+            }
+
+            setShowSuccessToast({ message, type });
+        } catch (error) {
+            console.error('Error updating claim:', error);
+            setShowSuccessToast({ message: 'Failed to update claim status. Please try again.', type: 'error' });
+        } finally {
+            setTimeout(() => setShowSuccessToast(null), 3000);
+            setApproveClaim(null); // Close approve modal
         }
-
-        setShowSuccessToast({ message, type });
-        setTimeout(() => setShowSuccessToast(null), 3000);
-        setApproveClaim(null); // Close approve modal
     };
 
     const handleSaveEdit = (updatedClaim: ExpenseClaim) => {
@@ -752,7 +901,8 @@ const ExpenseManagement: React.FC<{
                                     <th className="px-6 py-3 border-b border-slate-200">Employee Name & ID</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Category</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Amount</th>
-                                    <th className="px-6 py-3 border-b border-slate-200">Expense Date</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Status</th>
+                                    <th className="px-6 py-3 border-b border-slate-200 text-center whitespace-nowrap">Expense Date</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Created By</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Last Modified By</th>
                                     <th className="px-4 py-3 border-b border-slate-200 text-right">Actions</th>
@@ -785,7 +935,12 @@ const ExpenseManagement: React.FC<{
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-bold text-slate-700">₹{claim.amount.toLocaleString('en-IN')}</td>
-                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{claim.submittedDate}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${getStatusBadge(claim.status)}`}>
+                                                {claim.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap text-center font-bold text-xs">{claim.submittedDate}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-700">{claim.createdByName}</span>
@@ -807,7 +962,7 @@ const ExpenseManagement: React.FC<{
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                {['PENDING', 'MORE INFO REQUESTED'].includes(claim.status.toUpperCase()) && (
+                                                {['PENDING'].includes(claim.status.toUpperCase()) && (
                                                     <button
                                                         className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
                                                         title="Edit Claim"
@@ -901,9 +1056,9 @@ const ExpenseManagement: React.FC<{
                 </div>
             )}
 
-            {/* View Only Claim Modal */}
+            {/* View Only Claim Right Side Panel */}
             {viewClaim && (
-                <ViewClaimModal
+                <ViewClaimPanel
                     claim={viewClaim}
                     onClose={() => setViewClaim(null)}
                     onViewProof={(proof) => setViewingProof(proof)}
