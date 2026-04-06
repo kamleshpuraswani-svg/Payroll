@@ -27,7 +27,8 @@ const PfTdsSettings: React.FC = () => {
     const [establishmentName, setEstablishmentName] = useState('TechFlow Systems Pvt Ltd');
     const [epfJoiningDate, setEpfJoiningDate] = useState('2023-01-12');
     const [empRate, setEmpRate] = useState('12');
-    const [emprRate, setEmprRate] = useState('12% of Actual PF Wage');
+    const [emprRate, setEmprRate] = useState('12');
+    const [pensionWageLimit, setPensionWageLimit] = useState('15000');
     const [empLimit, setEmpLimit] = useState('1800');
     const [emprLimit, setEmprLimit] = useState('1800');
     const [pfContributionBasis, setPfContributionBasis] = useState<'actual' | 'limit'>('limit');
@@ -83,7 +84,12 @@ const PfTdsSettings: React.FC = () => {
                 setEstablishmentName(config.establishmentName ?? 'TechFlow Systems Pvt Ltd');
                 setEpfJoiningDate(config.epfJoiningDate ?? '2023-01-12');
                 setEmpRate(config.empRate ?? '12');
-                setEmprRate(config.emprRate ?? '12% of Actual PF Wage');
+                let rawEmprRate = config.emprRate ?? '12';
+                if (typeof rawEmprRate === 'string' && rawEmprRate.includes('%')) {
+                    rawEmprRate = rawEmprRate.split('%')[0].trim();
+                }
+                setEmprRate(rawEmprRate);
+                setPensionWageLimit(config.pensionWageLimit ?? '15000');
                 setEmpLimit(config.empLimit ?? '1800');
                 setEmprLimit(config.emprLimit ?? '1800');
                 setPfContributionBasis(config.pfContributionBasis ?? 'limit');
@@ -115,38 +121,37 @@ const PfTdsSettings: React.FC = () => {
 
     const handleEditPf = () => {
         setBackupPf({ 
-            enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
-            includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, overrideRate, prorateRestricted, 
-            considerComponents, belowLimitComponents: [...belowLimitComponents],
-            pfContributionBasis, pfWageCeiling,
-            pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
-        });
-        setIsEditingPf(true);
-    };
-
-    const handleSavePf = async () => {
-        try {
-            const configValue = { 
-                enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
-                includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, overrideRate, prorateRestricted, 
-                considerComponents, belowLimitComponents,
+                includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
+                considerComponents, belowLimitComponents: [...belowLimitComponents],
                 pfContributionBasis, pfWageCeiling,
                 pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
-            };
-            const { error } = await supabase.from('operational_config').upsert({ config_key: `pf_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
-            if (error) throw error;
+            });
+            setIsEditingPf(true);
+        };
+    
+        const handleSavePf = async () => {
+            try {
+                const configValue = { 
+                    enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
+                    includeEmprContri, includeEdli, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
+                    considerComponents, belowLimitComponents,
+                    pfContributionBasis, pfWageCeiling,
+                    pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis
+                };
+                const { error } = await supabase.from('operational_config').upsert({ config_key: `pf_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
+                if (error) throw error;
+                setIsEditingPf(false);
+            } catch (err) { console.error('Error saving PF settings:', err); }
+        };
+    
+        const handleCancelPf = () => {
+            if (backupPf) {
+                setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setPensionWageLimit(backupPf.pensionWageLimit || '15000'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
+                setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
+                setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
+            }
             setIsEditingPf(false);
-        } catch (err) { console.error('Error saving PF settings:', err); }
-    };
-
-    const handleCancelPf = () => {
-        if (backupPf) {
-            setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
-            setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
-            setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
-        }
-        setIsEditingPf(false);
-    };
+        };
 
     const handleEditTds = () => {
         setBackupTds({ enableTds, tan, defaultRegime, respName, respDesg, respEmail });
@@ -449,16 +454,18 @@ const PfTdsSettings: React.FC = () => {
                                                         </div>
                                                         <div className="space-y-4">
                                                             <div className="relative w-full md:w-80">
-                                                                <select 
+                                                                <input 
+                                                                    type="text" 
                                                                     value={emprRate} 
-                                                                    onChange={e => setEmprRate(e.target.value)} 
+                                                                    onChange={e => {
+                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                        setEmprRate(val);
+                                                                    }} 
                                                                     disabled={!isEditingPf} 
-                                                                    className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-1 ring-slate-100"
-                                                                >
-                                                                    <option>12% of Actual PF Wage</option>
-                                                                    <option>12% of Restricted PF Wage</option>
-                                                                </select>
-                                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                                    className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-1 ring-slate-100 placeholder:text-slate-300" 
+                                                                    placeholder="12"
+                                                                />
+                                                                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
                                                             </div>
                                                             <div className="flex items-center gap-3 flex-wrap">
                                                                 <span className="text-sm font-bold text-slate-600">Limit employer's PF contribution amount maximum of</span>
@@ -493,6 +500,21 @@ const PfTdsSettings: React.FC = () => {
                                                                 disabled={!isEditingPf} 
                                                                 className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
                                                                 placeholder="8.33"
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
+                                                            <input 
+                                                                type="text" 
+                                                                value={pensionWageLimit} 
+                                                                onChange={e => {
+                                                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                    setPensionWageLimit(val);
+                                                                }} 
+                                                                disabled={!isEditingPf} 
+                                                                className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
+                                                                placeholder="15000"
                                                             />
                                                         </div>
 
