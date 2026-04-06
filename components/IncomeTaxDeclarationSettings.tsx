@@ -84,7 +84,7 @@ const DatePicker: React.FC<{
       </label>
       <div 
         onClick={triggerPicker}
-        className={`relative w-full h-12 bg-white border rounded-2xl flex items-center transition-all shadow-sm ${disabled ? 'border-slate-100 bg-slate-50 cursor-not-allowed' : 'border-slate-200 hover:border-sky-400 cursor-pointer group'}`}
+        className={`relative w-full h-12 bg-white border rounded-2xl flex items-center transition-all shadow-sm ${disabled ? 'border-slate-200 bg-slate-50 cursor-not-allowed' : 'border-slate-200 hover:border-sky-400 cursor-pointer group'}`}
       >
         <div className="absolute inset-0 px-4 flex items-center justify-between pointer-events-none z-0">
           <div className="flex items-center gap-3">
@@ -227,9 +227,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     
     // Limits State
     const [limits, setLimits] = useState([
-        { id: '1', section: '80C', limit: '1,50,000', description: 'Investments & Expenses' },
-        { id: '2', section: '80D', limit: '25,000', description: 'Medical Insurance' }
+        { id: '1', section: '80C', limit: '1,50,000', description: 'Investments & Expenses', regime: 'Old' },
+        { id: '2', section: '80D', limit: '25,000', description: 'Medical Insurance', regime: 'Old' }
     ]);
+    const [limitViewRegime, setLimitViewRegime] = useState<'Old' | 'New'>('Old');
 
     // Regime State
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
@@ -509,7 +510,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             <p className="text-xs font-bold text-slate-700">Selected Months for Deduction: <span className="font-black">{selectedCount} months</span></p>
                         </div>
                         
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculation</p>
                             <p className="text-xs font-bold text-slate-700">Total TDS = ₹{totalTax.toLocaleString()}</p>
                             <p className="text-xs font-bold text-slate-700">Selected months = {selectedCount}</p>
@@ -518,9 +519,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                         <div className="space-y-3">
                             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month-wise Breakup:</h5>
-                            <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left text-[11px] border-collapse">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
+                                    <thead className="bg-slate-50/50 border-b border-slate-200">
                                         <tr>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase">Month</th>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase text-right">TDS Deducted</th>
@@ -559,16 +560,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             <p className="text-xs font-bold text-slate-700">Selected Months for Deduction: <span className="font-black">{selectedCount} months</span></p>
                         </div>
                         
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculation</p>
                             <p className="text-xs font-bold text-slate-700">Total TDS = ₹{totalTax.toLocaleString()}</p>
                         </div>
 
                         <div className="space-y-3">
                             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month-wise Breakup:</h5>
-                            <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left text-[11px] border-collapse">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
+                                    <thead className="bg-slate-50/50 border-b border-slate-200">
                                         <tr>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase">Month</th>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase">Weight</th>
@@ -644,16 +645,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </p>
                         </div>
                         
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculation</p>
                             <p className="text-xs font-bold text-slate-700">Total TDS = ₹{totalTax.toLocaleString()}</p>
                         </div>
 
                         <div className="space-y-3">
                             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month-wise Breakup (Auto-adjusted):</h5>
-                            <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left text-[11px] border-collapse">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
+                                    <thead className="bg-slate-50/50 border-b border-slate-200">
                                         <tr>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase">Month</th>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase text-right">TDS Deducted</th>
@@ -725,16 +726,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </p>
                         </div>
                         
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculation</p>
                             <p className="text-xs font-bold text-slate-700">Total TDS = ₹{totalTax.toLocaleString()}</p>
                         </div>
 
                         <div className="space-y-3">
                             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month-wise Breakup:</h5>
-                            <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left text-[11px] border-collapse">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
+                                    <thead className="bg-slate-50/50 border-b border-slate-200">
                                         <tr>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase">Month</th>
                                             <th className="px-3 py-2 font-bold text-slate-500 uppercase text-right">TDS Deducted</th>
@@ -768,7 +769,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         })}
                                     </tbody>
                                     <tfoot className="bg-slate-100/50 border-t border-slate-200">
-                                        <tr className="font-black border-b border-slate-100">
+                                        <tr className="font-black border-b border-slate-200">
                                             <td className="px-3 py-2 text-slate-800">Total Deducted</td>
                                             <td className="px-3 py-2 text-right text-slate-900">₹{totalDeductedInTableMax.toLocaleString()}</td>
                                             <td className="px-3 py-2"></td>
@@ -823,7 +824,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 
                 {/* 1. Investment Declaration Section */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <div>
                             <div className="flex items-center gap-3 mb-1">
                                 <h3 className="text-lg font-bold text-slate-800">Investment Declaration</h3>
@@ -861,7 +862,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                             {/* Declaration Settings Overhaul */}
                             <div className="pt-2">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-100 pb-2">Tax Declaration Due Date</h4>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Tax Declaration Due Date</h4>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* Monthly Window */}
@@ -968,150 +969,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Late Joiner Rule Section */}
-                            <div className="pt-2 border-t border-slate-100">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 pb-2">Late Joiner Declaration Rule</h4>
-                                
-                                <div className="space-y-6">
-                                    <div className="p-4 bg-cyan-50/50 border border-cyan-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2">
-                                        <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
-                                            <Info size={20} className="text-cyan-600" />
-                                        </div>
-                                        <p className="text-sm font-medium text-cyan-900/80 leading-relaxed self-center">
-                                            If employees joins on or after <span className="font-bold underline decoration-cyan-300 underline-offset-2">{getOrdinalDay(new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(cutoffMonth), parseInt(cutoffDay)))} {cutoffMonth}</span> in a financial year, then the earlier of the below dates will apply.
-                                        </p>
-                                    </div>
 
-                                    <div className="flex items-center gap-6 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl max-w-3xl">
-                                        <div className="flex-1">
-                                            <div className="h-11 px-6 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-sm font-bold text-slate-600 shadow-sm italic">
-                                                30 days after date of joining
-                                            </div>
-                                        </div>
 
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">OR</div>
-
-                                        <div className="flex-1 flex gap-3">
-                                            <div className="relative flex-1">
-                                                <select
-                                                    disabled={!isEditingInv}
-                                                    value={lateJoinerMonth}
-                                                    onChange={(e) => setLateJoinerMonth(e.target.value)}
-                                                    className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
-                                                >
-                                                    {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                                        <option key={m} value={m}>{m}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
-                                            <div className="relative w-24">
-                                                <select
-                                                    disabled={!isEditingInv}
-                                                    value={lateJoinerDay}
-                                                    onChange={(e) => setLateJoinerDay(e.target.value)}
-                                                    className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
-                                                >
-                                                    {Array.from({ 
-                                                        length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(lateJoinerMonth) + 1, 0).getDate() 
-                                                    }, (_, i) => i + 1).map(day => (
-                                                        <option key={day} value={day}>{day}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Investment Limits Configuration */}
-                            <div className="pt-2 border-t border-slate-100">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Investment Limits Configuration</h4>
-                                    {isEditingInv && (
-                                        <button 
-                                            onClick={() => setLimits([...limits, { id: Date.now().toString(), section: '', limit: '', description: '' }])}
-                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                                        >
-                                            <Plus size={14} /> Add Row
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">
-                                            <tr>
-                                                <th className="px-4 py-3">Section</th>
-                                                <th className="px-4 py-3">Max Limit (₹)</th>
-                                                <th className="px-4 py-3">Description</th>
-                                                {isEditingInv && <th className="px-4 py-3 w-10"></th>}
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {limits.map((limit, idx) => (
-                                                <tr key={limit.id} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="px-4 py-3 font-bold text-slate-700">
-                                                        {isEditingInv ? (
-                                                            <input 
-                                                                type="text" 
-                                                                value={limit.section} 
-                                                                onChange={(e) => {
-                                                                    const newLimits = [...limits];
-                                                                    newLimits[idx].section = e.target.value;
-                                                                    setLimits(newLimits);
-                                                                }}
-                                                                className="w-24 px-2 py-1 border border-slate-200 rounded focus:border-indigo-500 outline-none"
-                                                            />
-                                                        ) : limit.section}
-                                                    </td>
-                                                    <td className="px-4 py-3 font-black text-slate-800">
-                                                        {isEditingInv ? (
-                                                            <input 
-                                                                type="text" 
-                                                                value={limit.limit} 
-                                                                onChange={(e) => {
-                                                                    const newLimits = [...limits];
-                                                                    newLimits[idx].limit = e.target.value;
-                                                                    setLimits(newLimits);
-                                                                }}
-                                                                className="w-32 px-2 py-1 border border-slate-200 rounded focus:border-indigo-500 outline-none"
-                                                            />
-                                                        ) : limit.limit}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-slate-500">
-                                                        {isEditingInv ? (
-                                                            <input 
-                                                                type="text" 
-                                                                value={limit.description} 
-                                                                onChange={(e) => {
-                                                                    const newLimits = [...limits];
-                                                                    newLimits[idx].description = e.target.value;
-                                                                    setLimits(newLimits);
-                                                                }}
-                                                                className="w-full px-2 py-1 border border-slate-200 rounded focus:border-indigo-500 outline-none"
-                                                            />
-                                                        ) : limit.description}
-                                                    </td>
-                                                    {isEditingInv && (
-                                                        <td className="px-4 py-3 text-right">
-                                                            <button 
-                                                                onClick={() => setLimits(limits.filter(l => l.id !== limit.id))}
-                                                                className="text-slate-300 hover:text-rose-500 transition-colors"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </td>
-                                                    )}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
 
                             {/* Regime & Locking Settings */}
-                            <div className="pt-2 border-t border-slate-100 space-y-6">
+                            <div className="pt-2 border-t border-slate-200 space-y-6">
                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Tax Regime & Switching</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
@@ -1150,7 +1012,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Approval Hierarchy Section */}
-                            <div className="pt-2 border-t border-slate-100">
+                            <div className="pt-2 border-t border-slate-200">
                                 <div className="flex items-center gap-2 mb-4">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval Hierarchy</h4>
                                     <div className="group relative inline-block">
@@ -1188,7 +1050,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                                     <div className="space-y-2">
                                         {invApprovers.length > 0 ? invApprovers.map((approver, index) => (
-                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl group hover:border-indigo-200 transition-colors shadow-sm">
+                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl group hover:border-indigo-200 transition-colors shadow-sm">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black">
                                                         {index + 1}
@@ -1232,7 +1094,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Alerts */}
-                            <div className="pt-4 border-t border-slate-100">
+                            <div className="pt-4 border-t border-slate-200">
                                 <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-2">
                                     <Bell size={16} className="text-slate-400" /> Manage alerts for Employees
                                 </h4>
@@ -1263,7 +1125,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* TDS Deduction Configuration */}
-                            <div className="pt-6 border-t border-slate-100">
+                            <div className="pt-6 border-t border-slate-200">
                                 <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-4">
                                     <Calculator size={16} className="text-slate-400" /> TDS Deduction Configuration
                                 </h4>
@@ -1314,7 +1176,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         ))}
                                     </div>
 
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                                         {months.map(m => (
                                             <label key={m} className={`flex items-center gap-2 group ${isEditingInv ? 'cursor-pointer' : 'cursor-default'}`}>
                                                 <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedTdsMonths.includes(m) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-indigo-400'}`}>
@@ -1454,7 +1316,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 <PieChartIcon size={18} />
                                                 <h5 className="text-xs font-black uppercase tracking-widest">Calculation Preview (Demo Data)</h5>
                                             </div>
-                                            <div className="mb-6 pb-6 border-b border-slate-100 flex justify-between items-end">
+                                            <div className="mb-6 pb-6 border-b border-slate-200 flex justify-between items-end">
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Projected TDS</p>
                                                     <p className="text-2xl font-black text-slate-900">₹ 1,20,000</p>
@@ -1467,7 +1329,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                                             {getDummyCalculation(distributionMethod)}
                                             
-                                            <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
+                                            <div className="mt-6 pt-6 border-t border-slate-200 space-y-2">
                                                 <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
                                                     <Info size={12} /> System Note
                                                 </div>
@@ -1481,7 +1343,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Other Configurations for Investment Declaration */}
-                            <div className="pt-6 border-t border-slate-100">
+                            <div className="pt-6 border-t border-slate-200">
                                 <h4 className="text-sm font-bold text-slate-800 mb-4">Other Configurations</h4>
                                 <div className="space-y-4">
                                     <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
@@ -1495,7 +1357,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Progress Stats */}
-                            <div className="pt-2 border-t border-slate-100">
+                            <div className="pt-2 border-t border-slate-200">
                                 <div className="flex justify-between text-xs font-bold text-slate-600 mb-2">
                                     <span>Declarations Submitted</span>
                                     <span className="text-emerald-600">1,200/1,842 (65%)</span>
@@ -1508,9 +1370,135 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     )}
                 </div>
 
-                {/* 2. Proof of Investment Section */}
+                {/* 2. Income Tax Deductions Limit Section */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/30">
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                    <ShieldCheck size={20} />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 tracking-tight">Income Tax Deductions Limit</h3>
+                            </div>
+                            
+                            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                                <button 
+                                    onClick={() => setLimitViewRegime('Old')}
+                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${limitViewRegime === 'Old' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Old Regime
+                                </button>
+                                <button 
+                                    onClick={() => setLimitViewRegime('New')}
+                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${limitViewRegime === 'New' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    New Regime
+                                </button>
+                            </div>
+                        </div>
+                        {isEditingInv && (
+                            <button 
+                                onClick={() => setLimits([...limits, { id: Date.now().toString(), section: '', limit: '', description: '', regime: limitViewRegime }])}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2 active:scale-95"
+                            >
+                                <Plus size={14} strokeWidth={3} /> Add {limitViewRegime} Row
+                            </button>
+                        )}
+                    </div>
+                    <div className="p-8">
+                        <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left text-sm border-collapse">
+                                <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-6 py-4">Section</th>
+                                        <th className="px-6 py-4">Max Limit (₹)</th>
+                                        <th className="px-6 py-4">Description</th>
+                                        {isEditingInv && <th className="px-6 py-4 w-16 text-center">Action</th>}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {(limits as any[]).filter(l => l.regime === limitViewRegime).length > 0 ? (
+                                        (limits as any[]).filter(l => l.regime === limitViewRegime).map((limit, idx) => {
+                                            const actualIdx = limits.findIndex(l => l.id === limit.id);
+                                            return (
+                                                <tr key={limit.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-6 py-4 font-bold text-slate-700">
+                                                        {isEditingInv ? (
+                                                            <input 
+                                                                type="text" 
+                                                                value={limit.section} 
+                                                                onChange={(e) => {
+                                                                    const newLimits = [...limits];
+                                                                    newLimits[actualIdx].section = e.target.value;
+                                                                    setLimits(newLimits);
+                                                                }}
+                                                                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
+                                                                placeholder="e.g. 80C"
+                                                            />
+                                                        ) : <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-black text-slate-800">
+                                                        {isEditingInv ? (
+                                                            <div className="relative">
+                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={limit.limit} 
+                                                                    onChange={(e) => {
+                                                                        const newLimits = [...limits];
+                                                                        newLimits[actualIdx].limit = e.target.value;
+                                                                        setLimits(newLimits);
+                                                                    }}
+                                                                    className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                    placeholder="0"
+                                                                />
+                                                            </div>
+                                                        ) : <span className="text-indigo-600">₹{limit.limit}</span>}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-500 text-xs font-medium">
+                                                        {isEditingInv ? (
+                                                            <input 
+                                                                type="text" 
+                                                                value={limit.description} 
+                                                                onChange={(e) => {
+                                                                    const newLimits = [...limits];
+                                                                    newLimits[actualIdx].description = e.target.value;
+                                                                    setLimits(newLimits);
+                                                                }}
+                                                                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                placeholder="Section description..."
+                                                            />
+                                                        ) : limit.description}
+                                                    </td>
+                                                    {isEditingInv && (
+                                                        <td className="px-6 py-4 text-center">
+                                                            <button 
+                                                                onClick={() => setLimits(limits.filter(l => (l as any).id !== limit.id))}
+                                                                className="w-8 h-8 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={isEditingInv ? 4 : 3} className="px-6 py-12 text-center text-slate-400 italic text-sm">
+                                                No deductions configured for {limitViewRegime} Regime.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Proof of Investment Section */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <div>
                             <div className="flex items-center gap-3 mb-1">
                                 <h3 className="text-lg font-bold text-slate-800">Proof of Investment</h3>
@@ -1592,7 +1580,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Approval Hierarchy Section - NEW for POI */}
-                            <div className="pt-2 border-t border-slate-100">
+                            <div className="pt-2 border-t border-slate-200">
                                 <div className="flex items-center gap-2 mb-4">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">POI Approval Hierarchy</h4>
                                     <Info size={12} className="text-slate-400" />
@@ -1624,7 +1612,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                                     <div className="space-y-2">
                                         {proofApprovers.length > 0 ? proofApprovers.map((approver, index) => (
-                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl group hover:border-indigo-200 transition-colors shadow-sm">
+                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl group hover:border-indigo-200 transition-colors shadow-sm">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black">
                                                         {index + 1}
@@ -1698,7 +1686,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
 
                             {/* Other Configs */}
-                            <div className="pt-6 border-t border-slate-100">
+                            <div className="pt-6 border-t border-slate-200">
                                 <h4 className="text-sm font-bold text-slate-800 mb-4">Other Configurations</h4>
                                 <div className="space-y-4">
                                     <label className={`flex items-center gap-3 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
