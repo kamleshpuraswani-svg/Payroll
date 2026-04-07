@@ -32,7 +32,8 @@ import {
     Upload,
     Paperclip,
     Sigma,
-    Activity
+    Activity,
+    Info
 } from 'lucide-react';
 import { MOCK_EMPLOYEES } from '../constants';
 
@@ -67,6 +68,7 @@ interface LoanRequest {
     disbursedDate?: string;
     repaymentSchedule?: RepaymentScheduleItem[];
     reason: string;
+    repaymentMonth?: string;
 }
 
 // --- Mock Data ---
@@ -109,10 +111,10 @@ const MOCK_LOANS: LoanRequest[] = [
         disbursedDate: '12 Dec 2025',
         reason: 'Home Renovation',
         repaymentSchedule: [
-            { emiNo: 1, dueDate: '31 Dec 2025', amount: 8500, deductedDate: '31 Dec 2025', status: 'Paid' },
-            { emiNo: 2, dueDate: '31 Jan 2026', amount: 8500, status: 'Pending' },
-            { emiNo: 3, dueDate: '28 Feb 2026', amount: 8500, status: 'Pending' },
-            { emiNo: 4, dueDate: '31 Mar 2026', amount: 8500, status: 'Pending' },
+            { emiNo: 1, dueDate: '31 Dec 2025', amount: 8815, deductedDate: '31 Dec 2025', status: 'Paid' },
+            { emiNo: 2, dueDate: '31 Jan 2026', amount: 8815, status: 'Pending' },
+            { emiNo: 3, dueDate: '28 Feb 2026', amount: 8815, status: 'Pending' },
+            { emiNo: 4, dueDate: '31 Mar 2026', amount: 8815, status: 'Pending' },
         ]
     },
     {
@@ -123,7 +125,8 @@ const MOCK_LOANS: LoanRequest[] = [
         requestDate: '15 Dec 2025',
         status: 'Pending',
         reason: 'Diwali Expenses',
-        interestRate: 0
+        interestRate: 0,
+        totalEmis: 12
     },
     {
         id: 'LN-004',
@@ -153,7 +156,8 @@ const MOCK_LOANS: LoanRequest[] = [
         requestDate: '12 Dec 2025',
         status: 'Rejected',
         reason: 'Policy Violation: Probation Period',
-        interestRate: 10
+        interestRate: 10,
+        totalEmis: 24
     }
 ];
 
@@ -183,130 +187,407 @@ const getTypeColor = (type: string) => {
 
 // --- Modals ---
 
-const ViewLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void }> = ({ loan, onClose }) => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 className="font-bold text-slate-800 text-lg">Loan Details</h3>
-                <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"><X size={20} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* Employee Snippet */}
-                <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                        <img src={loan.employee.avatar} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-slate-800">{loan.employee.name}</h4>
-                        <p className="text-xs text-slate-500">{loan.employee.department} • CTC: {loan.employee.ctc}</p>
-                    </div>
-                </div>
+const ViewLoanModal: React.FC<{ 
+    loan: LoanRequest; 
+    userRole: string; 
+    onClose: () => void;
+    onEdit?: (loan: LoanRequest) => void;
+    onApprove?: (loan: LoanRequest) => void;
+    onReject?: (loan: LoanRequest) => void;
+}> = ({ loan, userRole, onClose, onEdit, onApprove, onReject }) => {
+    
+    // Calculate EMI stats for the visual boxes
+    const calculateEMI = () => {
+        // If a schedule exists, use the actual amount from the first entry to ensure consistency
+        if (loan.repaymentSchedule && loan.repaymentSchedule.length > 0) {
+            return { emi: loan.repaymentSchedule[0].amount };
+        }
+        
+        const p = loan.requestedAmount || 0;
+        const r = (loan.interestRate || 0) / 12 / 100;
+        const n = loan.totalEmis || 1;
+        if (p === 0 || n === 0) return { emi: 0 };
+        let emi = r === 0 ? p / n : (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        return { emi: Math.round(emi) };
+    };
 
-                {/* Loan Summary */}
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loan Summary</h4>
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(loan.status)}`}>
+    const stats = calculateEMI();
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-100">
+                {/* Header with Status */}
+                <div className="px-8 py-5 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
+                    <div className="flex items-center gap-3">
+                        <h3 className="font-black text-slate-800 text-xl tracking-tight">Loan Details</h3>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black border uppercase tracking-wider shadow-sm ${getStatusColor(loan.status)}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusColor(loan.status).split(' ')[1].replace('text-', 'bg-')}`} />
                             {loan.status}
                         </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                            <p className="text-xs text-slate-500 mb-1">Type</p>
-                            <p className="font-bold text-slate-800 text-sm">{loan.type}</p>
-                        </div>
-                        <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                            <p className="text-xs text-slate-500 mb-1">Requested Amount</p>
-                            <p className="font-bold text-slate-800 text-sm">₹{loan.requestedAmount.toLocaleString()}</p>
-                        </div>
-                        {loan.approvedAmount && (
-                            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
-                                <p className="text-xs text-emerald-600 font-medium mb-1">Approved Amount</p>
-                                <p className="font-bold text-emerald-800 text-sm">₹{loan.approvedAmount.toLocaleString()}</p>
-                            </div>
-                        )}
-                        <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                            <p className="text-xs text-slate-500 mb-1">Tenure</p>
-                            <p className="font-bold text-slate-800 text-sm">{loan.totalEmis || '-'} Months</p>
-                        </div>
-                    </div>
-                    {loan.reason && (
-                        <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                            <p className="text-xs text-slate-500 mb-1">Reason</p>
-                            <p className="text-sm text-slate-700 italic">"{loan.reason}"</p>
-                        </div>
-                    )}
+                    <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full text-slate-300 hover:text-slate-500 transition-all">
+                        <X size={24} />
+                    </button>
                 </div>
 
-                {/* Repayment Schedule */}
-                {loan.repaymentSchedule && (
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Repayment Schedule</h4>
-                        <div className="border border-slate-200 rounded-lg overflow-hidden">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-slate-50 text-slate-500 font-semibold">
-                                    <tr>
-                                        <th className="px-3 py-2 border-b border-slate-200">EMI</th>
-                                        <th className="px-3 py-2 border-b border-slate-200">Due Date</th>
-                                        <th className="px-3 py-2 border-b border-slate-200 text-right">Amount</th>
-                                        <th className="px-3 py-2 border-b border-slate-200 text-right">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {loan.repaymentSchedule.map((emi) => (
-                                        <tr key={emi.emiNo} className="hover:bg-slate-50">
-                                            <td className="px-3 py-2 text-slate-600">#{emi.emiNo}</td>
-                                            <td className="px-3 py-2 text-slate-800 font-medium">{emi.dueDate}</td>
-                                            <td className="px-3 py-2 text-right font-bold text-slate-700">₹{emi.amount.toLocaleString()}</td>
-                                            <td className="px-3 py-2 text-right">
-                                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${emi.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : emi.status === 'Overdue' ? 'bg-rose-100 text-rose-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                    {emi.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+                    {/* Top Section: Employee & Actions Card */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between group">
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <img src={loan.employee.avatar} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow-md object-cover" />
+                                <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+                            </div>
+                            <div>
+                                <h4 className="font-black text-slate-800 text-lg leading-tight">{loan.employee.name} ({loan.employee.id})</h4>
+                                <p className="text-sm text-slate-400 font-medium mt-1 uppercase tracking-wide">
+                                    Requested on {loan.requestDate || '02-Mar-2026'}, 05:15 PM
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Quick Action Icons (Only for Pending/HR) */}
+                        <div className="flex items-center gap-2">
+                            {loan.status === 'Pending' && (
+                                <>
+                                    <button onClick={() => onEdit?.(loan)} title="Edit" className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all border border-indigo-100/50 shadow-sm">
+                                        <Edit2 size={18} />
+                                    </button>
+                                    <button onClick={() => onApprove?.(loan)} title="Approve" className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-100 transition-all border border-emerald-100/50 shadow-sm">
+                                        <Check size={18} />
+                                    </button>
+                                    <button onClick={() => onReject?.(loan)} title="Reject" className="p-3 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all border border-rose-100/50 shadow-sm">
+                                        <X size={18} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
-                )}
-            </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button onClick={onClose} className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-medium rounded-lg hover:bg-slate-100 text-sm">Close</button>
+
+                    {/* Middle Section: Visual Stats Summary */}
+                    <div className="relative flex items-center justify-center py-6 px-4 bg-slate-50/30 rounded-[32px] border border-slate-50">
+                        {/* Connecting Line */}
+                        <div className="absolute left-1/4 right-1/4 h-[2px] border-t-2 border-dashed border-slate-200 top-1/2 -translate-y-1/2 -z-0" />
+
+                        <div className="grid grid-cols-3 w-full relative z-10">
+                            {/* Start Box: Requested Amount */}
+                            <div className="flex flex-col items-start gap-3">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">Requested Amount</span>
+                                <div className="w-full aspect-[16/9] max-h-24 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col items-center justify-center p-4">
+                                    <span className="text-xl font-black text-indigo-600">₹{loan.requestedAmount.toLocaleString()}</span>
+                                    <span className="text-[10px] font-bold text-slate-400 mt-0.5">Full Principle</span>
+                                </div>
+                            </div>
+
+                            {/* Center Bubble: Tenure & Interest */}
+                            <div className="flex flex-col items-center justify-center mt-6">
+                                <div className="px-6 py-2 bg-indigo-50 border border-indigo-100 rounded-full shadow-sm">
+                                    <span className="text-xs font-black text-indigo-600">{loan.totalEmis || 1} Month(s)</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tight">of {loan.type || 'Personal Loan'}</span>
+                                <div className="mt-2 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-[11px] font-black text-white shadow-lg border-2 border-white">
+                                    {loan.interestRate || '0'}%
+                                </div>
+                            </div>
+
+                            {/* End Box: Monthly EMI */}
+                            <div className="flex flex-col items-end gap-3 text-right">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest pr-2">Monthly EMI</span>
+                                <div className="w-full aspect-[16/9] max-h-24 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col items-center justify-center p-4">
+                                    <span className="text-xl font-black text-indigo-600">₹{stats.emi.toLocaleString()}</span>
+                                    <span className="text-[10px] font-bold text-slate-400 mt-0.5">{loan.interestRate ? 'With Interest' : 'Interest Free'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Metadata Sections */}
+                    <div className="space-y-6 pt-4">
+                        <div className="grid grid-cols-1 gap-6">
+                            {/* Attachment */}
+                            <div className="space-y-3">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Attachment:</span>
+                                <p className="text-slate-800 font-bold ml-1">-</p>
+                                <div className="h-px bg-slate-100" />
+                            </div>
+
+                            {/* Reason */}
+                            <div className="space-y-3">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Reason:</span>
+                                <p className="text-slate-800 font-bold ml-1 text-sm leading-relaxed">
+                                    {loan.reason || 'Requested for personal requirements.'}
+                                </p>
+                                <div className="h-px bg-slate-100" />
+                            </div>
+
+                            {/* Repayment Month */}
+                            <div className="space-y-3">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Repayment Month:</span>
+                                <p className="text-slate-800 font-bold ml-1 text-sm">
+                                    {loan.repaymentMonth || 'Not specified'}
+                                </p>
+                            </div>
+
+                            {/* Repayment Schedule (Conditional) */}
+                            {['Active', 'Approved', 'Repaying', 'Closed', 'Partially Approved'].includes(loan.status) && loan.repaymentSchedule && (
+                                <div className="space-y-4 pt-4 border-t border-slate-50">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Repayment Schedule</span>
+                                    <div className="overflow-hidden border border-slate-100 rounded-2xl bg-white shadow-sm">
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-tight">
+                                                <tr>
+                                                    <th className="px-4 py-3 border-b border-slate-100">#</th>
+                                                    <th className="px-4 py-3 border-b border-slate-100">Due Date</th>
+                                                    <th className="px-4 py-3 border-b border-slate-100 text-right">Amount</th>
+                                                    <th className="px-4 py-3 border-b border-slate-100 text-right">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {loan.repaymentSchedule.map((emi) => (
+                                                    <tr key={emi.emiNo} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="px-4 py-3 text-slate-500 font-mono">{emi.emiNo}</td>
+                                                        <td className="px-4 py-3 text-slate-800 font-bold">{emi.dueDate}</td>
+                                                        <td className="px-4 py-3 text-right text-indigo-600 font-black">₹{emi.amount.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${emi.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                                                {emi.status}
+                                                            </span>
+                                                         </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer (Simplified for View) */}
+                <div className="p-6 border-t border-slate-50 bg-white flex justify-end shrink-0">
+                    <button onClick={onClose} className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 font-black rounded-2xl hover:bg-slate-50 text-sm transition-all shadow-sm">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: (updated: LoanRequest) => void }> = ({ loan, onClose, onSave }) => {
     const [amount, setAmount] = useState(loan.requestedAmount);
-    const [tenure, setTenure] = useState(loan.totalEmis || 12);
+    const [tenure, setTenure] = useState(loan.totalEmis || 1);
+    const [interestRate, setInterestRate] = useState(String(loan.interestRate || '0'));
+    const [repaymentMonth, setRepaymentMonth] = useState('February 2026'); // Mock default
+    const [reason, setReason] = useState(loan.reason || '');
+    const [approvers, setApprovers] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchApprovers = async () => {
+            try {
+                const { data } = await supabase.from('loan_types').select('*');
+                if (data) {
+                    // Try to find matching config based on loan type and employee's BU
+                    const businessUnit = 'MindInventory'; // Mock/Default BU
+                    let config = data.find(lt => lt.name === loan.type && lt.target_id === businessUnit);
+                    if (!config) config = data.find(lt => lt.name === loan.type && lt.target_id === 'MindInventory');
+                    
+                    if (config?.approvers) {
+                        const mapped = config.approvers.map((name: string) => {
+                            const found = MOCK_EMPLOYEES.find(e => `${e.first_name} ${e.last_name}` === name.split(' (')[0]);
+                            return found || { id: name, first_name: name.split(' (')[0], last_name: '' };
+                        });
+                        setApprovers(mapped);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching approvers for edit:', err);
+            }
+        };
+        fetchApprovers();
+    }, [loan.id, loan.type]);
+
+    const calculateEMI = () => {
+        const p = parseFloat(String(amount)) || 0;
+        const r = (parseFloat(interestRate) || 0) / 12 / 100;
+        const n = parseInt(String(tenure)) || 0;
+        if (p === 0 || n === 0) return { emi: 0, totalInterest: 0, totalPayable: 0 };
+        let emi = r === 0 ? p / n : (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        return { emi: Math.round(emi), totalInterest: Math.round((emi * n) - p), totalPayable: Math.round(emi * n) };
+    };
+
+    const stats = calculateEMI();
 
     const handleSave = () => {
-        onSave({ ...loan, requestedAmount: amount, totalEmis: tenure });
+        onSave({ 
+            ...loan, 
+            requestedAmount: Number(amount), 
+            totalEmis: Number(tenure), 
+            interestRate: Number(interestRate),
+            reason: reason,
+            remainingBalance: Number(amount)
+        });
         onClose();
     };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10 transition-shadow">
                     <h3 className="font-bold text-slate-800 text-lg">Edit Loan Request</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"><X size={20} /></button>
+                    <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
                 </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Requested Amount</label>
-                        <input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:border-purple-500" />
+
+                <div className="p-8 space-y-8 overflow-y-auto">
+                    {/* Employee Snippet (Read-only Context) */}
+                    <div className="max-w-md">
+                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">SELECTED EMPLOYEE</label>
+                        <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl opacity-60">
+                            <img src={loan.employee.avatar} alt="" className="w-10 h-10 rounded-full border border-slate-200 object-cover" />
+                            <div>
+                                <div className="font-bold text-slate-800">{loan.employee.name}</div>
+                                <div className="text-xs text-slate-400 font-mono">{loan.employee.id} • {loan.employee.department}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tenure (Months)</label>
-                        <input type="number" value={tenure} onChange={(e) => setTenure(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" />
+
+                    <div className="space-y-6">
+                        {/* Loan Type (Read-only Context) */}
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">LOAN TYPE</label>
+                            <div className="flex gap-4">
+                                <label className={`flex items-center gap-4 px-6 py-4 border-2 rounded-2xl cursor-not-allowed opacity-50 min-w-[200px] ${loan.type === 'Salary Advance' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100'}`}>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${loan.type === 'Salary Advance' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {loan.type === 'Salary Advance' && <div className="w-3 h-3 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <span className={`text-base font-bold ${loan.type === 'Salary Advance' ? 'text-purple-900' : 'text-slate-600'}`}>Salary Advance</span>
+                                </label>
+                                <label className={`flex items-center gap-4 px-6 py-4 border-2 rounded-2xl cursor-not-allowed opacity-50 min-w-[200px] ${loan.type === 'Loan' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100'}`}>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${loan.type === 'Loan' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {loan.type === 'Loan' && <div className="w-3 h-3 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <span className={`text-base font-bold ${loan.type === 'Loan' ? 'text-purple-900' : 'text-slate-600'}`}>Loan</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Requested Amount */}
+                        <div className="max-w-md">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REQUESTED AMOUNT <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                <input
+                                    type="text"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6 max-w-md">
+                            <div>
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">INTEREST RATE (% P.A.)</label>
+                                <input
+                                    type="text"
+                                    value={interestRate}
+                                    onChange={(e) => setInterestRate(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                />
+                                <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Set 0 for interest-free advances.</p>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">MAX TENURE (MONTHS) <span className="text-rose-500">*</span></label>
+                                <input
+                                    type="text"
+                                    value={tenure}
+                                    onChange={(e) => setTenure(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                />
+                                <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Max tenure allowed for this selection.</p>
+                            </div>
+                        </div>
+
+                        {/* Detailed EMI Table & Repayment Month */}
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REPAYMENT MONTH</label>
+                                <div className="relative">
+                                    <select
+                                        value={repaymentMonth}
+                                        onChange={(e) => setRepaymentMonth(e.target.value)}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
+                                    >
+                                        <option>February 2026</option>
+                                        <option>March 2026</option>
+                                        <option>April 2026</option>
+                                    </select>
+                                    <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
+                            </div>
+                            
+                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">MONTHLY EMI</span>
+                                    <span className="text-lg font-black text-emerald-600">₹{stats.emi.toLocaleString()}</span>
+                                </div>
+                                <div className="h-px bg-slate-100" />
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs font-medium">
+                                        <span className="text-slate-400">Principal</span>
+                                        <span className="text-slate-700 font-bold">₹{Number(amount || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs font-medium">
+                                        <span className="text-slate-400">Total Interest</span>
+                                        <span className="text-slate-700 font-bold">₹{stats.totalInterest.toLocaleString()}</span>
+                                    </div>
+                                    <div className="h-px border-t border-dashed border-slate-200 my-1" />
+                                    <div className="flex justify-between text-xs font-medium pt-1">
+                                        <span className="text-slate-600 font-black">Total Payable</span>
+                                        <span className="text-slate-900 font-black">₹{stats.totalPayable.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Reason/Purpose */}
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">Reason/Purpose <span className="text-rose-500">*</span></label>
+                            <textarea
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all min-h-[100px] resize-none font-bold"
+                                placeholder="Brief reason for the loan request..."
+                            />
+                        </div>
+
+                        {/* Approval Flow Section (Read-Only List) */}
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow</label>
+                            <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/30 space-y-4">
+                                <div className="min-h-[80px] border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center p-4">
+                                    {approvers.length === 0 ? (
+                                        <p className="text-xs italic text-slate-400 font-medium">Approval flow is linked to entity settings and cannot be modified.</p>
+                                    ) : (
+                                        <div className="w-full flex flex-wrap gap-2">
+                                            {approvers.map((app, idx) => (
+                                                <div key={app.id} className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm transition-all shadow-sm">
+                                                    <span className="w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-[10px] font-black">{idx + 1}</span>
+                                                    <span className="font-bold text-slate-700">{app.first_name} {app.last_name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 text-sm">Cancel</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 text-sm shadow-sm flex items-center gap-2"><Save size={16} /> Save Changes</button>
+
+                <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3 sticky bottom-0 z-10 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
+                    <button onClick={onClose} className="px-8 py-3 dark:bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm">Cancel</button>
+                    <button onClick={handleSave} className="px-8 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all transform active:scale-95">Save</button>
                 </div>
             </div>
         </div>
@@ -408,33 +689,64 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                // Fetch live config from Supabase for all roles now
+                // Fetch live config from Supabase
                 const { data: loanTypes } = await supabase
                     .from('loan_types')
                     .select('*');
 
                 if (loanTypes) {
-                    const config = loanTypes.find(lt => lt.name === loanType);
+                    // Try to find the employee and their business unit
+                    const employee = MOCK_EMPLOYEES.find(e => e.id === selectedEmployeeId);
+                    const businessUnit = employee?.business_unit;
+
+                    // 1. Try to find config matching name AND employee's BU
+                    let config = businessUnit ? loanTypes.find(lt => 
+                        lt.name === loanType && 
+                        lt.target_id === businessUnit && 
+                        lt.target_type === 'BusinessUnit'
+                    ) : null;
+
+                    // 2. Fallback to 'MindInventory' (System Default) if BU mismatch or BU not found
+                    if (!config) {
+                        config = loanTypes.find(lt => 
+                            lt.name === loanType && 
+                            lt.target_id === 'MindInventory'
+                        );
+                    }
+
+                    // 3. Last resort: first match by name (preferring non-null target_id)
+                    if (!config) {
+                        config = loanTypes.find(lt => lt.name === loanType && lt.target_id !== null) 
+                                 || loanTypes.find(lt => lt.name === loanType);
+                    }
+
                     if (config) {
-                        setInterestRate(String(config.interest_rate || (loanType === 'Loan' ? '10.5' : '0')));
-                        setMaxTenure(String(config.max_tenure || (loanType === 'Loan' ? '12' : '3')));
+                        // Interest Rate
+                        setInterestRate(String(config.interest_rate ?? (loanType === 'Loan' ? '10.5' : '0')));
+                        
+                        // Max Tenure
+                        const defaultTenure = loanType === 'Loan' ? '12' : '3';
+                        setMaxTenure(String(config.max_tenure || defaultTenure));
                         
                         // Handle Approvers
                         if (config.approvers && Array.isArray(config.approvers)) {
-                            // Map approver IDs to full employee objects if possible, 
-                            // or just use the data from config if it's already structured
-                            const mappedApprovers = config.approvers.map((app: any) => ({
-                                id: app.id || app.employee_id,
-                                first_name: app.name?.split(' ')[0] || app.first_name,
-                                last_name: app.name?.split(' ').slice(1).join(' ') || app.last_name
-                            }));
+                            const mappedApprovers = config.approvers.map((nameStr: string) => {
+                                const found = MOCK_EMPLOYEES.find(e => `${e.first_name} ${e.last_name}` === nameStr.split(' (')[0]);
+                                if (found) return found;
+                                return {
+                                    id: nameStr,
+                                    first_name: nameStr.split(' (')[0],
+                                    last_name: ''
+                                };
+                            });
                             setApprovers(mappedApprovers);
+                        } else {
+                            setApprovers([]);
                         }
                     }
                 }
             } catch (err) {
                 console.error('Error fetching loan defaults:', err);
-                // Fallback to hardcoded defaults
                 if (loanType === 'Loan') {
                     setInterestRate('10.5');
                     setMaxTenure('12');
@@ -442,11 +754,12 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                     setInterestRate('0');
                     setMaxTenure('3');
                 }
+                setApprovers([]);
             }
         };
 
         fetchDefaults();
-    }, [loanType, userRole]);
+    }, [loanType, userRole, selectedEmployeeId]);
 
     // Approval Flow State
     const [approvers, setApprovers] = useState<any[]>([]);
@@ -526,7 +839,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                 <div className="p-8 space-y-8 overflow-y-auto">
                     {/* Select Employee */}
                     {userRole !== 'EMPLOYEE' && (
-                        <div>
+                        <div className="max-w-md">
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">SELECT EMPLOYEE <span className="text-rose-500">*</span></label>
                             <div className="relative">
                                 <select
@@ -540,6 +853,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                     ))}
                                 </select>
                                 <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                {/* Repayment note moved to correct section */}
                             </div>
                         </div>
                     )}
@@ -572,7 +886,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                         </div>
 
                         {/* Requested Amount */}
-                        <div>
+                        <div className="max-w-md">
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REQUESTED AMOUNT <span className="text-rose-500">*</span></label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
@@ -586,7 +900,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-6 max-w-md">
                             <div>
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">INTEREST RATE (% P.A.)</label>
                                 <input
@@ -615,22 +929,29 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                             </div>
                         </div>
 
-                        {loanType === 'Loan' && (
+                        {/* Show EMI table for Loan OR for Salary Advance with Interest > 0 and Tenure > 1 */}
+                        {(loanType === 'Loan' || (loanType === 'Salary Advance' && (parseFloat(interestRate) || 0) > 0 && (parseInt(maxTenure) || 0) > 1)) && (
                             <div className="grid grid-cols-2 gap-6">
                                 {userRole !== 'EMPLOYEE' && (
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI START DATE</label>
+                                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                            {loanType === 'Loan' ? 'REPAYMENT MONTH' : 'REPAYMENT MONTH'}
+                                        </label>
                                         <div className="relative">
-                                            <input
-                                                type="date"
-                                                value={emiStartDate}
-                                                onChange={(e) => setEmiStartDate(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
-                                            />
+                                            <select
+                                                value={repaymentMonth}
+                                                onChange={(e) => setRepaymentMonth(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
+                                            >
+                                                <option>February 2026</option>
+                                                <option>March 2026</option>
+                                                <option>April 2026</option>
+                                            </select>
+                                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                         </div>
                                     </div>
                                 )}
-                                <div className={`bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3 ${userRole === 'EMPLOYEE' ? 'col-span-2' : ''}`}>
+                                <div className={`bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3 ${(userRole === 'EMPLOYEE' || loanType === 'Salary Advance') ? 'col-span-2' : ''}`}>
                                     <div className="flex justify-between items-center">
                                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">MONTHLY EMI</span>
                                         <span className="text-lg font-black text-emerald-600">₹{stats.emi.toLocaleString()}</span>
@@ -656,7 +977,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                         )}
 
                         {loanType === 'Salary Advance' && userRole !== 'EMPLOYEE' && (
-                            <div>
+                            <div className="max-w-md">
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REPAYMENT MONTH</label>
                                 <div className="relative">
                                     <select
@@ -670,6 +991,12 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                     </select>
                                     <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                 </div>
+                                {loanType === 'Salary Advance' && (parseInt(maxTenure) || 0) === 1 && (
+                                    <p className="mt-3 text-xs text-purple-600 font-medium bg-purple-50 p-3 rounded-xl border border-purple-100 flex items-center gap-2.5">
+                                        <Info size={14} className="flex-shrink-0" />
+                                        <span>This advance will be recovered in full from the <span className="font-bold underline">{repaymentMonth}</span> payroll.</span>
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -689,29 +1016,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                         <div>
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow</label>
                             <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/30 space-y-4">
-                                {userRole !== 'EMPLOYEE' && (
-                                    <div className="flex gap-3">
-                                        <div className="relative flex-1">
-                                            <select
-                                                value={selectedApproverId}
-                                                onChange={(e) => setSelectedApproverId(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
-                                            >
-                                                <option value="">Select Employee to Add...</option>
-                                                {MOCK_EMPLOYEES.map(emp => (
-                                                    <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                        <button
-                                            onClick={handleAddApprover}
-                                            className="px-6 py-3 bg-purple-400 hover:bg-purple-500 text-white font-bold rounded-xl shadow-sm transition-all flex items-center gap-2"
-                                        >
-                                            <Plus size={18} /> Add
-                                        </button>
-                                    </div>
-                                )}
+                                {/* Manual approver addition removed per requirement */}
 
                                 {/* Approvers List Area */}
                                 <div className="min-h-[80px] border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center p-4">
@@ -723,29 +1028,8 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                                 <div key={app.id} className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm group transition-all">
                                                     <span className="w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-[10px] font-black">{idx + 1}</span>
                                                     <span className="font-bold text-slate-700">{app.first_name} {app.last_name}</span>
-                                                    {userRole !== 'EMPLOYEE' && (
-                                                        <div className="flex items-center gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={() => moveApprover(idx, 'up')}
-                                                                disabled={idx === 0}
-                                                                title="Move Up"
-                                                                className={`text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors ${idx === 0 ? 'opacity-20 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <ChevronUp size={14} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => moveApprover(idx, 'down')}
-                                                                disabled={idx === approvers.length - 1}
-                                                                title="Move Down"
-                                                                className={`text-slate-400 hover:text-purple-600 p-0.5 rounded transition-colors ${idx === approvers.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <ChevronDown size={14} />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                    {userRole !== 'EMPLOYEE' && (
-                                                        <button onClick={() => removeApprover(app.id)} className="text-slate-400 hover:text-rose-500 ml-1"><X size={14} /></button>
-                                                    )}
+                                                    {/* Approver reordering removed per requirement - view only hierarchy */}
+                                                    {/* Approver removal removed per requirement */}
                                                 </div>
                                             ))}
                                         </div>
@@ -855,6 +1139,20 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
         setLoans(prev => prev.map(l => l.id === id ? { ...l, status: 'Rejected', reason: reason } as LoanRequest : l));
     };
 
+    const calculateInitialEmi = (requestedAmount: number, interestRate: number, maxTenure: number) => {
+        const p = parseFloat(requestedAmount as any) || 0;
+        const r = (parseFloat(interestRate as any) || 0) / 12 / 100;
+        const n = parseInt(maxTenure as any) || 0;
+        if (p === 0 || n === 0) return 0;
+        let emi = 0;
+        if (r === 0) {
+            emi = p / n;
+        } else {
+            emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        }
+        return Math.round(emi);
+    };
+
     const handleCreateRequest = (data: any) => {
         const selectedEmp = MOCK_EMPLOYEES.find(e => e.id === data.employeeId);
         if (selectedEmp) {
@@ -868,13 +1166,15 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                     avatar: selectedEmp.avatar_url
                 },
                 type: data.loanType === 'Salary Advance' ? 'Salary Advance' : 'Loan',
-                requestedAmount: data.amount,
+                requestedAmount: data.requestedAmount || 0,
                 requestDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
                 status: 'Pending',
                 reason: data.reason,
-                totalEmis: data.tenure,
-                interestRate: data.loanType === 'Loan' ? 10.5 : 0, // Mock interest
-                remainingBalance: data.amount
+                totalEmis: data.maxTenure || 1,
+                interestRate: data.interestRate || 0,
+                remainingBalance: data.requestedAmount || 0,
+                emiAmount: calculateInitialEmi(data.requestedAmount, data.interestRate, data.maxTenure),
+                repaymentMonth: data.repaymentMonth || 'February 2026'
             };
             setLoans(prev => [newRequest, ...prev]);
         }
@@ -1004,7 +1304,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                 {loan.type}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right font-medium text-slate-600">₹{loan.requestedAmount.toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-right font-medium text-slate-600">₹{(loan.requestedAmount || 0).toLocaleString()}</td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">{loan.approvedAmount ? `₹${loan.approvedAmount.toLocaleString()}` : '—'}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(loan.status)}`}>
@@ -1037,26 +1337,17 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                {loan.status === 'Pending' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => setApproveLoan(loan)}
-                                                            className="p-1.5 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 rounded"
-                                                            title="Approve"
-                                                        >
-                                                            <CheckCircle size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setRejectLoan(loan)}
-                                                            className="p-1.5 hover:bg-rose-100 text-slate-500 hover:text-rose-600 rounded"
-                                                            title="Reject"
-                                                        >
-                                                            <XCircle size={14} />
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
+                                                 {!['Rejected', 'Closed'].includes(loan.status) && (
+                                                    <button
+                                                        onClick={() => setEditLoan(loan)}
+                                                        className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
+                                                        title="Edit Request"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                 )}
+                                             </div>
+                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -1067,7 +1358,14 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
 
             {/* Modals */}
             {viewLoan && (
-                <ViewLoanModal loan={viewLoan} onClose={() => setViewLoan(null)} />
+                <ViewLoanModal 
+                    loan={viewLoan} 
+                    userRole={userRole}
+                    onClose={() => setViewLoan(null)} 
+                    onEdit={(l) => { setViewLoan(null); setEditLoan(l); }}
+                    onApprove={(l) => { setViewLoan(null); setApproveLoan(l); }}
+                    onReject={(l) => { setViewLoan(null); setRejectLoan(l); }}
+                />
             )}
 
             {editLoan && (

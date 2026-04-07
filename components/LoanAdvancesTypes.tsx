@@ -794,7 +794,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                     <p className="text-[10px] text-slate-400 mt-1 ml-5">Set 0 for interest-free advances.</p>
                                 </div>
 
-                                <div>
+                                <div className="max-w-xs">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
                                         Max Tenure (Months) {(currentLoan.name === 'Loan' || currentLoan.name === 'Salary Advance') && <span className="text-rose-500">*</span>}
                                     </label>
@@ -844,7 +844,16 @@ const LoanAdvancesTypes: React.FC = () => {
 
                                 {/* Max Amount Limit - Enhanced Section */}
                                 <div className="md:col-span-2 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Max Amount Limit <span className="text-rose-500">*</span></label>
+                                        <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-3">
+                                            Max Amount Limit <span className="text-rose-500">*</span>
+                                            <div className="relative group/info">
+                                                <Info size={14} className="text-purple-400 cursor-help" />
+                                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-64 bg-slate-800 text-white text-[10px] p-2 rounded-lg opacity-0 group-hover/info:opacity-100 transition-opacity z-50 pointer-events-none shadow-xl border border-slate-700 leading-relaxed font-medium">
+                                                    Maximum loan amount or a multiple of the employee's salary — whichever is lower will be approved.
+                                                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-slate-800" />
+                                                </div>
+                                            </div>
+                                        </label>
 
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-4">
                                             {currentLoan.name !== 'Salary Advance' && (
