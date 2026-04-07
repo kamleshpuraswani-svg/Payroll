@@ -1714,8 +1714,6 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         <>
                                             <th className="px-6 py-4">Calculation Method</th>
                                             <th className="px-6 py-4">Taxable Earning</th>
-                                            <th className="px-6 py-4">Consider for PF</th>
-                                            <th className="px-6 py-4">Consider for ESI</th>
                                             {userRole === 'HR_MANAGER' && <th className="px-6 py-4">Effective Date</th>}
                                             <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER' ? 'Last Modified By' : 'Last Modified'}</th>
                                             <th className="px-6 py-4">{userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER' ? 'Created By' : 'Created'}</th>
@@ -1785,8 +1783,6 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 <>
                                                     <td className="px-6 py-4">{item.calc_method === 'Flat' ? 'Flat' : (item.calculation || '-')}</td>
                                                     <td className="px-6 py-4">{item.taxable !== 'Fully Exempt' ? 'Yes' : 'No'}</td>
-                                                    <td className="px-6 py-4">{item.consider_epf ? 'Yes' : 'No'}</td>
-                                                    <td className="px-6 py-4">{item.consider_esi ? 'Yes' : 'No'}</td>
                                                     {userRole === 'HR_MANAGER' && <td className="px-6 py-4 text-slate-500">{item.effective_date ? new Date(item.effective_date).toLocaleDateString() : '-'}</td>}
                                                     <td className="px-6 py-4 text-slate-500">{item.last_modified ? new Date(item.last_modified).toLocaleDateString() : '-'}</td>
                                                     <td className="px-6 py-4 text-slate-500">{item.created ? new Date(item.created).toLocaleDateString() : '-'}</td>
