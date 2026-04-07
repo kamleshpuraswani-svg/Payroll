@@ -56,6 +56,15 @@ interface SalaryComponent {
     incomeTaxSection?: string;
     sectionMaxLimit?: string;
     nonTaxableLimit?: string;
+    includeInCTC?: boolean;
+    includeInGross?: boolean;
+    includeInPayout?: boolean;
+    includeInFirstSalary?: boolean;
+    considerPT?: boolean;
+    considerLWF?: boolean;
+    considerLeaveEncashment?: boolean;
+    showOnSalaryRegister?: boolean;
+    showRateOnSalarySlip?: boolean;
 }
 
 const BUSINESS_UNITS = [
@@ -324,7 +333,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [isConsiderEPF, setIsConsiderEPF] = useState(initialData?.considerEPF ?? true);
     const [isConsiderESI, setIsConsiderESI] = useState(initialData?.considerESI ?? true);
     const [isConsiderGratuity, setIsConsiderGratuity] = useState(initialData?.considerGratuity ?? true);
+    const [includeInCTC, setIncludeInCTC] = useState(initialData?.includeInCTC ?? false);
+    const [includeInGross, setIncludeInGross] = useState(initialData?.includeInGross ?? false);
+    const [includeInFirstSalary, setIncludeInFirstSalary] = useState(initialData?.includeInFirstSalary ?? true);
+    const [includeInPayout, setIncludeInPayout] = useState(initialData?.includeInPayout ?? false);
+    const [isConsiderPT, setIsConsiderPT] = useState(initialData?.considerPT ?? false);
+    const [isConsiderLWF, setIsConsiderLWF] = useState(initialData?.considerLWF ?? false);
+    const [isConsiderLeaveEncashment, setIsConsiderLeaveEncashment] = useState(initialData?.considerLeaveEncashment ?? false);
     const [showInPayslip, setShowInPayslip] = useState(true);
+    const [isShowOnSalaryRegister, setIsShowOnSalaryRegister] = useState(initialData?.showOnSalaryRegister ?? false);
+    const [isShowRateOnSalarySlip, setIsShowRateOnSalarySlip] = useState(initialData?.showRateOnSalarySlip ?? false);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [roundOffSetting, setRoundOffSetting] = useState<'Floor' | 'Ceiling'>(initialData?.roundOffSetting || 'Floor');
     const [taxComputation, setTaxComputation] = useState<'Proportionally' | 'Pay month'>(initialData?.taxComputation || 'Proportionally');
@@ -338,6 +356,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const handleSave = () => {
         if (!name) {
             setError('Component Name is mandatory');
+            return;
+        }
+        if (!payslipName) {
+            setError('Name in Payslip is mandatory');
             return;
         }
         if (!localSelectedTarget) {
@@ -366,7 +388,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             taxComputation: isTaxable ? taxComputation : undefined,
             incomeTaxSection: isTaxable ? (isCreatingSection ? customTaxSection : incomeTaxSection) : undefined,
             sectionMaxLimit: (isTaxable && taxTreatment === 'Fully Taxable') ? sectionMaxLimit : undefined,
-            nonTaxableLimit: (isTaxable && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined
+            nonTaxableLimit: (isTaxable && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined,
+            includeInCTC,
+            includeInGross,
+            includeInFirstSalary,
+            includeInPayout,
+            considerPT: isConsiderPT,
+            considerLWF: isConsiderLWF,
+            considerLeaveEncashment: isConsiderLeaveEncashment,
+            showOnSalaryRegister: isShowOnSalaryRegister,
+            showRateOnSalarySlip: isShowRateOnSalarySlip
         };
 
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
@@ -410,11 +441,13 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                            <input type="text" value={name} onChange={e => { setName(e.target.value); setError(null); }} placeholder="Enter Component Name" className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error === 'Component Name is mandatory' ? 'border-rose-500' : 'border-slate-200'}`} />
+                            {error === 'Component Name is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
-                            <input type="text" value={payslipName} onChange={e => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                            <input type="text" value={payslipName} onChange={e => { setPayslipName(e.target.value); setError(null); }} placeholder="Enter Name in Payslip" className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error === 'Name in Payslip is mandatory' ? 'border-rose-500' : 'border-slate-200'}`} />
+                            {error === 'Name in Payslip is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                         </div>
                         {initialData && (
                             <div>
@@ -714,17 +747,53 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             </div>
                         </div>
 
-                        {/* Pro Rata */}
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {isProRata && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
-                            <div>
-                                <span className="block text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
-                                <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
-                            </div>
-                        </label>
+                        <div className="space-y-4">
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInCTC ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {includeInCTC && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={includeInCTC} onChange={() => setIncludeInCTC(!includeInCTC)} />
+                                <span className="block text-sm font-bold text-slate-700">Include this component in CTC</span>
+                            </label>
+
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInGross ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {includeInGross && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={includeInGross} onChange={() => setIncludeInGross(!includeInGross)} />
+                                <span className="block text-sm font-bold text-slate-700">Include this component in Gross salary</span>
+                            </label>
+
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInFirstSalary ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {includeInFirstSalary && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={includeInFirstSalary} onChange={() => setIncludeInFirstSalary(!includeInFirstSalary)} />
+                                <span className="block text-sm font-bold text-slate-700">Include in the employee’s first salary</span>
+                            </label>
+
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInPayout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {includeInPayout && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={includeInPayout} onChange={() => setIncludeInPayout(!includeInPayout)} />
+                                <span className="block text-sm font-bold text-slate-700">Include this component in monthly payout</span>
+                            </label>
+
+                            {/* Pro Rata moved here */}
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isProRata && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
+                                <div>
+                                    <span className="block text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
+                                    <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <h3 className="font-bold text-slate-800 text-sm mt-6 mb-4 pt-4 border-t border-slate-200">Statutory Settings</h3>
 
                         {/* EPF */}
                         <div className="flex flex-col md:flex-row md:items-start gap-4">
@@ -759,7 +828,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             )}
                         </div>
 
-                        {/* ESI & Payslip */}
+                        {/* ESI & Payslip & other configurations */}
                         <div className="space-y-4">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderESI ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
@@ -779,15 +848,55 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     <span className="block text-xs text-slate-500 mt-0.5">This component will be included in gratuity computation.</span>
                                 </div>
                             </label>
-                        </div>
 
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {showInPayslip && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
-                            <span className="text-sm font-bold text-slate-700">Show in Payslip</span>
-                        </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderPT ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isConsiderPT && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isConsiderPT} onChange={() => setIsConsiderPT(!isConsiderPT)} />
+                                <span className="text-sm font-bold text-slate-700">Consider for Professional tax</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderLWF ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isConsiderLWF && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isConsiderLWF} onChange={() => setIsConsiderLWF(!isConsiderLWF)} />
+                                <span className="text-sm font-bold text-slate-700">Consider for Labour Welfare Fund</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderLeaveEncashment ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isConsiderLeaveEncashment && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isConsiderLeaveEncashment} onChange={() => setIsConsiderLeaveEncashment(!isConsiderLeaveEncashment)} />
+                                <span className="text-sm font-bold text-slate-700">Consider for Leave encashment</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {showInPayslip && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
+                                <span className="text-sm font-bold text-slate-700">Show in Payslip</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isShowOnSalaryRegister ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isShowOnSalaryRegister && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isShowOnSalaryRegister} onChange={() => setIsShowOnSalaryRegister(!isShowOnSalaryRegister)} />
+                                <span className="text-sm font-bold text-slate-700">Show on salary register</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isShowRateOnSalarySlip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isShowRateOnSalarySlip && <Check size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={isShowRateOnSalarySlip} onChange={() => setIsShowRateOnSalarySlip(!isShowRateOnSalarySlip)} />
+                                <span className="text-sm font-bold text-slate-700">Show rate on salary slip</span>
+                            </label>
+                        </div>
 
                         <div className="pt-2">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -842,6 +951,10 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const handleSave = () => {
         if (!name) {
             setError('Component Name is mandatory');
+            return;
+        }
+        if (!payslipName) {
+            setError('Name in Payslip is mandatory');
             return;
         }
         if (!localSelectedTarget) {
@@ -905,8 +1018,16 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label><input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
-                        <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Payslip Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
+                            <input type="text" value={name} onChange={(e) => { setName(e.target.value); setError(null); }} placeholder="Enter Component Name" className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error === 'Component Name is mandatory' ? 'border-rose-500' : 'border-slate-200'}`} />
+                            {error === 'Component Name is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
+                            <input type="text" value={payslipName} onChange={(e) => { setPayslipName(e.target.value); setError(null); }} placeholder="Enter Payslip Name" className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error === 'Name in Payslip is mandatory' ? 'border-rose-500' : 'border-slate-200'}`} />
+                            {error === 'Name in Payslip is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {initialData && (

@@ -472,72 +472,78 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      </h3>
                   </div>
                   <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                     <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select salary structure</label>
-                        {isReadOnly ? (
-                           <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-slate-50">
-                              {salaryStructures.find(s => s.id === selectedStructureId)?.name || 'Not Assigned'}
-                           </div>
-                        ) : (
+                     {/* Left Column */}
+                     <div className="space-y-6">
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select salary structure</label>
+                           {isReadOnly ? (
+                              <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-slate-50">
+                                 {salaryStructures.find(s => s.id === selectedStructureId)?.name || 'Not Assigned'}
+                              </div>
+                           ) : (
+                              <div className="relative">
+                                 <select
+                                    value={selectedStructureId}
+                                    onChange={(e) => setSelectedStructureId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 appearance-none"
+                                 >
+                                    <option value="">Select Structure</option>
+                                    {salaryStructures.map(s => (
+                                       <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                 </select>
+                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              </div>
+                           )}
+                        </div>
+
+                        <div id="effective-from-field-main">
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {(ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId) && !isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
-                              <select
-                                 value={selectedStructureId}
-                                 onChange={(e) => setSelectedStructureId(e.target.value)}
-                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 appearance-none"
-                              >
-                                 <option value="">Select Structure</option>
-                                 {salaryStructures.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                 ))}
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              <input
+                                 type="date"
+                                 value={effectiveFrom}
+                                 disabled={isReadOnly}
+                                 onChange={(e) => {
+                                    setEffectiveFrom(e.target.value);
+                                    if (errors.effectiveFrom) setErrors({});
+                                 }}
+                                 className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : errors.effectiveFrom ? 'border-rose-500' : 'border-slate-200 hover:border-slate-300'}`}
+                              />
+                              <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
                            </div>
-                        )}
-                     </div>
-
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹)</label>
-                        <div className="relative">
-                           <input
-                              type="number"
-                              value={ctc || ''}
-                              disabled={isReadOnly}
-                              onChange={(e) => setCtc(parseInt(e.target.value) || 0)}
-                              className={`w-full pl-8 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}
-                           />
-                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                           {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1 animate-in fade-in slide-in-from-top-1">{errors.effectiveFrom}</p>}
                         </div>
                      </div>
 
-                     <div id="effective-from-field-main">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {(ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId) && !isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <div className="relative">
-                           <input
-                              type="date"
-                              value={effectiveFrom}
-                              disabled={isReadOnly}
-                              onChange={(e) => {
-                                 setEffectiveFrom(e.target.value);
-                                 if (errors.effectiveFrom) setErrors({});
-                              }}
-                              className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : errors.effectiveFrom ? 'border-rose-500' : 'border-slate-200 hover:border-slate-300'}`}
-                           />
-                           <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                     {/* Right Column */}
+                     <div className="space-y-6">
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹)</label>
+                           <div className="relative">
+                              <input
+                                 type="number"
+                                 value={ctc || ''}
+                                 disabled={isReadOnly}
+                                 onChange={(e) => setCtc(parseInt(e.target.value) || 0)}
+                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}
+                              />
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                           </div>
                         </div>
-                        {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1 animate-in fade-in slide-in-from-top-1">{errors.effectiveFrom}</p>}
-                     </div>
 
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Date</label>
-                        <div className="relative">
-                           <input
-                              type="date"
-                              value={arrearsPayoutDate}
-                              onChange={(e) => setArrearsPayoutDate(e.target.value)}
-                              disabled={isReadOnly}
-                              className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
-                           />
-                           <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Date</label>
+                           <div className="relative">
+                              <input
+                                 type="date"
+                                 value={arrearsPayoutDate}
+                                 onChange={(e) => setArrearsPayoutDate(e.target.value)}
+                                 disabled={isReadOnly}
+                                 className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
+                              />
+                              <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                           </div>
                         </div>
                      </div>
                   </div>

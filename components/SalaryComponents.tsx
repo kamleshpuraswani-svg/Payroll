@@ -31,6 +31,16 @@ interface SalaryComponent {
     income_tax_section?: string;
     section_max_limit?: string;
     non_taxable_limit?: string;
+    include_in_ctc?: boolean;
+    include_in_gross?: boolean;
+    include_in_payout?: boolean;
+    include_in_first_salary?: boolean;
+    consider_gratuity?: boolean;
+    consider_pt?: boolean;
+    consider_lwf?: boolean;
+    consider_leave_encashment?: boolean;
+    show_on_salary_register?: boolean;
+    show_rate_on_salary_slip?: boolean;
 }
 
 interface AddEarningFormProps {
@@ -226,7 +236,17 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [epfContribution, setEpfContribution] = useState<'Always' | 'Limit'>('Always');
     const [consider_epf, setConsider_epf] = useState(initialData?.consider_epf ?? true);
     const [consider_esi, setConsider_esi] = useState(initialData?.consider_esi ?? true);
+    const [include_in_ctc, setInclude_in_ctc] = useState(initialData?.include_in_ctc ?? false);
+    const [include_in_gross, setInclude_in_gross] = useState(initialData?.include_in_gross ?? false);
+    const [include_in_first_salary, setInclude_in_first_salary] = useState(initialData?.include_in_first_salary ?? true);
+    const [include_in_payout, setInclude_in_payout] = useState(initialData?.include_in_payout ?? false);
+    const [consider_gratuity, setConsider_gratuity] = useState(initialData?.consider_gratuity ?? true);
+    const [consider_pt, setConsider_pt] = useState(initialData?.consider_pt ?? false);
+    const [consider_lwf, setConsider_lwf] = useState(initialData?.consider_lwf ?? false);
+    const [consider_leave_encashment, setConsider_leave_encashment] = useState(initialData?.consider_leave_encashment ?? false);
     const [showInPayslip, setShowInPayslip] = useState(true);
+    const [show_on_salary_register, setShow_on_salary_register] = useState(initialData?.show_on_salary_register ?? false);
+    const [show_rate_on_salary_slip, setShow_rate_on_salary_slip] = useState(initialData?.show_rate_on_salary_slip ?? false);
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [round_off_setting, setRound_off_setting] = useState<'Floor' | 'Ceiling'>(initialData?.round_off_setting || 'Floor');
     const [tax_computation, setTax_computation] = useState<'Proportionally' | 'Pay month'>(initialData?.tax_computation || 'Proportionally');
@@ -267,7 +287,17 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             tax_computation: isTaxable ? tax_computation : undefined,
             income_tax_section: isTaxable ? (isCreatingSection ? customTaxSection : income_tax_section) : undefined,
             section_max_limit: (isTaxable && taxTreatment === 'Fully Taxable') ? section_max_limit : undefined,
-            non_taxable_limit: (isTaxable && taxTreatment === 'Partially Exempt') ? non_taxable_limit : undefined
+            non_taxable_limit: (isTaxable && taxTreatment === 'Partially Exempt') ? non_taxable_limit : undefined,
+            include_in_ctc,
+            include_in_gross,
+            include_in_first_salary,
+            include_in_payout,
+            consider_gratuity,
+            consider_pt,
+            consider_lwf,
+            consider_leave_encashment,
+            show_on_salary_register,
+            show_rate_on_salary_slip
         };
         onSave(updatedData);
     };
@@ -606,17 +636,53 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         </div>
                     </div>
 
-                    {/* Pro Rata */}
-                    <label className="flex items-start gap-2 cursor-pointer">
-                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                            {isProRata && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
-                        <div>
-                            <span className="block text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
-                            <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
-                        </div>
-                    </label>
+                    <div className="space-y-4">
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_ctc ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {include_in_ctc && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={include_in_ctc} onChange={() => setInclude_in_ctc(!include_in_ctc)} />
+                            <span className="block text-sm font-bold text-slate-700">Include this component in CTC</span>
+                        </label>
+
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_gross ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {include_in_gross && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={include_in_gross} onChange={() => setInclude_in_gross(!include_in_gross)} />
+                            <span className="block text-sm font-bold text-slate-700">Include this component in Gross salary</span>
+                        </label>
+
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_first_salary ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {include_in_first_salary && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={include_in_first_salary} onChange={() => setInclude_in_first_salary(!include_in_first_salary)} />
+                            <span className="block text-sm font-bold text-slate-700">Include in the employee’s first salary</span>
+                        </label>
+
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_payout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {include_in_payout && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={include_in_payout} onChange={() => setInclude_in_payout(!include_in_payout)} />
+                            <span className="block text-sm font-bold text-slate-700">Include this component in monthly payout</span>
+                        </label>
+
+                        {/* Pro Rata moved up here */}
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {isProRata && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
+                            <div>
+                                <span className="block text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
+                                <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <h3 className="font-bold text-slate-800 text-sm mt-6 mb-4 pt-4 border-t border-slate-200">Statutory Settings</h3>
 
                     {/* EPF */}
                     <div className="flex flex-col md:flex-row md:items-start gap-4">
@@ -653,24 +719,74 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         )}
                     </div>
 
-                    {/* ESI & Payslip */}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_esi ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                            {consider_esi && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={consider_esi}
-                            onChange={() => setConsider_esi(!consider_esi)}
-                        />
-                        <span className="text-sm font-bold text-slate-700">Consider for ESI Contribution</span>
-                    </label>
+                    {/* ESI, Gratuity, PT, LWF, Leave Encashment, & Payslip */}
+                    <div className="space-y-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_esi ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {consider_esi && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={consider_esi}
+                                onChange={() => setConsider_esi(!consider_esi)}
+                            />
+                            <span className="text-sm font-bold text-slate-700">Consider for ESI Contribution</span>
+                        </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                            {showInPayslip && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
-                        <span className="text-sm font-bold text-slate-700">Show in Payslip</span>
-                    </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_gratuity ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {consider_gratuity && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={consider_gratuity} onChange={() => setConsider_gratuity(!consider_gratuity)} />
+                            <span className="text-sm font-bold text-slate-700">Consider for Gratuity</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_pt ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {consider_pt && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={consider_pt} onChange={() => setConsider_pt(!consider_pt)} />
+                            <span className="text-sm font-bold text-slate-700">Consider for Professional tax</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_lwf ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {consider_lwf && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={consider_lwf} onChange={() => setConsider_lwf(!consider_lwf)} />
+                            <span className="text-sm font-bold text-slate-700">Consider for Labour Welfare Fund</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_leave_encashment ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {consider_leave_encashment && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={consider_leave_encashment} onChange={() => setConsider_leave_encashment(!consider_leave_encashment)} />
+                            <span className="text-sm font-bold text-slate-700">Consider for Leave encashment</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {showInPayslip && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
+                            <span className="text-sm font-bold text-slate-700">Show in Payslip</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_on_salary_register ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {show_on_salary_register && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={show_on_salary_register} onChange={() => setShow_on_salary_register(!show_on_salary_register)} />
+                            <span className="text-sm font-bold text-slate-700">Show on salary register</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_rate_on_salary_slip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                {show_rate_on_salary_slip && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={show_rate_on_salary_slip} onChange={() => setShow_rate_on_salary_slip(!show_rate_on_salary_slip)} />
+                            <span className="text-sm font-bold text-slate-700">Show rate on salary slip</span>
+                        </label>
+                    </div>
 
                     <div className="pt-2">
                         <label className="flex items-center gap-2 cursor-pointer">

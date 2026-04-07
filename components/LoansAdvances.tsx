@@ -1079,8 +1079,46 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
     const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    // Data State (Mock)
-    const [loans, setLoans] = useState(MOCK_LOANS);
+    // Data State (Supabase)
+    const [loans, setLoans] = useState<LoanRequest[]>([]);
+    
+    const fetchLoans = async () => {
+        const { data, error } = await supabase.from('loan_requests').select('*').order('created_at', { ascending: false });
+        if (!error && data) {
+            const formattedLoans: LoanRequest[] = data.map((item: any) => {
+                const emp = MOCK_EMPLOYEES.find(e => e.id === item.employee_id) || MOCK_EMPLOYEES[0];
+                return {
+                    id: item.id,
+                    employee: {
+                        name: `${emp.first_name} ${emp.last_name}`,
+                        id: emp.employee_id,
+                        department: emp.department,
+                        ctc: String(emp.ctc || 'N/A'),
+                        avatar: emp.avatar_url
+                    },
+                    type: item.type,
+                    requestedAmount: item.requested_amount,
+                    approvedAmount: item.approved_amount,
+                    requestDate: item.request_date,
+                    status: item.status,
+                    emiAmount: item.emi_amount,
+                    totalEmis: item.total_emis,
+                    remainingBalance: item.remaining_balance,
+                    interestRate: item.interest_rate,
+                    disbursedDate: item.disbursed_date,
+                    repaymentSchedule: item.repayment_schedule,
+                    reason: item.reason,
+                    repaymentMonth: item.repayment_month
+                };
+            });
+            setLoans(formattedLoans);
+        }
+    };
+
+    useEffect(() => {
+        fetchLoans();
+    }, []);
+
     const allLoans = loans;
 
     const displayLoans = useMemo(() => {
@@ -1090,7 +1128,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
         }
         return filtered.filter(loan =>
             `${loan.employee.name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            loan.id.toLowerCase().includes(searchTerm.toLowerCase())
+            `${loan.id}`.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [allLoans, userRole, currentEmployeeId, searchTerm]);
 
@@ -1109,34 +1147,48 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
         return { activeCount, totalOutstanding, totalLoanIssued, overdueAmount };
     }, [allLoans, userRole, currentEmployeeId]);
 
-    const handleUpdateLoan = (updatedLoan: LoanRequest) => {
-        setLoans(prev => prev.map(l => l.id === updatedLoan.id ? updatedLoan : l));
+    const handleUpdateLoan = async (updatedLoan: LoanRequest) => {
+        const payload = {
+            type: updatedLoan.type,
+            requested_amount: updatedLoan.requestedAmount,
+            status: updatedLoan.status,
+            reason: updatedLoan.reason,
+            total_emis: updatedLoan.totalEmis,
+            interest_rate: updatedLoan.interestRate,
+            emi_amount: updatedLoan.emiAmount,
+            remaining_balance: updatedLoan.remainingBalance,
+            repayment_month: updatedLoan.repaymentMonth
+        };
+        await supabase.from('loan_requests').update(payload).eq('id', updatedLoan.id);
+        fetchLoans();
     };
 
-    const handleApproveAction = (id: string, amount: number, remarks: string) => {
-        setLoans(prev => prev.map(l => {
-            if (l.id === id) {
-                const status = amount < l.requestedAmount ? 'Partially Approved' : 'Approved';
-                return {
-                    ...l,
-                    status: status,
-                    approvedAmount: amount,
-                    remainingBalance: amount, // Reset balance to approved amount
-                    // Generate dummy schedule
-                    repaymentSchedule: Array.from({ length: l.totalEmis || 12 }).map((_, i) => ({
-                        emiNo: i + 1,
-                        dueDate: '31 Jan 2026', // Mock date
-                        amount: Math.round(amount / (l.totalEmis || 12)),
-                        status: 'Pending'
-                    }))
-                } as LoanRequest;
-            }
-            return l;
+    const handleApproveAction = async (id: string, amount: number, remarks: string) => {
+        const loan = loans.find(l => l.id === id);
+        if (!loan) return;
+        const status = amount < loan.requestedAmount ? 'Partially Approved' : 'Approved';
+        const dummySchedule = Array.from({ length: loan.totalEmis || 12 }).map((_, i) => ({
+            emiNo: i + 1,
+            dueDate: '31 Jan 2026', // Mock date
+            amount: Math.round(amount / (loan.totalEmis || 12)),
+            status: 'Pending'
         }));
+        
+        await supabase.from('loan_requests').update({
+            status,
+            approved_amount: amount,
+            remaining_balance: amount,
+            repayment_schedule: dummySchedule
+        }).eq('id', id);
+        fetchLoans();
     };
 
-    const handleRejectAction = (id: string, reason: string) => {
-        setLoans(prev => prev.map(l => l.id === id ? { ...l, status: 'Rejected', reason: reason } as LoanRequest : l));
+    const handleRejectAction = async (id: string, reason: string) => {
+        await supabase.from('loan_requests').update({
+            status: 'Rejected',
+            reason: reason
+        }).eq('id', id);
+        fetchLoans();
     };
 
     const calculateInitialEmi = (requestedAmount: number, interestRate: number, maxTenure: number) => {
@@ -1153,30 +1205,29 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
         return Math.round(emi);
     };
 
-    const handleCreateRequest = (data: any) => {
+    const handleCreateRequest = async (data: any) => {
         const selectedEmp = MOCK_EMPLOYEES.find(e => e.id === data.employeeId);
         if (selectedEmp) {
-            const newRequest: LoanRequest = {
-                id: `LN-${Date.now().toString().slice(-4)}`,
-                employee: {
-                    name: `${selectedEmp.first_name} ${selectedEmp.last_name}`,
-                    id: selectedEmp.employee_id,
-                    department: selectedEmp.department,
-                    ctc: String(selectedEmp.ctc || 'N/A'),
-                    avatar: selectedEmp.avatar_url
-                },
+            const requestedAmount = data.requestedAmount || 0;
+            const maxTenure = data.maxTenure || 1;
+            const interestRate = data.interestRate || 0;
+            
+            const payload = {
+                employee_id: selectedEmp.id,
                 type: data.loanType === 'Salary Advance' ? 'Salary Advance' : 'Loan',
-                requestedAmount: data.requestedAmount || 0,
-                requestDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                requested_amount: requestedAmount,
+                request_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
                 status: 'Pending',
-                reason: data.reason,
-                totalEmis: data.maxTenure || 1,
-                interestRate: data.interestRate || 0,
-                remainingBalance: data.requestedAmount || 0,
-                emiAmount: calculateInitialEmi(data.requestedAmount, data.interestRate, data.maxTenure),
-                repaymentMonth: data.repaymentMonth || 'February 2026'
+                reason: data.reason || 'Requested based on requirements.',
+                total_emis: maxTenure,
+                interest_rate: interestRate,
+                remaining_balance: requestedAmount,
+                emi_amount: calculateInitialEmi(requestedAmount, interestRate, maxTenure),
+                repayment_month: data.repaymentMonth || 'February 2026'
             };
-            setLoans(prev => [newRequest, ...prev]);
+            
+            await supabase.from('loan_requests').insert([payload]);
+            fetchLoans();
         }
         setIsNewRequestOpen(false);
     };
