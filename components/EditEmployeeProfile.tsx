@@ -475,7 +475,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      {/* Left Column */}
                      <div className="space-y-6">
                         <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select salary structure</label>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select salary structure {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            {isReadOnly ? (
                               <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-slate-50">
                                  {salaryStructures.find(s => s.id === selectedStructureId)?.name || 'Not Assigned'}
@@ -498,7 +498,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
 
                         <div id="effective-from-field-main">
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {(ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId) && !isReadOnly && <span className="text-rose-500">*</span>}</label>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
                               <input
                                  type="date"
@@ -519,7 +519,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      {/* Right Column */}
                      <div className="space-y-6">
                         <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹)</label>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹) {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
                               <input
                                  type="number"
@@ -533,7 +533,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
 
                         <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Date</label>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Date {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
                               <input
                                  type="date"

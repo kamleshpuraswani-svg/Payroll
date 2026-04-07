@@ -106,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
     },
     {
       id: 'hr-employees',
-      label: 'Employees Payroll',
+      label: 'Employees Compensation',
       icon: <Users size={20} />,
       viewState: ViewState.HR_EMPLOYEES
     },
