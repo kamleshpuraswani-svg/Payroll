@@ -1525,14 +1525,6 @@ const StatutorySettings: React.FC = () => {
 
                                 {/* Toggles */}
                                 <div className="space-y-4 pt-2">
-                                    <label className="flex items-center justify-start gap-4 cursor-pointer">
-                                        <div className="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" checked={npsWageCeiling} onChange={() => isEditing && setNpsWageCeiling(!npsWageCeiling)} disabled={!isEditing} className="sr-only peer" />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                                        </div>
-                                        <span className="text-sm font-semibold text-slate-700">Apply Wage Ceiling: Cap contributions at ₹15,000/month wage</span>
-                                    </label>
-
                                     <label className="flex items-center gap-3 cursor-pointer group">
                                         <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${npsIncludeInCtc ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                             {npsIncludeInCtc && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
