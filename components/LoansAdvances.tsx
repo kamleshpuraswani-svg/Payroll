@@ -59,7 +59,7 @@ interface LoanRequest {
     requestedAmount: number;
     approvedAmount?: number;
     requestDate: string;
-    status: 'Requested' | 'Approved' | 'Partially Approved' | 'Active' | 'Repaying' | 'Closed' | 'Rejected' | 'Draft';
+    status: 'Pending' | 'Approved' | 'Partially Approved' | 'Active' | 'Repaying' | 'Closed' | 'Rejected' | 'Draft';
     emiAmount?: number;
     totalEmis?: number;
     remainingBalance?: number;
@@ -121,7 +121,7 @@ const MOCK_LOANS: LoanRequest[] = [
         type: 'Loan',
         requestedAmount: 30000,
         requestDate: '15 Dec 2025',
-        status: 'Requested',
+        status: 'Pending',
         reason: 'Diwali Expenses',
         interestRate: 0
     },
@@ -161,7 +161,7 @@ const MOCK_LOANS: LoanRequest[] = [
 
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'Requested': return 'bg-orange-50 text-orange-700 border-orange-100';
+        case 'Pending': return 'bg-orange-50 text-orange-700 border-orange-100';
         case 'Approved': return 'bg-green-50 text-green-700 border-green-100';
         case 'Partially Approved': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
         case 'Active': return 'bg-blue-50 text-blue-700 border-blue-100';
@@ -318,6 +318,7 @@ const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApp
     const [remarks, setRemarks] = useState('');
 
     const isPartial = amount < loan.requestedAmount;
+    const isSubmitDisabled = isPartial && !remarks.trim();
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -344,13 +345,17 @@ const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApp
                         {isPartial && <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> Amount is less than requested.</p>}
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Remarks (Optional)</label>
-                        <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 h-24 resize-none" placeholder="Add any comments..."></textarea>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Reason {isPartial && <span className="text-rose-500">*</span>}</label>
+                        <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none transition-colors h-24 resize-none ${isSubmitDisabled ? 'border-amber-300 focus:border-amber-500' : 'border-slate-200 focus:border-emerald-500'}`} placeholder={isPartial ? "Please provide a reason for partial approval..." : "Add any comments..."}></textarea>
                     </div>
                 </div>
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 text-sm">Cancel</button>
-                    <button onClick={() => { onApprove(amount, remarks); onClose(); }} className={`px-6 py-2 text-white rounded-lg font-medium text-sm shadow-sm flex items-center gap-2 ${isPartial ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                    <button 
+                        onClick={() => { onApprove(amount, remarks); onClose(); }} 
+                        disabled={isSubmitDisabled}
+                        className={`px-6 py-2 text-white rounded-lg font-medium text-sm shadow-sm flex items-center gap-2 transition-all ${isSubmitDisabled ? 'bg-slate-300 cursor-not-allowed opacity-50' : (isPartial ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200')}`}
+                    >
                         <Check size={16} /> {isPartial ? 'Approve Partial' : 'Approve'}
                     </button>
                 </div>
@@ -865,7 +870,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                 type: data.loanType === 'Salary Advance' ? 'Salary Advance' : 'Loan',
                 requestedAmount: data.amount,
                 requestDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                status: 'Requested',
+                status: 'Pending',
                 reason: data.reason,
                 totalEmis: data.tenure,
                 interestRate: data.loanType === 'Loan' ? 10.5 : 0, // Mock interest
@@ -970,7 +975,6 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                     <th className="px-6 py-3">Loan Type</th>
                                     <th className="px-6 py-3 text-right">Requested Amount</th>
                                     <th className="px-6 py-3 text-right">Approved Amount</th>
-                                    <th className="px-6 py-3">Requested Date</th>
                                     <th className="px-6 py-3">Status</th>
                                     <th className="px-6 py-3 text-right">Monthly EMI Amount</th>
                                     <th className="px-6 py-3 text-right">Total EMIs</th>
@@ -1002,7 +1006,6 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         </td>
                                         <td className="px-6 py-4 text-right font-medium text-slate-600">₹{loan.requestedAmount.toLocaleString()}</td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">{loan.approvedAmount ? `₹${loan.approvedAmount.toLocaleString()}` : '—'}</td>
-                                        <td className="px-6 py-4 text-slate-500">{loan.requestDate}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(loan.status)}`}>
                                                 {loan.status}
@@ -1034,7 +1037,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                {loan.status === 'Requested' && (
+                                                {loan.status === 'Pending' && (
                                                     <>
                                                         <button
                                                             onClick={() => setApproveLoan(loan)}

@@ -117,6 +117,7 @@ const StatutorySettings: React.FC = () => {
                 setLwfEstablishmentId(config.lwfEstablishmentId ?? '');
                 setLwfRegistrationDate(config.lwfRegistrationDate ?? '');
                 setLwfProcessBasis(config.lwfProcessBasis ?? true);
+                setLwfProcessBasisType(config.lwfProcessBasisType ?? 'Earnings');
                 setLwfProcessArrear(config.lwfProcessArrear ?? false);
                 setLwfProcessSettlement(config.lwfProcessSettlement ?? false);
                 setLwfProvisionEmployerCtc(config.lwfProvisionEmployerCtc ?? false);
@@ -194,6 +195,7 @@ const StatutorySettings: React.FC = () => {
                 setLwfEstablishmentId('');
                 setLwfRegistrationDate('');
                 setLwfProcessBasis(true);
+                setLwfProcessBasisType('Earnings');
                 setLwfProcessArrear(false);
                 setLwfProcessSettlement(false);
                 setLwfProvisionEmployerCtc(false);
@@ -285,6 +287,7 @@ const StatutorySettings: React.FC = () => {
     const [lwfEstablishmentId, setLwfEstablishmentId] = useState('');
     const [lwfRegistrationDate, setLwfRegistrationDate] = useState('');
     const [lwfProcessBasis, setLwfProcessBasis] = useState(true);
+    const [lwfProcessBasisType, setLwfProcessBasisType] = useState<'Rate' | 'Earnings'>('Earnings');
     const [lwfProcessArrear, setLwfProcessArrear] = useState(false);
     const [lwfProcessSettlement, setLwfProcessSettlement] = useState(false);
     const [lwfProvisionEmployerCtc, setLwfProvisionEmployerCtc] = useState(false);
@@ -334,7 +337,7 @@ const StatutorySettings: React.FC = () => {
             gratuityProrationIncompleteYear, gratuityWaiveMinServiceDeathDisablement, gratuityPaymentReminder,
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
             enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
-            lwfProcessBasis, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
+            lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
             ptState, ptNumber,
             ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit,
             enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
@@ -356,7 +359,7 @@ const StatutorySettings: React.FC = () => {
                 gratuityProvisionRate, gratuityTenureYears, gratuityTenureMonths, gratuityTaxFreeLimit, gratuityEmployeeEligibility, gratuityRoundOff,
                 gratuityProrationIncompleteYear, gratuityWaiveMinServiceDeathDisablement, gratuityPaymentReminder,
                 enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
-                lwfProcessBasis, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
+                lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
                 ptState, ptNumber,
                 ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
@@ -437,6 +440,7 @@ const StatutorySettings: React.FC = () => {
             setLwfEstablishmentId(backupState.lwfEstablishmentId);
             setLwfRegistrationDate(backupState.lwfRegistrationDate);
             setLwfProcessBasis(backupState.lwfProcessBasis);
+            setLwfProcessBasisType(backupState.lwfProcessBasisType);
             setLwfProcessArrear(backupState.lwfProcessArrear);
             setLwfProcessSettlement(backupState.lwfProcessSettlement);
             setLwfProvisionEmployerCtc(backupState.lwfProvisionEmployerCtc);
@@ -1248,14 +1252,35 @@ const StatutorySettings: React.FC = () => {
                                     />
                                 </div>
 
-                                <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-50 mt-2">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessBasis ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
-                                            {lwfProcessBasis && <Check size={14} className="text-white stroke-[3]" />}
+                                    <div className="space-y-4 pt-4 border-t border-slate-50 mt-2">
+                                        <div className="flex flex-col gap-3">
+                                            <label className="flex items-center gap-3 cursor-pointer group">
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessBasis ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                                    {lwfProcessBasis && <Check size={14} className="text-white stroke-[3]" />}
+                                                </div>
+                                                <input type="checkbox" className="hidden" checked={lwfProcessBasis} onChange={() => editingSection === 'lwf' && setLwfProcessBasis(!lwfProcessBasis)} disabled={editingSection !== 'lwf'} />
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process LWF on basis of</span>
+                                            </label>
+
+                                            {lwfProcessBasis && (
+                                                <div className="flex items-center gap-6 ml-8 animate-in slide-in-from-left-2 duration-200">
+                                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${lwfProcessBasisType === 'Rate' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                            {lwfProcessBasisType === 'Rate' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                        </div>
+                                                        <input type="radio" className="hidden" name="lwfBasis" value="Rate" checked={lwfProcessBasisType === 'Rate'} onChange={() => editingSection === 'lwf' && setLwfProcessBasisType('Rate')} disabled={editingSection !== 'lwf'} />
+                                                        <span className={`text-xs font-semibold transition-colors ${lwfProcessBasisType === 'Rate' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Rate</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${lwfProcessBasisType === 'Earnings' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                            {lwfProcessBasisType === 'Earnings' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                        </div>
+                                                        <input type="radio" className="hidden" name="lwfBasis" value="Earnings" checked={lwfProcessBasisType === 'Earnings'} onChange={() => editingSection === 'lwf' && setLwfProcessBasisType('Earnings')} disabled={editingSection !== 'lwf'} />
+                                                        <span className={`text-xs font-semibold transition-colors ${lwfProcessBasisType === 'Earnings' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Earnings</span>
+                                                    </label>
+                                                </div>
+                                            )}
                                         </div>
-                                        <input type="checkbox" className="hidden" checked={lwfProcessBasis} onChange={() => isEditing && setLwfProcessBasis(!lwfProcessBasis)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Process LWF on basis of</span>
-                                    </label>
 
                                     <label className="flex items-center gap-3 cursor-pointer group">
                                         <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessArrear ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
