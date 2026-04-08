@@ -1134,10 +1134,10 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
                     )}
 
-                    {/* Taxable earning */}
+                    {/* Taxable deduction */}
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Taxable earning <span className="text-rose-500">*</span></label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Taxable deduction <span className="text-rose-500">*</span></label>
                             <div className="flex gap-6">
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxableEarning ? 'border-purple-600' : 'border-slate-300'}`}>
@@ -1709,7 +1709,7 @@ const HRSalaryComponents: React.FC = () => {
     const [statusChangeRequest, setStatusChangeRequest] = useState<{ isOpen: boolean; id: string | null; newStatus: boolean }>({ isOpen: false, id: null, newStatus: false });
 
     // Filter out Benefits for now
-    const tabs = ['Earnings', 'Deductions', 'Reimbursements'];
+    const tabs = ['Earnings', 'Deductions'];
 
     const filteredData = useMemo(() => {
         let allComponents = [...components];
@@ -2051,9 +2051,9 @@ const HRSalaryComponents: React.FC = () => {
                                             )}
                                             {activeTab === 'Deductions' && (
                                                 <>
+                                                    <th className="px-6 py-4">Nature of Deduction</th>
                                                     <th className="px-6 py-4">Calculation Method</th>
-                                                    <th className="px-6 py-4">Deduction Type</th>
-                                                    <th className="px-6 py-4">Deduction Frequency</th>
+                                                    <th className="px-6 py-4">Taxable deduction</th>
                                                     <th className="px-6 py-4">Deduction Timing</th>
                                                 </>
                                             )}
