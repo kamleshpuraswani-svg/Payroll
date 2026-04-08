@@ -494,20 +494,9 @@ const PfTdsSettings: React.FC = () => {
                                                             <div className="h-px flex-1 bg-slate-200 ml-4"></div>
                                                         </div>
 
-                                                        <p className="text-sm font-bold text-slate-800">Total Employer’s Contribution</p>
-
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex items-center gap-2">
                                                                 <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate <span className="text-rose-500">*</span></h4>
-                                                                <div className="group/rate relative">
-                                                                    <Info size={14} className="text-slate-300 cursor-help" />
-                                                                    <div className="invisible group-hover/rate:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl z-50 text-left leading-relaxed font-bold border border-slate-800 pointer-events-none">
-                                                                        <div className="mb-2 italic text-sky-400">Options:</div>
-                                                                        <div className="mb-2">1. 12% of Actual PF Wage - Calculates based on employee's full Basic + DA.</div>
-                                                                        <div>2. 12% of Restricted PF Wage - Calculates based on statutory wage ceiling (₹15,000).</div>
-                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
-                                                                    </div>
-                                                                </div>
                                                             </div>
                                                             <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup</button>
                                                         </div>
@@ -568,57 +557,34 @@ const PfTdsSettings: React.FC = () => {
                                                                 )}
                                                             </div>
 
-                                                            <div className="flex items-center gap-3 flex-wrap py-2">
+                                                            {emprPfContributionBasis !== 'actual' && <div className="flex items-center gap-3 flex-wrap py-2">
                                                                 <span className="text-sm font-bold text-slate-600">Limit employer's PF contribution amount maximum of</span>
                                                                 <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
                                                                     <div className="px-3 py-2 bg-slate-200/50 text-[10px] font-black text-slate-500 border-r border-slate-100">INR</div>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={emprLimit} 
-                                                                        onChange={e => setEmprLimit(e.target.value)} 
-                                                                        disabled={!isEditingPf} 
-                                                                        className="w-24 px-3 py-2 bg-transparent text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70" 
+                                                                    <input
+                                                                        type="text"
+                                                                        value={emprLimit}
+                                                                        onChange={e => setEmprLimit(e.target.value)}
+                                                                        disabled={!isEditingPf}
+                                                                        className="w-24 px-3 py-2 bg-transparent text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70"
                                                                     />
                                                                 </div>
                                                                 <span className="text-sm font-bold text-slate-600">monthly.</span>
-                                                            </div>
+                                                            </div>}
 
-                                                            {/* Pension Fields */}
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
-                                                                <div className="space-y-2">
-                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Employer's pension contribution (%)</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={employerPensionRate}
-                                                                        onChange={e => {
-                                                                            const val = e.target.value;
-                                                                            if (/^\d*\.?\d{0,2}$/.test(val)) {
-                                                                                setEmployerPensionRate(val);
-                                                                                const pensionNum = parseFloat(val) || 0;
-                                                                                const calculatedRate = (12 - pensionNum).toFixed(2);
-                                                                                const finalRate = calculatedRate.endsWith('.00') ? Math.floor(12 - pensionNum).toString() : calculatedRate;
-                                                                                setEmprRate(finalRate);
-                                                                            }
-                                                                        }}
-                                                                        disabled={!isEditingPf}
-                                                                        className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
-                                                                        placeholder="8.33"
-                                                                    />
-                                                                </div>
-                                                                <div className="space-y-2">
-                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={pensionWageLimit}
-                                                                        onChange={e => {
-                                                                            const val = e.target.value.replace(/[^0-9]/g, '');
-                                                                            setPensionWageLimit(val);
-                                                                        }}
-                                                                        disabled={!isEditingPf}
-                                                                        className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
-                                                                        placeholder="15000"
-                                                                    />
-                                                                </div>
+                                                            <div className="space-y-2 py-2">
+                                                                <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={pensionWageLimit}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                        setPensionWageLimit(val);
+                                                                    }}
+                                                                    disabled={!isEditingPf}
+                                                                    className="w-full md:w-80 px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                                    placeholder="15000"
+                                                                />
                                                             </div>
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
