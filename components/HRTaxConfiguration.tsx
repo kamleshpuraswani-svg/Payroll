@@ -30,7 +30,18 @@ const DEFAULT_TAX_DATA: Record<string, { NEW: any[], OLD: any[] }> = {
       { from: 250001, to: 500000, rate: 5 },
       { from: 500001, to: 1000000, rate: 20 },
       { from: 1000001, to: null, rate: 30 },
-    ]
+    ],
+    OLD_Senior: [
+      { from: 0, to: 300000, rate: 0 },
+      { from: 300001, to: 500000, rate: 5 },
+      { from: 500001, to: 1000000, rate: 20 },
+      { from: 1000001, to: null, rate: 30 },
+    ],
+    OLD_SuperSenior: [
+      { from: 0, to: 500000, rate: 0 },
+      { from: 500001, to: 1000000, rate: 20 },
+      { from: 1000001, to: null, rate: 30 },
+    ],
   },
   '2024-2025': {
     NEW: [
@@ -106,9 +117,11 @@ export default function HRTaxConfiguration() {
           rate: Number(row.rate)
         });
       });
-      // Always override 2025-2026 NEW regime with the latest DEFAULT_TAX_DATA
+      // Always override 2025-2026 slabs with the latest DEFAULT_TAX_DATA
       if (reconstructed['2025-2026']) {
         reconstructed['2025-2026'].NEW = DEFAULT_TAX_DATA['2025-2026'].NEW;
+        reconstructed['2025-2026'].OLD_Senior = DEFAULT_TAX_DATA['2025-2026'].OLD_Senior;
+        reconstructed['2025-2026'].OLD_SuperSenior = DEFAULT_TAX_DATA['2025-2026'].OLD_SuperSenior;
       }
       setHistoricalData(reconstructed);
       setAvailableYears(Object.keys(reconstructed).sort().reverse());
@@ -123,6 +136,8 @@ export default function HRTaxConfiguration() {
   // Current working slabs
   const [newRegimeSlabs, setNewRegimeSlabs] = useState<any[]>([]);
   const [oldRegimeSlabs, setOldRegimeSlabs] = useState<any[]>([]);
+  const [oldSeniorSlabs, setOldSeniorSlabs] = useState<any[]>([]);
+  const [oldSuperSeniorSlabs, setOldSuperSeniorSlabs] = useState<any[]>([]);
 
   // Reset editing state and update slabs when switching year or data refreshes
   useEffect(() => {
@@ -130,6 +145,8 @@ export default function HRTaxConfiguration() {
     if (historicalData[selectedYear]) {
       setNewRegimeSlabs(historicalData[selectedYear].NEW || []);
       setOldRegimeSlabs(historicalData[selectedYear].OLD || []);
+      setOldSeniorSlabs(historicalData[selectedYear].OLD_Senior || DEFAULT_TAX_DATA['2025-2026'].OLD_Senior || []);
+      setOldSuperSeniorSlabs(historicalData[selectedYear].OLD_SuperSenior || DEFAULT_TAX_DATA['2025-2026'].OLD_SuperSenior || []);
     }
   }, [selectedYear, historicalData]);
 
@@ -139,7 +156,13 @@ export default function HRTaxConfiguration() {
     return val.toLocaleString('en-IN');
   };
 
-  const activeSlabs = tdsRegime === 'NEW' ? newRegimeSlabs : oldRegimeSlabs;
+  const activeSlabs = tdsRegime === 'NEW'
+    ? newRegimeSlabs
+    : oldRegimeCategory === 'Senior'
+      ? oldSeniorSlabs
+      : oldRegimeCategory === 'SuperSenior'
+        ? oldSuperSeniorSlabs
+        : oldRegimeSlabs;
   const isReadOnly = true;
 
   const updateSlab = (index: number, field: 'from' | 'to' | 'rate', value: string) => {
