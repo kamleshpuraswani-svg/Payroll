@@ -382,7 +382,7 @@ const PfTdsSettings: React.FC = () => {
                                                                 )}
                                                             </div>
 
-                                                            <div className="flex items-center gap-3 flex-wrap pt-2">
+                                                            {pfContributionBasis !== 'actual' && <div className="flex items-center gap-3 flex-wrap pt-2">
                                                                 <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
                                                                     Limit employee's PF contribution amount maximum of
                                                                     <div className="group/info relative">
@@ -404,7 +404,7 @@ const PfTdsSettings: React.FC = () => {
                                                                     />
                                                                 </div>
                                                                 <span className="text-sm font-bold text-slate-600">monthly.</span>
-                                                            </div>
+                                                            </div>}
 
                                                             {/* New PF Admin Fields */}
                                                             <div className="space-y-6 pt-4">
@@ -494,44 +494,7 @@ const PfTdsSettings: React.FC = () => {
                                                             <div className="h-px flex-1 bg-slate-200 ml-4"></div>
                                                         </div>
 
-                                                        {/* Pension Fields moved up */}
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
-                                                            <div className="space-y-2">
-                                                                <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Employer’s pension contribution (%)</label>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={employerPensionRate} 
-                                                                    onChange={e => {
-                                                                        const val = e.target.value;
-                                                                        if (/^\d*\.?\d{0,2}$/.test(val)) {
-                                                                            setEmployerPensionRate(val);
-                                                                            const pensionNum = parseFloat(val) || 0;
-                                                                            const calculatedRate = (12 - pensionNum).toFixed(2);
-                                                                            const finalRate = calculatedRate.endsWith('.00') ? Math.floor(12 - pensionNum).toString() : calculatedRate;
-                                                                            setEmprRate(finalRate);
-                                                                        }
-                                                                    }} 
-                                                                    disabled={!isEditingPf} 
-                                                                    className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
-                                                                    placeholder="8.33"
-                                                                />
-                                                            </div>
-
-                                                            <div className="space-y-2">
-                                                                <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={pensionWageLimit} 
-                                                                    onChange={e => {
-                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                                                        setPensionWageLimit(val);
-                                                                    }} 
-                                                                    disabled={!isEditingPf} 
-                                                                    className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" 
-                                                                    placeholder="15000"
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                        <p className="text-sm font-bold text-slate-800">Total Employer’s Contribution</p>
 
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex items-center gap-2">
@@ -618,6 +581,44 @@ const PfTdsSettings: React.FC = () => {
                                                                     />
                                                                 </div>
                                                                 <span className="text-sm font-bold text-slate-600">monthly.</span>
+                                                            </div>
+
+                                                            {/* Pension Fields */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Employer's pension contribution (%)</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={employerPensionRate}
+                                                                        onChange={e => {
+                                                                            const val = e.target.value;
+                                                                            if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                                setEmployerPensionRate(val);
+                                                                                const pensionNum = parseFloat(val) || 0;
+                                                                                const calculatedRate = (12 - pensionNum).toFixed(2);
+                                                                                const finalRate = calculatedRate.endsWith('.00') ? Math.floor(12 - pensionNum).toString() : calculatedRate;
+                                                                                setEmprRate(finalRate);
+                                                                            }
+                                                                        }}
+                                                                        disabled={!isEditingPf}
+                                                                        className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                                        placeholder="8.33"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">Pension wage limit</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={pensionWageLimit}
+                                                                        onChange={e => {
+                                                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                            setPensionWageLimit(val);
+                                                                        }}
+                                                                        disabled={!isEditingPf}
+                                                                        className="w-full px-5 py-3.5 bg-indigo-50/30 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                                        placeholder="15000"
+                                                                    />
+                                                                </div>
                                                             </div>
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">

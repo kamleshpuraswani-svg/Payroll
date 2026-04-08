@@ -278,7 +278,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [taxTreatment, setTaxTreatment] = useState(initialData?.taxable || 'Fully Taxable');
     const [taxPreference, setTaxPreference] = useState('Subsequent');
     const [isProRata, setIsProRata] = useState(true);
-    const [epfContribution, setEpfContribution] = useState<'Always' | 'Limit'>('Always');
     const [isConsiderEPF, setIsConsiderEPF] = useState(initialData?.considerEPF ?? true);
     const [isConsiderESI, setIsConsiderESI] = useState(initialData?.considerESI ?? true);
     const [isConsiderGratuity, setIsConsiderGratuity] = useState(initialData?.considerGratuity ?? true);
@@ -757,24 +756,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 </div>
                             </label>
 
-                            {isConsiderEPF && (
-                                <div className="flex gap-4 ml-7 md:ml-0">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${epfContribution === 'Always' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {epfContribution === 'Always' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={epfContribution === 'Always'} onChange={() => setEpfContribution('Always')} />
-                                        <span className="text-sm text-slate-700 font-medium">Always</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${epfContribution === 'Limit' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {epfContribution === 'Limit' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={epfContribution === 'Limit'} onChange={() => setEpfContribution('Limit')} />
-                                        <span className="text-sm text-slate-700 font-medium">Only when PF Wage is less than ₹ 15,000</span>
-                                    </label>
-                                </div>
-                            )}
                         </div>
 
                         {/* ESI & Payslip & other configurations */}
