@@ -106,6 +106,10 @@ export default function HRTaxConfiguration() {
           rate: Number(row.rate)
         });
       });
+      // Always override 2025-2026 NEW regime with the latest DEFAULT_TAX_DATA
+      if (reconstructed['2025-2026']) {
+        reconstructed['2025-2026'].NEW = DEFAULT_TAX_DATA['2025-2026'].NEW;
+      }
       setHistoricalData(reconstructed);
       setAvailableYears(Object.keys(reconstructed).sort().reverse());
     }
