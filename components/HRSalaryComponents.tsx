@@ -887,6 +887,10 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
         return selectedTarget === 'all' ? "bu:MindInventory" : selectedTarget;
     });
 
+    const [natureOfDeduction, setNatureOfDeduction] = useState<'Fixed' | 'Variable'>(
+        initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
+    );
+
     // Calculation Method State
     const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage'>(
         initialData?.calcMethod || 'Flat'
@@ -920,7 +924,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             deductionType,
             calcMethod,
             amountOrPercent,
-            type: 'Variable Pay',
+            type: natureOfDeduction === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
             category: 'Deductions',
             calculation: calcMethod === 'Flat' ? `Flat ₹${amountOrPercent}` : `${amountOrPercent}% of ${selectedComponents.join(', ')}`,
             isProRata,
@@ -999,6 +1003,28 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         )}
                     </div>
 
+                    {/* Nature of Deduction */}
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Nature of Deduction <span className="text-rose-500">*</span></label>
+                        <div className="flex gap-6">
+                            {(['Fixed', 'Variable'] as const).map((option) => (
+                                <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfDeduction === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {natureOfDeduction === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={natureOfDeduction === option} onChange={() => {
+                                        setNatureOfDeduction(option);
+                                        if (option === 'Variable') setCalcMethod('Flat');
+                                    }} />
+                                    <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                </label>
+                            ))}
+                        </div>
+                        {natureOfDeduction === 'Variable' && (
+                            <p className="text-xs text-slate-500 mt-1.5">Amount can be edited per employee during payroll processing.</p>
+                        )}
+                    </div>
+
                     {/* Calculation Method */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -1011,6 +1037,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                     <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
                                     <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
                                 </label>
+                                {natureOfDeduction === 'Fixed' && (
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
@@ -1018,7 +1045,8 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                     <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
                                     <span className="text-sm text-slate-700 font-medium">Percentage of</span>
                                 </label>
-                                <div className="relative">
+                                )}
+                                {natureOfDeduction === 'Fixed' && <div className="relative">
                                     <button
                                         type="button"
                                         disabled={calcMethod !== 'Percentage'}
@@ -1056,7 +1084,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                             </div>
                                         </>
                                     )}
-                                </div>
+                                </div>}
                             </div>
                         </div>
                         <div className="w-1/2">
