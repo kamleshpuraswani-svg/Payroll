@@ -20,9 +20,10 @@ const DEFAULT_TAX_DATA: Record<string, { NEW: any[], OLD: any[] }> = {
       { from: 0, to: 400000, rate: 0 },
       { from: 400001, to: 800000, rate: 5 },
       { from: 800001, to: 1200000, rate: 10 },
-      { from: 1200001, to: 1500000, rate: 15 },
-      { from: 1500001, to: 2000000, rate: 20 },
-      { from: 2000001, to: null, rate: 30 },
+      { from: 1200001, to: 1600000, rate: 15 },
+      { from: 1600001, to: 2000000, rate: 20 },
+      { from: 2000001, to: 2400000, rate: 25 },
+      { from: 2400001, to: null, rate: 30 },
     ],
     OLD: [
       { from: 0, to: 250000, rate: 0 },
