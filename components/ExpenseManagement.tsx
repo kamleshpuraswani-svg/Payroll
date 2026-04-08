@@ -199,6 +199,7 @@ const ViewClaimPanel: React.FC<{
                                     <tr>
                                         <th className="px-4 py-3">Expense Date</th>
                                         <th className="px-4 py-3">Category</th>
+                                        <th className="px-4 py-3">Reason</th>
                                         <th className="px-4 py-3 text-right">Amount</th>
                                     </tr>
                                 </thead>
@@ -209,10 +210,10 @@ const ViewClaimPanel: React.FC<{
                                                 {item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-slate-800 line-clamp-1">{item.category}</span>
-                                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5 line-clamp-1">{item.reason || item.description}</span>
-                                                </div>
+                                                <span className="text-slate-800 line-clamp-1">{item.category}</span>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <span className="text-slate-600 text-xs line-clamp-2">{item.reason || item.description || '—'}</span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex flex-col items-end">
@@ -230,7 +231,7 @@ const ViewClaimPanel: React.FC<{
                                     ))}
                                     {(!claim.items || claim.items.length === 0) && (
                                         <tr>
-                                            <td colSpan={3} className="px-4 py-6 text-center text-slate-300 italic font-medium">No individual items recorded</td>
+                                            <td colSpan={4} className="px-4 py-6 text-center text-slate-300 italic font-medium">No individual items recorded</td>
                                         </tr>
                                     )}
                                 </tbody>

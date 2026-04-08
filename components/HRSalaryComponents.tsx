@@ -50,6 +50,10 @@ interface SalaryComponent {
     targetId?: string;
     targetType?: 'Paygroup' | 'BusinessUnit';
     isProRata?: boolean;
+    includeMonthlyPayout?: boolean;
+    prorateDojDol?: boolean;
+    includeInFirstSalaryDeduction?: boolean;
+    includeArrears?: boolean;
     deductionTiming?: 'Pre-tax' | 'Post-tax';
     roundOffSetting?: 'Floor' | 'Ceiling';
     taxComputation?: 'Proportionally' | 'Pay month';
@@ -161,63 +165,8 @@ const INITIAL_DATA: SalaryComponent[] = [
         created: 'By Kamlesh P.\nAt 5:38 PM, Nov 17, 2025'
     },
 
-    // Deductions
-    { 
-        id: '7', 
-        name: 'Professional Tax (PT)', 
-        type: 'Variable Pay', 
-        calculation: 'State Slab', 
-        taxable: 'Tax Deductible', 
-        status: true, 
-        category: 'Deductions', 
-        frequency: 'Recurring', 
-        payslipName: 'Prof Tax',
-        deductionType: 'Statutory',
-        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
-        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
-    },
-    { 
-        id: '8', 
-        name: 'Provident Fund (Employee)', 
-        type: 'Variable Pay', 
-        calculation: '12% of Basic', 
-        taxable: 'Tax Deductible', 
-        status: true, 
-        category: 'Deductions', 
-        frequency: 'Recurring', 
-        payslipName: 'EPF',
-        deductionType: 'Statutory',
-        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
-        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
-    },
-    { 
-        id: '9', 
-        name: 'Income Tax (TDS)', 
-        type: 'Variable Pay', 
-        calculation: 'As per Slab', 
-        taxable: 'Tax Deductible', 
-        status: true, 
-        category: 'Deductions', 
-        frequency: 'Recurring', 
-        payslipName: 'TDS',
-        deductionType: 'Statutory',
-        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
-        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
-    },
-    { 
-        id: '10', 
-        name: 'Loan Repayment', 
-        type: 'Fixed Pay', 
-        calculation: 'Fixed EMI', 
-        taxable: 'Tax Deductible', 
-        status: false, 
-        category: 'Deductions', 
-        frequency: 'Recurring', 
-        payslipName: 'Loan Recovery',
-        deductionType: 'Non-Statutory',
-        lastModified: 'By Admin\nAt 10:00 AM, Nov 11, 2025',
-        created: 'By Admin\nAt 09:00 AM, Nov 11, 2025'
-    },
+    // Deductions (Mock data removed as requested)
+
 
     // Benefits (Data kept for future use, tab hidden)
     { id: '11', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
@@ -926,8 +875,25 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [frequency, setFrequency] = useState<'One-time' | 'Recurring'>(initialData?.frequency || 'One-time');
     const [isActive, setIsActive] = useState(initialData?.status ?? true);
     const [isProRata, setIsProRata] = useState(initialData?.isProRata ?? false);
+    const [includeMonthlyPayout, setIncludeMonthlyPayout] = useState(initialData?.includeMonthlyPayout ?? false);
+    const [prorateDojDol, setProrateDojDol] = useState(initialData?.prorateDojDol ?? false);
+    const [includeInFirstSalaryDeduction, setIncludeInFirstSalaryDeduction] = useState(initialData?.includeInFirstSalaryDeduction ?? false);
+    const [includeArrears, setIncludeArrears] = useState(initialData?.includeArrears ?? false);
     const [showInPayslip, setShowInPayslip] = useState(initialData?.showInPayslip ?? true);
     const [deductionTiming, setDeductionTiming] = useState<'Pre-tax' | 'Post-tax'>(initialData?.deductionTiming || 'Post-tax');
+    const [roundOffSetting, setRoundOffSetting] = useState<'Floor' | 'Ceiling'>(initialData?.roundOffSetting || 'Ceiling');
+    // Taxable earning fields
+    const [isTaxableEarning, setIsTaxableEarning] = useState(
+        initialData?.taxable !== undefined && initialData.taxable !== 'Tax Deductible' ? true : false
+    );
+    const [taxTreatment, setTaxTreatment] = useState(initialData?.taxable && initialData.taxable !== 'Tax Deductible' ? initialData.taxable : 'Fully Taxable');
+    const [taxComputation, setTaxComputation] = useState<'Proportionally' | 'Pay month'>(initialData?.taxComputation || 'Proportionally');
+    const [incomeTaxSection, setIncomeTaxSection] = useState(initialData?.incomeTaxSection || '');
+    const [sectionMaxLimit, setSectionMaxLimit] = useState(initialData?.sectionMaxLimit || '');
+    const [nonTaxableLimit, setNonTaxableLimit] = useState(initialData?.nonTaxableLimit || '');
+    const [isCreatingSection, setIsCreatingSection] = useState(false);
+    const [customTaxSection, setCustomTaxSection] = useState('');
+    const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
     const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
     const [deductionType, setDeductionType] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deductionType || 'Statutory');
     const [error, setError] = useState<string | null>(null);
@@ -976,9 +942,18 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             type: 'Variable Pay',
             category: 'Deductions',
             calculation: calcMethod === 'Flat' ? `Flat ₹${amountOrPercent}` : `${amountOrPercent}% of ${selectedComponents.join(', ')}`,
-            taxable: 'Tax Deductible',
             isProRata,
-            deductionTiming
+            includeMonthlyPayout,
+            prorateDojDol,
+            includeInFirstSalaryDeduction,
+            includeArrears,
+            deductionTiming,
+            roundOffSetting,
+            taxable: isTaxableEarning ? taxTreatment as SalaryComponent['taxable'] : 'Tax Deductible',
+            taxComputation: isTaxableEarning ? taxComputation : undefined,
+            incomeTaxSection: isTaxableEarning ? (isCreatingSection ? customTaxSection : incomeTaxSection) : undefined,
+            sectionMaxLimit: (isTaxableEarning && taxTreatment === 'Fully Taxable') ? sectionMaxLimit : undefined,
+            nonTaxableLimit: (isTaxableEarning && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined,
         };
 
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
@@ -1042,25 +1017,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                             </div>
                         )}
                     </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">Deduction Type <span className="text-rose-500">*</span></label>
-                        <div className="flex gap-6">
-                            {(['Statutory', 'Non-Statutory'] as const).map(type => (
-                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deductionType === type ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {deductionType === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input
-                                        type="radio"
-                                        className="hidden"
-                                        checked={deductionType === type}
-                                        onChange={() => setDeductionType(type)}
-                                    />
-                                    <span className="text-sm text-slate-700 font-medium">{type}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
+
                     {/* Calculation Method */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -1121,7 +1078,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                 </div>
                             </div>
                         </div>
-                        <div>
+                        <div className="w-1/2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
                                 {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
                             </label>
@@ -1140,21 +1097,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Frequency <span className="text-rose-500">*</span></label>
-                        <div className="space-y-2">
-                            {['One-time', 'Recurring'].map(freq => (
-                                <label key={freq} className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${frequency === freq ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {frequency === freq && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={frequency === freq} onChange={() => setFrequency(freq as any)} />
-                                    <span className="text-sm text-slate-700 font-medium">{freq === 'One-time' ? 'One-time deduction' : 'Recurring deduction for subsequent Payrolls'}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
 
+
+                    {isTaxableEarning && (
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Timing <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
@@ -1178,7 +1123,177 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                             Post-tax — deducted after income tax calculation (e.g. loan recovery, salary advance).
                         </p>
                     </div>
+                    )}
+
+                    {/* Taxable earning */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Taxable earning <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxableEarning ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {isTaxableEarning && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={isTaxableEarning} onChange={() => setIsTaxableEarning(true)} />
+                                    <span className="text-sm text-slate-700 font-medium">Yes</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${!isTaxableEarning ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {!isTaxableEarning && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={!isTaxableEarning} onChange={() => setIsTaxableEarning(false)} />
+                                    <span className="text-sm text-slate-700 font-medium">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {isTaxableEarning && (
+                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="w-1/2">
+                                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            value={taxTreatment}
+                                            onChange={(e) => setTaxTreatment(e.target.value)}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none bg-white"
+                                        >
+                                            <option value="Fully Taxable">Fully Taxable</option>
+                                            <option value="Partially Exempt">Partially Exempt</option>
+                                            <option value="Fully Exempt">Fully Exempt</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1.5">
+                                        {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
+                                        {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                                        {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                    {taxTreatment === 'Partially Exempt' && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Non Taxable Limit</label>
+                                            <input
+                                                type="text"
+                                                value={nonTaxableLimit}
+                                                onChange={e => setNonTaxableLimit(e.target.value.replace(/[^0-9]/g, ''))}
+                                                placeholder="Enter Amount"
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-2">Tax computation <span className="text-rose-500">*</span></label>
+                                        <div className="flex gap-6 h-[40px] items-center">
+                                            {(['Proportionally', 'Pay month'] as const).map((option) => (
+                                                <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${taxComputation === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                        {taxComputation === option && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                    </div>
+                                                    <input type="radio" className="hidden" checked={taxComputation === option} onChange={() => setTaxComputation(option)} />
+                                                    <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="relative">
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
+                                        {isCreatingSection ? (
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={customTaxSection}
+                                                    onChange={e => setCustomTaxSection(e.target.value)}
+                                                    placeholder="Enter Section Name"
+                                                    className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10 font-medium text-slate-700"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    onClick={() => { setIsCreatingSection(false); setCustomTaxSection(''); }}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div
+                                                    onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
+                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
+                                                >
+                                                    <span>{incomeTaxSection || 'Select or Create Section'}</span>
+                                                    <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                                </div>
+                                                {isSectionDropdownOpen && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
+                                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                            <div
+                                                                onClick={() => { setIsCreatingSection(true); setIsSectionDropdownOpen(false); }}
+                                                                className="px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-slate-50 cursor-pointer border-b border-slate-100"
+                                                            >
+                                                                Create section
+                                                            </div>
+                                                            {[
+                                                                "Section_10(14)(i)",
+                                                                "Section_10(14)(ii)",
+                                                                "Section_10(5)",
+                                                                "Section_17(2)(Viii)",
+                                                                "Section_10(13)(a)"
+                                                            ].map(section => (
+                                                                <div
+                                                                    key={section}
+                                                                    onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
+                                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                                                                >
+                                                                    {section}
+                                                                    {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {taxTreatment === 'Fully Taxable' && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
+                                            <input
+                                                type="text"
+                                                value={sectionMaxLimit}
+                                                onChange={e => setSectionMaxLimit(e.target.value.replace(/[^0-9]/g, ''))}
+                                                placeholder="Enter Amount"
+                                                className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="pt-2 flex flex-col gap-3">
+                        {/* Round off settings */}
+                        <div className="pb-1">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Round off settings <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-6">
+                                {(['Floor', 'Ceiling'] as const).map((option) => (
+                                    <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${roundOffSetting === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                            {roundOffSetting === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                        </div>
+                                        <input type="radio" className="hidden" checked={roundOffSetting === option} onChange={() => setRoundOffSetting(option)} />
+                                        <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
                         <label className="flex items-start gap-2 cursor-pointer group">
                             <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? "bg-purple-600 border-purple-600" : "border-slate-300 bg-white group-hover:border-purple-400"}`}>
                                 {isProRata && <Check size={14} className="text-white" />}
@@ -1188,6 +1303,34 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                 <span className="text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
                                 <p className="text-xs text-slate-500">Deduction will be adjusted based on employee working days.</p>
                             </div>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeMonthlyPayout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {includeMonthlyPayout && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={includeMonthlyPayout} onChange={() => setIncludeMonthlyPayout(!includeMonthlyPayout)} />
+                            <span className="text-sm font-medium text-slate-700">Include this component in monthly payout</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${prorateDojDol ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {prorateDojDol && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={prorateDojDol} onChange={() => setProrateDojDol(!prorateDojDol)} />
+                            <span className="text-sm font-medium text-slate-700">Prorate as per D.O.J / D.O.L</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInFirstSalaryDeduction ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {includeInFirstSalaryDeduction && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={includeInFirstSalaryDeduction} onChange={() => setIncludeInFirstSalaryDeduction(!includeInFirstSalaryDeduction)} />
+                            <span className="text-sm font-medium text-slate-700">Include in the employee's first salary</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeArrears ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                {includeArrears && <Check size={14} className="text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={includeArrears} onChange={() => setIncludeArrears(!includeArrears)} />
+                            <span className="text-sm font-medium text-slate-700">Include Arrears</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
@@ -1582,7 +1725,22 @@ const HRSalaryComponents: React.FC = () => {
             allComponents = [...defaultsForTarget, ...savedForTarget];
         }
 
-        const filtered = allComponents.filter(c => c.category === activeTab);
+        const filtered = allComponents.filter(c => {
+            if (c.category !== activeTab) return false;
+            
+            // Filter out specific components in Deductions tab as requested
+            if (activeTab === 'Deductions') {
+                const forbiddenNames = [
+                    'esi (employee)',
+                    'professional tax',
+                    'provident fund (employee)',
+                    'professional tax (pt)'
+                ];
+                const normalizedName = c.name.trim().toLowerCase();
+                if (forbiddenNames.some(fn => normalizedName.includes(fn))) return false;
+            }
+            return true;
+        });
         
         if (!searchQuery.trim()) return filtered;
         

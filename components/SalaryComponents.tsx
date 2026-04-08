@@ -33,8 +33,11 @@ interface SalaryComponent {
     non_taxable_limit?: string;
     include_in_ctc?: boolean;
     include_in_gross?: boolean;
-    include_in_payout?: boolean;
+    include_monthly_payout?: boolean;
     include_in_first_salary?: boolean;
+    include_arrears?: boolean;
+    is_pro_rata?: boolean;
+    prorate_doj_dol?: boolean;
     consider_gratuity?: boolean;
     consider_pt?: boolean;
     consider_lwf?: boolean;
@@ -129,15 +132,6 @@ const INITIAL_DATA: SalaryComponent[] = [
         last_modified: 'By Kamlesh P.\nAt 6:38 PM, Nov 17, 2025',
         created: 'By Kamlesh P.\nAt 5:38 PM, Nov 17, 2025'
     },
-
-    // Deductions
-    { id: '550e8400-e29b-41d4-a716-446655440007', name: 'Professional Tax (PT)', type: 'Variable Pay', calculation: '50% of CTC', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Prof Tax', deduction_type: 'Statutory' },
-    { id: '550e8400-e29b-41d4-a716-446655440008', name: 'Provident Fund (Employee)', type: 'Variable Pay', calculation: '50% of Basic', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'EPF', deduction_type: 'Statutory' },
-    { id: '550e8400-e29b-41d4-a716-446655440009', name: 'Income Tax (TDS)', type: 'Variable Pay', calculation: 'Flat | 1000 INR', taxable: 'Tax Deductible', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'TDS', deduction_type: 'Statutory' },
-    { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Loan Repayment', type: 'Fixed Pay', calculation: '10% of Basic, DA', taxable: 'Tax Deductible', status: false, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Loan Recovery', deduction_type: 'Non-Statutory' },
-    { id: '550e8400-e29b-41d4-a716-446655440017', name: 'Health Insurance Premium', type: 'Fixed Pay', calculation: '40% of Basic, HRA', taxable: 'Partially Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Health Ins', deduction_type: 'Non-Statutory' },
-    { id: '550e8400-e29b-41d4-a716-446655440018', name: 'Salary Advance Recovery', type: 'Variable Pay', calculation: 'Flat | 5000 INR', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'Sal Adv', deduction_type: 'Non-Statutory' },
-    { id: '550e8400-e29b-41d4-a716-446655440019', name: 'Labour Welfare Fund', type: 'Fixed Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Deductions', frequency: 'Recurring', payslip_name: 'LWF', deduction_type: 'Statutory' },
 
     // Benefits (Data kept for future use, tab hidden)
     { id: '550e8400-e29b-41d4-a716-446655440011', name: 'Provident Fund (Employer)', type: 'Variable Pay', calculation: '12% of Basic', taxable: 'Fully Exempt', status: true, category: 'Benefits' },
@@ -856,6 +850,13 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // New Fields
+    const [isProRata, setIsProRata] = useState(initialData?.is_pro_rata ?? false);
+    const [includeMonthlyPayout, setIncludeMonthlyPayout] = useState(initialData?.include_monthly_payout ?? false);
+    const [prorateDojDol, setProrateDojDol] = useState(initialData?.prorate_doj_dol ?? false);
+    const [includeInFirstSalary, setIncludeInFirstSalary] = useState(initialData?.include_in_first_salary ?? false);
+    const [includeArrears, setIncludeArrears] = useState(initialData?.include_arrears ?? false);
+
     const handleSave = () => {
         const finalName = isOtherSelected ? customName : name;
         if (userRole === 'HR_MANAGER' && (!finalName || !effective_date)) {
@@ -878,6 +879,11 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             category: 'Deductions',
             calculation: calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : `${amount_or_percent}% of ${selectedComponents.join(', ')}`,
             taxable: 'Tax Deductible',
+            is_pro_rata: isProRata,
+            include_monthly_payout: includeMonthlyPayout,
+            prorate_doj_dol: prorateDojDol,
+            include_in_first_salary: includeInFirstSalary,
+            include_arrears: includeArrears
         };
         onSave(updatedData);
     };
@@ -953,25 +959,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                     </div>
                 </div>
-                <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-3">Deduction Type <span className="text-rose-500">*</span></label>
-                    <div className="flex gap-6">
-                        {(['Statutory', 'Non-Statutory'] as const).map(type => (
-                            <label key={type} className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${deduction_type === type ? 'border-sky-500' : 'border-slate-300'}`}>
-                                    {deduction_type === type && <div className="w-2 h-2 rounded-full bg-sky-500" />}
-                                </div>
-                                <input
-                                    type="radio"
-                                    className="hidden"
-                                    checked={deduction_type === type}
-                                    onChange={() => setDeduction_type(type)}
-                                />
-                                <span className="text-sm text-slate-700">{type}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+
 
                 {/* Calculation Method */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1034,7 +1022,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                             </div>
                         </div>
                     </div>
-                    <div>
+                    <div className="w-1/2">
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
                             {calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
                         </label>
@@ -1053,33 +1041,61 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        {userRole === 'HR_MANAGER' ? 'Deduction Frequency' : 'Select the deduction frequency'} <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="space-y-2">
-                        {['One-time', 'Recurring'].map(freq => (
-                            <label key={freq} className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${frequency === freq ? 'border-sky-500' : 'border-slate-300'}`}>
-                                    {frequency === freq && <div className="w-2 h-2 rounded-full bg-sky-500" />}
-                                </div>
-                                <input type="radio" className="hidden" checked={frequency === freq} onChange={() => setFrequency(freq as any)} />
-                                <span className="text-sm text-slate-700">{freq === 'One-time' ? 'One-time deduction' : 'Recurring deduction for subsequent Payrolls'}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+
                 <div className="pt-2 flex flex-col gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_in_payslip ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>
-                            {show_in_payslip && <CheckCircle size={14} className="text-white" />}
+                    <label className="flex items-start gap-2 cursor-pointer group">
+                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? "bg-purple-600 border-purple-600" : "border-slate-300 bg-white group-hover:border-purple-400"}`}>
+                            {isProRata && <Check size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
+                        <div>
+                            <span className="text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
+                            <p className="text-xs text-slate-500">Deduction will be adjusted based on employee working days.</p>
+                        </div>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeMonthlyPayout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                            {includeMonthlyPayout && <Check size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={includeMonthlyPayout} onChange={() => setIncludeMonthlyPayout(!includeMonthlyPayout)} />
+                        <span className="text-sm font-medium text-slate-700">Include this component in monthly payout</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${prorateDojDol ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                            {prorateDojDol && <Check size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={prorateDojDol} onChange={() => setProrateDojDol(!prorateDojDol)} />
+                        <span className="text-sm font-medium text-slate-700">Prorate as per D.O.J / D.O.L</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInFirstSalary ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                            {includeInFirstSalary && <Check size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={includeInFirstSalary} onChange={() => setIncludeInFirstSalary(!includeInFirstSalary)} />
+                        <span className="text-sm font-medium text-slate-700">Include in the employee’s first salary</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeArrears ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                            {includeArrears && <Check size={14} className="text-white" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={includeArrears} onChange={() => setIncludeArrears(!includeArrears)} />
+                        <span className="text-sm font-medium text-slate-700">Include Arrears</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_in_payslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                            {show_in_payslip && <Check size={14} className="text-white" />}
                         </div>
                         <input type="checkbox" className="hidden" checked={show_in_payslip} onChange={() => setShow_in_payslip(!show_in_payslip)} />
                         <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-black border-black' : 'border-slate-300 bg-white'}`}>
-                            {isActive && <CheckCircle size={14} className="text-white" />}
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                            {isActive && <Check size={14} className="text-white" />}
                         </div>
                         <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
                         <span className="text-sm font-medium text-slate-700">Mark as Active</span>
@@ -1415,6 +1431,19 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const filteredData = components.filter(c => {
         if (c.category !== activeTab) return false;
+        
+        // Filter out specific components in Deductions tab as requested
+        if (activeTab === 'Deductions') {
+            const forbiddenNames = [
+                'esi (employee)',
+                'professional tax',
+                'provident fund (employee)',
+                'professional tax (pt)'
+            ];
+            const normalizedName = c.name.trim().toLowerCase();
+            if (forbiddenNames.some(fn => normalizedName.includes(fn))) return false;
+        }
+
         if (!searchQuery) return true;
 
         const query = searchQuery.toLowerCase();

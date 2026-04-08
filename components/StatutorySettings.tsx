@@ -661,85 +661,6 @@ const StatutorySettings: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-6 pt-2">
-                                    {/* Component Mapping Section */}
-                                    <div className="border-t border-slate-100 pt-6">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Component Mapping: <span className="text-rose-500">*</span></h4>
-                                            <div className="group relative inline-block">
-                                                <Info size={14} className="text-slate-400 cursor-help" />
-                                                <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                    Select the salary components that should be included in the calculation of ESI contributions.
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className={`group relative min-h-[50px] p-2 rounded-xl border flex flex-wrap gap-2 items-center transition-all shadow-sm ${isEditing ? 'bg-white border-slate-200 hover:border-sky-300 focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-50' : 'bg-slate-50 border-slate-100'}`}>
-                                            {esiMappedComponents.map(comp => (
-                                                <div key={comp} className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg text-xs font-bold border border-sky-100 shadow-sm animate-in zoom-in-95 group/tag hover:bg-sky-100 transition-colors">
-                                                    {comp}
-                                                    {isEditing && (
-                                                        <button 
-                                                            onClick={() => toggleEsiComponent(comp)}
-                                                            className="text-sky-400 hover:text-rose-500 transition-colors"
-                                                            title={`Remove ${comp}`}
-                                                        >
-                                                            <X size={14} strokeWidth={2.5} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                            
-                                            {isEditing && (
-                                                <div className="flex-1 min-w-[120px] relative flex items-center justify-between">
-                                                    <select 
-                                                        className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full"
-                                                        value=""
-                                                        onChange={(e) => {
-                                                            if (e.target.value && !esiMappedComponents.includes(e.target.value)) {
-                                                                toggleEsiComponent(e.target.value);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <option value="" disabled>Add component...</option>
-                                                        {ESI_COMPONENTS.filter(c => !esiMappedComponents.includes(c)).map(c => (
-                                                            <option key={c} value={c}>{c}</option>
-                                                        ))}
-                                                        {ESI_COMPONENTS.filter(c => !esiMappedComponents.includes(c)).length === 0 && (
-                                                            <option disabled>All components added</option>
-                                                        )}
-                                                    </select>
-                                                    
-                                                    <div className="flex-1 px-2 text-slate-400 text-xs italic font-medium pointer-events-none">
-                                                        {esiMappedComponents.length === 0 ? "Select components..." : "Add more..."}
-                                                    </div>
-
-                                                    <div className="flex items-center gap-1.5 pr-1 text-slate-300 group-hover:text-slate-400 transition-colors">
-                                                        {esiMappedComponents.length > 0 && (
-                                                            <button 
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    setEsiMappedComponents([]);
-                                                                }}
-                                                                className="p-1 hover:text-rose-500 transition-colors bg-white rounded-md hover:bg-rose-50 z-20"
-                                                                title="Clear all"
-                                                            >
-                                                                <X size={16} strokeWidth={2.5} />
-                                                            </button>
-                                                        )}
-                                                        <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
-                                                        <ChevronDown size={18} strokeWidth={2.5} className="group-focus-within:rotate-180 transition-transform duration-200" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            
-                                            {!isEditing && esiMappedComponents.length === 0 && (
-                                                <span className="text-sm text-slate-400 italic px-2 font-medium">No components mapped for ESI</span>
-                                            )}
-                                        </div>
-                                    </div>
-
                                     <div className="flex flex-col gap-2 pt-4">
                                         <div className="flex items-center gap-2">
                                             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings</h4>
@@ -900,65 +821,18 @@ const StatutorySettings: React.FC = () => {
                                             </div>
                                         </div>
 
-                                {/* Gratuity Calculation Components */}
-                                <div className="space-y-4 pt-4 border-t border-slate-100">
-                                    <div className="flex justify-between items-center">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">GRATUITY CALCULATION COMPONENTS</label>
-                                        <button 
-                                            type="button"
-                                            onClick={() => setShowGratuityFormulaModal(true)}
-                                            className="text-sky-600 hover:text-sky-700 text-xs font-bold underline flex items-center gap-1"
-                                        >
-                                            Gratuity Formula
-                                        </button>
-                                    </div>
-
-                                    <div className="relative">
-                                        <div className={`min-h-[48px] p-2 rounded-xl border flex flex-wrap gap-2 transition-all ${isEditing ? 'bg-white border-slate-200 hover:border-sky-300' : 'bg-slate-50 border-slate-100'}`}>
-                                            {gratuityCalculationComponents.map(comp => (
-                                                <div key={comp} className="flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-700 rounded-lg text-xs font-bold border border-sky-100 shadow-sm animate-in zoom-in-95">
-                                                    {comp}
-                                                    {isEditing && (
-                                                        <button 
-                                                            onClick={() => toggleGratuityComponent(comp)}
-                                                            className="hover:text-rose-500 transition-colors"
-                                                        >
-                                                            <X size={12} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                            {isEditing && (
-                                                <div className="flex-1 min-w-[200px] relative">
-                                                    <select 
-                                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                                        value=""
-                                                        onChange={(e) => {
-                                                            if (e.target.value && !gratuityCalculationComponents.includes(e.target.value)) {
-                                                                toggleGratuityComponent(e.target.value);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <option value="">Add component...</option>
-                                                        {GRATUITY_COMPONENTS.filter(c => !gratuityCalculationComponents.includes(c)).map(c => (
-                                                            <option key={c} value={c}>{c}</option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="h-full flex items-center px-2 text-slate-400 text-xs italic pointer-events-none">
-                                                        Click here to add components...
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5 font-medium italic">
-                                        <Info size={14} className="text-sky-500" />
-                                        Only Basic + DA is considered as per the GRATUITY Act.
-                                    </p>
+                                {/* Gratuity Formula Button */}
+                                <div className="pt-4 border-t border-slate-300 flex justify-end">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowGratuityFormulaModal(true)}
+                                        className="text-sky-600 hover:text-sky-700 text-xs font-bold underline flex items-center gap-1"
+                                    >
+                                        Gratuity Formula
+                                    </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-8 border-t border-slate-100">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-8 border-t border-slate-300">
                                     {/* Tenure for gratuity applicability */}
                                     <div className="space-y-4">
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tenure for gratuity applicability</label>
@@ -1029,7 +903,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
 
                                 {/* Tax-free gratuity limit (₹) */}
-                                <div className="space-y-4 pt-8 border-t border-slate-100">
+                                <div className="space-y-4 pt-8 border-t border-slate-300">
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tax-free gratuity limit (₹)</label>
                                     <div className="max-w-xs relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
@@ -1054,7 +928,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
 
                                 {/* Round Off Setting */}
-                                <div className="space-y-4 pt-8 border-t border-slate-100">
+                                <div className="space-y-4 pt-8 border-t border-slate-300">
                                     <div className="flex items-center gap-2">
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Round Off Setting</label>
                                         <div className="group relative inline-block">
@@ -1087,7 +961,7 @@ const StatutorySettings: React.FC = () => {
                                  </div>
  
                                  {/* Include Gratuity in CTC */}
-                                 <div className="pt-8 border-t border-slate-100">
+                                 <div className="pt-8 border-t border-slate-300">
                                      <label className="flex items-center gap-3 cursor-pointer group w-fit">
                                          <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${includeInCtcGratuity ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
                                              {includeInCtcGratuity && <Check size={14} className="text-white stroke-[3]" />}

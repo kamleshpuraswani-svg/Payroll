@@ -80,6 +80,8 @@ export default function HRTaxConfiguration() {
   // Persistence: Load all tax data into state
   const [historicalData, setHistoricalData] = useState<any>(DEFAULT_TAX_DATA);
   const [isLoading, setIsLoading] = useState(true);
+  const [oldRegimeCategory, setOldRegimeCategory] = useState('Individuals');
+
 
   const fetchTaxData = async () => {
     setIsLoading(true);
@@ -339,7 +341,30 @@ export default function HRTaxConfiguration() {
                     Old Regime
                   </button>
                 </div>
+
+                {tdsRegime === 'OLD' && (
+                  <div className="bg-slate-50 p-1 rounded-lg inline-flex gap-1 border border-slate-200 shadow-sm animate-in slide-in-from-left-2 duration-200">
+                    {[
+                      { id: 'Individuals', label: 'Individuals (Below 60 years)' },
+                      { id: 'Senior', label: 'Senior Citizens (60–80 years)' },
+                      { id: 'SuperSenior', label: 'Super Senior Citizens (80+ years)' }
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setOldRegimeCategory(cat.id)}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                          oldRegimeCategory === cat.id 
+                            ? 'bg-white text-purple-700 shadow-sm border border-purple-100' 
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
 
               <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left">

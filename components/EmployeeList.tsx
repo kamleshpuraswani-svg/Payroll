@@ -1184,7 +1184,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        Workforce Management
+                        Employees Compensation
                     </h1>
                     <p className="text-slate-500 mt-1">Manage employee profiles, salary structures and data.</p>
                 </div>
@@ -1194,9 +1194,9 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView }) => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all cursor-default">
-                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+            <div className="flex gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all cursor-default" style={{ width: '70%', maxWidth: '280px' }}>
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform shrink-0">
                         <AlertTriangle size={24} />
                     </div>
                     <div>

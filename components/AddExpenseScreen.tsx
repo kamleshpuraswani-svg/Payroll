@@ -301,11 +301,12 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                             <div className="w-full lg:w-80 space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Employee <span className="text-rose-500">*</span></label>
                                 <div className="relative group">
-                                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <select
                                         value={selectedEmployeeId}
-                                        onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all appearance-none cursor-pointer font-bold"
+                                        onChange={(e) => !editId && setSelectedEmployeeId(e.target.value)}
+                                        disabled={!!editId}
+                                        className={`w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all appearance-none font-bold ${editId ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer'}`}
                                     >
                                         <option value="">Choose an employee...</option>
                                         {employees.map(emp => (
@@ -314,22 +315,25 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
+                                {editId && <p className="text-[10px] text-slate-400 italic">Employee cannot be changed when editing.</p>}
                             </div>
 
                             {/* Expense from date */}
                             <div className="w-full lg:w-48 space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense From Date <span className="text-rose-500">*</span></label>
                                 <div className="relative group">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <input
                                         type="date"
                                         value={expenseFromDate}
                                         onChange={(e) => {
+                                            if (editId) return;
                                             const val = e.target.value;
                                             setExpenseFromDate(val);
                                             setExpenseItems(expenseItems.map(item => ({ ...item, fromDate: val })));
                                         }}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all font-bold"
+                                        disabled={!!editId}
+                                        className={`w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all font-bold ${editId ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'}`}
                                     />
                                 </div>
                             </div>
@@ -338,16 +342,18 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                             <div className="w-full lg:w-48 space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense To Date <span className="text-rose-500">*</span></label>
                                 <div className="relative group">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <input
                                         type="date"
                                         value={expenseToDate}
                                         onChange={(e) => {
+                                            if (editId) return;
                                             const val = e.target.value;
                                             setExpenseToDate(val);
                                             setExpenseItems(expenseItems.map(item => ({ ...item, toDate: val })));
                                         }}
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm transition-all font-bold"
+                                        disabled={!!editId}
+                                        className={`w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all font-bold ${editId ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'}`}
                                     />
                                 </div>
                             </div>
