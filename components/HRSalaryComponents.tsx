@@ -2118,11 +2118,15 @@ const HRSalaryComponents: React.FC = () => {
                                                             </td>
                                                         </>
                                                     )}
-                                                    {activeTab === 'Deductions' && (
+                                                     {activeTab === 'Deductions' && (
                                                         <>
+                                                            <td className="px-6 py-4">
+                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
+                                                                    {item.type === 'Variable Pay' ? 'Variable' : 'Fixed'}
+                                                                </span>
+                                                            </td>
                                                             <td className="px-6 py-4 text-slate-600 font-medium">{item.calculation || '-'}</td>
-                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.deductionType || '-'}</td>
-                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.frequency || '-'}</td>
+                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.taxable !== 'Tax Deductible' ? 'Yes' : 'No'}</td>
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.deductionTiming || '-'}</td>
                                                         </>
                                                     )}

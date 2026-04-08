@@ -1572,7 +1572,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
         if (activeTab === 'Earnings') {
             headers = ['Component Name', 'Nature of Pay', 'Calculation Method', 'Taxable Earning', 'Value', 'Consider for PF', 'Consider for ESI', 'Last Modified', 'Created'];
         } else if (activeTab === 'Deductions') {
-            headers = ['Component Name', 'Calculation Method', 'Deduction Type', 'Deduction Frequency', 'Taxable'];
+            headers = ['Component Name', 'Nature of Deduction', 'Calculation Method', 'Taxable deduction'];
         } else {
             headers = ['Component Name', 'Nature of Pay', 'Taxable'];
         }
@@ -1594,10 +1594,9 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
             } else if (activeTab === 'Deductions') {
                 return [
                     `"${(item.name || '').replace(/"/g, '""')}"`,
+                    `"${item.type === 'Variable Pay' ? 'Variable' : 'Fixed'}"`,
                     `"${item.calculation || ''}"`,
-                    `"${item.deduction_type || 'Non-Statutory'}"`,
-                    `"${item.frequency || 'Recurring'}"`,
-                    `"${item.taxable}"`
+                    `"${item.taxable !== 'Tax Deductible' ? 'Yes' : 'No'}"`
                 ];
             } else {
                 return [
@@ -1736,7 +1735,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                 <tr>
                                     <th className="px-6 py-4">Component Name</th>
                                     <th className="px-6 py-4">Name in Payslip</th>
-                                    <th className="px-6 py-4">{activeTab === 'Deductions' ? 'Calculation Method' : 'Nature of Pay'}</th>
+                                    <th className="px-6 py-4">{activeTab === 'Deductions' ? 'Nature of Deduction' : 'Nature of Pay'}</th>
 
                                     {/* Columns Specific to Earnings vs Others */}
                                     {activeTab === 'Earnings' ? (
@@ -1751,8 +1750,8 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         <>
                                             {activeTab === 'Deductions' && (
                                                 <>
-                                                    <th className="px-6 py-4">Deduction Type</th>
-                                                    <th className="px-6 py-4">Deduction Frequency</th>
+                                                    <th className="px-6 py-4">Calculation Method</th>
+                                                    <th className="px-6 py-4">Taxable deduction</th>
                                                 </>
                                             )}
                                             {activeTab !== 'Deductions' && (
@@ -1799,7 +1798,9 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             <td className="px-6 py-4 text-slate-600">{item.payslip_name || '-'}</td>
                                             <td className="px-6 py-4">
                                                 {activeTab === 'Deductions' ? (
-                                                    <span className="text-slate-600 font-medium">{item.calculation || '-'}</span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
+                                                        {item.type === 'Variable Pay' ? 'Variable' : 'Fixed'}
+                                                    </span>
                                                 ) : (
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
                                                         {item.type}
@@ -1820,12 +1821,8 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 <>
                                                     {activeTab === 'Deductions' && (
                                                         <>
-                                                            <td className="px-6 py-4">
-                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.deduction_type === 'Statutory' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-slate-50 text-slate-600 border border-slate-100'}`}>
-                                                                    {item.deduction_type || 'Non-Statutory'}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-slate-500 font-medium">{item.frequency || 'Recurring'}</td>
+                                                            <td className="px-6 py-4 text-slate-600 font-medium">{item.calculation || '-'}</td>
+                                                            <td className="px-6 py-4 font-medium text-slate-700">{item.taxable !== 'Tax Deductible' ? 'Yes' : 'No'}</td>
                                                         </>
                                                     )}
                                                     {activeTab !== 'Deductions' && (
