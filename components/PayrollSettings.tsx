@@ -1005,7 +1005,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             };
                                                             const nxtM = getNextMonth(currentM);
                                                             const ordDay = getOrd(payDateDay);
-                                                            return `Salary for ${currentM} will be paid on ${ordDay} ${payDateMonthType === 'same' ? currentM : nxtM}.`;
+                                                            return `Salary will be processed on the ${ordDay} of the ${payDateMonthType === 'same' ? 'same month' : 'following month'} every month.`;
                                                         })()}
                                                     </p>
                                                 )}
@@ -1595,7 +1595,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Pay Schedule Configuration</h1>
-                    <p className="text-slate-500 mt-1">Define and manage pay frequencies across client companies.</p>
+                    <p className="text-slate-500 mt-1">Set up and manage payroll cycles and payment frequencies for your organization.</p>
                 </div>
                 {/* ... (rest of the header) */}
                 <div className="flex items-center gap-3">
