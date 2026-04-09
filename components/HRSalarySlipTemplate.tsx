@@ -615,9 +615,27 @@ const HRSalarySlipTemplate: React.FC = () => {
             }
         } catch (err) {
             console.error('Error fetching templates:', err);
-            setTemplates(MOCK_TEMPLATES);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const calculateSummaryValue = (name: string) => {
+        const totalEarnings = sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0);
+        const totalDeductions = sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0);
+        const employerPF = settings.showEmployerContribution ? 1800 : 0;
+        
+        switch (name) {
+            case 'Gross Earnings':
+                return totalEarnings;
+            case 'Total Deductions':
+                return totalDeductions + (settings.showEmployerContribution ? employerPF : 0);
+            case 'Net Pay':
+                return totalEarnings - totalDeductions;
+            case 'CTC Monthly':
+                return totalEarnings + employerPF;
+            default:
+                return 0;
         }
     };
 
@@ -1137,7 +1155,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                 <div key={item.id} className="flex justify-between text-sm group font-medium">
                                                     <span className="text-slate-700">{item.name}</span>
                                                      <div className="flex items-center gap-2">
-                                                         <span className="font-bold text-slate-900">₹ {formatCurrency(parseAmount(item.amount))}</span>
+                                                         <span className="font-bold text-slate-900">₹ {formatCurrency(calculateSummaryValue(item.name))}</span>
                                                          {!isReadOnly && <X size={14} onClick={() => removeComponent('summary', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
                                                      </div>
                                                 </div>
@@ -1391,6 +1409,21 @@ const HRSalarySlipTemplate: React.FC = () => {
                                     </table>
                                 </div>
                             )} */}
+
+                            {/* Salary Summary for Preview */}
+                            {sections.summary.length > 0 && (
+                                <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <h4 className="font-bold text-sm mb-4 uppercase text-slate-600 tracking-wider">Salary Summary</h4>
+                                    <div className="grid grid-cols-2 gap-y-4 gap-x-12">
+                                        {sections.summary.map((item, i) => (
+                                            <div key={i} className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                                                <span className="text-sm font-semibold text-slate-500">{item.name}</span>
+                                                <span className="text-sm font-bold text-slate-900">₹ {formatCurrency(calculateSummaryValue(item.name))}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Net Pay */}
                             <div className="flex justify-end mb-12">
