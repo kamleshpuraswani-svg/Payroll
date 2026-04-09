@@ -319,26 +319,22 @@ const AddComponentModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     section: 'earnings' | 'deductions' | 'reimbursements' | 'summary' | null;
-    onAdd: (items: ComponentItem[]) => void
-}> = ({ isOpen, onClose, section, onAdd }) => {
+    currentItems: ComponentItem[];
+    onAdd: (selectedNames: string[]) => void
+}> = ({ isOpen, onClose, section, currentItems, onAdd }) => {
     const [selected, setSelected] = useState<string[]>([]);
 
     useEffect(() => {
-        if (isOpen) {
-            if (section === 'summary') {
-                setSelected(['Gross Earnings', 'Total Deductions', 'Net Pay']);
-            } else {
-                setSelected([]);
-            }
+        if (isOpen && section) {
+            setSelected(currentItems.map(i => i.name));
         }
-    }, [isOpen, section]);
+    }, [isOpen, section, currentItems]);
 
     if (!isOpen || !section) return null;
 
     const options = {
         earnings: ['Basic Salary', 'HRA', 'Special Allowance', 'Bonus', 'Overtime', 'Arrears', 'Food Allowance', 'Shift Allowance'],
         deductions: ['Provident Fund', 'Professional Tax', 'Income Tax (TDS)', 'Loan Repayment', 'Salary Advance', 'LWF'],
-        reimbursements: ['Medical', 'Fuel', 'Driver Salary', 'Telephone', 'Books & Periodicals'],
         summary: ['Gross Earnings', 'Total Deductions', 'Net Pay', 'CTC Monthly']
     };
 
@@ -348,14 +344,8 @@ const AddComponentModal: React.FC<{
         setSelected(prev => prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]);
     };
 
-    const handleAdd = () => {
-        const newItems: ComponentItem[] = selected.map(name => ({
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-            name,
-            amount: '0',
-            type: 'Variable'
-        }));
-        onAdd(newItems);
+    const handleSync = () => {
+        onAdd(selected);
         onClose();
     };
 
@@ -375,7 +365,7 @@ const AddComponentModal: React.FC<{
                 </div>
                 <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100">
                     <button onClick={onClose} className="flex-1 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">Cancel</button>
-                    <button onClick={handleAdd} disabled={selected.length === 0} className="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                    <button onClick={handleSync} disabled={selected.length === 0} className="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                         Add Selected ({selected.length})
                     </button>
                 </div>
@@ -749,6 +739,12 @@ const HRSalarySlipTemplate: React.FC = () => {
 
         const newActiveState = !template.isActive;
         const newStatus = newActiveState ? 'Active' : 'Inactive';
+
+        if (!newActiveState && templates.length === 1) {
+            if (!window.confirm('You only have one salary slip template active, if you deactivate employees will not receive salary slips. Are you sure you want to confirm?')) {
+                return;
+            }
+        }
         try {
             if (template.id.length < 5) {
                 // Mock -> Real Promotion
@@ -786,25 +782,58 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        const template = templates.find(t => t.id === id);
+        if (template?.isActive && templates.length === 1) {
+            alert('You cannot delete an active salary slip.');
+            return;
+        }
         if (!window.confirm('Are you sure you want to delete this template?')) return;
         try {
-            const { error } = await supabase
-                .from('document_templates')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
-            await fetchTemplates();
+            const isMock = id.length < 5;
+            if (!isMock) {
+                const { error } = await supabase
+                    .from('document_templates')
+                    .delete()
+                    .eq('id', id);
+                if (error) throw error;
+                await fetchTemplates();
+            } else {
+                // For mock templates, just remove from local state
+                setTemplates(prev => prev.filter(t => t.id !== id));
+            }
         } catch (err) {
             console.error('Error deleting template:', err);
         }
     };
 
-    const addComponent = (items: ComponentItem[]) => {
+    const syncComponents = (selectedNames: string[]) => {
         if (!addComponentModal.section) return;
-        setSections(prev => ({
-            ...prev,
-            [addComponentModal.section!]: [...prev[addComponentModal.section!], ...items]
-        }));
+        setSections(prev => {
+            const sectionName = addComponentModal.section!;
+            const currentSection = prev[sectionName];
+            
+            // 1. Keep existing items that are still selected
+            const preservedItems = currentSection.filter(existingItem => 
+                selectedNames.includes(existingItem.name)
+            );
+            
+            // 2. Add new items that weren't there before
+            const newlySelectedNames = selectedNames.filter(name => 
+                !preservedItems.some(i => i.name === name)
+            );
+            
+            const newItems: ComponentItem[] = newlySelectedNames.map(name => ({
+                id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                name,
+                amount: '0',
+                type: 'Variable'
+            }));
+            
+            return {
+                ...prev,
+                [sectionName]: [...preservedItems, ...newItems]
+            };
+        });
     };
 
     const removeComponent = (section: keyof typeof sections, id: string) => {
@@ -1043,10 +1072,10 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                 {sections.earnings.map(item => (
                                                     <div key={item.id} className="flex justify-between text-sm group">
                                                         <span className="text-slate-600">{item.name}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-slate-800">₹ {item.amount}</span>
-                                                            {!isReadOnly && <X size={14} onClick={() => removeComponent('earnings', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                        </div>
+                                                         <div className="flex items-center gap-2">
+                                                             <span className="font-medium text-slate-800">₹ {formatCurrency(parseAmount(item.amount))}</span>
+                                                             {!isReadOnly && <X size={14} onClick={() => removeComponent('earnings', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
+                                                         </div>
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
@@ -1064,10 +1093,10 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                 {sections.deductions.map(item => (
                                                     <div key={item.id} className="flex justify-between text-sm group">
                                                         <span className="text-slate-600">{item.name}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-slate-800">₹ {item.amount}</span>
-                                                            {!isReadOnly && <X size={14} onClick={() => removeComponent('deductions', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                        </div>
+                                                         <div className="flex items-center gap-2">
+                                                             <span className="font-medium text-slate-800">₹ {formatCurrency(parseAmount(item.amount))}</span>
+                                                             {!isReadOnly && <X size={14} onClick={() => removeComponent('deductions', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
+                                                         </div>
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
@@ -1079,26 +1108,26 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Reimbursements Section */}
-                                    <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                        <div className="bg-amber-50 px-4 py-2 border-b border-amber-100 text-xs font-bold uppercase text-amber-700">Reimbursements & Benefits</div>
-                                        <div className="p-4 space-y-2">
-                                            {sections.reimbursements.map(item => (
-                                                <div key={item.id} className="flex justify-between text-sm group">
-                                                    <span className="text-slate-600">{item.name}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium text-slate-800">₹ {item.amount}</span>
-                                                        {!isReadOnly && <X size={14} onClick={() => removeComponent('reimbursements', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            {!isReadOnly && (
-                                                <button onClick={() => setAddComponentModal({ isOpen: true, section: 'reimbursements' })} className="w-full py-2 border border-dashed border-amber-200 rounded text-xs font-medium text-amber-600 hover:bg-amber-50 mt-2 hidden">
-                                                    + Add Reimbursement
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                                     {/* Reimbursements Section hidden for now */}
+                                     {/* <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                         <div className="bg-amber-50 px-4 py-2 border-b border-amber-100 text-xs font-bold uppercase text-amber-700">Reimbursements & Benefits</div>
+                                         <div className="p-4 space-y-2">
+                                             {sections.reimbursements.map(item => (
+                                                 <div key={item.id} className="flex justify-between text-sm group">
+                                                     <span className="text-slate-600">{item.name}</span>
+                                                     <div className="flex items-center gap-2">
+                                                         <span className="font-medium text-slate-800">₹ {item.amount}</span>
+                                                         {!isReadOnly && <X size={14} onClick={() => removeComponent('reimbursements', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
+                                                     </div>
+                                                 </div>
+                                             ))}
+                                             {!isReadOnly && (
+                                                 <button onClick={() => setAddComponentModal({ isOpen: true, section: 'reimbursements' })} className="w-full py-2 border border-dashed border-amber-200 rounded text-xs font-medium text-amber-600 hover:bg-amber-50 mt-2 hidden">
+                                                     + Add Reimbursement
+                                                 </button>
+                                             )}
+                                         </div>
+                                     </div> */}
 
                                     {/* Summary Section */}
                                     <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -1107,10 +1136,10 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             {sections.summary.map(item => (
                                                 <div key={item.id} className="flex justify-between text-sm group font-medium">
                                                     <span className="text-slate-700">{item.name}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-slate-900">₹ {item.amount}</span>
-                                                        {!isReadOnly && <X size={14} onClick={() => removeComponent('summary', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                    </div>
+                                                     <div className="flex items-center gap-2">
+                                                         <span className="font-bold text-slate-900">₹ {formatCurrency(parseAmount(item.amount))}</span>
+                                                         {!isReadOnly && <X size={14} onClick={() => removeComponent('summary', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
+                                                     </div>
                                                 </div>
                                             ))}
                                             {!isReadOnly && (
@@ -1154,11 +1183,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                             { id: 'd2', name: 'Professional Tax', amount: '200', type: 'Variable' },
                                                             { id: 'd3', name: 'Income Tax (TDS)', amount: '0', type: 'Variable' },
                                                         ],
-                                                        reimbursements: [
-                                                            { id: 'r1', name: 'Fuel & Driver', amount: '0', type: 'Variable' },
-                                                            { id: 'r2', name: 'Telephone / Internet', amount: '0', type: 'Variable' },
-                                                            { id: 'r3', name: 'Books & Periodicals', amount: '0', type: 'Variable' },
-                                                        ]
+                                                         reimbursements: []
                                                     }));
                                                 } else if (val === '2') {
                                                     setSections(prev => ({
@@ -1281,23 +1306,23 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             <td className="border-l border-r border-slate-300 p-2 text-left align-top">
                                                 {sections.earnings[i]?.name}
                                             </td>
-                                            <td className="border-r border-slate-300 p-2 text-right align-top">
-                                                {sections.earnings[i] ? `₹ ${sections.earnings[i].amount}` : ''}
-                                            </td>
+                                             <td className="border-r border-slate-300 p-2 text-right align-top">
+                                                 {sections.earnings[i] ? `₹ ${formatCurrency(parseAmount(sections.earnings[i].amount))}` : ''}
+                                             </td>
                                             {settings.showYTD && (
                                                 <td className="border-r border-slate-300 p-2 text-right align-top text-slate-500">
-                                                    {sections.earnings[i] ? `₹ ${(parseAmount(sections.earnings[i].amount) * 8).toLocaleString('en-IN')}` : ''}
+                                                    {sections.earnings[i] ? `₹ ${formatCurrency(parseAmount(sections.earnings[i].amount) * 8)}` : ''}
                                                 </td>
                                             )}
                                             <td className="border-r border-slate-300 p-2 text-left align-top">
                                                 {sections.deductions[i]?.name}
                                             </td>
-                                            <td className="border-r border-slate-300 p-2 text-right align-top">
-                                                {sections.deductions[i] ? `₹ ${sections.deductions[i].amount}` : ''}
-                                            </td>
+                                             <td className="border-r border-slate-300 p-2 text-right align-top">
+                                                 {sections.deductions[i] ? `₹ ${formatCurrency(parseAmount(sections.deductions[i].amount))}` : ''}
+                                             </td>
                                             {settings.showYTD && (
                                                 <td className="border-r border-slate-300 p-2 text-right align-top text-slate-500">
-                                                    {sections.deductions[i] ? `₹ ${(parseAmount(sections.deductions[i].amount) * 8).toLocaleString('en-IN')}` : ''}
+                                                    {sections.deductions[i] ? `₹ ${formatCurrency(parseAmount(sections.deductions[i].amount) * 8)}` : ''}
                                                 </td>
                                             )}
                                         </tr>
@@ -1308,9 +1333,9 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             <td className="border border-slate-300 p-2 text-left" colSpan={settings.showYTD ? 3 : 2}>
                                                 <div className="font-semibold mb-1">Employer PF Contribution</div>
                                             </td>
-                                            <td className="border border-slate-300 p-2 text-right align-top" colSpan={settings.showYTD ? 3 : 2}>
-                                                ₹ 1,800
-                                            </td>
+                                             <td className="border border-slate-300 p-2 text-right align-top" colSpan={settings.showYTD ? 3 : 2}>
+                                                 ₹ {formatCurrency(1800)}
+                                             </td>
                                         </tr>
                                     )}
 
@@ -1350,8 +1375,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 </tbody>
                             </table>
 
-                            {/* Reimbursements (Optional) */}
-                            {sections.reimbursements.length > 0 && (
+                            {/* Reimbursements hidden */}
+                            {/* {sections.reimbursements.length > 0 && (
                                 <div className="mb-8">
                                     <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Reimbursements & Benefits</h4>
                                     <table className="w-full border-collapse border border-slate-300 text-sm">
@@ -1365,7 +1390,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         </tbody>
                                     </table>
                                 </div>
-                            )}
+                            )} */}
 
                             {/* Net Pay */}
                             <div className="flex justify-end mb-12">
@@ -1399,7 +1424,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                 isOpen={addComponentModal.isOpen}
                 onClose={() => setAddComponentModal({ isOpen: false, section: null })}
                 section={addComponentModal.section}
-                onAdd={addComponent}
+                currentItems={addComponentModal.section ? sections[addComponentModal.section] : []}
+                onAdd={syncComponents}
             />
         </div>
     );

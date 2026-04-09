@@ -1688,7 +1688,25 @@ const HRSalaryComponents: React.FC = () => {
                 targetType: item.target_type,
                 considerGratuity: item.consider_gratuity,
                 isProRata: item.is_pro_rata,
-                deductionTiming: item.deduction_timing
+                deductionTiming: item.deduction_timing,
+                includeMonthlyPayout: item.include_monthly_payout,
+                prorateDojDol: item.prorate_doj_dol,
+                includeInFirstSalaryDeduction: item.include_in_first_salary,
+                includeInFirstSalary: item.include_in_first_salary,
+                includeArrears: item.include_arrears,
+                roundOffSetting: item.round_off_setting,
+                taxComputation: item.tax_computation,
+                incomeTaxSection: item.income_tax_section,
+                sectionMaxLimit: item.section_max_limit,
+                nonTaxableLimit: item.non_taxable_limit,
+                includeInCTC: item.include_in_ctc,
+                includeInGross: item.include_in_gross,
+                includeInPayout: item.include_in_payout,
+                considerPT: item.consider_pt,
+                considerLWF: item.consider_lwf,
+                considerLeaveEncashment: item.consider_leave_encashment,
+                showOnSalaryRegister: item.show_on_salary_register,
+                showRateOnSalarySlip: item.show_rate_on_salary_slip
             }));
             setComponents(mappedData);
         }
@@ -1875,6 +1893,23 @@ const HRSalaryComponents: React.FC = () => {
             target_type: data.targetType,
             is_pro_rata: data.isProRata,
             deduction_timing: data.deductionTiming,
+            include_monthly_payout: data.includeMonthlyPayout,
+            prorate_doj_dol: data.prorateDojDol,
+            include_in_first_salary: data.includeInFirstSalaryDeduction || data.includeInFirstSalary,
+            include_arrears: data.includeArrears,
+            round_off_setting: data.roundOffSetting,
+            tax_computation: data.taxComputation,
+            income_tax_section: data.incomeTaxSection,
+            section_max_limit: data.sectionMaxLimit,
+            non_taxable_limit: data.nonTaxableLimit,
+            include_in_ctc: data.includeInCTC,
+            include_in_gross: data.includeInGross,
+            include_in_payout: data.includeInPayout,
+            consider_pt: data.considerPT,
+            consider_lwf: data.considerLWF,
+            consider_leave_encashment: data.considerLeaveEncashment,
+            show_on_salary_register: data.showOnSalaryRegister,
+            show_rate_on_salary_slip: data.showRateOnSalarySlip,
             last_updated_by: 'Admin'
         } as any;
 
