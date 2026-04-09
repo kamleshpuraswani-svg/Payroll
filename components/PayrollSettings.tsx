@@ -41,6 +41,7 @@ interface PaySchedule {
     calcBase?: string;
     payPeriodEndDate?: string;
     weeklyPayDay?: string;
+    smSecondStandardDay?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -192,6 +193,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     });
 
     const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>(() => initialData?.smSecondType || 'last');
+    const [smSecondStandardDay, setSmSecondStandardDay] = useState(() => initialData?.smSecondStandardDay || '31');
     const [smSecondCustomDay, setSmSecondCustomDay] = useState(() => initialData?.smSecondCustomDay || '16');
 
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
@@ -480,6 +482,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             calcBase,
             payPeriodEndDate,
             weeklyPayDay,
+            smSecondStandardDay,
             history: [...(initialData?.history || []), ...newHistoryRecords]
         }, { targetId, targetType });
     };
@@ -749,7 +752,24 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                         {smSecondType === 'last' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 animate-in zoom-in-50" />}
                                                     </div>
                                                     <input type="radio" name="semi2" checked={smSecondType === 'last'} onChange={() => setSmSecondType('last')} className="hidden" />
-                                                    <span className={`text-sm transition-colors ${smSecondType === 'last' ? 'text-slate-900 font-semibold' : 'text-slate-500'}`}>on 1st of following month</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative">
+                                                            <select
+                                                                value={smSecondStandardDay}
+                                                                onChange={(e) => {
+                                                                    setSmSecondStandardDay(e.target.value);
+                                                                    setSmSecondType('last');
+                                                                }}
+                                                                className={`w-24 pl-3 pr-8 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold ${smSecondType === 'last' ? 'border-sky-500 text-sky-700' : 'border-slate-200 text-slate-400'}`}
+                                                            >
+                                                                {Array.from({ length: 16 }, (_, i) => i + 16).map(d => (
+                                                                    <option key={d} value={d}>{d}</option>
+                                                                ))}
+                                                            </select>
+                                                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                        </div>
+                                                        <span className={`text-sm transition-colors ${smSecondType === 'last' ? 'text-slate-900 font-semibold' : 'text-slate-500'}`}>of same month</span>
+                                                    </div>
                                                 </label>
                                                 <label className="flex items-center gap-2 cursor-pointer group">
                                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${smSecondType === 'custom' ? 'border-sky-600 ring-4 ring-sky-50' : 'border-slate-300 group-hover:border-sky-300'}`}>
@@ -777,7 +797,12 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 </label>
                                             </div>
                                             <p className="text-[11px] text-sky-600 font-medium italic mt-2.5 bg-sky-50/50 px-3 py-1.5 rounded-lg border border-sky-100/50 w-fit">
-                                                Salary will be processed on {smSecondType === 'last' ? 'the 1st of every following month' : (() => {
+                                                Salary will be processed on {smSecondType === 'last' ? (() => {
+                                                    const n = parseInt(smSecondStandardDay);
+                                                    const j = n % 10, k = n % 100;
+                                                    const suffix = (j === 1 && k !== 11) ? "st" : (j === 2 && k !== 12) ? "nd" : (j === 3 && k !== 13) ? "rd" : "th";
+                                                    return n + suffix + " of every month";
+                                                })() : (() => {
                                                     const n = parseInt(smSecondCustomDay);
                                                     const j = n % 10, k = n % 100;
                                                     const suffix = (j === 1 && k !== 11) ? "st" : (j === 2 && k !== 12) ? "nd" : (j === 3 && k !== 13) ? "rd" : "th";
