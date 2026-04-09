@@ -46,7 +46,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
 
    const menuItems = [
       // ...(userRole === 'HR_MANAGER' ? [{ id: 'paygroup', label: 'Payroll Paygroup', icon: Landmark }] : []),
-      { id: 'organization', label: 'Organization Tax Details', icon: Building2 },
+      {id: 'organization', label: 'Organization Tax Details', icon: Building2 },
       { id: 'schedule', label: 'Pay Schedule', icon: Calendar },
       { id: 'components', label: 'Salary Components', icon: Layers },
       { id: 'structure', label: 'Salary Structures', icon: Briefcase },
@@ -56,12 +56,11 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'fnf-settlement', label: 'F&F Settlement Payslip', icon: FileText },
       { id: 'payslip', label: 'Salary Slip', icon: FileText },
       { id: 'bank', label: 'Bank Disbursal Format', icon: CreditCard },
-      { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'pf-tds', label: 'PF & TDS Settings', icon: Landmark },
-      { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
-      // { id: 'statutory-bonus', label: 'Statutory Bonus', icon: Award },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
+      { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
+      { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
    ];
 
    const renderContent = () => {

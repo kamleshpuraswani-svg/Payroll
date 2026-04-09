@@ -31,6 +31,16 @@ interface PaySchedule {
     excludeWeekOffs?: boolean;
     excludeHolidays?: boolean;
     history?: ChangeHistory[];
+    // Extended config fields for full sync
+    smFirstType?: '15th' | 'custom';
+    smFirstCustomDay?: string;
+    smSecondType?: 'last' | 'custom';
+    smSecondCustomDay?: string;
+    payDateDay?: string;
+    payDateMonthType?: 'same' | 'following';
+    calcBase?: string;
+    payPeriodEndDate?: string;
+    weeklyPayDay?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -110,12 +120,16 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     // Form State
     const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>(initialData?.frequency || 'Weekly');
     const [weeklyPayDay, setWeeklyPayDay] = useState(() => {
+        if (initialData?.weeklyPayDay) return initialData.weeklyPayDay;
         if (initialData?.frequency === 'Weekly' && initialData?.payDate?.startsWith('Every ')) {
             return initialData.payDate.replace('Every ', '').substring(0, 3);
         }
         return 'Fri';
     });
-    const [calcBase, setCalcBase] = useState(initialData?.payPeriodStart === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month');
+    const [calcBase, setCalcBase] = useState(() => {
+        if (initialData?.calcBase) return initialData.calcBase;
+        return initialData?.payPeriodStart === 'Organisation working days' ? 'Organisation working days' : 'Actual days in a month';
+    });
     const [startMonthStr, setStartMonthStr] = useState(initialData?.startMonthStr || 'December 2025');
     const [firstPayDate, setFirstPayDate] = useState(() => {
         if (!initialData?.firstPayDate) return '';
@@ -148,9 +162,10 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     });
 
     // Semi-Monthly Specific State
-    const [smFirstType, setSmFirstType] = useState<'15th' | 'custom'>('15th');
-    const [smFirstCustomDay, setSmFirstCustomDay] = useState('15');
+    const [smFirstType, setSmFirstType] = useState<'15th' | 'custom'>(() => initialData?.smFirstType || '15th');
+    const [smFirstCustomDay, setSmFirstCustomDay] = useState(() => initialData?.smFirstCustomDay || '15');
     const [payDateDay, setPayDateDay] = useState(() => {
+        if (initialData?.payDateDay) return initialData.payDateDay;
         if (initialData?.frequency === 'Monthly' && initialData?.payDate) {
             const match = initialData.payDate.match(/^(\d+)/);
             return match ? match[1] : '7';
@@ -158,6 +173,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         return '7';
     });
     const [payDateMonthType, setPayDateMonthType] = useState<'same' | 'following'>(() => {
+        if (initialData?.payDateMonthType) return initialData.payDateMonthType;
         if (initialData?.frequency === 'Monthly' && initialData?.payDate) {
             return initialData.payDate.includes('following month') ? 'following' : 'same';
         }
@@ -166,7 +182,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
     const [processingDate, setProcessingDate] = useState(() => initialData?.processingDate || '7');
     const [payPeriodEndDate, setPayPeriodEndDate] = useState(() => {
-        // Default to last day of the selected month
+        if (initialData?.payPeriodEndDate) return initialData.payPeriodEndDate;
+        // Default logic for backward compatibility
         if (initialData?.payPeriodEnd) {
             const match = initialData.payPeriodEnd.match(/^\d+/);
             return match ? match[0] : '28';
@@ -174,9 +191,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         return '28';
     });
 
-
-    const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>('last');
-    const [smSecondCustomDay, setSmSecondCustomDay] = useState('16'); // Default to 16th of following month if custom
+    const [smSecondType, setSmSecondType] = useState<'last' | 'custom'>(() => initialData?.smSecondType || 'last');
+    const [smSecondCustomDay, setSmSecondCustomDay] = useState(() => initialData?.smSecondCustomDay || '16');
 
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
@@ -238,8 +254,14 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             // 2nd Period Pay Date
             let date2Text = '';
             if (smSecondType === 'last') {
-                const lastDay = new Date(selectedYear, selectedMonthIndex + 1, 0).getDate();
-                date2Text = `${lastDay} ${startMonthStr.split(' ')[0]} ${selectedYear}`;
+                // Now representing 1st of following month
+                let nextMonthIndex = selectedMonthIndex + 1;
+                let nextYear = selectedYear;
+                if (nextMonthIndex > 11) {
+                    nextMonthIndex = 0;
+                    nextYear++;
+                }
+                date2Text = `01 ${MONTHS[nextMonthIndex]} ${nextYear}`;
             } else {
                 // Custom day of following month
                 let nextMonthIndex = selectedMonthIndex + 1;
@@ -407,9 +429,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             }
         }
 
-        // Validate Effective Month for HR Manager only if changes are made
-        if (userRole === 'HR_MANAGER' && hasChanged && !effectiveDate) {
-            newErrors.effectiveDate = "Effective month is mandatory when changes are made.";
+        // Validate Effective Month for HR Manager
+        if (userRole === 'HR_MANAGER' && !effectiveDate) {
+            newErrors.effectiveDate = "Effective month is mandatory.";
         }
 
         if (!localSelectedTarget) {
@@ -425,6 +447,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
         const updatedHistory = [...newHistoryRecords, ...(initialData?.history || [])];
 
         onSave({
+            ...initialData,
             frequency,
             targetId,
             targetType,
@@ -447,6 +470,16 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
             excludeWeekOffs: calcBase === 'Organisation working days' ? excludeWeekOffs : undefined,
             excludeHolidays: calcBase === 'Organisation working days' ? excludeHolidays : undefined,
+            // New sync fields
+            smFirstType,
+            smFirstCustomDay,
+            smSecondType,
+            smSecondCustomDay,
+            payDateDay,
+            payDateMonthType,
+            calcBase,
+            payPeriodEndDate,
+            weeklyPayDay,
             history: [...(initialData?.history || []), ...newHistoryRecords]
         }, { targetId, targetType });
     };
@@ -479,14 +512,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                     isPayDay = true;
                 }
             } else if (frequency === 'Monthly') {
-                if (firstPayDate) {
-                    const [y, m, day] = firstPayDate.split('-').map(Number);
-                    if (d === day && selectedMonthIndex === m - 1 && selectedYear === y) {
-                        isPayDay = true;
-                    }
-                }
-                
-                if (processingDate && d === parseInt(processingDate)) {
+                if (d === parseInt(payDateDay)) {
                     isPayDay = true;
                 }
             } else if (frequency === 'Semi-Monthly') {
@@ -565,7 +591,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         </button>
                         <div>
                             <h3 className="text-xl font-bold text-slate-800">
-                                {activeTab === 'History' ? 'Audit History' : (initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule')}
+                                {activeTab === 'History' ? 'Audit History' : (initialData ? `Edit ${frequency} Pay Schedule` : 'Create New Pay Schedule')}
                             </h3>
                             <p className="text-xs text-slate-500 font-medium">
                                 {activeTab === 'History' ? '' : 'Configure payment cycles and processing rules'}
@@ -714,39 +740,44 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             </p>
                                         </div>
 
-                                        {/* 2nd Period Config */}
+                                        {/* 2nd Period Config - Restored radios */}
                                         <div>
                                             <p className="text-xs font-bold text-slate-800 mb-3">Pay Schedule for 16th to the end of month:</p>
                                             <div className="flex flex-col sm:flex-row gap-6">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smSecondType === 'last' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                        {smSecondType === 'last' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                <label className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${smSecondType === 'last' ? 'border-sky-600 ring-4 ring-sky-50' : 'border-slate-300 group-hover:border-sky-300'}`}>
+                                                        {smSecondType === 'last' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 animate-in zoom-in-50" />}
                                                     </div>
                                                     <input type="radio" name="semi2" checked={smSecondType === 'last'} onChange={() => setSmSecondType('last')} className="hidden" />
-                                                    <span className="text-sm text-slate-700">on last day of same month</span>
+                                                    <span className={`text-sm transition-colors ${smSecondType === 'last' ? 'text-slate-900 font-semibold' : 'text-slate-500'}`}>on 1st of following month</span>
                                                 </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${smSecondType === 'custom' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                        {smSecondType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                <label className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${smSecondType === 'custom' ? 'border-sky-600 ring-4 ring-sky-50' : 'border-slate-300 group-hover:border-sky-300'}`}>
+                                                        {smSecondType === 'custom' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 animate-in zoom-in-50" />}
                                                     </div>
                                                     <input type="radio" name="semi2" checked={smSecondType === 'custom'} onChange={() => setSmSecondType('custom')} className="hidden" />
-                                                    <div className="flex items-center gap-2">
-                                                        <select
-                                                            value={smSecondCustomDay}
-                                                            onChange={(e) => setSmSecondCustomDay(e.target.value)}
-                                                            disabled={smSecondType !== 'custom'}
-                                                            className="border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:border-sky-500 disabled:opacity-50"
-                                                        >
-                                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(d => (
-                                                                <option key={d} value={d}>{d}</option>
-                                                            ))}
-                                                        </select>
-                                                        <span className="text-sm text-slate-500">of following month</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative">
+                                                            <select
+                                                                value={smSecondCustomDay}
+                                                                onChange={(e) => {
+                                                                    setSmSecondCustomDay(e.target.value);
+                                                                    setSmSecondType('custom');
+                                                                }}
+                                                                className={`w-24 pl-3 pr-8 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold ${smSecondType === 'custom' ? 'border-sky-500 text-sky-700' : 'border-slate-200 text-slate-400'}`}
+                                                            >
+                                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                                    <option key={d} value={d}>{d}</option>
+                                                                ))}
+                                                            </select>
+                                                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                        </div>
+                                                        <span className={`text-sm transition-colors ${smSecondType === 'custom' ? 'text-slate-900 font-semibold' : 'text-slate-500'}`}>of following month</span>
                                                     </div>
                                                 </label>
                                             </div>
                                             <p className="text-[11px] text-sky-600 font-medium italic mt-2.5 bg-sky-50/50 px-3 py-1.5 rounded-lg border border-sky-100/50 w-fit">
-                                                Salary will be processed on {smSecondType === 'last' ? 'the last day of every month' : (() => {
+                                                Salary will be processed on {smSecondType === 'last' ? 'the 1st of every following month' : (() => {
                                                     const n = parseInt(smSecondCustomDay);
                                                     const j = n % 10, k = n % 100;
                                                     const suffix = (j === 1 && k !== 11) ? "st" : (j === 2 && k !== 12) ? "nd" : (j === 3 && k !== 13) ? "rd" : "th";
@@ -757,221 +788,207 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     </div>
                                 )}
 
-                                {/* Common Bottom Fields */}
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                        Calculate salary based on? <span className="text-rose-500">*</span>
-                                        <Info size={14} className="text-slate-400 cursor-help" />
-                                    </label>
-                                    <div className="space-y-3">
-                                        <label className="flex items-center gap-2.5 cursor-pointer group">
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Actual days in a month' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                {calcBase === 'Actual days in a month' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="calcbase"
-                                                checked={calcBase === 'Actual days in a month'}
-                                                onChange={() => setCalcBase('Actual days in a month')}
-                                                className="hidden"
-                                            />
-                                            <span className="text-sm text-slate-700">{frequency === 'Weekly' ? 'Actual days in a week' : 'Actual days in a month'}</span>
-                                        </label>
-                                        <label className="flex items-center gap-2.5 cursor-pointer group">
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Organisation working days' ? 'border-sky-600' : 'border-slate-300'}`}>
-                                                {calcBase === 'Organisation working days' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="calcbase"
-                                                checked={calcBase === 'Organisation working days'}
-                                                onChange={() => setCalcBase('Organisation working days')}
-                                                className="hidden"
-                                            />
-                                            <span className="text-sm text-slate-700">Organisation working days (per {frequency === 'Weekly' ? 'week' : 'month'})</span>
-                                        </label>
-                                    </div>
-                                    {calcBase === 'Organisation working days' && (
-                                        <div className="mt-5 space-y-4 pl-7 animate-in fade-in slide-in-from-top-2 duration-300 border-l-2 border-sky-100">
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-sm font-bold text-slate-700 w-64 uppercase tracking-tight text-[11px]">Exclude week offs</span>
-                                                <div className="flex gap-6">
-                                                    {['Yes', 'No'].map(opt => (
-                                                        <button 
-                                                            key={opt}
-                                                            onClick={() => setExcludeWeekOffs(opt === 'Yes')}
-                                                            className={`flex items-center gap-2.5 cursor-pointer group transition-all`}
-                                                        >
-                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${excludeWeekOffs === (opt === 'Yes') ? 'border-sky-600 bg-sky-50' : 'border-slate-300 group-hover:border-slate-400'}`}>
-                                                                {excludeWeekOffs === (opt === 'Yes') && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 shadow-sm" />}
-                                                            </div>
-                                                            <span className={`text-sm ${excludeWeekOffs === (opt === 'Yes') ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{opt}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-sm font-bold text-slate-700 w-64 uppercase tracking-tight text-[11px]">Exclude public/national holidays</span>
-                                                <div className="flex gap-6">
-                                                    {['Yes', 'No'].map(opt => (
-                                                        <button 
-                                                            key={opt}
-                                                            onClick={() => setExcludeHolidays(opt === 'Yes')}
-                                                            className={`flex items-center gap-2.5 cursor-pointer group transition-all`}
-                                                        >
-                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${excludeHolidays === (opt === 'Yes') ? 'border-sky-600 bg-sky-50' : 'border-slate-300 group-hover:border-slate-400'}`}>
-                                                                {excludeHolidays === (opt === 'Yes') && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 shadow-sm" />}
-                                                            </div>
-                                                            <span className={`text-sm ${excludeHolidays === (opt === 'Yes') ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{opt}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
+                                {/* Config Fields Grid */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8 mt-4">
+                                    {/* Column 1 */}
+                                    <div className="space-y-8">
+                                        {/* Calculate salary based on? */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                                Calculate salary based on? <span className="text-rose-500">*</span>
+                                                <Info size={14} className="text-slate-400 cursor-help" />
+                                            </label>
+                                            <div className="space-y-3">
+                                                <label className="flex items-center gap-2.5 cursor-pointer group">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Actual days in a month' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {calcBase === 'Actual days in a month' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input
+                                                        type="radio"
+                                                        name="calcbase"
+                                                        checked={calcBase === 'Actual days in a month'}
+                                                        onChange={() => setCalcBase('Actual days in a month')}
+                                                        className="hidden"
+                                                    />
+                                                    <span className="text-sm text-slate-700">{frequency === 'Weekly' ? 'Actual days in a week' : 'Actual days in a month'}</span>
+                                                </label>
+                                                <label className="flex items-center gap-2.5 cursor-pointer group">
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcBase === 'Organisation working days' ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                        {calcBase === 'Organisation working days' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                                    </div>
+                                                    <input
+                                                        type="radio"
+                                                        name="calcbase"
+                                                        checked={calcBase === 'Organisation working days'}
+                                                        onChange={() => setCalcBase('Organisation working days')}
+                                                        className="hidden"
+                                                    />
+                                                    <span className="text-sm text-slate-700">Organisation working days (per {frequency === 'Weekly' ? 'week' : 'month'})</span>
+                                                    <div className="group relative ml-1 inline-block align-middle">
+                                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-pre-wrap w-48 pointer-events-none z-50 text-center">
+                                                            Based on configured company calendar excluding selected week-offs and holidays.
+                                                        </div>
+                                                    </div>
+                                                </label>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">First Payroll Month <span className="text-rose-500">*</span></label>
-                                        <div className="relative">
-                                            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <select
-                                                value={startMonthStr}
-                                                onChange={(e) => setStartMonthStr(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-medium text-slate-700"
-                                            >
-                                                <option value="">Select start month</option>
-                                                {Array.from({ length: 12 }, (_, i) => {
-                                                    const d = new Date();
-                                                    d.setMonth(d.getMonth() + i);
-                                                    const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
-                                                    return <option key={label} value={label}>{label}</option>;
-                                                })}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                        </div>
-                                        {errors.startMonthStr && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.startMonthStr}</p>}
-                                    </div>
-
-                                    {frequency === 'Weekly' && (
-                                        <div className="animate-in fade-in slide-in-from-right-2">
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">First Pay Date <span className="text-rose-500">*</span></label>
-                                            <div className="relative">
-                                                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500" size={18} />
-                                                <select
-                                                    value={firstPayDate}
-                                                    onChange={(e) => setFirstPayDate(e.target.value)}
-                                                    className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
-                                                >
-                                                    <option value="">Select pay date</option>
-                                                    {payDateOptions.map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
-                                            {errors.firstPayDate && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.firstPayDate}</p>}
-                                        </div>
-                                    )}
-
-                                    {frequency === 'Monthly' && (
-                                        <div className="animate-in fade-in slide-in-from-right-2">
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
-                                            <div className="flex items-center gap-6">
-                                                <div className="relative w-24">
+                                        {/* Row 2, Col 1: First Pay Date (For Weekly) */}
+                                        {frequency === 'Weekly' && (
+                                            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                                                <label className="block text-sm font-bold text-slate-700 mb-2">First Pay Date <span className="text-rose-500">*</span></label>
+                                                <div className="relative">
+                                                    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500" size={18} />
                                                     <select
-                                                        value={payDateDay}
-                                                        onChange={(e) => setPayDateDay(e.target.value)}
-                                                        className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
+                                                        value={firstPayDate}
+                                                        onChange={(e) => setFirstPayDate(e.target.value)}
+                                                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 ${errors.firstPayDate ? 'border-rose-500' : 'border-slate-200'}`}
                                                     >
-                                                        {Array.from({ length: daysInSelectedMonth }, (_, i) => (
-                                                            <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                        <option value="">Select pay date</option>
+                                                        {payDateOptions.map(opt => (
+                                                            <option key={opt} value={opt}>{opt}</option>
                                                         ))}
                                                     </select>
-                                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                                 </div>
-                                                
-                                                <div className="flex items-center gap-6">
-                                                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'same' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                            {payDateMonthType === 'same' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                        </div>
-                                                        <input
-                                                            type="radio"
-                                                            className="hidden"
-                                                            name="payDateMonthType"
-                                                            checked={payDateMonthType === 'same'}
-                                                            onChange={() => setPayDateMonthType('same')}
-                                                        />
-                                                        <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Same month</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${payDateMonthType === 'following' ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}>
-                                                            {payDateMonthType === 'following' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
-                                                        </div>
-                                                        <input
-                                                            type="radio"
-                                                            className="hidden"
-                                                            name="payDateMonthType"
-                                                            checked={payDateMonthType === 'following'}
-                                                            onChange={() => setPayDateMonthType('following')}
-                                                        />
-                                                        <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>Following month</span>
-                                                    </label>
-                                                </div>
+                                                {errors.firstPayDate && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.firstPayDate}</p>}
                                             </div>
-                                            {startMonthStr && payDateDay && (
-                                                <p className="text-[11px] text-slate-400 font-medium italic mt-2.5">
-                                                    {(() => {
-                                                        const currentM = startMonthStr.split(' ')[0];
-                                                        const getNextMonth = (s: string) => {
-                                                            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                                                            const idx = months.indexOf(s);
-                                                            return idx === -1 ? "Next month" : months[(idx + 1) % 12];
-                                                        };
-                                                        const getOrd = (d: string) => {
-                                                            const n = parseInt(d);
-                                                            const j = n % 10, k = n % 100;
-                                                            if (j === 1 && k !== 11) return n + "st";
-                                                            if (j === 2 && k !== 12) return n + "nd";
-                                                            if (j === 3 && k !== 13) return n + "rd";
-                                                            return n + "th";
-                                                        };
-                                                        const nxtM = getNextMonth(currentM);
-                                                        const ordDay = getOrd(payDateDay);
-                                                        return `Same month — salary for ${currentM} is paid on ${ordDay} ${currentM}. Following month — salary for ${currentM} is paid on ${ordDay} ${nxtM}.`;
-                                                    })()}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
 
-                                    {frequency === 'Semi-Monthly' && userRole === 'HR_MANAGER' && (
-                                        <div className="animate-in fade-in slide-in-from-right-2">
-                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                                Effective Month <span className="text-rose-500">*</span>
-                                                <div className="group relative">
-                                                    <Info size={14} className="text-slate-400 cursor-help" />
-                                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 text-center">
-                                                        The month from which this pay schedule configuration will be applied.
-                                                    </div>
-                                                </div>
-                                            </label>
+                                    {/* Column 2 */}
+                                    <div className="space-y-8">
+                                        {/* First Payroll Month */}
+                                        <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">First Payroll Month <span className="text-rose-500">*</span></label>
+                                            <p className="text-[11px] text-slate-500 mb-2 -mt-1 font-medium italic">Defines the starting month for payroll processing.</p>
                                             <div className="relative">
+                                                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                 <select
-                                                    value={effectiveDate}
-                                                    onChange={(e) => setEffectiveDate(e.target.value)}
-                                                    className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                    value={startMonthStr}
+                                                    onChange={(e) => setStartMonthStr(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-medium text-slate-700"
                                                 >
-                                                    <option value="">Select effective month</option>
-                                                    {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                                    <option value="">Select start month</option>
+                                                    {Array.from({ length: 12 }, (_, i) => {
+                                                        const d = new Date();
+                                                        d.setMonth(d.getMonth() + i);
+                                                        const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+                                                        return <option key={label} value={label}>{label}</option>;
+                                                    })}
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                             </div>
-                                            {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
+                                            {errors.startMonthStr && <p className="text-rose-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><Info size={12} /> {errors.startMonthStr}</p>}
+                                        </div>
+
+                                        {/* Effective Month — shown for Weekly & Semi-Monthly (Monthly has it in Pay Schedule Period row) */}
+                                        {userRole === 'HR_MANAGER' && frequency !== 'Monthly' && (
+                                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                                <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                                    Effective Month <span className="text-rose-500">*</span>
+                                                    <div className="group relative">
+                                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                                        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 text-white text-[11px] rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-pre-wrap w-56 pointer-events-none z-[100] text-center shadow-xl border border-slate-700/50 backdrop-blur-sm">
+                                                            <div className="relative z-10">The month from which this pay schedule configuration will be applied.</div>
+                                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 border-r border-b border-slate-700/50"></div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                <div className="relative">
+                                                    <select
+                                                        value={effectiveDate}
+                                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEffectiveDate(e.target.value)}
+                                                        className={`w-full border rounded-lg pl-4 pr-10 py-2.5 text-sm bg-white text-slate-700 appearance-none focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 ${errors.effectiveDate ? 'border-rose-500' : 'border-slate-200'}`}
+                                                    >
+                                                        <option value="">Select effective month</option>
+                                                        {monthOptions.map((m: string) => <option key={m} value={m}>{m}</option>)}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                                {errors.effectiveDate && <p className="text-xs text-rose-500 mt-1">{errors.effectiveDate}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                    {frequency === 'Monthly' && (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-2 col-span-full">
+                                            {/* Monthly Salary Processing Date - Full Width Row */}
+                                            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100/50">
+                                                <label className="block text-sm font-bold text-slate-700 mb-4">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
+                                                <div className="flex flex-wrap items-center gap-8">
+                                                    <div className="relative w-24">
+                                                        <select
+                                                            value={payDateDay}
+                                                            onChange={(e) => setPayDateDay(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center shadow-sm"
+                                                        >
+                                                            {Array.from({ length: daysInSelectedMonth }, (_, i) => (
+                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-8">
+                                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${payDateMonthType === 'same' ? 'border-sky-600 ring-4 ring-sky-50' : 'border-slate-300 group-hover:border-sky-300'}`}>
+                                                                {payDateMonthType === 'same' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 animate-in zoom-in-50" />}
+                                                            </div>
+                                                            <input
+                                                                type="radio"
+                                                                className="hidden"
+                                                                name="payDateMonthType"
+                                                                checked={payDateMonthType === 'same'}
+                                                                onChange={() => setPayDateMonthType('same')}
+                                                            />
+                                                            <span className={`text-sm ${payDateMonthType === 'same' ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>Same month</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${payDateMonthType === 'following' ? 'border-sky-600 ring-4 ring-sky-50' : 'border-slate-300 group-hover:border-sky-300'}`}>
+                                                                {payDateMonthType === 'following' && <div className="w-2.5 h-2.5 rounded-full bg-sky-600 animate-in zoom-in-50" />}
+                                                            </div>
+                                                            <input
+                                                                type="radio"
+                                                                className="hidden"
+                                                                name="payDateMonthType"
+                                                                checked={payDateMonthType === 'following'}
+                                                                onChange={() => setPayDateMonthType('following')}
+                                                            />
+                                                            <span className={`text-sm ${payDateMonthType === 'following' ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>Following month</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {startMonthStr && payDateDay && (
+                                                    <p className="text-[11px] text-sky-600/70 font-medium italic mt-3 bg-white/50 px-3 py-1.5 rounded-lg border border-sky-100/30 w-fit">
+                                                        {(() => {
+                                                            const currentM = startMonthStr.split(' ')[0];
+                                                            const getNextMonth = (s: string) => {
+                                                                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                                const idx = months.indexOf(s);
+                                                                return idx === -1 ? "Next month" : months[(idx + 1) % 12];
+                                                            };
+                                                            const getOrd = (d: string) => {
+                                                                const n = parseInt(d);
+                                                                const j = n % 10, k = n % 100;
+                                                                if (j === 1 && k !== 11) return n + "st";
+                                                                if (j === 2 && k !== 12) return n + "nd";
+                                                                if (j === 3 && k !== 13) return n + "rd";
+                                                                return n + "th";
+                                                            };
+                                                            const nxtM = getNextMonth(currentM);
+                                                            const ordDay = getOrd(payDateDay);
+                                                            return `Salary for ${currentM} will be paid on ${ordDay} ${payDateMonthType === 'same' ? currentM : nxtM}.`;
+                                                        })()}
+                                                    </p>
+                                                )}
+                                            </div>
+
                                         </div>
                                     )}
+
 
                                     {frequency === 'Monthly' && (
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-2 col-span-full mt-6">
@@ -1000,8 +1017,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                         Effective Month <span className="text-rose-500">*</span>
                                                         <div className="group relative">
                                                             <Info size={14} className="text-slate-400 cursor-help" />
-                                                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 text-center">
-                                                                The month from which this pay schedule configuration will be applied.
+                                                            <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 text-white text-[11px] rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-pre-wrap w-56 pointer-events-none z-[100] text-center shadow-xl border border-slate-700/50 backdrop-blur-sm">
+                                                                <div className="relative z-10">The month from which this pay schedule configuration will be applied.</div>
+                                                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 border-r border-b border-slate-700/50"></div>
                                                             </div>
                                                         </div>
                                                     </label>
@@ -1021,9 +1039,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             )}
                                         </div>
                                     )}
-                                    <div />
-                                </div>
-                            </div>
 
                             <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8 space-y-2">
                                 <div>
@@ -1050,13 +1065,56 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     If the pay date falls on a holiday or Sunday, payroll will be processed on the previous working day.
                                 </p>
                             </div>
-                        </div>
 
-                        {/* Calendar Preview Section */}
-                        <div className="w-full lg:w-80 shrink-0">
-                            {renderCalendar()}
+                            {/* Payroll Summary Section for Monthly */}
+                            {frequency === 'Monthly' && (
+                                <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                    <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <CheckCircle size={16} className="text-emerald-500" />
+                                        Payroll Summary
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payroll Cycle</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                                {(() => {
+                                                    const endDay = parseInt(payPeriodEndDate);
+                                                    const [mName, year] = startMonthStr.split(' ');
+                                                    const mIdx = MONTHS.indexOf(mName);
+                                                    const endD = new Date(parseInt(year), mIdx, endDay);
+                                                    const startD = new Date(endD);
+                                                    startD.setDate(startD.getDate() - 30);
+                                                    const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                                                    return `${fmt(startD)} - ${fmt(endD)}`;
+                                                })()}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payout Date</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                                {payDateDay} {payDateMonthType === 'same' ? startMonthStr.split(' ')[0] : (() => {
+                                                    const mIdx = MONTHS.indexOf(startMonthStr.split(' ')[0]);
+                                                    return MONTHS[(mIdx + 1) % 12];
+                                                })()}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Calculation Base</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                                {calcBase === 'Organisation working days' ? 'Working Days (excluding holidays)' : 'Actual Days'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
+
+                    {/* Calendar Preview Section */}
+                    <div className="w-full lg:w-80 shrink-0">
+                        {renderCalendar()}
+                    </div>
+                </div>
                     ) : (
                         /* History View - Redesigned with Sidebar */
                         <div className="animate-in fade-in slide-in-from-right-2 duration-300">

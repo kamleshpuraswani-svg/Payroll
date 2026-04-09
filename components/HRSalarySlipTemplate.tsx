@@ -450,6 +450,7 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     // Editor State
     const [templateName, setTemplateName] = useState('');
+    const [slipType, setSlipType] = useState<'Salary Slip' | 'F&F Settlement Slip'>('Salary Slip');
     const [sections, setSections] = useState<PayslipTemplate['sections']>({
         earnings: [], deductions: [], reimbursements: [], summary: []
     });
@@ -1011,6 +1012,14 @@ const HRSalarySlipTemplate: React.FC = () => {
                         </button>
                     ) : (
                         <>
+                            <select
+                                value={slipType}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSlipType(e.target.value as 'Salary Slip' | 'F&F Settlement Slip')}
+                                className="px-3 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer"
+                            >
+                                <option value="Salary Slip">Salary Slip</option>
+                                <option value="F&F Settlement Slip">F&amp;F Settlement Slip</option>
+                            </select>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                             {!editingTemplateId && <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>}
                             <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
