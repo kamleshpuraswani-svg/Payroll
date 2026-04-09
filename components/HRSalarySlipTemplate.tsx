@@ -70,6 +70,7 @@ interface PayslipTemplate {
     };
     settings: TemplateSettings;
     headerConfig: HeaderConfig;
+    slipType: 'Salary Slip' | 'F&F Settlement Slip';
 }
 
 interface HeaderConfig {
@@ -86,6 +87,7 @@ interface HeaderConfig {
         doj: boolean;
         bankAccount: boolean;
         pan: boolean;
+        lwk: boolean;
         uan: boolean;
         location: boolean;
     };
@@ -108,8 +110,9 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: true,
             payslipTitle: 'Salary Slip',
-            employeeFields: { name: true, id: true, designation: true, department: true, doj: true, bankAccount: true, pan: true, uan: true, location: true }
+            employeeFields: { name: true, id: true, designation: true, department: true, doj: true, bankAccount: true, pan: true, lwk: false, uan: true, location: true }
         },
+        slipType: 'Salary Slip',
         sections: {
             earnings: [
                 { id: 'e1', name: 'Basic Salary', amount: '25,000', type: 'Fixed' },
@@ -151,8 +154,9 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: false,
             payslipTitle: 'Stipend Receipt',
-            employeeFields: { name: true, id: true, designation: false, department: true, doj: true, bankAccount: true, pan: false, uan: false, location: false }
+            employeeFields: { name: true, id: true, designation: false, department: true, doj: true, bankAccount: true, pan: false, lwk: false, uan: false, location: false }
         },
+        slipType: 'Salary Slip',
         sections: {
             earnings: [
                 { id: 'e99', name: 'Fixed Stipend', amount: '15,000', type: 'Fixed' }
@@ -186,8 +190,9 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: true,
             payslipTitle: 'Performance Bonus',
-            employeeFields: { name: true, id: true, designation: true, department: true, doj: false, bankAccount: true, pan: true, uan: true, location: true }
+            employeeFields: { name: true, id: true, designation: true, department: true, doj: false, bankAccount: true, pan: true, lwk: false, uan: true, location: true }
         },
+        slipType: 'Salary Slip',
         sections: {
             earnings: [
                 { id: 'e1', name: 'Basic Salary', amount: '80,000', type: 'Fixed' },
@@ -220,7 +225,8 @@ const HeaderConfigModal: React.FC<{
     onClose: () => void;
     config: HeaderConfig;
     onChange: (cfg: HeaderConfig) => void;
-}> = ({ isOpen, onClose, config, onChange }) => {
+    slipType: 'Salary Slip' | 'F&F Settlement Slip';
+}> = ({ isOpen, onClose, config, onChange, slipType }) => {
     if (!isOpen) return null;
 
     const toggleField = (field: keyof HeaderConfig['employeeFields']) => {
@@ -290,8 +296,9 @@ const HeaderConfigModal: React.FC<{
                         <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Employee Details to Display</h4>
                         <div className="grid grid-cols-2 gap-2">
                             {Object.entries(config.employeeFields).map(([key, value]) => {
-                                const labels: Record<string, string> = { name: 'Employee Name', id: 'Employee ID', designation: 'Designation', department: 'Department', doj: 'Date of Joining', bankAccount: 'Bank Account', pan: 'PAN Number', uan: 'UAN', location: 'Address' };
+                                const labels: Record<string, string> = { name: 'Employee Name', id: 'Employee ID', designation: 'Designation', department: 'Department', doj: 'Date of Joining', bankAccount: 'Bank Account', pan: 'PAN Number', lwk: 'Last Working Date', uan: 'UAN', location: 'Address' };
                                 if (key === 'location') return null;
+                                if (key === 'lwk' && slipType !== 'F&F Settlement Slip') return null;
                                 return (
                                     <label key={key} className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                                         <input
@@ -320,25 +327,27 @@ const AddComponentModal: React.FC<{
     onClose: () => void;
     section: 'earnings' | 'deductions' | 'reimbursements' | 'summary' | null;
     currentItems: ComponentItem[];
+    dbComponents: { earnings: string[], deductions: string[] };
     onAdd: (selectedNames: string[]) => void
-}> = ({ isOpen, onClose, section, currentItems, onAdd }) => {
+}> = ({ isOpen, onClose, section, currentItems, dbComponents, onAdd }) => {
     const [selected, setSelected] = useState<string[]>([]);
 
-    useEffect(() => {
-        if (isOpen && section) {
-            setSelected(currentItems.map(i => i.name));
-        }
-    }, [isOpen, section, currentItems]);
-
-    if (!isOpen || !section) return null;
-
     const options = {
-        earnings: ['Basic Salary', 'HRA', 'Special Allowance', 'Bonus', 'Overtime', 'Arrears', 'Food Allowance', 'Shift Allowance'],
-        deductions: ['Provident Fund', 'Professional Tax', 'Income Tax (TDS)', 'Loan Repayment', 'Salary Advance', 'LWF'],
+        earnings: dbComponents.earnings.length > 0 ? dbComponents.earnings : ['Basic Salary', 'HRA', 'Special Allowance', 'Bonus', 'Overtime', 'Arrears', 'Food Allowance', 'Shift Allowance'],
+        deductions: dbComponents.deductions.length > 0 ? dbComponents.deductions : ['Provident Fund', 'Professional Tax', 'Income Tax (TDS)', 'Loan Repayment', 'Salary Advance', 'LWF'],
         summary: ['Gross Earnings', 'Total Deductions', 'Net Pay', 'CTC Monthly']
     };
 
-    const currentOptions = options[section] || [];
+    const currentOptions = (section && options[section]) || [];
+
+    useEffect(() => {
+        if (isOpen && section) {
+            // Only select items that are actually available in currentOptions to avoid hidden count issues
+            setSelected(currentItems.map(i => i.name).filter(name => currentOptions.includes(name)));
+        }
+    }, [isOpen, section, currentItems, currentOptions]);
+
+    if (!isOpen || !section) return null;
 
     const toggle = (name: string) => {
         setSelected(prev => prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]);
@@ -465,6 +474,11 @@ const HRSalarySlipTemplate: React.FC = () => {
         payPeriod: false
     });
 
+    const [dbComponents, setDbComponents] = useState<{ earnings: string[], deductions: string[] }>({
+        earnings: [],
+        deductions: []
+    });
+
     // Naming Format Editing State
     const [isNamingEditing, setIsNamingEditing] = useState(false);
     const [tempSuffix, setTempSuffix] = useState('');
@@ -584,6 +598,25 @@ const HRSalarySlipTemplate: React.FC = () => {
         }
     };
 
+    const fetchSalaryComponents = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('salary_components')
+                .select('name, category')
+                .eq('status', true);
+            
+            if (error) throw error;
+            if (data) {
+                setDbComponents({
+                    earnings: data.filter(c => c.category === 'Earnings').map(c => c.name),
+                    deductions: data.filter(c => c.category === 'Deductions').map(c => c.name)
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching salary components:', err);
+        }
+    };
+
     const fetchTemplates = async () => {
         setIsLoading(true);
         try {
@@ -591,25 +624,41 @@ const HRSalarySlipTemplate: React.FC = () => {
             const { data, error } = await supabase
                 .from('document_templates')
                 .select('*')
-                .eq('type', 'salary_slip')
+                .in('type', ['salary_slip', 'fnf_settlement'])
                 .eq('target_type', type)
                 .eq('target_id', id);
 
             if (error) throw error;
 
             if (data && data.length > 0) {
-                const formattedTemplates: PayslipTemplate[] = data.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    status: item.status as 'Active' | 'Draft' | 'Inactive',
-                    isActive: item.is_active,
-                    createdBy: item.created_by || 'HR Manager',
-                    lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                    lastModifiedBy: item.last_updated_by || 'HR Manager',
-                    sections: item.content.sections,
-                    settings: item.settings,
-                    headerConfig: item.content.headerConfig
-                }));
+                const formattedTemplates: PayslipTemplate[] = data.map(item => {
+                    const content = item.content || {};
+                    return {
+                        id: item.id,
+                        name: item.name,
+                        status: (item.status || 'Draft') as 'Active' | 'Draft' | 'Inactive',
+                        isActive: item.is_active ?? false,
+                        createdBy: item.created_by || 'HR Manager',
+                        lastModified: new Date(item.updated_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                        lastModifiedBy: item.last_updated_by || 'HR Manager',
+                        sections: content.sections || {
+                            earnings: [],
+                            deductions: [],
+                            reimbursements: [],
+                            summary: []
+                        },
+                        settings: item.settings || MOCK_TEMPLATES[0].settings,
+                        headerConfig: {
+                            ...MOCK_TEMPLATES[0].headerConfig,
+                            ...(content.headerConfig || {}),
+                            employeeFields: {
+                                ...MOCK_TEMPLATES[0].headerConfig.employeeFields,
+                                ...(content.headerConfig?.employeeFields || {})
+                            }
+                        },
+                        slipType: item.type === 'fnf_settlement' ? 'F&F Settlement Slip' : 'Salary Slip'
+                    };
+                });
                 setTemplates(formattedTemplates);
             } else {
                 setTemplates(MOCK_TEMPLATES);
@@ -643,6 +692,7 @@ const HRSalarySlipTemplate: React.FC = () => {
     useEffect(() => {
         fetchTemplates();
         fetchPaygroups();
+        fetchSalaryComponents();
     }, [selectedTarget]);
 
     const handleCreate = () => {
@@ -683,6 +733,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         setSections(t.sections);
         setSettings(t.settings);
         setHeaderConfig(t.headerConfig);
+        setSlipType(t.slipType);
         setActiveTab('EDITOR');
         setView('EDITOR');
     };
@@ -708,7 +759,7 @@ const HRSalarySlipTemplate: React.FC = () => {
 
         const [targetType, targetId] = selectedTarget.split(':');
         const templatePayload = {
-            type: 'salary_slip',
+            type: slipType === 'F&F Settlement Slip' ? 'fnf_settlement' : 'salary_slip',
             name: templateName,
             status,
             is_active: existingTemplate?.isActive ?? true,
@@ -771,7 +822,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                 const { error } = await supabase
                     .from('document_templates')
                     .insert([{
-                        type: 'salary_slip',
+                        type: template.slipType === 'F&F Settlement Slip' ? 'fnf_settlement' : 'salary_slip',
                         name: template.name,
                         status: newStatus,
                         is_active: newActiveState,
@@ -901,6 +952,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
                             <tr>
                                 <th className="px-6 py-4">Template Name</th>
+                                <th className="px-6 py-4">Type</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Created By</th>
                                 <th className="px-6 py-4">Last Modified By</th>
@@ -910,7 +962,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading templates...</span>
@@ -919,13 +971,22 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 </tr>
                             ) : templates.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                                         No templates found. Create your first one!
                                     </td>
                                 </tr>
                             ) : templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
+                                    <td className="px-6 py-4">
+                                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                                            t.slipType === 'F&F Settlement Slip' 
+                                                ? 'bg-purple-50 text-purple-700 border-purple-100' 
+                                                : 'bg-blue-50 text-blue-700 border-blue-100'
+                                        }`}>
+                                            {t.slipType}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                 t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' :
@@ -977,6 +1038,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         doj: 'Date of Joining',
         bankAccount: 'Bank Account',
         pan: 'PAN Number',
+        lwk: 'Last Working Date',
         uan: 'UAN',
         location: 'Address'
     };
@@ -1014,7 +1076,22 @@ const HRSalarySlipTemplate: React.FC = () => {
                         <>
                             <select
                                 value={slipType}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSlipType(e.target.value as 'Salary Slip' | 'F&F Settlement Slip')}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                    const newType = e.target.value as 'Salary Slip' | 'F&F Settlement Slip';
+                                    setSlipType(newType);
+                                    if (newType === 'F&F Settlement Slip') {
+                                        setHeaderConfig(prev => ({
+                                            ...prev,
+                                            payslipTitle: 'Full & Final Statement -',
+                                            employeeFields: { ...prev.employeeFields, lwk: true }
+                                        }));
+                                    } else {
+                                        setHeaderConfig(prev => ({
+                                            ...prev,
+                                            payslipTitle: 'Salary Slip'
+                                        }));
+                                    }
+                                }}
                                 className="px-3 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer"
                             >
                                 <option value="Salary Slip">Salary Slip</option>
@@ -1078,6 +1155,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             {headerConfig.employeeFields.doj && <div>Date of Joining: <span className="font-semibold text-slate-800">12 Jan 2023</span></div>}
                                             {headerConfig.employeeFields.location && <div>Address: <span className="font-semibold text-slate-800">Bangalore</span></div>}
                                             {headerConfig.employeeFields.pan && <div>PAN Number: <span className="font-semibold text-slate-800">ABCDE1234F</span></div>}
+                                            {headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip' && <div>Last Working Date: <span className="font-semibold text-slate-800">30 Nov 2025</span></div>}
                                             {headerConfig.employeeFields.uan && <div>UAN: <span className="font-semibold text-slate-800">100900200300</span></div>}
                                             {headerConfig.employeeFields.bankAccount && <div>Bank Account: <span className="font-semibold text-slate-800">HDFC0001234</span></div>}
                                         </div>
@@ -1106,8 +1184,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className="w-full py-2 border border-dashed border-emerald-200 rounded text-xs font-medium text-emerald-600 hover:bg-emerald-50 mt-2 hidden">
-                                                        + Add Earning
+                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className={`w-full py-2 border border-dashed border-emerald-200 rounded text-xs font-medium text-emerald-600 hover:bg-emerald-50 mt-2 ${slipType === 'F&F Settlement Slip' ? 'flex items-center justify-center gap-2' : 'hidden'}`}>
+                                                        <Plus size={14} /> Add Earning Component
                                                     </button>
                                                 )}
                                             </div>
@@ -1127,34 +1205,13 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className="w-full py-2 border border-dashed border-rose-200 rounded text-xs font-medium text-rose-600 hover:bg-rose-50 mt-2 hidden">
-                                                        + Add Deduction
+                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className={`w-full py-2 border border-dashed border-rose-200 rounded text-xs font-medium text-rose-600 hover:bg-rose-50 mt-2 ${slipType === 'F&F Settlement Slip' ? 'flex items-center justify-center gap-2' : 'hidden'}`}>
+                                                        <Plus size={14} /> Add Deduction Component
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-
-                                     {/* Reimbursements Section hidden for now */}
-                                     {/* <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                         <div className="bg-amber-50 px-4 py-2 border-b border-amber-100 text-xs font-bold uppercase text-amber-700">Reimbursements & Benefits</div>
-                                         <div className="p-4 space-y-2">
-                                             {sections.reimbursements.map(item => (
-                                                 <div key={item.id} className="flex justify-between text-sm group">
-                                                     <span className="text-slate-600">{item.name}</span>
-                                                     <div className="flex items-center gap-2">
-                                                         <span className="font-medium text-slate-800">₹ {item.amount}</span>
-                                                         {!isReadOnly && <X size={14} onClick={() => removeComponent('reimbursements', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                     </div>
-                                                 </div>
-                                             ))}
-                                             {!isReadOnly && (
-                                                 <button onClick={() => setAddComponentModal({ isOpen: true, section: 'reimbursements' })} className="w-full py-2 border border-dashed border-amber-200 rounded text-xs font-medium text-amber-600 hover:bg-amber-50 mt-2 hidden">
-                                                     + Add Reimbursement
-                                                 </button>
-                                             )}
-                                         </div>
-                                     </div> */}
 
                                     {/* Summary Section */}
                                     <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -1311,6 +1368,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 {headerConfig.employeeFields.doj && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.doj}</span><span>: 12 Jan 2023</span></div>}
                                 {headerConfig.employeeFields.location && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.location}</span><span>: Bangalore</span></div>}
                                 {headerConfig.employeeFields.pan && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.pan}</span><span>: ABCDE1234F</span></div>}
+                                {headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip' && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.lwk}</span><span>: 30 Nov 2025</span></div>}
                                 {headerConfig.employeeFields.uan && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.uan}</span><span>: 100900200300</span></div>}
                                 {headerConfig.employeeFields.bankAccount && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankAccount}</span><span>: HDFC0001234</span></div>}
                             </div>
@@ -1402,23 +1460,6 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 </tbody>
                             </table>
 
-                            {/* Reimbursements hidden */}
-                            {/* {sections.reimbursements.length > 0 && (
-                                <div className="mb-8">
-                                    <h4 className="font-bold text-sm mb-2 uppercase text-slate-600">Reimbursements & Benefits</h4>
-                                    <table className="w-full border-collapse border border-slate-300 text-sm">
-                                        <tbody>
-                                            {sections.reimbursements.map((item, i) => (
-                                                <tr key={i}>
-                                                    <td className="border border-slate-300 p-2 w-[70%]">{item.name}</td>
-                                                    <td className="border border-slate-300 p-2 text-right font-medium">₹ {item.amount}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )} */}
-
                             {/* Salary Summary for Preview */}
                             {sections.summary.length > 0 && (
                                 <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
@@ -1460,13 +1501,14 @@ const HRSalarySlipTemplate: React.FC = () => {
             </div>
 
             {/* Modals */}
-            <HeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} />
+            <HeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} slipType={slipType} />
             <SettingsConfigModal isOpen={settingsModal.isOpen} onClose={() => setSettingsModal({ isOpen: false, type: null })} type={settingsModal.type} settings={settings} onSave={s => setSettings(s)} />
             <AddComponentModal
                 isOpen={addComponentModal.isOpen}
                 onClose={() => setAddComponentModal({ isOpen: false, section: null })}
                 section={addComponentModal.section}
                 currentItems={addComponentModal.section ? sections[addComponentModal.section] : []}
+                dbComponents={dbComponents}
                 onAdd={syncComponents}
             />
         </div>
