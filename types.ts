@@ -143,10 +143,12 @@ export interface TaxDeclaration {
   type: '80C' | '80D' | 'HRA' | '80CCD' | '80G' | 'Others';
   type_label: string;
   amount: number;
+  approved_amount?: number;
   submitted_date: string;
   proofs: DeclarationProof[];
   status: 'Pending' | 'Approved' | 'Rejected';
   notes: string;
+  remarks?: string;
   last_modified_by?: string;
   ctc: string;
   regime: 'Old' | 'New';

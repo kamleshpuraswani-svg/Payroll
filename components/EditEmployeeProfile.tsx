@@ -54,6 +54,18 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [effectiveFrom, setEffectiveFrom] = useState('');
    const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
+   const [statutoryDeductions, setStatutoryDeductions] = useState({
+      providentFund: false,
+      esi: false,
+      professionalTax: true,
+      gratuity: false,
+      lwf: false,
+      tds: false,
+      nps: false
+   });
+
+   const [structureComponents, setStructureComponents] = useState<{ earnings: any[], deductions: any[] }>({ earnings: [], deductions: [] });
+   const [statutorySettings, setStatutorySettings] = useState<any>(null);
 
    const [salaryStructures, setSalaryStructures] = useState<{ id: string, name: string, departments?: string[], designations?: string[], employees?: string[] }[]>([]);
    const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +82,55 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       if (employeeId) {
          fetchEmployeeData();
       }
+      fetchStatutorySettings();
    }, [employeeId]);
+
+   useEffect(() => {
+      if (selectedStructureId) {
+         fetchStructureDetails(selectedStructureId);
+      }
+   }, [selectedStructureId]);
+
+   const fetchStatutorySettings = async () => {
+      try {
+         // Defaulting to MindInventory for now, ideally this would come from employee company info
+         const target = 'MindInventory';
+         const { data, error } = await supabase
+            .from('operational_config')
+            .select('config_key, config_value')
+            .like('config_key', `%settings:bu:${target}`);
+
+         if (!error && data) {
+            const settings: any = {};
+            data.forEach(item => {
+               const key = item.config_key.split(':')[0];
+               settings[key] = item.config_value;
+            });
+            setStatutorySettings(settings);
+         }
+      } catch (err) {
+         console.error('Error fetching statutory settings:', err);
+      }
+   };
+
+   const fetchStructureDetails = async (id: string) => {
+      try {
+         const { data, error } = await supabase
+            .from('salary_structures')
+            .select('earnings, deductions')
+            .eq('id', id)
+            .single();
+
+         if (!error && data) {
+            setStructureComponents({
+               earnings: data.earnings || [],
+               deductions: data.deductions || []
+            });
+         }
+      } catch (err) {
+         console.error('Error fetching structure details:', err);
+      }
+   };
 
    const fetchSalaryStructures = async () => {
       try {
@@ -123,50 +183,80 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       return filtered;
    };
 
-   const fetchEmployeeData = async () => {
-      setIsLoading(true);
-      try {
-         const { data, error } = await supabase
-            .from('employees')
-            .select('*')
-            .eq('id', employeeId)
-            .single();
+    const fetchEmployeeData = async () => {
+       setIsLoading(true);
+       try {
+          // 1. Fetch main employee record
+          const { data, error } = await supabase
+             .from('employees')
+             .select('*')
+             .eq('id', employeeId)
+             .single();
+ 
+          if (error) throw error;
+          if (data) {
+             setFullName(data.name || '');
+             setDesignation(data.designation || '');
+             setDepartment(data.department || 'Engineering');
+             setJoiningDate(data.join_date || '');
+             setLocation(data.location || 'Bangalore');
+ 
+             setAccountNumber(data.bank_account_no || '');
+             setIfscCode(data.bank_ifsc || '');
+             setBankName(data.bank_name || '');
+             setBranchName(data.bank_branch || '');
+ 
+             setPanNumber(data.pan_no || '');
+             setAadhaarNumber(data.aadhaar_no || '');
+             setUanNumber(data.uan_no || '');
+ 
+             const fetchedCtc = Number(data.ctc) || 0;
+             setCtc(fetchedCtc);
+             setRegime(data.tax_regime || 'New Regime (2025)');
+             setSelectedStructureId(data.salary_structure_id || '');
+             setEffectiveFrom(data.effective_date || '');
+ 
+             // 2. Fetch statutory deductions from operational_config (Workaround for missing column)
+             try {
+                const { data: configData, error: configError } = await supabase
+                   .from('operational_config')
+                   .select('config_value')
+                   .eq('config_key', `emp_statutory:${employeeId}`)
+                   .single();
+ 
+                if (!configError && configData?.config_value) {
+                   setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value }));
+                } else if (!data.statutory_deductions) {
+                   // Fallback to default state if no config and no legacy column data
+                }
+             } catch (ce) {
+                console.error('Error fetching employee statutory config:', ce);
+             }
 
-         if (error) throw error;
-         if (data) {
-            setFullName(data.name || '');
-            setDesignation(data.designation || '');
-            setDepartment(data.department || 'Engineering');
-            setJoiningDate(data.join_date || '');
-            setLocation(data.location || 'Bangalore');
-
-            setAccountNumber(data.bank_account_no || '');
-            setIfscCode(data.bank_ifsc || '');
-            setBankName(data.bank_name || '');
-            setBranchName(data.bank_branch || '');
-
-            setPanNumber(data.pan_no || '');
-            setAadhaarNumber(data.aadhaar_no || '');
-            setUanNumber(data.uan_no || '');
-
-            const fetchedCtc = Number(data.ctc) || 0;
-            setCtc(fetchedCtc);
-            setRegime(data.tax_regime || 'New Regime (2025)');
-            setSelectedStructureId(data.salary_structure_id || '');
-            setEffectiveFrom(data.effective_date || '');
-
-            initialValues.current = {
-               ctc: fetchedCtc,
-               structureId: data.salary_structure_id || ''
-            };
-            setEmployeeRawData(data);
-         }
-      } catch (error) {
-         console.error('Error fetching employee:', error);
-      } finally {
-         setIsLoading(false);
-      }
-   };
+             // 3. Backward compatibility: If legacy column exists but config doesn't
+             if (data.statutory_deductions) {
+                try {
+                   const savedDeductions = typeof data.statutory_deductions === 'string' 
+                      ? JSON.parse(data.statutory_deductions) 
+                      : data.statutory_deductions;
+                   setStatutoryDeductions(prev => ({ ...prev, ...savedDeductions }));
+                } catch (e) {
+                   console.error('Error parsing statutory deductions:', e);
+                }
+             }
+ 
+             initialValues.current = {
+                ctc: fetchedCtc,
+                structureId: data.salary_structure_id || ''
+             };
+             setEmployeeRawData(data);
+          }
+       } catch (error) {
+          console.error('Error fetching employee:', error);
+       } finally {
+          setIsLoading(false);
+       }
+    };
 
    // Helper to calculate estimated TDS for demo purposes
 
@@ -210,43 +300,168 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       return Math.round(tax * 1.04);
    };
 
-   // Salary Calculation
+   // Dynamic Salary Calculation
    const calculateSalary = (annualCtc: number) => {
-      if (!annualCtc) return { basic: 0, hra: 0, special: 0, pfEmployer: 0, gratuity: 0, monthlyGross: 0, taxOld: 0, taxNew: 0 };
+      if (!annualCtc) return { earnings: [], employeeDeductions: [], employerContributions: [], annualGross: 0, monthlyGross: 0, taxOld: 0, taxNew: 0, basic: 0, special: 0 };
 
-      const basic = annualCtc * 0.5;
-      const hra = basic * 0.5;
+      const earnings: any[] = [];
+      const employeeDeductions: any[] = [];
+      const employerContributions: any[] = [];
+      let totalEmployerContrib = 0;
 
-      // PF Employer Contribution (12% of Basic, capped at 1800/mo usually, but using 21600 annual for demo)
-      const pfEmployer = 21600;
+      // Helper for component calculation
+      const calcComp = (comp: any, baseValues: any) => {
+         const calc = comp.calculation || '';
+         if (calc.includes('Balancing Figure')) return 0;
+         if (calc.includes('% of CTC')) return annualCtc * (parseFloat(calc) / 100);
+         if (calc.includes('% of Basic')) return baseValues.basic * (parseFloat(calc) / 100);
+         if (calc.includes('Fixed ₹')) return parseFloat(calc.replace(/[^\d.-]/g, '')) * 12;
+         return 0;
+      };
 
-      // Gratuity (4.81% of Basic approx)
-      // Formula: (Basic / 26) * 15
-      const gratuity = (basic / 26) * 15;
+      // 1. Determine Basic Salary
+      let basic = 0;
+      const basicComp = structureComponents.earnings.find(c => c.name.toLowerCase().includes('basic'));
+      if (basicComp) {
+         basic = calcComp(basicComp, {});
+      } else {
+         basic = annualCtc * 0.5; // Default fallback
+      }
 
-      const special = Math.max(0, annualCtc - basic - hra - pfEmployer - gratuity);
+      // 2. Pre-calculate fixed and formula-based Earnings
+      structureComponents.earnings.forEach(comp => {
+         if (comp.name.toLowerCase().includes('basic')) {
+            earnings.push({ name: comp.name, annual: basic, monthly: basic / 12 });
+         } else if (!comp.calculation.includes('Balancing Figure')) {
+            const val = calcComp(comp, { basic });
+            earnings.push({ name: comp.name, annual: val, monthly: val / 12 });
+         }
+      });
 
-      // Monthly Gross = (Basic + HRA + Special) / 12
-      const annualGross = basic + hra + special;
+      // 3. Calculate Employer Contributions (Part of CTC)
+      
+      // PF Employer
+      if (statutoryDeductions.providentFund && statutorySettings?.pf_settings) {
+         const pfSet = statutorySettings.pf_settings;
+         const rate = parseFloat(pfSet.emprRate || '12') / 100;
+         const wageLimit = parseFloat(pfSet.pfWageCeiling || '15000');
+         const pfBasis = Math.min(basic, wageLimit * 12);
+         const pfContrib = Math.min(pfBasis * rate, (parseFloat(pfSet.emprLimit || '1800') * 12));
+         employerContributions.push({ name: 'PF (Employer)', annual: pfContrib, monthly: pfContrib / 12 });
+         totalEmployerContrib += pfContrib;
+      } else if (statutoryDeductions.providentFund) {
+         // Default logic if settings not fetched
+         const pfContrib = Math.min(basic * 0.12, 1800 * 12);
+         employerContributions.push({ name: 'PF (Employer)', annual: pfContrib, monthly: pfContrib / 12 });
+         totalEmployerContrib += pfContrib;
+      }
+
+      // ESI Employer
+      if (statutoryDeductions.esi && statutorySettings?.statutory_settings?.esi) {
+         const esiSet = statutorySettings.statutory_settings.esi;
+         const threshold = parseFloat(esiSet.threshold || '21000');
+         const rate = parseFloat(esiSet.employer_rate || '3.25') / 100;
+         const currentEarningsTotal = earnings.reduce((sum, e) => sum + e.annual, 0);
+         if ((currentEarningsTotal / 12) <= threshold) {
+            const esiContrib = currentEarningsTotal * rate;
+            employerContributions.push({ name: 'ESI (Employer)', annual: esiContrib, monthly: esiContrib / 12 });
+            totalEmployerContrib += esiContrib;
+         }
+      }
+
+      // Gratuity Employer
+      if (statutoryDeductions.gratuity) {
+         const gratRate = parseFloat(statutorySettings?.config_value?.gratuityProvisionRate || '4.81') / 100;
+         const gratContrib = basic * gratRate;
+         employerContributions.push({ name: 'Gratuity', annual: gratContrib, monthly: gratContrib / 12 });
+         totalEmployerContrib += gratContrib;
+      }
+
+      // LWF Employer
+      if (statutoryDeductions.lwf) {
+         const lwfEmpr = 40 * 12; // Static estimate
+         employerContributions.push({ name: 'LWF (Employer)', annual: lwfEmpr, monthly: lwfEmpr / 12 });
+         totalEmployerContrib += lwfEmpr;
+      }
+
+      // NPS Employer
+      if (statutoryDeductions.nps) {
+         const npsRate = parseFloat(statutorySettings?.config_value?.npsEmprRate || '10') / 100;
+         const npsContrib = basic * npsRate;
+         employerContributions.push({ name: 'NPS (Employer)', annual: npsContrib, monthly: npsContrib / 12 });
+         totalEmployerContrib += npsContrib;
+      }
+
+      // 4. Calculate Balancing Figure (Special Allowance)
+      const currentEarningsTotal = earnings.reduce((sum, e) => sum + e.annual, 0);
+      const balancingComp = structureComponents.earnings.find(c => c.calculation.includes('Balancing Figure'));
+      const specialVal = Math.max(0, annualCtc - currentEarningsTotal - totalEmployerContrib);
+      
+      const specialName = balancingComp ? balancingComp.name : 'Special Allowance';
+      earnings.push({ name: specialName, annual: specialVal, monthly: specialVal / 12 });
+
+      const annualGross = earnings.reduce((sum, e) => sum + e.annual, 0);
       const monthlyGross = annualGross / 12;
+
+      // 5. Calculate Employee Deductions
+      
+      // PF Employee
+      if (statutoryDeductions.providentFund) {
+         const rate = 0.12;
+         const pfEmp = Math.min(basic * rate, 1800 * 12);
+         employeeDeductions.push({ name: 'PF (Employee)', annual: pfEmp, monthly: pfEmp / 12 });
+      }
+
+      // ESI Employee
+      if (statutoryDeductions.esi && monthlyGross <= 21000) {
+         const rate = 0.0075;
+         const esiEmp = annualGross * rate;
+         employeeDeductions.push({ name: 'ESI (Employee)', annual: esiEmp, monthly: esiEmp / 12 });
+      }
+
+      // Professional Tax
+      if (statutoryDeductions.professionalTax && monthlyGross > 15000) {
+         const ptVal = 200 * 12;
+         employeeDeductions.push({ name: 'Professional Tax', annual: ptVal, monthly: ptVal / 12 });
+      }
+
+      // LWF Employee
+      if (statutoryDeductions.lwf) {
+         const lwfEmp = 20 * 12;
+         employeeDeductions.push({ name: 'LWF', annual: lwfEmp, monthly: lwfEmp / 12 });
+      }
+
+      // NPS Employee
+      if (statutoryDeductions.nps) {
+         const npsEmpVal = basic * 0.10;
+         employeeDeductions.push({ name: 'NPS (Employee)', annual: npsEmpVal, monthly: npsEmpVal / 12 });
+      }
+
+      // TDS / Income Tax
+      const taxAnnual = regime.includes('Old') ? calculateEstTax(annualCtc, 'OLD') : calculateEstTax(annualCtc, 'NEW');
+      if (statutoryDeductions.tds && taxAnnual > 0) {
+         employeeDeductions.push({ name: 'Income Tax (TDS)', annual: taxAnnual, monthly: taxAnnual / 12 });
+      }
 
       const taxOld = calculateEstTax(annualCtc, 'OLD');
       const taxNew = calculateEstTax(annualCtc, 'NEW');
 
       return {
-         basic,
-         hra,
-         special,
-         pfEmployer,
-         gratuity,
-         monthlyGross,
+         earnings,
+         employeeDeductions,
+         employerContributions,
          annualGross,
+         monthlyGross,
          taxOld,
-         taxNew
+         taxNew,
+         basic,
+         special: specialVal
       };
    };
-
    const salary = calculateSalary(ctc);
+   const totalDeductionsAnnual = salary.employeeDeductions.reduce((sum, d) => sum + d.annual, 0);
+   const totalDeductionsMonthly = salary.employeeDeductions.reduce((sum, d) => sum + d.monthly, 0);
+   const monthlyTakeHome = salary.monthlyGross - totalDeductionsMonthly;
 
    const handleSave = async () => {
       // Check if critical fields changed
@@ -255,16 +470,17 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       if (hasChanged && !effectiveFrom) {
          setErrors({ effectiveFrom: 'Effective From is mandatory when salary details are changed' });
          // Scroll to error
-         const errorField = document.getElementById('effective-from-field');
+         const errorField = document.getElementById('effective-from-field-main');
          errorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
          return;
       }
 
       setIsSaving(true);
       try {
-         // Re-re-fetch or use stored data to get eid and company_id if needed
+         // 1. Fetch current EID/Company if needed
          const { data: currentEmp } = await supabase.from('employees').select('eid, company_id').eq('id', employeeId).single();
 
+         // 2. Prepare employee updates
          const updates = {
             id: employeeId,
             eid: currentEmp?.eid,
@@ -288,19 +504,25 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             last_updated_by: 'HR Manager'
          };
 
-         console.log('Attempting upsert with:', updates);
-
-         const { data, error } = await supabase
+         // 3. Save main employee data
+         const { error: empError } = await supabase
             .from('employees')
-            .upsert(updates)
-            .select();
+            .upsert(updates);
 
-         if (error) {
-            console.error('Supabase Upsert Error:', error);
-            throw error;
+         if (empError) throw empError;
+
+         // 4. Save statutory deductions to operational_config as a workaround
+         const { error: configError } = await supabase
+            .from('operational_config')
+            .upsert({
+               config_key: `emp_statutory:${employeeId}`,
+               config_value: statutoryDeductions,
+               updated_at: new Date().toISOString()
+            }, { onConflict: 'config_key' });
+
+         if (configError) {
+             console.error('Error saving statutory deductions config:', configError);
          }
-
-         console.log('Save successful:', data);
 
          if (onBack) onBack();
       } catch (error: any) {
@@ -317,7 +539,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
 
    return (
       <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300">
-
          {/* Header */}
          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div className="flex items-center gap-3">
@@ -343,9 +564,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             </div>
 
             <div className="flex items-center gap-3">
-               {/* Integration Badge */}
-
-
                {!isReadOnly ? (
                   <>
                      <button
@@ -380,86 +598,50 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          </div>
 
          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
             {/* LEFT COLUMN: Forms */}
             <div className="xl:col-span-2 space-y-6">
-
                {/* 1. Identity & Basic Info */}
                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <User size={18} className="text-slate-400" /> Employee Details
                      </h3>
-                     {!isReadOnly && (
-                        <button className="text-xs font-medium text-sky-600 hover:text-sky-700 flex items-center gap-1">
-                           <RefreshCw size={12} /> Pull from HRMS
-                        </button>
-                     )}
                   </div>
                   <div className="p-6 flex flex-col sm:flex-row gap-6">
                      {/* Photo Upload */}
                      <div className="flex flex-col items-center gap-3">
-                        <div className={`relative group ${isReadOnly ? '' : 'cursor-pointer'}`}>
+                        <div className="relative group">
                            <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
-                              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profile" className="w-full h-full object-cover" />
+                              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profile" className="w-full h-full object-cover grayscale opacity-80" />
                            </div>
-                           {!isReadOnly && (
-                              <>
-                                 <div className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full border border-slate-200 shadow-sm text-slate-500 hover:text-sky-600 transition-colors">
-                                    <Camera size={14} />
-                                 </div>
-                                 <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Upload size={20} className="text-white" />
-                                 </div>
-                              </>
-                           )}
                         </div>
                         <span className="text-xs font-medium text-slate-400">TF00912</span>
                      </div>
-
+ 
                      {/* Fields */}
                      <div className="flex-1 space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            <div className="sm:col-span-2">
-                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name</label>
+                              <input type="text" value={fullName} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Designation</label>
-                              <input type="text" value={designation} onChange={(e) => setDesignation(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                              <input type="text" value={designation} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Department</label>
-                              <select value={department} onChange={(e) => setDepartment(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
-                                 <option>Engineering</option>
-                                 <option>Software Engineering</option>
-                                 <option>Product</option>
-                                 <option>Design</option>
-                                 <option>Sales</option>
-                                 <option>QA</option>
-                                 <option>Marketing</option>
-                                 <option>DevOps</option>
-                                 <option>Finance</option>
-                              </select>
+                              <input type="text" value={department} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Date of Joining</label>
-                              <input type="date" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                              <input type="text" value={joiningDate} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Work Location</label>
-                              <select value={location} onChange={(e) => setLocation(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}>
-                                 <option>Bangalore</option>
-                                 <option>Mumbai</option>
-                                 <option>Pune</option>
-                                 <option>Chennai</option>
-                                 <option>Delhi</option>
-                                 <option>Remote</option>
-                              </select>
+                              <input type="text" value={location} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                         </div>
-
-
                      </div>
                   </div>
                </div>
@@ -472,7 +654,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      </h3>
                   </div>
                   <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                     {/* Left Column */}
                      <div className="space-y-6">
                         <div>
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select salary structure {!isReadOnly && <span className="text-rose-500">*</span>}</label>
@@ -512,11 +693,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               />
                               <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
                            </div>
-                           {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1 animate-in fade-in slide-in-from-top-1">{errors.effectiveFrom}</p>}
+                           {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1">{errors.effectiveFrom}</p>}
                         </div>
                      </div>
 
-                     {/* Right Column */}
                      <div className="space-y-6">
                         <div>
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹) {!isReadOnly && <span className="text-rose-500">*</span>}</label>
@@ -547,6 +727,37 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
                      </div>
                   </div>
+
+                  <div className="px-6 pb-8 pt-6 border-t border-slate-100 bg-slate-50/30">
+                     <label className="block text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Applicable Statutory Deductions</label>
+                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-y-4 gap-x-6">
+                        {[
+                           { id: 'providentFund', label: 'Provident Fund' },
+                           { id: 'esi', label: 'ESI' },
+                           { id: 'professionalTax', label: 'Professional Tax' },
+                           { id: 'gratuity', label: 'Gratuity' },
+                           { id: 'lwf', label: 'LWF' },
+                           { id: 'tds', label: 'TDS/Income Tax' },
+                           { id: 'nps', label: 'NPS' }
+                        ].map((comp) => (
+                           <label key={comp.id} className="flex items-center gap-2.5 cursor-pointer group">
+                              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'bg-sky-600 border-sky-600 shadow-sm' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}>
+                                 {statutoryDeductions[comp.id as keyof typeof statutoryDeductions] && <CheckCircle size={14} className="text-white" />}
+                              </div>
+                              <input 
+                                 type="checkbox" 
+                                 className="hidden" 
+                                 checked={statutoryDeductions[comp.id as keyof typeof statutoryDeductions]} 
+                                 disabled={isReadOnly}
+                                 onChange={() => !isReadOnly && setStatutoryDeductions(prev => ({ ...prev, [comp.id]: !prev[comp.id as keyof typeof statutoryDeductions] }))} 
+                              />
+                              <span className={`text-sm font-medium transition-colors ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-800'}`}>
+                                 {comp.label}
+                              </span>
+                           </label>
+                        ))}
+                     </div>
+                  </div>
                </div>
 
                {/* 3. Bank Details */}
@@ -570,16 +781,16 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name</label>
-                        <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
+                        <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Branch</label>
-                        <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
+                        <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
                      </div>
                   </div>
                </div>
 
-               {/* 3. Statutory & Tax */}
+               {/* 4. Statutory & Tax */}
                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -617,16 +828,13 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <option>New Regime (2025) - Default</option>
                               <option>Old Regime</option>
                            </select>
-                           <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none opacity-0" size={14} />
-                           {/* Just a spacer icon */}
                         </div>
                      </div>
                   </div>
                </div>
-
             </div>
 
-            {/* RIGHT COLUMN: Salary Structure */}
+            {/* RIGHT COLUMN: Salary Structure Sidebar */}
             <div className="xl:col-span-1">
                <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-24">
                   <div className="bg-slate-800 px-6 py-4 flex justify-between items-center text-white">
@@ -645,52 +853,49 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700 font-medium">Basic Salary</td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.basic / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(salary.basic))}</td>
-                           </tr>
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700 flex items-center gap-1">
-                                 HRA <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 rounded border border-emerald-100">Exempt</span>
-                              </td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.hra / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(salary.hra))}</td>
-                           </tr>
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700">Special Allowance</td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.special / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(salary.special))}</td>
-                           </tr>
                            <tr className="bg-slate-50/50">
-                              <td className="px-4 py-2.5 text-slate-500 text-xs italic" colSpan={3}>Retirals (Employer Contribution)</td>
+                              <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Earnings</td>
                            </tr>
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700">PF (Employer)</td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.pfEmployer / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(salary.pfEmployer))}</td>
-                           </tr>
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700">Gratuity</td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.gratuity / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(salary.gratuity))}</td>
-                           </tr>
+                           {salary.earnings.map((comp, idx) => (
+                              <tr key={idx}>
+                                 <td className="px-4 py-2.5 text-slate-700 font-medium flex items-center gap-1">
+                                    {comp.name} 
+                                    {comp.name.toLowerCase().includes('hra') && <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 rounded border border-emerald-100">Exempt</span>}
+                                 </td>
+                                 <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
+                                 <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.annual))}</td>
+                              </tr>
+                           ))}
 
-                           {/* New Estimated TDS Section */}
-                           <tr className="bg-slate-50/50">
-                              <td className="px-4 py-2.5 text-slate-500 text-xs italic" colSpan={3}>Estimated Tax Deductions (Annual)</td>
-                           </tr>
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700">TDS (Old Regime)</td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.taxOld / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(salary.taxOld)}</td>
-                           </tr>
-                           <tr>
-                              <td className="px-4 py-2.5 text-slate-700">TDS (New Regime)</td>
-                              <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(salary.taxNew / 12))}</td>
-                              <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(salary.taxNew)}</td>
-                           </tr>
+                           {salary.employeeDeductions.length > 0 && (
+                              <>
+                                 <tr className="bg-slate-50/50">
+                                    <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Deductions (Employee Share)</td>
+                                 </tr>
+                                 {salary.employeeDeductions.map((comp, idx) => (
+                                    <tr key={`emp-ded-${idx}`}>
+                                       <td className="px-4 py-2.5 text-slate-700">{comp.name}</td>
+                                       <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
+                                       <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.annual))}</td>
+                                    </tr>
+                                 ))}
+                              </>
+                           )}
 
+                           {salary.employerContributions.length > 0 && (
+                              <>
+                                 <tr className="bg-slate-50/50">
+                                    <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Employer Contributions</td>
+                                 </tr>
+                                 {salary.employerContributions.map((comp, idx) => (
+                                    <tr key={`empr-cont-${idx}`}>
+                                       <td className="px-4 py-2.5 text-slate-700">{comp.name}</td>
+                                       <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
+                                       <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.annual))}</td>
+                                    </tr>
+                                 ))}
+                              </>
+                           )}
                         </tbody>
                         <tfoot className="bg-slate-800 text-white border-t border-slate-200">
                            <tr>
@@ -698,20 +903,23 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <td className="px-4 py-3 text-right opacity-60 text-xs">-</td>
                               <td className="px-4 py-3 text-right font-bold">₹ {formatCurrency(ctc)}</td>
                            </tr>
+                           <tr className="border-t border-slate-700/50">
+                              <td className="px-4 py-2.5 font-bold text-slate-400 text-xs uppercase tracking-wider">Total Deductions</td>
+                              <td className="px-4 py-2.5 text-right opacity-40 text-xs">-</td>
+                              <td className="px-4 py-2.5 text-right font-bold text-rose-400">₹ {formatCurrency(Math.round(totalDeductionsAnnual))}</td>
+                           </tr>
                            <tr>
                               <td className="px-4 py-2.5 font-bold text-slate-300">Total gross</td>
                               <td className="px-4 py-2.5 text-right opacity-40 text-xs">-</td>
                               <td className="px-4 py-2.5 text-right font-bold text-slate-100">₹ {formatCurrency(Math.round(salary.annualGross))}</td>
                            </tr>
-                           <tr className="bg-slate-900">
+                           <tr className="bg-slate-900 border-t border-slate-700">
                               <td className="px-4 py-3 font-bold text-emerald-400">Monthly take-home</td>
-                              <td className="px-4 py-3 text-right opacity-40 text-xs">-</td>
+                              <td className="px-4 py-3 text-right opacity-40 text-xs text-slate-400">
+                                 -₹{formatCurrency(Math.round(totalDeductionsMonthly))}
+                              </td>
                               <td className="px-4 py-3 text-right font-bold text-emerald-400">
-                                 ₹ {formatCurrency(Math.round(
-                                    salary.monthlyGross - 
-                                    (regime.includes('Old') ? salary.taxOld / 12 : salary.taxNew / 12) - 
-                                    (salary.pfEmployer / 12)
-                                 ))}
+                                 ₹ {formatCurrency(Math.round(monthlyTakeHome))}
                               </td>
                            </tr>
                         </tfoot>
@@ -728,7 +936,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   )}
                </div>
             </div>
-
          </div>
       </div>
    );

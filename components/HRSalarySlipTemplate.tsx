@@ -70,7 +70,7 @@ interface PayslipTemplate {
     };
     settings: TemplateSettings;
     headerConfig: HeaderConfig;
-    slipType: 'Salary Slip' | 'F&F Settlement Slip';
+    slipType: 'Payslip' | 'F&F Settlement Slip';
 }
 
 interface HeaderConfig {
@@ -109,10 +109,10 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showLogo: true,
             showCompanyName: true,
             showCompanyAddress: true,
-            payslipTitle: 'Salary Slip',
+            payslipTitle: 'Payslip',
             employeeFields: { name: true, id: true, designation: true, department: true, doj: true, bankAccount: true, pan: true, lwk: false, uan: true, location: true }
         },
-        slipType: 'Salary Slip',
+        slipType: 'Payslip',
         sections: {
             earnings: [
                 { id: 'e1', name: 'Basic Salary', amount: '25,000', type: 'Fixed' },
@@ -156,7 +156,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             payslipTitle: 'Stipend Receipt',
             employeeFields: { name: true, id: true, designation: false, department: true, doj: true, bankAccount: true, pan: false, lwk: false, uan: false, location: false }
         },
-        slipType: 'Salary Slip',
+        slipType: 'Payslip',
         sections: {
             earnings: [
                 { id: 'e99', name: 'Fixed Stipend', amount: '15,000', type: 'Fixed' }
@@ -192,7 +192,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             payslipTitle: 'Performance Bonus',
             employeeFields: { name: true, id: true, designation: true, department: true, doj: false, bankAccount: true, pan: true, lwk: false, uan: true, location: true }
         },
-        slipType: 'Salary Slip',
+        slipType: 'Payslip',
         sections: {
             earnings: [
                 { id: 'e1', name: 'Basic Salary', amount: '80,000', type: 'Fixed' },
@@ -225,7 +225,7 @@ const HeaderConfigModal: React.FC<{
     onClose: () => void;
     config: HeaderConfig;
     onChange: (cfg: HeaderConfig) => void;
-    slipType: 'Salary Slip' | 'F&F Settlement Slip';
+    slipType: 'Payslip' | 'F&F Settlement Slip';
 }> = ({ isOpen, onClose, config, onChange, slipType }) => {
     if (!isOpen) return null;
 
@@ -459,7 +459,7 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     // Editor State
     const [templateName, setTemplateName] = useState('');
-    const [slipType, setSlipType] = useState<'Salary Slip' | 'F&F Settlement Slip'>('Salary Slip');
+    const [slipType, setSlipType] = useState<'Payslip' | 'F&F Settlement Slip'>('Payslip');
     const [sections, setSections] = useState<PayslipTemplate['sections']>({
         earnings: [], deductions: [], reimbursements: [], summary: []
     });
@@ -656,7 +656,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 ...(content.headerConfig?.employeeFields || {})
                             }
                         },
-                        slipType: item.type === 'fnf_settlement' ? 'F&F Settlement Slip' : 'Salary Slip'
+                        slipType: item.type === 'fnf_settlement' ? 'F&F Settlement Slip' : 'Payslip'
                     };
                 });
                 setTemplates(formattedTemplates);
@@ -922,7 +922,7 @@ const HRSalarySlipTemplate: React.FC = () => {
             <div className="p-4 lg:p-8 w-full mx-auto space-y-6 animate-in fade-in duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800">Salary Slip Templates</h2>
+                        <h2 className="text-2xl font-bold text-slate-800">Payslip Templates</h2>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="relative">
@@ -940,7 +940,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
                         <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
-                            Create Salary Slip
+                            Create Payslip
                         </button>
                     </div>
                 </div>
@@ -1077,7 +1077,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             <select
                                 value={slipType}
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                    const newType = e.target.value as 'Salary Slip' | 'F&F Settlement Slip';
+                                    const newType = e.target.value as 'Payslip' | 'F&F Settlement Slip';
                                     setSlipType(newType);
                                     if (newType === 'F&F Settlement Slip') {
                                         setHeaderConfig(prev => ({
@@ -1088,13 +1088,13 @@ const HRSalarySlipTemplate: React.FC = () => {
                                     } else {
                                         setHeaderConfig(prev => ({
                                             ...prev,
-                                            payslipTitle: 'Salary Slip'
+                                            payslipTitle: 'Payslip'
                                         }));
                                     }
                                 }}
                                 className="px-3 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer"
                             >
-                                <option value="Salary Slip">Salary Slip</option>
+                                <option value="Payslip">Payslip</option>
                                 <option value="F&F Settlement Slip">F&amp;F Settlement Slip</option>
                             </select>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
@@ -1212,6 +1212,27 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Employer's Contribution Section */}
+                                    {slipType === 'Payslip' && (
+                                        <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                                            <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 text-xs font-bold uppercase text-slate-600">Employer's Contribution</div>
+                                            <div className="p-4 space-y-2">
+                                                <div className="flex justify-between text-sm font-medium">
+                                                    <span className="text-slate-600">EPF (Employer)</span>
+                                                    <span className="font-medium text-slate-800">₹ 1,800.00</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm font-medium">
+                                                    <span className="text-slate-600">ESI (Employer)</span>
+                                                    <span className="font-medium text-slate-800">₹ 450.00</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm font-medium">
+                                                    <span className="text-slate-600">LWF (Employer)</span>
+                                                    <span className="font-medium text-slate-800">₹ 12.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Summary Section */}
                                     <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -1460,11 +1481,32 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 </tbody>
                             </table>
 
+                            {/* Employer's Contribution for Preview */}
+                            {slipType === 'Payslip' && (
+                                <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <h4 className="font-bold text-xs mb-3 uppercase text-slate-600 tracking-wider">Employer's Contribution</h4>
+                                    <div className="grid grid-cols-3 gap-y-3 gap-x-8">
+                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                                            <span className="text-sm font-semibold text-slate-500">EPF (Employer)</span>
+                                            <span className="text-sm font-bold text-slate-900">₹ 1,800.00</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                                            <span className="text-sm font-semibold text-slate-500">ESI (Employer)</span>
+                                            <span className="text-sm font-bold text-slate-900">₹ 450.00</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                                            <span className="text-sm font-semibold text-slate-500">LWF (Employer)</span>
+                                            <span className="text-sm font-bold text-slate-900">₹ 12.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Salary Summary for Preview */}
                             {sections.summary.length > 0 && (
-                                <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-                                    <h4 className="font-bold text-sm mb-4 uppercase text-slate-600 tracking-wider">Salary Summary</h4>
-                                    <div className="grid grid-cols-2 gap-y-4 gap-x-12">
+                                <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <h4 className="font-bold text-xs mb-3 uppercase text-slate-600 tracking-wider">Salary Summary</h4>
+                                    <div className="grid grid-cols-3 gap-y-3 gap-x-8">
                                         {sections.summary.map((item, i) => (
                                             <div key={i} className="flex justify-between items-center pb-2 border-b border-slate-200/50">
                                                 <span className="text-sm font-semibold text-slate-500">{item.name}</span>
@@ -1476,7 +1518,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             )}
 
                             {/* Net Pay */}
-                            <div className="flex justify-end mb-12">
+                            <div className="flex justify-end mb-8">
                                 <div className="w-1/2 border-2 border-slate-800 p-4 flex justify-between items-center bg-slate-50">
                                     <div className="text-left">
                                         <span className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Net Payable</span>
@@ -1491,7 +1533,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-8 border-t border-slate-300">
+                            <div className="mt-8 pt-6 border-t border-slate-300">
                                 <p className="text-center text-xs text-slate-500 mb-1">This is a computer-generated document and does not require a signature.</p>
                                 <p className="text-center text-[10px] text-slate-400">Generated on {new Date().toLocaleDateString()}</p>
                             </div>

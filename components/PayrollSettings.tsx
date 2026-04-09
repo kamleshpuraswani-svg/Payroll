@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2, ArrowLeft } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2, ArrowLeft } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface ChangeHistory {
@@ -42,6 +42,9 @@ interface PaySchedule {
     payPeriodEndDate?: string;
     weeklyPayDay?: string;
     smSecondStandardDay?: string;
+    attendanceStartDay?: string;
+    attendanceEndDay?: string;
+    payrollEndDay?: string;
 }
 
 const BUSINESS_UNITS = [
@@ -196,6 +199,12 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     const [smSecondStandardDay, setSmSecondStandardDay] = useState(() => initialData?.smSecondStandardDay || '31');
     const [smSecondCustomDay, setSmSecondCustomDay] = useState(() => initialData?.smSecondCustomDay || '16');
 
+    // Attendance & Payroll Period State
+    const [attendanceStartDay, setAttendanceStartDay] = useState(() => initialData?.attendanceStartDay || '26');
+    const [attendanceEndDay, setAttendanceEndDay] = useState(() => initialData?.attendanceEndDay || '25');
+    const [payrollStartDay, setPayrollStartDay] = useState(() => initialData?.payrollStartDay || '1');
+    const [payrollEndDay, setPayrollEndDay] = useState(() => initialData?.payrollEndDay || '31');
+
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
     // Validation State
@@ -279,6 +288,41 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
         return dates;
     }, [frequency, weeklyPayDay, startMonthStr, selectedYear, selectedMonthIndex, daysInSelectedMonth, smFirstType, smFirstCustomDay, smSecondType, smSecondCustomDay]);
+
+    // Helper to calculate date range for attendance/payroll
+    const getPeriodRange = (endDay: string, isAttendance: boolean = false, customStartDay?: string) => {
+        if (!startMonthStr) return '';
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const [monthName, yearStr] = startMonthStr.split(' ');
+        const monthIdx = months.indexOf(monthName);
+        const year = parseInt(yearStr);
+
+        let endDate: Date;
+        if (endDay === '31' || endDay === 'last') {
+            endDate = new Date(year, monthIdx + 1, 0);
+        } else {
+            endDate = new Date(year, monthIdx, parseInt(endDay));
+        }
+
+        let startDate: Date;
+        if (customStartDay) {
+            if (isAttendance) {
+                // Attendance usually starts in the previous month
+                startDate = new Date(year, monthIdx - 1, parseInt(customStartDay));
+            } else {
+                // Payroll usually starts in the current month
+                startDate = new Date(year, monthIdx, parseInt(customStartDay));
+            }
+        } else {
+            startDate = new Date(endDate);
+            startDate.setDate(1); // Standard starts at 1st
+        }
+
+        const format = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + (d.getFullYear() !== year ? ` ${d.getFullYear()}` : '');
+        const formatFull = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        return `${format(startDate)} – ${formatFull(endDate)}`;
+    };
 
     // Reset pay date when options change
     useEffect(() => {
@@ -483,6 +527,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             payPeriodEndDate,
             weeklyPayDay,
             smSecondStandardDay,
+            attendanceStartDay,
+            attendanceEndDay,
+            payrollEndDay,
             history: [...(initialData?.history || []), ...newHistoryRecords]
         }, { targetId, targetType });
     };
@@ -1016,28 +1063,102 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
 
                                     {frequency === 'Monthly' && (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-2 col-span-full mt-6">
-                                            <div>
-                                                <label className="block text-sm font-bold text-slate-700 mb-2">Pay Schedule Period <span className="text-rose-500">*</span></label>
-                                                <div className="flex items-center gap-4">
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-2 col-span-full mt-6">
+                                            {/* Attendance Period Section */}
+                                            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100/50">
+                                                <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                                    Attendance Period <span className="text-rose-500">*</span>
+                                                    <div className="group relative">
+                                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                                        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none z-[100]">
+                                                            Define the attendance cycle for calculation
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-4 flex-wrap">
                                                     <div className="relative w-24">
                                                         <select
-                                                            value={payPeriodEndDate}
-                                                            onChange={(e) => setPayPeriodEndDate(e.target.value)}
-                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none font-bold text-sky-700 text-center"
+                                                            value={attendanceStartDay}
+                                                            onChange={(e) => setAttendanceStartDay(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
                                                         >
-                                                            {Array.from({ length: daysInSelectedMonth }, (_, i) => (
+                                                            {Array.from({ length: 31 }, (_, i) => (
                                                                 <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
                                                             ))}
                                                         </select>
                                                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                                                     </div>
-                                                    <span className="text-sm text-slate-500 font-medium">End Date of the selected month</span>
+                                                    <span className="text-sm font-medium text-slate-500">of previous month</span>
+                                                    <span className="text-slate-400 text-xs font-bold px-2">TO</span>
+                                                    <div className="relative w-24">
+                                                        <select
+                                                            value={attendanceEndDay}
+                                                            onChange={(e) => setAttendanceEndDay(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
+                                                        >
+                                                            {Array.from({ length: 31 }, (_, i) => (
+                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-slate-500">of current month</span>
+                                                </div>
+                                                <div className="mt-4 bg-emerald-50 border border-emerald-100/50 rounded-xl px-4 py-2.5 flex items-center gap-2.5 w-fit">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                                                    <span className="text-[11px] font-bold text-emerald-700">Attendance counted: {getPeriodRange(attendanceEndDay, true, attendanceStartDay)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Payroll Period Section */}
+                                            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100/50">
+                                                <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                                    Payroll Period <span className="text-rose-500">*</span>
+                                                    <div className="group relative">
+                                                        <HelpCircle size={14} className="text-slate-400 cursor-help" />
+                                                        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none z-[100]">
+                                                            The period for which salary is released
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-4 flex-wrap">
+                                                    <div className="relative w-24">
+                                                        <select
+                                                            value={payrollStartDay}
+                                                            onChange={(e) => setPayrollStartDay(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
+                                                        >
+                                                            {Array.from({ length: 31 }, (_, i) => (
+                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-slate-500">of current month</span>
+                                                    <span className="text-slate-400 text-xs font-bold px-2">TO</span>
+                                                    <div className="relative w-24">
+                                                        <select
+                                                            value={payrollEndDay}
+                                                            onChange={(e) => setPayrollEndDay(e.target.value)}
+                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
+                                                        >
+                                                            <option value="31">31</option>
+                                                            {Array.from({ length: 30 }, (_, i) => (
+                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-slate-500">of current month</span>
+                                                </div>
+                                                <div className="mt-4 bg-orange-50 border border-orange-100/50 rounded-xl px-4 py-2.5 flex items-center gap-2.5 w-fit">
+                                                    <div className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]" />
+                                                    <span className="text-[11px] font-bold text-orange-700">Payroll released: {getPeriodRange(payrollEndDay, false, payrollStartDay)}</span>
                                                 </div>
                                             </div>
 
                                             {userRole === 'HR_MANAGER' && (
-                                                <div>
+                                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
                                                         Effective Month <span className="text-rose-500">*</span>
                                                         <div className="group relative">
@@ -1048,7 +1169,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             </div>
                                                         </div>
                                                     </label>
-                                                    <div className="relative">
+                                                    <div className="relative max-w-sm">
                                                         <select
                                                             value={effectiveDate}
                                                             onChange={(e) => setEffectiveDate(e.target.value)}
@@ -1098,35 +1219,32 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         <CheckCircle size={16} className="text-emerald-500" />
                                         Payroll Summary
                                     </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        <div className="space-y-1">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payroll Cycle</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        <div className="space-y-1.5">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attendance Period</p>
                                             <p className="text-sm font-semibold text-slate-700">
-                                                {(() => {
-                                                    const endDay = parseInt(payPeriodEndDate);
-                                                    const [mName, year] = startMonthStr.split(' ');
-                                                    const mIdx = MONTHS.indexOf(mName);
-                                                    const endD = new Date(parseInt(year), mIdx, endDay);
-                                                    const startD = new Date(endD);
-                                                    startD.setDate(startD.getDate() - 30);
-                                                    const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-                                                    return `${fmt(startD)} - ${fmt(endD)}`;
-                                                })()}
+                                                {getPeriodRange(attendanceEndDay, true, attendanceStartDay)}
                                             </p>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payroll Period</p>
+                                            <p className="text-sm font-semibold text-slate-700">
+                                                {getPeriodRange(payrollEndDay, false, payrollStartDay)}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1.5">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payout Date</p>
                                             <p className="text-sm font-semibold text-slate-700">
-                                                {payDateDay} {payDateMonthType === 'same' ? startMonthStr.split(' ')[0] : (() => {
+                                                {payDateDay || '—'} {payDateMonthType === 'same' ? startMonthStr.split(' ')[0] : (() => {
                                                     const mIdx = MONTHS.indexOf(startMonthStr.split(' ')[0]);
                                                     return MONTHS[(mIdx + 1) % 12];
                                                 })()}
                                             </p>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Calculation Base</p>
                                             <p className="text-sm font-semibold text-slate-700">
-                                                {calcBase === 'Organisation working days' ? 'Working Days (excluding holidays)' : 'Actual Days'}
+                                                {calcBase === 'Organisation working days' ? 'Working Days' : 'Actual Days'}
                                             </p>
                                         </div>
                                     </div>

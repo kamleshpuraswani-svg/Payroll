@@ -45,6 +45,7 @@ import {
     Play,
     Activity
 } from 'lucide-react';
+import { supabase } from '../services/supabaseClient';
 import { MOCK_TAX_DECLARATIONS } from '../constants';
 import { TaxDeclaration } from '../types';
 
@@ -61,6 +62,7 @@ interface EditModalProps extends ModalProps {
 
 interface ApproveModalProps extends ModalProps {
     onDecide: (id: string, decision: 'Approved' | 'Rejected' | 'Partially Approved', amount?: number, note?: string) => void;
+    initialDecision?: 'Approved' | 'Partially Approved' | 'Rejected';
 }
 
 interface CommentModalProps extends ModalProps {
@@ -69,7 +71,7 @@ interface CommentModalProps extends ModalProps {
 
 interface ViewModalProps extends ModalProps {
     onEdit: () => void;
-    onApprove: () => void;
+    onApprove: (decision: 'Approved' | 'Rejected') => void;
 }
 
 const SECTION_LIMITS: Record<string, string> = {
@@ -684,11 +686,10 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
 
 // --- 2. Approve Declaration Modal ---
 
-const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, onDecide }) => {
-    const [decision, setDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>('Approved');
+const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, onDecide, initialDecision = 'Approved' }) => {
+    const [decision, setDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>(initialDecision);
     const [approvedAmount, setApprovedAmount] = useState<number>(doc.amount);
     const [reason, setReason] = useState('');
-    const [sendNotification, setSendNotification] = useState(true);
 
     const handleSubmit = () => {
         onDecide(doc.id, decision, approvedAmount, reason);
@@ -724,7 +725,6 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
 
                     {/* Approval Options */}
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Decision</label>
                         <div className="space-y-3">
                             <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Approved' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
                                 <input type="radio" name="decision" checked={decision === 'Approved'} onChange={() => setDecision('Approved')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
@@ -792,24 +792,14 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
 
                     {/* Note to Employee */}
                     <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Additional Note to Employee</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Remarks</label>
+                        <p className="text-[10px] text-slate-400 mb-2 font-medium">These remarks will also be visible to employees</p>
                         <textarea
                             value={reason}
                             onChange={e => setReason(e.target.value)}
                             placeholder="Optional comment..."
                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 min-h-[60px]"
                         />
-                        <div className="mt-2 flex items-center">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={sendNotification}
-                                    onChange={(e) => setSendNotification(e.target.checked)}
-                                    className="rounded text-purple-600 focus:ring-purple-500"
-                                />
-                                <span className="text-xs font-bold text-slate-600">Send Notification (Email/SMS)</span>
-                            </label>
-                        </div>
                     </div>
                 </div>
 
@@ -825,7 +815,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                 'bg-rose-600 hover:bg-rose-700'
                             }`}
                     >
-                        Submit Decision
+                        Submit
                     </button>
                 </div>
             </div>
@@ -997,30 +987,48 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                                 <User size={24} />
                             </div>
                         )}
-                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 text-sm">
-                            <div className="col-span-1 sm:col-span-2">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Employee</p>
-                                <p className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</p>
-                                <p className="text-xs text-slate-500">{doc?.employee_id || 'N/A'}</p>
+                        <div className="flex-1 flex justify-between items-start">
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Employee</p>
+                                    <p className="font-bold text-slate-800 text-base">{doc?.employee_name || 'N/A'}</p>
+                                    <p className="text-xs text-slate-500">{doc?.employee_id || 'N/A'}</p>
+                                </div>
+                                <div className="pt-1">
+                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
+                                        Tax Regime: {doc?.regime || 'N/A'}
+                                    </span>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Department</p>
-                                <p className="font-medium text-slate-700">Engineering</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">CTC</p>
-                                <p className="font-medium text-slate-700">{doc?.ctc || 'N/A'}</p>
-                            </div>
-                            <div className="col-span-2 sm:col-span-4 pt-1">
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
-                                    Tax Regime: {doc?.regime || 'N/A'}
+
+                            <div className="flex flex-col items-end gap-3">
+                                {doc.status === 'Pending' && (
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => onApprove('Approved')} 
+                                            title="Approve"
+                                            className="w-9 h-9 flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-all shadow-sm group active:scale-95"
+                                        >
+                                            <CheckCircle size={20} className="group-hover:scale-110 transition-transform" />
+                                        </button>
+                                        <button 
+                                            onClick={() => onApprove('Rejected')} 
+                                            title="Reject"
+                                            className="w-9 h-9 flex items-center justify-center bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm group active:scale-95"
+                                        >
+                                            <XCircle size={20} className="group-hover:scale-110 transition-transform" />
+                                        </button>
+                                    </div>
+                                )}
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold border shadow-sm ${getStatusStyle(doc?.status || 'Pending')}`}>
+                                    Status: {doc?.status || 'Pending'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Declaration Summary */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-slate-100 pb-6">
+                    <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-4 border-b border-slate-100 pb-6`}>
                         <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Declaration Type</p>
                             <p className="font-bold text-purple-700 text-sm">{doc?.type_label || 'N/A'}</p>
@@ -1033,6 +1041,18 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Declared Amount</p>
                             <p className="font-bold text-slate-800 text-lg">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
                         </div>
+                        {(doc?.status === 'Approved' || doc?.status === 'Partially Approved') && (
+                            <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Approved Amount</p>
+                                <p className="font-bold text-emerald-700 text-lg">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</p>
+                                {doc?.status === 'Partially Approved' && doc?.remarks && (
+                                    <p className="text-[9px] text-slate-500 italic mt-1 leading-tight line-clamp-2" title={doc.remarks}>
+                                        <span className="font-bold uppercase text-[8px] text-slate-400 mr-1">Reason:</span>
+                                        {doc.remarks}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                         <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Submitted Date</p>
                             <p className="font-medium text-slate-700 text-sm flex items-center gap-1"><Calendar size={12} /> {doc?.submitted_date || 'N/A'}</p>
@@ -1101,29 +1121,14 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
                         </div>
                     </div>
 
-                    {/* Status & Log */}
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-3">
-                        <div className="flex justify-between items-center">
-                            <h4 className="text-xs font-bold text-slate-500 uppercase">Current Status</h4>
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyle(doc?.status || 'Pending')}`}>{doc?.status || 'Pending'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 pt-3 border-t border-slate-200">
-                            <Clock size={12} />
-                            <span>Submitted by employee – {doc?.submitted_date || 'N/A'}</span>
-                        </div>
-                    </div>
+                    <div className="pt-2"></div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center gap-3">
-                    <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm">
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                    <button onClick={onClose} className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm shadow-sm">
                         Close
                     </button>
-                    <div className="flex gap-2">
-                        <button onClick={onApprove} className="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-sm transition-colors text-sm flex items-center gap-2">
-                            <CheckCircle size={16} /> Decide
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1135,9 +1140,36 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
 const TaxDeclarationsManagement: React.FC = () => {
     const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
     const [modalMode, setModalMode] = useState<'VIEW' | 'EDIT' | 'APPROVE' | 'COMMENT' | null>(null);
+    const [initialDecision, setInitialDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>('Approved');
     const [isForm16ModalOpen, setIsForm16ModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [declarations, setDeclarations] = useState(MOCK_TAX_DECLARATIONS);
+    const [declarations, setDeclarations] = useState<TaxDeclaration[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchDeclarations = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('tax_declarations')
+            .select(`
+                *,
+                employee:employees(full_name, avatar_url)
+            `)
+            .order('submitted_date', { ascending: false });
+
+        if (!error && data) {
+            const mappedData = data.map((d: any) => ({
+                ...d,
+                employee_name: d.employee?.full_name,
+                avatar_url: d.employee?.avatar_url
+            }));
+            setDeclarations(mappedData);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchDeclarations();
+    }, []);
 
     const selectedDoc = declarations.find(d => d.id === selectedDocId);
 
@@ -1147,7 +1179,10 @@ const TaxDeclarationsManagement: React.FC = () => {
     };
 
     const handleOpenEdit = () => setModalMode('EDIT');
-    const handleOpenApprove = () => setModalMode('APPROVE');
+    const handleOpenApprove = (decision: 'Approved' | 'Partially Approved' | 'Rejected' = 'Approved') => {
+        setInitialDecision(decision);
+        setModalMode('APPROVE');
+    };
     const handleOpenComment = () => setModalMode('COMMENT');
 
     const handleClose = () => {
@@ -1182,14 +1217,48 @@ const TaxDeclarationsManagement: React.FC = () => {
         { title: 'Rejected', value: '56', color: 'bg-rose-50 text-rose-700' },
     ];
 
-    const handleUpdateStatus = (id: string, status: string) => {
-        setDeclarations(prev => prev.map(doc =>
-            doc.id === id ? { ...doc, status: status as any } : doc
-        ));
+    const handleUpdateStatus = async (id: string, status: string, approvedAmount?: number, remarks?: string) => {
+        const { error } = await supabase
+            .from('tax_declarations')
+            .update({
+                status,
+                approved_amount: approvedAmount,
+                remarks,
+                last_modified_by: 'HR Manager'
+            })
+            .eq('id', id);
+
+        if (!error) {
+            setDeclarations(prev => prev.map(doc =>
+                doc.id === id ? {
+                    ...doc,
+                    status: status as any,
+                    approved_amount: approvedAmount !== undefined ? approvedAmount : doc.approved_amount,
+                    remarks: remarks !== undefined ? remarks : doc.remarks,
+                    last_modified_by: 'HR Manager'
+                } : doc
+            ));
+            setModalMode('VIEW');
+        } else {
+            console.error('Error updating status:', error);
+        }
     };
 
-    const handleSaveEdit = (updatedDoc: TaxDeclaration) => {
-        setDeclarations(prev => prev.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc));
+    const handleSaveEdit = async (updatedDoc: TaxDeclaration) => {
+        const { error } = await supabase
+            .from('tax_declarations')
+            .update({
+                amount: updatedDoc.amount,
+                breakdown: updatedDoc.breakdown,
+                last_modified_by: 'HR Manager'
+            })
+            .eq('id', updatedDoc.id);
+
+        if (!error) {
+            setDeclarations(prev => prev.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc));
+        } else {
+            console.error('Error saving edit:', error);
+        }
     };
 
     return (
@@ -1271,74 +1340,105 @@ const TaxDeclarationsManagement: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {declarations.map((doc) => (
-                                    <tr
-                                        key={doc?.id || Math.random()}
-                                        onClick={() => handleOpenView(doc?.id || '')}
-                                        className={`hover:bg-sky-50/30 cursor-pointer transition-colors group ${selectedDocId === doc?.id ? 'bg-sky-50/50' : ''}`}
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                {doc?.avatar_url ? (
-                                                    <img src={doc.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200" />
-                                                ) : (
-                                                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                                        <User size={14} />
+                                {isLoading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-full bg-slate-100"></div>
+                                                    <div className="space-y-2">
+                                                        <div className="h-4 w-24 bg-slate-100 rounded"></div>
+                                                        <div className="h-3 w-16 bg-slate-50 rounded"></div>
                                                     </div>
-                                                )}
-                                                <div>
-                                                    <div className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</div>
-                                                    <div className="text-xs text-slate-400 font-mono">{doc?.employee_id || 'N/A'}</div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc?.type || '')}`}>
-                                                {doc?.type_label || 'N/A'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
-                                            {doc?.submitted_date || 'N/A'}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">
-                                                <FileText size={12} /> {(doc?.proofs || []).length} Files
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
-                                                {doc?.status || 'Pending'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-xs font-medium text-slate-600 italic">
-                                                {doc?.last_modified_by || 'Not modified'}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-0.5">
-                                                <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('APPROVE'); }}
-                                                    className="p-1.5 hover:bg-slate-100 hover:text-emerald-600 rounded-lg text-slate-400 transition-colors"
-                                                    title="Decide"
-                                                >
-                                                    <Check size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('COMMENT'); }}
-                                                    className="p-1.5 hover:bg-slate-100 hover:text-sky-600 rounded-lg text-slate-400 transition-colors"
-                                                    title="Add Note"
-                                                >
-                                                    <MessageSquare size={15} />
-                                                </button>
-                                            </div>
+                                            </td>
+                                            <td className="px-6 py-4"><div className="h-6 w-16 bg-slate-100 rounded-lg"></div></td>
+                                            <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
+                                            <td className="px-6 py-4"><div className="h-4 w-24 bg-slate-100 rounded"></div></td>
+                                            <td className="px-6 py-4 text-center"><div className="h-5 w-16 bg-slate-100 rounded mx-auto"></div></td>
+                                            <td className="px-6 py-4"><div className="h-5 w-20 bg-slate-100 rounded-full"></div></td>
+                                            <td className="px-6 py-4"><div className="h-3 w-24 bg-slate-50 rounded italic"></div></td>
+                                            <td className="px-6 py-4"></td>
+                                        </tr>
+                                    ))
+                                ) : declarations.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-12 text-center text-slate-400 font-medium">
+                                            No declarations found.
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    declarations.map((doc) => (
+                                        <tr
+                                            key={doc?.id || Math.random()}
+                                            onClick={() => handleOpenView(doc?.id || '')}
+                                            className={`hover:bg-sky-50/30 cursor-pointer transition-colors group ${selectedDocId === doc?.id ? 'bg-sky-50/50' : ''}`}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {doc?.avatar_url ? (
+                                                        <img src={doc.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200" />
+                                                    ) : (
+                                                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                            <User size={14} />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</div>
+                                                        <div className="text-xs text-slate-400 font-mono">{doc?.employee_id || 'N/A'}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc?.type || '')}`}>
+                                                    {doc?.type_label || 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                                                {doc?.submitted_date || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">
+                                                    <FileText size={12} /> {(doc?.proofs || []).length} Files
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
+                                                    {doc?.status || 'Pending'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-medium text-slate-600 italic">
+                                                    {doc?.last_modified_by || 'Not modified'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-0.5">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
+                                                    {doc.status === 'Pending' && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); handleOpenApprove(); }}
+                                                            className="p-1.5 hover:bg-slate-100 hover:text-emerald-600 rounded-lg text-slate-400 transition-colors"
+                                                            title="Decide"
+                                                        >
+                                                            <Check size={15} />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('COMMENT'); }}
+                                                        className="p-1.5 hover:bg-slate-100 hover:text-sky-600 rounded-lg text-slate-400 transition-colors"
+                                                        title="Add Note"
+                                                    >
+                                                        <MessageSquare size={15} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -1369,7 +1469,7 @@ const TaxDeclarationsManagement: React.FC = () => {
                 {selectedDoc && modalMode === 'EDIT' && (
                     <EditDeclarationModal
                         doc={selectedDoc}
-                        onClose={handleClose}
+                        onClose={() => setModalMode('VIEW')}
                         onSave={handleSaveEdit}
                     />
                 )}
@@ -1377,15 +1477,16 @@ const TaxDeclarationsManagement: React.FC = () => {
                 {selectedDoc && modalMode === 'APPROVE' && (
                     <ApproveDeclarationModal
                         doc={selectedDoc}
-                        onClose={handleClose}
-                        onDecide={(id, decision) => handleUpdateStatus(id, decision)}
+                        initialDecision={initialDecision}
+                        onClose={() => setModalMode('VIEW')}
+                        onDecide={(id, decision, amount, note) => handleUpdateStatus(id, decision, amount, note)}
                     />
                 )}
 
                 {selectedDoc && modalMode === 'COMMENT' && (
                     <AddCommentModal
                         doc={selectedDoc}
-                        onClose={handleClose}
+                        onClose={() => setModalMode('VIEW')}
                         onComment={() => { }}
                     />
                 )}

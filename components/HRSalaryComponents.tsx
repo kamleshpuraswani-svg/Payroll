@@ -888,7 +888,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     });
 
     const [natureOfDeduction, setNatureOfDeduction] = useState<'Fixed' | 'Variable'>(
-        initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
+        initialData?.type === 'Fixed Pay' ? 'Fixed' : 'Variable'
     );
 
     // Calculation Method State
@@ -1007,7 +1007,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Nature of Deduction <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
-                            {(['Fixed', 'Variable'] as const).map((option) => (
+                            {(['Variable'] as const).map((option) => (
                                 <label key={option} className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfDeduction === option ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {natureOfDeduction === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
