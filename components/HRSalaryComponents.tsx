@@ -409,7 +409,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
                             {['Fixed', 'Variable'].map((type) => (
-                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                                <label key={type} 
+                                       className="flex items-center gap-2 cursor-pointer group"
+                                       style={{ display: type === 'Variable' ? 'none' : 'flex' }}
+                                >
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>

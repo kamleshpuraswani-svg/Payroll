@@ -136,7 +136,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       try {
          const { data, error } = await supabase
             .from('salary_structures')
-            .select('id, name, departments, designations')
+            .select('id, name, departments, designations, status')
             .eq('status', 'Active');
 
          if (error) throw error;
@@ -150,6 +150,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       if (!salaryStructures.length) return [];
       
       const filtered = salaryStructures.filter(struct => {
+         // Filter by Active status
+         if (struct.status !== 'Active') return false;
+
          // Check if it has any restriction rules
          const hasRules = (struct.departments?.length ?? 0) > 0 || 
                          (struct.designations?.length ?? 0) > 0 || 
@@ -669,7 +672,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 appearance-none"
                                  >
                                     <option value="">Select Structure</option>
-                                    {salaryStructures.map(s => (
+                                    {getFilteredStructures().map(s => (
                                        <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                  </select>
