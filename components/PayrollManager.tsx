@@ -982,7 +982,7 @@ const PayrollManager: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setView('WIZARD')}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 shadow-lg shadow-purple-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
                 >
                     <Plus size={20} /> Initiate Payroll
                 </button>

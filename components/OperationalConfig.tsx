@@ -73,6 +73,8 @@ const OperationalConfig: React.FC = () => {
     // Leave Encashment Settings state
     const [isLeaveEncashmentExpanded, setIsLeaveEncashmentExpanded] = useState(true);
     const [encashmentComponents, setEncashmentComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
+    const [isEncashmentDropdownOpen, setIsEncashmentDropdownOpen] = useState(false);
+    const encashmentDropdownRef = React.useRef<HTMLDivElement>(null);
 
     const fetchPaygroups = async () => {
         try {
@@ -114,6 +116,16 @@ const OperationalConfig: React.FC = () => {
     useEffect(() => {
         fetchNamingFormat(selectedTarget);
     }, [selectedTarget]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (encashmentDropdownRef.current && !encashmentDropdownRef.current.contains(event.target as Node)) {
+                setIsEncashmentDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleEditNamingFormat = () => {
         setTempSuffix(namingPatternSuffix);
@@ -907,32 +919,73 @@ const OperationalConfig: React.FC = () => {
                                         <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Components for Daily Rate</h4>
                                     </div>
 
-                                    <div className="grid gap-3">
-                                        {["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].map(opt => (
-                                            <label
-                                                key={opt}
-                                                className={`relative group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${encashmentComponents.includes(opt)
-                                                    ? 'bg-purple-50/40 border-purple-200 shadow-sm'
-                                                    : 'bg-white border-slate-100 hover:border-slate-300/60 hover:shadow-md'
-                                                    }`}
-                                            >
-                                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${encashmentComponents.includes(opt)
-                                                    ? 'bg-purple-600 border-purple-600 scale-105'
-                                                    : 'border-slate-200 bg-white group-hover:border-purple-300'
-                                                    }`}>
-                                                    {encashmentComponents.includes(opt) && <Check size={14} className="text-white stroke-[3]" />}
+                                    <div className="relative" ref={encashmentDropdownRef}>
+                                        <div 
+                                            onClick={() => setIsEncashmentDropdownOpen(!isEncashmentDropdownOpen)}
+                                            className={`min-h-[48px] w-full p-2 bg-white border rounded-xl flex flex-wrap gap-2 items-center cursor-pointer transition-all duration-200 ${
+                                                isEncashmentDropdownOpen ? 'border-sky-500 ring-2 ring-sky-500/10 shadow-sm' : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            {encashmentComponents.length === 0 ? (
+                                                <span className="text-slate-400 text-sm ml-2">Select components...</span>
+                                            ) : (
+                                                encashmentComponents.map(comp => (
+                                                    <div 
+                                                        key={comp}
+                                                        className="flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-2.5 py-1 rounded-lg text-xs font-bold animate-in zoom-in duration-200"
+                                                    >
+                                                        {comp}
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleEncashmentComponent(comp);
+                                                            }}
+                                                            className="hover:bg-sky-200/50 rounded-full p-0.5 transition-colors"
+                                                        >
+                                                            <X size={12} className="stroke-[3]" />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
+                                            <div className="ml-auto pr-2 flex items-center gap-2">
+                                                {encashmentComponents.length > 0 && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEncashmentComponents([]);
+                                                        }}
+                                                        className="text-slate-300 hover:text-slate-450 transition-colors"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                )}
+                                                <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${isEncashmentDropdownOpen ? 'rotate-180' : ''}`} />
+                                            </div>
+                                        </div>
+
+                                        {isEncashmentDropdownOpen && (
+                                            <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <div className="max-h-60 overflow-y-auto p-1.5">
+                                                    {["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].map(opt => {
+                                                        const isSelected = encashmentComponents.includes(opt);
+                                                        return (
+                                                            <div
+                                                                key={opt}
+                                                                onClick={() => toggleEncashmentComponent(opt)}
+                                                                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+                                                                    isSelected 
+                                                                    ? 'bg-sky-50 text-sky-700' 
+                                                                    : 'text-slate-600 hover:bg-slate-50'
+                                                                }`}
+                                                            >
+                                                                <span>{opt}</span>
+                                                                {isSelected && <Check size={16} className="text-sky-600 stroke-[3]" />}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
-                                                <input
-                                                    type="checkbox"
-                                                    className="hidden"
-                                                    checked={encashmentComponents.includes(opt)}
-                                                    onChange={() => toggleEncashmentComponent(opt)}
-                                                />
-                                                <div className="flex-1 text-sm font-bold transition-colors duration-300 text-slate-700">
-                                                    {opt}
-                                                </div>
-                                            </label>
-                                        ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

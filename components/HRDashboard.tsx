@@ -719,6 +719,11 @@ const HRDashboard: React.FC = () => {
 
     // Full Report Modal State
     const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
+ 
+    // Employees Expense Trend State
+    const [expenseTimeRange, setExpenseTimeRange] = useState('This Year');
+    const [isExpenseFilterPopoverOpen, setIsExpenseFilterPopoverOpen] = useState(false);
+
     const [isPTModalOpen, setIsPTModalOpen] = useState(false);
     const [isECRModalOpen, setIsECRModalOpen] = useState(false);
     const [isPFECRFiled, setIsPFECRFiled] = useState(false);
@@ -811,6 +816,38 @@ const HRDashboard: React.FC = () => {
     const tdsGraphData = getGraphData;
     const maxTdsValue = Math.max(...tdsGraphData.map(d => d.tds), 1); // Ensure > 0
     const yAxisMax = Math.ceil(maxTdsValue * 1.1); // 10% buffer
+
+    // -- Employee Expense Trend Data --
+    const EXPENSE_TREND_DATA = [
+        { month: 'May 2025', amount: 0, count: 0 },
+        { month: 'Jun 2025', amount: 32000, count: 1 },
+        { month: 'Jul 2025', amount: 0, count: 0 },
+        { month: 'Aug 2025', amount: 0, count: 0 },
+        { month: 'Sep 2025', amount: 0, count: 0 },
+        { month: 'Oct 2025', amount: 0, count: 0 },
+        { month: 'Nov 2025', amount: 0, count: 0 },
+        { month: 'Dec 2025', amount: 0, count: 0 },
+        { month: 'Jan 2026', amount: 0, count: 0 },
+        { month: 'Feb 2026', amount: 5000, count: 1 },
+        { month: 'Mar 2026', amount: 0, count: 0 },
+        { month: 'Apr 2026', amount: 0, count: 0 },
+    ];
+
+    const maxExpenseAmount = 35000; // Fixed max for scale as per image (35K)
+    const maxEmployeeCount = 5; // Fixed max for scale as per image (5)
+
+    const getExpensePointCoords = (index: number) => {
+        const x = (index / (EXPENSE_TREND_DATA.length - 1)) * 1000;
+        const y = 300 - (EXPENSE_TREND_DATA[index].count / maxEmployeeCount) * 300;
+        return { x, y };
+    };
+
+    const getExpenseLinePath = () => {
+        return EXPENSE_TREND_DATA.map((_, i) => {
+            const { x, y } = getExpensePointCoords(i);
+            return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+        }).join(' ');
+    };
 
     const stats: StatMetric[] = [
         {
@@ -1167,6 +1204,192 @@ const HRDashboard: React.FC = () => {
                                 >
                                     View Full Report
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Employees Expense Trend Section */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-8">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-slate-800 text-lg">Employees Expense Trend</h3>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsExpenseFilterPopoverOpen(!isExpenseFilterPopoverOpen)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
+                            >
+                                <Filter size={14} className="text-blue-600" />
+                                <span>{expenseTimeRange}</span>
+                                <ChevronDown size={12} className={`text-slate-400 transition-transform ${isExpenseFilterPopoverOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isExpenseFilterPopoverOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setIsExpenseFilterPopoverOpen(false)}
+                                    ></div>
+
+                                    <div className="absolute right-0 mt-2 p-4 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 w-[300px] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-3">Date Range</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
+                                                <button
+                                                    key={label}
+                                                    onClick={() => {
+                                                        setExpenseTimeRange(label);
+                                                        setIsExpenseFilterPopoverOpen(false);
+                                                    }}
+                                                    className={`px-2 py-2 text-[10px] font-bold rounded-lg transition-all border ${expenseTimeRange === label
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                                                        }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="relative h-[400px] bg-white pt-6">
+                        {/* Y-Axis Left (INR) */}
+                        <div className="absolute left-0 top-6 bottom-12 w-16 flex flex-col justify-between text-[11px] font-bold text-slate-400 pointer-events-none pr-2 border-r border-slate-50">
+                            <span>35K</span>
+                            <span>28K</span>
+                            <span>21K</span>
+                            <span>14K</span>
+                            <span>7K</span>
+                            <span>0</span>
+                            <div className="absolute -left-12 top-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-slate-300 text-[10px] uppercase tracking-wider">
+                                Expense Amount (INR)
+                            </div>
+                        </div>
+
+                        {/* Y-Axis Right (Count) */}
+                        <div className="absolute right-0 top-6 bottom-12 w-16 flex flex-col justify-between text-[11px] font-bold text-slate-400 text-right pointer-events-none pl-2 border-l border-slate-50">
+                            <span>5</span>
+                            <span>4</span>
+                            <span>3</span>
+                            <span>2</span>
+                            <span>1</span>
+                            <span>0</span>
+                            <div className="absolute -right-12 top-1/2 -translate-y-1/2 rotate-90 whitespace-nowrap text-slate-300 text-[10px] uppercase tracking-wider">
+                                Number of Employees
+                            </div>
+                        </div>
+
+                        {/* Chart Area */}
+                        <div className="mx-16 h-full flex flex-col">
+                            <div className="flex-1 relative border-l border-b border-slate-100">
+                                {/* Horizontal Grid Lines */}
+                                {[0, 1, 2, 3, 4, 5].map(i => (
+                                    <div 
+                                        key={i} 
+                                        className="absolute w-full border-t border-slate-50" 
+                                        style={{ bottom: `${(i / 5) * 100}%` }}
+                                    ></div>
+                                ))}
+
+                                {/* Bars and Line SVG */}
+                                <div className="absolute inset-0 flex items-end">
+                                    {EXPENSE_TREND_DATA.map((d, i) => (
+                                        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full relative group">
+                                            {/* Bar */}
+                                            {d.amount > 0 && (
+                                                <div 
+                                                    className="w-8 bg-blue-500/70 rounded-t-sm relative transition-all hover:bg-blue-600/80"
+                                                    style={{ height: `${(d.amount / maxExpenseAmount) * 100}%` }}
+                                                >
+                                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-700 bg-slate-100 px-1 rounded shadow-sm">
+                                                        {d.amount >= 1000 ? `${d.amount / 1000}K` : d.amount}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {/* Line Overlay */}
+                                    <svg viewBox="0 0 1000 300" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
+                                        <path 
+                                            d={getExpenseLinePath()} 
+                                            fill="none" 
+                                            stroke="#f59e0b" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                        />
+                                        {EXPENSE_TREND_DATA.map((d, i) => {
+                                            const { x, y } = getExpensePointCoords(i);
+                                            return (
+                                                <g key={i}>
+                                                    <circle cx={x} cy={y} r="4" fill="#f59e0b" stroke="white" strokeWidth="2" />
+                                                    {d.count > 0 && (
+                                                        <text x={x} y={y - 12} textAnchor="middle" className="font-bold fill-slate-700" style={{ fontSize: '18px' }}>{d.count}</text>
+                                                    )}
+                                                </g>
+                                            );
+                                        })}
+                                    </svg>
+                                </div>
+                            </div>
+
+                            {/* X-Axis Labels */}
+                            <div className="h-12 flex justify-between items-center px-0">
+                                {EXPENSE_TREND_DATA.map((d, i) => (
+                                    <span key={i} className="text-[10px] font-bold text-slate-500 w-12 text-center transform -rotate-12 mt-2">
+                                        {d.month}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex justify-center items-center gap-8 pt-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-blue-500/70 rounded-sm"></div>
+                            <span className="text-xs font-bold text-slate-500">Expense Amount (INR)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center">
+                                <div className="w-4 h-0.5 bg-amber-500"></div>
+                                <div className="w-2 h-2 rounded-full bg-amber-500 -ml-1.5 border border-white"></div>
+                            </div>
+                            <span className="text-xs font-bold text-slate-500">Employees Count</span>
+                        </div>
+                    </div>
+
+                    {/* Insights Section */}
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                        <h4 className="font-bold text-slate-800 text-sm">Insights</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100 bg-slate-50/50 rounded-xl border border-slate-100">
+                            <div className="p-4 space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Most Expensive Month</p>
+                                <p className="text-sm font-bold text-slate-800">June 2025</p>
+                            </div>
+                            <div className="p-4 space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expense Paid</p>
+                                <p className="text-sm font-bold text-slate-800">INR 32,000</p>
+                            </div>
+                            <div className="p-4 space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Employees with Expense</p>
+                                <p className="text-sm font-bold text-slate-800">1</p>
+                            </div>
+                            <div className="p-4 space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Least Expensive Month</p>
+                                <p className="text-sm font-bold text-slate-800">April 2026</p>
+                            </div>
+                            <div className="p-4 space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expense Paid</p>
+                                <p className="text-sm font-bold text-slate-800">INR 0</p>
+                            </div>
+                            <div className="p-4 space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Employees with Expense</p>
+                                <p className="text-sm font-bold text-slate-800">0</p>
                             </div>
                         </div>
                     </div>

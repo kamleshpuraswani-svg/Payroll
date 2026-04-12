@@ -325,6 +325,32 @@ export const RunPayrollModal: React.FC<{
    const [empSearch, setEmpSearch] = useState('');
    const [selectedBUs, setSelectedBUs] = useState<string[]>([]);
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
+   const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
+
+   const getPayrollPeriod = (monthYear: string) => {
+      try {
+         const [monthName, yearStr] = monthYear.split(' ');
+         const year = parseInt(yearStr);
+         const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+         const firstDay = new Date(year, monthIndex, 1);
+         const lastDay = new Date(year, monthIndex + 1, 0);
+         
+         const format = (d: Date) => {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const fullYear = d.getFullYear();
+            return `${day}/${month}/${fullYear}`;
+         };
+         return `${format(firstDay)} to ${format(lastDay)}`;
+      } catch (e) {
+         return '01/03/2026 to 31/03/2026';
+      }
+   };
+
+   const payrollMonthsList = Array.from({ length: 12 }, (_, i) => {
+      const date = new Date(2026, 2 + i, 1); // Month index 2 is March
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+   });
 
    // Step 6 States
    const [isGenerating, setIsGenerating] = useState(false);
@@ -616,17 +642,26 @@ export const RunPayrollModal: React.FC<{
                      <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
                         <Calendar size={16} className="text-sky-600" /> Payroll Period
                      </h3>
-                     <div className="flex gap-4 items-center">
+                     <div className="flex gap-4 items-end">
                         <div className="flex-1 relative">
-                           <input type="date" disabled={readOnly} defaultValue="2025-11-01" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50" />
-                           <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-slate-400 uppercase">From</span>
+                           <select 
+                              disabled={readOnly} 
+                              value={selectedPayrollMonth}
+                              onChange={(e) => setSelectedPayrollMonth(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 disabled:bg-slate-50 appearance-none cursor-pointer pr-10"
+                           >
+                              {payrollMonthsList.map(month => (
+                                 <option key={month} value={month}>{month}</option>
+                              ))}
+                           </select>
+                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                           <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-slate-400 uppercase">Select Month</span>
+                           <p className="mt-1.5 text-[11px] font-medium text-slate-500 italic flex items-center gap-1">
+                              <Info size={12} className="text-sky-500" />
+                              Payroll Period: <span className="text-slate-700 font-bold not-italic">{getPayrollPeriod(selectedPayrollMonth)}</span>
+                           </p>
                         </div>
-                        <span className="text-slate-400 font-medium">to</span>
-                        <div className="flex-1 relative">
-                           <input type="date" disabled={readOnly} defaultValue="2025-11-30" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50" />
-                           <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-slate-400 uppercase">To</span>
-                        </div>
-                        <div className="bg-slate-100 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600">22 Working Days</div>
+                        <div className="bg-slate-100 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 border border-slate-200 shadow-sm mb-[28px]">22 Working Days</div>
                      </div>
                   </div>
 

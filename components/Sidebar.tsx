@@ -130,7 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
     },
     {
       id: 'hr-payroll',
-      label: 'Run Payroll',
+      label: 'Payroll Runs',
       icon: <FileText size={20} />,
       viewState: ViewState.HR_PAYROLL_RUN
     },

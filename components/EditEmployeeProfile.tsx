@@ -47,6 +47,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [uanNumber, setUanNumber] = useState('');
 
    const [ctc, setCtc] = useState<number>(0);
+   const [annualGross, setAnnualGross] = useState<number>(0);
    const [regime, setRegime] = useState('New Regime (2025)');
    const [bankVerified, setBankVerified] = useState(true);
    const [isSaving, setIsSaving] = useState(false);
@@ -74,6 +75,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    // Refs to track initial values for change detection
    const initialValues = useRef({
       ctc: 0,
+      annualGross: 0,
       structureId: ''
    });
 
@@ -214,7 +216,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
              setUanNumber(data.uan_no || '');
  
              const fetchedCtc = Number(data.ctc) || 0;
+             const fetchedAnnualGross = Number(data.annual_gross) || 0;
              setCtc(fetchedCtc);
+             setAnnualGross(fetchedAnnualGross);
              setRegime(data.tax_regime || 'New Regime (2025)');
              setSelectedStructureId(data.salary_structure_id || '');
              setEffectiveFrom(data.effective_date || '');
@@ -250,6 +254,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
  
              initialValues.current = {
                 ctc: fetchedCtc,
+                annualGross: fetchedAnnualGross,
                 structureId: data.salary_structure_id || ''
              };
              setEmployeeRawData(data);
@@ -501,6 +506,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             aadhaar_no: aadhaarNumber,
             uan_no: uanNumber,
             ctc: ctc.toString(), 
+            annual_gross: annualGross.toString(),
             tax_regime: regime,
             salary_structure_id: selectedStructureId || null,
             effective_date: effectiveFrom || null,
@@ -679,6 +685,23 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               </div>
                            )}
+                        </div>
+
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual Gross (₹) {!isReadOnly && <span className="text-rose-500">*</span>}</label>
+                           <div className="relative">
+                              <input
+                                 type="text"
+                                 value={annualGross || ''}
+                                 disabled={isReadOnly}
+                                 onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    setAnnualGross(parseInt(val) || 0);
+                                 }}
+                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}
+                              />
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                           </div>
                         </div>
 
                         <div id="effective-from-field-main">
