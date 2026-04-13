@@ -49,6 +49,7 @@ import {
    Edit2,
    PauseCircle,
    PlayCircle,
+   Eye,
    Trash2
 } from 'lucide-react';
 import { Company } from '../types';
@@ -170,49 +171,197 @@ export const PayrollAlertsModal: React.FC<{ isOpen: boolean; onClose: () => void
    };
 
    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-         <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+      <div 
+         className="fixed inset-0 z-[150] flex justify-end bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+         onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+         }}
+      >
+         <div className="bg-white w-full max-w-lg h-full shadow-2xl animate-in slide-in-from-right duration-500 overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><AlertCircle size={18} /></div>
-                  <h3 className="font-bold text-slate-800">Payroll Alerts</h3>
+                  <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl shadow-sm"><AlertCircle size={20} /></div>
+                  <div>
+                     <h3 className="font-bold text-slate-800 text-lg">Critical Payroll Issues</h3>
+                     <p className="text-xs text-slate-500 font-medium">Review and resolve alerts before processing</p>
+                  </div>
                </div>
-               <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
+               <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                  <X size={20} />
+               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
                {alerts.map(alert => (
-                  <div key={alert.id} className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors bg-white shadow-sm">
-                     <div className="flex justify-between items-start mb-2">
+                  <div key={alert.id} className="p-5 border border-slate-200 rounded-2xl hover:border-slate-300 transition-all bg-white shadow-sm group">
+                     <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-2">
-                           <span className={`w-2 h-2 rounded-full ${alert.severity === 'High' ? 'bg-rose-500' :
-                              alert.severity === 'Medium' ? 'bg-orange-500' : 'bg-blue-500'
-                              }`}></span>
-                           <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">{alert.title}</span>
+                           <span className={`w-2.5 h-2.5 rounded-full ${
+                              alert.severity === 'High' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' :
+                              alert.severity === 'Medium' ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]' : 
+                              'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'
+                           }`}></span>
+                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{alert.title}</span>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${alert.severity === 'High' ? 'bg-rose-50 text-rose-700' :
-                           alert.severity === 'Medium' ? 'bg-orange-50 text-orange-700' : 'bg-blue-50 text-blue-700'
-                           }`}>
-                           {alert.severity} Priority
-                        </span>
                      </div>
-                     <p className="text-sm text-slate-600 mb-4 leading-relaxed">{alert.message}</p>
-                     <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button className="px-3 py-1.5 text-slate-500 text-xs font-bold hover:text-slate-700 transition-colors">Ignore</button>
+                     <p className="text-sm font-medium text-slate-600 mb-5 leading-relaxed">{alert.message}</p>
+                     <div className="flex justify-end gap-3 border-t border-slate-50 pt-4">
+                        <button className="px-4 py-2 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors uppercase tracking-widest">Ignore</button>
                         <button
                            onClick={() => handleActionClick(alert.action)}
-                           className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1"
+                           className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center gap-1.5 transform group-hover:-translate-y-0.5 active:scale-95"
                         >
-                           {alert.action} <ChevronRight size={12} />
+                           {alert.action} <ArrowRight size={14} />
                         </button>
                      </div>
                   </div>
                ))}
+               
+               {/* Empty State visual helper */}
+               {alerts.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                     <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                        <Check size={32} />
+                     </div>
+                     <p className="text-slate-500 font-bold">No critical issues found</p>
+                     <p className="text-xs text-slate-400 mt-1">All compliance checks have passed</p>
+                  </div>
+               )}
             </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-               <button onClick={onClose} className="px-6 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-900 transition-colors shadow-sm">
-                  Done
+            <div className="p-6 border-t border-slate-100 bg-white shrink-0">
+               <button 
+                  onClick={onClose} 
+                  className="w-full py-3.5 bg-slate-900 text-white text-sm font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group"
+               >
+                  Close <X size={16} className="text-slate-500 group-hover:rotate-90 transition-transform" />
+               </button>
+            </div>
+         </div>
+      </div>
+   );
+};
+
+// --- Payroll On-hold Panel ---
+export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+   if (!isOpen) return null;
+
+   const onHoldEmployees = [
+      { 
+         id: 'TF00945', 
+         name: 'Sameer Sheikh', 
+         dept: 'Operations', 
+         designation: 'Operations Lead', 
+         status: 'On Hold', 
+         lwd: '2026-03-31', 
+         reason: 'Full & Final Settlement Pending', 
+         holdSince: 'March 2026' 
+      },
+      { 
+         id: 'AC04122', 
+         name: 'Rishabh Pant', 
+         dept: 'Sales', 
+         designation: 'Account Manager', 
+         status: 'On Hold', 
+         lwd: '-', 
+         reason: 'Bank Verification Needed', 
+         holdSince: 'April 2026' 
+      },
+      { 
+         id: 'SU00344', 
+         name: 'Ishaan Kishan', 
+         dept: 'Product', 
+         designation: 'UX Designer', 
+         status: 'On Hold', 
+         lwd: '2026-04-10', 
+         reason: 'Resignation - LWD Adjustment', 
+         holdSince: 'April 2026' 
+      },
+   ];
+
+   return (
+      <div 
+         className="fixed inset-0 z-[200] flex justify-end bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+         onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+         }}
+      >
+         <div className="bg-white w-full max-w-2xl h-full shadow-2xl animate-in slide-in-from-right duration-500 overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+               <div className="flex items-center gap-2">
+                  <div className="p-2.5 bg-slate-50 text-slate-600 rounded-xl shadow-sm"><PauseCircle size={20} /></div>
+                  <div>
+                     <h3 className="font-bold text-slate-800 text-lg">Payroll On-hold</h3>
+                     <p className="text-xs text-slate-500 font-medium">Manage employees whose disbursements are paused</p>
+                  </div>
+               </div>
+               <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                  <X size={20} />
+               </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+               <div className="space-y-4">
+                  {onHoldEmployees.map(emp => (
+                     <div key={emp.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-slate-300 transition-all">
+                        <div className="flex justify-between items-start mb-4">
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                                 {emp.name.split(' ').map(n => n[0]).join('')}
+                              </div>
+                              <div>
+                                 <h4 className="font-bold text-slate-800">{emp.name}</h4>
+                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{emp.id}</p>
+                              </div>
+                           </div>
+                           <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
+                              {emp.status}
+                           </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                           <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Department</p>
+                              <p className="text-sm font-bold text-slate-700">{emp.dept}</p>
+                           </div>
+                           <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Designation</p>
+                              <p className="text-sm font-bold text-slate-700">{emp.designation}</p>
+                           </div>
+                           <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Last Working Day (LWD)</p>
+                              <p className="text-sm font-bold text-slate-700">{emp.lwd}</p>
+                           </div>
+                           <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hold Since</p>
+                              <p className="text-sm font-bold text-slate-700">{emp.holdSince}</p>
+                           </div>
+                           <div className="col-span-2 p-3 bg-rose-50/50 border border-rose-100/50 rounded-xl">
+                              <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Hold Reason</p>
+                              <p className="text-sm font-bold text-slate-700 leading-relaxed">{emp.reason}</p>
+                           </div>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+
+               {onHoldEmployees.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                     <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                        <Check size={32} />
+                     </div>
+                     <p className="text-slate-500 font-bold">No employees on hold</p>
+                     <p className="text-xs text-slate-400 mt-1">All processed payrolls are active</p>
+                  </div>
+               )}
+            </div>
+
+            <div className="p-6 border-t border-slate-100 bg-white shrink-0">
+               <button 
+                  onClick={onClose} 
+                  className="w-full py-3.5 bg-slate-900 text-white text-sm font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group"
+               >
+                  Close <X size={16} className="text-slate-500 group-hover:rotate-90 transition-transform" />
                </button>
             </div>
          </div>
@@ -301,31 +450,73 @@ export const RunPayrollModal: React.FC<{
    const [currentStep, setCurrentStep] = useState(1);
    const [isConfirmed, setIsConfirmed] = useState(false);
    const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+   const [isLoading, setIsLoading] = useState(false);
+   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
 
    // Step 1: Employee Selection State
-   const [payrollEmployees, setPayrollEmployees] = useState(() => {
-      const bus = ["Mindinventory", "300 Minds", "CollabCRM", "Dots & Boxes"];
-      const designations: Record<string, string> = {
-         'Software Engineering': 'Senior Engineer',
-         'Sales': 'Account Executive',
-         'Product': 'Product Manager',
-         'DevOps': 'Systems Engineer',
-         'QA': 'QA Lead',
-         'Finance': 'Finance Associate',
-         'Design': 'Senior Designer',
-         'Marketing': 'Marketing Specialist'
-      };
-      return MOCK_EMPLOYEES.map((e, i) => ({ 
-         ...e, 
-         business_unit: bus[i % bus.length],
-         designation: designations[e.department] || 'Specialist',
-         payrollStatus: 'Eligible' as 'Eligible' | 'On Hold' 
-      }));
-   });
+   const [payrollEmployees, setPayrollEmployees] = useState<any[]>([]);
+   
+   // Sync with Database
+   useEffect(() => {
+     if (isOpen) {
+       fetchEmployees();
+     }
+   }, [isOpen]);
+
+   const fetchEmployees = async () => {
+     setIsLoading(true);
+     try {
+       const { data, error } = await supabase
+         .from('employees')
+         .select('*')
+         .order('eid', { ascending: true });
+
+       if (error) throw error;
+
+       const bus = ["Mindinventory", "300 Minds", "CollabCRM", "Dots & Boxes"];
+       const designations: Record<string, string> = {
+          'Software Engineering': 'Senior Engineer',
+          'Sales': 'Account Executive',
+          'Product': 'Product Manager',
+          'DevOps': 'Systems Engineer',
+          'QA': 'QA Lead',
+          'Finance': 'Finance Associate',
+          'Design': 'Senior Designer',
+          'Marketing': 'Marketing Specialist'
+       };
+
+       const mapped = (data || []).map((e, i) => ({
+         ...e,
+         employee_id: e.eid, // Mapping eid column to UI employee_id
+         business_unit: e.business_unit || bus[i % bus.length],
+         designation: e.designation || designations[e.department] || 'Specialist',
+         payrollStatus: e.payroll_status || 'Eligible',
+         holdReason: e.hold_reason || ''
+       }));
+
+       setPayrollEmployees(mapped);
+     } catch (err) {
+       console.error('Error fetching employees:', err);
+     } finally {
+       setIsLoading(false);
+     }
+   };
    const [empSearch, setEmpSearch] = useState('');
    const [selectedBUs, setSelectedBUs] = useState<string[]>([]);
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
    const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
+
+   const [showHoldModal, setShowHoldModal] = useState(false);
+   const [holdReason, setHoldReason] = useState('');
+   const [holdTargetId, setHoldTargetId] = useState<string | null>(null);
+
+   const [showWizardOnHoldPanel, setShowWizardOnHoldPanel] = useState(false);
+   const [showWizardExitPanel, setShowWizardExitPanel] = useState(false);
+
+   const [exitEmployees, setExitEmployees] = useState([
+      { id: 'E100', name: 'Siddharth Jain', department: 'Engineering', designation: 'Senior Lead', lwd: '15/11/2025' },
+      { id: 'E105', name: 'Tanvi Shah', department: 'Marketing', designation: 'Content Strategist', lwd: '28/11/2025' },
+   ]);
 
    const getPayrollPeriod = (monthYear: string) => {
       try {
@@ -361,14 +552,78 @@ export const RunPayrollModal: React.FC<{
 
    // Step 3 State & Modals
    const [adjustmentSearch, setAdjustmentSearch] = useState('');
-   const [adjustments, setAdjustments] = useState([
-      { id: 1, name: 'Priya Sharma', gross: 154166, bonus: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 12500, actualTds: 12500, isEditing: false },
-      { id: 2, name: 'Arjun Mehta', gross: 180000, bonus: 25000, arrears: 0, loanRecovery: 5000, salaryAdvanceRecovery: 0, expenseReimbursement: 8400, lop: 0, lopReversal: 0, other: 0, proposedTds: 18000, actualTds: 18000, isEditing: false },
-      { id: 3, name: 'Neha Kapoor', gross: 131666, bonus: 0, arrears: 5000, loanRecovery: 0, salaryAdvanceRecovery: 0, expenseReimbursement: 0, lop: 4500, lopReversal: 0, other: 0, proposedTds: 8500, actualTds: 8500, isEditing: false },
-      { id: 4, name: 'Rohan Desai', gross: 176666, bonus: 0, arrears: 0, loanRecovery: 2000, salaryAdvanceRecovery: 1000, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 1000, proposedTds: 16200, actualTds: 16200, isEditing: false },
-      { id: 5, name: 'Vikram Singh', gross: 158333, bonus: 5000, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 14000, actualTds: 14000, isEditing: false },
-      { id: 6, name: 'Ananya Patel', gross: 147500, bonus: 0, arrears: 0, loanRecovery: 1000, salaryAdvanceRecovery: 500, expenseReimbursement: 0, lop: 0, lopReversal: 0, other: 0, proposedTds: 11000, actualTds: 11000, isEditing: false },
-   ]);
+   const [adjustments, setAdjustments] = useState<any[]>([]);
+
+   useEffect(() => {
+       if (currentRunId) {
+           fetchAdjustments();
+       }
+   }, [currentRunId]);
+
+   const fetchAdjustments = async () => {
+       if (!currentRunId) return;
+       try {
+           const { data, error } = await supabase
+               .from('payroll_adjustments')
+               .select('*, employees(first_name, last_name)')
+               .eq('payroll_run_id', currentRunId);
+
+           if (error) throw error;
+
+           const mapped = (data || []).map(adj => ({
+               id: adj.employee_id,
+               db_id: adj.id,
+               employee_id: adj.employee_id,
+               name: adj.employees ? `${adj.employees.first_name} ${adj.employees.last_name}` : 'Unknown',
+               gross: adj.gross || 0,
+               bonus: adj.bonus || 0,
+               arrears: adj.arrears || 0,
+               loanRecovery: adj.loan_recovery || 0,
+               salaryAdvanceRecovery: adj.salary_advance_recovery || 0,
+               expenseReimbursement: adj.expense_reimbursement || 0,
+               lop: adj.lop || 0,
+               lop_reversal: adj.lop_reversal || 0,
+               other: adj.other || 0,
+               proposedTds: adj.proposed_tds || 0,
+               actualTds: adj.actual_tds || 0,
+               is_exit: adj.is_exit,
+               isEditing: false
+           }));
+
+           setAdjustments(mapped);
+       } catch (err) {
+           console.error('Error fetching adjustments:', err);
+       }
+   };
+
+   const saveAdjustmentToDb = async (adjustment: any) => {
+       if (!currentRunId) return;
+       try {
+           const { error } = await supabase
+               .from('payroll_adjustments')
+               .upsert({
+                   id: adjustment.db_id,
+                   payroll_run_id: currentRunId,
+                   employee_id: adjustment.employee_id,
+                   gross: adjustment.gross,
+                   bonus: adjustment.bonus,
+                   arrears: adjustment.arrears,
+                   loan_recovery: adjustment.loanRecovery,
+                   salary_advance_recovery: adjustment.salaryAdvanceRecovery,
+                   expense_reimbursement: adjustment.expenseReimbursement,
+                   lop: adjustment.lop,
+                   lop_reversal: adjustment.lopReversal,
+                   other: adjustment.other,
+                   proposed_tds: adjustment.proposedTds,
+                   actual_tds: adjustment.actualTds,
+                   is_exit: adjustment.is_exit
+               });
+           if (error) throw error;
+       } catch (err) {
+           console.error('Error saving adjustment:', err);
+       }
+   };
+
    const [showBonusModal, setShowBonusModal] = useState(false);
    const [showLopModal, setShowLopModal] = useState(false);
 
@@ -390,10 +645,87 @@ export const RunPayrollModal: React.FC<{
    if (!isPage && !isOpen) return null;
    if (!company) return null;
 
-   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, 6));
+   const handleNext = async () => {
+       if (currentStep === 1) {
+           await initiatePayrollRun();
+       }
+       setCurrentStep(prev => Math.min(prev + 1, 6));
+   };
+
+   const initiatePayrollRun = async () => {
+       setIsLoading(true);
+       try {
+           const [month, year] = selectedPayrollMonth.split(' ');
+           
+           // 1. Create or get Payroll Run
+           const { data: runData, error: runError } = await supabase
+               .from('payroll_runs')
+               .upsert({
+                   month,
+                   year: parseInt(year),
+                   company_id: company.id,
+                   status: 'Processing'
+               })
+               .select()
+               .single();
+
+           if (runError) throw runError;
+           setCurrentRunId(runData.id);
+
+           // 2. Initialize Adjustments for selected employees if they don't exist
+           if (selectedEmpIds.length > 0) {
+               const adjustmentsToCreate = selectedEmpIds.map(empId => ({
+                   payroll_run_id: runData.id,
+                   employee_id: empId,
+                   gross: 0, // In reality, fetch this from salary_structures
+                   bonus: 0,
+                   arrears: 0,
+                   loan_recovery: 0,
+                   salary_advance_recovery: 0,
+                   expense_reimbursement: 0,
+                   lop: 0,
+                   lop_reversal: 0,
+                   other: 0,
+                   proposed_tds: 0,
+                   actual_tds: 0
+               }));
+
+               const { error: adjError } = await supabase
+                   .from('payroll_adjustments')
+                   .upsert(adjustmentsToCreate, { onConflict: 'payroll_run_id,employee_id' });
+
+               if (adjError) throw adjError;
+               await fetchAdjustments();
+           }
+       } catch (err) {
+           console.error('Error initiating payroll run:', err);
+       } finally {
+           setIsLoading(false);
+       }
+   };
+
    const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-   const handleGeneratePayslips = () => {
+    const handleProcessFF = async (employeeId: string) => {
+        try {
+            const { error } = await supabase.from("employees").update({ status: "Relieved" }).eq("id", employeeId);
+            if (error) throw error;
+            setExitEmployees(prev => prev.filter(e => e.id !== employeeId));
+        } catch (err) {
+            console.error("Error processing F&F:", err);
+        }
+    };
+
+    const handleHoldFF = async (employeeId: string) => {
+        try {
+            const { error } = await supabase.from("employees").update({ status: "On-hold" }).eq("id", employeeId);
+            if (error) throw error;
+        } catch (err) {
+            console.error("Error holding F&F:", err);
+        }
+    };
+
+   const handleGeneratePayslips = async () => {
       setIsGenerating(true);
       let progress = 0;
       const interval = setInterval(() => {
@@ -403,8 +735,76 @@ export const RunPayrollModal: React.FC<{
             clearInterval(interval);
             setIsGenerating(false);
             setPayslipsGenerated(true);
+            finalizePayrollRun();
          }
       }, 200);
+   };
+
+   const finalizePayrollRun = async () => {
+       if (!currentRunId) return;
+       try {
+           // 1. Update Payroll Run Status
+           const { error: runError } = await supabase
+               .from('payroll_runs')
+               .update({ status: 'Completed' })
+               .eq('id', currentRunId);
+           
+           if (runError) throw runError;
+
+           // 2. Generate and Insert Individual Payslips
+           const payslipRecords = adjustments.map(adj => {
+               const netPay = (adj.gross || 0) + (adj.bonus || 0) + (adj.arrears || 0) + (adj.expenseReimbursement || 0) - (adj.lop || 0) - (adj.loanRecovery || 0) - (adj.salary_advance_recovery || 0) - (adj.actual_tds || 0) + (adj.other || 0);
+               
+               return {
+                   employee_id: adj.employee_id,
+                   payroll_run_id: currentRunId,
+                   month: selectedPayrollMonth.split(' ')[0],
+                   year: selectedPayrollMonth.split(' ')[1],
+                   net_pay: netPay,
+                   trend: 'flat',
+                   total_working_days: 30,
+                   processed_days: 30 - (adj.lop_days || 0),
+                   earnings: [
+                       { name: 'Basic Salary', amount: (adj.gross || 0) * 0.5 },
+                       { name: 'House Rent Allowance', amount: (adj.gross || 0) * 0.25 },
+                       { name: 'Special Allowance', amount: (adj.gross || 0) * 0.25 },
+                       { name: 'Bonus', amount: adj.bonus || 0 },
+                       { name: 'Arrears', amount: adj.arrears || 0 }
+                   ],
+                   deductions: [
+                       { name: 'Income Tax', amount: adj.actual_tds || 0 },
+                       { name: 'Loan Recovery', amount: adj.loan_recovery || 0 },
+                       { name: 'Salary Advance Recovery', amount: adj.salary_advance_recovery || 0 },
+                       { name: 'LOP', amount: adj.lop || 0 }
+                   ],
+                   reimbursements: [
+                       { name: 'Expense Reimbursement', amount: adj.expense_reimbursement || 0 }
+                   ],
+                   tax_donut: [
+                       { name: 'Income Tax', value: adj.actual_tds || 0, color: '#EF4444' },
+                       { name: 'PF', value: (adj.gross || 0) * 0.06, color: '#F59E0B' },
+                       { name: 'Net Salary', value: netPay, color: '#3B82F6' }
+                   ]
+               };
+           });
+
+           const { error: payslipError } = await supabase
+               .from('payslips')
+               .insert(payslipRecords);
+
+           if (payslipError) throw payslipError;
+
+           // 3. Log Audit
+           await supabase.from('audit_logs').insert({
+               id: crypto.randomUUID(),
+               action: `Payroll & Payslips Generated for ${selectedPayrollMonth}`,
+               user_name: 'HR Manager',
+               severity: 'High',
+               timestamp_label: new Date().toLocaleString()
+           });
+       } catch (err) {
+           console.error('Error finalizing payroll run:', err);
+       }
    };
 
    const handleDownloadBankFile = () => {
@@ -429,10 +829,17 @@ export const RunPayrollModal: React.FC<{
       setBankFileDownloaded(true);
    };
 
-   const handleAdjustmentChange = (id: number, field: string, val: string) => {
-      const num = parseFloat(val) || 0;
-      setAdjustments(prev => prev.map(row => row.id === id ? { ...row, [field]: num } : row));
-   };
+   const handleAdjustmentChange = (id: any, field: string, val: string) => {
+       const num = parseFloat(val) || 0;
+       setAdjustments(prev => prev.map(row => {
+          if (row.id === id || row.employee_id === id) {
+             const updatedRow = { ...row, [field]: num };
+             saveAdjustmentToDb(updatedRow);
+             return updatedRow;
+          }
+          return row;
+       }));
+    };
 
    const handleRowLopClick = (id: number) => {
       setRowLopTargetId(id);
@@ -456,21 +863,76 @@ export const RunPayrollModal: React.FC<{
       }
    };
 
+   const handleProcessFF = async (empId: string) => {
+      const emp = exitEmployees.find(e => e.id === empId);
+      if (emp && currentRunId) {
+         try {
+            // 1. Mark as Processed/Relieved in employees table potentially, 
+            // but primarily add to adjustments as an exit case
+            const { error: adjError } = await supabase
+               .from('payroll_adjustments')
+               .insert({
+                  payroll_run_id: currentRunId,
+                  employee_id: empId,
+                  gross: 0, // Should fetch real gross
+                  is_exit: true
+               });
+
+            if (adjError) throw adjError;
+
+            // 2. Remove from exit list and refresh adjustments
+            setExitEmployees(prev => prev.filter(e => e.id !== empId));
+            await fetchAdjustments();
+         } catch (err) {
+            console.error('Error processing F&F:', err);
+         }
+      }
+   };
+
+   const handleHoldFF = async (empId: string) => {
+      const emp = exitEmployees.find(e => e.id === empId);
+      if (emp) {
+         try {
+            // 1. Mark as On Hold in main list (employees table)
+            const { error: empError } = await supabase
+               .from('employees')
+               .update({ payroll_status: 'On Hold', hold_reason: 'F&F Settlement Pending/Held' })
+               .eq('eid', empId);
+
+            if (empError) throw empError;
+
+            // 2. Remove from exit list (this is local state but reflects separated status)
+            setExitEmployees(prev => prev.filter(e => e.id !== empId));
+            
+            // 3. Update local employee state to reflect change immediately
+            await fetchEmployees();
+         } catch (err) {
+            console.error('Error holding F&F:', err);
+         }
+      }
+   };
+
    const toggleEdit = (id: number) => {
       setAdjustments(prev => prev.map(row => row.id === id ? { ...row, isEditing: !row.isEditing } : row));
    };
 
-   const handleAddBonus = () => {
-      if (selectedBonusEmp && bonusAmount) {
-         const empId = parseInt(selectedBonusEmp);
-         setAdjustments(prev => prev.map(row =>
-            row.id === empId ? { ...row, bonus: row.bonus + parseFloat(bonusAmount) } : row
-         ));
-         setShowBonusModal(false);
-         setBonusAmount('');
-         setSelectedBonusEmp('');
-      }
-   };
+   const handleAddBonus = async () => {
+       if (selectedBonusEmp && bonusAmount) {
+          const empId = selectedBonusEmp;
+          const updatedAdjustments = adjustments.map(row => {
+             if (row.id === empId || row.employee_id === empId) {
+                const updatedRow = { ...row, bonus: row.bonus + parseFloat(bonusAmount) };
+                saveAdjustmentToDb(updatedRow);
+                return updatedRow;
+             }
+             return row;
+          });
+          setAdjustments(updatedAdjustments);
+          setShowBonusModal(false);
+          setBonusAmount('');
+          setSelectedBonusEmp('');
+       }
+    };
 
    const handleAddLopEmployee = () => {
       if (selectedLopEmp) {
@@ -508,19 +970,22 @@ export const RunPayrollModal: React.FC<{
       setLopReversalList(prev => prev.filter(item => item.id !== id));
    };
 
-   const handleApplyReversal = () => {
-      if (lopReversalList.length > 0) {
-         setAdjustments(prev => prev.map(row => {
-            const reversalItem = lopReversalList.find(item => item.id === row.id);
-            if (reversalItem) {
-               return { ...row, lopReversal: row.lopReversal + reversalItem.amount };
-            }
-            return row;
-         }));
-         setShowLopModal(false);
-         setLopReversalList([]);
-      }
-   };
+   const handleApplyReversal = async () => {
+       if (lopReversalList.length > 0) {
+          const updatedAdjustments = adjustments.map(row => {
+             const reversalItem = lopReversalList.find(item => item.id === row.id || item.id === row.employee_id);
+             if (reversalItem) {
+                const updatedRow = { ...row, lopReversal: row.lopReversal + reversalItem.amount };
+                saveAdjustmentToDb(updatedRow);
+                return updatedRow;
+             }
+             return row;
+          });
+          setAdjustments(updatedAdjustments);
+          setShowLopModal(false);
+          setLopReversalList([]);
+       }
+    };
 
    // Step 1: Selection Logic
    const filteredEmployees = payrollEmployees.filter(e => {
@@ -535,14 +1000,51 @@ export const RunPayrollModal: React.FC<{
    const eligibleCount = payrollEmployees.filter(e => e.payrollStatus === 'Eligible').length;
    const onHoldCount = payrollEmployees.filter(e => e.payrollStatus === 'On Hold').length;
 
-   const toggleHold = (id: string) => {
-      setPayrollEmployees(prev => prev.map(e => {
-         if (e.id === id) {
-            return { ...e, payrollStatus: e.payrollStatus === 'Eligible' ? 'On Hold' : 'Eligible' };
-         }
-         return e;
-      }));
-   };
+   const toggleHold = async (id: string) => {
+        const emp = payrollEmployees.find(e => e.id === id);
+        if (!emp) return;
+
+        if (emp.payrollStatus === 'Eligible') {
+           setHoldTargetId(id);
+           setHoldReason('');
+           setShowHoldModal(true);
+        } else {
+           // Release from Hold
+           try {
+               const { error } = await supabase
+                   .from('employees')
+                   .update({ payroll_status: 'Eligible', hold_reason: '' })
+                   .eq('id', id);
+               
+               if (error) throw error;
+               await fetchEmployees();
+           } catch (err) {
+               console.error('Error releasing hold:', err);
+           }
+        }
+    };
+
+    const confirmHold = async () => {
+        if (holdTargetId) {
+           try {
+               const { error } = await supabase
+                   .from('employees')
+                   .update({ 
+                       payroll_status: 'On Hold', 
+                       hold_reason: holdReason || 'Managerial Hold' 
+                   })
+                   .eq('id', holdTargetId);
+               
+               if (error) throw error;
+               await fetchEmployees();
+               setShowHoldModal(false);
+               setHoldTargetId(null);
+               setHoldReason('');
+           } catch (err) {
+               console.error('Error confirming hold:', err);
+           }
+        }
+    };
 
    const toggleSelection = (id: string) => {
       setSelectedEmpIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -694,16 +1196,6 @@ export const RunPayrollModal: React.FC<{
                               onChange={setSelectedBUs}
                               disabled={readOnly}
                            />
-                           {selectedEmpIds.length > 0 && !readOnly && (
-                              <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
-                                 <button onClick={() => bulkAction('Hold')} className="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5">
-                                    <PauseCircle size={14} /> Mark On Hold ({selectedEmpIds.length})
-                                 </button>
-                                 <button onClick={() => bulkAction('Eligible')} className="px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1.5">
-                                    <PlayCircle size={14} /> Mark Eligible ({selectedEmpIds.length})
-                                 </button>
-                              </div>
-                           )}
                         </div>
                      </div>
 
@@ -711,15 +1203,6 @@ export const RunPayrollModal: React.FC<{
                         <table className="w-full text-left text-sm border-collapse">
                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
                               <tr>
-                                 <th className="px-4 py-3 w-12 text-center">
-                                    <input
-                                       type="checkbox"
-                                       disabled={readOnly}
-                                       checked={filteredEmployees.length > 0 && selectedEmpIds.length === filteredEmployees.length}
-                                       onChange={toggleSelectAll}
-                                       className="rounded text-sky-600 focus:ring-sky-500 cursor-pointer disabled:opacity-50"
-                                    />
-                                 </th>
                                  <th className="px-4 py-3">Employee Name</th>
                                  <th className="px-4 py-3">Designation</th>
                                  <th className="px-4 py-3">Department</th>
@@ -729,15 +1212,6 @@ export const RunPayrollModal: React.FC<{
                            <tbody className="divide-y divide-slate-100">
                               {filteredEmployees.map(emp => (
                                  <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
-                                    <td className="px-4 py-3 text-center">
-                                       <input
-                                          type="checkbox"
-                                          disabled={readOnly}
-                                          checked={selectedEmpIds.includes(emp.id)}
-                                          onChange={() => toggleSelection(emp.id)}
-                                          className="rounded text-sky-600 focus:ring-sky-500 cursor-pointer disabled:opacity-50"
-                                       />
-                                    </td>
                                     <td className="px-4 py-3">
                                        <div className="flex items-center gap-3">
                                           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
@@ -759,7 +1233,7 @@ export const RunPayrollModal: React.FC<{
                                                 ? 'bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200'
                                                 : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
                                                 }`}
-                                             title={emp.payrollStatus === 'Eligible' ? "Put On Hold" : "Mark as Eligible"}
+                                             title={emp.payrollStatus === 'Eligible' ? "Keep On Hold" : "Remove Hold"}
                                           >
                                              {emp.payrollStatus === 'Eligible' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
                                           </button>
@@ -769,7 +1243,7 @@ export const RunPayrollModal: React.FC<{
                               ))}
                               {filteredEmployees.length === 0 && (
                                  <tr>
-                                    <td colSpan={readOnly ? 4 : 5} className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan={readOnly ? 3 : 4} className="px-6 py-12 text-center text-slate-400 italic">
                                        No employees found matching "{empSearch}"
                                     </td>
                                  </tr>
@@ -861,32 +1335,59 @@ export const RunPayrollModal: React.FC<{
          case 3: // ADJUSTMENTS
             return (
                <div className="flex flex-col h-full space-y-4">
-                  <div className="grid grid-cols-7 gap-3">
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-3">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
                         <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
                      </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimb.</p>
                         <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.expenseReimb)}</p>
                      </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
                         <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
                      </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan Recovery</p>
-                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery)}</p>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan & Salary Advance Recovery</p>
+                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery + summary.salaryAdvance)}</p>
                      </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Salary Advance</p>
-                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.salaryAdvance)}</p>
-                     </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
                         <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
                      </div>
-                     <div className={`p-3 rounded-xl border shadow-sm ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+                     
+                     {/* New On-hold Employees Card */}
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
+                           <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount} Selected</p>
+                        </div>
+                        <button 
+                           onClick={() => setShowWizardOnHoldPanel(true)}
+                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
+                        >
+                           <Eye size={12} /> View Details
+                        </button>
+                     </div>
+
+                     {/* New Employee Exits Card */}
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">Employee Exits (This month)</p>
+                           <p className="text-base font-bold text-rose-600 relative z-10">{exitEmployees.length} Detected</p>
+                        </div>
+                        <button 
+                           onClick={() => setShowWizardExitPanel(true)}
+                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors relative z-10"
+                        >
+                           <Eye size={12} /> View Details
+                        </button>
+                     </div>
+
+                     <div className={`p-3 rounded-xl border shadow-sm transition-all hover:shadow-md ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
                         <p className={`text-[10px] font-bold uppercase mb-1 leading-tight ${netImpact >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>Net Impact</p>
                         <p className={`text-base font-bold truncate ${netImpact >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
                            {netImpact >= 0 ? '+' : '-'} ₹{formatLakh(Math.abs(netImpact))}
@@ -1062,6 +1563,208 @@ export const RunPayrollModal: React.FC<{
                         </tbody>
                      </table>
                   </div>
+
+                  {/* Wizard On-hold Employees Detail Panel */}
+                  {showWizardOnHoldPanel && (
+                     <div className="fixed inset-0 z-[150] flex justify-end">
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowWizardOnHoldPanel(false)}></div>
+                        <div className="relative w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                           <div className="bg-slate-50 border-b border-slate-200 p-6 flex flex-col gap-4">
+                              <div className="flex justify-between items-center">
+                                 <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-amber-100 text-amber-600 rounded-xl shadow-inner">
+                                       <PauseCircle size={22} />
+                                    </div>
+                                    <div>
+                                       <h2 className="text-xl font-black text-slate-800 tracking-tight">On-hold Employees</h2>
+                                       <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Wizard Step 3 • Detail Oversight</p>
+                                    </div>
+                                 </div>
+                                 <button 
+                                    onClick={() => setShowWizardOnHoldPanel(false)}
+                                    className="p-2 hover:bg-slate-200 rounded-full transition-colors group"
+                                 >
+                                    <X size={20} className="text-slate-400 group-hover:text-slate-600" />
+                                 </button>
+                              </div>
+                              
+                              <div className="flex items-center gap-4 bg-amber-50/50 border border-amber-100 p-3 rounded-xl">
+                                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 font-bold text-lg">{onHoldCount}</div>
+                                 <div>
+                                    <p className="text-xs font-bold text-amber-900">Review Hold Status</p>
+                                    <p className="text-[10px] text-amber-700 font-medium">Please review each employee on hold before proceeding to final verification.</p>
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div className="flex-1 overflow-y-auto">
+                              <table className="w-full text-left text-sm border-collapse">
+                                 <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 sticky top-0 z-10 border-b border-slate-200 tracking-wider">
+                                    <tr>
+                                       <th className="px-5 py-4 w-28">Emp ID</th>
+                                       <th className="px-5 py-4">Name</th>
+                                       <th className="px-5 py-4">Department</th>
+                                       <th className="px-5 py-4">Designation</th>
+                                       <th className="px-5 py-4 w-28">LWD</th>
+                                       <th className="px-5 py-4">Hold Reason</th>
+                                       <th className="px-5 py-4 w-32">Hold Since</th>
+                                       <th className="px-5 py-4 text-center">Action</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody className="divide-y divide-slate-100">
+                                    {payrollEmployees.filter(e => e.payrollStatus === 'On Hold').map(emp => (
+                                       <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                                          <td className="px-5 py-4 font-bold text-slate-400">{emp.employee_id}</td>
+                                          <td className="px-5 py-4">
+                                             <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 overflow-hidden ring-2 ring-white">
+                                                   <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="font-bold text-slate-700">{emp.first_name} {emp.last_name}</div>
+                                             </div>
+                                          </td>
+                                          <td className="px-5 py-4 text-slate-500 font-medium">{emp.department}</td>
+                                          <td className="px-5 py-4 text-slate-500 font-medium">{emp.designation}</td>
+                                          <td className="px-5 py-4 text-slate-500 font-bold">30/11/2025</td>
+                                          <td className="px-5 py-4 font-medium text-slate-600 truncate max-w-[150px]" title={emp.holdReason}>
+                                             {emp.holdReason || 'No reason provided'}
+                                          </td>
+                                          <td className="px-5 py-4 text-slate-500 font-bold uppercase text-[10px] tracking-tight">Nov 2025</td>
+                                          <td className="px-5 py-4">
+                                             <div className="flex items-center justify-center gap-2">
+                                                <button 
+                                                   onClick={() => toggleHold(emp.id)}
+                                                   className="px-2.5 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 border border-emerald-100 transition-all flex items-center gap-1"
+                                                >
+                                                   <PlayCircle size={12} /> Release
+                                                </button>
+                                                <button 
+                                                   className="px-2.5 py-1.5 bg-slate-50 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 border border-slate-100 transition-all flex items-center gap-1"
+                                                >
+                                                   <CheckCircle size={12} /> Continue Hold
+                                                </button>
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    ))}
+                                    {onHoldCount === 0 && (
+                                       <tr>
+                                          <td colSpan={8} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                                             No employees currently on hold for this cycle.
+                                          </td>
+                                       </tr>
+                                    )}
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
+                              <button 
+                                 onClick={() => setShowWizardOnHoldPanel(false)}
+                                 className="px-8 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 shadow-sm transition-all"
+                              >
+                                 Close
+                              </button>
+                           </div>
+                        </div>
+                     </div>
+                  )}
+
+                  {/* Wizard Employee Exits Detail Panel */}
+                  {showWizardExitPanel && (
+                     <div className="fixed inset-0 z-[150] flex justify-end">
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowWizardExitPanel(false)}></div>
+                        <div className="relative w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                           <div className="bg-slate-50 border-b border-slate-200 p-6 flex flex-col gap-4">
+                              <div className="flex justify-between items-center">
+                                 <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl shadow-inner">
+                                       <AlertTriangle size={22} />
+                                    </div>
+                                    <div>
+                                       <h2 className="text-xl font-black text-slate-800 tracking-tight">Employee Exits</h2>
+                                       <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Wizard Step 3 • Final Settlement Oversight</p>
+                                    </div>
+                                 </div>
+                                 <button 
+                                    onClick={() => setShowWizardExitPanel(false)}
+                                    className="p-2 hover:bg-slate-200 rounded-full transition-colors group"
+                                 >
+                                    <X size={20} className="text-slate-400 group-hover:text-slate-600" />
+                                 </button>
+                              </div>
+                              
+                              <div className="flex items-center gap-4 bg-rose-50/50 border border-rose-100 p-3 rounded-xl">
+                                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-rose-600 shadow-sm border border-rose-100 font-bold text-lg">{exitEmployees.length}</div>
+                                 <div>
+                                    <p className="text-xs font-bold text-rose-900">Process Separation</p>
+                                    <p className="text-[10px] text-rose-700 font-medium">Coordinate full and final settlements for departing employees before cycle closure.</p>
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div className="flex-1 overflow-y-auto">
+                              <table className="w-full text-left text-sm border-collapse">
+                                 <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 sticky top-0 z-10 border-b border-slate-200 tracking-wider">
+                                    <tr>
+                                       <th className="px-5 py-4 w-28">Emp ID</th>
+                                       <th className="px-5 py-4">Name</th>
+                                       <th className="px-5 py-4">Department</th>
+                                       <th className="px-5 py-4">Designation</th>
+                                       <th className="px-5 py-4 w-32">LWD</th>
+                                       <th className="px-5 py-4 text-center">Action</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody className="divide-y divide-slate-100">
+                                    {exitEmployees.map(emp => (
+                                       <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                                          <td className="px-5 py-4 font-bold text-slate-400">{emp.id}</td>
+                                          <td className="px-5 py-4">
+                                             <div className="font-bold text-slate-700">{emp.name}</div>
+                                          </td>
+                                          <td className="px-5 py-4 text-slate-500 font-medium">{emp.department}</td>
+                                          <td className="px-5 py-4 text-slate-500 font-medium">{emp.designation}</td>
+                                          <td className="px-5 py-4 text-rose-600 font-black tracking-tight">{emp.lwd}</td>
+                                          <td className="px-5 py-4">
+                                             <div className="flex items-center justify-center gap-2">
+                                                <button 
+                                                   onClick={() => handleProcessFF(emp.id)}
+                                                   className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 border border-emerald-100 transition-all shadow-sm"
+                                                >
+                                                   Process F&F
+                                                </button>
+                                                <button 
+                                                   onClick={() => handleHoldFF(emp.id)}
+                                                   className="px-3 py-1.5 bg-slate-50 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 border border-slate-100 transition-all"
+                                                >
+                                                   Hold F&F
+                                                </button>
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    ))}
+                                    {exitEmployees.length === 0 && (
+                                       <tr>
+                                          <td colSpan={6} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                                             No pending employee exits to process.
+                                          </td>
+                                       </tr>
+                                    )}
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
+                              <button 
+                                 onClick={() => setShowWizardExitPanel(false)}
+                                 className="px-8 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 shadow-sm transition-all"
+                              >
+                                 Close
+                              </button>
+                           </div>
+                        </div>
+                     </div>
+                  )}
                </div>
             );
 
@@ -1509,7 +2212,11 @@ export const RunPayrollModal: React.FC<{
                            Finish <CheckCircle size={16} />
                         </button>
                      ) : (
-                        <button onClick={handleNext} className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all">
+                        <button 
+                           onClick={handleNext} 
+                           disabled={currentStep === 1 && selectedBUs.length === 0}
+                           className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:shadow-none"
+                        >
                            {getStepButtonLabel()} <ArrowRight size={16} />
                         </button>
                      )}
@@ -1521,6 +2228,50 @@ export const RunPayrollModal: React.FC<{
 
          {/* Alerts Modal */}
          <PayrollAlertsModal isOpen={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
+
+         {/* Mandatory Hold Reason Modal */}
+         {showHoldModal && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-amber-50">
+                     <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
+                        <PauseCircle size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-extrabold text-slate-800 text-base">Reason for Payroll Hold</h3>
+                     </div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                     <div className="relative">
+                        <textarea
+                           value={holdReason}
+                           onChange={(e) => setHoldReason(e.target.value)}
+                           className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-700 font-medium focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all placeholder:text-slate-400 min-h-[120px] resize-none"
+                           placeholder="Enter a detailed reason for putting this employee on hold..."
+                           autoFocus
+                        />
+                        <div className="absolute -top-3 left-4 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-black text-amber-600 uppercase tracking-tighter border border-amber-100">Hold Reason</div>
+                     </div>
+                     
+                     <div className="flex gap-4">
+                        <button
+                           onClick={() => setShowHoldModal(false)}
+                           className="flex-1 py-3 text-slate-500 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 rounded-xl transition-colors"
+                        >
+                           Cancel
+                        </button>
+                        <button
+                           onClick={confirmHold}
+                           disabled={!holdReason.trim()}
+                           className="flex-1 py-3 bg-amber-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-amber-700 shadow-lg shadow-amber-100 transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                        >
+                           Confirm
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
 
          {/* Attendance Upload Modal */}
          <AttendanceImportModal

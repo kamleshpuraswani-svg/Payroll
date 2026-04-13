@@ -35,9 +35,10 @@ import {
     Upload,
     User,
     Send,
-    Info
+    Info,
+    PauseCircle
 } from 'lucide-react';
-import { RunPayrollModal, PayrollAlertsModal } from './CompanyActionModals';
+import { RunPayrollModal, PayrollAlertsModal, PayrollOnHoldPanel } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
 
 interface PastPayroll {
@@ -938,6 +939,7 @@ const PayrollManager: React.FC = () => {
     const [showDetailsModal, setShowDetailsModal] = useState<PastPayroll | null>(null);
     const [showDownloadModal, setShowDownloadModal] = useState<PastPayroll | null>(null);
     const [showAlertsModal, setShowAlertsModal] = useState(false);
+    const [showOnHoldPanel, setShowOnHoldPanel] = useState(false);
     const [showForm24QModal, setShowForm24QModal] = useState(false);
     const [showForm16Modal, setShowForm16Modal] = useState(false);
 
@@ -989,12 +991,12 @@ const PayrollManager: React.FC = () => {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Cycle</p>
                     <p className="text-xl font-bold text-slate-800">Nov 2025</p>
                     <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-orange-600">
-                        <Clock size={14} /> Pending Submission
+                        <Clock size={14} /> Pending
                     </div>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -1027,6 +1029,24 @@ const PayrollManager: React.FC = () => {
                     <p className="text-xl font-bold text-slate-800">3 Alerts</p>
                     <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-rose-600">
                         <AlertCircle size={14} /> Action Required
+                    </div>
+                </div>
+
+                {/* Payroll On-hold Card */}
+                <div className="bg-white p-5 rounded-2xl border border-amber-200 bg-amber-50/30 shadow-sm relative group">
+                    <div className="flex justify-between items-start mb-1">
+                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Payroll On-hold</p>
+                        <button
+                            onClick={() => setShowOnHoldPanel(true)}
+                            className="text-amber-500 hover:text-amber-600 transition-colors p-1 hover:bg-amber-100 rounded"
+                            title="View On-hold Details"
+                        >
+                            <Eye size={16} />
+                        </button>
+                    </div>
+                    <p className="text-xl font-bold text-slate-800">3 Employees</p>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-amber-600">
+                        <PauseCircle size={14} /> Verification Pending
                     </div>
                 </div>
 
@@ -1216,6 +1236,11 @@ const PayrollManager: React.FC = () => {
             <PayrollAlertsModal
                 isOpen={showAlertsModal}
                 onClose={() => setShowAlertsModal(false)}
+            />
+
+            <PayrollOnHoldPanel
+                isOpen={showOnHoldPanel}
+                onClose={() => setShowOnHoldPanel(false)}
             />
 
             {/* Form 24Q Details Modal */}

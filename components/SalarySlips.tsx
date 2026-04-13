@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabaseClient';
+
 import { 
   Download, 
   TrendingUp, 
@@ -45,237 +47,81 @@ const COLORS = {
   slate: '#64748b'
 };
 
-const MOCK_PAYSLIPS: Record<string, PayslipData> = {
-  'Nov 2025': {
-    month: 'Nov',
-    year: '2025',
-    creditedDate: '30th Nov 2025',
-    netPay: 44000,
-    netPayWords: 'Rupees Forty Four Thousand Only',
-    trend: 'up',
-    totalWorkingDays: 30,
-    processedDays: 30,
-    earnings: [
-      { name: 'Basic Salary', amount: 25000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12500 },
-      { name: 'Special Allowance', amount: 12500 },
-      { name: 'Statutory Bonus', amount: 8000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 4000 },
-    ],
-    reimbursements: [
-      { name: 'Fuel Reimbursement', amount: 2500 },
-      { name: 'Medical Reimbursement', amount: 1200 },
-      { name: 'Broadband Reimbursement', amount: 1500 },
-    ],
-    taxDonut: [
-      { name: 'Income Tax', value: 4000, color: COLORS.red },
-      { name: 'PF', value: 1800, color: COLORS.amber },
-      { name: 'Net Salary', value: 44000, color: COLORS.blue },
-    ]
-  },
-  'Oct 2025': {
-    month: 'Oct',
-    year: '2025',
-    creditedDate: '31st Oct 2025',
-    netPay: 44000,
-    netPayWords: 'Rupees Forty Four Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 25000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12500 },
-      { name: 'Special Allowance', amount: 12500 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 4000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Sep 2025': {
-    month: 'Sep',
-    year: '2025',
-    creditedDate: '30th Sep 2025',
-    netPay: 42500,
-    netPayWords: 'Rupees Forty Two Thousand Five Hundred Only',
-    trend: 'down',
-    totalWorkingDays: 30,
-    processedDays: 28,
-    earnings: [
-      { name: 'Basic Salary', amount: 25000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12500 },
-      { name: 'Special Allowance', amount: 11000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 4000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Dec 2024': {
-    month: 'Dec',
-    year: '2024',
-    creditedDate: '31st Dec 2024',
-    netPay: 42000,
-    netPayWords: 'Rupees Forty Two Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 24000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12000 },
-      { name: 'Special Allowance', amount: 11000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Nov 2024': {
-    month: 'Nov',
-    year: '2024',
-    creditedDate: '30th Nov 2024',
-    netPay: 42000,
-    netPayWords: 'Rupees Forty Two Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 30,
-    processedDays: 30,
-    earnings: [
-      { name: 'Basic Salary', amount: 24000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12000 },
-      { name: 'Special Allowance', amount: 11000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Oct 2024': {
-    month: 'Oct',
-    year: '2024',
-    creditedDate: '31st Oct 2024',
-    netPay: 43500,
-    netPayWords: 'Rupees Forty Three Thousand Five Hundred Only',
-    trend: 'up',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 24000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12000 },
-      { name: 'Special Allowance', amount: 11000 },
-      { name: 'Diwali Bonus', amount: 1500 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Sep 2024': {
-    month: 'Sep',
-    year: '2024',
-    creditedDate: '30th Sep 2024',
-    netPay: 41000,
-    netPayWords: 'Rupees Forty One Thousand Only',
-    trend: 'down',
-    totalWorkingDays: 30,
-    processedDays: 29,
-    earnings: [
-      { name: 'Basic Salary', amount: 24000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12000 },
-      { name: 'Special Allowance', amount: 10000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Aug 2024': {
-    month: 'Aug',
-    year: '2024',
-    creditedDate: '31st Aug 2024',
-    netPay: 42000,
-    netPayWords: 'Rupees Forty Two Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 24000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12000 },
-      { name: 'Special Allowance', amount: 11000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Jul 2024': {
-    month: 'Jul',
-    year: '2024',
-    creditedDate: '31st Jul 2024',
-    netPay: 42000,
-    netPayWords: 'Rupees Forty Two Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 24000 },
-      { name: 'House Rent Allowance (HRA)', amount: 12000 },
-      { name: 'Special Allowance', amount: 11000 },
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3000 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  }
-};
+// --- Persistence Configuration ---
+// All data is fetched from public.payslips table based on logged-in employee ID
+
 
 const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export const SalarySlipsModule: React.FC = () => {
+export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ currentEmployeeId = 'TF00912' }) => {
   const [selectedYear, setSelectedYear] = useState('2025');
-  const [activeMonth, setActiveMonth] = useState('Nov 2025');
+  const [activeMonth, setActiveMonth] = useState('');
   const [showValues, setShowValues] = useState(false);
+  const [payslipsMap, setPayslipsMap] = useState<Record<string, PayslipData>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPayslips();
+  }, [currentEmployeeId]);
+
+  const fetchPayslips = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('payslips')
+        .select('*')
+        .eq('employee_id', currentEmployeeId);
+      
+      if (!error && data) {
+        const map: Record<string, PayslipData> = {};
+        data.forEach(p => {
+          const key = `${p.month} ${p.year}`;
+          map[key] = {
+            month: p.month,
+            year: p.year,
+            creditedDate: p.credited_date ? new Date(p.credited_date).toLocaleDateString() : 'N/A',
+            netPay: p.net_pay,
+            netPayWords: p.net_pay_words || '',
+            trend: p.trend || 'flat',
+            totalWorkingDays: p.total_working_days || 30,
+            processedDays: p.processed_days || 30,
+            earnings: p.earnings || [],
+            deductions: p.deductions || [],
+            reimbursements: p.reimbursements || [],
+            taxDonut: p.tax_donut || []
+          };
+        });
+        setPayslipsMap(map);
+        
+        // Set default active month to latest
+        const sortedKeys = Object.keys(map).sort((a, b) => {
+          const monthA = a.split(' ')[0];
+          const monthB = b.split(' ')[0];
+          return MONTH_ORDER.indexOf(monthB) - MONTH_ORDER.indexOf(monthA);
+        });
+        if (sortedKeys.length > 0) setActiveMonth(sortedKeys[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching payslips:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   
   // Password Modal State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  const slip = MOCK_PAYSLIPS[activeMonth];
+  const slip = payslipsMap[activeMonth];
   const totalEarnings = slip ? slip.earnings.reduce((s, i) => s + i.amount, 0) : 0;
   const totalDeductions = slip ? slip.deductions.reduce((s, i) => s + i.amount, 0) : 0;
   const totalReimbursements = slip ? slip.reimbursements.reduce((s, i) => s + i.amount, 0) : 0;
   
   const lopDays = slip ? slip.totalWorkingDays - slip.processedDays : 0;
 
-  const availableMonths = Object.keys(MOCK_PAYSLIPS)
+  const availableMonths = Object.keys(payslipsMap)
     .filter(key => key.includes(selectedYear))
     .sort((a, b) => {
        const monthA = a.split(' ')[0];
@@ -287,7 +133,7 @@ export const SalarySlipsModule: React.FC = () => {
     const newYear = e.target.value;
     setSelectedYear(newYear);
     // Automatically switch to the latest available month in the new year
-    const latestMonthInYear = Object.keys(MOCK_PAYSLIPS)
+    const latestMonthInYear = Object.keys(payslipsMap)
       .filter(key => key.includes(newYear))
       .sort((a, b) => {
         const monthA = a.split(' ')[0];
@@ -399,18 +245,18 @@ export const SalarySlipsModule: React.FC = () => {
                   
                   <div className="text-left">
                     <p className={`text-sm font-bold ${activeMonth === m ? 'text-purple-900' : 'text-slate-600'}`}>{m}</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Credited {MOCK_PAYSLIPS[m]?.creditedDate || 'N/A'}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">Credited {payslipsMap[m]?.creditedDate || 'N/A'}</p>
                   </div>
 
                   <div className="text-right flex flex-col items-end">
                      <p className={`text-sm font-black ${activeMonth === m ? 'text-purple-900' : 'text-slate-800'}`}>
-                        {MOCK_PAYSLIPS[m] ? formatCurrency(MOCK_PAYSLIPS[m].netPay) : '--'}
+                        {payslipsMap[m] ? formatCurrency(payslipsMap[m].netPay) : '--'}
                      </p>
-                     {MOCK_PAYSLIPS[m] && (
-                        <span className={`text-[10px] font-black uppercase flex items-center gap-0.5 ${MOCK_PAYSLIPS[m].trend === 'up' ? 'text-emerald-500' : MOCK_PAYSLIPS[m].trend === 'down' ? 'text-red-400' : 'text-slate-300'}`}>
-                           {MOCK_PAYSLIPS[m].trend === 'up' && <TrendingUp size={10}/>}
-                           {MOCK_PAYSLIPS[m].trend === 'down' && <TrendingDown size={10}/>}
-                           {MOCK_PAYSLIPS[m].trend === 'up' ? 'PAID' : MOCK_PAYSLIPS[m].trend === 'flat' ? 'PAID' : 'PAID'}
+                     {payslipsMap[m] && (
+                        <span className={`text-[10px] font-black uppercase flex items-center gap-0.5 ${payslipsMap[m].trend === 'up' ? 'text-emerald-500' : payslipsMap[m].trend === 'down' ? 'text-red-400' : 'text-slate-300'}`}>
+                           {payslipsMap[m].trend === 'up' && <TrendingUp size={10}/>}
+                           {payslipsMap[m].trend === 'down' && <TrendingDown size={10}/>}
+                           {payslipsMap[m].trend === 'up' ? 'PAID' : payslipsMap[m].trend === 'flat' ? 'PAID' : 'PAID'}
                         </span>
                      )}
                   </div>

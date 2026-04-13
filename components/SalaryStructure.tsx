@@ -69,68 +69,9 @@ const DEPARTMENTS = ['Software Engineering', 'Sales', 'Product', 'Finance', 'QA'
 const DESIGNATIONS = ['Senior Engineer', 'Sales Manager', 'Product Analyst', 'DevOps Engineer', 'Finance Associate', 'QA Lead', 'Designer', 'HR Manager'];
 const EMPLOYEES_LIST = ['Priya Sharma (TF00912)', 'Arjun Mehta (AC04567)', 'Neha Kapoor (SU00234)', 'Rohan Desai (GL07890)', 'Vikram Singh (AC03987)', 'Ananya Patel (TF01145)', 'Amit Patel (TF02211)', 'Simran Kaur (GL09988)'];
 
-// --- Mock Data ---
+// --- Persistence Configuration ---
+// All data is fetched from public.salary_structures and public.salary_components
 
-const MASTER_COMPONENTS: Record<string, SalaryComponent[]> = {
-    earnings: [
-        { id: 'm1', name: 'Basic Salary', calculation: '50% of CTC', type: 'Fixed', taxStatus: 'Taxable' },
-        { id: 'm2', name: 'House Rent Allowance', calculation: '50% of Basic', type: 'Fixed', taxStatus: 'Exempt' },
-        { id: 'm3', name: 'Special Allowance', calculation: 'Balancing Figure', type: 'Fixed', taxStatus: 'Taxable' },
-        { id: 'm4', name: 'Conveyance Allowance', calculation: 'Fixed ₹1600', type: 'Fixed', taxStatus: 'Exempt' },
-        { id: 'm5', name: 'Medical Allowance', calculation: 'Fixed ₹1250', type: 'Fixed', taxStatus: 'Exempt' },
-        { id: 'm6', name: 'Leave Travel Allowance', calculation: 'Fixed', type: 'Fixed', taxStatus: 'Exempt' },
-    ],
-    deductions: [
-        { id: 'd1', name: 'PF (Employee)', calculation: '12% of Basic', type: 'Variable', taxStatus: 'Tax Deductible' },
-        { id: 'd2', name: 'Professional Tax', calculation: 'Slab Based', type: 'Variable', taxStatus: 'Tax Deductible' },
-        { id: 'd3', name: 'Income Tax (TDS)', calculation: 'As per Tax Regime', type: 'Variable', taxStatus: 'Tax Deductible' },
-    ],
-    benefits: [
-        { id: 'b1', name: 'PF (Employer)', calculation: '12% of Basic', type: 'Fixed', taxStatus: 'Exempt' },
-        { id: 'b2', name: 'Gratuity', calculation: '4.81% of Basic', type: 'Fixed', taxStatus: 'Exempt' },
-        { id: 'b3', name: 'Health Insurance', calculation: 'Fixed Premium', type: 'Fixed', taxStatus: 'Exempt' },
-    ],
-    reimbursements: [
-        { id: 'r1', name: 'Fuel & Driver', calculation: 'On Actuals', type: 'Variable', taxStatus: 'Exempt' },
-        { id: 'r2', name: 'Telephone / Internet', calculation: 'On Actuals', type: 'Variable', taxStatus: 'Exempt' },
-        { id: 'r3', name: 'Books & Periodicals', calculation: 'On Actuals', type: 'Variable', taxStatus: 'Exempt' },
-    ]
-};
-
-const MOCK_STRUCTURES: Structure[] = [
-    {
-        id: '1',
-        name: 'Standard IT Structure 2025',
-        description: 'Regular structure for FT employees',
-        departments: ['Software Engineering', 'QA'],
-        designations: ['Senior Engineer', 'DevOps Engineer', 'QA Lead'],
-        employees: [],
-        employeeCount: 1240,
-        status: 'Active',
-        createdBy: 'Priya Sharma',
-        lastModified: '2 days ago',
-        earnings: [MASTER_COMPONENTS.earnings[0], MASTER_COMPONENTS.earnings[1], MASTER_COMPONENTS.earnings[2]],
-        deductions: [MASTER_COMPONENTS.deductions[0], MASTER_COMPONENTS.deductions[1]],
-        benefits: [MASTER_COMPONENTS.benefits[0]],
-        reimbursements: []
-    },
-    {
-        id: '2',
-        name: 'Internship Stipend',
-        description: 'Fixed stipend for interns',
-        departments: ['Software Engineering', 'Product'],
-        designations: ['Senior Engineer'],
-        employees: [],
-        employeeCount: 45,
-        status: 'Active',
-        createdBy: 'Amit Patel',
-        lastModified: '1 week ago',
-        earnings: [{ id: 'm99', name: 'Stipend', calculation: 'Fixed', type: 'Fixed', taxStatus: 'Taxable' }],
-        deductions: [],
-        benefits: [],
-        reimbursements: []
-    },
-];
 
 // --- Helper Components ---
 

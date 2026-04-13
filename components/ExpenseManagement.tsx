@@ -595,9 +595,9 @@ const ExpenseManagement: React.FC<{
                         title: c.title
                     };
                 });
-                setClaims([...mappedClaims, ...MOCK_CLAIMS]);
+                setClaims(mappedClaims);
             } else {
-                setClaims(MOCK_CLAIMS);
+                setClaims([]);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
