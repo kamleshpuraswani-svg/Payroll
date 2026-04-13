@@ -38,6 +38,7 @@ const Workforce: React.FC = () => {
         <EmployeeSalaryHistory
           employeeId={selectedEmployeeId}
           onBack={handleBack}
+          onEdit={handleEdit}
         />
       )}
     </>

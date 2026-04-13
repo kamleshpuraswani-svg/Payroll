@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabaseClient';
 import {
   ArrowLeft,
   Download,
@@ -26,7 +27,8 @@ import {
   FileArchive,
   Loader2,
   // Fixed: Corrected typo in lucide-react import from CheckSquares to CheckSquare
-  CheckSquare
+  CheckSquare,
+  Pencil
 } from 'lucide-react';
 
 interface SalaryHistoryRow {
@@ -37,6 +39,8 @@ interface SalaryHistoryRow {
   status: 'Disbursed' | 'Pending' | 'Hold';
   date: string;
   bankAcc: string;
+  createdBy: string;
+  lastModifiedBy: string;
   deductions: {
     pf: number;
     tds: number;
@@ -47,25 +51,78 @@ interface SalaryHistoryRow {
 interface EmployeeSalaryHistoryProps {
   onBack: () => void;
   employeeId: string;
+  onEdit?: (id: string) => void;
 }
 
 const MOCK_HISTORY_ROWS: SalaryHistoryRow[] = [
-  { id: '1', period: 'Nov 2025', gross: 250000, net: 205000, status: 'Disbursed', date: '30 Nov 2025', bankAcc: 'XXXX1234', deductions: { pf: 18000, tds: 25000, others: 2000 } },
-  { id: '2', period: 'Oct 2025', gross: 250000, net: 205200, status: 'Disbursed', date: '31 Oct 2025', bankAcc: 'XXXX1234', deductions: { pf: 18000, tds: 24800, others: 2000 } },
-  { id: '3', period: 'Sep 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '30 Sep 2025', bankAcc: 'XXXX5678', deductions: { pf: 17280, tds: 22720, others: 2000 } },
-  { id: '4', period: 'Aug 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '31 Aug 2025', bankAcc: 'XXXX5678', deductions: { pf: 17280, tds: 22720, others: 2000 } },
-  { id: '5', period: 'Jul 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '31 Jul 2025', bankAcc: 'XXXX5678', deductions: { pf: 17280, tds: 22720, others: 2000 } },
-  { id: '6', period: 'Jun 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '30 Jun 2025', bankAcc: 'XXXX5678', deductions: { pf: 16560, tds: 21940, others: 2000 } },
-  { id: '7', period: 'May 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '31 May 2025', bankAcc: 'XXXX5678', deductions: { pf: 16560, tds: 21940, others: 2000 } },
-  { id: '8', period: 'Apr 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '30 Apr 2025', bankAcc: 'XXXX5678', deductions: { pf: 16560, tds: 21940, others: 2000 } },
-  { id: '9', period: 'Mar 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Mar 2025', bankAcc: 'XXXX5678', deductions: { pf: 15480, tds: 19520, others: 2000 } },
-  { id: '10', period: 'Feb 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '28 Feb 2025', bankAcc: 'XXXX5678', deductions: { pf: 15480, tds: 19520, others: 2000 } },
-  { id: '11', period: 'Jan 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Jan 2025', bankAcc: 'XXXX5678', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  // 2025
+  { id: '1', period: 'Nov 2025', gross: 250000, net: 205000, status: 'Disbursed', date: '30 Nov 2025', bankAcc: 'XXXX1234', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 18000, tds: 25000, others: 2000 } },
+  { id: '2', period: 'Oct 2025', gross: 250000, net: 205200, status: 'Disbursed', date: '31 Oct 2025', bankAcc: 'XXXX1234', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 18000, tds: 24800, others: 2000 } },
+  { id: '3', period: 'Sep 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '30 Sep 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 17280, tds: 22720, others: 2000 } },
+  { id: '4', period: 'Aug 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '31 Aug 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 17280, tds: 22720, others: 2000 } },
+  { id: '5', period: 'Jul 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '31 Jul 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 17280, tds: 22720, others: 2000 } },
+  { id: '6', period: 'Jun 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '30 Jun 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 16560, tds: 21940, others: 2000 } },
+  { id: '7', period: 'May 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '31 May 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 16560, tds: 21940, others: 2000 } },
+  { id: '8', period: 'Apr 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '30 Apr 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 16560, tds: 21940, others: 2000 } },
+  { id: '9', period: 'Mar 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Mar 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  { id: '10', period: 'Feb 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '28 Feb 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  { id: '11', period: 'Jan 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Jan 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  
+  // 2024
+  { id: '12', period: 'Dec 2024', gross: 200000, net: 165000, status: 'Disbursed', date: '31 Dec 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14400, tds: 18600, others: 2000 } },
+  { id: '13', period: 'Nov 2024', gross: 200000, net: 165000, status: 'Disbursed', date: '30 Nov 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14400, tds: 18600, others: 2000 } },
+  { id: '14', period: 'Oct 2024', gross: 200000, net: 165000, status: 'Disbursed', date: '31 Oct 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14400, tds: 18600, others: 2000 } },
+  { id: '15', period: 'Sep 2024', gross: 190000, net: 157000, status: 'Disbursed', date: '30 Sep 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13680, tds: 17320, others: 2000 } },
+  { id: '16', period: 'Aug 2024', gross: 190000, net: 157000, status: 'Disbursed', date: '31 Aug 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13680, tds: 17320, others: 2000 } },
+  { id: '17', period: 'Jul 2024', gross: 190000, net: 157000, status: 'Disbursed', date: '31 Jul 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13680, tds: 17320, others: 2000 } },
+  { id: '18', period: 'Jun 2024', gross: 180000, net: 149000, status: 'Disbursed', date: '30 Jun 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12960, tds: 16040, others: 2000 } },
+  { id: '19', period: 'May 2024', gross: 180000, net: 149000, status: 'Disbursed', date: '31 May 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12960, tds: 16040, others: 2000 } },
+  { id: '20', period: 'Apr 2024', gross: 180000, net: 149000, status: 'Disbursed', date: '30 Apr 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12960, tds: 16040, others: 2000 } },
+  { id: '21', period: 'Mar 2024', gross: 170000, net: 140500, status: 'Disbursed', date: '31 Mar 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12240, tds: 15260, others: 2000 } },
+  { id: '22', period: 'Feb 2024', gross: 170000, net: 140500, status: 'Disbursed', date: '29 Feb 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12240, tds: 15260, others: 2000 } },
+  { id: '23', period: 'Jan 2024', gross: 170000, net: 140500, status: 'Disbursed', date: '31 Jan 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12240, tds: 15260, others: 2000 } },
+
+  // 2023
+  { id: '24', period: 'Dec 2023', gross: 160000, net: 132000, status: 'Disbursed', date: '31 Dec 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 11520, tds: 14480, others: 2000 } },
+  { id: '25', period: 'Nov 2023', gross: 160000, net: 132000, status: 'Disbursed', date: '30 Nov 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 11520, tds: 14480, others: 2000 } },
+  { id: '26', period: 'Oct 2023', gross: 160000, net: 132000, status: 'Disbursed', date: '31 Oct 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 11520, tds: 14480, others: 2000 } },
+  { id: '27', period: 'Sep 2023', gross: 155000, net: 128000, status: 'Disbursed', date: '30 Sep 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 11160, tds: 13840, others: 2000 } },
+  { id: '28', period: 'Aug 2023', gross: 155000, net: 128000, status: 'Disbursed', date: '31 Aug 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 11160, tds: 13840, others: 2000 } },
+  { id: '29', period: 'Jul 2023', gross: 155000, net: 128000, status: 'Disbursed', date: '31 Jul 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 11160, tds: 13840, others: 2000 } },
+  { id: '30', period: 'Jun 2023', gross: 150000, net: 124000, status: 'Disbursed', date: '30 Jun 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10800, tds: 13200, others: 2000 } },
+  { id: '31', period: 'May 2023', gross: 150000, net: 124000, status: 'Disbursed', date: '31 May 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10800, tds: 13200, others: 2000 } },
+  { id: '32', period: 'Apr 2023', gross: 150000, net: 124000, status: 'Disbursed', date: '30 Apr 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10800, tds: 13200, others: 2000 } },
+  { id: '33', period: 'Mar 2023', gross: 145000, net: 120000, status: 'Disbursed', date: '31 Mar 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10440, tds: 12560, others: 2000 } },
+  { id: '34', period: 'Feb 2023', gross: 145000, net: 120000, status: 'Disbursed', date: '28 Feb 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10440, tds: 12560, others: 2000 } },
+  { id: '35', period: 'Jan 2023', gross: 145000, net: 120000, status: 'Disbursed', date: '31 Jan 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10440, tds: 12560, others: 2000 } },
 ];
 
-const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, employeeId }) => {
+const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, employeeId, onEdit }) => {
   const [activeTab, setActiveTab] = useState<'HISTORY' | 'PROFILE'>('HISTORY');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [employeeData, setEmployeeData] = useState<any>(null);
+  const [isDataLoading, setIsDataLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      setIsDataLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('id', employeeId)
+          .single();
+        if (!error && data) {
+          setEmployeeData(data);
+        }
+      } catch (err) {
+        console.error('Error fetching employee details:', err);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+    if (employeeId) fetchEmployee();
+  }, [employeeId]);
 
   // Action Screen states
   const [selectedRow, setSelectedRow] = useState<SalaryHistoryRow | null>(null);
@@ -150,17 +207,27 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     <div className="p-4 lg:p-8 max-w-[1600px] mx-auto animate-in fade-in duration-300">
 
       {/* Navigation Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Employee Details</h1>
-          <p className="text-sm text-slate-500">View comprehensive payroll and profile history</p>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Employee Details</h1>
+            <p className="text-sm text-slate-500">View comprehensive payroll and profile history</p>
+          </div>
         </div>
+
+        <button 
+           onClick={() => onEdit?.(employeeId)}
+           className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 hover:text-sky-600 shadow-sm transition-all active:scale-95 flex items-center gap-2 group"
+        >
+           <Pencil size={18} className="group-hover:scale-110 transition-transform" />
+           <span>Edit Profile</span>
+        </button>
       </div>
 
       <div className="w-full">
@@ -176,22 +243,22 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
             <div className="flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-2xl font-bold text-slate-800">Priya Sharma</h2>
-                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100">TF00912</span>
+                <h2 className="text-2xl font-bold text-slate-800">{employeeData?.name || 'Loading...'}</h2>
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100">{employeeData?.eid || '---'}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-2 text-sm">
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Department</span>
-                  <span className="text-slate-700 font-semibold">Software Engineering</span>
+                  <span className="text-slate-700 font-semibold">{employeeData?.department || '---'}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Date of Joining</span>
-                  <span className="text-slate-700 font-semibold">12 Jan 2023</span>
+                  <span className="text-slate-700 font-semibold">{employeeData?.join_date || '---'}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Current CTC</span>
-                  <span className="text-slate-700 font-bold">{formatINR(1850000)}</span>
+                  <span className="text-slate-700 font-bold">{formatINR(employeeData?.ctc || 0)}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Monthly Net</span>
@@ -249,7 +316,6 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       <TrendingUp size={18} className="text-purple-600" />
                       Monthly Salary Trend
                     </h3>
-                    <p className="text-xs text-slate-500">Gross salary progression since joining</p>
                   </div>
                   <div className="flex items-center gap-6">
                     <select
@@ -305,13 +371,15 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                       <tr>
-                        <th className="px-6 py-4">Pay Period</th>
+                        <th className="px-6 py-4">Payroll Period</th>
                         <th className="px-6 py-4 text-right">Gross Salary</th>
                         <th className="px-6 py-4 text-right">Deductions</th>
                         <th className="px-6 py-4 text-right">Net Pay</th>
                         <th className="px-6 py-4">Status</th>
                         <th className="px-6 py-4">Disbursed On</th>
-                        <th className="px-6 py-4">Bank A/c</th>
+                        <th className="px-6 py-4">Bank Account</th>
+                        <th className="px-6 py-4">Created By</th>
+                        <th className="px-6 py-4">Last Modified By</th>
                         <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
@@ -357,6 +425,8 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                               </td>
                               <td className="px-6 py-5 text-slate-500">{row.date}</td>
                               <td className="px-6 py-5 font-mono text-xs text-slate-400">{row.bankAcc}</td>
+                              <td className="px-6 py-5 text-slate-500 font-medium">{row.createdBy}</td>
+                              <td className="px-6 py-5 text-slate-500 font-medium">{row.lastModifiedBy}</td>
                               <td className="px-6 py-5 text-right">
                                 <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                   <button
@@ -380,7 +450,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                             {/* Expanded Deduction Row */}
                             {isExpanded && (
                               <tr className="bg-slate-50/80 animate-in slide-in-from-top-2 duration-200">
-                                <td colSpan={8} className="px-6 py-4">
+                                <td colSpan={10} className="px-6 py-4">
                                   <div className="flex justify-end pr-[400px]">
                                     <div className="w-80 bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
                                       <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2 mb-2">
@@ -414,9 +484,6 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     </tbody>
                   </table>
                 </div>
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 text-center font-medium">
-                  End of history reached (Joined Jan 2023)
-                </div>
               </div>
             </div>
           ) : (
@@ -432,19 +499,19 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name</label>
-                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">Priya Sharma</p>
+                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">{employeeData?.name || '---'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Designation</label>
-                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">Senior Software Engineer</p>
+                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">{employeeData?.designation || '---'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Department</label>
-                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">Engineering</p>
+                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">{employeeData?.department || '---'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Work Location</label>
-                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">Bangalore</p>
+                    <p className="text-sm font-semibold text-slate-800 py-1 border-b border-slate-50">{employeeData?.location || '---'}</p>
                   </div>
                 </div>
               </div>
@@ -459,11 +526,11 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Account Number</label>
-                    <p className="text-sm font-mono font-bold text-slate-800 py-1 border-b border-slate-50">50100234567890</p>
+                    <p className="text-sm font-mono font-bold text-slate-800 py-1 border-b border-slate-50">{employeeData?.bank_account_no || '---'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">IFSC Code</label>
-                    <p className="text-sm font-mono font-bold text-slate-800 py-1 border-b border-slate-50">HDFC0001234</p>
+                    <p className="text-sm font-mono font-bold text-slate-800 py-1 border-b border-slate-50">{employeeData?.bank_ifsc || '---'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name</label>
@@ -488,20 +555,23 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PAN Number</label>
                     <div className="flex items-center gap-2">
                       <CreditCard size={14} className="text-slate-400" />
-                      <p className="text-sm font-mono font-bold text-slate-800">ABCDE1234F</p>
+                      <p className="text-sm font-mono font-bold text-slate-800">{employeeData?.pan_no || '---'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Aadhaar Number</label>
+                    <div className="flex items-center gap-2">
+                      <CreditCard size={14} className="text-slate-400" />
+                      <p className="text-sm font-mono font-bold text-slate-800">{employeeData?.aadhaar_no || '---'}</p>
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">UAN (Provident Fund)</label>
-                    <p className="text-sm font-mono font-bold text-slate-800">100900200300</p>
+                    <p className="text-sm font-mono font-bold text-slate-800">{employeeData?.uan_no || '---'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Regime (Current FY)</label>
-                    <p className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded w-fit">New Tax Regime</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">EPF Contribution Rate</label>
-                    <p className="text-sm font-semibold text-slate-700">12% of Basic</p>
+                    <p className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded w-fit">{employeeData?.tax_regime || '---'}</p>
                   </div>
                 </div>
               </div>
