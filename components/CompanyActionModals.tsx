@@ -706,25 +706,6 @@ export const RunPayrollModal: React.FC<{
 
    const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-    const handleProcessFF = async (employeeId: string) => {
-        try {
-            const { error } = await supabase.from("employees").update({ status: "Relieved" }).eq("id", employeeId);
-            if (error) throw error;
-            setExitEmployees(prev => prev.filter(e => e.id !== employeeId));
-        } catch (err) {
-            console.error("Error processing F&F:", err);
-        }
-    };
-
-    const handleHoldFF = async (employeeId: string) => {
-        try {
-            const { error } = await supabase.from("employees").update({ status: "On-hold" }).eq("id", employeeId);
-            if (error) throw error;
-        } catch (err) {
-            console.error("Error holding F&F:", err);
-        }
-    };
-
    const handleGeneratePayslips = async () => {
       setIsGenerating(true);
       let progress = 0;
