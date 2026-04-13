@@ -1384,12 +1384,6 @@ const PayrollManager: React.FC = () => {
 
                         <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                             <button onClick={() => setShowDetailsModal(null)} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50">Close</button>
-                            <button
-                                onClick={() => { setShowDetailsModal(null); setShowDownloadModal(showDetailsModal); }}
-                                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-100 flex items-center gap-2"
-                            >
-                                <Download size={16} /> Download Options
-                            </button>
                         </div>
                     </div>
                 </div>

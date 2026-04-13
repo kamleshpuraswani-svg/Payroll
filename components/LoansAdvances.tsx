@@ -73,7 +73,95 @@ interface LoanRequest {
 
 // --- Mock Data ---
 
- // --- Mock Data Removed ---
+const MOCK_LOANS: LoanRequest[] = [
+    {
+        id: 'LN-2025-001',
+        employee: { name: 'Priya Sharma', id: 'TF00912', department: 'Engineering', ctc: '1850000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
+        type: 'Loan',
+        requestedAmount: 200000,
+        approvedAmount: 200000,
+        requestDate: '05 Jan 2026',
+        status: 'Repaying',
+        emiAmount: 18333,
+        totalEmis: 12,
+        remainingBalance: 146667,
+        interestRate: 5,
+        disbursedDate: '10 Jan 2026',
+        reason: 'Home renovation',
+        repaymentMonth: 'February 2026',
+        repaymentSchedule: Array.from({ length: 12 }, (_, i) => ({
+            emiNo: i + 1,
+            dueDate: new Date(2026, 0 + i, 10).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            amount: 18333,
+            status: i < 2 ? 'Paid' : i === 2 ? 'Pending' : 'Pending',
+        }))
+    },
+    {
+        id: 'LA-2025-002',
+        employee: { name: 'Arjun Mehta', id: 'AC04567', department: 'Sales', ctc: '2400000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun' },
+        type: 'Salary Advance',
+        requestedAmount: 50000,
+        approvedAmount: 50000,
+        requestDate: '18 Feb 2026',
+        status: 'Approved',
+        emiAmount: 50000,
+        totalEmis: 1,
+        remainingBalance: 50000,
+        interestRate: 0,
+        disbursedDate: '20 Feb 2026',
+        reason: 'Medical emergency for family member',
+        repaymentMonth: 'March 2026',
+    },
+    {
+        id: 'LN-2025-003',
+        employee: { name: 'Neha Kapoor', id: 'SU00234', department: 'HR', ctc: '1580000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Neha' },
+        type: 'Loan',
+        requestedAmount: 150000,
+        approvedAmount: 100000,
+        requestDate: '12 Mar 2026',
+        status: 'Partially Approved',
+        emiAmount: 9167,
+        totalEmis: 12,
+        remainingBalance: 100000,
+        interestRate: 6,
+        reason: 'Vehicle purchase',
+        repaymentMonth: 'April 2026',
+    },
+    {
+        id: 'LN-2025-004',
+        employee: { name: 'Rohan Desai', id: 'GL07890', department: 'Finance', ctc: '2120000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan' },
+        type: 'Loan',
+        requestedAmount: 500000,
+        requestDate: '01 Apr 2026',
+        status: 'Pending',
+        reason: 'Children\'s education fee payment',
+    },
+    {
+        id: 'LA-2025-005',
+        employee: { name: 'Ananya Patel', id: 'TF01145', department: 'Marketing', ctc: '1470000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya' },
+        type: 'Salary Advance',
+        requestedAmount: 30000,
+        approvedAmount: 0,
+        requestDate: '02 Apr 2026',
+        status: 'Rejected',
+        reason: 'Travel expenses for personal trip',
+    },
+    {
+        id: 'LN-2025-006',
+        employee: { name: 'Kunal Singh', id: 'SU00111', department: 'Engineering', ctc: '1920000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kunal' },
+        type: 'Loan',
+        requestedAmount: 300000,
+        approvedAmount: 300000,
+        requestDate: '15 Nov 2025',
+        status: 'Closed',
+        emiAmount: 26250,
+        totalEmis: 12,
+        remainingBalance: 0,
+        interestRate: 5,
+        disbursedDate: '20 Nov 2025',
+        reason: 'Home down-payment assistance',
+    },
+];
 
 
 // --- Helpers ---
@@ -999,7 +1087,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
     
      const fetchLoans = async () => {
          const { data, error } = await supabase.from('employee_loans').select('*').order('created_at', { ascending: false });
-         if (!error && data) {
+         if (!error && data && data.length > 0) {
              const formattedLoans: LoanRequest[] = data.map((item: any) => {
                  const emp = MOCK_EMPLOYEES.find(e => e.id === item.employee_id) || MOCK_EMPLOYEES[0];
                  return {
@@ -1027,6 +1115,8 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                  };
              });
              setLoans(formattedLoans);
+         } else {
+             setLoans(MOCK_LOANS);
          }
      };
 

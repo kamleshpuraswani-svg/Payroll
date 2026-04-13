@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { Company } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
+import { supabase } from '../services/supabaseClient';
 
 // --- View Company Modal ---
 export const ViewCompanyModal: React.FC<{ isOpen: boolean; onClose: () => void; company: Company | null }> = ({ isOpen, onClose, company }) => {
@@ -439,6 +440,54 @@ const MultiSelect: React.FC<{
     );
 };
 
+// --- Mock employees for payroll run (fallback when Supabase is empty) ---
+const MOCK_PAYROLL_EMPLOYEES = [
+   // Mindinventory — 10 employees
+   { id: 'mi-1', employee_id: 'MI00101', first_name: 'Priya', last_name: 'Sharma', department: 'Engineering', designation: 'Senior Engineer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-2', employee_id: 'MI00102', first_name: 'Rohan', last_name: 'Verma', department: 'Engineering', designation: 'Backend Developer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-3', employee_id: 'MI00103', first_name: 'Sneha', last_name: 'Patel', department: 'QA', designation: 'QA Lead', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-4', employee_id: 'MI00104', first_name: 'Arjun', last_name: 'Mehta', department: 'Product', designation: 'Product Manager', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun', payrollStatus: 'On Hold', holdReason: 'Pending document' },
+   { id: 'mi-5', employee_id: 'MI00105', first_name: 'Kavita', last_name: 'Nair', department: 'Design', designation: 'UI/UX Designer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kavita', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-6', employee_id: 'MI00106', first_name: 'Suresh', last_name: 'Kumar', department: 'DevOps', designation: 'DevOps Engineer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-7', employee_id: 'MI00107', first_name: 'Meera', last_name: 'Joshi', department: 'HR', designation: 'HR Specialist', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Meera', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-8', employee_id: 'MI00108', first_name: 'Vikram', last_name: 'Singh', department: 'Finance', designation: 'Finance Associate', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-9', employee_id: 'MI00109', first_name: 'Ananya', last_name: 'Gupta', department: 'Marketing', designation: 'Marketing Specialist', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'mi-10', employee_id: 'MI00110', first_name: 'Rahul', last_name: 'Desai', department: 'Engineering', designation: 'Frontend Developer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul', payrollStatus: 'Eligible', holdReason: '' },
+   // 300 Minds — 10 employees
+   { id: 'tm-1', employee_id: 'TM00201', first_name: 'Aarav', last_name: 'Shah', department: 'Engineering', designation: 'Full Stack Developer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aarav', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-2', employee_id: 'TM00202', first_name: 'Divya', last_name: 'Reddy', department: 'Sales', designation: 'Account Executive', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Divya', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-3', employee_id: 'TM00203', first_name: 'Nikhil', last_name: 'Bose', department: 'Engineering', designation: 'Mobile Developer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nikhil', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-4', employee_id: 'TM00204', first_name: 'Pooja', last_name: 'Iyer', department: 'Design', designation: 'Graphic Designer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pooja', payrollStatus: 'On Hold', holdReason: 'Salary revision pending' },
+   { id: 'tm-5', employee_id: 'TM00205', first_name: 'Karan', last_name: 'Malhotra', department: 'Product', designation: 'Product Analyst', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Karan', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-6', employee_id: 'TM00206', first_name: 'Sonal', last_name: 'Trivedi', department: 'QA', designation: 'Test Engineer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sonal', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-7', employee_id: 'TM00207', first_name: 'Aditya', last_name: 'Kapoor', department: 'DevOps', designation: 'Cloud Engineer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aditya', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-8', employee_id: 'TM00208', first_name: 'Ritu', last_name: 'Saxena', department: 'Finance', designation: 'Accounts Manager', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ritu', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-9', employee_id: 'TM00209', first_name: 'Gaurav', last_name: 'Pandey', department: 'Engineering', designation: 'Systems Architect', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'tm-10', employee_id: 'TM00210', first_name: 'Ishaan', last_name: 'Chaudhary', department: 'Marketing', designation: 'Content Strategist', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ishaan', payrollStatus: 'Eligible', holdReason: '' },
+   // CollabCRM — 10 employees
+   { id: 'cc-1', employee_id: 'CC00301', first_name: 'Neha', last_name: 'Kapoor', department: 'Sales', designation: 'Sales Manager', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Neha2', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-2', employee_id: 'CC00302', first_name: 'Manish', last_name: 'Agarwal', department: 'Engineering', designation: 'Backend Engineer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Manish', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-3', employee_id: 'CC00303', first_name: 'Tanvi', last_name: 'Mishra', department: 'HR', designation: 'HR Manager', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tanvi', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-4', employee_id: 'CC00304', first_name: 'Sahil', last_name: 'Bansal', department: 'Finance', designation: 'CFO', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sahil', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-5', employee_id: 'CC00305', first_name: 'Preeti', last_name: 'Kulkarni', department: 'Design', designation: 'Product Designer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Preeti', payrollStatus: 'On Hold', holdReason: 'Offer letter revision' },
+   { id: 'cc-6', employee_id: 'CC00306', first_name: 'Rajat', last_name: 'Srivastava', department: 'Engineering', designation: 'Tech Lead', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rajat', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-7', employee_id: 'CC00307', first_name: 'Simran', last_name: 'Oberoi', department: 'Marketing', designation: 'Brand Manager', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Simran', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-8', employee_id: 'CC00308', first_name: 'Harsh', last_name: 'Vardhan', department: 'QA', designation: 'QA Engineer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Harsh', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-9', employee_id: 'CC00309', first_name: 'Ankita', last_name: 'Bhatt', department: 'Product', designation: 'Product Owner', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ankita', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'cc-10', employee_id: 'CC00310', first_name: 'Deepak', last_name: 'Choudhary', department: 'DevOps', designation: 'SRE', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Deepak', payrollStatus: 'Eligible', holdReason: '' },
+   // Dots & Boxes — 10 employees
+   { id: 'db-1', employee_id: 'DB00401', first_name: 'Varun', last_name: 'Tiwari', department: 'Engineering', designation: 'iOS Developer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Varun', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-2', employee_id: 'DB00402', first_name: 'Nisha', last_name: 'Goyal', department: 'Design', designation: 'UI Designer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nisha', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-3', employee_id: 'DB00403', first_name: 'Ajay', last_name: 'Rawat', department: 'Sales', designation: 'Business Dev Manager', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ajay', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-4', employee_id: 'DB00404', first_name: 'Shruti', last_name: 'Pathak', department: 'Finance', designation: 'Finance Manager', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Shruti', payrollStatus: 'On Hold', holdReason: 'Bank details update pending' },
+   { id: 'db-5', employee_id: 'DB00405', first_name: 'Yash', last_name: 'Bhardwaj', department: 'Engineering', designation: 'Android Developer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Yash', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-6', employee_id: 'DB00406', first_name: 'Riya', last_name: 'Menon', department: 'Marketing', designation: 'Digital Marketer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Riya', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-7', employee_id: 'DB00407', first_name: 'Tushar', last_name: 'Rane', department: 'QA', designation: 'Automation Engineer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tushar', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-8', employee_id: 'DB00408', first_name: 'Lavanya', last_name: 'Krishnan', department: 'HR', designation: 'Talent Acquisition', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lavanya', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-9', employee_id: 'DB00409', first_name: 'Chirag', last_name: 'Jain', department: 'Product', designation: 'Product Lead', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Chirag', payrollStatus: 'Eligible', holdReason: '' },
+   { id: 'db-10', employee_id: 'DB00410', first_name: 'Swati', last_name: 'Doshi', department: 'Engineering', designation: 'React Developer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Swati', payrollStatus: 'Eligible', holdReason: '' },
+];
+
 // --- Run Payroll Modal (Full 6-Step Wizard) ---
 export const RunPayrollModal: React.FC<{
    isOpen?: boolean;
@@ -458,10 +507,10 @@ export const RunPayrollModal: React.FC<{
    
    // Sync with Database
    useEffect(() => {
-     if (isOpen) {
+     if (isOpen || isPage) {
        fetchEmployees();
      }
-   }, [isOpen]);
+   }, [isOpen, isPage]);
 
    const fetchEmployees = async () => {
      setIsLoading(true);
@@ -487,16 +536,22 @@ export const RunPayrollModal: React.FC<{
 
        const mapped = (data || []).map((e, i) => ({
          ...e,
-         employee_id: e.eid, // Mapping eid column to UI employee_id
+         employee_id: e.eid || e.employee_id || `EMP${String(i + 1).padStart(3, '0')}`,
          business_unit: e.business_unit || bus[i % bus.length],
          designation: e.designation || designations[e.department] || 'Specialist',
          payrollStatus: e.payroll_status || 'Eligible',
-         holdReason: e.hold_reason || ''
+         holdReason: e.hold_reason || '',
+         first_name: e.first_name || (e.name ? e.name.split(' ')[0] : 'Employee'),
+         last_name: e.last_name || (e.name ? e.name.split(' ').slice(1).join(' ') : String(i + 1)),
        }));
 
-       setPayrollEmployees(mapped);
+       // Merge Supabase employees with mock data to guarantee 10 per BU
+       const mockIds = new Set(MOCK_PAYROLL_EMPLOYEES.map(m => m.employee_id));
+       const supabaseOnly = mapped.filter(e => !mockIds.has(e.employee_id));
+       setPayrollEmployees([...MOCK_PAYROLL_EMPLOYEES, ...supabaseOnly]);
      } catch (err) {
        console.error('Error fetching employees:', err);
+       setPayrollEmployees(MOCK_PAYROLL_EMPLOYEES);
      } finally {
        setIsLoading(false);
      }
@@ -554,18 +609,48 @@ export const RunPayrollModal: React.FC<{
    const [adjustmentSearch, setAdjustmentSearch] = useState('');
    const [adjustments, setAdjustments] = useState<any[]>([]);
 
+   // Build mock adjustments from payrollEmployees when Supabase has no data
+   const buildMockAdjustments = (employees: any[]) =>
+       employees.map((emp, i) => {
+           const grossValues = [154166, 200000, 131666, 176666, 158333, 185000, 142500, 168000, 195000, 122000];
+           const gross = grossValues[i % grossValues.length];
+           const tdsRate = [12500, 18000, 8500, 16200, 14000, 17500, 9800, 15000, 19200, 7500];
+           return {
+               id: emp.id,
+               db_id: null,
+               employee_id: emp.employee_id,
+               name: `${emp.first_name} ${emp.last_name}`,
+               gross,
+               bonus: i % 5 === 1 ? 25000 : 0,
+               arrears: i % 7 === 2 ? 5000 : 0,
+               loanRecovery: i % 4 === 3 ? 5000 : 0,
+               salaryAdvanceRecovery: i % 6 === 0 ? 3000 : 0,
+               expenseReimbursement: i % 3 === 1 ? 8400 : 0,
+               lop: i % 8 === 4 ? 1 : 0,
+               lop_reversal: 0,
+               lopReversal: 0,
+               other: 0,
+               proposedTds: tdsRate[i % tdsRate.length],
+               actualTds: tdsRate[i % tdsRate.length],
+               is_exit: false,
+               isEditing: false,
+           };
+       });
+
    useEffect(() => {
        if (currentRunId) {
            fetchAdjustments();
+       } else if (payrollEmployees.length > 0) {
+           setAdjustments(buildMockAdjustments(payrollEmployees));
        }
-   }, [currentRunId]);
+   }, [currentRunId, payrollEmployees]);
 
    const fetchAdjustments = async () => {
        if (!currentRunId) return;
        try {
            const { data, error } = await supabase
                .from('payroll_adjustments')
-               .select('*, employees(first_name, last_name)')
+               .select('*, employees(name)')
                .eq('payroll_run_id', currentRunId);
 
            if (error) throw error;
@@ -574,7 +659,7 @@ export const RunPayrollModal: React.FC<{
                id: adj.employee_id,
                db_id: adj.id,
                employee_id: adj.employee_id,
-               name: adj.employees ? `${adj.employees.first_name} ${adj.employees.last_name}` : 'Unknown',
+               name: adj.employees?.name || 'Unknown',
                gross: adj.gross || 0,
                bonus: adj.bonus || 0,
                arrears: adj.arrears || 0,
@@ -583,6 +668,7 @@ export const RunPayrollModal: React.FC<{
                expenseReimbursement: adj.expense_reimbursement || 0,
                lop: adj.lop || 0,
                lop_reversal: adj.lop_reversal || 0,
+               lopReversal: adj.lop_reversal || 0,
                other: adj.other || 0,
                proposedTds: adj.proposed_tds || 0,
                actualTds: adj.actual_tds || 0,
@@ -590,9 +676,14 @@ export const RunPayrollModal: React.FC<{
                isEditing: false
            }));
 
-           setAdjustments(mapped);
+           if (mapped.length > 0) {
+               setAdjustments(mapped);
+           } else {
+               setAdjustments(buildMockAdjustments(payrollEmployees));
+           }
        } catch (err) {
            console.error('Error fetching adjustments:', err);
+           setAdjustments(buildMockAdjustments(payrollEmployees));
        }
    };
 
@@ -971,8 +1062,11 @@ export const RunPayrollModal: React.FC<{
    // Step 1: Selection Logic
    const filteredEmployees = payrollEmployees.filter(e => {
       const matchesSearch = `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
-         e.employee_id.toLowerCase().includes(empSearch.toLowerCase());
-      const matchesBU = selectedBUs.length > 0 ? selectedBUs.includes(e.business_unit || 'CollabCRM') : true;
+         (e.employee_id || e.eid || '').toLowerCase().includes(empSearch.toLowerCase());
+      const empBU = (e.business_unit || '').toLowerCase();
+      const matchesBU = selectedBUs.length > 0
+         ? selectedBUs.some(bu => bu.toLowerCase() === empBU)
+         : true;
       return matchesSearch && matchesBU;
    });
 
@@ -1404,6 +1498,7 @@ export const RunPayrollModal: React.FC<{
                               <th className="px-2 py-3 text-right w-24">Proposed TDS</th>
                               <th className="px-2 py-3 text-right w-24">Actual TDS</th>
                               <th className="px-4 py-3 text-right font-bold bg-slate-100 w-32">Final Gross</th>
+                              <th className="px-4 py-3 text-right font-bold bg-emerald-50 text-emerald-700 w-32">Net Pay</th>
                               <th className="px-4 py-3 w-20 text-center">Actions</th>
                            </tr>
                         </thead>
@@ -1510,6 +1605,11 @@ export const RunPayrollModal: React.FC<{
                                     </td>
                                     <td className="px-4 py-3 text-right font-bold text-slate-800 bg-slate-50 group-hover:bg-slate-100 transition-colors">
                                        ₹{total.toLocaleString()}
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-bold bg-emerald-50 group-hover:bg-emerald-100 transition-colors">
+                                       <span className={total >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
+                                          ₹{total.toLocaleString()}
+                                       </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                        <div className="flex items-center justify-center gap-2">

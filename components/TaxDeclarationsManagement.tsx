@@ -1152,17 +1152,19 @@ const TaxDeclarationsManagement: React.FC = () => {
             .from('tax_declarations')
             .select(`
                 *,
-                employee:employees(full_name, avatar_url)
+                employee:employees(name, avatar_url)
             `)
             .order('submitted_date', { ascending: false });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
             const mappedData = data.map((d: any) => ({
                 ...d,
-                employee_name: d.employee?.full_name,
-                avatar_url: d.employee?.avatar_url
+                employee_name: d.employee?.name || d.employee_name,
+                avatar_url: d.employee?.avatar_url || d.avatar_url
             }));
             setDeclarations(mappedData);
+        } else {
+            setDeclarations(MOCK_TAX_DECLARATIONS);
         }
         setIsLoading(false);
     };
