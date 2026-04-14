@@ -32,8 +32,10 @@ const DEPARTMENTS = [
 
 const OperationalConfig: React.FC = () => {
     const [isHierarchyExpanded, setIsHierarchyExpanded] = useState(true);
+    const [isLoansHierarchyExpanded, setIsLoansHierarchyExpanded] = useState(true);
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
     const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
+    const [loansApprovers, setLoansApprovers] = useState<SelectedEmployee[]>([]);
     const [allEmployees, setAllEmployees] = useState<EmployeeData[]>([]);
 
     // Supabase state
@@ -337,13 +339,17 @@ const OperationalConfig: React.FC = () => {
         }
     };
 
-    const handleSelectEmployee = (id: string, type: 'payroll' | 'expense') => {
+    const handleSelectEmployee = (id: string, type: 'payroll' | 'expense' | 'loans') => {
         if (!id) return;
-        
+
         if (type === 'payroll') {
             if (selectedEmployees.find(emp => emp.id === id)) return;
             const empToAdd = allEmployees.find(emp => emp.id === id);
             if (empToAdd) setSelectedEmployees([...selectedEmployees, empToAdd]);
+        } else if (type === 'loans') {
+            if (loansApprovers.find(emp => emp.id === id)) return;
+            const empToAdd = allEmployees.find(emp => emp.id === id);
+            if (empToAdd) setLoansApprovers([...loansApprovers, empToAdd]);
         } else {
             if (expenseApprovers.find(emp => emp.id === id)) return;
             const empToAdd = allEmployees.find(emp => emp.id === id);
@@ -351,16 +357,18 @@ const OperationalConfig: React.FC = () => {
         }
     };
 
-    const removeEmployee = (id: string, type: 'payroll' | 'expense') => {
+    const removeEmployee = (id: string, type: 'payroll' | 'expense' | 'loans') => {
         if (type === 'payroll') {
             setSelectedEmployees(selectedEmployees.filter(emp => emp.id !== id));
+        } else if (type === 'loans') {
+            setLoansApprovers(loansApprovers.filter(emp => emp.id !== id));
         } else {
             setExpenseApprovers(expenseApprovers.filter(emp => emp.id !== id));
         }
     };
 
-    const moveEmployee = (index: number, direction: 'up' | 'down', type: 'payroll' | 'expense') => {
-        const items = type === 'payroll' ? [...selectedEmployees] : [...expenseApprovers];
+    const moveEmployee = (index: number, direction: 'up' | 'down', type: 'payroll' | 'expense' | 'loans') => {
+        const items = type === 'payroll' ? [...selectedEmployees] : type === 'loans' ? [...loansApprovers] : [...expenseApprovers];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
         if (targetIndex < 0 || targetIndex >= items.length) return;
@@ -369,6 +377,7 @@ const OperationalConfig: React.FC = () => {
         items.splice(targetIndex, 0, movedItem);
 
         if (type === 'payroll') setSelectedEmployees(items);
+        else if (type === 'loans') setLoansApprovers(items);
         else setExpenseApprovers(items);
     };
 
@@ -543,6 +552,103 @@ const OperationalConfig: React.FC = () => {
                                                 {/* Remove Button */}
                                                 <button
                                                     onClick={() => removeEmployee(emp.id, 'payroll')}
+                                                    className="text-slate-300 hover:text-red-500 transition-all p-1"
+                                                >
+                                                    <MinusCircle size={24} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 italic">
+                                        * Approvals will be requested sequentially in the order listed above.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Loans & Advances Approval Hierarchy */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsLoansHierarchyExpanded(!isLoansHierarchyExpanded)}
+                >
+                    <h3 className="font-semibold text-slate-800">Loans & Advances Approval Hierarchy</h3>
+                    <button className="text-slate-400">
+                        {isLoansHierarchyExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isLoansHierarchyExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-3xl space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5">
+                                    Select Loans & Advances Approver <span className="text-red-500">*</span>
+                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                        <Search size={16} className="text-slate-400" />
+                                    </div>
+                                    <select
+                                        value=""
+                                        onChange={(e) => handleSelectEmployee(e.target.value, 'loans')}
+                                        className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="" disabled>Search employee...</option>
+                                        {allEmployees.filter(emp => !loansApprovers.find(s => s.id === emp.id)).map(emp => (
+                                            <option key={emp.id} value={emp.id}>
+                                                {emp.name} ({emp.eid})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                        <ChevronDown size={16} className="text-slate-400" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Selected Hierarchy Section */}
+                            {loansApprovers.length > 0 && (
+                                <div className="space-y-3">
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approval Workflow</p>
+                                    <div className="space-y-3">
+                                        {loansApprovers.map((emp, index) => (
+                                            <div key={emp.id} className="flex items-center gap-3 group">
+                                                <div className="flex flex-col gap-1 text-slate-400">
+                                                    <div className="p-1.5 rounded hover:bg-slate-100 cursor-grab active:cursor-grabbing">
+                                                        <GripVertical size={20} className="text-slate-300" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 shadow-sm group-hover:border-sky-200 group-hover:shadow-sky-50 transition-all">
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <div className="text-sm font-semibold text-slate-700">{emp.name}</div>
+                                                            <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">Employee ID: {emp.eid} • Level {index + 1}</div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                disabled={index === 0}
+                                                                onClick={() => moveEmployee(index, 'up', 'loans')}
+                                                                className="p-1 hover:text-sky-600 disabled:opacity-30"
+                                                            >
+                                                                <ArrowUp size={14} />
+                                                            </button>
+                                                            <button
+                                                                disabled={index === loansApprovers.length - 1}
+                                                                onClick={() => moveEmployee(index, 'down', 'loans')}
+                                                                className="p-1 hover:text-sky-600 disabled:opacity-30"
+                                                            >
+                                                                <ArrowDown size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeEmployee(emp.id, 'loans')}
                                                     className="text-slate-300 hover:text-red-500 transition-all p-1"
                                                 >
                                                     <MinusCircle size={24} />
@@ -990,55 +1096,48 @@ const OperationalConfig: React.FC = () => {
                                 </div>
 
                                 {/* Formula Preview */}
-                                <div className="relative group self-start lg:mt-14">
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-5 group-hover:opacity-10 transition duration-1000"></div>
-                                    <div className="relative p-6 bg-white border border-indigo-100/50 rounded-3xl space-y-6 shadow-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                                                    <Calculator size={20} />
-                                                </div>
-                                                <div>
-                                                    <h5 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Formula Preview</h5>
-                                                    <p className="text-[9px] text-indigo-500 mt-0.5 font-bold uppercase tracking-wider">Live Logic</p>
-                                                </div>
+                                <div className="self-start lg:mt-14 w-full max-w-sm">
+                                    <div className="p-4 bg-slate-50/50 border border-slate-200 rounded-xl shadow-sm">
+                                        <div className="mb-3">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                                                <span className="text-sm font-medium text-slate-700">Daily rate</span>
                                             </div>
-                                            <div className="p-2 bg-indigo-50 rounded-full text-indigo-400">
-                                                <Info size={14} />
+                                            <div className="font-mono text-[15px] text-indigo-700 pl-4 py-1 tracking-tight">
+                                                {(() => {
+                                                    const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => encashmentComponents.includes(opt));
+                                                    if (active.length === 0) return "(None Selected) / 26";
+                                                    const labels = active.map(a => {
+                                                        if (a === "Dearness Allowance (DA)") return "DA";
+                                                        return a.replace(" Salary", "").replace(" Allowance", "");
+                                                    });
+                                                    return `(${labels.join(" + ")}) / 26`;
+                                                })()}
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/code">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-                                                    Daily Rate Logic
-                                                </p>
-                                                <div className="font-mono text-xs leading-relaxed text-slate-600">
-                                                    <span className="font-bold">Daily Rate = </span>
-                                                    <span className="text-indigo-600 font-bold bg-indigo-50/50 px-2 py-0.5 rounded border border-indigo-100">
-                                                        {(() => {
-                                                            const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => encashmentComponents.includes(opt));
-                                                            if (active.length === 0) return "(None Selected) / Divisor";
-                                                            const labels = active.map(a => a.replace(" Salary", "").replace(" Allowance", ""));
-                                                            return `(${labels.join(" + ")}) / Divisor`;
-                                                        })()}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                        <hr className="my-3 border-slate-200" />
 
-                                            <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                    Final Payable
-                                                </p>
-                                                <div className="font-mono text-xs leading-relaxed">
-                                                    <span className="text-purple-600 font-bold">Encashment = </span>
-                                                    <span className="text-slate-700 font-bold">Daily Rate × </span>
-                                                    <span className="text-indigo-600 font-bold">Days</span>
-                                                </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                                                <span className="text-sm font-medium text-slate-700">Encashment</span>
+                                            </div>
+                                            <div className="font-mono text-[15px] text-amber-700 pl-4 py-1 tracking-tight">
+                                                Daily Rate × Days
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <div className="mt-4 space-y-2">
+                                        <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
+                                            <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
+                                            <span>The divisor is typically 26 (working days) or 30 (calendar days), depending on company policy.</span>
+                                        </p>
+                                        <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
+                                            <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
+                                            <span>"Days" = number of eligible leave days being encashed.</span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>

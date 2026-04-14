@@ -23,6 +23,16 @@ import {
    Clock
 } from 'lucide-react';
 
+const EFFECTIVE_MONTHS = (() => {
+   const months: string[] = [];
+   const start = new Date(2024, 3, 1); // April 2024
+   for (let i = 0; i < 36; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      months.push(d.toLocaleString('en-IN', { month: 'long', year: 'numeric' }));
+   }
+   return months;
+})();
+
 interface EditEmployeeProfileProps {
    employeeId?: string;
    onBack?: () => void;
@@ -90,6 +100,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    useEffect(() => {
       if (selectedStructureId) {
          fetchStructureDetails(selectedStructureId);
+      } else {
+         setStructureComponents({ earnings: [], deductions: [] });
       }
    }, [selectedStructureId]);
 
@@ -233,6 +245,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
  
                 if (!configError && configData?.config_value) {
                    setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value }));
+                   if (configData.config_value.arrears_payout_month) {
+                      setArrearsPayoutDate(configData.config_value.arrears_payout_month);
+                   }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
                 }
@@ -309,8 +324,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    };
 
    // Dynamic Salary Calculation
-   const calculateSalary = (annualCtc: number) => {
-      if (!annualCtc) return { earnings: [], employeeDeductions: [], employerContributions: [], annualGross: 0, monthlyGross: 0, taxOld: 0, taxNew: 0, basic: 0, special: 0 };
+    const calculateSalary = (annualCtc: number) => {
+       // Removed early return !annualCtc to allow dynamic preview of structure rows
 
       const earnings: any[] = [];
       const employeeDeductions: any[] = [];
@@ -332,8 +347,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       const basicComp = structureComponents.earnings.find(c => c.name.toLowerCase().includes('basic'));
       if (basicComp) {
          basic = calcComp(basicComp, {});
-      } else {
-         basic = annualCtc * 0.5; // Default fallback
       }
 
       // 2. Pre-calculate fixed and formula-based Earnings
@@ -405,8 +418,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       const balancingComp = structureComponents.earnings.find(c => c.calculation.includes('Balancing Figure'));
       const specialVal = Math.max(0, annualCtc - currentEarningsTotal - totalEmployerContrib);
       
-      const specialName = balancingComp ? balancingComp.name : 'Special Allowance';
-      earnings.push({ name: specialName, annual: specialVal, monthly: specialVal / 12 });
+      if (balancingComp) {
+         earnings.push({ name: balancingComp.name, annual: specialVal, monthly: specialVal / 12 });
+      }
 
       const annualGross = earnings.reduce((sum, e) => sum + e.annual, 0);
       const monthlyGross = annualGross / 12;
@@ -506,7 +520,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             aadhaar_no: aadhaarNumber,
             uan_no: uanNumber,
             ctc: ctc.toString(), 
-            annual_gross: annualGross.toString(),
+            annual_gross: salary.annualGross.toString(),
             tax_regime: regime,
             salary_structure_id: selectedStructureId || null,
             effective_date: effectiveFrom || null,
@@ -525,7 +539,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             .from('operational_config')
             .upsert({
                config_key: `emp_statutory:${employeeId}`,
-               config_value: statutoryDeductions,
+               config_value: { ...statutoryDeductions, arrears_payout_month: arrearsPayoutDate },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
 
@@ -587,10 +601,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium text-sm shadow-sm flex items-center gap-2 transition-all disabled:opacity-70"
                      >
                         {isSaving ? (
-                           <>Saving...</>
+                           <>Submitting...</>
                         ) : (
                            <>
-                              <Save size={16} /> Save Changes
+                              <Save size={16} /> Submit
                            </>
                         )}
                      </button>
@@ -687,22 +701,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            )}
                         </div>
 
-                        <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual Gross (₹) {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                           <div className="relative">
-                              <input
-                                 type="text"
-                                 value={annualGross || ''}
-                                 disabled={isReadOnly}
-                                 onChange={(e) => {
-                                    const val = e.target.value.replace(/[^0-9]/g, '');
-                                    setAnnualGross(parseInt(val) || 0);
-                                 }}
-                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}
-                              />
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                           </div>
-                        </div>
 
                         <div id="effective-from-field-main">
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {!isReadOnly && <span className="text-rose-500">*</span>}</label>
@@ -739,16 +737,21 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
 
                         <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Date {!isReadOnly && <span className="text-rose-500">*</span>}</label>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Arrears Payout Month {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
-                              <input
-                                 type="date"
+                              <select
                                  value={arrearsPayoutDate}
                                  onChange={(e) => setArrearsPayoutDate(e.target.value)}
                                  disabled={isReadOnly}
-                                 className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
-                              />
+                                 className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 appearance-none transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
+                              >
+                                 <option value="">Select Payout Month</option>
+                                 {EFFECTIVE_MONTHS.map(month => (
+                                    <option key={month} value={month}>{month}</option>
+                                 ))}
+                              </select>
                               <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                              {!isReadOnly && <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />}
                            </div>
                         </div>
                      </div>

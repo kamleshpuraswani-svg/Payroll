@@ -20,9 +20,43 @@ import {
     Building2,
     ChevronLeft,
     ChevronRight,
-    ChevronDown as ChevronDownIcon
+    ChevronDown as ChevronDownIcon,
+    Clock,
+    ArrowLeft
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+
+interface ComponentChangeHistory {
+    id: string;
+    timestamp: string;
+    changedBy: string;
+    field: string;
+    oldValue: string;
+    newValue: string;
+}
+
+// Generate months from April 2026 onwards (24 months)
+const generateEffectiveMonths = (): string[] => {
+    const months: string[] = [];
+    const start = new Date(2026, 3, 1); // April 2026
+    for (let i = 0; i < 24; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+        months.push(d.toLocaleString('en-IN', { month: 'long', year: 'numeric' }));
+    }
+    return months;
+};
+const EFFECTIVE_MONTHS = generateEffectiveMonths();
+
+// Converts display strings like "April 2026" to ISO date "2026-04-01" for DB storage
+const toISOEffectiveDate = (monthStr: string): string | null => {
+    if (!monthStr) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(monthStr)) return monthStr; // already ISO
+    const d = new Date(`1 ${monthStr}`);
+    if (isNaN(d.getTime())) return null;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}-01`;
+};
 
 interface SalaryComponent {
     id: string;
@@ -69,6 +103,7 @@ interface SalaryComponent {
     considerLeaveEncashment?: boolean;
     showOnSalaryRegister?: boolean;
     showRateOnSalarySlip?: boolean;
+    history?: ComponentChangeHistory[];
 }
 
 const BUSINESS_UNITS = [
@@ -253,7 +288,10 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
-    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || EFFECTIVE_MONTHS[0]);
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
+    const [history] = useState<ComponentChangeHistory[]>((initialData as any)?.history || []);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [localSelectedTarget, setLocalSelectedTarget] = useState(() => {
         if (initialData?.targetId && initialData?.targetType) {
@@ -351,17 +389,241 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
         const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
 
-        onSave({ ...updatedData, targetId, targetType });
+        const newHistoryRecords: any[] = [];
+        const timestamp = new Date().toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        const changedBy = 'Admin';
+
+        const addHistory = (field: string, oldVal: any, newVal: any) => {
+            const o = Array.isArray(oldVal) ? oldVal.join(', ') : String(oldVal ?? 'Not set');
+            const n = Array.isArray(newVal) ? newVal.join(', ') : String(newVal ?? 'Not set');
+            if (o !== n) {
+                newHistoryRecords.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    timestamp,
+                    changedBy,
+                    field,
+                    oldValue: o,
+                    newValue: n
+                });
+            }
+        };
+
+        const yn = (v: any) => (v ? 'Yes' : 'No');
+        if (initialData) {
+            addHistory('Component Name', initialData.name, name);
+            addHistory('Name in Payslip', initialData.payslipName, payslipName);
+            addHistory('Effective Month', initialData.effectiveDate, effectiveDate);
+            addHistory('Status', initialData.status !== false ? 'Active' : 'Inactive', isActive ? 'Active' : 'Inactive');
+            addHistory('Nature of Pay', initialData.type, natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay');
+            addHistory('Calculation Method', initialData.calcMethod, natureOfPay === 'Fixed' ? calcMethod : 'N/A');
+            addHistory('Amount / %', initialData.amountOrPercent, natureOfPay === 'Fixed' ? (amount || 'Not set') : 'N/A');
+            addHistory('Taxable Earning', initialData.taxable !== 'Fully Exempt' ? 'Yes' : 'No', isTaxable ? 'Yes' : 'No');
+            addHistory('Tax Treatment', initialData.taxable || 'N/A', isTaxable ? taxTreatment : 'Fully Exempt');
+            addHistory('Tax Computation', initialData.taxComputation, isTaxable ? taxComputation : 'N/A');
+            addHistory('Income Tax Section', initialData.incomeTaxSection, isTaxable ? (isCreatingSection ? customTaxSection : incomeTaxSection) : 'N/A');
+            addHistory('Round Off', initialData.roundOffSetting, roundOffSetting);
+            addHistory('Consider EPF', yn(initialData.considerEPF), yn(isConsiderEPF));
+            addHistory('Consider ESI', yn(initialData.considerESI), yn(isConsiderESI));
+            addHistory('Consider Gratuity', yn(initialData.considerGratuity), yn(isConsiderGratuity));
+            addHistory('Consider PT', yn(initialData.considerPT), yn(isConsiderPT));
+            addHistory('Consider LWF', yn(initialData.considerLWF), yn(isConsiderLWF));
+            addHistory('Consider Leave Enc.', yn(initialData.considerLeaveEncashment), yn(isConsiderLeaveEncashment));
+            addHistory('Include in CTC', yn(initialData.includeInCTC), yn(includeInCTC));
+            addHistory('Include in Gross', yn(initialData.includeInGross), yn(includeInGross));
+            addHistory('Include in Payout', yn(initialData.includeInPayout), yn(includeInPayout));
+            addHistory('Include in First Salary', yn(initialData.includeInFirstSalary), yn(includeInFirstSalary));
+            addHistory('Show on Salary Register', yn(initialData.showOnSalaryRegister), yn(isShowOnSalaryRegister));
+            addHistory('Show Rate on Slip', yn(initialData.showRateOnSalarySlip), yn(isShowRateOnSalarySlip));
+        }
+
+        onSave({
+            ...updatedData,
+            targetId,
+            targetType,
+            history: [...((initialData as any)?.history || []), ...newHistoryRecords]
+        });
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-4xl w-full max-h-[90vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
-                    <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Earning Component' : 'Add Earning Component'}</h2>
-                    <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full animate-in slide-in-from-right-2 duration-300">
+                <div className="bg-slate-50 border-b border-slate-200">
+                    <div className="flex justify-between items-center px-6 py-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => { if (activeTab === 'History') setActiveTab('Configuration'); else onCancel(); }}
+                                className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all group border border-slate-200 bg-white"
+                                title={activeTab === 'History' ? 'Back to Config' : 'Back to List'}
+                            >
+                                <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                            </button>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800">
+                                    {activeTab === 'History' ? 'Audit History' : (initialData ? 'Edit Earning Component' : 'Add Earning Component')}
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    {activeTab === 'History' ? 'View all changes made to this component' : 'Configure earning rules and tax treatment'}
+                                </p>
+                            </div>
+                        </div>
+                        {activeTab === 'Configuration' && initialData && (
+                            <button onClick={() => setActiveTab('History')} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-sky-600 hover:bg-sky-50 border border-slate-200 rounded-lg transition-all bg-white shadow-sm">
+                                <Clock size={16} /> Audit History
+                            </button>
+                        )}
+                    </div>
                 </div>
 
+                {activeTab === 'History' ? (
+                    <div className="flex-1 overflow-y-auto p-6 animate-in fade-in slide-in-from-right-2 duration-300">
+                        <div className="flex flex-col lg:flex-row gap-0 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm min-h-[420px]">
+                            {/* Left: Configuration snapshot */}
+                            <div className="flex-1 p-8 bg-white border-r border-slate-100">
+                                <div className="mb-6 flex items-center gap-2">
+                                    <h4 className="text-base font-bold text-slate-800">Configuration Details</h4>
+                                    {(!selectedRecordId || selectedRecordId === history[0]?.id) && history.length > 0 && (
+                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded border border-emerald-100">Current Version</span>
+                                    )}
+                                </div>
+                                {history.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                                        <div className="p-4 bg-slate-50 rounded-2xl text-slate-300 mb-4"><Clock size={40} strokeWidth={1.5} /></div>
+                                        <p className="text-slate-800 font-bold text-lg">No history available</p>
+                                        <p className="text-slate-500 text-sm max-w-xs mt-2">Changes are recorded when you save updates to an existing component.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                                        {(() => {
+                                            const yn = (v: any) => (v ? 'Yes' : 'No');
+                                            const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
+                                            const histState: any = {
+                                                'Component Name': name,
+                                                'Name in Payslip': payslipName,
+                                                'Effective Month': effectiveDate,
+                                                'Status': isActive ? 'Active' : 'Inactive',
+                                                'Nature of Pay': natureOfPay + ' Pay',
+                                                'Calculation Method': natureOfPay === 'Fixed' ? calcMethod : 'N/A',
+                                                'Amount / %': natureOfPay === 'Fixed' ? (amount || 'Not set') : 'N/A',
+                                                'Taxable Earning': isTaxable ? 'Yes' : 'No',
+                                                'Tax Treatment': isTaxable ? taxTreatment : 'Fully Exempt',
+                                                'Tax Computation': isTaxable ? taxComputation : 'N/A',
+                                                'Income Tax Section': isTaxable ? (incomeTaxSection || 'Not set') : 'N/A',
+                                                'Round Off': roundOffSetting,
+                                                'Consider EPF': yn(isConsiderEPF),
+                                                'Consider ESI': yn(isConsiderESI),
+                                                'Consider Gratuity': yn(isConsiderGratuity),
+                                                'Consider PT': yn(isConsiderPT),
+                                                'Consider LWF': yn(isConsiderLWF),
+                                                'Consider Leave Enc.': yn(isConsiderLeaveEncashment),
+                                                'Include in CTC': yn(includeInCTC),
+                                                'Include in Gross': yn(includeInGross),
+                                                'Include in Payout': yn(includeInPayout),
+                                                'Include in First Salary': yn(includeInFirstSalary),
+                                                'Show on Salary Register': yn(isShowOnSalaryRegister),
+                                                'Show Rate on Slip': yn(isShowRateOnSalarySlip),
+                                            };
+                                            if (selectedIndex > 0) {
+                                                for (let i = 0; i < selectedIndex; i++) {
+                                                    histState[history[i].field] = history[i].oldValue;
+                                                }
+                                            }
+                                            const renderField = (label: string) => {
+                                                const isChanged = selectedRecordId
+                                                    ? history[selectedIndex]?.field === label
+                                                    : (history.length > 0 && history[0].field === label);
+                                                return (
+                                                    <div className="space-y-1.5" key={label}>
+                                                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+                                                        <div className={`text-sm font-medium p-3 rounded-xl border ${isChanged ? 'bg-sky-50/50 border-sky-100 text-sky-900 shadow-sm' : 'bg-slate-50/30 border-slate-100 text-slate-700'}`}>
+                                                            {histState[label] ?? 'Not set'}
+                                                            {isChanged && <span className="ml-2 text-[10px] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded font-bold">CHANGED</span>}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            };
+                                            const renderSection = (title: string) => (
+                                                <div className="md:col-span-2 pt-2 pb-1 border-b border-slate-100">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{title}</span>
+                                                </div>
+                                            );
+                                            return <>
+                                                {renderSection('Basic Info')}
+                                                {renderField('Component Name')}
+                                                {renderField('Name in Payslip')}
+                                                {renderField('Effective Month')}
+                                                {renderField('Status')}
+                                                {renderSection('Pay Configuration')}
+                                                {renderField('Nature of Pay')}
+                                                {renderField('Calculation Method')}
+                                                {renderField('Amount / %')}
+                                                {renderField('Round Off')}
+                                                {renderSection('Tax')}
+                                                {renderField('Taxable Earning')}
+                                                {renderField('Tax Treatment')}
+                                                {renderField('Tax Computation')}
+                                                {renderField('Income Tax Section')}
+                                                {renderSection('Statutory Contributions')}
+                                                {renderField('Consider EPF')}
+                                                {renderField('Consider ESI')}
+                                                {renderField('Consider Gratuity')}
+                                                {renderField('Consider PT')}
+                                                {renderField('Consider LWF')}
+                                                {renderField('Consider Leave Enc.')}
+                                                {renderSection('Inclusions')}
+                                                {renderField('Include in CTC')}
+                                                {renderField('Include in Gross')}
+                                                {renderField('Include in Payout')}
+                                                {renderField('Include in First Salary')}
+                                                {renderSection('Display Settings')}
+                                                {renderField('Show on Salary Register')}
+                                                {renderField('Show Rate on Slip')}
+                                            </>;
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Right: Version sidebar */}
+                            <div className="w-full lg:w-[300px] bg-slate-50 p-6 overflow-y-auto max-h-[520px]">
+                                <div className="mb-5">
+                                    <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Version History</h4>
+                                    <p className="text-[11px] text-slate-400 font-medium">View previous versions of this component.</p>
+                                </div>
+                                <div className="space-y-3">
+                                    {history.length === 0 ? (
+                                        <div className="py-12 text-center text-slate-400 text-xs italic">No versions recorded.</div>
+                                    ) : history.map((record, index) => (
+                                        <button key={record.id} onClick={() => setSelectedRecordId(record.id)}
+                                            className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 relative ${(selectedRecordId === record.id || (!selectedRecordId && index === 0)) ? 'bg-white border-sky-200 shadow-md ring-1 ring-sky-100' : 'bg-transparent border-slate-200/60 hover:bg-white hover:border-slate-300'}`}>
+                                            <div className="flex flex-col gap-2.5">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[13px] font-bold text-slate-800">{record.timestamp.split(', ')[0]}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{record.timestamp.split(', ')[1]}</span>
+                                                    </div>
+                                                    {index === 0 && <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded uppercase border border-emerald-100 shrink-0">Current</span>}
+                                                </div>
+                                                <div className="bg-slate-100 rounded-lg px-2.5 py-1.5 space-y-0.5">
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{record.field}</span>
+                                                    <div className="flex items-center gap-1.5 text-[11px]">
+                                                        <span className="text-slate-400 line-through">{record.oldValue}</span>
+                                                        <span className="text-slate-300">→</span>
+                                                        <span className="text-sky-700 font-semibold">{record.newValue}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">{record.changedBy.charAt(0)}</div>
+                                                    <span className="text-[11px] font-medium text-slate-500">{record.changedBy}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (<>
                 <div className="p-8 space-y-8 overflow-y-auto flex-1">
                     {/* Target Selection */}
                     <div className="w-1/2 hidden">
@@ -399,8 +661,15 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         </div>
                         {initialData && (
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
-                                <input type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600" />
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Month</label>
+                                <div className="relative">
+                                    <select value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 appearance-none bg-white">
+                                        {EFFECTIVE_MONTHS.map(m => (
+                                            <option key={m} value={m}>{m}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
                             </div>
                         )}
                     </div>
@@ -847,10 +1116,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                     <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
                     <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
+                </>)}
             </div>
-        </div>
     );
-}
+};
 
 // --- Detailed Add Deduction Form ---
 const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
@@ -878,7 +1147,10 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [isCreatingSection, setIsCreatingSection] = useState(false);
     const [customTaxSection, setCustomTaxSection] = useState('');
     const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
-    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || new Date().toISOString().split('T')[0]);
+    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || EFFECTIVE_MONTHS[0]);
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
+    const [history] = useState<ComponentChangeHistory[]>((initialData as any)?.history || []);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
     const [deductionType, setDeductionType] = useState<'Statutory' | 'Non-Statutory'>(initialData?.deductionType || 'Statutory');
     const [error, setError] = useState<string | null>(null);
 
@@ -947,16 +1219,227 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
         const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
 
-        onSave({ ...updatedData, targetId, targetType });
+        const newHistoryRecords: any[] = [];
+        const timestamp = new Date().toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        const changedBy = 'Admin';
+
+        const addHistory = (field: string, oldVal: any, newVal: any) => {
+            const o = Array.isArray(oldVal) ? oldVal.join(', ') : String(oldVal ?? 'Not set');
+            const n = Array.isArray(newVal) ? newVal.join(', ') : String(newVal ?? 'Not set');
+            if (o !== n) {
+                newHistoryRecords.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    timestamp,
+                    changedBy,
+                    field,
+                    oldValue: o,
+                    newValue: n
+                });
+            }
+        };
+
+        const yn = (v: any) => (v ? 'Yes' : 'No');
+        if (initialData) {
+            addHistory('Component Name', initialData.name, name);
+            addHistory('Name in Payslip', initialData.payslipName, payslipName);
+            addHistory('Effective Month', initialData.effectiveDate, effectiveDate);
+            addHistory('Status', initialData.status !== false ? 'Active' : 'Inactive', isActive ? 'Active' : 'Inactive');
+            addHistory('Deduction Type', initialData.deductionType, deductionType);
+            addHistory('Nature of Deduction', initialData.type, natureOfDeduction === 'Variable' ? 'Variable Pay' : 'Fixed Pay');
+            addHistory('Calculation Method', initialData.calcMethod, calcMethod);
+            addHistory('Amount / %', initialData.amountOrPercent, amountOrPercent || 'Not set');
+            addHistory('Deduction Timing', initialData.deductionTiming, deductionTiming);
+            addHistory('Round Off', initialData.roundOffSetting, roundOffSetting);
+            addHistory('Taxable Earning', initialData.taxable !== 'Tax Deductible' ? 'Yes' : 'No', isTaxableEarning ? 'Yes' : 'No');
+            addHistory('Tax Treatment', initialData.taxable || 'N/A', isTaxableEarning ? taxTreatment : 'Tax Deductible');
+            addHistory('Tax Computation', initialData.taxComputation, isTaxableEarning ? taxComputation : 'N/A');
+            addHistory('Income Tax Section', initialData.incomeTaxSection, isTaxableEarning ? (isCreatingSection ? customTaxSection : incomeTaxSection) : 'N/A');
+            addHistory('Pro-Rata', yn(initialData.isProRata), yn(isProRata));
+            addHistory('Include Monthly Payout', yn(initialData.includeMonthlyPayout), yn(includeMonthlyPayout));
+            addHistory('Prorate DOJ/DOL', yn(initialData.prorateDojDol), yn(prorateDojDol));
+            addHistory('Include in First Salary', yn(initialData.includeInFirstSalaryDeduction), yn(includeInFirstSalaryDeduction));
+            addHistory('Include Arrears', yn(initialData.includeArrears), yn(includeArrears));
+            addHistory('Show in Payslip', yn(initialData.showInPayslip), yn(showInPayslip));
+        }
+
+        onSave({
+            ...updatedData,
+            targetId,
+            targetType,
+            history: [...((initialData as any)?.history || []), ...newHistoryRecords]
+        });
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-4xl w-full max-h-[90vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
-                    <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Deduction Component' : 'Add Deduction Component'}</h2>
-                    <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full animate-in slide-in-from-right-2 duration-300">
+                <div className="bg-slate-50 border-b border-slate-200">
+                    <div className="flex justify-between items-center px-6 py-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => { if (activeTab === 'History') setActiveTab('Configuration'); else onCancel(); }}
+                                className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all group border border-slate-200 bg-white"
+                                title={activeTab === 'History' ? 'Back to Config' : 'Back to List'}
+                            >
+                                <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                            </button>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800">
+                                    {activeTab === 'History' ? 'Audit History' : (initialData ? 'Edit Deduction Component' : 'Add Deduction Component')}
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    {activeTab === 'History' ? 'View all changes made to this component' : 'Configure deduction rules and timing'}
+                                </p>
+                            </div>
+                        </div>
+                        {activeTab === 'Configuration' && initialData && (
+                            <button onClick={() => setActiveTab('History')} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-sky-600 hover:bg-sky-50 border border-slate-200 rounded-lg transition-all bg-white shadow-sm">
+                                <Clock size={16} /> Audit History
+                            </button>
+                        )}
+                    </div>
                 </div>
+
+                {activeTab === 'History' ? (
+                    <div className="flex-1 overflow-y-auto p-6 animate-in fade-in slide-in-from-right-2 duration-300">
+                        <div className="flex flex-col lg:flex-row gap-0 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm min-h-[420px]">
+                            {/* Left: Configuration snapshot */}
+                            <div className="flex-1 p-8 bg-white border-r border-slate-100">
+                                <div className="mb-6 flex items-center gap-2">
+                                    <h4 className="text-base font-bold text-slate-800">Configuration Details</h4>
+                                    {(!selectedRecordId || selectedRecordId === history[0]?.id) && history.length > 0 && (
+                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded border border-emerald-100">Current Version</span>
+                                    )}
+                                </div>
+                                {history.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                                        <div className="p-4 bg-slate-50 rounded-2xl text-slate-300 mb-4"><Clock size={40} strokeWidth={1.5} /></div>
+                                        <p className="text-slate-800 font-bold text-lg">No history available</p>
+                                        <p className="text-slate-500 text-sm max-w-xs mt-2">Changes are recorded when you save updates to an existing component.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                                        {(() => {
+                                            const yn = (v: any) => (v ? 'Yes' : 'No');
+                                            const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
+                                            const histState: any = {
+                                                'Component Name': name,
+                                                'Name in Payslip': payslipName,
+                                                'Effective Month': effectiveDate,
+                                                'Status': isActive ? 'Active' : 'Inactive',
+                                                'Deduction Type': deductionType,
+                                                'Nature of Deduction': natureOfDeduction === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
+                                                'Calculation Method': calcMethod,
+                                                'Amount / %': amountOrPercent || 'Not set',
+                                                'Deduction Timing': deductionTiming,
+                                                'Round Off': roundOffSetting,
+                                                'Taxable Earning': isTaxableEarning ? 'Yes' : 'No',
+                                                'Tax Treatment': isTaxableEarning ? taxTreatment : 'Tax Deductible',
+                                                'Tax Computation': isTaxableEarning ? taxComputation : 'N/A',
+                                                'Income Tax Section': isTaxableEarning ? (incomeTaxSection || 'Not set') : 'N/A',
+                                                'Pro-Rata': yn(isProRata),
+                                                'Include Monthly Payout': yn(includeMonthlyPayout),
+                                                'Prorate DOJ/DOL': yn(prorateDojDol),
+                                                'Include in First Salary': yn(includeInFirstSalaryDeduction),
+                                                'Include Arrears': yn(includeArrears),
+                                                'Show in Payslip': yn(showInPayslip),
+                                            };
+                                            if (selectedIndex > 0) {
+                                                for (let i = 0; i < selectedIndex; i++) {
+                                                    histState[history[i].field] = history[i].oldValue;
+                                                }
+                                            }
+                                            const renderField = (label: string) => {
+                                                const isChanged = selectedRecordId
+                                                    ? history[selectedIndex]?.field === label
+                                                    : (history.length > 0 && history[0].field === label);
+                                                return (
+                                                    <div className="space-y-1.5" key={label}>
+                                                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+                                                        <div className={`text-sm font-medium p-3 rounded-xl border ${isChanged ? 'bg-sky-50/50 border-sky-100 text-sky-900 shadow-sm' : 'bg-slate-50/30 border-slate-100 text-slate-700'}`}>
+                                                            {histState[label] ?? 'Not set'}
+                                                            {isChanged && <span className="ml-2 text-[10px] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded font-bold">CHANGED</span>}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            };
+                                            const renderSection = (title: string) => (
+                                                <div className="md:col-span-2 pt-2 pb-1 border-b border-slate-100">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{title}</span>
+                                                </div>
+                                            );
+                                            return <>
+                                                {renderSection('Basic Info')}
+                                                {renderField('Component Name')}
+                                                {renderField('Name in Payslip')}
+                                                {renderField('Effective Month')}
+                                                {renderField('Status')}
+                                                {renderSection('Deduction Configuration')}
+                                                {renderField('Deduction Type')}
+                                                {renderField('Nature of Deduction')}
+                                                {renderField('Calculation Method')}
+                                                {renderField('Amount / %')}
+                                                {renderField('Deduction Timing')}
+                                                {renderField('Round Off')}
+                                                {renderSection('Tax')}
+                                                {renderField('Taxable Earning')}
+                                                {renderField('Tax Treatment')}
+                                                {renderField('Tax Computation')}
+                                                {renderField('Income Tax Section')}
+                                                {renderSection('Payout & Proration')}
+                                                {renderField('Pro-Rata')}
+                                                {renderField('Include Monthly Payout')}
+                                                {renderField('Prorate DOJ/DOL')}
+                                                {renderField('Include in First Salary')}
+                                                {renderField('Include Arrears')}
+                                                {renderField('Show in Payslip')}
+                                            </>;
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Right: Version sidebar */}
+                            <div className="w-full lg:w-[300px] bg-slate-50 p-6 overflow-y-auto max-h-[520px]">
+                                <div className="mb-5">
+                                    <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Version History</h4>
+                                    <p className="text-[11px] text-slate-400 font-medium">View previous versions of this component.</p>
+                                </div>
+                                <div className="space-y-3">
+                                    {history.length === 0 ? (
+                                        <div className="py-12 text-center text-slate-400 text-xs italic">No versions recorded.</div>
+                                    ) : history.map((record, index) => (
+                                        <button key={record.id} onClick={() => setSelectedRecordId(record.id)}
+                                            className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 relative ${(selectedRecordId === record.id || (!selectedRecordId && index === 0)) ? 'bg-white border-sky-200 shadow-md ring-1 ring-sky-100' : 'bg-transparent border-slate-200/60 hover:bg-white hover:border-slate-300'}`}>
+                                            <div className="flex flex-col gap-2.5">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[13px] font-bold text-slate-800">{record.timestamp.split(', ')[0]}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{record.timestamp.split(', ')[1]}</span>
+                                                    </div>
+                                                    {index === 0 && <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded uppercase border border-emerald-100 shrink-0">Current</span>}
+                                                </div>
+                                                <div className="bg-slate-100 rounded-lg px-2.5 py-1.5 space-y-0.5">
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{record.field}</span>
+                                                    <div className="flex items-center gap-1.5 text-[11px]">
+                                                        <span className="text-slate-400 line-through">{record.oldValue}</span>
+                                                        <span className="text-slate-300">→</span>
+                                                        <span className="text-sky-700 font-semibold">{record.newValue}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">{record.changedBy.charAt(0)}</div>
+                                                    <span className="text-[11px] font-medium text-slate-500">{record.changedBy}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (<>
                 <div className="p-8 space-y-6 overflow-y-auto flex-1">
                     {/* Target Selection */}
                     <div className="w-1/2 hidden">
@@ -995,13 +1478,15 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {initialData && (
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date</label>
-                                <input
-                                    type="date"
-                                    value={effectiveDate}
-                                    onChange={(e) => setEffectiveDate(e.target.value)}
-                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600"
-                                />
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Month</label>
+                                <div className="relative">
+                                    <select value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 appearance-none bg-white">
+                                        {EFFECTIVE_MONTHS.map(m => (
+                                            <option key={m} value={m}>{m}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1364,10 +1849,10 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
                     <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
+                </>)}
             </div>
-        </div>
     );
-}
+};
 
 // --- Detailed Add Reimbursement Form ---
 const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
@@ -1392,11 +1877,15 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
     );
 
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
     const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage'>(
         initialData?.calcMethod || 'Flat'
     );
     const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const history = (initialData as any)?.history || [];
 
     const handleSave = () => {
         if (!name) {
@@ -1426,213 +1915,376 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
         const [targetTypeRaw, targetId] = localSelectedTarget.split(':');
         const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
 
-        onSave({ ...updatedData, targetId, targetType });
+        const newHistoryRecords: any[] = [];
+        const timestamp = new Date().toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        const changedBy = 'Admin';
+
+        const addHistory = (field: string, oldVal: any, newVal: any) => {
+            const o = Array.isArray(oldVal) ? oldVal.join(', ') : String(oldVal ?? 'Not set');
+            const n = Array.isArray(newVal) ? newVal.join(', ') : String(newVal ?? 'Not set');
+            if (o !== n) {
+                newHistoryRecords.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    timestamp,
+                    changedBy,
+                    field,
+                    oldValue: o,
+                    newValue: n
+                });
+            }
+        };
+
+        const yn = (v: any) => (v ? 'Yes' : 'No');
+        if (initialData) {
+            addHistory('Component Name', initialData.name, name);
+            addHistory('Name in Payslip', initialData.payslipName, payslipName);
+            addHistory('Effective Month', initialData.effectiveDate, effectiveDate);
+            addHistory('Status', initialData.status !== false ? 'Active' : 'Inactive', isActive ? 'Active' : 'Inactive');
+            addHistory('Nature of Pay', initialData.type, natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay');
+            addHistory('Calculation Method', initialData.calcMethod, calcMethod);
+            addHistory('Amount / %', amount, amount);
+            addHistory('Tax Treatment', initialData.taxable || 'N/A', taxTreatment);
+            addHistory('Show in Payslip', yn(initialData.showInPayslip), yn(showInPayslip));
+        }
+
+        onSave({ 
+            ...updatedData, 
+            targetId, 
+            targetType,
+            history: [...((initialData as any)?.history || []), ...newHistoryRecords]
+        });
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-4xl w-full max-h-[90vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
-                    <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Reimbursement Component' : 'Add Reimbursement Component'}</h2>
-                    <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
-                </div>
-
-                <div className="p-8 space-y-6 overflow-y-auto flex-1">
-                    {/* Target Selection */}
-                    <div className="w-1/2 hidden">
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Business Unit or Paygroup <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                            <select
-                                disabled
-                                value={localSelectedTarget}
-                                onChange={(e) => setLocalSelectedTarget(e.target.value)}
-                                className={`w-full px-3 py-2.5 border rounded-lg text-sm bg-slate-50 opacity-80 cursor-not-allowed text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && error.includes('Business Unit') ? 'border-rose-500' : 'border-slate-200'}`}
-                            >
-                                <option value="">Select a unit or paygroup</option>
-                                <optgroup label="Business Units">
-                                    {BUSINESS_UNITS.map(bu => (
-                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Payroll Paygroups">
-                                    {paygroups.map(pg => (
-                                        <option key={pg.id} value={`pg:${pg.id}`}>
-                                            {pg.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                        </div>
-                        {error && error.includes('Business Unit') && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
-                    </div>
-
-                    {/* Names */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full animate-in slide-in-from-right-2 duration-300 min-h-[500px]">
+            <div className="bg-slate-50 border-b border-slate-200">
+                <div className="flex justify-between items-center px-6 py-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => { if (activeTab === 'History') setActiveTab('Configuration'); else onCancel(); }}
+                            className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all group border border-slate-200 bg-white"
+                            title={activeTab === 'History' ? 'Back to Config' : 'Back to List'}
+                        >
+                            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                        </button>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
-                            <input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
-                        </div>
-                        {initialData && (
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
-                                <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 transition-all" />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Nature of Pay */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
-                            <div className="flex gap-6">
-                                {['Fixed', 'Variable'].map(type => (
-                                    <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
-                                        <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Calculation Method, Enter Amount & Tax Treatment */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[42px]">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
-                                    <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
-                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
-                                </label>
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        disabled={calcMethod !== 'Percentage'}
-                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between transition-all"
-                                    >
-                                        <span className="truncate max-w-[80px]">
-                                            {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
-                                        </span>
-                                        <ChevronDown size={14} className="text-slate-400" />
-                                    </button>
-
-                                    {isDropdownOpen && calcMethod === 'Percentage' && (
-                                        <>
-                                            <div
-                                                className="fixed inset-0 z-40"
-                                                onClick={() => setIsDropdownOpen(false)}
-                                            />
-                                            <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
-                                                {['CTC', 'Basic'].map(comp => (
-                                                    <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedComponents.includes(comp)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) {
-                                                                    setSelectedComponents([...selectedComponents, comp]);
-                                                                } else {
-                                                                    setSelectedComponents(selectedComponents.filter(c => c !== comp));
-                                                                }
-                                                            }}
-                                                            className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                                                        />
-                                                        <span className="text-sm text-slate-700">{comp}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">
-                                {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-800"
-                                />
-                                <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                    {calcMethod === 'Percentage' ? '%' : '₹'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
-                            <div className="relative">
-                                <select
-                                    value={taxTreatment}
-                                    onChange={(e) => setTaxTreatment(e.target.value as any)}
-                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white text-slate-700 font-medium"
-                                >
-                                    <option value="Fully Taxable">Fully Taxable</option>
-                                    <option value="Fully Exempt">Fully Exempt</option>
-                                    <option value="Partially Exempt">Partially Exempt</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                            </div>
-                            <p className="text-[10px] text-slate-500 mt-1.5">
-                                {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
-                                {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
-                                {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                            <h3 className="text-xl font-bold text-slate-800">
+                                {activeTab === 'History' ? 'Audit History' : (initialData ? `Edit Reimbursement Component` : 'Add Reimbursement Component')}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {activeTab === 'History' ? 'Track all modifications and version updates' : 'Define and configure reimbursement parameters'}
                             </p>
                         </div>
                     </div>
-
-                    {/* Checkboxes */}
-                    <div className="pt-2 flex flex-col gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer group">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                {showInPayslip && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
-                            <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer group">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                {isActive && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
-                            <span className="text-sm font-medium text-slate-700">Mark as Active</span>
-                        </label>
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                        <button
+                            onClick={() => setActiveTab('Configuration')}
+                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${activeTab === 'Configuration' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            <Settings size={16} /> Configuration
+                        </button>
+                        {initialData && (
+                            <button
+                                onClick={() => setActiveTab('History')}
+                                className={`px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${activeTab === 'History' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                                <History size={16} /> Audit History
+                            </button>
+                        )}
                     </div>
                 </div>
+            </div>
 
-                <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
-                    <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
-                </div>
+            <div className="flex-1 overflow-hidden flex flex-col">
+                {activeTab === 'History' ? (
+                    <div className="flex-1 flex overflow-hidden">
+                        <div className="flex-1 p-8 overflow-y-auto bg-white">
+                            <div className="max-w-4xl mx-auto space-y-8">
+                                <div className="flex items-center justify-between group">
+                                    <h4 className="text-base font-bold text-slate-800">Configuration Details</h4>
+                                    {(!selectedRecordId || selectedRecordId === history[0]?.id) && history.length > 0 && (
+                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded border border-emerald-100">Current Version</span>
+                                    )}
+                                </div>
+                                {history.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                                        <div className="p-4 bg-slate-50 rounded-2xl text-slate-300 mb-4"><Clock size={40} strokeWidth={1.5} /></div>
+                                        <p className="text-slate-800 font-bold text-lg">No history available</p>
+                                        <p className="text-slate-500 text-sm max-w-xs mt-2">Changes are recorded when you save updates to an existing component.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                                        {(() => {
+                                            const yn = (v: any) => (v ? 'Yes' : 'No');
+                                            const selectedIndex = selectedRecordId ? history.findIndex((r: any) => r.id === selectedRecordId) : 0;
+                                            const histState: any = {
+                                                'Component Name': name,
+                                                'Name in Payslip': payslipName,
+                                                'Effective Month': effectiveDate,
+                                                'Status': isActive ? 'Active' : 'Inactive',
+                                                'Nature of Pay': natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
+                                                'Calculation Method': calcMethod,
+                                                'Amount / %': amount || 'Not set',
+                                                'Tax Treatment': taxTreatment,
+                                                'Show in Payslip': yn(showInPayslip),
+                                            };
+                                            if (selectedIndex > 0) {
+                                                for (let i = 0; i < selectedIndex; i++) {
+                                                    histState[history[i].field] = history[i].oldValue;
+                                                }
+                                            }
+                                            const renderField = (label: string) => {
+                                                const isChanged = selectedRecordId
+                                                    ? history[selectedIndex]?.field === label
+                                                    : (history.length > 0 && history[0].field === label);
+                                                return (
+                                                    <div className="space-y-1.5" key={label}>
+                                                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+                                                        <div className={`text-sm font-medium p-3 rounded-xl border ${isChanged ? 'bg-sky-50/50 border-sky-100 text-sky-900 shadow-sm' : 'bg-slate-50/30 border-slate-100 text-slate-700'}`}>
+                                                            {histState[label] ?? 'Not set'}
+                                                            {isChanged && <span className="ml-2 text-[10px] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded font-bold">CHANGED</span>}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            };
+                                            const renderSection = (title: string) => (
+                                                <div className="md:col-span-2 pt-2 pb-1 border-b border-slate-100">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{title}</span>
+                                                </div>
+                                            );
+                                            return <>
+                                                {renderSection('Basic Info')}
+                                                {renderField('Component Name')}
+                                                {renderField('Name in Payslip')}
+                                                {renderField('Effective Month')}
+                                                {renderField('Status')}
+                                                {renderSection('Configuration')}
+                                                {renderField('Nature of Pay')}
+                                                {renderField('Calculation Method')}
+                                                {renderField('Amount / %')}
+                                                {renderField('Tax Treatment')}
+                                                {renderField('Show in Payslip')}
+                                            </>;
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="w-full lg:w-[300px] bg-slate-50 p-6 overflow-y-auto max-h-[520px]">
+                            <div className="mb-5">
+                                <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Version History</h4>
+                                <p className="text-[11px] text-slate-400 font-medium">View previous versions of this component.</p>
+                            </div>
+                            <div className="space-y-3">
+                                {history.length === 0 ? (
+                                    <div className="py-12 text-center text-slate-400 text-xs italic">No versions recorded.</div>
+                                ) : (
+                                    history.map((record: any, idx: number) => (
+                                        <button
+                                            key={record.id}
+                                            onClick={() => setSelectedRecordId(record.id)}
+                                            className={`w-full text-left p-4 rounded-xl border transition-all ${selectedRecordId === record.id || (!selectedRecordId && idx === 0) ? 'bg-white border-sky-200 shadow-md shadow-sky-100/50 scale-[1.02]' : 'bg-white/50 border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${record.field === 'Status' ? (record.newValue === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600') : 'bg-sky-50 text-sky-600'}`}>
+                                                    {record.field} Update
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 font-medium">{record.timestamp}</span>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                                    <span className="text-xs text-slate-400 line-through truncate">{record.oldValue}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+                                                    <span className="text-xs font-bold text-slate-700 truncate">{record.newValue}</span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 pt-2 border-t border-slate-50 flex items-center gap-2">
+                                                <div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-500">{record.changedBy[0]}</div>
+                                                <span className="text-[10px] font-medium text-slate-500">Modified by {record.changedBy}</span>
+                                            </div>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="p-8 space-y-6 overflow-y-auto flex-1 bg-white">
+                            {/* Names */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
+                                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
+                                    <input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
+                                </div>
+                                {initialData && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date</label>
+                                        <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 transition-all" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Nature of Pay */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
+                                    <div className="flex gap-6">
+                                        {['Fixed', 'Variable'].map(type => (
+                                            <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                    {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                                </div>
+                                                <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
+                                                <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Calculation Method, Enter Amount & Tax Treatment */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
+                                    <div className="flex items-center gap-6 h-[42px]">
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                            </div>
+                                            <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
+                                            <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                            </div>
+                                            <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
+                                            <span className="text-sm text-slate-700 font-medium">Percentage of</span>
+                                        </label>
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                disabled={calcMethod !== 'Percentage'}
+                                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                                className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between transition-all"
+                                            >
+                                                <span className="truncate max-w-[80px]">
+                                                    {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
+                                                </span>
+                                                <ChevronDown size={14} className="text-slate-400" />
+                                            </button>
+
+                                            {isDropdownOpen && calcMethod === 'Percentage' && (
+                                                <>
+                                                    <div
+                                                        className="fixed inset-0 z-40"
+                                                        onClick={() => setIsDropdownOpen(false)}
+                                                    />
+                                                    <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
+                                                        {['CTC', 'Basic'].map(comp => (
+                                                            <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedComponents.includes(comp)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            setSelectedComponents([...selectedComponents, comp]);
+                                                                        } else {
+                                                                            setSelectedComponents(selectedComponents.filter(c => c !== comp));
+                                                                        }
+                                                                    }}
+                                                                    className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                                                                />
+                                                                <span className="text-sm text-slate-700">{comp}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">
+                                        {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
+                                            className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-800"
+                                        />
+                                        <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                            {calcMethod === 'Percentage' ? '%' : '₹'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            value={taxTreatment}
+                                            onChange={(e) => setTaxTreatment(e.target.value as any)}
+                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white text-slate-700 font-medium"
+                                        >
+                                            <option value="Fully Taxable">Fully Taxable</option>
+                                            <option value="Fully Exempt">Fully Exempt</option>
+                                            <option value="Partially Exempt">Partially Exempt</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-1.5">
+                                        {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
+                                        {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
+                                        {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Checkboxes */}
+                            <div className="pt-2 flex flex-col gap-3">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                        {showInPayslip && <Check size={14} className="text-white" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
+                                    <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                        {isActive && <Check size={14} className="text-white" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
+                                    <span className="text-sm font-medium text-slate-700">Mark as Active</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                            <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                            <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
-}
+};
 
 const HRSalaryComponents: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Earnings');
@@ -1709,7 +2361,8 @@ const HRSalaryComponents: React.FC = () => {
                 considerLWF: item.consider_lwf,
                 considerLeaveEncashment: item.consider_leave_encashment,
                 showOnSalaryRegister: item.show_on_salary_register,
-                showRateOnSalarySlip: item.show_rate_on_salary_slip
+                showRateOnSalarySlip: item.show_rate_on_salary_slip,
+                history: item.history || []
             }));
             setComponents(mappedData);
         }
@@ -1889,7 +2542,7 @@ const HRSalaryComponents: React.FC = () => {
             consider_epf: data.considerEPF,
             consider_esi: data.considerESI,
             consider_gratuity: data.considerGratuity,
-            effective_date: data.effectiveDate,
+            effective_date: toISOEffectiveDate(data.effectiveDate || ''),
             deduction_type: data.deductionType,
             show_in_payslip: data.showInPayslip,
             target_id: data.targetId,
@@ -1955,6 +2608,33 @@ const HRSalaryComponents: React.FC = () => {
         setEditingComponent(null);
     };
 
+    if (isAdding) {
+        const editLabel = editingComponent
+            ? (activeTab === 'Earnings' ? 'Edit Earning Component' : activeTab === 'Deductions' ? 'Edit Deduction Component' : 'Edit Reimbursement Component')
+            : (activeTab === 'Earnings' ? 'Add Earning Component' : activeTab === 'Deductions' ? 'Add Deduction Component' : 'Add Reimbursement Component');
+        return (
+            <div className="p-4 lg:p-6 w-full space-y-6">
+                <div className="flex items-center gap-2 mb-2">
+                    <button
+                        onClick={handleCancel}
+                        className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
+                    >
+                        Salary Components
+                    </button>
+                    <ChevronRight size={14} className="text-slate-300" />
+                    <span className="text-slate-800 font-bold text-sm">{editLabel}</span>
+                </div>
+                {activeTab === 'Earnings' ? (
+                    <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
+                ) : activeTab === 'Deductions' ? (
+                    <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
+                ) : (
+                    <AddReimbursementComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 lg:p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
 
@@ -1969,17 +2649,8 @@ const HRSalaryComponents: React.FC = () => {
 
             </div>
 
-            {isAdding ? (
-                activeTab === 'Earnings' ? (
-                    <AddEarningComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
-                ) : activeTab === 'Deductions' ? (
-                    <AddDeductionComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
-                ) : (
-                    <AddReimbursementComponentForm onCancel={handleCancel} onSave={handleSave} initialData={editingComponent} paygroups={paygroups} selectedTarget={selectedTarget} />
-                )
-            ) : (
-                /* Main Content */
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[500px]">
+            {/* Main Content */}
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[500px]">
                     {/* Tabs */}
                     <div className="flex border-b border-slate-100">
                         {tabs.map((tab) => (
@@ -2267,7 +2938,6 @@ const HRSalaryComponents: React.FC = () => {
                         </div>
                     )}
                 </div>
-            )}
 
             {/* Confirmation Modals */}
             <ConfirmationModal

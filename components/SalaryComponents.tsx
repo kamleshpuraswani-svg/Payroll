@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, LayoutDashboard, Plus, Search, Filter, Trash2, Edit2, RotateCcw, CheckCircle, X, Download, Info, Check, MoreVertical,
-    Sigma, ChevronDown, Tag, FileText, Calculator, Power, AlertTriangle
+    Sigma, ChevronDown, Tag, FileText, Calculator, Power, AlertTriangle, Clock
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+
+interface ComponentChangeHistory {
+    id: string;
+    timestamp: string;
+    changedBy: string;
+    field: string;
+    oldValue: string;
+    newValue: string;
+}
 
 interface SalaryComponent {
     id: string;
@@ -44,6 +53,7 @@ interface SalaryComponent {
     consider_leave_encashment?: boolean;
     show_on_salary_register?: boolean;
     show_rate_on_salary_slip?: boolean;
+    history?: ComponentChangeHistory[];
 }
 
 interface AddEarningFormProps {
@@ -62,6 +72,21 @@ interface ConfirmationModalProps {
     confirmLabel: string;
     isDanger?: boolean;
 }
+
+const addHistory = (label: string, oldVal: any, newVal: any): ComponentChangeHistory | null => {
+    if (String(oldVal) === String(newVal)) return null;
+    return {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        }),
+        changedBy: 'Admin',
+        field: label,
+        oldValue: String(oldVal || 'None'),
+        newValue: String(newVal || 'None')
+    };
+};
 
 // --- Mock Data ---
 const INITIAL_DATA: SalaryComponent[] = [
@@ -180,9 +205,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 
 // --- Detailed Add Earning Form ---
 const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, userRole }) => {
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
     const [name, setName] = useState(initialData?.name || '');
     const [availableEarnings, setAvailableEarnings] = useState<{ id: string, name: string }[]>([]);
     const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
+    const [history] = useState<ComponentChangeHistory[]>(initialData?.history || []);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
     useEffect(() => {
         if (userRole === 'HR_MANAGER') {
@@ -260,9 +288,21 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             return;
         }
         setError(null);
-        const calculateString = calc_method === 'Flat'
-            ? `Flat ₹${amount_or_percent}`
-            : `${amount_or_percent}% of ${selectedComponents.join(', ')}`;
+        const calculateString = natureOfPay === 'Fixed'
+            ? (calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : `${amount_or_percent}% of ${selectedComponents.join(', ')}`)
+            : 'Variable';
+
+        const newHistoryRecords: ComponentChangeHistory[] = [];
+        if (initialData) {
+            const h1 = addHistory('Name', initialData.name, finalName); if (h1) newHistoryRecords.push(h1);
+            const h2 = addHistory('Payslip Name', initialData.payslip_name, payslip_name); if (h2) newHistoryRecords.push(h2);
+            const h3 = addHistory('Effective Date', initialData.effective_date, effective_date); if (h3) newHistoryRecords.push(h3);
+            const h4 = addHistory('Type', initialData.type, natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay'); if (h4) newHistoryRecords.push(h4);
+            const h5 = addHistory('Calc Method', initialData.calc_method, calc_method); if (h5) newHistoryRecords.push(h5);
+            const h6 = addHistory('Amount/Percent', initialData.amount_or_percent, amount_or_percent); if (h6) newHistoryRecords.push(h6);
+            const h7 = addHistory('Taxable', initialData.taxable, isTaxable ? 'Fully Taxable' : 'Fully Exempt'); if (h7) newHistoryRecords.push(h7);
+            const h8 = addHistory('Status', initialData.status, isActive); if (h8) newHistoryRecords.push(h8);
+        }
 
         const updatedData: Partial<SalaryComponent> = {
             name: finalName,
@@ -271,7 +311,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
             calc_method: natureOfPay === 'Fixed' ? calc_method : undefined,
             amount_or_percent: natureOfPay === 'Fixed' ? amount_or_percent : undefined,
-            calculation: natureOfPay === 'Fixed' ? calculateString : 'Variable',
+            calculation: calculateString,
             taxable: isTaxable ? 'Fully Taxable' : 'Fully Exempt',
             consider_epf: consider_epf,
             consider_esi: consider_esi,
@@ -291,525 +331,431 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             consider_lwf,
             consider_leave_encashment,
             show_on_salary_register,
-            show_rate_on_salary_slip
+            show_rate_on_salary_slip,
+            history: [...newHistoryRecords, ...(initialData?.history || [])]
         };
         onSave(updatedData);
     };
 
+    if (activeTab === 'History') {
+        const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
+        
+        return (
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 flex flex-col h-[85vh] max-w-6xl mx-auto mt-6">
+                <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setActiveTab('Configuration')} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><ChevronDown size={20} className="rotate-90 text-slate-600" /></button>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Audit History: {name || 'New Component'}</h2>
+                            <p className="text-sm text-slate-500">Track all modifications and configuration changes</p>
+                        </div>
+                    </div>
+                    <button onClick={onCancel} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all group">
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
+
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar */}
+                    <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/30">
+                        <div className="p-4 border-b border-slate-100 bg-white/50">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                <input type="text" placeholder="Search history..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none" />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                            {history.length === 0 ? (
+                                <div className="text-center py-10 px-4">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3"><Clock className="text-slate-400" size={20} /></div>
+                                    <p className="text-slate-500 text-sm font-medium">No history available</p>
+                                </div>
+                            ) : (
+                                history.map((record, index) => (
+                                    <button
+                                        key={record.id}
+                                        onClick={() => setSelectedRecordId(record.id)}
+                                        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedRecordId === record.id || (!selectedRecordId && index === 0) ? 'bg-white border-purple-200 shadow-md ring-1 ring-purple-100' : 'bg-transparent border-transparent hover:bg-white hover:border-slate-200'}`}
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{record.timestamp}</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-800 mb-1">{record.field} Changed</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">A</div>
+                                            <span className="text-xs text-slate-500 font-medium">{record.changedBy}</span>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto bg-white p-10">
+                        {history.length > 0 && (
+                            <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="flex items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center"><Clock className="text-purple-600" size={24} /></div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-800">Modification Summary</h3>
+                                        <p className="text-sm text-slate-500">Detailed overview of the changes made to the configuration.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-10">
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Previous Configuration</h4>
+                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/60 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-slate-300" />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{history[selectedIndex]?.field}</span>
+                                                <span className="text-lg font-bold text-slate-800 line-through decoration-slate-300 decoration-2">{history[selectedIndex]?.oldValue}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-sky-500 uppercase tracking-widest pl-1">New Configuration</h4>
+                                        <div className="bg-sky-50 rounded-2xl p-6 border border-sky-200/60 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-sky-500" />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider">{history[selectedIndex]?.field}</span>
+                                                <span className="text-lg font-bold text-slate-900">{history[selectedIndex]?.newValue}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100 text-center">
+                                    <p className="text-xs text-slate-400">Captured by System Audit Engine • Version 2.4.0</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-4xl mx-auto mt-6">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Earning Component' : 'Add Earning Component'}</h2>
-                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-300 max-w-4xl mx-auto mt-6 flex flex-col h-[85vh]">
+            <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                <div className="flex flex-col">
+                    <h2 className="text-xl font-bold text-slate-800">{initialData ? `Edit ${name}` : 'Add Earning Component'}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{isActive ? 'Currently Active' : 'Currently Inactive'}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm mr-4">
+                        <button
+                            onClick={() => setActiveTab('Configuration')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'Configuration' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Configuration
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('History')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'History' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            History
+                        </button>
+                    </div>
+                    <button onClick={onCancel} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all group">
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
             </div>
 
-            <div className="p-8 space-y-8">
-                {/* Section 1 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                        {userRole === 'HR_MANAGER' ? (
-                            <div className="relative">
-                                <select
-                                    value={isOtherSelected ? 'others' : name}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (val === 'others') {
-                                            setIsOtherSelected(true);
-                                            setName('');
-                                        } else {
-                                            setIsOtherSelected(false);
-                                            setName(val);
-                                            // Auto-fill payslip name if empty
-                                            if (!payslip_name) setPayslip_name(val);
-                                        }
-                                    }}
-                                    disabled={isLoadingEarnings}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white font-medium text-slate-700"
-                                >
-                                    <option value="">Select Component</option>
-                                    {availableEarnings.map(comp => (
-                                        <option key={comp.id} value={comp.name}>{comp.name}</option>
-                                    ))}
-                                    <option value="others" className="text-purple-600 font-semibold border-t border-slate-100">+ Others</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div className="max-w-3xl mx-auto space-y-10">
+                    <section className="space-y-6">
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Component Name <span className="text-rose-500">*</span></label>
+                                {userRole === 'HR_MANAGER' ? (
+                                    <div className="relative">
+                                        <select
+                                            value={isOtherSelected ? 'others' : name}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val === 'others') {
+                                                    setIsOtherSelected(true);
+                                                    setName('');
+                                                } else {
+                                                    setIsOtherSelected(false);
+                                                    setName(val);
+                                                    if (!payslip_name) setPayslip_name(val);
+                                                }
+                                            }}
+                                            disabled={isLoadingEarnings}
+                                            className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all appearance-none"
+                                        >
+                                            <option value="">Select Component</option>
+                                            {availableEarnings.map(comp => (
+                                                <option key={comp.id} value={comp.name}>{comp.name}</option>
+                                            ))}
+                                            <option value="others">+ Others</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="e.g. Basic Salary"
+                                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                    />
+                                )}
+                                {userRole === 'HR_MANAGER' && isOtherSelected && (
+                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                        <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={customName}
+                                            onChange={e => { setCustomName(e.target.value); if (!payslip_name) setPayslip_name(e.target.value); }}
+                                            placeholder="Enter Custom Name"
+                                            className="w-full px-4 py-3 bg-purple-50/10 border border-purple-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
-                        )}
-
-                        {userRole === 'HR_MANAGER' && isOtherSelected && (
-                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Name in Payslip <span className="text-rose-500">*</span></label>
                                 <input
                                     type="text"
-                                    value={customName}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setCustomName(val);
-                                        if (!payslip_name) setPayslip_name(val);
-                                    }}
-                                    placeholder="Enter Custom Name"
-                                    className="w-full px-3 py-2.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10"
+                                    value={payslip_name}
+                                    onChange={(e) => setPayslip_name(e.target.value)}
+                                    placeholder="e.g. Basic"
+                                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
                                 />
                             </div>
-                        )}
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
-                        <input type="text" value={payslip_name} onChange={e => setPayslip_name(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date {userRole === 'HR_MANAGER' && <span className="text-rose-500">*</span>}</label>
-                        <input type="date" value={effective_date} onChange={e => setEffective_date(e.target.value)} className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`} />
-                        {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
-                    </div>
-                </div>
+                        </div>
 
-                <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
-                    <div className="flex gap-6">
-                        {['Fixed', 'Variable'].map((type) => (
-                            <label key={type} 
-                                   className="flex items-center gap-2 cursor-pointer group"
-                                   style={{ display: type === 'Variable' ? 'none' : 'flex' }}
-                            >
-                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Effective Date <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        type="date"
+                                        value={effective_date}
+                                        onChange={(e) => setEffective_date(e.target.value)}
+                                        className={`w-full pl-12 pr-4 py-3 bg-slate-50/50 border rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`}
+                                    />
                                 </div>
-                                <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
-                                <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+                                {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-bold">{error}</p>}
+                            </div>
+                        </div>
+                    </section>
 
-                {/* Calculation Method - Visible for Both Fixed and Variable per request */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
-                        <div className="flex items-center gap-6 h-[42px]">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {calc_method === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                    <div className="h-px bg-slate-100" />
+
+                    <section className="space-y-6">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <Calculator size={18} className="text-purple-600" />
+                            Calculation Basis
+                        </h3>
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-3" style={{ display: 'none' }}>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Pay Type</label>
+                                <div className="flex p-1.5 bg-slate-100/50 rounded-xl border border-slate-200/60 shadow-inner">
+                                    {['Fixed', 'Variable'].map(t => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setNatureOfPay(t as any)}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${natureOfPay === t ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            {t} Pay
+                                        </button>
+                                    ))}
                                 </div>
-                                <input type="radio" className="hidden" checked={calc_method === 'Flat'} onChange={() => setCalc_method('Flat')} />
-                                <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {calc_method === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                            </div>
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Calculation Method</label>
+                                <div className="flex p-1.5 bg-slate-100/50 rounded-xl border border-slate-200/60 shadow-inner">
+                                    {['Flat', 'Percentage'].map(m => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setCalc_method(m as any)}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${calc_method === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            {m === 'Flat' ? 'Flat Amount' : 'Percentage'}
+                                        </button>
+                                    ))}
                                 </div>
-                                <input type="radio" className="hidden" checked={calc_method === 'Percentage'} onChange={() => setCalc_method('Percentage')} />
-                                <span className="text-sm text-slate-700 font-medium">Percentage of</span>
-                            </label>
+                            </div>
                             <div className="relative">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Value</label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        value={amount_or_percent}
+                                        onChange={(e) => setAmount_or_percent(e.target.value)}
+                                        placeholder={calc_method === 'Percentage' ? 'e.g. 50' : 'e.g. 10000'}
+                                        className="w-full pl-4 pr-14 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                    />
+                                    <div className="absolute right-0 top-0 h-full px-4 bg-slate-100/80 border-l border-slate-200 rounded-r-xl flex items-center text-slate-500 font-bold text-sm">
+                                        {calc_method === 'Percentage' ? '%' : '₹'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {calc_method === 'Percentage' && (
+                            <div className="relative max-w-sm">
                                 <button
                                     type="button"
-                                    disabled={calc_method !== 'Percentage'}
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between"
+                                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:border-purple-500 outline-none flex items-center justify-between group hover:bg-white transition-all shadow-sm"
                                 >
-                                    <span className="truncate max-w-[80px]">
-                                        {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
+                                    <span className="text-slate-700 flex items-center gap-2 uppercase tracking-tighter text-[10px] font-black">
+                                        <Sigma className="text-slate-400" size={12} />
+                                        OF {selectedComponents.join(', ')}
                                     </span>
-                                    <ChevronDown size={14} className="text-slate-400" />
+                                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
-                                {isDropdownOpen && calc_method === 'Percentage' && (
+                                {isDropdownOpen && (
                                     <>
-                                        <div
-                                            className="fixed inset-0 z-40"
-                                            onClick={() => setIsDropdownOpen(false)}
-                                        />
-                                        <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                        <div className="absolute top-full left-0 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-2 animate-in fade-in zoom-in-95 duration-100 overflow-hidden ring-1 ring-slate-200/50">
                                             {['CTC', 'Basic'].map(comp => (
-                                                <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                                <label key={comp} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                                        {selectedComponents.includes(comp) && <Check size={14} className="text-white" />}
+                                                    </div>
                                                     <input
                                                         type="checkbox"
+                                                        className="hidden"
                                                         checked={selectedComponents.includes(comp)}
                                                         onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setSelectedComponents([...selectedComponents, comp]);
-                                                            } else {
-                                                                setSelectedComponents(selectedComponents.filter(c => c !== comp));
-                                                            }
+                                                            if (e.target.checked) setSelectedComponents(prev => [...prev, comp]);
+                                                            else setSelectedComponents(prev => prev.filter(c => c !== comp));
                                                         }}
-                                                        className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                                                     />
-                                                    <span className="text-sm text-slate-700">{comp}</span>
+                                                    <span className="text-sm text-slate-700 font-bold">{comp}</span>
                                                 </label>
                                             ))}
                                         </div>
                                     </>
                                 )}
                             </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-2">{calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                            <input type="text" value={amount_or_percent} onChange={(e) => setAmount_or_percent(e.target.value)} placeholder={calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
-                            <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                {calc_method === 'Percentage' ? '%' : '₹'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-
-                <div className="pt-6 border-t border-slate-300 space-y-5">
-                    <h3 className="font-bold text-slate-800 text-sm">Other Configurations</h3>
-
-                    {/* Taxable */}
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Taxable earning <span className="text-rose-500">*</span></label>
-                            <div className="flex gap-6">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(true)} />
-                                    <span className="text-sm text-slate-700 font-medium">Yes</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors {!isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {!isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={!isTaxable} onChange={() => setIsTaxable(false)} />
-                                    <span className="text-sm text-slate-700 font-medium">No</span>
-                                </label>
-                            </div>
-                        </div>
-                        {isTaxable && (
-                            <div className="ml-7 w-1/2 space-y-3 animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
-                                <div className="relative">
-                                    <select
-                                        value={taxTreatment}
-                                        onChange={(e) => setTaxTreatment(e.target.value as any)}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none bg-white font-medium text-slate-700"
-                                    >
-                                        <option value="Fully Taxable">Fully Taxable</option>
-                                        <option value="Partially Exempt">Partially Exempt</option>
-                                        <option value="Fully Exempt">Fully Exempt</option>
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                </div>
-                                <p className="text-xs text-slate-500">
-                                    {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
-                                    {taxTreatment === 'Partially Exempt' && "Entire amount is exempt from income tax."}
-                                    {taxTreatment === 'Fully Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
-                                </p>
-                            </div>
                         )}
+                    </section>
 
-                        {/* Additional Tax Fields */}
-                        {isTaxable && (
-                            <div className="ml-7 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                                {(taxTreatment === 'Partially Exempt') && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Non Taxable Limit</label>
-                                        <input
-                                            type="text"
-                                            value={non_taxable_limit}
-                                            onChange={e => setNon_taxable_limit(e.target.value.replace(/[^0-9]/g, ''))}
-                                            placeholder="Enter Amount"
-                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
-                                        />
+                    <div className="h-px bg-slate-100" />
+
+                    <section className="space-y-8">
+                        <div className="flex items-center justify-between mb-2">
+                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                                <Sigma size={18} className="text-purple-600" />
+                                Configuration & Statutory
+                            </h3>
+                            <button onClick={() => setIsActive(!isActive)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-1 ring-slate-200'}`}>
+                                {isActive ? 'Active Status' : 'Inactive Status'}
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">PF (Provident Fund)</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Consider for PF Contribution</span>
                                     </div>
-                                )}
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2">Tax computation <span className="text-rose-500">*</span></label>
-                                    <div className="flex gap-6 h-[40px] items-center">
-                                        {['Proportionally', 'Pay month'].map((option) => (
-                                            <label key={option} className="flex items-center gap-2 cursor-pointer group">
-                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${tax_computation === option ? 'border-purple-600' : 'border-slate-300'}`}>
-                                                    {tax_computation === option && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                                </div>
-                                                <input type="radio" className="hidden" checked={tax_computation === option} onChange={() => setTax_computation(option as any)} />
-                                                <span className="text-sm text-slate-700 font-medium">{option}</span>
-                                            </label>
-                                        ))}
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${consider_epf ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${consider_epf ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={consider_epf} onChange={() => setConsider_epf(!consider_epf)} />
                                     </div>
-                                </div>
+                                </label>
 
-                                <div className="relative">
-                                    <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
-                                    {isCreatingSection ? (
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={customTaxSection}
-                                                onChange={e => setCustomTaxSection(e.target.value)}
-                                                placeholder="Enter Section Name"
-                                                className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10 font-medium text-slate-700"
-                                                autoFocus
-                                            />
-                                            <button
-                                                onClick={() => { setIsCreatingSection(false); setCustomTaxSection(''); }}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div
-                                                onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
-                                            >
-                                                <span>{income_tax_section || 'Select or Create Section'}</span>
-                                                <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
-                                            </div>
-                                            {isSectionDropdownOpen && (
-                                                <>
-                                                    <div className="fixed inset-0 z-40" onClick={() => setIsSectionDropdownOpen(false)} />
-                                                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                                                        <div
-                                                            onClick={() => { setIsCreatingSection(true); setIsSectionDropdownOpen(false); }}
-                                                            className="px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-slate-50 cursor-pointer border-b border-slate-100"
-                                                        >
-                                                            Create section
-                                                        </div>
-                                                        {[
-                                                            "Section_10(14)(i)",
-                                                            "Section_10(14)(ii)",
-                                                            "Section_10(5)",
-                                                            "Section_17(2)(Viii)",
-                                                            "Section_10(13)(a)"
-                                                        ].map(section => (
-                                                            <div
-                                                                key={section}
-                                                                onClick={() => { setIncome_tax_section(section); setIsSectionDropdownOpen(false); }}
-                                                                className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
-                                                            >
-                                                                {section}
-                                                                {income_tax_section === section && <Check size={14} className="text-purple-600" />}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-
-                                {(taxTreatment === 'Fully Taxable') && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
-                                        <input
-                                            type="text"
-                                            value={section_max_limit}
-                                            onChange={e => setSection_max_limit(e.target.value.replace(/[^0-9]/g, ''))}
-                                            placeholder="Enter Amount"
-                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-slate-700"
-                                        />
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">ESI contribution</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Consider for ESI Contribution</span>
                                     </div>
-                                )}
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${consider_esi ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${consider_esi ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={consider_esi} onChange={() => setConsider_esi(!consider_esi)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Taxable Earning</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Consider for Income Tax</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isTaxable ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${isTaxable ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(!isTaxable)} />
+                                    </div>
+                                </label>
                             </div>
-                        )}
-                    </div>
 
-                    {/* Round off settings */}
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Round off settings <span className="text-rose-500">*</span></label>
-                            <div className="flex gap-6">
-                                {['Floor', 'Ceiling'].map((option) => (
-                                    <label key={option} className="flex items-center gap-2 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${round_off_setting === option ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {round_off_setting === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={round_off_setting === option} onChange={() => setRound_off_setting(option as any)} />
-                                        <span className="text-sm text-slate-700 font-medium">{option}</span>
-                                    </label>
-                                ))}
+                            <div className="space-y-6">
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Include in CTC</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Affects Annual CTC calculation</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${include_in_ctc ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${include_in_ctc ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={include_in_ctc} onChange={() => setInclude_in_ctc(!include_in_ctc)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Gross Salary</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Include in Gross Salary Sum</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${include_in_gross ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${include_in_gross ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={include_in_gross} onChange={() => setInclude_in_gross(!include_in_gross)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">First Salary Only</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Include in employee's first salary</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${include_in_first_salary ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${include_in_first_salary ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={include_in_first_salary} onChange={() => setInclude_in_first_salary(!include_in_first_salary)} />
+                                    </div>
+                                </label>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_ctc ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {include_in_ctc && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={include_in_ctc} onChange={() => setInclude_in_ctc(!include_in_ctc)} />
-                            <span className="block text-sm font-bold text-slate-700">Include this component in CTC</span>
-                        </label>
-
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_gross ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {include_in_gross && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={include_in_gross} onChange={() => setInclude_in_gross(!include_in_gross)} />
-                            <span className="block text-sm font-bold text-slate-700">Include this component in Gross salary</span>
-                        </label>
-
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_first_salary ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {include_in_first_salary && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={include_in_first_salary} onChange={() => setInclude_in_first_salary(!include_in_first_salary)} />
-                            <span className="block text-sm font-bold text-slate-700">Include in the employee’s first salary</span>
-                        </label>
-
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${include_in_payout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {include_in_payout && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={include_in_payout} onChange={() => setInclude_in_payout(!include_in_payout)} />
-                            <span className="block text-sm font-bold text-slate-700">Include this component in monthly payout</span>
-                        </label>
-
-                        {/* Pro Rata moved up here */}
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {isProRata && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
-                            <div>
-                                <span className="block text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
-                                <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
-                            </div>
-                        </label>
-                    </div>
-
-                    <h3 className="font-bold text-slate-800 text-sm mt-6 mb-4 pt-4 border-t border-slate-200">Statutory Settings</h3>
-
-                    {/* EPF */}
-                    <div className="flex flex-col md:flex-row md:items-start gap-4">
-                        <label className="flex items-start gap-2 cursor-pointer">
-                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_epf ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {consider_epf && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={consider_epf}
-                                onChange={() => setConsider_epf(!consider_epf)}
-                            />
-                            <div>
-                                <span className="block text-sm font-bold text-slate-700">Consider for EPF Contribution</span>
-                                <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
-                            </div>
-                        </label>
-
-                        {consider_epf && (
-                            <div className="flex gap-4 ml-7 md:ml-0">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${epfContribution === 'Always' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {epfContribution === 'Always' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={epfContribution === 'Always'} onChange={() => setEpfContribution('Always')} />
-                                    <span className="text-sm text-slate-700 font-medium">Always</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${epfContribution === 'Limit' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {epfContribution === 'Limit' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={epfContribution === 'Limit'} onChange={() => setEpfContribution('Limit')} />
-                                    <span className="text-sm text-slate-700 font-medium">Only when PF Wage is less than ₹ 15,000</span>
-                                </label>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* ESI, Gratuity, PT, LWF, Leave Encashment, & Payslip */}
-                    <div className="space-y-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_esi ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {consider_esi && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={consider_esi}
-                                onChange={() => setConsider_esi(!consider_esi)}
-                            />
-                            <span className="text-sm font-bold text-slate-700">Consider for ESI Contribution</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_gratuity ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {consider_gratuity && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={consider_gratuity} onChange={() => setConsider_gratuity(!consider_gratuity)} />
-                            <span className="text-sm font-bold text-slate-700">Consider for Gratuity</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_pt ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {consider_pt && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={consider_pt} onChange={() => setConsider_pt(!consider_pt)} />
-                            <span className="text-sm font-bold text-slate-700">Consider for Professional tax</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_lwf ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {consider_lwf && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={consider_lwf} onChange={() => setConsider_lwf(!consider_lwf)} />
-                            <span className="text-sm font-bold text-slate-700">Consider for Labour Welfare Fund</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${consider_leave_encashment ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {consider_leave_encashment && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={consider_leave_encashment} onChange={() => setConsider_leave_encashment(!consider_leave_encashment)} />
-                            <span className="text-sm font-bold text-slate-700">Consider for Leave encashment</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {showInPayslip && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={showInPayslip} onChange={() => setShowInPayslip(!showInPayslip)} />
-                            <span className="text-sm font-bold text-slate-700">Show in Payslip</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_on_salary_register ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {show_on_salary_register && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={show_on_salary_register} onChange={() => setShow_on_salary_register(!show_on_salary_register)} />
-                            <span className="text-sm font-bold text-slate-700">Show on salary register</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_rate_on_salary_slip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {show_rate_on_salary_slip && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={show_rate_on_salary_slip} onChange={() => setShow_rate_on_salary_slip(!show_rate_on_salary_slip)} />
-                            <span className="text-sm font-bold text-slate-700">Show rate on salary slip</span>
-                        </label>
-                    </div>
-
-                    <div className="pt-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                {isActive && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
-                            <span className="text-sm font-medium text-slate-700">Mark as Active</span>
-                        </label>
-                    </div>
+                    </section>
                 </div>
             </div>
 
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+            <div className="px-10 py-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+                <button onClick={onCancel} className="px-8 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 transition-all border border-slate-200 rounded-xl bg-white hover:bg-slate-50">Cancel</button>
+                <button
+                    onClick={handleSave}
+                    className="px-10 py-2.5 text-sm font-black text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] uppercase tracking-widest"
+                >
+                    {initialData ? 'Update Component' : 'Create Component'}
+                </button>
             </div>
         </div>
     );
-}
+};
 
 // --- Detailed Add Deduction Form ---
 const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, userRole }) => {
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
     const [name, setName] = useState(initialData?.name || '');
     const [availableDeductions, setAvailableDeductions] = useState<{ id: string, name: string }[]>([]);
     const [isLoadingDeductions, setIsLoadingDeductions] = useState(false);
+    const [history, setHistory] = useState<ComponentChangeHistory[]>(initialData?.history || []);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
     useEffect(() => {
         if (userRole === 'HR_MANAGER') {
@@ -868,254 +814,461 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             return;
         }
         setError(null);
+
+        const newHistoryEntries: ComponentChangeHistory[] = [];
+        if (initialData) {
+            const changes = [
+                { label: 'Name', old: initialData.name, new: finalName },
+                { label: 'Payslip Name', old: initialData.payslip_name, new: payslip_name },
+                { label: 'Amount/Percent', old: initialData.amount_or_percent, new: amount_or_percent },
+                { label: 'Calculation Method', old: initialData.calc_method, new: calc_method },
+                { label: 'Status', old: initialData.status, new: isActive },
+                { label: 'Pro-rata', old: initialData.is_pro_rata, new: isProRata },
+                { label: 'Effective Date', old: initialData.effective_date, new: effective_date },
+                { label: 'Include Monthly Payout', old: initialData.include_monthly_payout, new: includeMonthlyPayout },
+                { label: 'Prorate DOJ/DOL', old: initialData.prorate_doj_dol, new: prorateDojDol },
+                { label: 'Include In First Salary', old: initialData.include_in_first_salary, new: includeInFirstSalary },
+                { label: 'Include Arrears', old: initialData.include_arrears, new: includeArrears },
+            ];
+
+            changes.forEach(c => {
+                const entry = addHistory(c.label, c.old, c.new);
+                if (entry) newHistoryEntries.push(entry);
+            });
+        }
+
+        const calculateString = calc_method === 'Flat'
+            ? 'Fixed Amount'
+            : `% of ${selectedComponents.join(', ')}`;
+
         const updatedData: Partial<SalaryComponent> = {
             name: finalName,
             payslip_name,
-            frequency,
-            status: isActive,
-            show_in_payslip,
             effective_date,
-            deduction_type,
-            calc_method,
-            amount_or_percent,
-            type: 'Variable Pay',
+            amount_or_percent: amount_or_percent,
+            status: isActive,
+            type: 'Fixed Pay',
             category: 'Deductions',
-            calculation: calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : `${amount_or_percent}% of ${selectedComponents.join(', ')}`,
+            calc_method: calc_method,
+            calculation: calculateString,
             taxable: 'Tax Deductible',
             is_pro_rata: isProRata,
+            show_in_payslip: show_in_payslip,
             include_monthly_payout: includeMonthlyPayout,
             prorate_doj_dol: prorateDojDol,
             include_in_first_salary: includeInFirstSalary,
-            include_arrears: includeArrears
+            include_arrears: includeArrears,
+            history: [...newHistoryEntries, ...history]
         };
         onSave(updatedData);
     };
 
-    return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-3xl mx-auto mt-6">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Deduction Component' : 'Add Deduction Component'}</h2>
-                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
-            </div>
-            <div className="p-8 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                        {userRole === 'HR_MANAGER' ? (
-                            <div className="relative">
-                                <select
-                                    value={isOtherSelected ? 'others' : name}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (val === 'others') {
-                                            setIsOtherSelected(true);
-                                            setName('');
-                                        } else {
-                                            setIsOtherSelected(false);
-                                            setName(val);
-                                            if (!payslip_name || payslip_name === name) setPayslip_name(val);
-                                        }
-                                    }}
-                                    disabled={isLoadingDeductions}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white font-medium text-slate-700"
-                                >
-                                    <option value="">Select Component</option>
-                                    {availableDeductions.map(comp => (
-                                        <option key={comp.id} value={comp.name}>{comp.name}</option>
-                                    ))}
-                                    <option value="others" className="text-purple-600 font-semibold border-t border-slate-100">+ Others</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                            </div>
-                        ) : (
-                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
-                        )}
+    if (activeTab === 'History') {
+        const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
+        
+        return (
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 flex flex-col h-[85vh] max-w-6xl mx-auto mt-6">
+                <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setActiveTab('Configuration')} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><ChevronDown size={20} className="rotate-90 text-slate-600" /></button>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Audit History: {name || 'New Component'}</h2>
+                            <p className="text-sm text-slate-500">Track all modifications and configuration changes</p>
+                        </div>
+                    </div>
+                    <button onClick={onCancel} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all group">
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
 
-                        {userRole === 'HR_MANAGER' && isOtherSelected && (
-                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar */}
+                    <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/30">
+                        <div className="p-4 border-b border-slate-100 bg-white/50">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                <input type="text" placeholder="Search history..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none" />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                            {history.length === 0 ? (
+                                <div className="text-center py-10 px-4">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3"><Clock className="text-slate-400" size={20} /></div>
+                                    <p className="text-slate-500 text-sm font-medium">No history available</p>
+                                </div>
+                            ) : (
+                                history.map((record, index) => (
+                                    <button
+                                        key={record.id}
+                                        onClick={() => setSelectedRecordId(record.id)}
+                                        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedRecordId === record.id || (!selectedRecordId && index === 0) ? 'bg-white border-purple-200 shadow-md ring-1 ring-purple-100' : 'bg-transparent border-transparent hover:bg-white hover:border-slate-200'}`}
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{record.timestamp}</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-800 mb-1">{record.field} Changed</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">A</div>
+                                            <span className="text-xs text-slate-500 font-medium">{record.changedBy}</span>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto bg-white p-10">
+                        {history.length > 0 && (
+                            <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="flex items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center"><Clock className="text-purple-600" size={24} /></div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-800">Modification Summary</h3>
+                                        <p className="text-sm text-slate-500">Detailed overview of the changes made to the configuration.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-10">
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Previous Configuration</h4>
+                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/60 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-slate-300" />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{history[selectedIndex]?.field}</span>
+                                                <span className="text-lg font-bold text-slate-800 line-through decoration-slate-300 decoration-2">{history[selectedIndex]?.oldValue}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-sky-500 uppercase tracking-widest pl-1">New Configuration</h4>
+                                        <div className="bg-sky-50 rounded-2xl p-6 border border-sky-200/60 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-sky-500" />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider">{history[selectedIndex]?.field}</span>
+                                                <span className="text-lg font-bold text-slate-900">{history[selectedIndex]?.newValue}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100 text-center">
+                                    <p className="text-xs text-slate-400">Captured by System Audit Engine • Version 2.4.0</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-300 max-w-4xl mx-auto mt-6 flex flex-col h-[85vh]">
+            <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                <div className="flex flex-col">
+                    <h2 className="text-xl font-bold text-slate-800">{initialData ? `Edit ${name}` : 'Add Deduction Component'}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{isActive ? 'Currently Active' : 'Currently Inactive'}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm mr-4">
+                        <button
+                            onClick={() => setActiveTab('Configuration')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'Configuration' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Configuration
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('History')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'History' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            History
+                        </button>
+                    </div>
+                    <button onClick={onCancel} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all group">
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div className="max-w-3xl mx-auto space-y-10">
+                    <section className="space-y-6">
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Component Name <span className="text-rose-500">*</span></label>
+                                {userRole === 'HR_MANAGER' ? (
+                                    <div className="relative">
+                                        <select
+                                            value={isOtherSelected ? 'others' : name}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val === 'others') {
+                                                    setIsOtherSelected(true);
+                                                    setName('');
+                                                } else {
+                                                    setIsOtherSelected(false);
+                                                    setName(val);
+                                                    if (!payslip_name) setPayslip_name(val);
+                                                }
+                                            }}
+                                            disabled={isLoadingDeductions}
+                                            className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all appearance-none"
+                                        >
+                                            <option value="">Select Component</option>
+                                            {availableDeductions.map(comp => (
+                                                <option key={comp.id} value={comp.name}>{comp.name}</option>
+                                            ))}
+                                            <option value="others">+ Others</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="e.g. Professional Tax"
+                                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                    />
+                                )}
+                                {userRole === 'HR_MANAGER' && isOtherSelected && (
+                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                        <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={customName}
+                                            onChange={e => { setCustomName(e.target.value); if (!payslip_name) setPayslip_name(e.target.value); }}
+                                            placeholder="Enter Custom Name"
+                                            className="w-full px-4 py-3 bg-purple-50/10 border border-purple-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Name in Payslip <span className="text-rose-500">*</span></label>
                                 <input
                                     type="text"
-                                    value={customName}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setCustomName(val);
-                                        if (!payslip_name || payslip_name === customName) setPayslip_name(val);
-                                    }}
-                                    placeholder="Enter Custom Name"
-                                    className="w-full px-3 py-2.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10"
+                                    value={payslip_name}
+                                    onChange={(e) => setPayslip_name(e.target.value)}
+                                    placeholder="e.g. PT"
+                                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
                                 />
                             </div>
-                        )}
-                    </div>
-                    <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label><input type="text" value={payslip_name} onChange={(e) => setPayslip_name(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" /></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Date <span className="text-rose-500">*</span></label>
-                        <input
-                            type="date"
-                            value={effective_date}
-                            onChange={(e) => setEffective_date(e.target.value)}
-                            className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`}
-                        />
-                        {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
-                    </div>
-                </div>
+                        </div>
 
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Effective Date <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        type="date"
+                                        value={effective_date}
+                                        onChange={(e) => setEffective_date(e.target.value)}
+                                        className={`w-full pl-12 pr-4 py-3 bg-slate-50/50 border rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`}
+                                    />
+                                </div>
+                                {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-bold">{error}</p>}
+                            </div>
+                        </div>
+                    </section>
 
-                {/* Calculation Method */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">Calculation Method <span className="text-rose-500">*</span></label>
-                        <div className="flex items-center gap-6 h-[42px]">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {calc_method === 'Flat' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                    <div className="h-px bg-slate-100" />
+
+                    <section className="space-y-6">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <Calculator size={18} className="text-purple-600" />
+                            Calculation Basis
+                        </h3>
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Calculation Method</label>
+                                <div className="flex p-1.5 bg-slate-100/50 rounded-xl border border-slate-200/60 shadow-inner">
+                                    {['Flat', 'Percentage'].map(m => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setCalc_method(m as any)}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${calc_method === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            {m === 'Flat' ? 'Flat Amount' : 'Percentage'}
+                                        </button>
+                                    ))}
                                 </div>
-                                <input type="radio" className="hidden" checked={calc_method === 'Flat'} onChange={() => setCalc_method('Flat')} />
-                                <span className="text-sm text-slate-700">Flat Amount</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                    {calc_method === 'Percentage' && <div className="w-2 h-2 rounded-full bg-purple-600" />}
-                                </div>
-                                <input type="radio" className="hidden" checked={calc_method === 'Percentage'} onChange={() => setCalc_method('Percentage')} />
-                                <span className="text-sm text-slate-700">Percentage of</span>
-                            </label>
+                            </div>
                             <div className="relative">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Value</label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        value={amount_or_percent}
+                                        onChange={(e) => setAmount_or_percent(e.target.value)}
+                                        placeholder={calc_method === 'Percentage' ? 'e.g. 10' : 'e.g. 500'}
+                                        className="w-full pl-4 pr-14 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                    />
+                                    <div className="absolute right-0 top-0 h-full px-4 bg-slate-100/80 border-l border-slate-200 rounded-r-xl flex items-center text-slate-500 font-bold text-sm">
+                                        {calc_method === 'Percentage' ? '%' : '₹'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {calc_method === 'Percentage' && (
+                            <div className="relative max-w-sm">
                                 <button
                                     type="button"
-                                    disabled={calc_method !== 'Percentage'}
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 focus:outline-none focus:border-purple-500 disabled:opacity-50 flex items-center gap-2 min-w-[100px] hover:bg-slate-100 transition-colors"
+                                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:border-purple-500 outline-none flex items-center justify-between group hover:bg-white transition-all shadow-sm"
                                 >
-                                    <span className="flex-1 text-left">{selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select...'}</span>
+                                    <span className="text-slate-700 flex items-center gap-2 uppercase tracking-tighter text-[10px] font-black">
+                                        <Sigma className="text-slate-400" size={12} />
+                                        OF {selectedComponents.join(', ')}
+                                    </span>
                                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
                                 {isDropdownOpen && (
                                     <>
                                         <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
-                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
+                                        <div className="absolute top-full left-0 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-2 animate-in fade-in zoom-in-95 duration-100 overflow-hidden ring-1 ring-slate-200/50">
                                             {['CTC', 'Basic'].map(comp => (
-                                                <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer group transition-colors">
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                                        {selectedComponents.includes(comp) && <Check size={12} className="text-white" />}
+                                                <label key={comp} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                                        {selectedComponents.includes(comp) && <Check size={14} className="text-white" />}
                                                     </div>
                                                     <input
                                                         type="checkbox"
                                                         className="hidden"
                                                         checked={selectedComponents.includes(comp)}
                                                         onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setSelectedComponents(prev => [...prev, comp]);
-                                                            } else {
-                                                                // Prevent deselecting everything if needed, or allow it
-                                                                setSelectedComponents(prev => prev.filter(c => c !== comp));
-                                                            }
+                                                            if (e.target.checked) setSelectedComponents(prev => [...prev, comp]);
+                                                            else setSelectedComponents(prev => prev.filter(c => c !== comp));
                                                         }}
                                                     />
-                                                    <span className="text-sm text-slate-700 font-medium">{comp}</span>
+                                                    <span className="text-sm text-slate-700 font-bold">{comp}</span>
                                                 </label>
                                             ))}
                                         </div>
                                     </>
                                 )}
                             </div>
+                        )}
+                    </section>
+
+                    <div className="h-px bg-slate-100" />
+
+                    <section className="space-y-8">
+                        <div className="flex items-center justify-between mb-2">
+                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                                <Sigma size={18} className="text-purple-600" />
+                                Configuration & Flags
+                            </h3>
+                            <button onClick={() => setIsActive(!isActive)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-1 ring-slate-200'}`}>
+                                {isActive ? 'Active Status' : 'Inactive Status'}
+                            </button>
                         </div>
-                    </div>
-                    <div className="w-1/2">
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            {calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={amount_or_percent}
-                                onChange={(e) => setAmount_or_percent(e.target.value)}
-                                placeholder={calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
-                                className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                            />
-                            <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                {calc_method === 'Percentage' ? '%' : '₹'}
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Pro-rata basis</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Adjust as per working days</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isProRata ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${isProRata ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Monthly Payout</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Include in monthly payout</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${includeMonthlyPayout ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${includeMonthlyPayout ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={includeMonthlyPayout} onChange={() => setIncludeMonthlyPayout(!includeMonthlyPayout)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Prorate DOJ/DOL</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Enable DOJ/DOL Proration</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${prorateDojDol ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${prorateDojDol ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={prorateDojDol} onChange={() => setProrateDojDol(!prorateDojDol)} />
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="space-y-6">
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">First Salary</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Include in first salary</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${includeInFirstSalary ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${includeInFirstSalary ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={includeInFirstSalary} onChange={() => setIncludeInFirstSalary(!includeInFirstSalary)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Include Arrears</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Enable Arrears Calculation</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${includeArrears ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${includeArrears ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={includeArrears} onChange={() => setIncludeArrears(!includeArrears)} />
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Show in Payslip</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Visible in Payslip document</span>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${show_in_payslip ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${show_in_payslip ? 'left-7' : 'left-1'}`} />
+                                        <input type="checkbox" className="hidden" checked={show_in_payslip} onChange={() => setShow_in_payslip(!show_in_payslip)} />
+                                    </div>
+                                </label>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-
-                <div className="pt-2 flex flex-col gap-3">
-                    <label className="flex items-start gap-2 cursor-pointer group">
-                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? "bg-purple-600 border-purple-600" : "border-slate-300 bg-white group-hover:border-purple-400"}`}>
-                            {isProRata && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
-                        <div>
-                            <span className="text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
-                            <p className="text-xs text-slate-500">Deduction will be adjusted based on employee working days.</p>
-                        </div>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeMonthlyPayout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                            {includeMonthlyPayout && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={includeMonthlyPayout} onChange={() => setIncludeMonthlyPayout(!includeMonthlyPayout)} />
-                        <span className="text-sm font-medium text-slate-700">Include this component in monthly payout</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${prorateDojDol ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                            {prorateDojDol && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={prorateDojDol} onChange={() => setProrateDojDol(!prorateDojDol)} />
-                        <span className="text-sm font-medium text-slate-700">Prorate as per D.O.J / D.O.L</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInFirstSalary ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                            {includeInFirstSalary && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={includeInFirstSalary} onChange={() => setIncludeInFirstSalary(!includeInFirstSalary)} />
-                        <span className="text-sm font-medium text-slate-700">Include in the employee’s first salary</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeArrears ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                            {includeArrears && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={includeArrears} onChange={() => setIncludeArrears(!includeArrears)} />
-                        <span className="text-sm font-medium text-slate-700">Include Arrears</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_in_payslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                            {show_in_payslip && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={show_in_payslip} onChange={() => setShow_in_payslip(!show_in_payslip)} />
-                        <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                            {isActive && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
-                        <span className="text-sm font-medium text-slate-700">Mark as Active</span>
-                    </label>
+                    </section>
                 </div>
             </div>
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3"><button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button><button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button></div>
+
+            <div className="px-10 py-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+                <button onClick={onCancel} className="px-8 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 transition-all border border-slate-200 rounded-xl bg-white hover:bg-slate-50">Cancel</button>
+                <button
+                    onClick={handleSave}
+                    className="px-10 py-2.5 text-sm font-black text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] uppercase tracking-widest"
+                >
+                    {initialData ? 'Update Component' : 'Create Component'}
+                </button>
+            </div>
         </div>
     );
-}
+};
 
 // --- Detailed Add Reimbursement Form ---
 const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, userRole }) => {
+    const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
     const [name, setName] = useState(initialData?.name || '');
     const [availableReimbursements, setAvailableReimbursements] = useState<{ id: string, name: string }[]>([]);
     const [isLoadingReimbursements, setIsLoadingReimbursements] = useState(false);
     const [effective_date, setEffective_date] = useState(initialData?.effective_date || '');
+    const [history, setHistory] = useState<ComponentChangeHistory[]>(initialData?.history || []);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
     const [isOtherSelected, setIsOtherSelected] = useState(false);
     const [customName, setCustomName] = useState('');
@@ -1169,6 +1322,25 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             return;
         }
         setError(null);
+
+        const newHistoryEntries: ComponentChangeHistory[] = [];
+        if (initialData) {
+            const changes = [
+                { label: 'Name', old: initialData.name, new: finalName },
+                { label: 'Payslip Name', old: initialData.payslip_name, new: payslip_name },
+                { label: 'Amount/Percent', old: initialData.amount_or_percent, new: amount_or_percent },
+                { label: 'Calculation Method', old: initialData.calc_method, new: calc_method },
+                { label: 'Status', old: initialData.status, new: isActive },
+                { label: 'Nature of Pay', old: initialData.type, new: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay' },
+                { label: 'Effective Date', old: initialData.effective_date, new: effective_date },
+            ];
+
+            changes.forEach(c => {
+                const entry = addHistory(c.label, c.old, c.new);
+                if (entry) newHistoryEntries.push(entry);
+            });
+        }
+
         const calculateString = calc_method === 'Flat'
             ? 'Fixed Amount'
             : `% of ${selectedComponents.join(', ')}`;
@@ -1185,208 +1357,378 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
             calculation: calculateString,
             taxable: 'Partially Exempt',
             show_in_payslip: show_in_payslip,
+            history: [...newHistoryEntries, ...history]
         };
         onSave(updatedData);
     };
 
-    return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 max-w-3xl mx-auto mt-6">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h2 className="text-lg font-bold text-slate-800">{initialData ? 'Edit Reimbursement Component' : 'Add Reimbursement Component'}</h2>
-                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
-            </div>
-
-            <div className="p-8">
-                <div className="space-y-6">
-                    {/* Names */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    if (activeTab === 'History') {
+        const selectedIndex = selectedRecordId ? history.findIndex(r => r.id === selectedRecordId) : 0;
+        
+        return (
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 flex flex-col h-[85vh] max-w-6xl mx-auto mt-6">
+                <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setActiveTab('Configuration')} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><ChevronDown size={20} className="rotate-90 text-slate-600" /></button>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Component Name <span className="text-rose-500">*</span></label>
-                            {userRole === 'HR_MANAGER' ? (
-                                <div className="relative">
-                                    <select
-                                        value={isOtherSelected ? 'others' : name}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (val === 'others') {
-                                                setIsOtherSelected(true);
-                                                setName('');
-                                            } else {
-                                                setIsOtherSelected(false);
-                                                setName(val);
-                                                if (!payslip_name || payslip_name === name) setPayslip_name(val);
-                                            }
-                                        }}
-                                        disabled={isLoadingReimbursements}
-                                        className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white font-medium text-slate-700"
-                                    >
-                                        <option value="">Select Component</option>
-                                        {availableReimbursements.map(comp => (
-                                            <option key={comp.id} value={comp.name}>{comp.name}</option>
-                                        ))}
-                                        <option value="others" className="text-purple-600 font-semibold border-t border-slate-100">+ Others</option>
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            <h2 className="text-xl font-bold text-slate-800">Audit History: {name || 'New Component'}</h2>
+                            <p className="text-sm text-slate-500">Track all modifications and configuration changes</p>
+                        </div>
+                    </div>
+                    <button onClick={onCancel} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all group">
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
+
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar */}
+                    <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/30">
+                        <div className="p-4 border-b border-slate-100 bg-white/50">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                <input type="text" placeholder="Search history..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none" />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                            {history.length === 0 ? (
+                                <div className="text-center py-10 px-4">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3"><Clock className="text-slate-400" size={20} /></div>
+                                    <p className="text-slate-500 text-sm font-medium">No history available</p>
                                 </div>
                             ) : (
-                                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Component Name" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
-                            )}
-
-                            {userRole === 'HR_MANAGER' && isOtherSelected && (
-                                <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        value={customName}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            setCustomName(val);
-                                            if (!payslip_name || payslip_name === customName) setPayslip_name(val);
-                                        }}
-                                        placeholder="Enter Custom Name"
-                                        className="w-full px-3 py-2.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Name in Payslip <span className="text-rose-500">*</span></label>
-                            <input type="text" value={payslip_name} onChange={(e) => setPayslip_name(e.target.value)} placeholder="Enter Name in Payslip" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Date <span className="text-rose-500">*</span></label>
-                            <input type="date" value={effective_date} onChange={(e) => setEffective_date(e.target.value)} className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-slate-600 ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`} />
-                            {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
-                        </div>
-                    </div>
-
-                    {/* Nature of Pay */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
-                        <div className="flex gap-6">
-                            {['Fixed', 'Variable'].map(type => (
-                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
-                                    <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Calculation Method */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[42px]">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calc_method === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calc_method === 'Flat'} onChange={() => setCalc_method('Flat')} />
-                                    <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calc_method === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calc_method === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calc_method === 'Percentage'} onChange={() => setCalc_method('Percentage')} />
-                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
-                                </label>
-                                <div className="relative">
+                                history.map((record, index) => (
                                     <button
-                                        type="button"
-                                        disabled={calc_method !== 'Percentage'}
-                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between"
+                                        key={record.id}
+                                        onClick={() => setSelectedRecordId(record.id)}
+                                        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedRecordId === record.id || (!selectedRecordId && index === 0) ? 'bg-white border-purple-200 shadow-md ring-1 ring-purple-100' : 'bg-transparent border-transparent hover:bg-white hover:border-slate-200'}`}
                                     >
-                                        <span className="truncate max-w-[80px]">
-                                            {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
-                                        </span>
-                                        <ChevronDown size={14} className="text-slate-400" />
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{record.timestamp}</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-800 mb-1">{record.field} Changed</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">A</div>
+                                            <span className="text-xs text-slate-500 font-medium">{record.changedBy}</span>
+                                        </div>
                                     </button>
-
-                                    {isDropdownOpen && calc_method === 'Percentage' && (
-                                        <>
-                                            <div
-                                                className="fixed inset-0 z-40"
-                                                onClick={() => setIsDropdownOpen(false)}
-                                            />
-                                            <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
-                                                {['CTC', 'Basic'].map(comp => (
-                                                    <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedComponents.includes(comp)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) {
-                                                                    setSelectedComponents([...selectedComponents, comp]);
-                                                                } else {
-                                                                    setSelectedComponents(selectedComponents.filter(c => c !== comp));
-                                                                }
-                                                            }}
-                                                            className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                                                        />
-                                                        <span className="text-sm text-slate-700">{comp}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">
-                                {calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={amount_or_percent}
-                                    onChange={(e) => setAmount_or_percent(e.target.value)}
-                                    placeholder={calc_method === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
-                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                                />
-                                <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                    {calc_method === 'Percentage' ? '%' : '₹'}
-                                </div>
-                            </div>
+                                ))
+                            )}
                         </div>
                     </div>
 
-                    {/* Active Checkbox */}
-                    <div className="flex flex-col gap-4 pt-2">
-                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                {isActive && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
-                            <span className="text-sm font-medium text-slate-700">Mark as Active</span>
-                        </label>
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto bg-white p-10">
+                        {history.length > 0 && (
+                            <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="flex items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center"><Clock className="text-purple-600" size={24} /></div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-800">Modification Summary</h3>
+                                        <p className="text-sm text-slate-500">Detailed overview of the changes made to the configuration.</p>
+                                    </div>
+                                </div>
 
-                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${show_in_payslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                {show_in_payslip && <Check size={14} className="text-white" />}
+                                <div className="grid grid-cols-2 gap-10">
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Previous Configuration</h4>
+                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/60 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-slate-300" />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{history[selectedIndex]?.field}</span>
+                                                <span className="text-lg font-bold text-slate-800 line-through decoration-slate-300 decoration-2">{history[selectedIndex]?.oldValue}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-sky-500 uppercase tracking-widest pl-1">New Configuration</h4>
+                                        <div className="bg-sky-50 rounded-2xl p-6 border border-sky-200/60 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-sky-500" />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider">{history[selectedIndex]?.field}</span>
+                                                <span className="text-lg font-bold text-slate-900">{history[selectedIndex]?.newValue}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100 text-center">
+                                    <p className="text-xs text-slate-400">Captured by System Audit Engine • Version 2.4.0</p>
+                                </div>
                             </div>
-                            <input type="checkbox" className="hidden" checked={show_in_payslip} onChange={() => setShow_in_payslip(!show_in_payslip)} />
-                            <span className="text-sm font-medium text-slate-700">Show in Payslip</span>
-                        </label>
+                        )}
                     </div>
                 </div>
             </div>
+        );
+    }
 
-            {/* Footer */}
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+    return (
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-300 max-w-4xl mx-auto mt-6 flex flex-col h-[85vh]">
+            <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                <div className="flex flex-col">
+                    <h2 className="text-xl font-bold text-slate-800">{initialData ? `Edit ${name}` : 'Add Reimbursement Component'}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{isActive ? 'Currently Active' : 'Currently Inactive'}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm mr-4">
+                        <button
+                            onClick={() => setActiveTab('Configuration')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'Configuration' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Configuration
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('History')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'History' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            History
+                        </button>
+                    </div>
+                    <button onClick={onCancel} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all group">
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div className="max-w-3xl mx-auto space-y-10">
+                    <section className="space-y-6">
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Component Name <span className="text-rose-500">*</span></label>
+                                {userRole === 'HR_MANAGER' ? (
+                                    <div className="relative">
+                                        <select
+                                            value={isOtherSelected ? 'others' : name}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val === 'others') {
+                                                    setIsOtherSelected(true);
+                                                    setName('');
+                                                } else {
+                                                    setIsOtherSelected(false);
+                                                    setName(val);
+                                                    if (!payslip_name) setPayslip_name(val);
+                                                }
+                                            }}
+                                            disabled={isLoadingReimbursements}
+                                            className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all appearance-none"
+                                        >
+                                            <option value="">Select Component</option>
+                                            {availableReimbursements.map(comp => (
+                                                <option key={comp.id} value={comp.name}>{comp.name}</option>
+                                            ))}
+                                            <option value="others">+ Others</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="e.g. Fuel Reimbursement"
+                                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                    />
+                                )}
+                                {userRole === 'HR_MANAGER' && isOtherSelected && (
+                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                        <label className="block text-[10px] font-bold text-purple-600 mb-1.5 uppercase tracking-wider">Custom Component Name <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={customName}
+                                            onChange={e => { setCustomName(e.target.value); if (!payslip_name) setPayslip_name(e.target.value); }}
+                                            placeholder="Enter Custom Name"
+                                            className="w-full px-4 py-3 bg-purple-50/10 border border-purple-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Name in Payslip <span className="text-rose-500">*</span></label>
+                                <input
+                                    type="text"
+                                    value={payslip_name}
+                                    onChange={(e) => setPayslip_name(e.target.value)}
+                                    placeholder="e.g. Fuel"
+                                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Effective Date <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        type="date"
+                                        value={effective_date}
+                                        onChange={(e) => setEffective_date(e.target.value)}
+                                        className={`w-full pl-12 pr-4 py-3 bg-slate-50/50 border rounded-xl text-sm font-medium focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all ${error && !effective_date ? 'border-rose-500' : 'border-slate-200'}`}
+                                    />
+                                </div>
+                                {error && !effective_date && <p className="text-[10px] text-rose-500 mt-1 font-bold">{error}</p>}
+                            </div>
+                        </div>
+                    </section>
+
+                    <div className="h-px bg-slate-100" />
+
+                    <section className="space-y-6">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <Calculator size={18} className="text-purple-600" />
+                            Calculation Basis
+                        </h3>
+                        
+                        <div className="space-y-4">
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Nature of Pay <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-4">
+                                {['Fixed', 'Variable'].map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setNatureOfPay(type as any)}
+                                        className={`flex-1 flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 ${natureOfPay === type ? 'bg-purple-50 border-purple-200 shadow-md ring-1 ring-purple-100' : 'bg-white border-slate-100 hover:border-slate-300'}`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${natureOfPay === type ? 'bg-purple-100' : 'bg-slate-50'}`}>
+                                            {type === 'Fixed' ? <Calculator size={20} className={natureOfPay === type ? 'text-purple-600' : 'text-slate-400'} /> : <Sigma size={20} className={natureOfPay === type ? 'text-purple-600' : 'text-slate-400'} />}
+                                        </div>
+                                        <span className={`text-sm font-bold ${natureOfPay === type ? 'text-purple-700' : 'text-slate-600'}`}>{type} Pay</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-8 pt-4">
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Calculation Method</label>
+                                <div className="flex p-1.5 bg-slate-100/50 rounded-xl border border-slate-200/60 shadow-inner">
+                                    {['Flat', 'Percentage'].map(m => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setCalc_method(m as any)}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${calc_method === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            {m === 'Flat' ? 'Flat Amount' : 'Percentage'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Value</label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        value={amount_or_percent}
+                                        onChange={(e) => setAmount_or_percent(e.target.value)}
+                                        placeholder={calc_method === 'Percentage' ? 'e.g. 10' : 'e.g. 500'}
+                                        className="w-full pl-4 pr-14 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+                                    />
+                                    <div className="absolute right-0 top-0 h-full px-4 bg-slate-100/80 border-l border-slate-200 rounded-r-xl flex items-center text-slate-500 font-bold text-sm">
+                                        {calc_method === 'Percentage' ? '%' : '₹'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {calc_method === 'Percentage' && (
+                            <div className="relative max-w-sm">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:border-purple-500 outline-none flex items-center justify-between group hover:bg-white transition-all shadow-sm"
+                                >
+                                    <span className="text-slate-700 flex items-center gap-2 uppercase tracking-tighter text-[10px] font-black">
+                                        <Sigma className="text-slate-400" size={12} />
+                                        OF {selectedComponents.join(', ')}
+                                    </span>
+                                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                        <div className="absolute top-full left-0 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-2 animate-in fade-in zoom-in-95 duration-100 overflow-hidden ring-1 ring-slate-200/50">
+                                            {['CTC', 'Basic'].map(comp => (
+                                                <label key={comp} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
+                                                        {selectedComponents.includes(comp) && <Check size={14} className="text-white" />}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={selectedComponents.includes(comp)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) setSelectedComponents(prev => [...prev, comp]);
+                                                            else setSelectedComponents(prev => prev.filter(c => c !== comp));
+                                                        }}
+                                                    />
+                                                    <span className="text-sm text-slate-700 font-bold">{comp}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </section>
+
+                    <div className="h-px bg-slate-100" />
+
+                    <section className="space-y-8">
+                        <div className="flex items-center justify-between mb-2">
+                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                                <Sigma size={18} className="text-purple-600" />
+                                Configuration & Flags
+                            </h3>
+                            <button onClick={() => setIsActive(!isActive)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-1 ring-slate-200'}`}>
+                                {isActive ? 'Active Status' : 'Inactive Status'}
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Show in Payslip</span>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Visible in Payslip document</span>
+                                </div>
+                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${show_in_payslip ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${show_in_payslip ? 'left-7' : 'left-1'}`} />
+                                    <input type="checkbox" className="hidden" checked={show_in_payslip} onChange={() => setShow_in_payslip(!show_in_payslip)} />
+                                </div>
+                            </label>
+
+                            <label className="flex items-center justify-between cursor-pointer group bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:border-purple-200 transition-all duration-300">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 group-hover:text-purple-600 transition-colors">Mark as Active</span>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight transition-colors">Enable/Disable Component</span>
+                                </div>
+                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isActive ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${isActive ? 'left-7' : 'left-1'}`} />
+                                    <input type="checkbox" className="hidden" checked={isActive} onChange={() => setIsActive(!isActive)} />
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div className="px-10 py-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+                <button onClick={onCancel} className="px-8 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 transition-all border border-slate-200 rounded-xl bg-white hover:bg-slate-50">Cancel</button>
+                <button
+                    onClick={handleSave}
+                    className="px-10 py-2.5 text-sm font-black text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] uppercase tracking-widest"
+                >
+                    {initialData ? 'Update Component' : 'Create Component'}
+                </button>
             </div>
         </div>
     );
-}
+};
 
 const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [activeTab, setActiveTab] = useState('Earnings');
@@ -1527,10 +1869,13 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const handleSave = async (data: Partial<SalaryComponent>) => {
         try {
+            // Strip frontend-only fields that don't exist in the DB table
+            const { history, ...dbData } = data;
+
             if (editingComponent) {
                 const { data: updatedData, error } = await supabase
                     .from('salary_components')
-                    .update(data)
+                    .update(dbData)
                     .eq('id', editingComponent.id)
                     .select();
 
@@ -1538,13 +1883,13 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setComponents(prev => prev.map(c => c.id === editingComponent.id ? { ...c, ...data } : c));
             } else {
                 const newComponent = {
-                    name: data.name || 'New Component',
-                    type: data.type || 'Fixed Pay',
-                    calculation: data.calculation || '',
-                    taxable: data.taxable || 'Fully Taxable',
-                    status: data.status ?? true,
+                    name: dbData.name || 'New Component',
+                    type: dbData.type || 'Fixed Pay',
+                    calculation: dbData.calculation || '',
+                    taxable: dbData.taxable || 'Fully Taxable',
+                    status: dbData.status ?? true,
                     category: activeTab,
-                    ...data
+                    ...dbData
                 };
 
                 const { data: insertedData, error } = await supabase
@@ -1560,7 +1905,7 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
             handleCancel();
         } catch (error) {
             console.error('Error saving component:', error);
-            alert('Failed to save component. Please try again.');
+            alert(`Failed to save component: ${(error as any)?.message || 'Please try again.'}`);
         }
     };
 

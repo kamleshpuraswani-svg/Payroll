@@ -965,8 +965,8 @@ const LoanAdvancesTypes: React.FC = () => {
                                     />
                                 </div>
 
-                                {/* Approval Flow Section */}
-                                <div className="md:col-span-2">
+                                {/* Approval Flow Section — hidden, managed via Operational Config > Loans & Advances Approval Hierarchy */}
+                                <div className="md:col-span-2 hidden">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Approval Flow</label>
                                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                                         <div className="flex gap-3 mb-4">
