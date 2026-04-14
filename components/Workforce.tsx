@@ -29,7 +29,7 @@ const Workforce: React.FC = () => {
       {view === 'EDIT' && selectedEmployeeId && (
         <EditEmployeeProfile
           employeeId={selectedEmployeeId}
-          onBack={handleBack}
+          onBack={() => setView('VIEW_HISTORY')}
           onViewHistory={() => setView('VIEW_HISTORY')}
           isReadOnly={false}
         />
