@@ -149,6 +149,7 @@ export interface TaxDeclaration {
   status: 'Pending' | 'Approved' | 'Rejected';
   notes: string;
   remarks?: string;
+  created_by?: string;
   last_modified_by?: string;
   ctc: string;
   regime: 'Old' | 'New';
