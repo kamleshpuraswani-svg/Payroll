@@ -101,6 +101,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   const [activeTab, setActiveTab] = useState<'HISTORY' | 'PROFILE'>('HISTORY');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [employeeData, setEmployeeData] = useState<any>(null);
+  const [appraisalMonth, setAppraisalMonth] = useState('');
   const [isDataLoading, setIsDataLoading] = useState(false);
 
   useEffect(() => {
@@ -114,6 +115,21 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
           .single();
         if (!error && data) {
           setEmployeeData(data);
+          
+          // Fetch appraisal month from config
+          try {
+            const { data: configData } = await supabase
+              .from('operational_config')
+              .select('config_value')
+              .eq('config_key', `emp_statutory:${employeeId}`)
+              .single();
+            
+            if (configData?.config_value?.appraisal_month) {
+              setAppraisalMonth(configData.config_value.appraisal_month);
+            }
+          } catch (e) {
+            console.error('Error fetching appraisal month config:', e);
+          }
         }
       } catch (err) {
         console.error('Error fetching employee details:', err);
@@ -266,7 +282,9 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Next Appraisal Due</span>
-                  <span className="text-purple-600 font-bold">Mar 2026</span>
+                  <span className="text-purple-600 font-bold">
+                    {appraisalMonth ? `${appraisalMonth.substring(0, 3)} ${new Date().getFullYear()}` : '---'}
+                  </span>
                 </div>
               </div>
 

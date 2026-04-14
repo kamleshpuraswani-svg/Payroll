@@ -65,6 +65,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [effectiveFrom, setEffectiveFrom] = useState('');
    const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
+   const [appraisalMonth, setAppraisalMonth] = useState('');
    const [statutoryDeductions, setStatutoryDeductions] = useState({
       providentFund: false,
       esi: false,
@@ -247,6 +248,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value }));
                    if (configData.config_value.arrears_payout_month) {
                       setArrearsPayoutDate(configData.config_value.arrears_payout_month);
+                   }
+                   if (configData.config_value.appraisal_month) {
+                      setAppraisalMonth(configData.config_value.appraisal_month);
                    }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
@@ -539,7 +543,11 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             .from('operational_config')
             .upsert({
                config_key: `emp_statutory:${employeeId}`,
-               config_value: { ...statutoryDeductions, arrears_payout_month: arrearsPayoutDate },
+               config_value: { 
+                  ...statutoryDeductions, 
+                  arrears_payout_month: arrearsPayoutDate,
+                  appraisal_month: appraisalMonth
+               },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
 
@@ -718,6 +726,25 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
                            </div>
                            {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1">{errors.effectiveFrom}</p>}
+                        </div>
+
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Appraisal Month</label>
+                           <div className="relative">
+                              <select
+                                 value={appraisalMonth}
+                                 onChange={(e) => setAppraisalMonth(e.target.value)}
+                                 disabled={isReadOnly}
+                                 className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 appearance-none transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
+                              >
+                                 <option value="">Select Month</option>
+                                 {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                    <option key={m} value={m}>{m}</option>
+                                 ))}
+                              </select>
+                              <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                           </div>
                         </div>
                      </div>
 
