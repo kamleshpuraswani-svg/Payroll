@@ -1078,10 +1078,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                 <div className="flex items-center gap-4 flex-wrap">
                                                     <div className="relative w-24">
                                                         <select
-                                                            value={attendanceStartDay}
-                                                            onChange={(e) => setAttendanceStartDay(e.target.value)}
-                                                            className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
-                                                        >
                                                             value={attendanceEndDay}
                                                             onChange={(e) => {
                                                                 const newEnd = e.target.value;
