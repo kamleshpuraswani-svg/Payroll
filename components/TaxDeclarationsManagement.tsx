@@ -35,6 +35,7 @@ import {
     Shield,
     Lock,
     ChevronRight,
+    ChevronLeft,
     FileSpreadsheet,
     CheckSquare,
     ArrowLeft,
@@ -923,7 +924,7 @@ const AddCommentModal: React.FC<CommentModalProps> = ({ doc, onClose, onComment 
 
 // --- View Declaration Modal (Updated) ---
 
-const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, onApprove }) => {
+const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, onApprove }) => {
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'Approved': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
@@ -962,174 +963,170 @@ const ViewDeclarationModal: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, 
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
+            {/* Header */}
+            <div className="px-8 py-5 border-b border-sky-100 bg-sky-50 flex justify-between items-center shadow-sm">
+                <div className="flex items-center gap-4">
+                    <button onClick={onClose} className="p-2 hover:bg-sky-100 rounded-full text-slate-500 hover:text-sky-700 transition-colors bg-white shadow-sm border border-slate-200">
+                        <ChevronLeft size={20} />
+                    </button>
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">View Investment Declaration</h3>
                         <p className="text-xs text-sky-700 font-medium">{doc?.employee_name || 'N/A'} ({doc?.employee_id || 'N/A'})</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button onClick={onClose} className="p-2 hover:bg-sky-100 rounded-full text-slate-400 hover:text-sky-700 transition-colors">
-                            <X size={20} />
-                        </button>
-                    </div>
                 </div>
+            </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Employee Info Header */}
-                    <div className="flex items-start gap-4 p-4 border border-slate-100 rounded-xl bg-slate-50/50">
-                        {doc?.avatar_url ? (
-                            <img src={doc.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover" />
-                        ) : (
-                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-white shadow-sm">
-                                <User size={24} />
+            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                {/* Employee Info Header */}
+                <div className="flex items-start gap-6 p-6 border border-slate-100 rounded-2xl bg-slate-50/50 shadow-sm">
+                    {doc?.avatar_url ? (
+                        <img src={doc.avatar_url} alt="" className="w-16 h-16 rounded-full border-4 border-white shadow-md object-cover" />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border-4 border-white shadow-md">
+                            <User size={32} />
+                        </div>
+                    )}
+                    <div className="flex-1 flex justify-between items-start">
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Employee</p>
+                                <p className="font-bold text-slate-800 text-xl">{doc?.employee_name || 'N/A'}</p>
+                                <p className="text-sm text-slate-500">{doc?.employee_id || 'N/A'}</p>
                             </div>
-                        )}
-                        <div className="flex-1 flex justify-between items-start">
-                            <div className="space-y-3">
-                                <div>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Employee</p>
-                                    <p className="font-bold text-slate-800 text-base">{doc?.employee_name || 'N/A'}</p>
-                                    <p className="text-xs text-slate-500">{doc?.employee_id || 'N/A'}</p>
-                                </div>
-                                <div className="pt-1">
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
-                                        Tax Regime: {doc?.regime || 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-end gap-3">
-                                {doc.status === 'Pending' && (
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => onApprove('Approved')} 
-                                            title="Approve"
-                                            className="w-9 h-9 flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-all shadow-sm group active:scale-95"
-                                        >
-                                            <CheckCircle size={20} className="group-hover:scale-110 transition-transform" />
-                                        </button>
-                                        <button 
-                                            onClick={() => onApprove('Rejected')} 
-                                            title="Reject"
-                                            className="w-9 h-9 flex items-center justify-center bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm group active:scale-95"
-                                        >
-                                            <XCircle size={20} className="group-hover:scale-110 transition-transform" />
-                                        </button>
-                                    </div>
-                                )}
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold border shadow-sm ${getStatusStyle(doc?.status || 'Pending')}`}>
-                                    Status: {doc?.status || 'Pending'}
+                            <div className="pt-1">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
+                                    Tax Regime: {doc?.regime || 'N/A'}
                                 </span>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Declaration Summary */}
-                    <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-4 border-b border-slate-100 pb-6`}>
-                        <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Tax Section</p>
-                            <p className="font-bold text-purple-700 text-sm">{doc?.type_label || 'N/A'}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Max Limit</p>
-                            <p className="font-bold text-slate-600 text-sm">{maxLimit}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Declared Amount</p>
-                            <p className="font-bold text-slate-800 text-lg">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
-                        </div>
-                        {(doc?.status === 'Approved' || doc?.status === 'Partially Approved') && (
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Approved Amount</p>
-                                <p className="font-bold text-emerald-700 text-lg">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</p>
-                                {doc?.status === 'Partially Approved' && doc?.remarks && (
-                                    <p className="text-[9px] text-slate-500 italic mt-1 leading-tight line-clamp-2" title={doc.remarks}>
-                                        <span className="font-bold uppercase text-[8px] text-slate-400 mr-1">Reason:</span>
-                                        {doc.remarks}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                        <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Submitted Date</p>
-                            <p className="font-medium text-slate-700 text-sm flex items-center gap-1"><Calendar size={12} /> {doc?.submitted_date || 'N/A'}</p>
-                        </div>
-                    </div>
-
-                    {/* Breakdown Table */}
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Declaration Breakdown</h4>
-                        <div className="border border-slate-200 rounded-lg overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    <tr>
-                                        <th className="px-4 py-2 border-b border-slate-200">Sub-Item / Category</th>
-                                        <th className="px-4 py-2 border-b border-slate-200 text-right">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {(doc?.breakdown || []).map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td className="px-4 py-2.5 text-slate-700">{item?.label || 'N/A'}</td>
-                                            <td className="px-4 py-2.5 text-right font-medium text-slate-800">₹{(item?.amount || 0).toLocaleString('en-IN')}</td>
-                                        </tr>
-                                    ))}
-                                    <tr className="bg-slate-50/50 font-bold">
-                                        <td className="px-4 py-2.5 text-slate-800">Total</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-900">₹{(doc?.amount || 0).toLocaleString('en-IN')}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Attached Proofs */}
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Attached Proofs ({(doc?.proofs || []).length})</h4>
-                        <div className="grid grid-cols-3 gap-3">
-                            {(doc?.proofs || []).map((proof, i) => (
-                                <div key={i} className="border border-slate-200 rounded-xl p-3 flex flex-col items-center text-center gap-2 hover:border-purple-300 transition-all group bg-white shadow-sm hover:shadow-md relative cursor-pointer">
-                                    <div className="mb-1">
-                                        {proof?.file_type === 'pdf' ? <FileText size={24} className="text-rose-500" /> : <ImageIcon size={24} className="text-sky-500" />}
-                                    </div>
-                                    <div className="w-full">
-                                        <p className="text-[10px] font-medium text-slate-700 truncate px-1" title={proof?.file_name || 'File'}>{proof?.file_name || 'File'}</p>
-                                        <p className="text-[9px] text-slate-400 mt-0.5">{proof?.size || '0 KB'}</p>
-                                    </div>
-                                    {/* Hover Actions */}
-                                    <div className="absolute inset-0 bg-slate-900/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleViewProof(proof?.file_name || 'file.pdf'); }}
-                                            className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-600 hover:text-purple-600 transition-colors"
-                                            title="View"
-                                        >
-                                            <Eye size={14} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDownloadProof(proof?.file_name || 'file.pdf'); }}
-                                            className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-600 hover:text-purple-600 transition-colors"
-                                            title="Download"
-                                        >
-                                            <Download size={14} />
-                                        </button>
-                                    </div>
+                        <div className="flex flex-col items-end gap-4">
+                            {doc.status === 'Pending' && (
+                                <div className="flex gap-3">
+                                    <button 
+                                        onClick={() => onApprove('Approved')} 
+                                        title="Approve"
+                                        className="px-4 py-2 flex items-center gap-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 font-bold text-sm active:scale-95"
+                                    >
+                                        <CheckCircle size={18} /> Approve
+                                    </button>
+                                    <button 
+                                        onClick={() => onApprove('Rejected')} 
+                                        title="Reject"
+                                        className="px-4 py-2 flex items-center gap-2 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 font-bold text-sm active:scale-95"
+                                    >
+                                        <CheckCircle size={18} className="rotate-45" /> Reject
+                                    </button>
                                 </div>
-                            ))}
+                            )}
+                            <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold border shadow-sm ${getStatusStyle(doc?.status || 'Pending')}`}>
+                                Status: {doc?.status || 'Pending'}
+                            </span>
                         </div>
                     </div>
-
-                    <div className="pt-2"></div>
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                    <button onClick={onClose} className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm shadow-sm">
-                        Close
-                    </button>
+                {/* Declaration Summary */}
+                <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-6 border-b border-slate-100 pb-8`}>
+                    <div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Tax Section</p>
+                        <p className="font-bold text-purple-700 text-base">{doc?.type_label || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Max Limit</p>
+                        <p className="font-bold text-slate-600 text-base">{maxLimit}</p>
+                    </div>
+                    <div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Declared Amount</p>
+                        <p className="font-black text-slate-800 text-2xl">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    {(doc?.status === 'Approved' || doc?.status === 'Partially Approved') && (
+                        <div>
+                            <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Approved Amount</p>
+                            <p className="font-black text-emerald-700 text-2xl">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</p>
+                            {doc?.status === 'Partially Approved' && doc?.remarks && (
+                                <p className="text-[10px] text-slate-500 italic mt-2 leading-tight" title={doc.remarks}>
+                                    <span className="font-bold uppercase text-[9px] text-slate-400 mr-1">Reason:</span>
+                                    {doc.remarks}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                    <div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Submitted Date</p>
+                        <p className="font-bold text-slate-700 text-base flex items-center gap-1.5"><Calendar size={14} /> {doc?.submitted_date || 'N/A'}</p>
+                    </div>
                 </div>
+
+                {/* Breakdown Table */}
+                <div>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Declaration Breakdown</h4>
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                <tr>
+                                    <th className="px-6 py-4 border-b border-slate-200">Sub-Item / Category</th>
+                                    <th className="px-6 py-4 border-b border-slate-200 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {(doc?.breakdown || []).map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-slate-700 font-medium">{item?.label || 'N/A'}</td>
+                                        <td className="px-6 py-4 text-right font-bold text-slate-900">₹{(item?.amount || 0).toLocaleString('en-IN')}</td>
+                                    </tr>
+                                ))}
+                                <tr className="bg-slate-50/50 font-black text-lg">
+                                    <td className="px-6 py-4 text-slate-800">Total</td>
+                                    <td className="px-6 py-4 text-right text-indigo-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Attached Proofs */}
+                <div className="pb-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Attached Proofs ({(doc?.proofs || []).length})</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {(doc?.proofs || []).map((proof, i) => (
+                            <div key={i} className="border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center gap-3 hover:border-indigo-400 transition-all group bg-white shadow-sm hover:shadow-lg relative cursor-pointer active:scale-95">
+                                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
+                                    {proof?.file_type === 'pdf' ? <FileText size={32} className="text-rose-500" /> : <ImageIcon size={32} className="text-sky-500" />}
+                                </div>
+                                <div className="w-full">
+                                    <p className="text-[11px] font-bold text-slate-700 truncate px-1" title={proof?.file_name || 'File'}>{proof?.file_name || 'File'}</p>
+                                    <p className="text-[10px] text-slate-400 font-medium mt-1">{proof?.size || '0 KB'}</p>
+                                </div>
+                                {/* Hover Actions */}
+                                <div className="absolute inset-0 bg-indigo-600/90 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleViewProof(proof?.file_name || 'file.pdf'); }}
+                                        className="p-2 bg-white shadow-lg rounded-xl text-indigo-600 hover:scale-110 transition-transform"
+                                        title="View"
+                                    >
+                                        <Eye size={18} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDownloadProof(proof?.file_name || 'file.pdf'); }}
+                                        className="p-2 bg-white shadow-lg rounded-xl text-indigo-600 hover:scale-110 transition-transform"
+                                        title="Download"
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onClick={onClose} className="px-10 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-2xl hover:bg-slate-50 transition-all text-xs uppercase tracking-widest shadow-sm active:scale-95">
+                    Back to List
+                </button>
             </div>
         </div>
     );
@@ -1265,240 +1262,223 @@ const TaxDeclarationsManagement: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 overflow-hidden animate-in fade-in duration-300">
-
-            {/* Header & Title */}
-            <div className="bg-white border-b border-slate-200 px-8 py-5 shrink-0">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-tr from-sky-400 via-purple-500 to-yellow-500 rounded-lg text-white shadow-sm">
-                            <ShieldCheck size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Tax Declarations</h1>
-                            <p className="text-sm text-slate-500">Manage and verify employee investment declarations</p>
-                        </div>
-                    </div>
-                    <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
-                        <FileText size={18} /> Generate Form 16
-                    </button>
-                </div>
-
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {stats.map((stat, i) => (
-                        <div key={i} className={`p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between ${stat.color}`}>
-                            <span className="text-[11px] font-bold uppercase tracking-wider opacity-60 mb-1">{stat.title}</span>
-                            <span className="text-2xl font-black">{stat.value}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex-1 flex overflow-hidden relative">
-
-                {/* Main List Table */}
-                <div className="flex-1 flex flex-col bg-white">
-                    {/* Filters Bar */}
-                    <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap gap-3 items-center">
-                        <div className="flex-1 min-w-[240px] relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search employee, ID or amount..."
-                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                Employee <ChevronDown size={14} />
+            {modalMode === 'VIEW' && selectedDoc ? (
+                <ViewDeclarationDetail
+                    doc={selectedDoc}
+                    onClose={handleClose}
+                    onEdit={handleOpenEdit}
+                    onApprove={handleOpenApprove}
+                />
+            ) : (
+                <>
+                    {/* Header & Title */}
+                    <div className="bg-white border-b border-slate-200 px-8 py-5 shrink-0">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-gradient-to-tr from-sky-400 via-purple-500 to-yellow-500 rounded-lg text-white shadow-sm">
+                                    <ShieldCheck size={24} />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Tax Declarations</h1>
+                                    <p className="text-sm text-slate-500">Manage and verify employee investment declarations</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
+                                <FileText size={18} /> Generate Form 16
                             </button>
-                            <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                Type <ChevronDown size={14} />
-                            </button>
-                            <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                Status <ChevronDown size={14} />
-                            </button>
-                            <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                Date <ChevronDown size={14} />
-                            </button>
+                        </div>
+
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {stats.map((stat, i) => (
+                                <div key={i} className={`p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between ${stat.color}`}>
+                                    <span className="text-[11px] font-bold uppercase tracking-wider opacity-60 mb-1">{stat.title}</span>
+                                    <span className="text-2xl font-black">{stat.value}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Table Body */}
-                    <div className="flex-1 overflow-auto bg-white">
-                        <table className="w-full text-left text-sm border-collapse">
-                            <thead className="bg-slate-50/50 sticky top-0 z-10 text-[11px] font-bold uppercase text-slate-400 border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-4">Employee Name & ID</th>
-                                    <th className="px-6 py-4">Tax Section</th>
-                                    <th className="px-6 py-4">Declared Amount</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Created By</th>
-                                    <th className="px-6 py-4">Last Modified By</th>
-                                    <th className="px-6 py-4 text-right">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {isLoading ? (
-                                    Array.from({ length: 5 }).map((_, i) => (
-                                        <tr key={i} className="animate-pulse">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-full bg-slate-100"></div>
-                                                    <div className="space-y-2">
-                                                        <div className="h-4 w-24 bg-slate-100 rounded"></div>
-                                                        <div className="h-3 w-16 bg-slate-50 rounded"></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4"><div className="h-6 w-16 bg-slate-100 rounded-lg"></div></td>
-                                            <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
-                                            <td className="px-6 py-4"><div className="h-5 w-20 bg-slate-100 rounded-full"></div></td>
-                                            <td className="px-6 py-4"><div className="h-3 w-20 bg-slate-50 rounded italic"></div></td>
-                                            <td className="px-6 py-4"><div className="h-3 w-24 bg-slate-50 rounded italic"></div></td>
-                                            <td className="px-6 py-4"></td>
+                    <div className="flex-1 flex overflow-hidden relative">
+
+                        {/* Main List Table */}
+                        <div className="flex-1 flex flex-col bg-white">
+                            {/* Filters Bar */}
+                            <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap gap-3 items-center">
+                                <div className="flex-1 min-w-[240px] relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search employee, ID or amount..."
+                                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
+                                        Employee <ChevronDown size={14} />
+                                    </button>
+                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
+                                        Type <ChevronDown size={14} />
+                                    </button>
+                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
+                                        Status <ChevronDown size={14} />
+                                    </button>
+                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
+                                        Date <ChevronDown size={14} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Table Body */}
+                            <div className="flex-1 overflow-auto bg-white">
+                                <table className="w-full text-left text-sm border-collapse">
+                                    <thead className="bg-slate-50/50 sticky top-0 z-10 text-[11px] font-bold uppercase text-slate-400 border-b border-slate-100">
+                                        <tr>
+                                            <th className="px-6 py-4">Employee Name & ID</th>
+                                            <th className="px-6 py-4">Tax Section</th>
+                                            <th className="px-6 py-4">Declared Amount</th>
+                                            <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4">Created By</th>
+                                            <th className="px-6 py-4">Last Modified By</th>
+                                            <th className="px-6 py-4 text-right">ACTIONS</th>
                                         </tr>
-                                    ))
-                                ) : declarations.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center text-slate-400 font-medium">
-                                            No declarations found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    declarations.map((doc) => (
-                                        <tr
-                                            key={doc?.id || Math.random()}
-                                            onClick={() => handleOpenView(doc?.id || '')}
-                                            className={`hover:bg-sky-50/30 cursor-pointer transition-colors group ${selectedDocId === doc?.id ? 'bg-sky-50/50' : ''}`}
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    {doc?.avatar_url ? (
-                                                        <img src={doc.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200" />
-                                                    ) : (
-                                                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                                            <User size={14} />
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {isLoading ? (
+                                            Array.from({ length: 5 }).map((_, i) => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-9 h-9 rounded-full bg-slate-100"></div>
+                                                            <div className="space-y-2">
+                                                                <div className="h-4 w-24 bg-slate-100 rounded"></div>
+                                                                <div className="h-3 w-16 bg-slate-50 rounded"></div>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                    <div>
-                                                        <div className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</div>
-                                                        <div className="text-xs text-slate-400 font-mono">{doc?.employee_id || 'N/A'}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc?.type || '')}`}>
-                                                    {doc?.type_label || 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
-                                                    {doc?.status || 'Pending'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-[11px] font-bold text-slate-700">
-                                                    {doc?.created_by || 'Employee'}
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 mt-0.5">
-                                                    {doc?.created_at || '10 Dec 2025, 09:00 AM'}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-[11px] font-bold text-slate-700">
-                                                    {doc?.last_modified_by || 'Not modified'}
-                                                </div>
-                                                {doc?.last_modified_at && (
-                                                    <div className="text-[10px] text-slate-400 mt-0.5">
-                                                        {doc.last_modified_at}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-0.5">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
-                                                    {/* Approve button hidden per user request
-                                                    {doc.status === 'Pending' && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); handleOpenApprove(); }}
-                                                            className="p-1.5 hover:bg-slate-100 hover:text-emerald-600 rounded-lg text-slate-400 transition-colors"
-                                                            title="Decide"
-                                                        >
-                                                            <Check size={15} />
-                                                        </button>
-                                                    )}
-                                                    */}
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('COMMENT'); }}
-                                                        className="p-1.5 hover:bg-slate-100 hover:text-sky-600 rounded-lg text-slate-400 transition-colors"
-                                                        title="Add Note"
-                                                    >
-                                                        <MessageSquare size={15} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                                    </td>
+                                                    <td className="px-6 py-4"><div className="h-6 w-16 bg-slate-100 rounded-lg"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-5 w-20 bg-slate-100 rounded-full"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-3 w-20 bg-slate-50 rounded italic"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-3 w-24 bg-slate-50 rounded italic"></div></td>
+                                                    <td className="px-6 py-4"></td>
+                                                </tr>
+                                            ))
+                                        ) : declarations.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={8} className="px-6 py-12 text-center text-slate-400 font-medium">
+                                                    No declarations found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            declarations.map((doc) => (
+                                                <tr
+                                                    key={doc?.id || Math.random()}
+                                                    onClick={() => handleOpenView(doc?.id || '')}
+                                                    className={`hover:bg-sky-50/30 cursor-pointer transition-colors group ${selectedDocId === doc?.id ? 'bg-sky-50/50' : ''}`}
+                                                >
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            {doc?.avatar_url ? (
+                                                                <img src={doc.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200" />
+                                                            ) : (
+                                                                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                                    <User size={14} />
+                                                                </div>
+                                                            )}
+                                                            <div>
+                                                                <div className="font-bold text-slate-800">{doc?.employee_name || 'N/A'}</div>
+                                                                <div className="text-xs text-slate-400 font-mono">{doc?.employee_id || 'N/A'}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc?.type || '')}`}>
+                                                            {doc?.type_label || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
+                                                            {doc?.status || 'Pending'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-[11px] font-bold text-slate-700">
+                                                            {doc?.created_by || 'Employee'}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-0.5">
+                                                            {doc?.created_at || '10 Dec 2025, 09:00 AM'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-[11px] font-bold text-slate-700">
+                                                            {doc?.last_modified_by || 'Not modified'}
+                                                        </div>
+                                                        {doc?.last_modified_at && (
+                                                            <div className="text-[10px] text-slate-400 mt-0.5">
+                                                                {doc.last_modified_at}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-0.5">
+                                                            <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    {/* Pagination */}
-                    <div className="px-6 py-4 border-t border-slate-200 bg-white flex justify-between items-center text-xs font-medium text-slate-500">
-                        <span>Showing 1-6 of 2,140 declarations</span>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors">Previous</button>
-                            <button className="px-3 py-1 bg-purple-600 text-white rounded-lg font-bold shadow-sm shadow-purple-100">1</button>
-                            <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">2</button>
-                            <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">3</button>
-                            <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Next</button>
+                            {/* Pagination */}
+                            <div className="px-6 py-4 border-t border-slate-200 bg-white flex justify-between items-center text-xs font-medium text-slate-500">
+                                <span>Showing 1-6 of 2,140 declarations</span>
+                                <div className="flex gap-2">
+                                    <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors">Previous</button>
+                                    <button className="px-3 py-1 bg-purple-600 text-white rounded-lg font-bold shadow-sm shadow-purple-100">1</button>
+                                    <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">2</button>
+                                    <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">3</button>
+                                    <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Next</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </>
+            )}
 
-                {/* Modals */}
-                {selectedDoc && modalMode === 'VIEW' && (
-                    <ViewDeclarationModal
-                        doc={selectedDoc}
-                        onClose={handleClose}
-                        onEdit={handleOpenEdit}
-                        onApprove={handleOpenApprove}
-                    />
-                )}
+            {selectedDoc && modalMode === 'EDIT' && (
+                <EditDeclarationModal
+                    doc={selectedDoc}
+                    onClose={() => setModalMode('VIEW')}
+                    onSave={handleSaveEdit}
+                />
+            )}
 
-                {selectedDoc && modalMode === 'EDIT' && (
-                    <EditDeclarationModal
-                        doc={selectedDoc}
-                        onClose={() => setModalMode('VIEW')}
-                        onSave={handleSaveEdit}
-                    />
-                )}
+            {selectedDoc && modalMode === 'APPROVE' && (
+                <ApproveDeclarationModal
+                    doc={selectedDoc}
+                    initialDecision={initialDecision}
+                    onClose={() => setModalMode('VIEW')}
+                    onDecide={(id, decision, amount, note) => handleUpdateStatus(id, decision, amount, note)}
+                />
+            )}
 
-                {selectedDoc && modalMode === 'APPROVE' && (
-                    <ApproveDeclarationModal
-                        doc={selectedDoc}
-                        initialDecision={initialDecision}
-                        onClose={() => setModalMode('VIEW')}
-                        onDecide={(id, decision, amount, note) => handleUpdateStatus(id, decision, amount, note)}
-                    />
-                )}
+            {selectedDoc && modalMode === 'COMMENT' && (
+                <AddCommentModal
+                    doc={selectedDoc}
+                    onClose={() => setModalMode('VIEW')}
+                    onComment={() => { }}
+                />
+            )}
 
-                {selectedDoc && modalMode === 'COMMENT' && (
-                    <AddCommentModal
-                        doc={selectedDoc}
-                        onClose={() => setModalMode('VIEW')}
-                        onComment={() => { }}
-                    />
-                )}
-                <Form16GenerationModal isOpen={isForm16ModalOpen} onClose={() => setIsForm16ModalOpen(false)} />
-            </div>
+            <Form16GenerationModal isOpen={isForm16ModalOpen} onClose={() => setIsForm16ModalOpen(false)} />
         </div>
     );
 };

@@ -20,7 +20,8 @@ import {
    Upload,
    ChevronDown,
    Calendar,
-   Clock
+   Clock,
+   Info
 } from 'lucide-react';
 
 const EFFECTIVE_MONTHS = (() => {
@@ -727,25 +728,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            </div>
                            {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1">{errors.effectiveFrom}</p>}
                         </div>
-
-                        <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Appraisal Month</label>
-                           <div className="relative">
-                              <select
-                                 value={appraisalMonth}
-                                 onChange={(e) => setAppraisalMonth(e.target.value)}
-                                 disabled={isReadOnly}
-                                 className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 appearance-none transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
-                              >
-                                 <option value="">Select Month</option>
-                                 {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                    <option key={m} value={m}>{m}</option>
-                                 ))}
-                              </select>
-                              <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                           </div>
-                        </div>
                      </div>
 
                      <div className="space-y-6">
@@ -884,6 +866,35 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <option>New Regime (2025) - Default</option>
                               <option>Old Regime</option>
                            </select>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               {/* 5. General Information */}
+               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <Info size={18} className="text-slate-400" /> General Information
+                     </h3>
+                  </div>
+                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Appraisal Month</label>
+                        <div className="relative">
+                           <select
+                              value={appraisalMonth}
+                              onChange={(e) => setAppraisalMonth(e.target.value)}
+                              disabled={isReadOnly}
+                              className={`w-full pl-10 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 appearance-none transition-all ${isReadOnly ? 'bg-slate-50 text-slate-500 border-slate-200' : 'border-slate-200 hover:border-slate-300'}`}
+                           >
+                              <option value="">Select Month</option>
+                              {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                 <option key={m} value={m}>{m}</option>
+                              ))}
+                           </select>
+                           <Calendar size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isReadOnly ? 'text-slate-300' : 'text-slate-400'}`} />
+                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
                      </div>
                   </div>
