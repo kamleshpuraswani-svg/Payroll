@@ -150,7 +150,9 @@ export interface TaxDeclaration {
   notes: string;
   remarks?: string;
   created_by?: string;
+  created_at?: string;
   last_modified_by?: string;
+  last_modified_at?: string;
   ctc: string;
   regime: 'Old' | 'New';
   breakdown: { label: string; amount: number }[];

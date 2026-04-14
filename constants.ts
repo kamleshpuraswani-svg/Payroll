@@ -219,6 +219,7 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
     submitted_date: '10 Dec 2025',
     status: 'Pending',
     created_by: 'Employee',
+    created_at: '10 Dec 2025, 09:15 AM',
     notes: 'LIC receipt pending',
     ctc: '₹18.5 L',
     regime: 'Old',
@@ -262,8 +263,10 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
     submitted_date: '12 Dec 2025',
     status: 'Rejected',
     created_by: 'System',
+    created_at: '12 Dec 2025, 02:20 PM',
     notes: 'Invalid policy document uploaded. Please upload a clear copy of the premium receipt.',
     last_modified_by: 'Admin Mike',
+    last_modified_at: '15 Dec 2025, 04:10 PM',
     ctc: '₹15.8 L',
     regime: 'New',
     proofs: [

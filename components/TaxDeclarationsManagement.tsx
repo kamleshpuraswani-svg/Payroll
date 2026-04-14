@@ -1403,18 +1403,27 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-xs font-medium text-slate-600 italic">
+                                                <div className="text-[11px] font-bold text-slate-700">
                                                     {doc?.created_by || 'Employee'}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                                    {doc?.created_at || '10 Dec 2025, 09:00 AM'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-xs font-medium text-slate-600 italic">
+                                                <div className="text-[11px] font-bold text-slate-700">
                                                     {doc?.last_modified_by || 'Not modified'}
                                                 </div>
+                                                {doc?.last_modified_at && (
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">
+                                                        {doc.last_modified_at}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-0.5">
                                                     <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
+                                                    {/* Approve button hidden per user request
                                                     {doc.status === 'Pending' && (
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); handleOpenApprove(); }}
@@ -1424,6 +1433,7 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                             <Check size={15} />
                                                         </button>
                                                     )}
+                                                    */}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setSelectedDocId(doc?.id || ''); setModalMode('COMMENT'); }}
                                                         className="p-1.5 hover:bg-slate-100 hover:text-sky-600 rounded-lg text-slate-400 transition-colors"
