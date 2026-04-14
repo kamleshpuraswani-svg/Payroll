@@ -266,7 +266,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Next Appraisal Due</span>
-                  <span className="text-purple-600 font-bold">15 Mar 2026</span>
+                  <span className="text-purple-600 font-bold">Mar 2026</span>
                 </div>
               </div>
 
