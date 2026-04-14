@@ -73,6 +73,8 @@ interface CommentModalProps extends ModalProps {
 interface ViewModalProps extends ModalProps {
     onEdit: () => void;
     onApprove: (decision: 'Approved' | 'Rejected') => void;
+    allDeclarations: TaxDeclaration[];
+    onSwitchDoc: (id: string) => void;
 }
 
 const SECTION_LIMITS: Record<string, string> = {
@@ -82,6 +84,17 @@ const SECTION_LIMITS: Record<string, string> = {
     'HRA': 'As per Rules',
     '80G': 'Donation Based',
     'Others': 'NA'
+};
+
+// Derives the overall/parent status for an employee from all their section statuses
+const computeParentStatus = (sections: TaxDeclaration[]): string => {
+    if (sections.length === 0) return 'Pending';
+    const statuses = sections.map(s => s.status);
+    if (statuses.every(s => s === 'Approved')) return 'Approved';
+    if (statuses.every(s => s === 'Rejected')) return 'Rejected';
+    if (statuses.every(s => s === 'Pending')) return 'Pending';
+    if (statuses.some(s => s === 'Pending')) return 'In Review';
+    return 'Partially Approved'; // mix of Approved + Rejected, no Pending remaining
 };
 
 // --- Custom Icons ---
@@ -689,8 +702,24 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
 
 const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, onDecide, initialDecision = 'Approved' }) => {
     const [decision, setDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>(initialDecision);
+    const [itemApprovals, setItemApprovals] = useState<Record<number, number>>(() => {
+        const initialMap: Record<number, number> = {};
+        if (doc.breakdown) {
+            doc.breakdown.forEach((item, index) => {
+                initialMap[index] = item.amount;
+            });
+        }
+        return initialMap;
+    });
     const [approvedAmount, setApprovedAmount] = useState<number>(doc.amount);
     const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (doc.breakdown && doc.breakdown.length > 0) {
+            const total = Object.values(itemApprovals).reduce((sum, val) => sum + val, 0);
+            setApprovedAmount(total);
+        }
+    }, [itemApprovals, doc.breakdown]);
 
     const handleSubmit = () => {
         onDecide(doc.id, decision, approvedAmount, reason);
@@ -701,7 +730,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center">
+                <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex justify-between items-center shrink-0">
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">Approve Declaration</h3>
                         <p className="text-xs text-sky-700 font-medium">{doc?.employee_name || 'N/A'} ({doc?.employee_id || 'N/A'})</p>
@@ -728,7 +757,10 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                     <div>
                         <div className="space-y-3">
                             <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Approved' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                <input type="radio" name="decision" checked={decision === 'Approved'} onChange={() => setDecision('Approved')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
+                                <input type="radio" name="decision" checked={decision === 'Approved'} onChange={() => {
+                                    setDecision('Approved');
+                                    setApprovedAmount(doc.amount);
+                                }} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
                                 <span className="ml-3 font-bold text-slate-700">Full Approve</span>
                                 <span className="ml-auto text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded">₹{(doc?.amount || 0).toLocaleString()}</span>
                             </label>
@@ -739,16 +771,49 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                     <span className="ml-3 font-bold text-slate-700">Partial Approve</span>
                                 </div>
                                 {decision === 'Partially Approved' && (
-                                    <div className="mt-3 ml-7 space-y-2 animate-in fade-in slide-in-from-top-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-slate-600">Approved Amount: ₹</span>
-                                            <input
-                                                type="number"
-                                                value={approvedAmount}
-                                                onChange={(e) => setApprovedAmount(parseInt(e.target.value) || 0)}
-                                                className="w-32 px-2 py-1 border border-slate-300 rounded text-sm font-bold focus:border-orange-500 focus:outline-none"
-                                            />
+                                    <div className="mt-3 ml-7 space-y-4 animate-in fade-in slide-in-from-top-1">
+                                        <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100 space-y-3">
+                                            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider mb-2">Item-wise Approval</p>
+                                            {doc.breakdown && doc.breakdown.length > 0 ? (
+                                                doc.breakdown.map((item, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between gap-4 p-2 bg-white rounded-lg border border-orange-100/50">
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-slate-700">{item.label}</p>
+                                                            <p className="text-[10px] text-slate-500 font-medium">Declared: ₹{item.amount.toLocaleString()}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-slate-400">₹</span>
+                                                            <input
+                                                                type="text"
+                                                                value={(itemApprovals[idx] || 0).toLocaleString()}
+                                                                onChange={(e) => {
+                                                                    const rawVal = e.target.value.replace(/[^0-9]/g, '');
+                                                                    const val = Math.min(item.amount, Math.max(0, parseInt(rawVal) || 0));
+                                                                    setItemApprovals(prev => ({ ...prev, [idx]: val }));
+                                                                }}
+                                                                className="w-24 px-2 py-1 border border-slate-200 rounded text-sm font-bold focus:border-orange-500 focus:outline-none text-right"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm text-slate-600">Approved Amount: ₹</span>
+                                                    <input
+                                                        type="number"
+                                                        value={approvedAmount}
+                                                        onChange={(e) => setApprovedAmount(parseInt(e.target.value) || 0)}
+                                                        className="w-32 px-2 py-1 border border-slate-300 rounded text-sm font-bold focus:border-orange-500 focus:outline-none"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
+
+                                        <div className="flex items-center justify-between px-4 py-2 bg-slate-100 rounded-lg">
+                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Calculated Total Approval</span>
+                                            <span className="text-base font-black text-slate-800">₹{approvedAmount.toLocaleString()}</span>
+                                        </div>
+
                                         <textarea
                                             placeholder="Reason for partial approval (Mandatory)"
                                             value={reason}
@@ -761,7 +826,10 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
 
                             <label className={`flex flex-col p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Rejected' ? 'border-rose-500 bg-rose-50/30' : 'border-slate-200 hover:bg-slate-50'}`}>
                                 <div className="flex items-center w-full">
-                                    <input type="radio" name="decision" checked={decision === 'Rejected'} onChange={() => setDecision('Rejected')} className="w-4 h-4 text-rose-600 focus:ring-rose-500 border-gray-300" />
+                                    <input type="radio" name="decision" checked={decision === 'Rejected'} onChange={() => {
+                                        setDecision('Rejected');
+                                        setApprovedAmount(0);
+                                    }} className="w-4 h-4 text-rose-600 focus:ring-rose-500 border-gray-300" />
                                     <span className="ml-3 font-bold text-slate-700">Reject</span>
                                 </div>
                                 {decision === 'Rejected' && (
@@ -778,19 +846,6 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                         </div>
                     </div>
 
-                    {/* Read-Only Proofs */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Attached Proofs (Review)</label>
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                            {(doc?.proofs || []).map((proof, i) => (
-                                <div key={i} className="min-w-[100px] border border-slate-200 rounded-lg p-2 flex flex-col items-center text-center bg-slate-50">
-                                    <FileText size={16} className="text-slate-400 mb-1" />
-                                    <p className="text-[9px] font-medium text-slate-600 truncate w-full" title={proof?.file_name || 'File'}>{proof?.file_name || 'File'}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Note to Employee */}
                     <div className="pt-4 border-t border-slate-100">
                         <label className="block text-xs font-bold text-slate-500 uppercase">Remarks</label>
@@ -799,22 +854,23 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                             value={reason}
                             onChange={e => setReason(e.target.value)}
                             placeholder="Optional comment..."
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 min-h-[60px]"
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 min-h-[80px]"
                         />
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm">
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0 z-10 relative">
+                    <button onClick={onClose} className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all shadow-sm">
                         Cancel
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className={`px-6 py-2.5 text-white font-bold rounded-xl shadow-sm transition-colors text-sm flex items-center gap-2 ${decision === 'Approved' ? 'bg-emerald-600 hover:bg-emerald-700' :
-                            decision === 'Partially Approved' ? 'bg-orange-500 hover:bg-orange-600' :
-                                'bg-rose-600 hover:bg-rose-700'
-                            }`}
+                        className={`px-8 py-2.5 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center gap-2 ${
+                            decision === 'Approved' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100' :
+                            decision === 'Partially Approved' ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-100' :
+                            'bg-rose-500 hover:bg-rose-600 shadow-rose-100'
+                        }`}
                     >
                         Submit
                     </button>
@@ -924,15 +980,20 @@ const AddCommentModal: React.FC<CommentModalProps> = ({ doc, onClose, onComment 
 
 // --- View Declaration Modal (Updated) ---
 
-const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, onApprove }) => {
+const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit, onApprove, allDeclarations, onSwitchDoc }) => {
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'Approved': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
             case 'Rejected': return 'bg-rose-50 text-rose-700 border-rose-100';
             case 'Pending': return 'bg-orange-50 text-orange-700 border-orange-100';
+            case 'In Review': return 'bg-amber-50 text-amber-700 border-amber-100';
+            case 'Partially Approved': return 'bg-sky-50 text-sky-700 border-sky-100';
             default: return 'bg-slate-100 text-slate-600 border-slate-200';
         }
     };
+
+    const employeeSections = allDeclarations.filter((d: TaxDeclaration) => d.employee_id === doc.employee_id);
+    const parentStatus = computeParentStatus(employeeSections);
 
     const maxLimit = SECTION_LIMITS[doc.type] || 'NA';
 
@@ -977,74 +1038,136 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+            <div className="px-8 py-3 bg-white border-b border-slate-100">
                 {/* Employee Info Header */}
-                <div className="flex items-start gap-6 p-6 border border-slate-100 rounded-2xl bg-slate-50/50 shadow-sm">
+                <div className="flex items-center gap-6 p-4 border border-slate-100 rounded-2xl bg-slate-50/50 shadow-sm">
                     {doc?.avatar_url ? (
-                        <img src={doc.avatar_url} alt="" className="w-16 h-16 rounded-full border-4 border-white shadow-md object-cover" />
+                        <img src={doc.avatar_url} alt="" className="w-14 h-14 rounded-full border-4 border-white shadow-md object-cover" />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border-4 border-white shadow-md">
-                            <User size={32} />
+                        <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border-4 border-white shadow-md">
+                            <User size={28} />
                         </div>
                     )}
-                    <div className="flex-1 flex justify-between items-start">
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Employee</p>
-                                <p className="font-bold text-slate-800 text-xl">{doc?.employee_name || 'N/A'}</p>
-                                <p className="text-sm text-slate-500">{doc?.employee_id || 'N/A'}</p>
+                    <div className="flex-1 flex justify-between items-center text-center sm:text-left">
+                        <div>
+                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
+                                <p className="font-bold text-slate-800 text-lg leading-tight">{doc?.employee_name || 'N/A'}</p>
+                                <p className="text-xs text-slate-500 font-medium">({doc?.employee_id || 'N/A'})</p>
                             </div>
-                            <div className="pt-1">
-                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
+                        </div>
+
+                            <div className="flex items-center gap-4">
+                                <span className={`hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm`}>
                                     Tax Regime: {doc?.regime || 'N/A'}
                                 </span>
-                            </div>
-                        </div>
 
-                        <div className="flex flex-col items-end gap-4">
-                            {doc.status === 'Pending' && (
-                                <div className="flex gap-3">
-                                    <button 
-                                        onClick={() => onApprove('Approved')} 
-                                        title="Approve"
-                                        className="px-4 py-2 flex items-center gap-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 font-bold text-sm active:scale-95"
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold border shadow-sm ${getStatusStyle(parentStatus)}`}>
+                                        {parentStatus}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 ml-2 border-l border-slate-200 pl-4">
+                                    <button
+                                        onClick={onClose}
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all shadow-sm"
                                     >
-                                        <CheckCircle size={18} /> Approve
+                                        Cancel
                                     </button>
-                                    <button 
-                                        onClick={() => onApprove('Rejected')} 
-                                        title="Reject"
-                                        className="px-4 py-2 flex items-center gap-2 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 font-bold text-sm active:scale-95"
+                                    <button
+                                        onClick={onClose}
+                                        className="px-4 py-2 bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-100 hover:bg-emerald-600 transition-all active:scale-95 flex items-center gap-1.5"
                                     >
-                                        <CheckCircle size={18} className="rotate-45" /> Reject
+                                        <CheckCircle size={14} /> Submit
                                     </button>
                                 </div>
-                            )}
-                            <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold border shadow-sm ${getStatusStyle(doc?.status || 'Pending')}`}>
-                                Status: {doc?.status || 'Pending'}
-                            </span>
-                        </div>
+                            </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Declaration Summary */}
-                <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-6 border-b border-slate-100 pb-8`}>
-                    <div>
-                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Tax Section</p>
-                        <p className="font-bold text-purple-700 text-base">{doc?.type_label || 'N/A'}</p>
+            <div className="flex-1 flex overflow-hidden">
+                {/* Sidebar */}
+                    <div className="w-80 border-r border-slate-100 bg-slate-50/30 overflow-y-auto shrink-0 animate-in slide-in-from-left-4 duration-300">
+                        <div className="p-4 space-y-3">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
+                                <Zap size={12} className="text-indigo-500" /> All Declarations
+                            </h4>
+                            {allDeclarations
+                                .filter(d => d.employee_id === doc.employee_id)
+                                .map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => onSwitchDoc(item.id)}
+                                        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 group ${item.id === doc.id
+                                            ? 'bg-white border-indigo-200 shadow-md ring-1 ring-indigo-50'
+                                            : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-sm'
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`text-xs font-bold ${item.id === doc.id ? 'text-indigo-600' : 'text-slate-700'}`}>
+                                                {item.type_label}
+                                            </span>
+                                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase border ${item.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                item.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                    'bg-orange-50 text-orange-600 border-orange-100'
+                                                }`}>
+                                                {item.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span className="font-bold text-slate-500">
+                                                INR {item.amount.toLocaleString('en-IN')}
+                                            </span>
+                                            <div className="flex items-center gap-1 text-slate-400 font-bold">
+                                                <Paperclip size={10} />
+                                                {(item.proofs || []).length}
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Max Limit</p>
-                        <p className="font-bold text-slate-600 text-base">{maxLimit}</p>
-                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                        {/* Declaration Summary */}
+                        <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-6 border-b border-slate-100 pb-8`}>
+                            <div>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Tax Section</p>
+                                <p className="font-bold text-purple-700 text-base">{doc?.type_label || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Maximum Limit</p>
+                                <p className="font-bold text-slate-600 text-base">{maxLimit}</p>
+                            </div>
                     <div>
                         <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Declared Amount</p>
-                        <p className="font-black text-slate-800 text-2xl">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
+                        <p className="font-bold text-slate-600 text-base">₹{(doc?.amount || 0).toLocaleString('en-IN')}</p>
                     </div>
+
+                    {doc.status === 'Pending' && (
+                        <div className="flex items-end pb-1 h-full">
+                            <div className="flex gap-2 p-1.5 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm">
+                                <button 
+                                    onClick={() => onApprove('Approved')} 
+                                    className="px-4 py-2 flex items-center gap-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-md font-bold text-[11px] uppercase tracking-wider active:scale-95"
+                                >
+                                    <CheckCircle size={14} /> Approve
+                                </button>
+                                <button 
+                                    onClick={() => onApprove('Rejected')} 
+                                    className="px-4 py-2 flex items-center gap-2 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all shadow-md font-bold text-[11px] uppercase tracking-wider active:scale-95"
+                                >
+                                    <CheckCircle size={14} className="rotate-45" /> Reject
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {(doc?.status === 'Approved' || doc?.status === 'Partially Approved') && (
                         <div>
                             <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Approved Amount</p>
-                            <p className="font-black text-emerald-700 text-2xl">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</p>
+                            <p className="font-bold text-emerald-700 text-base">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</p>
                             {doc?.status === 'Partially Approved' && doc?.remarks && (
                                 <p className="text-[10px] text-slate-500 italic mt-2 leading-tight" title={doc.remarks}>
                                     <span className="font-bold uppercase text-[9px] text-slate-400 mr-1">Reason:</span>
@@ -1121,15 +1244,9 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                     </div>
                 </div>
             </div>
-
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button onClick={onClose} className="px-10 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-2xl hover:bg-slate-50 transition-all text-xs uppercase tracking-widest shadow-sm active:scale-95">
-                    Back to List
-                </button>
-            </div>
         </div>
-    );
+    </div>
+);
 };
 
 // --- Main Container ---
@@ -1194,6 +1311,8 @@ const TaxDeclarationsManagement: React.FC = () => {
             case 'Approved': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
             case 'Rejected': return 'bg-rose-50 text-rose-700 border-rose-100';
             case 'Pending': return 'bg-orange-50 text-orange-700 border-orange-100';
+            case 'In Review': return 'bg-amber-50 text-amber-700 border-amber-100';
+            case 'Partially Approved': return 'bg-sky-50 text-sky-700 border-sky-100';
             default: return 'bg-slate-100 text-slate-600 border-slate-200';
         }
     };
@@ -1268,6 +1387,8 @@ const TaxDeclarationsManagement: React.FC = () => {
                     onClose={handleClose}
                     onEdit={handleOpenEdit}
                     onApprove={handleOpenApprove}
+                    allDeclarations={declarations}
+                    onSwitchDoc={(id) => setSelectedDocId(id)}
                 />
             ) : (
                 <>
@@ -1339,7 +1460,8 @@ const TaxDeclarationsManagement: React.FC = () => {
                                             <th className="px-6 py-4">Employee Name & ID</th>
                                             <th className="px-6 py-4">Tax Section</th>
                                             <th className="px-6 py-4">Declared Amount</th>
-                                            <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4">Section Status</th>
+                                            <th className="px-6 py-4">Overall Status</th>
                                             <th className="px-6 py-4">Created By</th>
                                             <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4 text-right">ACTIONS</th>
@@ -1406,6 +1528,17 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
                                                             {doc?.status || 'Pending'}
                                                         </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {(() => {
+                                                            const empSections = declarations.filter((d: TaxDeclaration) => d.employee_id === doc.employee_id);
+                                                            const overall = computeParentStatus(empSections);
+                                                            return (
+                                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(overall)}`}>
+                                                                    {overall}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="text-[11px] font-bold text-slate-700">

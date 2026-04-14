@@ -339,5 +339,65 @@ export const MOCK_TAX_DECLARATIONS: TaxDeclaration[] = [
     breakdown: [
       { label: 'NSC Purchase', amount: 120000 }
     ]
+  },
+  {
+    id: 'TX-007',
+    employee_name: 'Priya Sharma',
+    employee_id: 'TF00912',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
+    type: '80D',
+    type_label: '80D Medical Insurance',
+    amount: 25000,
+    submitted_date: '12 Dec 2025',
+    status: 'Approved',
+    created_by: 'Employee',
+    regime: 'Old',
+    proofs: [{ id: 'pd1', file_name: 'Medical_Insurance.pdf', file_type: 'pdf', size: '1.5 MB' }],
+    breakdown: [{ label: 'Self & Family', amount: 25000 }]
+  },
+  {
+    id: 'TX-008',
+    employee_name: 'Priya Sharma',
+    employee_id: 'TF00912',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
+    type: '80CCD',
+    type_label: '80CCD NPS',
+    amount: 50000,
+    submitted_date: '14 Dec 2025',
+    status: 'Pending',
+    created_by: 'Employee',
+    regime: 'Old',
+    proofs: [{ id: 'pn1', file_name: 'NPS_Contribution.pdf', file_type: 'pdf', size: '1.2 MB' }],
+    breakdown: [{ label: 'NPS Tier 1', amount: 50000 }]
+  },
+  {
+    id: 'TX-010',
+    employee_name: 'Priya Sharma',
+    employee_id: 'TF00912',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
+    type: '80G',
+    type_label: '80G Donations',
+    amount: 10000,
+    submitted_date: '15 Dec 2025',
+    status: 'Approved',
+    created_by: 'Employee',
+    regime: 'Old',
+    proofs: [{ id: 'pg1', file_name: 'Donation_Receipt.pdf', file_type: 'pdf', size: '800 KB' }],
+    breakdown: [{ label: 'Charitable Trust', amount: 10000 }]
+  },
+  {
+    id: 'TX-011',
+    employee_name: 'Priya Sharma',
+    employee_id: 'TF00912',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
+    type: 'HRA',
+    type_label: 'HRA Rent Receipts',
+    amount: 180000,
+    submitted_date: '16 Dec 2025',
+    status: 'Pending',
+    created_by: 'Employee',
+    regime: 'Old',
+    proofs: [{ id: 'ph1', file_name: 'Rent_Receipts_FY25.pdf', file_type: 'pdf', size: '4.5 MB' }],
+    breakdown: [{ label: 'Monthly Rent', amount: 180000 }]
   }
 ];

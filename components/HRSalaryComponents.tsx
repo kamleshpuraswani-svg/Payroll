@@ -335,8 +335,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [incomeTaxSection, setIncomeTaxSection] = useState(initialData?.incomeTaxSection || '');
     const [sectionMaxLimit, setSectionMaxLimit] = useState(initialData?.sectionMaxLimit || '');
     const [nonTaxableLimit, setNonTaxableLimit] = useState(initialData?.nonTaxableLimit || '');
-    const [isCreatingSection, setIsCreatingSection] = useState(false);
-    const [customTaxSection, setCustomTaxSection] = useState('');
     const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
 
     const handleSave = () => {
@@ -372,7 +370,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             category: 'Earnings',
             roundOffSetting: roundOffSetting,
             taxComputation: isTaxable ? taxComputation : undefined,
-            incomeTaxSection: isTaxable ? (isCreatingSection ? customTaxSection : incomeTaxSection) : undefined,
+            incomeTaxSection: isTaxable ? incomeTaxSection : undefined,
             sectionMaxLimit: (isTaxable && taxTreatment === 'Fully Taxable') ? sectionMaxLimit : undefined,
             nonTaxableLimit: (isTaxable && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined,
             includeInCTC,
@@ -875,61 +873,34 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
                                         <div className="relative">
                                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
-                                            {isCreatingSection ? (
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        value={customTaxSection}
-                                                        onChange={e => setCustomTaxSection(e.target.value)}
-                                                        placeholder="Enter Section Name"
-                                                        className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10 font-medium text-slate-700"
-                                                        autoFocus
-                                                    />
-                                                    <button
-                                                        onClick={() => { setIsCreatingSection(false); setCustomTaxSection(''); }}
-                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                            ) : (
+                                            <div
+                                                onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
+                                            >
+                                                <span>{incomeTaxSection || 'Select Section'}</span>
+                                                <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                            </div>
+                                            {isSectionDropdownOpen && (
                                                 <>
-                                                    <div
-                                                        onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
-                                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
-                                                    >
-                                                        <span>{incomeTaxSection || 'Select or Create Section'}</span>
-                                                        <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
-                                                    </div>
-                                                    {isSectionDropdownOpen && (
-                                                        <>
-                                                            <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
-                                                            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                                                                <div
-                                                                    onClick={() => { setIsCreatingSection(true); setIsSectionDropdownOpen(false); }}
-                                                                    className="px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-slate-50 cursor-pointer border-b border-slate-100"
-                                                                >
-                                                                    Create section
-                                                                </div>
-                                                                {[
-                                                                    "Section_10(14)(i)",
-                                                                    "Section_10(14)(ii)",
-                                                                    "Section_10(5)",
-                                                                    "Section_17(2)(Viii)",
-                                                                    "Section_10(13)(a)"
-                                                                ].map(section => (
-                                                                    <div
-                                                                        key={section}
-                                                                        onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
-                                                                        className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
-                                                                    >
-                                                                        {section}
-                                                                        {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
-                                                                    </div>
-                                                                ))}
+                                                    <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
+                                                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                        {[
+                                                            "Section_10(14)(i)",
+                                                            "Section_10(14)(ii)",
+                                                            "Section_10(5)",
+                                                            "Section_17(2)(Viii)",
+                                                            "Section_10(13)(a)"
+                                                        ].map(section => (
+                                                            <div
+                                                                key={section}
+                                                                onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
+                                                                className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                                                            >
+                                                                {section}
+                                                                {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
                                                             </div>
-                                                        </>
-                                                    )}
+                                                        ))}
+                                                    </div>
                                                 </>
                                             )}
                                         </div>
@@ -1256,7 +1227,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             addHistory('Taxable Earning', initialData.taxable !== 'Tax Deductible' ? 'Yes' : 'No', isTaxableEarning ? 'Yes' : 'No');
             addHistory('Tax Treatment', initialData.taxable || 'N/A', isTaxableEarning ? taxTreatment : 'Tax Deductible');
             addHistory('Tax Computation', initialData.taxComputation, isTaxableEarning ? taxComputation : 'N/A');
-            addHistory('Income Tax Section', initialData.incomeTaxSection, isTaxableEarning ? (isCreatingSection ? customTaxSection : incomeTaxSection) : 'N/A');
+            addHistory('Income Tax Section', initialData.incomeTaxSection, isTaxableEarning ? incomeTaxSection : 'N/A');
             addHistory('Pro-Rata', yn(initialData.isProRata), yn(isProRata));
             addHistory('Include Monthly Payout', yn(initialData.includeMonthlyPayout), yn(includeMonthlyPayout));
             addHistory('Prorate DOJ/DOL', yn(initialData.prorateDojDol), yn(prorateDojDol));
@@ -1698,61 +1669,34 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
 
                                     <div className="relative">
                                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
-                                        {isCreatingSection ? (
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    value={customTaxSection}
-                                                    onChange={e => setCustomTaxSection(e.target.value)}
-                                                    placeholder="Enter Section Name"
-                                                    className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-purple-50/10 font-medium text-slate-700"
-                                                    autoFocus
-                                                />
-                                                <button
-                                                    onClick={() => { setIsCreatingSection(false); setCustomTaxSection(''); }}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        ) : (
+                                        <div
+                                            onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
+                                        >
+                                            <span>{incomeTaxSection || 'Select Section'}</span>
+                                            <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                        </div>
+                                        {isSectionDropdownOpen && (
                                             <>
-                                                <div
-                                                    onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
-                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
-                                                >
-                                                    <span>{incomeTaxSection || 'Select or Create Section'}</span>
-                                                    <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
-                                                </div>
-                                                {isSectionDropdownOpen && (
-                                                    <>
-                                                        <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
-                                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                                                            <div
-                                                                onClick={() => { setIsCreatingSection(true); setIsSectionDropdownOpen(false); }}
-                                                                className="px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-slate-50 cursor-pointer border-b border-slate-100"
-                                                            >
-                                                                Create section
-                                                            </div>
-                                                            {[
-                                                                "Section_10(14)(i)",
-                                                                "Section_10(14)(ii)",
-                                                                "Section_10(5)",
-                                                                "Section_17(2)(Viii)",
-                                                                "Section_10(13)(a)"
-                                                            ].map(section => (
-                                                                <div
-                                                                    key={section}
-                                                                    onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
-                                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
-                                                                >
-                                                                    {section}
-                                                                    {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
-                                                                </div>
-                                                            ))}
+                                                <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
+                                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                    {[
+                                                        "Section_10(14)(i)",
+                                                        "Section_10(14)(ii)",
+                                                        "Section_10(5)",
+                                                        "Section_17(2)(Viii)",
+                                                        "Section_10(13)(a)"
+                                                    ].map(section => (
+                                                        <div
+                                                            key={section}
+                                                            onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
+                                                            className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                                                        >
+                                                            {section}
+                                                            {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
                                                         </div>
-                                                    </>
-                                                )}
+                                                    ))}
+                                                </div>
                                             </>
                                         )}
                                     </div>
