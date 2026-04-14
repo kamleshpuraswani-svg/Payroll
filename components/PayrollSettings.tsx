@@ -1082,17 +1082,14 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                             onChange={(e) => setAttendanceStartDay(e.target.value)}
                                                             className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
                                                         >
-                                                            {Array.from({ length: 31 }, (_, i) => (
-                                                                <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
-                                                            ))}
-                                                        </select>
-                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
-                                                    </div>
-                                                    <span className="text-slate-400 text-xs font-bold px-2">TO</span>
-                                                    <div className="relative w-24">
-                                                        <select
                                                             value={attendanceEndDay}
-                                                            onChange={(e) => setAttendanceEndDay(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const newEnd = e.target.value;
+                                                                setAttendanceEndDay(newEnd);
+                                                                // Automatically set start day as (End + 1) of previous month
+                                                                const startDay = (parseInt(newEnd) % 31) + 1;
+                                                                setAttendanceStartDay(String(startDay));
+                                                            }}
                                                             className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none shadow-sm"
                                                         >
                                                             {Array.from({ length: 31 }, (_, i) => (
