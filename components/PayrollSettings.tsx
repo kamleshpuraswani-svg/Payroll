@@ -1088,7 +1088,6 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                         </select>
                                                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                                                     </div>
-                                                    <span className="text-sm font-medium text-slate-500">of previous month</span>
                                                     <span className="text-slate-400 text-xs font-bold px-2">TO</span>
                                                     <div className="relative w-24">
                                                         <select
@@ -1102,7 +1101,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                         </select>
                                                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                                                     </div>
-                                                    <span className="text-sm font-medium text-slate-500">of current month</span>
+                                                    <span className="text-sm font-medium text-slate-500">End Day of month</span>
                                                 </div>
                                                 <div className="mt-4 bg-emerald-50 border border-emerald-100/50 rounded-xl px-4 py-2.5 flex items-center gap-2.5 w-fit">
                                                     <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
