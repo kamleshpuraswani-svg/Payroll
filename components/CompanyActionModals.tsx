@@ -1481,6 +1481,14 @@ export const RunPayrollModal: React.FC<{
                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all shadow-sm"
                         />
                      </div>
+                     <div className="flex items-center gap-3">
+                        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                           <Download size={16} /> Export Data
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all shadow-sm">
+                           <Upload size={16} /> Upload CSV
+                        </button>
+                     </div>
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
