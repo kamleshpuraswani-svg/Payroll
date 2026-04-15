@@ -388,7 +388,6 @@ const PayrollApprovalRequests: React.FC = () => {
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(selectedRun.status)}`}>
                            {getStatusIcon(selectedRun.status)} {selectedRun.status}
                         </span>
-                        <span className="text-xs text-slate-400">• ID: {selectedRun.id}</span>
                      </div>
                   </div>
                   <div className="flex gap-2">
@@ -495,27 +494,6 @@ const PayrollApprovalRequests: React.FC = () => {
                               <p className={`text-sm font-bold ${selectedRun.status === 'Locked' ? 'text-slate-800' : 'text-slate-400'}`}>Finance Approval</p>
                               <p className="text-xs text-slate-400 mt-0.5">Pending</p>
                            </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* Activity Log */}
-                  <div>
-                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Recent Activity</h3>
-                     <div className="space-y-3">
-                        {selectedRun.status === 'Approved' && (
-                            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-xs animate-in slide-in-from-top-2">
-                                <span className="font-bold text-emerald-800">Payroll Approved</span> by You <br/>
-                                <span className="text-emerald-600">{selectedRun.approvedDate} • Ready for Finance</span>
-                            </div>
-                        )}
-                        <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs">
-                           <span className="font-bold text-slate-700">Adjustments made</span> by Kavita <br/>
-                           <span className="text-slate-400">18 Dec • Added Bonus for 12 employees</span>
-                        </div>
-                        <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs">
-                           <span className="font-bold text-slate-700">Payroll locked for editing</span> <br/>
-                           <span className="text-slate-400">17 Dec • System Auto-lock</span>
                         </div>
                      </div>
                   </div>
