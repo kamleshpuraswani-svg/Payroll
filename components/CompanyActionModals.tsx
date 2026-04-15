@@ -1216,8 +1216,8 @@ export const RunPayrollModal: React.FC<{
          case 1: // PERIOD
             return (
                <div className="w-full space-y-6">
-                  <div className="flex flex-col lg:flex-row gap-6 w-full">
-                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2">
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row w-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+                     <div className="p-6 w-full lg:w-1/2">
                         <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
                            <Calendar size={16} className="text-sky-600" /> Payroll Period
                         </h3>
@@ -1244,7 +1244,7 @@ export const RunPayrollModal: React.FC<{
                         </div>
                      </div>
 
-                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col justify-start">
+                     <div className="p-6 w-full lg:w-1/2 flex flex-col justify-start">
                         <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
                            <Briefcase size={16} className="text-sky-600" /> Business Unit <span className="text-red-500">*</span>
                         </h3>
