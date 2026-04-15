@@ -496,13 +496,13 @@ const PayrollApprovalRequests: React.FC = () => {
                             onClick={handleEditPayroll}
                             className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                         >
-                            <Edit2 size={18} /> Edit Payroll
+                            <Edit2 size={18} /> Edit
                         </button>
                         <button 
                             onClick={handleApproveClick}
-                            className="flex-[2] py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 shadow-lg shadow-purple-200 transition-all flex items-center justify-center gap-2"
+                            className="flex-[2] py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
                         >
-                            <CheckCircle size={18} /> Approve Payroll
+                            <CheckCircle size={18} /> Approve
                         </button>
                     </div>
                   ) : (
