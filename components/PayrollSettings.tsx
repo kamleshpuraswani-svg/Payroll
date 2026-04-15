@@ -206,6 +206,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     const [payrollEndDay, setPayrollEndDay] = useState(() => initialData?.payrollEndDay || '31');
 
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+    const [showAttendanceCalcModal, setShowAttendanceCalcModal] = useState(false);
 
     // Validation State
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -1066,15 +1067,25 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         <div className="space-y-8 animate-in fade-in slide-in-from-right-2 col-span-full mt-6">
                                             {/* Attendance Period Section */}
                                             <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100/50">
-                                                <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                                                    Attendance Period <span className="text-rose-500">*</span>
-                                                    <div className="group relative">
-                                                        <Info size={14} className="text-slate-400 cursor-help" />
-                                                        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none z-[100]">
-                                                            Define the attendance cycle for calculation
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                        Attendance Period <span className="text-rose-500">*</span>
+                                                        <div className="group relative">
+                                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                                            <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none z-[100]">
+                                                                Define the attendance cycle for calculation
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </label>
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAttendanceCalcModal(true)}
+                                                        className="text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline flex items-center gap-1 transition-colors"
+                                                    >
+                                                        <Info size={12} />
+                                                        Attendance Period Calculation
+                                                    </button>
+                                                </div>
                                                 <div className="flex items-center gap-4 flex-wrap">
                                                     <div className="relative w-24">
                                                         <select
@@ -1424,8 +1435,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                 {activeTab === 'Configuration' && (
                     <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-start gap-4">
                         <button onClick={onClose} disabled={isSaving} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">Cancel</button>
-                        <button 
-                            onClick={handleSave} 
+                        <button
+                            onClick={handleSave}
                             disabled={isSaving}
                             className="px-8 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
                         >
@@ -1435,6 +1446,222 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                     </div>
                 )}
             </div>
+
+            {/* Attendance Period Calculation Modal */}
+            {showAttendanceCalcModal && (() => {
+                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const [curMonthName, curYearStr] = startMonthStr.split(' ');
+                const curMonthIdx = months.indexOf(curMonthName);
+                const curYear = parseInt(curYearStr);
+
+                const prevMonthIdx = curMonthIdx === 0 ? 11 : curMonthIdx - 1;
+                const nextMonthIdx = curMonthIdx === 11 ? 0 : curMonthIdx + 1;
+
+                const prevMonthName = months[prevMonthIdx];
+                const nextMonthName = months[nextMonthIdx];
+
+                const attStart = parseInt(attendanceStartDay);
+                const attEnd = parseInt(attendanceEndDay);
+                const payStart = parseInt(payrollStartDay);
+                const payEnd = payrollEndDay === '31' ? new Date(curYear, curMonthIdx + 1, 0).getDate() : parseInt(payrollEndDay);
+                const payoutDay = parseInt(payDateDay);
+                const payoutMonth = payDateMonthType === 'same' ? curMonthName : nextMonthName;
+
+                const getOrd = (n: number) => {
+                    const j = n % 10, k = n % 100;
+                    if (j === 1 && k !== 11) return `${n}st`;
+                    if (j === 2 && k !== 12) return `${n}nd`;
+                    if (j === 3 && k !== 13) return `${n}rd`;
+                    return `${n}th`;
+                };
+
+                const attStartLabel = `${attStart} ${prevMonthName.slice(0, 3)}`;
+                const attEndLabel = `${attEnd} ${curMonthName.slice(0, 3)}`;
+                const payStartLabel = `${payStart} ${curMonthName.slice(0, 3)}`;
+                const payEndLabel = `${payEnd} ${curMonthName.slice(0, 3)}`;
+                const payoutLabel = `${payoutDay} ${payoutMonth.slice(0, 3)}`;
+
+                return (
+                    <div
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setShowAttendanceCalcModal(false)}
+                    >
+                        <div
+                            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 animate-in zoom-in-95 duration-200"
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                                <h3 className="text-base font-bold text-slate-800">Attendance Period — explained</h3>
+                                <button
+                                    onClick={() => setShowAttendanceCalcModal(false)}
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Diagram */}
+                            <div className="px-6 pt-6 pb-4">
+                                {/* Month Headers */}
+                                <div className="grid grid-cols-3 mb-3">
+                                    {[prevMonthName, curMonthName, nextMonthName].map((m) => (
+                                        <div key={m} className="text-center text-xs font-bold text-slate-500">{m}</div>
+                                    ))}
+                                </div>
+
+                                {/* Vertical separators + rows */}
+                                <div className="relative border border-slate-200 rounded-xl overflow-hidden">
+                                    {/* Column dividers */}
+                                    <div className="absolute inset-0 pointer-events-none flex">
+                                        <div className="w-1/3 border-r border-dashed border-slate-200" />
+                                        <div className="w-1/3 border-r border-dashed border-slate-200" />
+                                        <div className="w-1/3" />
+                                    </div>
+
+                                    <div className="relative z-10 py-4 px-3 space-y-5">
+                                        {/* Attendance Row */}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-16 shrink-0 text-right">Attendance</span>
+                                            <div className="flex-1 relative h-8">
+                                                {/* Bar spanning ~col1-right to ~col2-right */}
+                                                <div className="absolute inset-y-0 left-[8%] right-[5%] bg-teal-100 border border-teal-300 rounded-lg flex items-center justify-between px-2">
+                                                    <span className="text-[10px] font-bold text-teal-700">{attStartLabel}</span>
+                                                    <span className="text-[10px] font-semibold text-teal-600 hidden sm:block">Attendance feeds salary calculation</span>
+                                                    <span className="text-[10px] font-bold text-teal-700">{attEndLabel}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Payroll Period Row */}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-16 shrink-0 text-right leading-tight">Payroll<br/>period</span>
+                                            <div className="flex-1 relative h-8">
+                                                {/* Bar spanning col2 */}
+                                                <div className="absolute inset-y-0 left-[33%] right-[33%] bg-violet-100 border border-violet-300 rounded-lg flex items-center justify-between px-2">
+                                                    <span className="text-[10px] font-bold text-violet-700">{payStartLabel}</span>
+                                                    <span className="text-[10px] font-bold text-violet-700">{payEndLabel}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Payout Row */}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-16 shrink-0 text-right">Payout</span>
+                                            <div className="flex-1 relative h-8 flex items-center">
+                                                {/* Arrow pointing to payout date */}
+                                                <div
+                                                    className="absolute flex flex-col items-center"
+                                                    style={{ left: payDateMonthType === 'same' ? '55%' : '88%' }}
+                                                >
+                                                    <svg width="20" height="24" viewBox="0 0 20 24" fill="none">
+                                                        <line x1="10" y1="0" x2="10" y2="18" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3,2"/>
+                                                        <path d="M5 16 L10 22 L15 16" stroke="#94a3b8" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-0.5 mt-0.5 whitespace-nowrap">{payoutLabel}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Summary Text */}
+                            <div className="mx-6 mb-5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                    Attendance cutoff = {getOrd(attEnd)}. So{' '}
+                                    <span className="font-semibold text-slate-800">{curMonthName}</span> salary is counted from{' '}
+                                    <span className="font-semibold text-teal-700">{attStartLabel} to {attEndLabel} {curYear}</span>, processed across the{' '}
+                                    <span className="font-semibold text-violet-700">{payStart}–{payEnd} {curMonthName.slice(0, 3)}</span> payroll window, and paid out on{' '}
+                                    <span className="font-semibold text-amber-700">{payoutDay} {payoutMonth}</span>.
+                                </p>
+                            </div>
+
+                            {/* Monthly Breakdown Table */}
+                            {(() => {
+                                const tableRows: { salaryMonth: string; salaryYear: number; attPeriod: string; days: number; explanation: string; isCurrent: boolean; isShort: boolean; isThirty: boolean; }[] = [];
+
+                                for (let i = 0; i < 8; i++) {
+                                    const mIdx = (curMonthIdx + i) % 12;
+                                    const mYear = curYear + Math.floor((curMonthIdx + i) / 12);
+                                    const prevMIdx = mIdx === 0 ? 11 : mIdx - 1;
+                                    const prevMYear = mIdx === 0 ? mYear - 1 : mYear;
+
+                                    const daysInPrevMonth = new Date(prevMYear, prevMIdx + 1, 0).getDate();
+                                    const partialPrevDays = daysInPrevMonth - attStart + 1;
+                                    const totalDays = partialPrevDays + attEnd;
+
+                                    const prevMonthShort = months[prevMIdx].slice(0, 3);
+                                    const curMonthShort = months[mIdx].slice(0, 3);
+
+                                    const isFebruary = prevMIdx === 1; // prev month is Feb
+
+                                    const isFebNote = isFebruary;
+                                    const isFebShort = isFebruary && daysInPrevMonth === 28;
+
+                                    let explanation = `${prevMonthShort} ${attStart}–${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1–${attEnd} = ${attEnd} → ${totalDays}`;
+                                    if (isFebShort) explanation += ' (Feb is short!)';
+                                    else if (isFebNote && daysInPrevMonth === 29) explanation += ' (Feb leap year)';
+
+                                    const isShort = totalDays <= 28;
+                                    const isThirty = totalDays === 30;
+
+                                    tableRows.push({
+                                        salaryMonth: months[mIdx],
+                                        salaryYear: mYear,
+                                        attPeriod: `${attStart} ${prevMonthShort} → ${attEnd} ${curMonthShort}`,
+                                        days: totalDays,
+                                        explanation,
+                                        isCurrent: i === 0,
+                                        isShort,
+                                        isThirty,
+                                    });
+                                }
+
+                                return (
+                                    <div className="mx-6 mb-6 border border-slate-200 rounded-xl overflow-hidden">
+                                        <table className="w-full text-[11px]">
+                                            <thead>
+                                                <tr className="bg-slate-50 border-b border-slate-200">
+                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Salary Month</th>
+                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Attendance Period</th>
+                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap">Days in Period</th>
+                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Month Type</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {tableRows.map((row, idx) => (
+                                                    <tr
+                                                        key={idx}
+                                                        className={`border-b border-slate-100 last:border-0 ${row.isCurrent ? 'bg-sky-50/50' : row.isShort ? 'bg-amber-50/40' : row.isThirty ? 'bg-teal-50/40' : 'bg-white'}`}
+                                                    >
+                                                        <td className="px-3 py-2.5">
+                                                            <span className={`font-bold ${row.isCurrent ? 'text-sky-700' : row.isShort ? 'text-amber-700' : row.isThirty ? 'text-teal-700' : 'text-slate-700'}`}>
+                                                                {row.salaryMonth} {row.salaryYear}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5">
+                                                            <span className={`font-semibold ${row.isCurrent ? 'text-sky-600' : row.isShort ? 'text-amber-600' : row.isThirty ? 'text-teal-600' : 'text-slate-500'}`}>
+                                                                {row.attPeriod}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5">
+                                                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md font-bold text-[11px] ${row.isShort ? 'bg-amber-100 text-amber-700' : row.isThirty ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                {row.days} days
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-slate-500 leading-snug">{row.explanation}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 };
