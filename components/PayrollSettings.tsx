@@ -1487,7 +1487,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         onClick={() => setShowAttendanceCalcModal(false)}
                     >
                         <div
-                            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 animate-in zoom-in-95 duration-200"
+                            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
                             onClick={(e: React.MouseEvent) => e.stopPropagation()}
                         >
                             {/* Modal Header */}
@@ -1501,6 +1501,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 </button>
                             </div>
 
+                            {/* Scrollable body */}
+                            <div className="overflow-y-auto flex-1">
                             {/* Diagram */}
                             <div className="px-6 pt-6 pb-4">
                                 {/* Month Headers */}
@@ -1578,123 +1580,54 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                             </div>
 
                             {/* Monthly Breakdown Table */}
-                            {(() => {
-                                interface TableRow {
-                                    salaryMonth: string;
-                                    salaryYear: number;
-                                    attPeriod: string;
-                                    days: number;
-                                    explanation: string;
-                                    isCurrent: boolean;
-                                    isShort: boolean;
-                                    isThirty: boolean;
-                                    isFebSalaryMonth: boolean;
-                                }
-                                const tableRows: TableRow[] = [];
-
-                                for (let i = 0; i < 8; i++) {
-                                    const mIdx = (curMonthIdx + i) % 12;
-                                    const mYear = curYear + Math.floor((curMonthIdx + i) / 12);
-                                    const prevMIdx = mIdx === 0 ? 11 : mIdx - 1;
-                                    const prevMYear = mIdx === 0 ? mYear - 1 : mYear;
-
-                                    const daysInPrevMonth = new Date(prevMYear, prevMIdx + 1, 0).getDate();
-                                    const partialPrevDays = daysInPrevMonth - attStart + 1;
-                                    const totalDays = partialPrevDays + attEnd;
-
-                                    const prevMonthShort = months[prevMIdx].slice(0, 3);
-                                    const curMonthShort = months[mIdx].slice(0, 3);
-
-                                    // Special cases
-                                    const isPrevFebShort = prevMIdx === 1 && daysInPrevMonth === 28;
-                                    const isPrevFebLeap = prevMIdx === 1 && daysInPrevMonth === 29;
-                                    const isFebSalaryMonth = mIdx === 1; // Salary month is Feb
-
-                                    let note = '';
-                                    if (isPrevFebShort) note = ' (Feb is short!)';
-                                    else if (isPrevFebLeap) note = ' (Feb leap year)';
-                                    else if (isFebSalaryMonth) note = ' (Feb length irrelevant!)';
-
-                                    const explanation = `${prevMonthShort} ${attStart}–${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1–${attEnd} = ${attEnd} → ${totalDays}${note}`;
-
-                                    const isShort = totalDays <= 28;
-                                    const isThirty = totalDays === 30;
-
-                                    tableRows.push({
-                                        salaryMonth: months[mIdx],
-                                        salaryYear: mYear,
-                                        attPeriod: `${attStart} ${prevMonthShort} → ${attEnd} ${curMonthShort}`,
-                                        days: totalDays,
-                                        explanation,
-                                        isCurrent: i === 0,
-                                        isShort,
-                                        isThirty,
-                                        isFebSalaryMonth,
-                                    });
-                                }
-
-                                return (
-                                    <div className="mx-6 mb-6 border border-slate-200 rounded-xl overflow-hidden">
-                                        <table className="w-full text-[11px]">
-                                            <thead>
-                                                <tr className="bg-slate-50 border-b border-slate-200">
-                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Salary Month</th>
-                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Attendance Period</th>
-                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap">Days in<br/>Period</th>
-                                                    <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Month Type</th>
+                            <div className="mx-6 mb-6 border border-slate-200 rounded-xl overflow-hidden">
+                                <table className="w-full text-[11px]">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200">
+                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Salary Month</th>
+                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Attendance Period</th>
+                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap">Days in<br/>Period</th>
+                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Month Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {Array.from({ length: 8 }, (_, i) => {
+                                            const mIdx = (curMonthIdx + i) % 12;
+                                            const mYear = curYear + Math.floor((curMonthIdx + i) / 12);
+                                            const prevMIdx = mIdx === 0 ? 11 : mIdx - 1;
+                                            const prevMYear = mIdx === 0 ? mYear - 1 : mYear;
+                                            const daysInPrevMonth = new Date(prevMYear, prevMIdx + 1, 0).getDate();
+                                            const partialPrevDays = daysInPrevMonth - attStart + 1;
+                                            const totalDays = partialPrevDays + attEnd;
+                                            const prevMonthShort = months[prevMIdx].slice(0, 3);
+                                            const curMonthShort = months[mIdx].slice(0, 3);
+                                            const isPrevFebShort = prevMIdx === 1 && daysInPrevMonth === 28;
+                                            const isPrevFebLeap = prevMIdx === 1 && daysInPrevMonth === 29;
+                                            const isFebSalaryMonth = mIdx === 1;
+                                            let note = '';
+                                            if (isPrevFebShort) note = ' (Feb is short!)';
+                                            else if (isPrevFebLeap) note = ' (Feb leap year)';
+                                            else if (isFebSalaryMonth) note = ' (Feb length irrelevant!)';
+                                            const explanation = `${prevMonthShort} ${attStart}\u2013${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1\u2013${attEnd} = ${attEnd} \u2192 ${totalDays}${note}`;
+                                            const isShort = totalDays <= 28;
+                                            const isThirty = totalDays === 30;
+                                            const isCurrent = i === 0;
+                                            const rowBg = isCurrent ? 'bg-sky-50/60' : isFebSalaryMonth ? 'bg-rose-50/50' : isShort ? 'bg-amber-50/40' : 'bg-white';
+                                            const mColor = isCurrent ? 'text-sky-700' : isFebSalaryMonth ? 'text-rose-600' : isShort ? 'text-amber-700' : isThirty ? 'text-teal-700' : 'text-slate-700';
+                                            const pColor = isCurrent ? 'text-sky-600' : isFebSalaryMonth ? 'text-rose-500' : isShort ? 'text-amber-600' : isThirty ? 'text-teal-600' : 'text-slate-500';
+                                            const badge = isFebSalaryMonth ? 'bg-rose-100 text-rose-700' : isShort ? 'bg-amber-100 text-amber-700' : isThirty ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700';
+                                            return (
+                                                <tr key={i} className={`border-b border-slate-100 last:border-0 ${rowBg}`}>
+                                                    <td className="px-3 py-3"><span className={`font-bold ${mColor}`}>{months[mIdx]} {mYear}</span></td>
+                                                    <td className="px-3 py-3"><span className={`font-semibold ${pColor}`}>{attStart} {prevMonthShort} \u2192 {attEnd} {curMonthShort}</span></td>
+                                                    <td className="px-3 py-3"><span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-md font-bold text-[11px] ${badge}`}>{totalDays} days</span></td>
+                                                    <td className="px-3 py-3 text-slate-500 leading-snug">{explanation}</td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {tableRows.map((row, idx) => (
-                                                    <tr
-                                                        key={idx}
-                                                        className={`border-b border-slate-100 last:border-0 ${
-                                                            row.isCurrent ? 'bg-sky-50/60' :
-                                                            row.isFebSalaryMonth ? 'bg-rose-50/50' :
-                                                            row.isShort ? 'bg-amber-50/40' :
-                                                            'bg-white'
-                                                        }`}
-                                                    >
-                                                        <td className="px-3 py-3">
-                                                            <span className={`font-bold ${
-                                                                row.isCurrent ? 'text-sky-700' :
-                                                                row.isFebSalaryMonth ? 'text-rose-600' :
-                                                                row.isShort ? 'text-amber-700' :
-                                                                row.isThirty ? 'text-teal-700' :
-                                                                'text-slate-700'
-                                                            }`}>
-                                                                {row.salaryMonth} {row.salaryYear}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-3 py-3">
-                                                            <span className={`font-semibold ${
-                                                                row.isCurrent ? 'text-sky-600' :
-                                                                row.isFebSalaryMonth ? 'text-rose-500' :
-                                                                row.isShort ? 'text-amber-600' :
-                                                                row.isThirty ? 'text-teal-600' :
-                                                                'text-slate-500'
-                                                            }`}>
-                                                                {row.attPeriod}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-3 py-3">
-                                                            <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-md font-bold text-[11px] ${
-                                                                row.isFebSalaryMonth ? 'bg-rose-100 text-rose-700' :
-                                                                row.isShort ? 'bg-amber-100 text-amber-700' :
-                                                                row.isThirty ? 'bg-teal-100 text-teal-700' :
-                                                                'bg-emerald-100 text-emerald-700'
-                                                            }`}>
-                                                                {row.days} days
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-3 py-3 text-slate-500 leading-snug">{row.explanation}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                );
-                            })()}
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 );
