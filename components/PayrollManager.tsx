@@ -1167,7 +1167,6 @@ const PayrollManager: React.FC = () => {
                                             <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold">{payroll.month.charAt(0)}</div>
                                             <div>
                                                 <div className="font-bold text-slate-700">{payroll.month}</div>
-                                                <div className="text-[10px] text-slate-400 font-mono">ID: {payroll.id}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -1346,37 +1345,10 @@ const PayrollManager: React.FC = () => {
                             </div>
 
                             <div className="space-y-4">
-                                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Component Breakdown</h4>
                                 <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-600">Basic Salary</span>
-                                        <span className="font-bold text-slate-800">₹ 85,20,000</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-600">House Rent Allowance (HRA)</span>
-                                        <span className="font-bold text-slate-800">₹ 42,60,000</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-600">Provident Fund (Employer)</span>
-                                        <span className="font-bold text-slate-800">₹ 10,22,400</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm border-t border-dashed border-slate-200 pt-3">
+                                    <div className="flex justify-between items-center text-sm pt-3">
                                         <span className="text-slate-800 font-bold">Income Tax (TDS) Deducted</span>
                                         <span className="font-black text-rose-600">- ₹ 15,40,000</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Audit Trail</h4>
-                                <div className="space-y-4">
-                                    <div className="flex gap-3">
-                                        <div className="w-2 h-2 mt-1.5 rounded-full bg-emerald-500"></div>
-                                        <p className="text-xs text-slate-600"><span className="font-bold">Payments released</span> via ICICI bulk transfer by Kavita Sharma on {showDetailsModal.processedDate} at 4:30 PM.</p>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <div className="w-2 h-2 mt-1.5 rounded-full bg-slate-300"></div>
-                                        <p className="text-xs text-slate-600"><span className="font-bold">Payslips distributed</span> to 448 employees via email on {showDetailsModal.processedDate}.</p>
                                     </div>
                                 </div>
                             </div>
