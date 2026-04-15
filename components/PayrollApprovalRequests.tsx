@@ -391,13 +391,6 @@ const PayrollApprovalRequests: React.FC = () => {
                      </div>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                        onClick={handleViewPayroll}
-                        className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-200 transition-all"
-                        title="View Full Details"
-                    >
-                        <Eye size={20} />
-                    </button>
                     <button onClick={() => setSelectedRun(null)} className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-slate-600 border border-transparent hover:border-slate-200 transition-all">
                         <X size={20} />
                     </button>
@@ -419,17 +412,13 @@ const PayrollApprovalRequests: React.FC = () => {
                            <p className="text-xs text-indigo-600 font-medium mb-1">Net Payable</p>
                            <p className="text-lg font-bold text-indigo-900">{selectedRun.net}</p>
                         </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 col-span-2 flex justify-between items-center">
-                           <div>
-                              <p className="text-xs text-slate-500 font-medium mb-1">Total Deductions</p>
-                              <p className="text-base font-bold text-slate-700">{selectedRun.deductions || '₹0'}</p>
-                           </div>
-                           <button 
-                             onClick={handleViewPayroll}
-                             className="text-xs font-bold text-purple-600 hover:underline"
-                           >
-                             View Breakdown
-                           </button>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                           <p className="text-xs text-slate-500 font-medium mb-1">Total Deductions</p>
+                           <p className="text-lg font-bold text-slate-700">{selectedRun.deductions || '₹0'}</p>
+                        </div>
+                        <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                           <p className="text-xs text-blue-600 font-medium mb-1">Total Employees</p>
+                           <p className="text-lg font-bold text-blue-900">{selectedRun.employees.toLocaleString()}</p>
                         </div>
                      </div>
                   </div>
