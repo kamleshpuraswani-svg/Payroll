@@ -423,9 +423,9 @@ const PayrollApprovalRequests: React.FC = () => {
                      </div>
                   </div>
 
-                  {/* Approval Workflow */}
+                  {/* Approval Hierarchy */}
                   <div>
-                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Approval Workflow</h3>
+                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Approval Hierarchy</h3>
                      <div className="space-y-6 pl-2">
                         {/* Step 1 */}
                         <div className="flex gap-4 relative">
@@ -434,8 +434,8 @@ const PayrollApprovalRequests: React.FC = () => {
                               <Check size={12} strokeWidth={3} />
                            </div>
                            <div>
-                              <p className="text-sm font-bold text-slate-800">Payroll Initiated</p>
-                              <p className="text-xs text-slate-500 mt-0.5">by {selectedRun.initiatedBy} • HR Manager</p>
+                              <p className="text-sm font-bold text-slate-800">{selectedRun.initiatedBy}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">HR Manager</p>
                               <p className="text-[10px] text-slate-400 mt-1">18 Dec 2025, 10:30 AM</p>
                            </div>
                         </div>
@@ -449,8 +449,8 @@ const PayrollApprovalRequests: React.FC = () => {
                                     <Check size={12} strokeWidth={3} />
                                  </div>
                                  <div>
-                                    <p className="text-sm font-bold text-slate-800">HR Approval</p>
-                                    <p className="text-xs text-slate-500 mt-0.5">by Kavita Sharma</p>
+                                    <p className="text-sm font-bold text-slate-800">Kavita Sharma</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">HR Manager</p>
                                     <p className="text-[10px] text-slate-400 mt-1">{selectedRun.approvedDate ? `${selectedRun.approvedDate}, 04:15 PM` : 'Just now'}</p>
                                  </div>
                               </>
@@ -461,7 +461,7 @@ const PayrollApprovalRequests: React.FC = () => {
                                     <Clock size={12} strokeWidth={3} />
                                  </div>
                                  <div>
-                                    <p className="text-sm font-bold text-slate-800">HR Approval</p>
+                                    <p className="text-sm font-bold text-slate-800">Kavita Sharma</p>
                                     <p className="text-xs text-amber-600 font-medium mt-0.5">Pending Action</p>
                                  </div>
                               </>
@@ -480,8 +480,8 @@ const PayrollApprovalRequests: React.FC = () => {
                               </div>
                            )}
                            <div>
-                              <p className={`text-sm font-bold ${selectedRun.status === 'Locked' ? 'text-slate-800' : 'text-slate-400'}`}>Finance Approval</p>
-                              <p className="text-xs text-slate-400 mt-0.5">Pending</p>
+                              <p className={`text-sm font-bold ${selectedRun.status === 'Locked' ? 'text-slate-800' : 'text-slate-400'}`}>Rajesh Kumar</p>
+                              <p className="text-xs text-slate-400 mt-0.5">Pending Action</p>
                            </div>
                         </div>
                      </div>
