@@ -1630,6 +1630,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                             </div>
                         </div>
                     </div>
+                    </div>
                 );
             })()}
         </div>
