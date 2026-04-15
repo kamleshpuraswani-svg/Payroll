@@ -713,6 +713,34 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
     });
     const [approvedAmount, setApprovedAmount] = useState<number>(doc.amount);
     const [reason, setReason] = useState('');
+    const [rejectedItems, setRejectedItems] = useState<Set<number>>(() => {
+        const allIndices = new Set<number>();
+        if (doc.breakdown) {
+            doc.breakdown.forEach((_item: { label: string; amount: number }, idx: number) => allIndices.add(idx));
+        }
+        return allIndices;
+    });
+
+    const allRejected = doc.breakdown ? doc.breakdown.every((_item: { label: string; amount: number }, idx: number) => rejectedItems.has(idx)) : true;
+
+    const toggleRejectedItem = (idx: number) => {
+        setRejectedItems((prev: Set<number>) => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx);
+            else next.add(idx);
+            return next;
+        });
+    };
+
+    const toggleRejectAll = () => {
+        if (allRejected) {
+            setRejectedItems(new Set<number>());
+        } else {
+            const all = new Set<number>();
+            if (doc.breakdown) doc.breakdown.forEach((_item: { label: string; amount: number }, idx: number) => all.add(idx));
+            setRejectedItems(all);
+        }
+    };
 
     useEffect(() => {
         if (doc.breakdown && doc.breakdown.length > 0) {
@@ -833,7 +861,35 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                     <span className="ml-3 font-bold text-slate-700">Reject</span>
                                 </div>
                                 {decision === 'Rejected' && (
-                                    <div className="mt-3 ml-7 animate-in fade-in slide-in-from-top-1">
+                                    <div className="mt-3 ml-7 space-y-3 animate-in fade-in slide-in-from-top-1">
+                                        {doc.breakdown && doc.breakdown.length > 0 && (
+                                            <div className="bg-rose-50/50 p-4 rounded-xl border border-rose-100 space-y-2">
+                                                <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-2">Select Items to Reject</p>
+                                                {/* Per-item icons */}
+                                                {doc.breakdown.map((item: { label: string; amount: number }, idx: number) => (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={(e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); toggleRejectedItem(idx); }}
+                                                        className={`flex items-center justify-between p-2 bg-white rounded-lg border cursor-pointer transition-colors ${rejectedItems.has(idx) ? 'border-rose-300 bg-rose-50/40' : 'border-slate-100 hover:bg-slate-50'}`}
+                                                    >
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-slate-700">{item.label}</p>
+                                                            <p className="text-[10px] text-slate-500 font-medium">Declared: ₹{item.amount.toLocaleString()}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 ml-3">
+                                                            {rejectedItems.has(idx) && (
+                                                                <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wide animate-in fade-in duration-150">Rejected</span>
+                                                            )}
+                                                            <XCircle
+                                                                size={20}
+                                                                className={`transition-all duration-150 ${rejectedItems.has(idx) ? 'text-rose-500 scale-110' : 'text-slate-300 hover:text-rose-400'}`}
+                                                                fill={rejectedItems.has(idx) ? '#fca5a5' : 'transparent'}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                         <textarea
                                             placeholder="Reason for rejection (Mandatory)"
                                             value={reason}
