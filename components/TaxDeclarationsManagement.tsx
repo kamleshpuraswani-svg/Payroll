@@ -1203,22 +1203,30 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                     </div>
 
                     {doc.status === 'Pending' && (
-                        <div className="flex items-end pb-1 h-full">
-                            <div className="flex gap-2 p-1.5 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm">
-                                <button 
-                                    onClick={() => onApprove('Approved')} 
-                                    className="px-4 py-2 flex items-center gap-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-md font-bold text-[11px] uppercase tracking-wider active:scale-95"
-                                >
-                                    <CheckCircle size={14} /> Approve
-                                </button>
-                                <button 
-                                    onClick={() => onApprove('Rejected')} 
-                                    className="px-4 py-2 flex items-center gap-2 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all shadow-md font-bold text-[11px] uppercase tracking-wider active:scale-95"
-                                >
-                                    <CheckCircle size={14} className="rotate-45" /> Reject
-                                </button>
+                            <div className="flex items-end pb-1 h-full">
+                                <div className="flex gap-3 p-1.5">
+                                    {/* Approve icon button — green circle checkmark */}
+                                    <button
+                                        onClick={() => onApprove('Approved')}
+                                        title="Approve"
+                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-500 hover:bg-emerald-600 transition-all shadow-md shadow-emerald-100 active:scale-95 group"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                                            <path d="M20 6L9 17l-5-5" />
+                                        </svg>
+                                    </button>
+                                    {/* Reject icon button — red circle X */}
+                                    <button
+                                        onClick={() => onApprove('Rejected')}
+                                        title="Reject"
+                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-500 hover:bg-rose-600 transition-all shadow-md shadow-rose-100 active:scale-95 group"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                                            <path d="M18 6L6 18M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
                     )}
                     {(doc?.status === 'Approved' || doc?.status === 'Partially Approved') && (
                         <div>
