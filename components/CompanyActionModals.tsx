@@ -1216,30 +1216,52 @@ export const RunPayrollModal: React.FC<{
          case 1: // PERIOD
             return (
                <div className="w-full space-y-6">
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-1/2">
-                     <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
-                        <Calendar size={16} className="text-sky-600" /> Payroll Period
-                     </h3>
-                     <div className="flex gap-4 items-end">
-                        <div className="flex-1 relative">
-                           <select 
-                              disabled={readOnly} 
-                              value={selectedPayrollMonth}
-                              onChange={(e) => setSelectedPayrollMonth(e.target.value)}
-                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 disabled:bg-slate-50 appearance-none cursor-pointer pr-10"
-                           >
-                              {payrollMonthsList.map(month => (
-                                 <option key={month} value={month}>{month}</option>
-                              ))}
-                           </select>
-                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                           <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-slate-400 uppercase">Select Month</span>
-                           <p className="mt-1.5 text-[11px] font-medium text-slate-500 italic flex items-center gap-1">
+                  <div className="flex flex-col lg:flex-row gap-6 w-full">
+                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
+                           <Calendar size={16} className="text-sky-600" /> Payroll Period
+                        </h3>
+                        <div className="flex gap-4 items-end">
+                           <div className="flex-1 relative">
+                              <select 
+                                 disabled={readOnly} 
+                                 value={selectedPayrollMonth}
+                                 onChange={(e) => setSelectedPayrollMonth(e.target.value)}
+                                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 disabled:bg-slate-50 appearance-none cursor-pointer pr-10"
+                              >
+                                 {payrollMonthsList.map(month => (
+                                    <option key={month} value={month}>{month}</option>
+                                 ))}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-slate-400 uppercase">Select Month</span>
+                              <p className="mt-1.5 text-[11px] font-medium text-slate-500 italic flex items-center gap-1">
+                                 <Info size={12} className="text-sky-500" />
+                                 Payroll Period: <span className="text-slate-700 font-bold not-italic">{getPayrollPeriod(selectedPayrollMonth)}</span>
+                              </p>
+                           </div>
+                           <div className="bg-slate-100 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 border border-slate-200 shadow-sm mb-[28px]">22 Working Days</div>
+                        </div>
+                     </div>
+
+                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col justify-start">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
+                           <Briefcase size={16} className="text-sky-600" /> Business Unit
+                        </h3>
+                        <div className="flex-1 relative mt-[2px]">
+                           <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] z-10 font-bold text-slate-400 uppercase leading-none">Select Unit</span>
+                           <MultiSelect
+                               label="All Business Units"
+                               options={availableBUs}
+                               selected={selectedBUs}
+                               onChange={setSelectedBUs}
+                               disabled={readOnly}
+                           />
+                           <p className="mt-2.5 text-[11px] font-medium text-slate-500 italic flex items-center gap-1">
                               <Info size={12} className="text-sky-500" />
-                              Payroll Period: <span className="text-slate-700 font-bold not-italic">{getPayrollPeriod(selectedPayrollMonth)}</span>
+                              Filters the employees table below
                            </p>
                         </div>
-                        <div className="bg-slate-100 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 border border-slate-200 shadow-sm mb-[28px]">22 Working Days</div>
                      </div>
                   </div>
 
