@@ -1581,13 +1581,13 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                             {/* Monthly Breakdown Table */}
                             <div className="mx-6 mb-6 border border-slate-200 rounded-xl overflow-hidden">
-                                <table className="w-full text-sm">
+                                <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-slate-200 bg-white">
-                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Salary<br/>Month</th>
-                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Attendance<br/>Period</th>
-                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Days in<br/>Period</th>
-                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Month Type</th>
+                                            <th className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Salary<br/>Month</th>
+                                            <th className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attendance<br/>Period</th>
+                                            <th className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Days in<br/>Period</th>
+                                            <th className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Month Type</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1604,50 +1604,45 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             const isPrevFebShort = prevMIdx === 1 && daysInPrevMonth === 28;
                                             const isPrevFebLeap = prevMIdx === 1 && daysInPrevMonth === 29;
                                             const isFebSalaryMonth = mIdx === 1;
+                                            const isShort = totalDays <= 28;
+                                            const isThirty = totalDays === 30;
+
+                                            // Build explanation parts for bold → N
+                                            let bodyText = `${prevMonthShort} ${attStart}–${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1–${attEnd} = ${attEnd}`;
                                             let note = '';
                                             if (isPrevFebShort) note = ' (Feb is short!)';
                                             else if (isPrevFebLeap) note = ' (Feb leap year)';
                                             else if (isFebSalaryMonth) note = ' (Feb length irrelevant!)';
-                                            const explanation = `${prevMonthShort} ${attStart}–${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1–${attEnd} = ${attEnd} → ${totalDays}${note}`;
-                                            const isShort = totalDays <= 28;
-                                            const isThirty = totalDays === 30;
-                                            const isCurrent = i === 0;
 
-                                            // Text colors — matching image exactly
-                                            const mColor = isCurrent
-                                                ? 'text-blue-600'
-                                                : isFebSalaryMonth ? 'text-rose-600'
-                                                : isShort ? 'text-amber-600'
-                                                : isThirty ? 'text-teal-600'
-                                                : 'text-slate-800';
-                                            const pColor = isCurrent
-                                                ? 'text-blue-500'
-                                                : isFebSalaryMonth ? 'text-rose-400'
-                                                : isShort ? 'text-amber-500'
-                                                : isThirty ? 'text-teal-500'
-                                                : 'text-slate-500';
-                                            // Pill badge colors
-                                            const pillBg = isFebSalaryMonth
-                                                ? 'bg-rose-100 text-rose-700'
-                                                : isShort ? 'bg-amber-100 text-amber-700'
-                                                : isThirty ? 'bg-teal-100 text-teal-700'
-                                                : 'bg-emerald-100 text-emerald-700';
+                                            // Badge style
+                                            const badgeCls = isFebSalaryMonth
+                                                ? 'bg-rose-50 text-rose-500 border border-rose-200'
+                                                : isShort
+                                                ? 'bg-orange-50 text-orange-500 border border-orange-200'
+                                                : isThirty
+                                                ? 'bg-teal-50 text-teal-600 border border-teal-200'
+                                                : 'bg-slate-100 text-slate-500 border border-slate-200';
+
+                                            // Month/period text color
+                                            const mColor = isFebSalaryMonth ? 'text-rose-500' : 'text-slate-800';
+                                            const pColor = isFebSalaryMonth ? 'text-rose-400' : 'text-slate-500';
 
                                             return (
                                                 <tr key={i} className="border-b border-slate-100 last:border-0 bg-white">
                                                     <td className="px-4 py-4">
-                                                        <span className={`font-bold text-sm ${mColor}`}>{months[mIdx]} {mYear}</span>
+                                                        <span className={`font-semibold text-sm ${mColor}`}>{months[mIdx]} {mYear}</span>
                                                     </td>
                                                     <td className="px-4 py-4">
-                                                        <span className={`font-semibold text-sm ${pColor}`}>{attStart} {prevMonthShort} → {attEnd} {curMonthShort}</span>
+                                                        <span className={`text-sm ${pColor}`}>{attStart} {prevMonthShort} → {attEnd} {curMonthShort}</span>
                                                     </td>
                                                     <td className="px-4 py-4">
-                                                        <div className={`inline-flex flex-col items-center justify-center w-14 py-1.5 rounded-2xl ${pillBg}`}>
-                                                            <span className="text-base font-bold leading-tight">{totalDays}</span>
-                                                            <span className="text-[10px] font-semibold leading-tight">days</span>
-                                                        </div>
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap ${badgeCls}`}>
+                                                            {totalDays} days
+                                                        </span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-slate-400 text-[11px] leading-snug">{explanation}</td>
+                                                    <td className="px-4 py-4 text-slate-500 text-xs leading-relaxed">
+                                                        {bodyText} <strong className="text-slate-700 font-bold">→ {totalDays}</strong>{note}
+                                                    </td>
                                                 </tr>
                                             );
                                         })}
