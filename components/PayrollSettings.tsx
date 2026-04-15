@@ -1608,7 +1608,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             if (isPrevFebShort) note = ' (Feb is short!)';
                                             else if (isPrevFebLeap) note = ' (Feb leap year)';
                                             else if (isFebSalaryMonth) note = ' (Feb length irrelevant!)';
-                                            const explanation = `${prevMonthShort} ${attStart}\u2013${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1\u2013${attEnd} = ${attEnd} \u2192 ${totalDays}${note}`;
+                                            const explanation = `${prevMonthShort} ${attStart}–${daysInPrevMonth} = ${partialPrevDays} days + ${curMonthShort} 1–${attEnd} = ${attEnd} → ${totalDays}${note}`;
                                             const isShort = totalDays <= 28;
                                             const isThirty = totalDays === 30;
                                             const isCurrent = i === 0;
@@ -1619,7 +1619,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             return (
                                                 <tr key={i} className={`border-b border-slate-100 last:border-0 ${rowBg}`}>
                                                     <td className="px-3 py-3"><span className={`font-bold ${mColor}`}>{months[mIdx]} {mYear}</span></td>
-                                                    <td className="px-3 py-3"><span className={`font-semibold ${pColor}`}>{attStart} {prevMonthShort} \u2192 {attEnd} {curMonthShort}</span></td>
+                                                    <td className="px-3 py-3"><span className={`font-semibold ${pColor}`}>{attStart} {prevMonthShort} → {attEnd} {curMonthShort}</span></td>
                                                     <td className="px-3 py-3"><span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-md font-bold text-[11px] ${badge}`}>{totalDays} days</span></td>
                                                     <td className="px-3 py-3 text-slate-500 leading-snug">{explanation}</td>
                                                 </tr>
