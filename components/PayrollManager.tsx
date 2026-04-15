@@ -944,6 +944,7 @@ const PayrollManager: React.FC = () => {
     const [showOnHoldPanel, setShowOnHoldPanel] = useState(false);
     const [showForm24QModal, setShowForm24QModal] = useState(false);
     const [showForm16Modal, setShowForm16Modal] = useState(false);
+    const [unlockedPayrolls, setUnlockedPayrolls] = useState<string[]>([]);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -956,8 +957,10 @@ const PayrollManager: React.FC = () => {
     };
 
     const handleUnlockConfirm = () => {
+        if (showUnlockModal) {
+            setUnlockedPayrolls([...unlockedPayrolls, showUnlockModal]);
+        }
         setShowUnlockModal(null);
-        setView('WIZARD');
     };
 
     const handleLockConfirm = () => {
@@ -1192,13 +1195,15 @@ const PayrollManager: React.FC = () => {
                                             >
                                                 <Eye size={16} />
                                             </button>
-                                            <button
-                                                onClick={() => setView('WIZARD')}
-                                                className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                title="Edit Payroll"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
+                                            { (payroll.status !== 'Paid' || unlockedPayrolls.includes(payroll.id)) && (
+                                                <button
+                                                    onClick={() => setView('WIZARD')}
+                                                    className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                    title="Edit Payroll"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => setShowUnlockModal(payroll.id)}
                                                 className="p-2 hover:bg-white hover:text-amber-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
