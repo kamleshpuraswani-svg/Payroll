@@ -1216,7 +1216,7 @@ export const RunPayrollModal: React.FC<{
          case 1: // PERIOD
             return (
                <div className="w-full space-y-6">
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-1/2">
                      <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
                         <Calendar size={16} className="text-sky-600" /> Payroll Period
                      </h3>
@@ -2221,8 +2221,8 @@ export const RunPayrollModal: React.FC<{
                  {readOnly && <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-2">Read Only</span>}
              </div>
              <div className="flex items-center gap-3">
-                 <button onClick={onClose} className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors">
-                     <X size={16} className="text-slate-400" /> Cancel
+                 <button onClick={onClose} className="px-4 py-2 border border-blue-600 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors">
+                     <X size={16} className="text-blue-600" /> Cancel
                  </button>
                  <button className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
                      <MoreHorizontal size={16} />
