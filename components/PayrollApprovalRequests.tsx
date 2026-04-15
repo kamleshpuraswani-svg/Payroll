@@ -494,7 +494,7 @@ const PayrollApprovalRequests: React.FC = () => {
                     <div className="flex gap-3">
                         <button 
                             onClick={handleEditPayroll}
-                            className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                            className="flex-1 py-3 bg-white border border-slate-300 shadow-sm text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 hover:border-slate-400 transition-all flex items-center justify-center gap-2"
                         >
                             <Edit2 size={18} /> Edit
                         </button>
