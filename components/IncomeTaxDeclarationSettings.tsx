@@ -288,6 +288,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' }
     ]);
     const [limitViewRegime, setLimitViewRegime] = useState<'Old' | 'New'>('Old');
+    const [oldRegimeAgeGroup, setOldRegimeAgeGroup] = useState<'individual' | 'senior' | 'superSenior'>('individual');
 
     // Regime State
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
@@ -1446,6 +1447,30 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     </div>
                     {isLimitsExpanded && (
                         <div className="p-8 animate-in fade-in slide-in-from-top-2 duration-300">
+
+                        {/* Age group sub-tabs — only for Old Regime */}
+                        {limitViewRegime === 'Old' && (
+                            <div className="mb-5 flex items-center gap-1 bg-slate-100/80 border border-slate-200 rounded-2xl p-1 w-fit shadow-sm">
+                                {([
+                                    { key: 'individual', label: 'Individuals (Below 60 years)' },
+                                    { key: 'senior',     label: 'Senior Citizens (60\u201380 years)' },
+                                    { key: 'superSenior', label: 'Super Senior Citizens (80+ years)' },
+                                ] as const).map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setOldRegimeAgeGroup(tab.key)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
+                                            oldRegimeAgeGroup === tab.key
+                                                ? 'bg-white text-violet-600 shadow-sm border border-slate-200'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                             <table className="w-full text-left text-sm border-collapse">
                                         <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
@@ -1457,8 +1482,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {(limits as any[]).filter(l => (l.regime || 'Old') === limitViewRegime).length > 0 ? (
-                                        (limits as any[]).filter(l => (l.regime || 'Old') === limitViewRegime).map((limit, idx) => {
+                                    {(limits as any[]).filter(l => {
+                                            if ((l.regime || 'Old') !== limitViewRegime) return false;
+                                            if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
+                                            return true;
+                                        }).length > 0 ? (
+                                        (limits as any[]).filter(l => {
+                                            if ((l.regime || 'Old') !== limitViewRegime) return false;
+                                            if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
+                                            return true;
+                                        }).map((limit, idx) => {
                                             const actualIdx = limits.findIndex(l => l.id === limit.id);
                                             return (
                                                 <tr key={limit.id} className="hover:bg-slate-50/50 transition-colors group">
