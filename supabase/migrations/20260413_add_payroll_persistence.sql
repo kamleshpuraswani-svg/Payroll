@@ -15,6 +15,7 @@ create table if not exists public.payroll_runs (
     created_at timestamp with time zone default now(),
     created_by text default 'HR Manager',
     company_id text references public.companies(id),
+    business_units text[] default '{}'::text[],
     unique(month, year, company_id)
 );
 
