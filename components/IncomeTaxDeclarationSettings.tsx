@@ -199,7 +199,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: 'sc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'senior' },
                     { id: 'sc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'senior' },
                     { id: 'sc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' }
+                    { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' },
+                    // Super Senior Citizens (80+ years)
+                    { id: 'ssc-1', section: '80C', limit: '1,50,000', description: 'PPF, LIC, ELSS, SCSS etc.', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-2', section: '80D', limit: '50,000', description: 'Health insurance premium', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-3', section: '80DDB', limit: '1,00,000', description: 'Treatment of specified diseases', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-4', section: '80TTB', limit: '50,000', description: 'Interest on deposits (FD/savings)', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'superSenior' },
+                    { id: 'ssc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'superSenior' }
                 ];
                 
                 // Smarter migration: If they have exactly the 2 old defaults, override them with the new 28 entries
@@ -309,7 +318,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         { id: 'sc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'senior' },
         { id: 'sc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'senior' },
         { id: 'sc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' }
+        { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' },
+        // Super Senior Citizens (80+ years)
+        { id: 'ssc-1', section: '80C', limit: '1,50,000', description: 'PPF, LIC, ELSS, SCSS etc.', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-2', section: '80D', limit: '50,000', description: 'Health insurance premium', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-3', section: '80DDB', limit: '1,00,000', description: 'Treatment of specified diseases', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-4', section: '80TTB', limit: '50,000', description: 'Interest on deposits (FD/savings)', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'superSenior' },
+        { id: 'ssc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'superSenior' }
     ]);
     const [limitViewRegime, setLimitViewRegime] = useState<'Old' | 'New'>('Old');
     const [oldRegimeAgeGroup, setOldRegimeAgeGroup] = useState<'individual' | 'senior' | 'superSenior'>('individual');
