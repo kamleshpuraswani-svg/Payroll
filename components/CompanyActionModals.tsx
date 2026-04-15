@@ -756,7 +756,8 @@ export const RunPayrollModal: React.FC<{
                    month,
                    year: parseInt(year),
                    company_id: company.id,
-                   status: 'Processing'
+                   status: 'Processing',
+                   business_units: selectedBUs
                })
                .select()
                .single();
