@@ -36,7 +36,9 @@ import {
     User,
     Send,
     Info,
-    PauseCircle
+    PauseCircle,
+    Calculator,
+    Minus
 } from 'lucide-react';
 import { RunPayrollModal, PayrollAlertsModal, PayrollOnHoldPanel } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
@@ -1322,7 +1324,6 @@ const PayrollManager: React.FC = () => {
                                 <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Calendar size={18} /></div>
                                 <div>
                                     <h3 className="font-bold text-slate-800">Payroll Details: {showDetailsModal.month}</h3>
-                                    <p className="text-xs text-slate-500">Cycle ID: {showDetailsModal.id}</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowDetailsModal(null)} className="p-2 hover:bg-slate-200 rounded-full text-slate-400"><X size={20} /></button>
@@ -1344,11 +1345,36 @@ const PayrollManager: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-sm pt-3">
-                                        <span className="text-slate-800 font-bold">Income Tax (TDS) Deducted</span>
-                                        <span className="font-black text-rose-600">- ₹ 15,40,000</span>
+                            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                                <div className="flex items-center gap-3 px-4 py-2 bg-slate-200/60 rounded-xl mb-4 w-max">
+                                    <div className="relative">
+                                        <Calculator size={20} className="text-slate-700" />
+                                        <div className="absolute -bottom-1 -right-1.5 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                                            <Minus size={10} className="text-white" strokeWidth={4} />
+                                        </div>
+                                    </div>
+                                    <h4 className="text-[15px] font-bold text-slate-800 tracking-tight">Deductions & Recoveries</h4>
+                                </div>
+                                <div className="space-y-4 px-1">
+                                    <div className="flex justify-between items-center bg-white">
+                                        <span className="text-[15px] text-slate-700 tracking-tight">TDS (Income Tax):</span>
+                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 15,40,000</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-white">
+                                        <span className="text-[15px] text-slate-700 tracking-tight">PF (Employee):</span>
+                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 0.40,000</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-white">
+                                        <span className="text-[15px] text-slate-700 tracking-tight">Professional Tax:</span>
+                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 20,000</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-white">
+                                        <span className="text-[15px] text-slate-700 tracking-tight">Loan Repayments:</span>
+                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 30,000</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-white">
+                                        <span className="text-[15px] text-slate-700 tracking-tight">Unpaid Leaves (LWP):</span>
+                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 10,000</span>
                                     </div>
                                 </div>
                             </div>
