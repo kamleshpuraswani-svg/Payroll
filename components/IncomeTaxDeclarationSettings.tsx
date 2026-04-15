@@ -192,14 +192,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
                     { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' },
                     // Senior Citizens (60–80 years)
-                    { id: 'sc-1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-2', section: '80D', limit: '50,000', description: 'Medical insurance — Self & Family', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-3', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-4', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-5', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-6', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-7', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-8', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' }
+                    { id: 'sc-1', section: '80C', limit: '1,50,000', description: 'PPF, LIC, ELSS, SCSS etc.', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-2', section: '80D', limit: '50,000', description: 'Health insurance premium', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-3', section: '80DDB', limit: '1,00,000', description: 'Treatment of specified diseases', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-4', section: '80TTB', limit: '50,000', description: 'Interest on deposits (FD/savings)', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' }
                 ];
                 
                 // Smarter migration: If they have exactly the 2 old defaults, override them with the new 28 entries
@@ -302,14 +302,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
         { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' },
         // Senior Citizens (60–80 years)
-        { id: 'sc-1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-2', section: '80D', limit: '50,000', description: 'Medical insurance — Self & Family', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-3', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-4', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-5', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-6', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-7', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
-        { id: 'sc-8', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' }
+        { id: 'sc-1', section: '80C', limit: '1,50,000', description: 'PPF, LIC, ELSS, SCSS etc.', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-2', section: '80D', limit: '50,000', description: 'Health insurance premium', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-3', section: '80DDB', limit: '1,00,000', description: 'Treatment of specified diseases', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-4', section: '80TTB', limit: '50,000', description: 'Interest on deposits (FD/savings)', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'senior' },
+        { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' }
     ]);
     const [limitViewRegime, setLimitViewRegime] = useState<'Old' | 'New'>('Old');
     const [oldRegimeAgeGroup, setOldRegimeAgeGroup] = useState<'individual' | 'senior' | 'superSenior'>('individual');
