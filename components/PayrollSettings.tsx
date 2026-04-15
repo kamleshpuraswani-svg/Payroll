@@ -1581,13 +1581,13 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
 
                             {/* Monthly Breakdown Table */}
                             <div className="mx-6 mb-6 border border-slate-200 rounded-xl overflow-hidden">
-                                <table className="w-full text-[11px]">
+                                <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-200">
-                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Salary Month</th>
-                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Attendance Period</th>
-                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap">Days in<br/>Period</th>
-                                            <th className="text-left px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wide">Month Type</th>
+                                        <tr className="border-b border-slate-200 bg-white">
+                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Salary<br/>Month</th>
+                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Attendance<br/>Period</th>
+                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Days in<br/>Period</th>
+                                            <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Month Type</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1612,16 +1612,42 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             const isShort = totalDays <= 28;
                                             const isThirty = totalDays === 30;
                                             const isCurrent = i === 0;
-                                            const rowBg = isCurrent ? 'bg-sky-50/60' : isFebSalaryMonth ? 'bg-rose-50/50' : isShort ? 'bg-amber-50/40' : 'bg-white';
-                                            const mColor = isCurrent ? 'text-sky-700' : isFebSalaryMonth ? 'text-rose-600' : isShort ? 'text-amber-700' : isThirty ? 'text-teal-700' : 'text-slate-700';
-                                            const pColor = isCurrent ? 'text-sky-600' : isFebSalaryMonth ? 'text-rose-500' : isShort ? 'text-amber-600' : isThirty ? 'text-teal-600' : 'text-slate-500';
-                                            const badge = isFebSalaryMonth ? 'bg-rose-100 text-rose-700' : isShort ? 'bg-amber-100 text-amber-700' : isThirty ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700';
+
+                                            // Text colors — matching image exactly
+                                            const mColor = isCurrent
+                                                ? 'text-blue-600'
+                                                : isFebSalaryMonth ? 'text-rose-600'
+                                                : isShort ? 'text-amber-600'
+                                                : isThirty ? 'text-teal-600'
+                                                : 'text-slate-800';
+                                            const pColor = isCurrent
+                                                ? 'text-blue-500'
+                                                : isFebSalaryMonth ? 'text-rose-400'
+                                                : isShort ? 'text-amber-500'
+                                                : isThirty ? 'text-teal-500'
+                                                : 'text-slate-500';
+                                            // Pill badge colors
+                                            const pillBg = isFebSalaryMonth
+                                                ? 'bg-rose-100 text-rose-700'
+                                                : isShort ? 'bg-amber-100 text-amber-700'
+                                                : isThirty ? 'bg-teal-100 text-teal-700'
+                                                : 'bg-emerald-100 text-emerald-700';
+
                                             return (
-                                                <tr key={i} className={`border-b border-slate-100 last:border-0 ${rowBg}`}>
-                                                    <td className="px-3 py-3"><span className={`font-bold ${mColor}`}>{months[mIdx]} {mYear}</span></td>
-                                                    <td className="px-3 py-3"><span className={`font-semibold ${pColor}`}>{attStart} {prevMonthShort} → {attEnd} {curMonthShort}</span></td>
-                                                    <td className="px-3 py-3"><span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-md font-bold text-[11px] ${badge}`}>{totalDays} days</span></td>
-                                                    <td className="px-3 py-3 text-slate-500 leading-snug">{explanation}</td>
+                                                <tr key={i} className="border-b border-slate-100 last:border-0 bg-white">
+                                                    <td className="px-4 py-4">
+                                                        <span className={`font-bold text-sm ${mColor}`}>{months[mIdx]} {mYear}</span>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <span className={`font-semibold text-sm ${pColor}`}>{attStart} {prevMonthShort} → {attEnd} {curMonthShort}</span>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className={`inline-flex flex-col items-center justify-center w-14 py-1.5 rounded-2xl ${pillBg}`}>
+                                                            <span className="text-base font-bold leading-tight">{totalDays}</span>
+                                                            <span className="text-[10px] font-semibold leading-tight">days</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-slate-400 text-[11px] leading-snug">{explanation}</td>
                                                 </tr>
                                             );
                                         })}
