@@ -1128,8 +1128,8 @@ const PayrollManager: React.FC = () => {
                                     <div className="text-sm font-bold text-slate-700">Mindinventory, 300 Minds</div>
                                 </td>
                                 <td className="px-6 py-5 font-bold text-slate-600">452</td>
-                                <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr (Est)</td>
-                                <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr (Est)</td>
+                                <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
+                                <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
                                 <td className="px-6 py-5">
                                     <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100">Draft</span>
                                 </td>
