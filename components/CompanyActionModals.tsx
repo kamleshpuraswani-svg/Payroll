@@ -1246,10 +1246,9 @@ export const RunPayrollModal: React.FC<{
 
                      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col justify-start">
                         <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
-                           <Briefcase size={16} className="text-sky-600" /> Business Unit
+                           <Briefcase size={16} className="text-sky-600" /> Business Unit <span className="text-red-500">*</span>
                         </h3>
                         <div className="flex-1 relative mt-[2px]">
-                           <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] z-10 font-bold text-slate-400 uppercase leading-none">Select Unit</span>
                            <MultiSelect
                                label="All Business Units"
                                options={availableBUs}
@@ -1257,10 +1256,6 @@ export const RunPayrollModal: React.FC<{
                                onChange={setSelectedBUs}
                                disabled={readOnly}
                            />
-                           <p className="mt-2.5 text-[11px] font-medium text-slate-500 italic flex items-center gap-1">
-                              <Info size={12} className="text-sky-500" />
-                              Filters the employees table below
-                           </p>
                         </div>
                      </div>
                   </div>
