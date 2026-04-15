@@ -945,6 +945,7 @@ const PayrollManager: React.FC = () => {
     const [showForm24QModal, setShowForm24QModal] = useState(false);
     const [showForm16Modal, setShowForm16Modal] = useState(false);
     const [unlockedPayrolls, setUnlockedPayrolls] = useState<string[]>([]);
+    const [wizardBU, setWizardBU] = useState<string[]>([]);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -974,6 +975,7 @@ const PayrollManager: React.FC = () => {
                 isPage={true}
                 company={MOCK_COMPANIES[0]}
                 onClose={() => setView('HISTORY')}
+                initialBusinessUnits={wizardBU}
             />
         );
     }
@@ -988,7 +990,7 @@ const PayrollManager: React.FC = () => {
                     <p className="text-slate-500 mt-1">Review past disbursements and manage current payroll processing.</p>
                 </div>
                 <button
-                    onClick={() => setView('WIZARD')}
+                    onClick={() => { setWizardBU([]); setView('WIZARD'); }}
                     className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
                 >
                     <Plus size={20} /> Initiate Payroll
@@ -1141,7 +1143,7 @@ const PayrollManager: React.FC = () => {
                                 <td className="px-6 py-5 text-right pr-8">
                                     <div className="flex items-center justify-end gap-2">
                                         <button
-                                            onClick={() => setView('WIZARD')}
+                                            onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setView('WIZARD'); }}
                                             className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                             title="Edit Draft"
                                         >
@@ -1155,7 +1157,7 @@ const PayrollManager: React.FC = () => {
                                             <Lock size={16} />
                                         </button>
                                         <button
-                                            onClick={() => setView('WIZARD')}
+                                            onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setView('WIZARD'); }}
                                             className="px-4 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-black hover:bg-purple-700 transition-all flex items-center gap-1.5 ml-2 shadow-md shadow-purple-100"
                                         >
                                             Continue <ArrowRight size={14} />
@@ -1197,7 +1199,11 @@ const PayrollManager: React.FC = () => {
                                             </button>
                                             { (payroll.status !== 'Paid' || unlockedPayrolls.includes(payroll.id)) && (
                                                 <button
-                                                    onClick={() => setView('WIZARD')}
+                                                    onClick={() => {
+                                                        const bus = payroll.businessUnit.split(',').map(s => s.trim());
+                                                        setWizardBU(bus);
+                                                        setView('WIZARD');
+                                                    }}
                                                     className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                                     title="Edit Payroll"
                                                 >

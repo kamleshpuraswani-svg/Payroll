@@ -495,7 +495,8 @@ export const RunPayrollModal: React.FC<{
    company: Company | null;
    isPage?: boolean;
    readOnly?: boolean;
-}> = ({ isOpen = false, onClose, company, isPage = false, readOnly = false }) => {
+   initialBusinessUnits?: string[];
+}> = ({ isOpen = false, onClose, company, isPage = false, readOnly = false, initialBusinessUnits = [] }) => {
    const [currentStep, setCurrentStep] = useState(1);
    const [isConfirmed, setIsConfirmed] = useState(false);
    const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -557,7 +558,7 @@ export const RunPayrollModal: React.FC<{
      }
    };
    const [empSearch, setEmpSearch] = useState('');
-   const [selectedBUs, setSelectedBUs] = useState<string[]>([]);
+   const [selectedBUs, setSelectedBUs] = useState<string[]>(initialBusinessUnits);
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
    const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
 
