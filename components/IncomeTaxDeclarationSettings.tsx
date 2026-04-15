@@ -190,12 +190,27 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
                     { id: '26', section: '10(13A)', limit: 'Not available', description: 'HRA', regime: 'New' },
                     { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
-                    { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' }
+                    { id: '28', section: '80C, D, E, G…', limit: 'Not available', description: 'Most Chapter VI-A deductions', regime: 'New' },
+                    // Senior Citizens (60–80 years)
+                    { id: 'sc-1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-2', section: '80D', limit: '50,000', description: 'Medical insurance — Self & Family', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-3', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-4', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-5', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-6', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-7', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-8', section: '', limit: '', description: '', regime: 'Old', ageGroup: 'senior' }
                 ];
                 
                 // Smarter migration: If they have exactly the 2 old defaults, override them with the new 28 entries
                 const isLegacyDefaults = config.limits && config.limits.length === 2 && config.limits[0].description === 'Investments & Expenses';
-                setLimits(!config.limits || config.limits.length === 0 || isLegacyDefaults ? defaultLimits : config.limits);
+                const baseLoaded = (!config.limits || config.limits.length === 0 || isLegacyDefaults) ? defaultLimits : config.limits;
+                // Merge in any defaultLimits entries missing from the loaded set (e.g. newly added ageGroup rows)
+                const mergedLimits = [
+                    ...baseLoaded,
+                    ...defaultLimits.filter(def => !baseLoaded.some((l: any) => l.id === def.id))
+                ];
+                setLimits(mergedLimits);
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setAllowSwitch(config.allowSwitch ?? true);
                 setSwitchLockDate(config.switchLockDate ? new Date(config.switchLockDate) : new Date(2025, 11, 31));
