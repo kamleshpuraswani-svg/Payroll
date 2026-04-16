@@ -198,6 +198,9 @@ const LoanAdvancesTypes: React.FC = () => {
     const [multiFactor, setMultiFactor] = useState('2');
     const [multiBasis, setMultiBasis] = useState('Gross Salary');
 
+    // Interest Calculation Type
+    const [interestCalcType, setInterestCalcType] = useState<'flat' | 'reducing'>('flat');
+
     // Approver Selection State
     const [selectedApprover, setSelectedApprover] = useState('');
 
@@ -253,6 +256,7 @@ const LoanAdvancesTypes: React.FC = () => {
         setErrors({});
         setIsEditing(true);
         setSelectedApprover('');
+        setInterestCalcType('flat');
 
         // Reset eligibility
         setIsEligibilityAfterJoining(false);
@@ -286,6 +290,7 @@ const LoanAdvancesTypes: React.FC = () => {
         setErrors({});
         setIsEditing(true);
         setSelectedApprover('');
+        setInterestCalcType('flat');
 
         // Set eligibility from loan
         setIsEligibilityAfterJoining(loan.isEligibilityAfterJoining ?? false);
@@ -792,6 +797,34 @@ const LoanAdvancesTypes: React.FC = () => {
                                         </div>
                                     )}
                                     <p className="text-[10px] text-slate-400 mt-1 ml-5">Set 0 for interest-free advances.</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Interest Calculation Type</label>
+                                    <div className="flex flex-wrap gap-4">
+                                        {(['flat', 'reducing'] as const).map((type) => {
+                                            const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
+                                            const isSelected = interestCalcType === type;
+                                            return (
+                                                <label key={type} className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'}`}>
+                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                                    </div>
+                                                    <input
+                                                        type="radio"
+                                                        name="interestCalcType"
+                                                        className="hidden"
+                                                        checked={isSelected}
+                                                        onChange={() => setInterestCalcType(type)}
+                                                    />
+                                                    <span className={`text-sm font-bold ${isSelected ? 'text-purple-900' : 'text-slate-600'}`}>{label}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-2">
+                                        {interestCalcType === 'flat' ? 'Interest is calculated on the original principal amount throughout the tenure.' : 'Interest is calculated on the outstanding principal balance each month.'}
+                                    </p>
                                 </div>
 
                                 <div className="max-w-xs">

@@ -33,9 +33,10 @@ export interface AddExpenseScreenProps {
     categories: any[];
     editId?: string;
     hideTopFields?: boolean;
+    hideDateRange?: boolean;
 }
 
-export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId, hideTopFields = false }) => {
+export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId, hideTopFields = false, hideDateRange = false }) => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [expenseItems, setExpenseItems] = useState<any[]>([]);
@@ -328,6 +329,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 {editId && <p className="text-[10px] text-slate-400 italic">Employee cannot be changed when editing.</p>}
                             </div>
 
+                            {!hideDateRange && (
+                              <>
                             {/* Expense from date */}
                             <div className="w-full lg:w-48 space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Expense From Date <span className="text-rose-500">*</span></label>
@@ -367,6 +370,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     />
                                 </div>
                             </div>
+                              </>
+                            )}
                               </>
                             )}
 

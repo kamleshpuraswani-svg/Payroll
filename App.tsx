@@ -259,6 +259,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_ADD_EXPENSE && (
                   <AddExpenseScreen
                     editId={editingClaimId}
+                    hideDateRange={true}
                     onClose={() => {
                       setEditingClaimId(undefined);
                       setCurrentView(ViewState.HR_EXPENSES);
