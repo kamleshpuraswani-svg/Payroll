@@ -146,13 +146,13 @@ NET PAYABLE        : ₹ 78,200
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1400px] mx-auto pb-10">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-full mx-auto pb-10">
 
       {/* 2. Top row: Quick Insights & Tax Teaser */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Latest Salary Card - Compact Redesign */}
-        <div className="lg:col-span-2 bg-white p-4 rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all relative overflow-hidden">
+        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all relative overflow-hidden">
           <div className="flex justify-between items-start">
             <div className="flex flex-col">
               <span className="inline-block px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-1">Dec 2025</span>
@@ -181,7 +181,7 @@ NET PAYABLE        : ₹ 78,200
         </div>
 
         {/* Tax Projection Teaser - Light Theme (Changed from Dark) */}
-        <div className="lg:col-span-2 bg-indigo-50/50 border border-indigo-100 p-4 rounded-[32px] shadow-sm relative overflow-hidden group cursor-pointer hover:bg-indigo-50 transition-all" onClick={onNavigateToTaxPlanning}>
+        <div className="lg:col-span-2 bg-indigo-50/50 border border-indigo-100 p-4 rounded-xl shadow-sm relative overflow-hidden group cursor-pointer hover:bg-indigo-50 transition-all" onClick={onNavigateToTaxPlanning}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100/50 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform"></div>
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start">
@@ -202,7 +202,7 @@ NET PAYABLE        : ₹ 78,200
         </div>
 
         {/* Next Payout - Compact Design */}
-        <div className="lg:col-span-2 bg-white p-4 rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-center hover:border-blue-300 transition-all relative overflow-hidden">
+        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center hover:border-blue-300 transition-all relative overflow-hidden">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Next Payout In</p>
@@ -224,7 +224,7 @@ NET PAYABLE        : ₹ 78,200
 
         {/* Recent Activity Feed (New) */}
         {!hiddenWidgets.includes('activity') && (
-          <div className="lg:col-span-4 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm group relative">
+          <div className="lg:col-span-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm group relative">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <History size={16} /> Recent Activity
@@ -264,7 +264,7 @@ NET PAYABLE        : ₹ 78,200
 
         {/* YTD Earnings - Redesigned (Simplified) */}
         {!hiddenWidgets.includes('ytd') && (
-          <div className="lg:col-span-4 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm relative group">
+          <div className="lg:col-span-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative group">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <TrendingUp size={16} /> Annual Realization (YTD)
@@ -338,7 +338,7 @@ NET PAYABLE        : ₹ 78,200
 
         {/* Trends Chart (Customizable/Hideable) - REDESIGNED */}
         {!hiddenWidgets.includes('trends') && (
-          <div className="lg:col-span-4 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm flex flex-col relative group h-full">
+          <div className="lg:col-span-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col relative group h-full">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="text-slate-400"><PieChartIcon size={20} strokeWidth={2} /></div>
@@ -393,7 +393,7 @@ NET PAYABLE        : ₹ 78,200
       {/* 4. Bottom row: Allowances, Payout Status (Quick Actions Removed) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* My Allowances - Compact & No Progress Bar */}
-        <div className="lg:col-span-8 bg-white p-5 rounded-[40px] border border-slate-200 shadow-sm h-fit">
+        <div className="lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-fit">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Wallet size={16} /> Flexi Benefit Wallets
@@ -417,7 +417,7 @@ NET PAYABLE        : ₹ 78,200
         </div>
 
         {/* Payout Status - Expanded to 4 */}
-        <div className={`lg:col-span-4 p-8 rounded-[40px] border shadow-sm flex flex-col justify-between relative group transition-colors ${attendanceStatus === 'issue' ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'
+        <div className={`lg:col-span-4 p-8 rounded-xl border shadow-sm flex flex-col justify-between relative group transition-colors ${attendanceStatus === 'issue' ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'
           }`}>
           {/* Dev Toggle */}
           <button
@@ -473,9 +473,9 @@ NET PAYABLE        : ₹ 78,200
       </div>
 
       {/* 5. Bottom banner */}
-      <div className="bg-amber-50 border border-amber-200 p-10 rounded-[48px] flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm hover:shadow-md transition-all">
+      <div className="bg-amber-50 border border-amber-200 p-10 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center gap-6">
-          <div className="w-16 h-16 bg-white text-amber-600 rounded-3xl flex items-center justify-center shrink-0 shadow-sm border border-amber-100">
+          <div className="w-16 h-16 bg-white text-amber-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-amber-100">
             <AlertTriangle size={32} />
           </div>
           <div>

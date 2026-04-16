@@ -293,7 +293,7 @@ const App: React.FC = () => {
 
             {/* EMPLOYEE ROUTES */}
             {userRole === 'EMPLOYEE' && (
-              <div className="p-6 h-full">
+              <div className="px-2 py-6 h-full">
                 {currentView === ViewState.EMP_OVERVIEW && (
                   <Overview
                     onNavigateToTaxPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)}
