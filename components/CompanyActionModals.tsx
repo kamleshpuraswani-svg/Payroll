@@ -2221,7 +2221,7 @@ export const RunPayrollModal: React.FC<{
 
    const innerContent = (
       <>
-         <div className="flex w-full h-full bg-slate-50 relative flex-col">
+         <div className="flex w-full h-full bg-slate-50 relative flex-col overflow-hidden">
             {/* Top Header */}
          <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0 sticky top-0 z-20">
              <div className="flex items-center gap-3">
