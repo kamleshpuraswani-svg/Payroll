@@ -53,6 +53,78 @@ const COLORS = {
 
 const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const MOCK_PAYSLIPS_DATA: Record<string, PayslipData> = {
+  'Dec 2025': {
+    month: 'Dec',
+    year: '2025',
+    creditedDate: '07/12/2025',
+    netPay: 78200,
+    netPayWords: 'Seventy-Eight Thousand Two Hundred Only',
+    trend: 'flat',
+    totalWorkingDays: 31,
+    processedDays: 31,
+    earnings: [
+      { name: 'Basic Salary', amount: 41667 },
+      { name: 'HRA', amount: 20000 },
+      { name: 'Special Allowance', amount: 15000 },
+      { name: 'Statutory Bonus', amount: 5000 },
+    ],
+    deductions: [
+      { name: 'PF Contribution', amount: 1800 },
+      { name: 'Professional Tax', amount: 200 },
+      { name: 'Income Tax (TDS)', amount: 4000 },
+    ],
+    reimbursements: [
+      { name: 'Fuel Reimbursement', amount: 2500 }
+    ],
+    taxDonut: []
+  },
+  'Nov 2025': {
+    month: 'Nov',
+    year: '2025',
+    creditedDate: '07/11/2025',
+    netPay: 75700,
+    netPayWords: 'Seventy-Five Thousand Seven Hundred Only',
+    trend: 'down',
+    totalWorkingDays: 30,
+    processedDays: 30,
+    earnings: [
+      { name: 'Basic Salary', amount: 41667 },
+      { name: 'HRA', amount: 20000 },
+      { name: 'Special Allowance', amount: 15000 },
+    ],
+    deductions: [
+      { name: 'PF Contribution', amount: 1800 },
+      { name: 'Professional Tax', amount: 200 },
+      { name: 'Income Tax (TDS)', amount: 3500 },
+    ],
+    reimbursements: [],
+    taxDonut: []
+  },
+  'Oct 2025': {
+    month: 'Oct',
+    year: '2025',
+    creditedDate: '07/10/2025',
+    netPay: 76000,
+    netPayWords: 'Seventy-Six Thousand Only',
+    trend: 'up',
+    totalWorkingDays: 31,
+    processedDays: 31,
+    earnings: [
+      { name: 'Basic Salary', amount: 41667 },
+      { name: 'HRA', amount: 20000 },
+      { name: 'Special Allowance', amount: 15000 },
+    ],
+    deductions: [
+      { name: 'PF Contribution', amount: 1800 },
+      { name: 'Professional Tax', amount: 200 },
+      { name: 'Income Tax (TDS)', amount: 3200 },
+    ],
+    reimbursements: [],
+    taxDonut: []
+  }
+};
+
 export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ currentEmployeeId = 'TF00912' }) => {
   const [selectedYear, setSelectedYear] = useState('2025');
   const [activeMonth, setActiveMonth] = useState('');
@@ -72,35 +144,39 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
         .select('*')
         .eq('employee_id', currentEmployeeId);
       
-      if (!error && data) {
-        const map: Record<string, PayslipData> = {};
-        data.forEach(p => {
-          const key = `${p.month} ${p.year}`;
-          map[key] = {
-            month: p.month,
-            year: p.year,
-            creditedDate: p.credited_date ? new Date(p.credited_date).toLocaleDateString() : 'N/A',
-            netPay: p.net_pay,
-            netPayWords: p.net_pay_words || '',
-            trend: p.trend || 'flat',
-            totalWorkingDays: p.total_working_days || 30,
-            processedDays: p.processed_days || 30,
-            earnings: p.earnings || [],
-            deductions: p.deductions || [],
-            reimbursements: p.reimbursements || [],
-            taxDonut: p.tax_donut || []
-          };
-        });
-        setPayslipsMap(map);
-        
-        // Set default active month to latest
-        const sortedKeys = Object.keys(map).sort((a, b) => {
-          const monthA = a.split(' ')[0];
-          const monthB = b.split(' ')[0];
-          return MONTH_ORDER.indexOf(monthB) - MONTH_ORDER.indexOf(monthA);
-        });
-        if (sortedKeys.length > 0) setActiveMonth(sortedKeys[0]);
-      }
+        if (!error && data && data.length > 0) {
+          const map: Record<string, PayslipData> = {};
+          data.forEach(p => {
+            const key = `${p.month} ${p.year}`;
+            map[key] = {
+              month: p.month,
+              year: p.year,
+              creditedDate: p.credited_date ? new Date(p.credited_date).toLocaleDateString() : 'N/A',
+              netPay: p.net_pay,
+              netPayWords: p.net_pay_words || '',
+              trend: p.trend || 'flat',
+              totalWorkingDays: p.total_working_days || 30,
+              processedDays: p.processed_days || 30,
+              earnings: p.earnings || [],
+              deductions: p.deductions || [],
+              reimbursements: p.reimbursements || [],
+              taxDonut: p.tax_donut || []
+            };
+          });
+          setPayslipsMap(map);
+          
+          // Set default active month to latest
+          const sortedKeys = Object.keys(map).sort((a, b) => {
+            const monthA = a.split(' ')[0];
+            const monthB = b.split(' ')[0];
+            return MONTH_ORDER.indexOf(monthB) - MONTH_ORDER.indexOf(monthA);
+          });
+          if (sortedKeys.length > 0) setActiveMonth(sortedKeys[0]);
+        } else {
+          // Fallback to mock data if no data found
+          setPayslipsMap(MOCK_PAYSLIPS_DATA);
+          setActiveMonth('Dec 2025');
+        }
     } catch (err) {
       console.error('Error fetching payslips:', err);
     } finally {
