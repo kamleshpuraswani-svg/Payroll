@@ -222,49 +222,11 @@ NET PAYABLE        : ₹ 78,200
       {/* 3. Middle row: Activity, YTD, Trends */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
 
-        {/* Recent Activity Feed (New) */}
-        {!hiddenWidgets.includes('activity') && (
-          <div className="lg:col-span-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm group relative">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <History size={16} /> Recent Activity
-              </h3>
-              <div className="flex gap-1">
-                <PinButton active={pinnedWidgets.includes('activity')} onClick={() => togglePin('activity')} />
-              </div>
-            </div>
-            <div className="space-y-6">
-              {recentActivities.map((act) => (
-                <div key={act.id} className="flex gap-4 group/item">
-                  <div className="relative">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover/item:scale-105 ${act.type === 'reimbursement' ? 'bg-teal-50 text-teal-600' :
-                        act.type === 'payout' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
-                      }`}>
-                      {act.type === 'reimbursement' ? <Wallet size={18} /> : act.type === 'payout' ? <CreditCard size={18} /> : <FileText size={18} />}
-                    </div>
-                    {act.id !== recentActivities.length && (
-                      <div className="absolute top-10 bottom-0 left-1/2 -translate-x-1/2 w-px bg-slate-100 h-6"></div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <p className="text-sm font-black text-slate-800 leading-tight">{act.label}</p>
-                      {act.amount && <span className="text-xs font-black text-slate-900">{showAmounts ? act.amount : '••••'}</span>}
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{act.date} • <span className={
-                      act.status === 'approved' || act.status === 'credited' ? 'text-emerald-500' :
-                        act.status === 'pending' ? 'text-amber-500' : 'text-blue-500'
-                    }>{act.status}</span></p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* YTD Earnings - Redesigned (Simplified) */}
         {!hiddenWidgets.includes('ytd') && (
-          <div className="lg:col-span-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative group">
+          <div className="lg:col-span-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative group">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <TrendingUp size={16} /> Annual Realization (YTD)
@@ -338,7 +300,7 @@ NET PAYABLE        : ₹ 78,200
 
         {/* Trends Chart (Customizable/Hideable) - REDESIGNED */}
         {!hiddenWidgets.includes('trends') && (
-          <div className="lg:col-span-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col relative group h-full">
+          <div className="lg:col-span-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col relative group h-full">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="text-slate-400"><PieChartIcon size={20} strokeWidth={2} /></div>
@@ -393,7 +355,7 @@ NET PAYABLE        : ₹ 78,200
       {/* 4. Bottom row: Allowances, Payout Status (Quick Actions Removed) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* My Allowances - Compact & No Progress Bar */}
-        <div className="lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-fit">
+        <div className="lg:col-span-12 bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-fit">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Wallet size={16} /> Flexi Benefit Wallets
@@ -416,60 +378,7 @@ NET PAYABLE        : ₹ 78,200
           </div>
         </div>
 
-        {/* Payout Status - Expanded to 4 */}
-        <div className={`lg:col-span-4 p-8 rounded-xl border shadow-sm flex flex-col justify-between relative group transition-colors ${attendanceStatus === 'issue' ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'
-          }`}>
-          {/* Dev Toggle */}
-          <button
-            onClick={() => setAttendanceStatus(prev => prev === 'verified' ? 'issue' : 'verified')}
-            className="absolute top-6 right-6 p-2 text-red-500 hover:text-red-600 bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-            title="Toggle Attendance Status"
-          >
-            <AlertTriangle size={14} />
-          </button>
 
-          <div>
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Attendance Check</h3>
-
-            {attendanceStatus === 'verified' ? (
-              <div className="flex flex-col items-center text-center py-4">
-                <div className="relative">
-                  <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center border-4 border-emerald-100 shadow-inner">
-                    <span className="text-2xl font-black text-emerald-600">30/30</span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm border border-emerald-200">
-                    <CheckCircle2 size={16} className="text-emerald-500" />
-                  </div>
-                </div>
-                <h4 className="font-black text-slate-900 mt-6">All Days Credited</h4>
-                <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tighter">Zero Loss of Pay (LOP)</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center text-center py-4">
-                <div className="relative animate-pulse-slow">
-                  <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center border-4 border-red-200 shadow-inner">
-                    <span className="text-2xl font-black text-red-600">28/30</span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm border border-red-200">
-                    <AlertCircle size={16} className="text-red-500" />
-                  </div>
-                </div>
-                <h4 className="font-black text-slate-900 mt-6">Action Required</h4>
-                <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tighter">2 Days LOP Detected</p>
-              </div>
-            )}
-          </div>
-
-          {attendanceStatus === 'verified' ? (
-            <div className="bg-emerald-50 text-emerald-700 px-4 py-3 rounded-2xl border border-emerald-100 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest">
-              Verified for December Payout
-            </div>
-          ) : (
-            <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-2xl shadow-lg shadow-red-200 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all">
-              Regularize Now <ArrowRight size={14} />
-            </button>
-          )}
-        </div>
       </div>
 
       {/* 5. Bottom banner */}
