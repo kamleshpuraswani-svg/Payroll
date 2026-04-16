@@ -342,29 +342,16 @@ const PayrollApprovalRequests: React.FC = () => {
                                 <button onClick={(e) => {e.stopPropagation(); setSelectedRun(run)}} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600" title="View Details">
                                     <Eye size={16}/>
                                 </button>
-                                {run.status === 'Pending Approval' ? (
-                                    <>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedRun(run);
-                                                setWizardState({ isOpen: true, readOnly: false });
-                                            }}
-                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-purple-600" title="Edit"
-                                        >
-                                            <Edit2 size={16}/>
-                                        </button>
-                                        <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600" title="Approve">
-                                        <CheckCircle size={16}/>
-                                        </button>
-                                    </>
-                                ) : run.status === 'Approved' ? (
-                                    <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-amber-600" title="Re-open">
-                                        <RefreshCw size={16}/>
-                                    </button>
-                                ) : (
-                                    <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-purple-600" title="History">
-                                        <History size={16}/>
+                                {run.status === 'Pending Approval' && (
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedRun(run);
+                                            setWizardState({ isOpen: true, readOnly: false });
+                                        }}
+                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-purple-600" title="Edit"
+                                    >
+                                        <Edit2 size={16}/>
                                     </button>
                                 )}
                             </div>
