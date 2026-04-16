@@ -214,6 +214,22 @@ NET PAYABLE        : ₹ 78,200
             </div>
           </div>
         </div>
+
+        {/* Loans & advances - New Card */}
+        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center hover:border-emerald-300 transition-all relative overflow-hidden">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Loans & advances</p>
+              <div className="flex items-baseline gap-1">
+                <h3 className="text-xl font-black text-slate-900">{showAmounts ? '₹ 45,000' : '₹ •••••'}</h3>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 mt-1">1 Active Loan</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <CreditCard size={20} />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 3. Middle row: Activity, YTD, Trends */}
