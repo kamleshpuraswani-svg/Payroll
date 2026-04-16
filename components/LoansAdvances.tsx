@@ -683,6 +683,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
     const [loanType, setLoanType] = useState<'Salary Advance' | 'Loan'>('Salary Advance');
     const [interestRate, setInterestRate] = useState('0');
     const [maxTenure, setMaxTenure] = useState('0');
+    const [interestCalcType, setInterestCalcType] = useState<'flat' | 'reducing'>('flat');
     const [repaymentMonth, setRepaymentMonth] = useState('February 2026');
     const [emiStartDate, setEmiStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [requestedAmount, setRequestedAmount] = useState('');
@@ -730,6 +731,9 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                         // Max Tenure
                         const defaultTenure = loanType === 'Loan' ? '12' : '3';
                         setMaxTenure(String(config.max_tenure || defaultTenure));
+
+                        // Interest Calculation Type
+                        setInterestCalcType(config.interest_calc_type === 'reducing' ? 'reducing' : 'flat');
                         
                         // Handle Approvers
                         if (config.approvers && Array.isArray(config.approvers)) {
@@ -903,7 +907,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6 max-w-md">
+                        <div className="grid grid-cols-3 gap-6">
                             <div>
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">INTEREST RATE (% P.A.)</label>
                                 <input
@@ -928,7 +932,39 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                                     className={`w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold ${userRole === 'EMPLOYEE' ? 'bg-slate-50/50 cursor-not-allowed opacity-70' : 'bg-white'}`}
                                     placeholder="e.g. 12"
                                 />
-                                <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Max tenure allowed is 3 months.</p>
+                                <p className="mt-1.5 text-[10px] text-slate-400 font-medium">
+                                    {loanType === 'Salary Advance' ? 'Max tenure allowed is 6 months.' : 'Max tenure allowed is 48 months.'}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">INTEREST CALCULATION TYPE</label>
+                                <div className="flex gap-2">
+                                    {(['flat', 'reducing'] as const).map((type) => {
+                                        const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
+                                        const isSelected = interestCalcType === type;
+                                        return (
+                                            <label
+                                                key={type}
+                                                className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl cursor-pointer transition-all text-sm font-bold ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 text-purple-900' : 'bg-white border-slate-200 hover:border-purple-200 text-slate-600'} ${userRole === 'EMPLOYEE' ? 'cursor-not-allowed opacity-70' : ''}`}
+                                            >
+                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                    {isSelected && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                </div>
+                                                <input
+                                                    type="radio"
+                                                    className="hidden"
+                                                    checked={isSelected}
+                                                    disabled={userRole === 'EMPLOYEE'}
+                                                    onChange={() => userRole !== 'EMPLOYEE' && setInterestCalcType(type)}
+                                                />
+                                                {label}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <p className="mt-1.5 text-[10px] text-slate-400 font-medium">
+                                    {interestCalcType === 'flat' ? 'Calculated on original principal.' : 'Calculated on outstanding balance.'}
+                                </p>
                             </div>
                         </div>
 
