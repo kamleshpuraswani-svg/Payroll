@@ -14,6 +14,7 @@ import {
   Building,
   Info,
   AlertTriangle,
+  ChevronLeft,
   ChevronRight,
   History,
   Pin,
@@ -56,6 +57,31 @@ const trendData = [
   { month: 'Dec', net: 78200, pf: 4600, tax: 9200 },
 ];
 
+const MOCK_LOANS = [
+  {
+    type: 'Personal Loan',
+    outstanding: 45000,
+    total: 100000,
+    progress: 55,
+    emisPaid: 6,
+    totalEmis: 12,
+    upcomingEmi: 8333,
+    dueDate: '01 Jan 2026',
+    status: 'Active'
+  },
+  {
+    type: 'Home Renovation',
+    outstanding: 245000,
+    total: 500000,
+    progress: 51,
+    emisPaid: 24,
+    totalEmis: 60,
+    upcomingEmi: 12500,
+    dueDate: '10 Feb 2026',
+    status: 'Repaying'
+  }
+];
+
 const recentActivities = [
   { id: 1, type: 'reimbursement', label: 'Fuel Reimbursement Approved', amount: '₹2,500', date: '2 hours ago', status: 'approved' },
   { id: 2, type: 'payout', label: 'December Salary Credited', amount: '₹78,200', date: 'Dec 7, 2025', status: 'credited' },
@@ -73,6 +99,9 @@ const Overview: React.FC<OverviewProps> = ({ onNavigateToTaxPlanning, onNavigate
   const [hiddenWidgets, setHiddenWidgets] = useState<string[]>([]);
   const [showAmounts, setShowAmounts] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState<'verified' | 'issue'>('verified');
+  const [activeLoanIndex, setActiveLoanIndex] = useState(0);
+
+  const currentLoan = MOCK_LOANS[activeLoanIndex];
 
   // Password Modal State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -241,10 +270,29 @@ NET PAYABLE        : ₹ 78,200
                 <CreditCard size={20} />
               </div>
               <div>
-                <div className="flex items-center justify-between w-full min-w-[140px]">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Loans & advances</p>
+                <div className="flex items-center justify-between w-full min-w-[220px]">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{currentLoan.type}</p>
+                  <div className="flex items-center gap-1 ml-4 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveLoanIndex(prev => Math.max(0, prev - 1)); }}
+                      disabled={activeLoanIndex === 0}
+                      className="text-slate-300 hover:text-emerald-600 disabled:opacity-30 transition-colors"
+                    >
+                      <ChevronLeft size={10} strokeWidth={3} />
+                    </button>
+                    <span className="text-[9px] font-black text-slate-600 min-w-[30px] text-center">
+                      {(activeLoanIndex + 1).toString().padStart(2, '0')} / {MOCK_LOANS.length.toString().padStart(2, '0')}
+                    </span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveLoanIndex(prev => Math.min(MOCK_LOANS.length - 1, prev + 1)); }}
+                      disabled={activeLoanIndex === MOCK_LOANS.length - 1}
+                      className="text-slate-400 hover:text-emerald-600 disabled:opacity-30 transition-colors"
+                    >
+                      <ChevronRight size={10} strokeWidth={3} />
+                    </button>
+                  </div>
                   <button
-                    onClick={handleToggleAmounts}
+                    onClick={(e) => { e.stopPropagation(); handleToggleAmounts(); }}
                     className="p-1 rounded-lg text-slate-200 hover:bg-slate-50 hover:text-slate-400 transition-all ml-2"
                     title={showAmounts ? "Hide loans" : "Show loans"}
                   >
@@ -252,13 +300,13 @@ NET PAYABLE        : ₹ 78,200
                   </button>
                 </div>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-xl font-black text-slate-900 leading-none">{showAmounts ? '₹ 45,000' : '₹ •••••'}</h3>
-                  <span className="text-[10px] font-bold text-slate-400">/ {showAmounts ? '₹ 1,00,000' : '₹ •••••'}</span>
+                  <h3 className="text-xl font-black text-slate-900 leading-none">{showAmounts ? `₹ ${currentLoan.outstanding.toLocaleString()}` : '₹ •••••'}</h3>
+                  <span className="text-[10px] font-bold text-slate-400">/ {showAmounts ? `₹ ${currentLoan.total.toLocaleString()}` : '₹ •••••'}</span>
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 uppercase tracking-widest">Active</span>
+              <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 uppercase tracking-widest">{currentLoan.status}</span>
             </div>
           </div>
 
@@ -267,10 +315,10 @@ NET PAYABLE        : ₹ 78,200
             <div className="space-y-1">
               <div className="flex justify-between text-[10px] font-bold">
                 <span className="text-slate-400 uppercase tracking-wider">Repayment Progress</span>
-                <span className="text-emerald-600">55%</span>
+                <span className="text-emerald-600">{currentLoan.progress}%</span>
               </div>
               <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '55%' }}></div>
+                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${currentLoan.progress}%` }}></div>
               </div>
             </div>
 
@@ -278,14 +326,14 @@ NET PAYABLE        : ₹ 78,200
               {/* EMIs */}
               <div className="p-2 bg-slate-50/50 border border-slate-100 rounded-lg">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">EMIs Paid</p>
-                <p className="text-sm font-black text-slate-900">06 <span className="text-[10px] text-slate-400 font-bold">/ 12</span></p>
+                <p className="text-sm font-black text-slate-900">{currentLoan.emisPaid.toString().padStart(2, '0')} <span className="text-[10px] text-slate-400 font-bold">/ {currentLoan.totalEmis}</span></p>
               </div>
 
               {/* Next EMI */}
               <div className="p-2 bg-indigo-50/50 border border-indigo-100 rounded-lg">
                 <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Upcoming EMI</p>
-                <p className="text-sm font-black text-indigo-900">{showAmounts ? '₹ 8,333' : '••••'}</p>
-                <p className="text-[9px] font-bold text-indigo-400 mt-0.5">Due: 01 Jan 2026</p>
+                <p className="text-sm font-black text-indigo-900">{showAmounts ? `₹ ${currentLoan.upcomingEmi.toLocaleString()}` : '••••'}</p>
+                <p className="text-[9px] font-bold text-indigo-400 mt-0.5">Due: {currentLoan.dueDate}</p>
               </div>
             </div>
           </div>
