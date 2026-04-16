@@ -413,19 +413,14 @@ NET PAYABLE        : ₹ 78,200
         <div className="lg:col-span-12 bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-fit">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Wallet size={16} /> Flexi Benefit Wallets
+              <Wallet size={16} /> Reimbursement Summary
             </h3>
             <button onClick={onNavigateToReimbursements} className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1 transition-all">
               Manage All <ArrowRight size={14} />
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
-            <div className="absolute -top-10 right-0 flex items-center gap-2">
-              <button onClick={handleToggleAmounts} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-500 hover:bg-white hover:text-blue-600 transition-all uppercase tracking-widest shadow-sm">
-                {showAmounts ? <EyeOff size={12} /> : <Eye size={12} />}
-                {showAmounts ? 'Hide' : 'Reveal'}
-              </button>
-            </div>
+
             <AllowanceItem label="Medical Reimbursement" utilized={5200} limit={15000} showAmounts={showAmounts} />
             <AllowanceItem label="Fuel & Conveyance" utilized={8000} limit={24000} showAmounts={showAmounts} />
             <AllowanceItem label="Books & Periodicals" utilized={0} limit={6000} disabled showAmounts={showAmounts} />
