@@ -559,6 +559,13 @@ export const RunPayrollModal: React.FC<{
    };
    const [empSearch, setEmpSearch] = useState('');
    const [selectedBUs, setSelectedBUs] = useState<string[]>(initialBusinessUnits);
+   
+   useEffect(() => {
+     if (isOpen) {
+       setSelectedBUs(initialBusinessUnits);
+     }
+   }, [isOpen, initialBusinessUnits]);
+
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
    const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
 
