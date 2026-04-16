@@ -218,7 +218,7 @@ NET PAYABLE        : ₹ 78,200
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Zap size={14} className="text-indigo-500" />
-                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Est. Tax Saved YTD</p>
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Est. Tax Saved</p>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleToggleAmounts(); }}
@@ -229,7 +229,10 @@ NET PAYABLE        : ₹ 78,200
                   </button>
                 </div>
                 <h4 className="text-2xl font-black text-indigo-950">{showAmounts ? '₹ 32,400' : '₹ ••••••'}</h4>
-                <p className="text-[10px] font-bold text-indigo-400 mt-1">New Regime Vs Old Regime</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[9px] font-black bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-md uppercase">New Regime</span>
+                  <p className="text-[10px] font-bold text-indigo-400 tracking-tight">Active for FY 25-26</p>
+                </div>
               </div>
             </div>
 
