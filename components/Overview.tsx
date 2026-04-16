@@ -215,18 +215,51 @@ NET PAYABLE        : ₹ 78,200
           </div>
         </div>
 
-        {/* Loans & advances - New Card */}
-        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center hover:border-emerald-300 transition-all relative overflow-hidden">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Loans & advances</p>
-              <div className="flex items-baseline gap-1">
-                <h3 className="text-xl font-black text-slate-900">{showAmounts ? '₹ 45,000' : '₹ •••••'}</h3>
+        {/* Loans & advances - Detailed Design */}
+        <div className="lg:col-span-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-all relative overflow-hidden group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                <CreditCard size={20} />
               </div>
-              <p className="text-[10px] font-bold text-slate-400 mt-1">1 Active Loan</p>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Loans & advances</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <h3 className="text-xl font-black text-slate-900 leading-none">{showAmounts ? '₹ 45,000' : '₹ •••••'}</h3>
+                  <span className="text-[10px] font-bold text-slate-400">/ {showAmounts ? '₹ 1,00,000' : '₹ •••••'}</span>
+                </div>
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <CreditCard size={20} />
+            <div className="text-right">
+              <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 uppercase tracking-widest">Active</span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {/* Progress Bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-bold">
+                <span className="text-slate-400 uppercase tracking-wider">Repayment Progress</span>
+                <span className="text-emerald-600">55%</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '55%' }}></div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-1">
+              {/* EMIs */}
+              <div className="p-2 bg-slate-50/50 border border-slate-100 rounded-lg">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">EMIs Paid</p>
+                <p className="text-sm font-black text-slate-900">06 <span className="text-[10px] text-slate-400 font-bold">/ 12</span></p>
+              </div>
+
+              {/* Next EMI */}
+              <div className="p-2 bg-indigo-50/50 border border-indigo-100 rounded-lg">
+                <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Upcoming EMI</p>
+                <p className="text-sm font-black text-indigo-900">{showAmounts ? '₹ 8,333' : '••••'}</p>
+                <p className="text-[9px] font-bold text-indigo-400 mt-0.5">Due: 01 Jan 2026</p>
+              </div>
             </div>
           </div>
         </div>
