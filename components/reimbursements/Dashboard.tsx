@@ -9,13 +9,40 @@ import { BudgetCategory, WalletMetric, ReimbursementCategory } from '../../types
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#0EA5E9'];
 
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+      ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true });
+  } catch { return ''; }
+};
+
 export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditClaim, onViewClaim, onViewLoans }: any) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showRejectedPanel, setShowRejectedPanel] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [viewClaim, setViewClaim] = useState<any>(null);
 
   // Filter for history table
   const allHistoryClaims = claims.filter((c: any) => c.status !== 'draft');
+
+  // Dummy claims to always show in the table
+  const DUMMY_CLAIMS = [
+    { id: 'CLM-00124', name: 'Client Meeting - Food & Cab', category: 'TRAVEL', items: [{ merchant: 'Uber', amount: 750, reason: 'Cab to client office for Q4 meeting', expenseDate: '2025-12-05' }, { merchant: 'Swiggy', amount: 500, reason: 'Lunch with client', expenseDate: '2025-12-05' }], submittedAt: '2025-12-06', createdAt: '2025-12-05T10:00:00Z', modifiedAt: '2025-12-06T14:30:00Z', status: 'settled' },
+    { id: 'CLM-00123', name: 'Broadband Subscription - Dec', category: 'BROADBAND', items: [{ merchant: 'Airtel', amount: 999, reason: 'Monthly broadband reimbursement - Dec 2025', expenseDate: '2025-12-01' }], submittedAt: '2025-12-01', createdAt: '2025-12-01T09:00:00Z', modifiedAt: '2025-12-02T11:00:00Z', status: 'approved' },
+    { id: 'CLM-00122', name: 'Team Lunch - Q4 Review', category: 'MEAL', items: [{ merchant: 'Barbeque Nation', amount: 3200, reason: 'Team lunch for Q4 performance review', expenseDate: '2025-11-28' }], submittedAt: '2025-11-28', createdAt: '2025-11-28T13:00:00Z', modifiedAt: '2025-11-29T10:00:00Z', status: 'approved' },
+    { id: 'CLM-00121', name: 'Mobile Recharge - Nov', category: 'MOBILE', items: [{ merchant: 'Jio', amount: 599, reason: 'Monthly mobile reimbursement - Nov 2025', expenseDate: '2025-11-15' }], submittedAt: '2025-11-15', createdAt: '2025-11-15T11:00:00Z', modifiedAt: '2025-11-16T09:00:00Z', status: 'settled' },
+    { id: 'CLM-00120', name: 'Flight - Bangalore to Mumbai', category: 'TRAVEL', items: [{ merchant: 'IndiGo', amount: 5800, reason: 'Business travel to Mumbai for client presentation', expenseDate: '2025-11-10' }], submittedAt: '2025-11-10', createdAt: '2025-11-10T08:00:00Z', modifiedAt: '2025-11-11T16:00:00Z', status: 'approved' },
+    { id: 'CLM-00119', name: 'AWS Certification Course', category: 'LEARNING', items: [{ merchant: 'Coursera', amount: 4500, reason: 'AWS Solutions Architect certification fee', expenseDate: '2025-10-22' }], submittedAt: '2025-10-22', createdAt: '2025-10-22T14:00:00Z', modifiedAt: null, status: 'pending' },
+    { id: 'CLM-00118', name: 'Hotel Stay - Client Visit', category: 'TRAVEL', items: [{ merchant: 'Marriott', amount: 7200, reason: '2-night hotel stay for client visit in Mumbai', expenseDate: '2025-10-15' }], submittedAt: '2025-10-15', createdAt: '2025-10-15T09:00:00Z', modifiedAt: '2025-10-17T12:00:00Z', status: 'settled' },
+    { id: 'CLM-00117', name: 'Internet Bill - Oct', category: 'BROADBAND', items: [{ merchant: 'ACT Fibernet', amount: 1299, reason: 'Monthly broadband reimbursement - Oct 2025', expenseDate: '2025-10-05' }], submittedAt: '2025-10-05', createdAt: '2025-10-05T10:00:00Z', modifiedAt: '2025-10-06T08:00:00Z', status: 'approved' },
+  ];
+
+  const mergedClaims = [
+    ...allHistoryClaims,
+    ...DUMMY_CLAIMS.filter(d => !allHistoryClaims.find((c: any) => c.id === d.id))
+  ];
 
   // Mock data for the rejected claims panel
   const rejectedClaims = [
@@ -58,13 +85,12 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Reimbursements</h1>
-          <p className="text-slate-500 font-medium">Maximize your take-home pay via tax-free claims.</p>
         </div>
         <button
           onClick={onNewClaim}
-          className="bg-slate-900 text-white px-8 h-14 rounded-lg font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all flex items-center gap-3 group"
+          className="bg-blue-600 text-white px-8 h-14 rounded-lg font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 transition-all flex items-center gap-3"
         >
-          <Plus size={20} className="group-hover:rotate-90 transition-transform" /> Create New Claim
+          Create New Claim
         </button>
       </div>
 
@@ -74,7 +100,7 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <div className="flex justify-between mb-4">
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Wallet size={20} /></div>
-              <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase">FY 25-26</span>
+              <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase">{new Date().getFullYear()}</span>
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Entitlement</p>
             <p className="text-2xl font-black text-slate-900">₹{wallet.entitlement.toLocaleString()}</p>
@@ -122,18 +148,19 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
           </div>
 
           {/* Rejected Claims */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative group">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
             <div className="flex justify-between mb-4">
               <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileWarning size={20} /></div>
+              <button
+                onClick={() => setShowRejectedPanel(true)}
+                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                title="View Rejected Claims"
+              >
+                <Eye size={18} />
+              </button>
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Rejected Claims</p>
             <p className="text-2xl font-black text-slate-900">2</p>
-            <button
-              onClick={() => setShowRejectedPanel(true)}
-              className="mt-3 text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 w-fit"
-            >
-              View Reasons <ChevronRight size={12} />
-            </button>
           </div>
         </div>
 
@@ -160,7 +187,7 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-            <History size={18} className="text-slate-400" /> Settlement History
+            Claims
           </h3>
           <div className="flex items-center gap-3">
             {/* Lookup Filter */}
@@ -211,21 +238,21 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-white border-b border-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <thead className="bg-white border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
               <tr>
-                <th className="px-8 py-5">Reference ID</th>
-                <th className="px-6 py-5">Description</th>
                 <th className="px-6 py-5">Category</th>
+                <th className="px-6 py-5">Description/Reason</th>
                 <th className="px-6 py-5">Merchant/Payee</th>
-                <th className="px-6 py-5">Date of Expense</th>
-                <th className="px-6 py-5">Created At</th>
-                <th className="px-6 py-5">Status</th>
                 <th className="px-6 py-5 text-right">Amount</th>
+                <th className="px-6 py-5">Expense Date</th>
+                <th className="px-6 py-5">Created By</th>
+                <th className="px-6 py-5">Last Modified By</th>
+                <th className="px-6 py-5">Status</th>
                 <th className="px-8 py-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
-              {allHistoryClaims.filter((c: any) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toLowerCase().includes(searchTerm.toLowerCase())).map((claim: any) => {
+            <tbody className="divide-y divide-slate-200">
+              {mergedClaims.filter((c: any) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toLowerCase().includes(searchTerm.toLowerCase())).map((claim: any) => {
                 const isSettled = claim.status === 'settled' || claim.status === 'approved';
                 const merchant = claim.items?.length > 0
                   ? (claim.items.length > 1
@@ -233,26 +260,46 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                     : (claim.items[0].merchant || 'N/A'))
                   : 'N/A';
 
+                const firstReason = claim.items?.[0]?.reason || claim.name;
+                const description = claim.items?.length > 1
+                  ? `${firstReason} +${claim.items.length - 1} more`
+                  : firstReason;
+
+                const modifiedBy = claim.status === 'settled' || claim.status === 'approved' ? 'Finance Team' : null;
+                const modifiedAt = claim.modifiedAt || (modifiedBy ? claim.createdAt : null);
+
                 return (
                   <tr key={claim.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6 text-[10px] font-black text-slate-400">{claim.id}</td>
-                    <td className="px-6 py-6">
-                      <p className="text-sm font-bold text-slate-900">{claim.name}</p>
-                    </td>
-                    <td className="px-6 py-6">
+                    <td className="px-6 py-5">
                       <span className="text-[10px] font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded uppercase">{claim.category}</span>
                     </td>
-                    <td className="px-6 py-6 text-xs font-medium text-slate-600">{merchant}</td>
-                    <td className="px-6 py-6 text-xs font-medium text-slate-500">{claim.submittedAt}</td>
-                    <td className="px-6 py-6 text-xs font-medium text-slate-500">{claim.createdAt || '-'}</td>
-                    <td className="px-6 py-6">
+                    <td className="px-6 py-5 max-w-[200px]">
+                      <p className="text-sm font-bold text-slate-900 truncate" title={description}>{description}</p>
+                    </td>
+                    <td className="px-6 py-5 text-xs font-medium text-slate-600">{merchant}</td>
+                    <td className="px-6 py-5 text-right font-black text-slate-900">₹{claim.items.reduce((s: number, i: any) => s + i.amount, 0).toLocaleString()}</td>
+                    <td className="px-6 py-5 text-xs font-medium text-slate-500">{claim.submittedAt}</td>
+                    <td className="px-6 py-5">
+                      <p className="text-xs font-bold text-slate-700">Priya Sharma</p>
+                      {claim.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(claim.createdAt)}</p>}
+                    </td>
+                    <td className="px-6 py-5">
+                      {modifiedBy ? (
+                        <>
+                          <p className="text-xs font-bold text-slate-700">{modifiedBy}</p>
+                          {modifiedAt && <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(modifiedAt)}</p>}
+                        </>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-5">
                       <StatusBadge status={claim.status} />
                     </td>
-                    <td className="px-6 py-6 text-right font-black text-slate-900">₹{claim.items.reduce((s: number, i: any) => s + i.amount, 0).toLocaleString()}</td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-8 py-5 text-right">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => onViewClaim(claim)}
+                          onClick={() => setViewClaim(claim)}
                           className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="View Details"
                         >
@@ -278,6 +325,15 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
           </table>
         </div>
       </div>
+
+      {/* Claim View Panel */}
+      {viewClaim && (
+        <ClaimViewPanel
+          claim={viewClaim}
+          onClose={() => setViewClaim(null)}
+          onEdit={(c: any) => { setViewClaim(null); onEditClaim(c); }}
+        />
+      )}
 
       {/* Rejected Claims Panel */}
       {showRejectedPanel && (
@@ -316,7 +372,7 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                     <button
                       onClick={() => {
                         setShowRejectedPanel(false);
-                        onViewClaim(claim);
+                        setViewClaim(claim);
                       }}
                       className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
                     >
@@ -350,6 +406,161 @@ const StatusBadge = ({ status }: { status: string }) => {
     <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${classes}`}>
       {status.replace('_', ' ')}
     </span>
+  );
+};
+
+const ClaimViewPanel = ({ claim, onClose, onEdit }: { claim: any; onClose: () => void; onEdit: (c: any) => void }) => {
+  const isSettled = claim.status === 'settled' || claim.status === 'approved';
+  const total = claim.items?.reduce((s: number, i: any) => s + (i.amount || 0), 0) || 0;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[560px] bg-white shadow-2xl flex flex-col border-l border-slate-200">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Claim Details</p>
+            <h2 className="text-lg font-black text-slate-900">{claim.name || claim.id}</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isSettled && (
+              <button
+                onClick={() => onEdit(claim)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black hover:bg-blue-700 transition-colors shadow-sm"
+                title="Edit Claim"
+              >
+                <Edit2 size={14} /> Edit
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto bg-slate-50/40">
+          {/* Summary strip */}
+          <div className="px-6 py-5 bg-white border-b border-slate-100 grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Category</p>
+              <span className="text-[11px] font-black text-slate-700 bg-slate-100 px-2.5 py-1 rounded uppercase tracking-wide">{claim.category}</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Amount</p>
+              <p className="text-lg font-black text-slate-900">₹{total.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+              <StatusBadge status={claim.status} />
+            </div>
+          </div>
+
+          {/* Meta */}
+          <div className="px-6 py-5 bg-white border-b border-slate-100 grid grid-cols-2 gap-5">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Created By</p>
+              <p className="text-sm font-bold text-slate-800">Priya Sharma</p>
+              {claim.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(claim.createdAt)}</p>}
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Last Modified By</p>
+              {(claim.status === 'settled' || claim.status === 'approved') ? (
+                <>
+                  <p className="text-sm font-bold text-slate-800">Finance Team</p>
+                  {claim.modifiedAt && <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(claim.modifiedAt)}</p>}
+                </>
+              ) : (
+                <p className="text-sm text-slate-300">—</p>
+              )}
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Submitted Date</p>
+              <p className="text-sm font-bold text-slate-800">{claim.submittedAt || '—'}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Items</p>
+              <p className="text-sm font-bold text-slate-800">{claim.items?.length || 0} line item{(claim.items?.length || 0) !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+
+          {/* Expense Items */}
+          <div className="px-6 py-5">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Expense Items</p>
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              {claim.items?.length > 0 ? (
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Description</th>
+                      <th className="px-4 py-3 text-left">Merchant</th>
+                      <th className="px-4 py-3 text-left">Category</th>
+                      <th className="px-4 py-3 text-left">Date</th>
+                      <th className="px-4 py-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {claim.items.map((item: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="text-xs font-bold text-slate-800 leading-snug">{item.reason || item.description || '—'}</p>
+                          {item.project && <p className="text-[10px] text-slate-400 mt-0.5 uppercase">{item.project}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600 font-medium">{item.merchant || '—'}</td>
+                        <td className="px-4 py-3">
+                          {item.category && <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded uppercase">{item.category}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500 font-medium whitespace-nowrap">
+                          {item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right font-black text-slate-900">₹{(item.amount || 0).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t border-slate-200 bg-slate-50/50">
+                    <tr>
+                      <td colSpan={4} className="px-4 py-3 text-xs font-black text-slate-500 uppercase tracking-widest">Total</td>
+                      <td className="px-4 py-3 text-right text-base font-black text-blue-600">₹{total.toLocaleString('en-IN')}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              ) : (
+                <p className="px-4 py-6 text-xs text-slate-400 text-center">No expense items found.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Action Note / Rejection Reason */}
+          {claim.actionNote && (
+            <div className="px-6 pb-5">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Action Note</p>
+              <div className="bg-red-50 border border-red-100 rounded-xl p-4">
+                <p className="text-xs text-red-700 leading-relaxed">{claim.actionNote}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Approval History */}
+          {claim.approvalHistory?.length > 0 && (
+            <div className="px-6 pb-6">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Approval History</p>
+              <div className="space-y-2">
+                {claim.approvalHistory.map((log: any, idx: number) => (
+                  <div key={idx} className="bg-white border border-slate-100 rounded-xl px-4 py-3 flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: log.action === 'Rejected' ? '#EF4444' : '#10B981' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800">{log.actor} · <span className="font-medium text-slate-500">{log.action}</span></p>
+                      {log.comment && <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{log.comment}</p>}
+                    </div>
+                    <p className="text-[10px] text-slate-400 shrink-0">{log.date}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 };
 

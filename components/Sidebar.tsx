@@ -39,6 +39,7 @@ type MenuItem = {
   icon?: React.ReactNode;
   viewState?: ViewState;
   subItems?: MenuItem[];
+  hidden?: boolean;
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, setIsOpen, userRole }) => {
@@ -173,7 +174,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         {
           id: 'emp-payslips',
           label: 'Salary Slips',
-          viewState: ViewState.EMP_PAYSLIPS
+          viewState: ViewState.EMP_PAYSLIPS,
+          hidden: true
         },
         {
           id: 'emp-tax-planning',
@@ -182,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         },
         {
           id: 'emp-salary-breakdown',
-          label: 'Salary Breakdown',
+          label: 'Salary Slips',
           viewState: ViewState.EMP_SALARY_BREAKDOWN
         },
         {
@@ -280,7 +282,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                   {/* Sub-menu Items */}
                   {item.subItems && isExpanded && (
                     <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 space-y-1">
-                      {item.subItems.map((subItem) => {
+                      {item.subItems.filter(subItem => !subItem.hidden).map((subItem) => {
                         const isSubActive = subItem.viewState === currentView;
                         const subGroupActive = isGroupActive(subItem);
                         const isSubExpanded = expandedGroups.includes(subItem.id);

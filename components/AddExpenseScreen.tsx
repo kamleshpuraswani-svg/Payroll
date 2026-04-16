@@ -32,9 +32,10 @@ export interface AddExpenseScreenProps {
     employees: any[];
     categories: any[];
     editId?: string;
+    hideTopFields?: boolean;
 }
 
-export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId }) => {
+export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId, hideTopFields = false }) => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [expenseItems, setExpenseItems] = useState<any[]>([]);
@@ -59,6 +60,12 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
             fetchClaimData();
         }
     }, [editId]);
+
+    useEffect(() => {
+        if (hideTopFields && employees.length > 0 && !selectedEmployeeId) {
+            setSelectedEmployeeId(employees[0].id);
+        }
+    }, [hideTopFields, employees]);
 
     // Ensure expenseDate is valid when range changes
     useEffect(() => {
@@ -210,7 +217,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     };
 
     const handleSubmit = async () => {
-        if (!selectedEmployeeId || expenseItems.length === 0) return;
+        if ((!hideTopFields && !selectedEmployeeId) || expenseItems.length === 0) return;
         
         setIsSubmitting(true);
         try {
@@ -280,7 +287,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     </button>
                     <button 
                         onClick={handleSubmit}
-                        disabled={isSubmitting || !selectedEmployeeId || expenseItems.length === 0}
+                        disabled={isSubmitting || (!hideTopFields && !selectedEmployeeId) || expenseItems.length === 0}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
                     >
                         <Send size={16} /> {isSubmitting ? 'Submitting...' : (editId ? 'Update' : 'Submit')}
@@ -296,7 +303,10 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     </div>
                 ) : (
                     <>
+                        {(!hideTopFields || editId) && (
                         <div className="flex flex-col lg:flex-row items-end gap-8 mb-10 pb-10 border-b border-slate-200/60">
+                            {!hideTopFields && (
+                              <>
                             {/* Select Employee */}
                             <div className="w-full lg:w-80 space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Employee <span className="text-rose-500">*</span></label>
@@ -357,6 +367,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     />
                                 </div>
                             </div>
+                              </>
+                            )}
 
                             {/* Status - Extreme Right */}
                             {editId && (
@@ -373,6 +385,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 </div>
                             )}
                         </div>
+                        )}
 
                         <div className="space-y-6 mt-10">
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense details</h3>

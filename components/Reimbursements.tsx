@@ -2,9 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, X, Calendar, CheckCircle, Clock, AlertCircle, Filter, ChevronDown } from 'lucide-react';
 import { Dashboard } from './reimbursements/Dashboard';
-import { ClaimWizard } from './reimbursements/ClaimWizard';
+import { AddExpenseScreen } from './AddExpenseScreen';
 import { ReimbursementCategory, ClaimStatus, WalletMetric, BudgetCategory } from '../types';
 import { supabase } from '../services/supabaseClient';
+
+const EMPLOYEE_SELF = [{ id: '1', name: 'Priya Sharma', eid: 'TF00123' }];
+const EXPENSE_CATEGORIES = [
+  { id: 1, name: 'Travel', receipt_threshold: 1000 },
+  { id: 2, name: 'Meal', receipt_threshold: 500 },
+  { id: 3, name: 'Mobile', receipt_threshold: 0 },
+  { id: 4, name: 'Broadband', receipt_threshold: 0 },
+  { id: 5, name: 'Learning', receipt_threshold: 2000 },
+  { id: 6, name: 'Fuel', receipt_threshold: 500 },
+  { id: 7, name: 'Other', receipt_threshold: 1000 },
+];
 
 interface ApprovalLog {
     date: string;
@@ -341,33 +352,33 @@ export const ReimbursementModule: React.FC = () => {
     const EMPLOYEE_ID = '1'; // Hardcoded for prototype
 
     // Fetch Claims from Supabase
+    const fetchClaims = async () => {
+        const { data, error } = await supabase
+            .from('reimbursement_claims')
+            .select('*')
+            .eq('employee_id', EMPLOYEE_ID)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching claims:', error);
+        } else if (data && data.length > 0) {
+            // Map database columns to ClaimReport interface
+            const mappedClaims: ClaimReport[] = data.map((item: any) => ({
+                id: item.id,
+                name: item.title,
+                category: item.category as ReimbursementCategory,
+                status: item.status as ClaimStatus,
+                items: item.items || [],
+                submittedAt: item.submitted_at ? new Date(item.submitted_at).toISOString().split('T')[0] : '',
+                createdAt: item.created_at,
+                actionNote: item.action_note,
+                approvalHistory: item.approval_history || []
+            }));
+            setClaims(mappedClaims);
+        }
+    };
+
     useEffect(() => {
-        const fetchClaims = async () => {
-            const { data, error } = await supabase
-                .from('reimbursement_claims')
-                .select('*')
-                .eq('employee_id', EMPLOYEE_ID)
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching claims:', error);
-            } else if (data && data.length > 0) {
-                // Map database columns to ClaimReport interface
-                const mappedClaims: ClaimReport[] = data.map((item: any) => ({
-                    id: item.id,
-                    name: item.title,
-                    category: item.category as ReimbursementCategory,
-                    status: item.status as ClaimStatus,
-                    items: item.items || [],
-                    submittedAt: item.submitted_at ? new Date(item.submitted_at).toISOString().split('T')[0] : '',
-                    createdAt: item.created_at,
-                    actionNote: item.action_note,
-                    approvalHistory: item.approval_history || []
-                }));
-                setClaims(mappedClaims);
-            }
-        };
-
         const fetchLoans = async () => {
             const { data } = await supabase
                 .from('employee_loans')
@@ -404,7 +415,7 @@ export const ReimbursementModule: React.FC = () => {
 
         fetchClaims();
         fetchLoans();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const wallet: WalletMetric = {
         entitlement: 250000,
@@ -476,12 +487,13 @@ export const ReimbursementModule: React.FC = () => {
             ) : view === 'LOANS' ? (
                 <EmployeeLoansView loans={loans} onBack={() => setView('DASHBOARD')} />
             ) : (
-                <ClaimWizard
-                    initialData={editingClaim}
-                    readOnly={isReadOnly}
-                    onCancel={() => { setView('DASHBOARD'); setEditingClaim(null); }}
-                    onSubmit={handleUpsertClaim}
-                    onEdit={() => setIsReadOnly(false)}
+                <AddExpenseScreen
+                    employees={EMPLOYEE_SELF}
+                    categories={EXPENSE_CATEGORIES}
+                    editId={editingClaim?.id}
+                    hideTopFields={true}
+                    onClose={() => { setView('DASHBOARD'); setEditingClaim(null); }}
+                    onSuccess={() => { fetchClaims(); setView('DASHBOARD'); setEditingClaim(null); }}
                 />
             )}
         </div>

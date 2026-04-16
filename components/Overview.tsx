@@ -533,8 +533,8 @@ NET PAYABLE        : ₹ 78,200
             </p>
           </div>
         </div>
-        <button onClick={onNavigateToTaxPlanning} className="bg-slate-900 hover:bg-slate-800 text-white px-10 h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all whitespace-nowrap">
-          Open Planner
+        <button onClick={onNavigateToTaxPlanning} className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all whitespace-nowrap">
+          Open Tax Planner
         </button>
       </div>
 

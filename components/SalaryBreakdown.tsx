@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { SalarySlipsModule } from './SalarySlips';
 
 // --- Constants & Types ---
 const COLORS = {
@@ -54,9 +55,9 @@ const BASE_DEDUCTIONS = [
 ];
 
 const BASE_DONUT_DATA = [
-  { name: 'Basic & Fixed', value: 980000, color: COLORS.green },
-  { name: 'Benefits (FBP)', value: 124000, color: COLORS.amber },
-  { name: 'Statutory', value: 96000, color: COLORS.blue },
+  { name: 'Basic & Fixed', value: 980000, color: '#3B82F6' },
+  { name: 'Benefits (FBP)', value: 124000, color: '#F59E0B' },
+  { name: 'Statutory', value: 96000, color: '#8B5CF6' },
 ];
 
 export const SalaryBreakdownModule: React.FC = () => {
@@ -65,9 +66,21 @@ export const SalaryBreakdownModule: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  
+  const [isSalaryBreakupOpen, setIsSalaryBreakupOpen] = useState(false);
+  const [selectedVersionId, setSelectedVersionId] = useState('v1');
+
   // Date State
   const [effectiveDate, setEffectiveDate] = useState('July 2025 (Current)');
+
+  // Version History data for the breakup panel
+  const VERSIONS = [
+    { id: 'v1', date: '01 Mar 2026', label: 'Original salary structure', multiplier: 1, isCurrent: true },
+    { id: 'v2', date: '01 Jul 2024', label: 'Revised salary structure', multiplier: 0.90, isCurrent: false },
+    { id: 'v3', date: '01 May 2023', label: 'Original salary structure', multiplier: 0.80, isCurrent: false },
+  ];
+
+  const selectedVersion = VERSIONS.find(v => v.id === selectedVersionId) || VERSIONS[0];
+  const panelMultiplier = selectedVersion.multiplier;
 
   // Logic to scale values based on date
   const getMultiplier = () => {
@@ -103,6 +116,19 @@ export const SalaryBreakdownModule: React.FC = () => {
   }));
   
   const totalCTC = donutData.reduce((acc, curr) => acc + curr.value, 0);
+
+  // Panel-specific data (changes with selected version)
+  const panelSalary = BASE_SALARY_STRUCTURE.map(item => ({
+    ...item,
+    monthly: Math.round(item.monthly * panelMultiplier),
+    annual: Math.round(item.annual * panelMultiplier),
+  }));
+  const panelDeductions = BASE_DEDUCTIONS.map(item => ({
+    ...item,
+    monthly: Math.round(item.monthly * panelMultiplier),
+    annual: Math.round(item.annual * panelMultiplier),
+  }));
+  const panelTotalCTC = Math.round(BASE_DONUT_DATA.reduce((s, i) => s + i.value, 0) * panelMultiplier);
 
   const handleToggleVisibility = () => {
     if (showValues) {
@@ -166,232 +192,62 @@ export const SalaryBreakdownModule: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-8 h-full animate-fade-in max-w-[1400px] mx-auto pb-10">
-      
-      {/* LEFT & CENTER WORKSPACE */}
-      <div className="col-span-12 lg:col-span-9 space-y-6">
-        
-        {/* Module Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
-           <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Salary Structure</h2>
-              <p className="text-sm text-slate-500 font-medium">Detailed breakdown of your Cost to Company (CTC).</p>
-           </div>
-           <div className="flex items-center gap-3">
-              <button 
-                onClick={handleToggleVisibility}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all border border-slate-100"
-                title={showValues ? "Hide amounts" : "Show amounts"}
-              >
-                {showValues ? <EyeOff size={18}/> : <Eye size={18}/>}
-              </button>
+    <div className="space-y-3 h-full animate-fade-in pb-10">
 
-              <div className="flex flex-col items-end">
-                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Effective Date</label>
-                 <select 
-                    value={effectiveDate}
-                    onChange={(e) => setEffectiveDate(e.target.value)}
-                    className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 outline-none cursor-pointer"
-                 >
-                    <option>July 2025 (Current)</option>
-                    <option>July 2024</option>
-                    <option>May 2023</option>
-                 </select>
+      {/* Module Header */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        {/* Top row: title + actions */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Salary structure</h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-sm text-slate-500">Effective March 2026</p>
+              <span className="bg-teal-400 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider">Current</span>
+            </div>
+            <p className="text-sm text-slate-400 mt-0.5">New regime · HDFC ****8901</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsSalaryBreakupOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-blue-400 hover:decoration-blue-600 font-medium transition-colors cursor-pointer">View Salary Breakup</button>
+            <span className="bg-emerald-50 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-100">UAN Active</span>
+            <button
+              onClick={handleToggleVisibility}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all border border-slate-100"
+              title={showValues ? "Hide amounts" : "Show amounts"}
+            >
+              {showValues ? <EyeOff size={16}/> : <Eye size={16}/>}
+            </button>
+          </div>
+        </div>
+
+        {/* CTC Breakdown Bar */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Annual CTC Breakdown</span>
+            <span className="text-2xl font-black text-slate-900">
+              {showValues ? `₹${totalCTC.toLocaleString()}` : '₹ ••••••'}
+            </span>
+          </div>
+          <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5 mb-3">
+            {donutData.map((d) => (
+              <div key={d.name} style={{ width: `${(d.value / totalCTC) * 100}%`, backgroundColor: d.color }} />
+            ))}
+          </div>
+          <div className="flex items-center gap-6">
+            {donutData.map((d) => (
+              <div key={d.name} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                <span className="text-xs text-slate-600">
+                  {d.name} {showValues ? `₹${(d.value / 100000).toFixed(1)}L` : '••••'}
+                </span>
               </div>
-              <button 
-                onClick={handleDownloadPDF}
-                className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all border border-blue-100"
-                title="Download PDF"
-              >
-                 <Download size={18}/>
-              </button>
-           </div>
+            ))}
+          </div>
         </div>
-
-        {/* UNIFIED CONTAINER */}
-        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-8 space-y-10">
-          
-          {/* Section A: Payment Details */}
-          <div>
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <Landmark size={16} />
-                  </div>
-                  (A) Payment & Statutory Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-2 px-2">
-                <InfoGroup label="Salary Payment Mode" value="Online Transfer" icon={<CreditCard size={14} className="text-blue-500"/>} />
-                <InfoGroup label="Bank Name" value="HDFC Bank (**** 8901)" />
-                <InfoGroup label="Tax Regime" value="NEW REGIME (Default)" highlight />
-                
-                <div className="col-span-1 md:col-span-3 h-px bg-slate-50"></div>
-                
-                <InfoGroup label="Aadhaar Linked" value="YES" icon={<UserCheck size={14} className="text-emerald-500"/>} />
-                <InfoGroup label="PAN Linked" value="YES" />
-                <InfoGroup label="UAN Status" value="ACTIVE (102199****)" />
-             </div>
-          </div>
-
-          <div className="h-px bg-slate-100"></div>
-
-          {/* Section B: Gross Benefits */}
-          <div>
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <TrendingUp size={16} />
-                  </div>
-                  (B) Gross Benefits (Earnings)
-              </h3>
-              <div className="overflow-hidden rounded-2xl border border-slate-100">
-               <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                     <tr>
-                        <th className="px-6 py-4">Component Name</th>
-                        <th className="px-6 py-4">Nature</th>
-                        <th className="px-6 py-4 text-right">Monthly (₹)</th>
-                        <th className="px-6 py-4 text-right">Annual (₹)</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                     {salaryStructure.map((item) => (
-                        <tr key={item.name} className="hover:bg-blue-50/20 transition-colors group">
-                           <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                 {item.name}
-                                 <TooltipTrigger content={`${item.name} is part of your fixed monthly payout.`} />
-                              </div>
-                           </td>
-                           <td className="px-6 py-4 text-xs font-black uppercase text-slate-400">{item.type}</td>
-                           <td className="px-6 py-4 text-right font-black">{maskValue(item.monthly)}</td>
-                           <td className="px-6 py-4 text-right font-black">{maskValue(item.annual)}</td>
-                        </tr>
-                     ))}
-                  </tbody>
-                  <tfoot className="bg-emerald-50 text-emerald-900 border-t-2 border-emerald-100">
-                     <tr className="font-black">
-                        <td className="px-6 py-5" colSpan={2}>Total Gross Benefits</td>
-                        <td className="px-6 py-5 text-right">{maskValue(salaryStructure.reduce((s,i) => s+i.monthly, 0))}</td>
-                        <td className="px-6 py-5 text-right">{maskValue(salaryStructure.reduce((s,i) => s+i.annual, 0))}</td>
-                     </tr>
-                  </tfoot>
-               </table>
-             </div>
-          </div>
-
-          <div className="h-px bg-slate-100"></div>
-
-          {/* Section C: Contributions & Retirals */}
-          <div>
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <Building size={16} />
-                  </div>
-                  (C) Contributions / Retirals
-              </h3>
-              <div className="overflow-hidden rounded-2xl border border-slate-100">
-               <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                     <tr>
-                        <th className="px-6 py-4">Component Name</th>
-                        <th className="px-6 py-4 text-right">Monthly (₹)</th>
-                        <th className="px-6 py-4 text-right">Annual (₹)</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                     {contributions.map((item) => (
-                        <tr key={item.name} className="hover:bg-blue-50/20 transition-colors group">
-                           <td className="px-6 py-4 flex items-center gap-2">
-                              {item.name}
-                              <TooltipTrigger content={`Employer contribution to your ${item.name.includes('PF') ? 'Provident Fund' : 'Gratuity Fund'}.`} />
-                           </td>
-                           <td className="px-6 py-4 text-right font-black">{maskValue(item.monthly)}</td>
-                           <td className="px-6 py-4 text-right font-black">{maskValue(item.annual)}</td>
-                        </tr>
-                     ))}
-                  </tbody>
-               </table>
-             </div>
-          </div>
-
-          <div className="h-px bg-slate-100"></div>
-
-          {/* Section D: Deductions */}
-          <div>
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <TrendingUp className="rotate-180" size={16} />
-                  </div>
-                  (D) Recurring Deductions
-              </h3>
-              <div className="overflow-hidden rounded-2xl border border-slate-100">
-               <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                     <tr>
-                        <th className="px-6 py-4">Component Name</th>
-                        <th className="px-6 py-4 text-right">Monthly (₹)</th>
-                        <th className="px-6 py-4 text-right">Annual (₹)</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                     {deductions.map((item) => (
-                        <tr key={item.name} className="hover:bg-blue-50/20 transition-colors group">
-                           <td className="px-6 py-4">{item.name}</td>
-                           <td className="px-6 py-4 text-right font-black text-red-500">- {maskValue(item.monthly)}</td>
-                           <td className="px-6 py-4 text-right font-black text-red-500">- {maskValue(item.annual)}</td>
-                        </tr>
-                     ))}
-                  </tbody>
-               </table>
-             </div>
-          </div>
-
-        </div>
-        {/* Nudge Banner Removed as requested */}
       </div>
 
-      {/* RIGHT SIDEBAR (25%) */}
-      <div className="col-span-12 lg:col-span-3 space-y-6">
-        
-        {/* CTC Summary Card */}
-        <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm flex flex-col items-center sticky top-24">
-           <h3 className="w-full text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Annual CTC Composition</h3>
-           <div className="h-48 w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                 <PieChart>
-                    <Pie data={donutData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
-                       {donutData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                       ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                      formatter={(value: number) => showValues ? `₹${value.toLocaleString()}` : '₹ ••••••'}
-                    />
-                 </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                 <span className="text-[10px] font-bold text-slate-400 uppercase">Annual</span>
-                 <span className="text-xl font-black text-slate-900 leading-tight">
-                    {showValues ? `₹ ${(totalCTC/100000).toFixed(1)}L` : '•••••'}
-                 </span>
-              </div>
-           </div>
-           <div className="w-full mt-6 space-y-3">
-              {donutData.map((d) => (
-                <div key={d.name} className="flex items-center justify-between">
-                   <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }}></div>
-                      <span className="text-xs font-bold text-slate-600">{d.name}</span>
-                   </div>
-                   <span className="text-xs font-black text-slate-900">
-                     {showValues ? `₹${(d.value/100000).toFixed(1)}L` : '••••'}
-                   </span>
-                </div>
-              ))}
-           </div>
-        </div>
-
+      {/* Salary Slips Section */}
+      <div>
+        <SalarySlipsModule />
       </div>
 
       {/* Password Modal */}
@@ -425,6 +281,140 @@ export const SalaryBreakdownModule: React.FC = () => {
                  </button>
               </form>
            </div>
+        </div>
+      )}
+
+      {/* Salary Breakup Side Panel */}
+      {isSalaryBreakupOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onClick={() => setIsSalaryBreakupOpen(false)} />
+
+          {/* Drawer */}
+          <div className="relative w-full max-w-3xl bg-white h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">Salary Breakup for INR {(panelTotalCTC / 100000).toFixed(0)},00,000</h2>
+              <button onClick={() => setIsSalaryBreakupOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body — two columns */}
+            <div className="flex flex-1 overflow-hidden">
+
+            {/* Left: breakup tables */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 border-r border-slate-100">
+
+              {/* Earnings Table */}
+              <div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">Earnings</th>
+                      <th className="text-right text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">Monthly</th>
+                      <th className="text-right text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">Annually</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {panelSalary.map((item) => (
+                      <tr key={item.name}>
+                        <td className="py-3 text-slate-700">{item.name}</td>
+                        <td className="py-3 text-right text-slate-800 font-medium">INR {item.monthly.toLocaleString()}</td>
+                        <td className="py-3 text-right text-slate-800 font-medium">INR {item.annual.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr className="border-t border-slate-200 bg-slate-50/60">
+                      <td className="py-3 font-bold text-slate-900">Total Earnings</td>
+                      <td className="py-3 text-right font-bold text-slate-900">INR {panelSalary.reduce((s, i) => s + i.monthly, 0).toLocaleString()}</td>
+                      <td className="py-3 text-right font-bold text-slate-900">INR {panelSalary.reduce((s, i) => s + i.annual, 0).toLocaleString()}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Deductions Table */}
+              <div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">Deductions</th>
+                      <th className="text-right text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">Monthly</th>
+                      <th className="text-right text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">Annually</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {panelDeductions.map((item) => (
+                      <tr key={item.name}>
+                        <td className="py-3 text-slate-700">{item.name}</td>
+                        <td className="py-3 text-right text-slate-800 font-medium">INR {item.monthly.toLocaleString()}</td>
+                        <td className="py-3 text-right text-slate-800 font-medium">INR {item.annual.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr className="border-t border-slate-200 bg-slate-50/60">
+                      <td className="py-3 font-bold text-slate-900">Total Deductions</td>
+                      <td className="py-3 text-right font-bold text-slate-900">INR {panelDeductions.reduce((s, i) => s + i.monthly, 0).toLocaleString()}</td>
+                      <td className="py-3 text-right font-bold text-slate-900">INR {panelDeductions.reduce((s, i) => s + i.annual, 0).toLocaleString()}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Net Pay */}
+              <div className="border-t-2 border-slate-200 pt-4">
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr>
+                      <td className="py-2 font-black text-slate-900 text-base">NET PAY</td>
+                      <td className="py-2 text-right font-black text-slate-900">
+                        INR {(panelSalary.reduce((s, i) => s + i.monthly, 0) - panelDeductions.reduce((s, i) => s + i.monthly, 0)).toLocaleString()}
+                      </td>
+                      <td className="py-2 text-right font-black text-slate-900">
+                        INR {(panelSalary.reduce((s, i) => s + i.annual, 0) - panelDeductions.reduce((s, i) => s + i.annual, 0)).toLocaleString()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Note */}
+              <div className="bg-slate-50 rounded-xl p-4 space-y-1">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Note</p>
+                <p className="text-xs text-slate-500">• NOTE: Net Pay above does not include Taxes or Other deductions (if any).</p>
+              </div>
+
+            </div>
+
+            {/* Right: Version History */}
+            <div className="w-56 shrink-0 px-5 py-6 bg-slate-50/60 overflow-y-auto">
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Version History</h3>
+              <p className="text-xs text-slate-400 mb-5">View previous versions of salary structures</p>
+
+              <div className="space-y-3">
+                {VERSIONS.map((v) => {
+                  const isSelected = selectedVersionId === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVersionId(v.id)}
+                      className={`w-full text-left rounded-xl p-3 border transition-all ${
+                        isSelected
+                          ? 'bg-white border-blue-200 shadow-sm ring-1 ring-blue-100'
+                          : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
+                      }`}
+                    >
+                      <p className="text-xs font-bold text-slate-700 mb-2">{v.date}</p>
+                      {v.isCurrent && (
+                        <span className="bg-teal-400 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Current Version</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            </div>{/* end body two-col */}
+          </div>
         </div>
       )}
 

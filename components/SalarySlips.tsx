@@ -54,142 +54,40 @@ const COLORS = {
 const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const MOCK_PAYSLIPS_DATA: Record<string, PayslipData> = {
-  'Dec 2025': {
-    month: 'Dec',
-    year: '2025',
-    creditedDate: '07/12/2025',
-    netPay: 78200,
-    netPayWords: 'Seventy-Eight Thousand Two Hundred Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 41667 },
-      { name: 'HRA', amount: 20000 },
-      { name: 'Special Allowance', amount: 15000 },
-      { name: 'Statutory Bonus', amount: 5000 },
-    ],
-    deductions: [
-      { name: 'PF Contribution', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 4000 },
-    ],
-    reimbursements: [
-      { name: 'Fuel Reimbursement', amount: 2500 }
-    ],
-    taxDonut: []
-  },
-  'Nov 2025': {
-    month: 'Nov',
-    year: '2025',
-    creditedDate: '07/11/2025',
-    netPay: 75700,
-    netPayWords: 'Seventy-Five Thousand Seven Hundred Only',
-    trend: 'down',
-    totalWorkingDays: 30,
-    processedDays: 30,
-    earnings: [
-      { name: 'Basic Salary', amount: 41667 },
-      { name: 'HRA', amount: 20000 },
-      { name: 'Special Allowance', amount: 15000 },
-    ],
-    deductions: [
-      { name: 'PF Contribution', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3500 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Oct 2025': {
-    month: 'Oct',
-    year: '2025',
-    creditedDate: '07/10/2025',
-    netPay: 76000,
-    netPayWords: 'Seventy-Six Thousand Only',
-    trend: 'up',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 41667 },
-      { name: 'HRA', amount: 20000 },
-      { name: 'Special Allowance', amount: 15000 },
-    ],
-    deductions: [
-      { name: 'PF Contribution', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-      { name: 'Income Tax (TDS)', amount: 3200 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Dec 2024': {
-    month: 'Dec',
-    year: '2024',
-    creditedDate: '07/12/2024',
-    netPay: 72000,
-    netPayWords: 'Seventy-Two Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 38000 },
-      { name: 'HRA', amount: 18000 },
-      { name: 'Special Allowance', amount: 16000 },
-    ],
-    deductions: [
-      { name: 'PF Contribution', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Nov 2024': {
-    month: 'Nov',
-    year: '2024',
-    creditedDate: '07/11/2024',
-    netPay: 71500,
-    netPayWords: 'Seventy-One Thousand Five Hundred Only',
-    trend: 'up',
-    totalWorkingDays: 30,
-    processedDays: 30,
-    earnings: [
-      { name: 'Basic Salary', amount: 38000 },
-      { name: 'HRA', amount: 18000 },
-      { name: 'Special Allowance', amount: 15500 },
-    ],
-    deductions: [
-      { name: 'PF Contribution', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  },
-  'Oct 2024': {
-    month: 'Oct',
-    year: '2024',
-    creditedDate: '07/10/2024',
-    netPay: 71000,
-    netPayWords: 'Seventy-One Thousand Only',
-    trend: 'flat',
-    totalWorkingDays: 31,
-    processedDays: 31,
-    earnings: [
-      { name: 'Basic Salary', amount: 38000 },
-      { name: 'HRA', amount: 18000 },
-      { name: 'Special Allowance', amount: 15000 },
-    ],
-    deductions: [
-      { name: 'PF Contribution', amount: 1800 },
-      { name: 'Professional Tax', amount: 200 },
-    ],
-    reimbursements: [],
-    taxDonut: []
-  }
+  // ── 2026 ──────────────────────────────────────────────
+  'Mar 2026': { month: 'Mar', year: '2026', creditedDate: '07/03/2026', netPay: 81500, netPayWords: 'Eighty-One Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 43000 }, { name: 'HRA', amount: 21000 }, { name: 'Special Allowance', amount: 16000 }, { name: 'Statutory Bonus', amount: 5000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4500 }], reimbursements: [{ name: 'Fuel Reimbursement', amount: 2500 }], taxDonut: [] },
+  'Feb 2026': { month: 'Feb', year: '2026', creditedDate: '07/02/2026', netPay: 80200, netPayWords: 'Eighty Thousand Two Hundred Only', trend: 'up', totalWorkingDays: 28, processedDays: 28, earnings: [{ name: 'Basic Salary', amount: 43000 }, { name: 'HRA', amount: 21000 }, { name: 'Special Allowance', amount: 16000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4400 }], reimbursements: [], taxDonut: [] },
+  'Jan 2026': { month: 'Jan', year: '2026', creditedDate: '07/01/2026', netPay: 79800, netPayWords: 'Seventy-Nine Thousand Eight Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 43000 }, { name: 'HRA', amount: 21000 }, { name: 'Special Allowance', amount: 15500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4300 }], reimbursements: [], taxDonut: [] },
+  // ── 2025 ──────────────────────────────────────────────
+  'Dec 2025': { month: 'Dec', year: '2025', creditedDate: '07/12/2025', netPay: 78200, netPayWords: 'Seventy-Eight Thousand Two Hundred Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 15000 }, { name: 'Statutory Bonus', amount: 5000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4000 }], reimbursements: [{ name: 'Fuel Reimbursement', amount: 2500 }], taxDonut: [] },
+  'Nov 2025': { month: 'Nov', year: '2025', creditedDate: '07/11/2025', netPay: 75700, netPayWords: 'Seventy-Five Thousand Seven Hundred Only', trend: 'down', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 15000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 3500 }], reimbursements: [], taxDonut: [] },
+  'Oct 2025': { month: 'Oct', year: '2025', creditedDate: '07/10/2025', netPay: 76000, netPayWords: 'Seventy-Six Thousand Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 15000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 3200 }], reimbursements: [], taxDonut: [] },
+  'Sep 2025': { month: 'Sep', year: '2025', creditedDate: '07/09/2025', netPay: 75500, netPayWords: 'Seventy-Five Thousand Five Hundred Only', trend: 'flat', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 14500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 3100 }], reimbursements: [], taxDonut: [] },
+  'Aug 2025': { month: 'Aug', year: '2025', creditedDate: '07/08/2025', netPay: 76200, netPayWords: 'Seventy-Six Thousand Two Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 15000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 3100 }], reimbursements: [{ name: 'Fuel Reimbursement', amount: 1500 }], taxDonut: [] },
+  'Jul 2025': { month: 'Jul', year: '2025', creditedDate: '07/07/2025', netPay: 74900, netPayWords: 'Seventy-Four Thousand Nine Hundred Only', trend: 'down', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 14000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 3000 }], reimbursements: [], taxDonut: [] },
+  'Jun 2025': { month: 'Jun', year: '2025', creditedDate: '07/06/2025', netPay: 75200, netPayWords: 'Seventy-Five Thousand Two Hundred Only', trend: 'up', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 14000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 2900 }], reimbursements: [], taxDonut: [] },
+  'May 2025': { month: 'May', year: '2025', creditedDate: '07/05/2025', netPay: 74500, netPayWords: 'Seventy-Four Thousand Five Hundred Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 13500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 2800 }], reimbursements: [], taxDonut: [] },
+  'Apr 2025': { month: 'Apr', year: '2025', creditedDate: '07/04/2025', netPay: 74000, netPayWords: 'Seventy-Four Thousand Only', trend: 'up', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 13000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 2700 }], reimbursements: [], taxDonut: [] },
+  'Mar 2025': { month: 'Mar', year: '2025', creditedDate: '07/03/2025', netPay: 73500, netPayWords: 'Seventy-Three Thousand Five Hundred Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 12500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 2600 }], reimbursements: [], taxDonut: [] },
+  'Feb 2025': { month: 'Feb', year: '2025', creditedDate: '07/02/2025', netPay: 72800, netPayWords: 'Seventy-Two Thousand Eight Hundred Only', trend: 'down', totalWorkingDays: 28, processedDays: 28, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 12000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 2500 }], reimbursements: [], taxDonut: [] },
+  'Jan 2025': { month: 'Jan', year: '2025', creditedDate: '07/01/2025', netPay: 72500, netPayWords: 'Seventy-Two Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 41667 }, { name: 'HRA', amount: 20000 }, { name: 'Special Allowance', amount: 11500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 2400 }], reimbursements: [], taxDonut: [] },
+  // ── 2024 ──────────────────────────────────────────────
+  'Dec 2024': { month: 'Dec', year: '2024', creditedDate: '07/12/2024', netPay: 72000, netPayWords: 'Seventy-Two Thousand Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 16000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Nov 2024': { month: 'Nov', year: '2024', creditedDate: '07/11/2024', netPay: 71500, netPayWords: 'Seventy-One Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 15500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Oct 2024': { month: 'Oct', year: '2024', creditedDate: '07/10/2024', netPay: 71000, netPayWords: 'Seventy-One Thousand Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 15000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Sep 2024': { month: 'Sep', year: '2024', creditedDate: '07/09/2024', netPay: 70500, netPayWords: 'Seventy Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 14500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Aug 2024': { month: 'Aug', year: '2024', creditedDate: '07/08/2024', netPay: 70000, netPayWords: 'Seventy Thousand Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 14000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Jul 2024': { month: 'Jul', year: '2024', creditedDate: '07/07/2024', netPay: 69500, netPayWords: 'Sixty-Nine Thousand Five Hundred Only', trend: 'down', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 13500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Jun 2024': { month: 'Jun', year: '2024', creditedDate: '07/06/2024', netPay: 69000, netPayWords: 'Sixty-Nine Thousand Only', trend: 'up', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 13000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'May 2024': { month: 'May', year: '2024', creditedDate: '07/05/2024', netPay: 68500, netPayWords: 'Sixty-Eight Thousand Five Hundred Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 12500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Apr 2024': { month: 'Apr', year: '2024', creditedDate: '07/04/2024', netPay: 68000, netPayWords: 'Sixty-Eight Thousand Only', trend: 'up', totalWorkingDays: 30, processedDays: 30, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 12000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Mar 2024': { month: 'Mar', year: '2024', creditedDate: '07/03/2024', netPay: 67500, netPayWords: 'Sixty-Seven Thousand Five Hundred Only', trend: 'flat', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 11500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Feb 2024': { month: 'Feb', year: '2024', creditedDate: '07/02/2024', netPay: 67000, netPayWords: 'Sixty-Seven Thousand Only', trend: 'down', totalWorkingDays: 29, processedDays: 29, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 11000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
+  'Jan 2024': { month: 'Jan', year: '2024', creditedDate: '07/01/2024', netPay: 66500, netPayWords: 'Sixty-Six Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 10500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
 };
 
 export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ currentEmployeeId = 'TF00912' }) => {
-  const [selectedYear, setSelectedYear] = useState('2025');
+  const [selectedYear, setSelectedYear] = useState('2026');
   const [activeMonth, setActiveMonth] = useState('');
   const [showValues, setShowValues] = useState(false);
   const [payslipsMap, setPayslipsMap] = useState<Record<string, PayslipData>>({});
@@ -238,7 +136,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
         } else {
           // Fallback to mock data if no data found
           setPayslipsMap(MOCK_PAYSLIPS_DATA);
-          setActiveMonth('Dec 2025');
+          setActiveMonth('Mar 2026');
         }
     } catch (err) {
       console.error('Error fetching payslips:', err);
@@ -271,17 +169,20 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newYear = e.target.value;
     setSelectedYear(newYear);
-    // Automatically switch to the latest available month in the new year
-    const latestMonthInYear = Object.keys(payslipsMap)
-      .filter(key => key.includes(newYear))
+    
+    // Switch to the latest available month in the selected year
+    const monthsInYear = Object.keys(payslipsMap)
+      .filter(key => key.endsWith(newYear))
       .sort((a, b) => {
         const monthA = a.split(' ')[0];
         const monthB = b.split(' ')[0];
         return MONTH_ORDER.indexOf(monthB) - MONTH_ORDER.indexOf(monthA);
-      })[0];
+      });
       
-    if (latestMonthInYear) {
-      setActiveMonth(latestMonthInYear);
+    if (monthsInYear.length > 0) {
+      setActiveMonth(monthsInYear[0]);
+    } else {
+      setActiveMonth('');
     }
   };
 
@@ -352,18 +253,19 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
   };
 
   return (
-    <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-300 max-w-[1400px] mx-auto pb-10">
+    <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-300 pb-10">
       
       {/* LEFT: INTERACTIVE TIMELINE */}
-      <div className="col-span-3 space-y-6">
-        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-6">
+      <div className="col-span-3 flex flex-col">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex-1">
            <div className="flex justify-between items-center mb-6">
-             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Timeline</h3>
+             <h3 className="text-xl font-bold text-slate-900">Payslips</h3>
              <select 
                value={selectedYear}
                onChange={handleYearChange}
                className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none cursor-pointer"
              >
+                <option value="2026">2026</option>
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
              </select>
@@ -391,13 +293,6 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
                      <p className={`text-sm font-black ${activeMonth === m ? 'text-purple-900' : 'text-slate-800'}`}>
                         {payslipsMap[m] ? formatCurrency(payslipsMap[m].netPay) : '--'}
                      </p>
-                     {payslipsMap[m] && (
-                        <span className={`text-[10px] font-black uppercase flex items-center gap-0.5 ${payslipsMap[m].trend === 'up' ? 'text-emerald-500' : payslipsMap[m].trend === 'down' ? 'text-red-400' : 'text-slate-300'}`}>
-                           {payslipsMap[m].trend === 'up' && <TrendingUp size={10}/>}
-                           {payslipsMap[m].trend === 'down' && <TrendingDown size={10}/>}
-                           {payslipsMap[m].trend === 'up' ? 'PAID' : payslipsMap[m].trend === 'flat' ? 'PAID' : 'PAID'}
-                        </span>
-                     )}
                   </div>
                 </button>
               )) : (
@@ -414,7 +309,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
       <div className="col-span-9 space-y-6">
         
         {/* MERGED: Header Actions & Employee Info */}
-        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
            
            {/* Top Section: Company Info & Actions */}
            <div className="p-8 flex justify-between items-center">
@@ -428,7 +323,6 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
               <div className="flex items-center gap-3">
                  <div className="text-right mr-4">
                     <h3 className="text-sm font-black text-slate-900 tracking-tighter">PAYSLIP #{slip.month.toUpperCase()}-{slip.year}</h3>
-                    <p className="text-[10px] text-slate-400 font-bold">Standard Payroll Cycle</p>
                  </div>
                  
                  <button 
@@ -465,7 +359,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
         </div>
 
         {/* SALARY BREAKDOWN & FOOTER MERGED CARD */}
-        <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
            
            {/* Earnings */}
            <div className="group">
@@ -544,7 +438,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
                     <div className="w-8 h-8 bg-gold/10 text-gold rounded-lg flex items-center justify-center">
                        <CreditCard size={16}/>
                     </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Reimbursements (Non-Taxable)</span>
+                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Reimbursements</span>
                  </div>
                  <div className="flex items-center gap-4">
                     <span className="text-sm font-black text-gold">Total: {formatCurrency(totalReimbursements)}</span>
@@ -561,10 +455,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
                     <tbody className="divide-y divide-slate-50">
                        {slip.reimbursements.length > 0 ? slip.reimbursements.map((r) => (
                          <tr key={r.name} className="hover:bg-slate-50/50 transition-colors group">
-                            <td className="py-4 text-sm font-medium text-slate-700 flex items-center gap-2">
-                               {r.name}
-                               <span className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black uppercase">Verified</span>
-                            </td>
+                            <td className="py-4 text-sm font-medium text-slate-700">{r.name}</td>
                             <td className="py-4 text-right font-black text-slate-900">{formatCurrency(r.amount)}</td>
                          </tr>
                        )) : (
