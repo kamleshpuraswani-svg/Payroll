@@ -194,10 +194,7 @@ NET PAYABLE        : ₹ 78,200
                 <p className="text-[10px] font-bold text-indigo-400 mt-1">New Regime Vs Old Regime</p>
               </div>
             </div>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-[10px] font-bold text-indigo-700 group-hover:underline">View Tax Planning</span>
-              <ArrowRight size={12} className="text-indigo-400 group-hover:translate-x-1 transition-transform" />
-            </div>
+
           </div>
         </div>
 
@@ -229,7 +226,7 @@ NET PAYABLE        : ₹ 78,200
           <div className="lg:col-span-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative group">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <TrendingUp size={16} /> Annual Realization (YTD)
+                <TrendingUp size={16} /> Annual Realization
               </h3>
               <div className="flex items-center gap-1">
                 <button
@@ -264,7 +261,10 @@ NET PAYABLE        : ₹ 78,200
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">Net Take Home</p>
-                    <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 6.83L' : '••••'}</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 6.83L' : '••••'}</p>
+                      <span className="text-[10px] font-bold text-slate-400">({showAmounts ? '₹ 56.9k/mo' : '••••/mo'})</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -277,7 +277,10 @@ NET PAYABLE        : ₹ 78,200
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">PF Contribution</p>
-                    <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 9.2k' : '••••'}</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 9.2k' : '••••'}</p>
+                      <span className="text-[10px] font-bold text-slate-400">({showAmounts ? '₹ 766/mo' : '••••/mo'})</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -290,7 +293,10 @@ NET PAYABLE        : ₹ 78,200
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">Tax Deducted</p>
-                    <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 33.6k' : '••••'}</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 33.6k' : '••••'}</p>
+                      <span className="text-[10px] font-bold text-slate-400">({showAmounts ? '₹ 2.8k/mo' : '••••/mo'})</span>
+                    </div>
                   </div>
                 </div>
               </div>
