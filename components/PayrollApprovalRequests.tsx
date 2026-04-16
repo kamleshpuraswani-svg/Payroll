@@ -39,6 +39,7 @@ interface PayrollRun {
   lastUpdated: string;
   approvedDate?: string;
   deductions?: string;
+  businessUnits?: string[];
 }
 
 const INITIAL_DATA: PayrollRun[] = [
@@ -51,7 +52,8 @@ const INITIAL_DATA: PayrollRun[] = [
     deductions: '₹3.74 Cr',
     status: 'Pending Approval', 
     initiatedBy: 'Kavita Sharma', 
-    lastUpdated: '18 Dec 2025' 
+    lastUpdated: '18 Dec 2025',
+    businessUnits: ['Mindinventory', '300 Minds']
   },
   { 
     id: '2', 
@@ -578,6 +580,7 @@ const PayrollApprovalRequests: React.FC = () => {
         onClose={() => setWizardState({ ...wizardState, isOpen: false })} 
         company={MOCK_COMPANIES[0]} 
         readOnly={wizardState.readOnly}
+        initialBusinessUnits={selectedRun?.businessUnits || undefined}
       />
 
     </div>
