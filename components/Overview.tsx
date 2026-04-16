@@ -186,9 +186,18 @@ NET PAYABLE        : ₹ 78,200
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap size={14} className="text-indigo-500" />
-                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Est. Tax Saved YTD</p>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Zap size={14} className="text-indigo-500" />
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Est. Tax Saved YTD</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleToggleAmounts(); }}
+                    className="p-1.5 rounded-lg text-indigo-300 hover:bg-indigo-100/50 hover:text-indigo-600 transition-all"
+                    title={showAmounts ? "Hide amount" : "Show amount"}
+                  >
+                    {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
                 <h4 className="text-2xl font-black text-indigo-950">{showAmounts ? '₹ 32,400' : '₹ ••••••'}</h4>
                 <p className="text-[10px] font-bold text-indigo-400 mt-1">New Regime Vs Old Regime</p>
@@ -202,12 +211,21 @@ NET PAYABLE        : ₹ 78,200
         <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center hover:border-blue-300 transition-all relative overflow-hidden">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Next Payout In</p>
-              <div className="flex items-baseline gap-1">
-                <h3 className="text-3xl font-black text-slate-900">5</h3>
-                <span className="text-sm font-bold text-slate-500">Days</span>
-              </div>
-              <p className="text-[10px] font-bold text-slate-400 mt-1">Salary Date: 7th January, 2026</p>
+            <div className="flex justify-between items-start mb-1">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next Payout In</p>
+              <button
+                onClick={handleToggleAmounts}
+                className="p-1 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-600 transition-all"
+                title={showAmounts ? "Hide payout" : "Show payout"}
+              >
+                {showAmounts ? <EyeOff size={12} /> : <Eye size={12} />}
+              </button>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <h3 className="text-3xl font-black text-slate-900">{showAmounts ? '5' : '•'}</h3>
+              <span className="text-sm font-bold text-slate-500">{showAmounts ? 'Days' : '••••'}</span>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400 mt-1">Salary Date: {showAmounts ? '7th January, 2026' : '•• ••••••••, ••••'}</p>
             </div>
             <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
               <Calendar size={20} />
@@ -223,7 +241,16 @@ NET PAYABLE        : ₹ 78,200
                 <CreditCard size={20} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Loans & advances</p>
+                <div className="flex items-center justify-between w-full min-w-[140px]">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Loans & advances</p>
+                  <button
+                    onClick={handleToggleAmounts}
+                    className="p-1 rounded-lg text-slate-200 hover:bg-slate-50 hover:text-slate-400 transition-all ml-2"
+                    title={showAmounts ? "Hide loans" : "Show loans"}
+                  >
+                    {showAmounts ? <EyeOff size={12} /> : <Eye size={12} />}
+                  </button>
+                </div>
                 <div className="flex items-baseline gap-2 mt-1">
                   <h3 className="text-xl font-black text-slate-900 leading-none">{showAmounts ? '₹ 45,000' : '₹ •••••'}</h3>
                   <span className="text-[10px] font-bold text-slate-400">/ {showAmounts ? '₹ 1,00,000' : '₹ •••••'}</span>
@@ -361,7 +388,14 @@ NET PAYABLE        : ₹ 78,200
                 <div className="text-slate-400"><PieChartIcon size={20} strokeWidth={2} /></div>
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Salary Trends</h3>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
+                <button
+                  onClick={handleToggleAmounts}
+                  className="w-8 h-8 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-50 flex items-center justify-center transition-all"
+                  title={showAmounts ? "Hide data" : "Show data"}
+                >
+                  {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
                 <button
                   onClick={() => togglePin('trends')}
                   className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${pinnedWidgets.includes('trends') ? 'bg-blue-50 text-blue-600' : 'text-slate-300 hover:bg-slate-50'}`}
@@ -415,8 +449,12 @@ NET PAYABLE        : ₹ 78,200
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Wallet size={16} /> Reimbursement Summary
             </h3>
-            <button onClick={onNavigateToReimbursements} className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1 transition-all">
-              Manage All <ArrowRight size={14} />
+            <button
+              onClick={handleToggleAmounts}
+              className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-600 transition-all"
+              title={showAmounts ? "Hide amounts" : "Show amounts"}
+            >
+              {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
