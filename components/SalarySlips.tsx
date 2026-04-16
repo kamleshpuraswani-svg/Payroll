@@ -122,6 +122,69 @@ const MOCK_PAYSLIPS_DATA: Record<string, PayslipData> = {
     ],
     reimbursements: [],
     taxDonut: []
+  },
+  'Dec 2024': {
+    month: 'Dec',
+    year: '2024',
+    creditedDate: '07/12/2024',
+    netPay: 72000,
+    netPayWords: 'Seventy-Two Thousand Only',
+    trend: 'flat',
+    totalWorkingDays: 31,
+    processedDays: 31,
+    earnings: [
+      { name: 'Basic Salary', amount: 38000 },
+      { name: 'HRA', amount: 18000 },
+      { name: 'Special Allowance', amount: 16000 },
+    ],
+    deductions: [
+      { name: 'PF Contribution', amount: 1800 },
+      { name: 'Professional Tax', amount: 200 },
+    ],
+    reimbursements: [],
+    taxDonut: []
+  },
+  'Nov 2024': {
+    month: 'Nov',
+    year: '2024',
+    creditedDate: '07/11/2024',
+    netPay: 71500,
+    netPayWords: 'Seventy-One Thousand Five Hundred Only',
+    trend: 'up',
+    totalWorkingDays: 30,
+    processedDays: 30,
+    earnings: [
+      { name: 'Basic Salary', amount: 38000 },
+      { name: 'HRA', amount: 18000 },
+      { name: 'Special Allowance', amount: 15500 },
+    ],
+    deductions: [
+      { name: 'PF Contribution', amount: 1800 },
+      { name: 'Professional Tax', amount: 200 },
+    ],
+    reimbursements: [],
+    taxDonut: []
+  },
+  'Oct 2024': {
+    month: 'Oct',
+    year: '2024',
+    creditedDate: '07/10/2024',
+    netPay: 71000,
+    netPayWords: 'Seventy-One Thousand Only',
+    trend: 'flat',
+    totalWorkingDays: 31,
+    processedDays: 31,
+    earnings: [
+      { name: 'Basic Salary', amount: 38000 },
+      { name: 'HRA', amount: 18000 },
+      { name: 'Special Allowance', amount: 15000 },
+    ],
+    deductions: [
+      { name: 'PF Contribution', amount: 1800 },
+      { name: 'Professional Tax', amount: 200 },
+    ],
+    reimbursements: [],
+    taxDonut: []
   }
 };
 
