@@ -771,11 +771,12 @@ const LoanAdvancesTypes: React.FC = () => {
                                     {errors.name && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> {errors.name}</p>}
                                 </div>
 
-                                <div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                                        <span className="text-sm font-medium text-slate-700">Interest Rate</span>
-                                        <div className={`flex border rounded-lg overflow-hidden transition-all ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
+                                {/* Interest Rate + Interest Calculation Type + Max Tenure — single row */}
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                                    {/* Interest Rate */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Interest Rate</label>
+                                        <div className={`flex border rounded-lg overflow-hidden transition-all w-fit ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
                                             <input
                                                 type="number"
                                                 value={currentLoan.interestRate}
@@ -783,79 +784,66 @@ const LoanAdvancesTypes: React.FC = () => {
                                                     setCurrentLoan({ ...currentLoan, interestRate: parseFloat(e.target.value) || 0 });
                                                     if (errors.interestRate) setErrors({ ...errors, interestRate: undefined });
                                                 }}
-                                                className="w-20 px-3 py-2 text-sm focus:outline-none"
+                                                className="w-20 px-3 py-2.5 text-sm focus:outline-none"
                                             />
-                                            <div className="px-3 py-2 bg-slate-50 border-l border-slate-200 text-slate-500 text-sm flex items-center justify-center font-medium">
+                                            <div className="px-3 py-2.5 bg-slate-50 border-l border-slate-200 text-slate-500 text-sm flex items-center justify-center font-medium">
                                                 %
                                             </div>
                                         </div>
+                                        {errors.interestRate && <p className="text-xs text-rose-500 mt-1">Interest rate is required</p>}
+                                        <p className="text-[10px] text-slate-400 mt-1">Set 0 for interest-free.</p>
                                     </div>
-                                    {errors.interestRate && (
-                                        <div className="mt-1.5 space-y-1 ml-5">
-                                            <p className="text-xs text-rose-500">Default interest rate is required</p>
-                                            <p className="text-xs text-rose-500">Interest calculation rate is required</p>
+
+                                    {/* Interest Calculation Type */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Interest Calculation Type</label>
+                                        <div className="flex gap-3">
+                                            {(['flat', 'reducing'] as const).map((type) => {
+                                                const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
+                                                const isSelected = interestCalcType === type;
+                                                return (
+                                                    <label key={type} className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'}`}>
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                            {isSelected && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                        </div>
+                                                        <input type="radio" name="interestCalcType" className="hidden" checked={isSelected} onChange={() => setInterestCalcType(type)} />
+                                                        <span className={`text-sm font-bold ${isSelected ? 'text-purple-900' : 'text-slate-600'}`}>{label}</span>
+                                                    </label>
+                                                );
+                                            })}
                                         </div>
-                                    )}
-                                    <p className="text-[10px] text-slate-400 mt-1 ml-5">Set 0 for interest-free advances.</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Interest Calculation Type</label>
-                                    <div className="flex flex-wrap gap-4">
-                                        {(['flat', 'reducing'] as const).map((type) => {
-                                            const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
-                                            const isSelected = interestCalcType === type;
-                                            return (
-                                                <label key={type} className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'}`}>
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
-                                                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                                    </div>
-                                                    <input
-                                                        type="radio"
-                                                        name="interestCalcType"
-                                                        className="hidden"
-                                                        checked={isSelected}
-                                                        onChange={() => setInterestCalcType(type)}
-                                                    />
-                                                    <span className={`text-sm font-bold ${isSelected ? 'text-purple-900' : 'text-slate-600'}`}>{label}</span>
-                                                </label>
-                                            );
-                                        })}
+                                        <p className="text-[10px] text-slate-400 mt-1">
+                                            {interestCalcType === 'flat' ? 'Calculated on original principal.' : 'Calculated on outstanding balance.'}
+                                        </p>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mt-2">
-                                        {interestCalcType === 'flat' ? 'Interest is calculated on the original principal amount throughout the tenure.' : 'Interest is calculated on the outstanding principal balance each month.'}
-                                    </p>
-                                </div>
 
-                                <div className="max-w-xs">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
-                                        Max Tenure (Months) {(currentLoan.name === 'Loan' || currentLoan.name === 'Salary Advance') && <span className="text-rose-500">*</span>}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={currentLoan.maxTenure}
-                                        onChange={e => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            if (currentLoan.name === 'Salary Advance' && val > 6) {
-                                                setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 6 months.' }));
-                                                return;
-                                            }
-                                            if (currentLoan.name === 'Loan' && val > 48) {
-                                                setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 48 months.' }));
-                                                return;
-                                            }
-                                            setCurrentLoan({ ...currentLoan, maxTenure: val });
-                                            if (errors.maxTenure) setErrors({ ...errors, maxTenure: undefined });
-                                        }}
-                                        className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${errors.maxTenure ? 'border-rose-500' : 'border-slate-200'}`}
-                                    />
-                                    {currentLoan.name === 'Salary Advance' && (
-                                        <p className="text-[10px] text-slate-400 mt-1">Max tenure allowed is 6 months.</p>
-                                    )}
-                                    {currentLoan.name === 'Loan' && (
-                                        <p className="text-[10px] text-slate-400 mt-1">Max tenure allowed is 48 months.</p>
-                                    )}
-                                    {errors.maxTenure && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxTenure}</p>}
+                                    {/* Max Tenure */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                                            Max Tenure (Months) {(currentLoan.name === 'Loan' || currentLoan.name === 'Salary Advance') && <span className="text-rose-500">*</span>}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={currentLoan.maxTenure}
+                                            onChange={e => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (currentLoan.name === 'Salary Advance' && val > 6) {
+                                                    setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 6 months.' }));
+                                                    return;
+                                                }
+                                                if (currentLoan.name === 'Loan' && val > 48) {
+                                                    setErrors(prev => ({ ...prev, maxTenure: 'Max tenure allowed is 48 months.' }));
+                                                    return;
+                                                }
+                                                setCurrentLoan({ ...currentLoan, maxTenure: val });
+                                                if (errors.maxTenure) setErrors({ ...errors, maxTenure: undefined });
+                                            }}
+                                            className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${errors.maxTenure ? 'border-rose-500' : 'border-slate-200'}`}
+                                        />
+                                        {currentLoan.name === 'Salary Advance' && <p className="text-[10px] text-slate-400 mt-1">Max 6 months.</p>}
+                                        {currentLoan.name === 'Loan' && <p className="text-[10px] text-slate-400 mt-1">Max 48 months.</p>}
+                                        {errors.maxTenure && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxTenure}</p>}
+                                    </div>
                                 </div>
 
                                 {/* Repayment Month Dropdown */}
