@@ -23,7 +23,8 @@ import {
   ArrowRight,
   RefreshCw,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  Unlock
 } from 'lucide-react';
 import { RunPayrollModal } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
@@ -111,6 +112,8 @@ const PayrollApprovalRequests: React.FC = () => {
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [wizardState, setWizardState] = useState<{isOpen: boolean, readOnly: boolean}>({isOpen: false, readOnly: false});
+  const [showLockModal, setShowLockModal] = useState<string | null>(null);
+  const [showUnlockModal, setShowUnlockModal] = useState<string | null>(null);
 
   // Derived Stats
   const pendingCount = payrollRuns.filter(r => r.status === 'Pending Approval').length;
@@ -354,6 +357,23 @@ const PayrollApprovalRequests: React.FC = () => {
                                         <Edit2 size={16}/>
                                     </button>
                                 )}
+                                {run.status === 'Locked' ? (
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); setShowUnlockModal(run.id); }} 
+                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-amber-600" 
+                                        title="Unlock to Edit"
+                                    >
+                                        <Unlock size={16}/>
+                                    </button>
+                                ) : run.status !== 'Draft' && run.status !== 'Pending Approval' ? (
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); setShowLockModal(run.id); }} 
+                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600" 
+                                        title="Lock Payroll"
+                                    >
+                                        <Lock size={16}/>
+                                    </button>
+                                ) : null}
                             </div>
                             </td>
                         </tr>
@@ -569,6 +589,84 @@ const PayrollApprovalRequests: React.FC = () => {
         readOnly={wizardState.readOnly}
         initialBusinessUnits={selectedRun?.businessUnits || undefined}
       />
+
+      {/* Unlock Confirmation Modal */}
+      {showUnlockModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                  <div className="p-6">
+                      <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-6">
+                          <Unlock size={24} />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 mb-2">Unlock Payroll Request?</h3>
+                      <p className="text-slate-500 mb-6">
+                          Unlocking this payroll will allow HR administrators to edit it again. Once changes are done, it must be approved again before locking.
+                      </p>
+                      <div className="flex gap-3 mt-8">
+                          <button 
+                              onClick={() => setShowUnlockModal(null)}
+                              className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                              onClick={() => {
+                                  const idx = payrollRuns.findIndex(r => r.id === showUnlockModal);
+                                  if (idx !== -1) {
+                                      const newRuns = [...payrollRuns];
+                                      newRuns[idx].status = 'Approved';
+                                      setPayrollRuns(newRuns);
+                                  }
+                                  setShowUnlockModal(null);
+                              }}
+                              className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg font-bold text-sm hover:bg-amber-600 shadow-lg shadow-amber-200 transition-all flex items-center justify-center gap-2"
+                          >
+                              <Unlock size={16} /> Confirm Unlock
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Lock Confirmation Modal */}
+      {showLockModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                  <div className="p-6">
+                      <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-6">
+                          <Lock size={24} />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 mb-2">Lock Payroll Request?</h3>
+                      <p className="text-slate-500 mb-6">
+                          You are about to lock this payroll request to prevent any further changes.
+                      </p>
+                      <div className="flex gap-3 mt-8">
+                          <button 
+                              onClick={() => setShowLockModal(null)}
+                              className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                              onClick={() => {
+                                  const idx = payrollRuns.findIndex(r => r.id === showLockModal);
+                                  if (idx !== -1) {
+                                      const newRuns = [...payrollRuns];
+                                      newRuns[idx].status = 'Locked';
+                                      setPayrollRuns(newRuns);
+                                  }
+                                  setShowLockModal(null);
+                              }}
+                              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                          >
+                              <Lock size={16} /> Confirm Lock
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
 
     </div>
   );
