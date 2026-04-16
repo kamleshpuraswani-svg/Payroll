@@ -342,8 +342,15 @@ const PayrollApprovalRequests: React.FC = () => {
                                 </button>
                                 {run.status === 'Pending Approval' ? (
                                     <>
-                                        <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-purple-600" title="Edit">
-                                        <Edit2 size={16}/>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedRun(run);
+                                                setWizardState({ isOpen: true, readOnly: false });
+                                            }}
+                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-purple-600" title="Edit"
+                                        >
+                                            <Edit2 size={16}/>
                                         </button>
                                         <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600" title="Approve">
                                         <CheckCircle size={16}/>
