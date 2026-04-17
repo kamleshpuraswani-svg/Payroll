@@ -31,7 +31,8 @@ import {
    Calculator,
    ArrowDown,
    RefreshCcw,
-   Loader
+   Loader,
+   Eye
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -151,11 +152,17 @@ const DEFAULT_PLANNING_DATA: TaxPlanningData = {
 // Limits for Other Investments
 const OTHER_SECTION_LIMITS: Record<string, number> = {
    "Section 80CCD(1B) - Additional Exemption on voluntary NPS": 50000,
+   "Section 80CCD(2) - Employer NPS Contribution": 750000, // 10% of salary or 7.5L cap
    "Section 80CCG - Rajiv Gandhi Equity Saving Scheme (RGESS)": 25000,
    "Section 80DD - Treatment of dependent with disability": 75000,
    "Section 80DD - Treatment of dependent with severe disability": 125000,
    "Section 80DDB - Medical Treatment of Specified Diseases (Below 60 years)": 40000,
    "Section 80DDB - Medical Treatment of Specified Diseases (Above 60 years)": 100000,
+   "Section 80TTA - Interest from Savings Account (Below 60 years)": 10000,
+   "Section 80TTB - Interest from Deposits (Above 60 years)": 50000,
+   "Section 80EEA - Additional Interest on Home Loan": 150000,
+   "Section 80U - Self disability (Normal)": 75000,
+   "Section 80U - Self disability (Severe)": 125000,
 };
 
 const SECTION_80C_OPTIONS = [
@@ -190,24 +197,45 @@ const SECTION_80D_OPTIONS = [
    "Preventive Health checkup for Members of HUF (above 60 years)"
 ];
 
-const SECTION_OTHERS_OPTIONS = [
+const SECTION_80CCD_OPTIONS = [
    "Section 80CCD(1B) - Additional Exemption on voluntary NPS",
-   "Section 80E - Interest paid on Education Loan",
-   "Section 80CCG - Rajiv Gandhi Equity Saving Scheme (RGESS)",
+   "Section 80CCD(2) - Employer NPS Contribution"
+];
+
+const SECTION_80E_OPTIONS = [
+   "Section 80E - Interest paid on Education Loan"
+];
+
+const SECTION_80G_OPTIONS = [
+   "Section 80G - Donations (100% Tax Exempt)",
+   "Section 80G - Donations (50% Tax Exempt)"
+];
+
+const SECTION_80DDB_OPTIONS = [
+   "Section 80DDB - Medical Treatment of Specified Diseases (Below 60 years)",
+   "Section 80DDB - Medical Treatment of Specified Diseases (Above 60 years)"
+];
+
+const SECTION_OTHERS_OPTIONS = [
+   "Section 80EEA - Additional Interest on Home Loan",
+   "Section 80U - Self disability (Normal)",
+   "Section 80U - Self disability (Severe)",
    "Section 80DD - Treatment of dependent with disability",
    "Section 80DD - Treatment of dependent with severe disability",
-   "Section 80DDB - Medical Treatment of Specified Diseases (Below 60 years)",
-   "Section 80DDB - Medical Treatment of Specified Diseases (Above 60 years)",
-   "Section 80G - Donations"
+   "Section 80CCG - Rajiv Gandhi Equity Saving Scheme (RGESS)",
+   "Section 80TTA - Interest from Savings Account (Below 60 years)",
+   "Section 80TTB - Interest from Deposits (Above 60 years)",
+   "Section 10(5) - Leave Travel Allowance (LTA)"
 ];
 
 // Mock Annual Income for calculation
 const ANNUAL_GROSS_SALARY = 1800000;
-const DEADLINE_DATE = new Date('2026-03-31');
+const DEADLINE_DATE = new Date('2027-03-31');
 
 const TaxPlanning: React.FC = () => {
    const [view, setView] = useState<'DASHBOARD' | 'PLANNING' | 'CALCULATOR'>('DASHBOARD');
-   const [expandedYear, setExpandedYear] = useState<string | null>('FY 2024-25');
+   const [selectedHistoryYear, setSelectedHistoryYear] = useState<any>(null);
+   const [isEditMode, setIsEditMode] = useState(false);
 
    // Persisted States
    const [declarationStatus, setDeclarationStatus] = useState<'NEW' | 'DRAFT' | 'SUBMITTED'>('NEW'); // Fetched from DB
@@ -215,7 +243,6 @@ const TaxPlanning: React.FC = () => {
    // Regime State
    const [planningRegime, setPlanningRegime] = useState<'OLD' | 'NEW'>('OLD'); // Default, will fetch from DB
    const [isLoading, setIsLoading] = useState(true);
-   const [activeTab, setActiveTab] = useState<'CALCULATOR' | 'DECLARATION'>('DECLARATION');
 
    // State Management (Initialized with Defaults)
    const [declarations, setDeclarations] = useState<DeclarationRow[]>(DEFAULT_PLANNING_DATA.declarations);
@@ -389,7 +416,7 @@ const TaxPlanning: React.FC = () => {
 
    // Read Only Logic
    const isDeadlinePassed = new Date() > DEADLINE_DATE;
-   const isReadOnly = declarationStatus === 'SUBMITTED' || isDeadlinePassed;
+   const isReadOnly = !isEditMode || isDeadlinePassed;
 
    const fileInputRef = useRef<HTMLInputElement>(null);
    const [activeUploadId, setActiveUploadId] = useState<number | null>(null);
@@ -436,19 +463,38 @@ const TaxPlanning: React.FC = () => {
       // Loss from house property can be set off against salary up to 2L
       const totalHousePropertyLoss = Math.min(Math.abs(Math.min(0, letOutLoss - selfOccupiedInterest)), 200000);
 
-      // 5. Other Deductions
+      // 5. New Individual Sections
+      const total80CCD = declarations.filter((d: DeclarationRow) => d.section === '80CCD').reduce((sum: number, d: DeclarationRow) => {
+         const limit = OTHER_SECTION_LIMITS[d.title];
+         return sum + (limit ? Math.min(d.amount, limit) : d.amount);
+      }, 0);
+
+      const total80E = declarations.filter((d: DeclarationRow) => d.section === '80E').reduce((sum: number, d: DeclarationRow) => sum + d.amount, 0);
+      const total80G = declarations.filter((d: DeclarationRow) => d.section === '80G').reduce((sum: number, d: DeclarationRow) => sum + d.amount, 0);
+      const total80DDB = declarations.filter((d: DeclarationRow) => d.section === '80DDB').reduce((sum: number, d: DeclarationRow) => {
+         const limit = OTHER_SECTION_LIMITS[d.title];
+         return sum + (limit ? Math.min(d.amount, limit) : d.amount);
+      }, 0);
+
+      // 6. Generic Other Deductions (Remaining items in OTHERS)
       const otherDeductions = declarations.filter((d: DeclarationRow) => d.section === 'OTHERS').reduce((sum: number, d: DeclarationRow) => {
          const limit = OTHER_SECTION_LIMITS[d.title];
          return sum + (limit ? Math.min(d.amount, limit) : d.amount);
       }, 0);
 
-      // 6. Section 80TTA (Savings Interest Deduction for Old Regime, max 10k)
-      const ded80TTA = otherIncomeEnabled ? Math.min(otherIncomeDetails.savingsInterest, 10000) : 0;
+      // 7. Section 80TTA (Savings Interest Deduction for Old Regime, max 10k)
+      // Also look into OTHERS for 80TTA/TTB
+      const manual80TTA = declarations.filter(d => d.section === 'OTHERS' && (d.title.includes('80TTA') || d.title.includes('80TTB'))).reduce((sum, d) => {
+         const limit = OTHER_SECTION_LIMITS[d.title];
+         return sum + (limit ? Math.min(d.amount, limit) : d.amount);
+      }, 0);
+      const auto80TTA = otherIncomeEnabled ? Math.min(otherIncomeDetails.savingsInterest, 10000) : 0;
+      const final80TTA = Math.max(auto80TTA, manual80TTA);
 
       // Previous Employment PT
       const prevEmpPT = prevEmploymentEnabled ? prevEmploymentDetails.professionalTax : 0;
 
-      const totalDeductionsOld = total80C + total80D + hraExemption + totalHousePropertyLoss + otherDeductions + ded80TTA + prevEmpPT + 50000; // + Std Deduction
+      const totalDeductionsOld = total80C + total80D + total80CCD + total80E + total80G + total80DDB + hraExemption + totalHousePropertyLoss + otherDeductions + final80TTA + prevEmpPT + 50000; // + Std Deduction
 
       // Tax Calculations
       const calculateTaxLiability = (regime: 'OLD' | 'NEW') => {
@@ -463,7 +509,9 @@ const TaxPlanning: React.FC = () => {
             if (taxableIncome > 250000) { tax += (taxableIncome - 250000) * 0.05; }
          } else {
             // New Regime (FY 25-26 Budget) - Std Ded 75k
-            taxableIncome = Math.max(0, grossTotalIncome - 75000);
+            // Specific deductions allowed in New Regime: 80CCD(2) - Employer NPS
+            const employerNPS = declarations.filter(d => d.section === '80CCD' && d.title.includes('80CCD(2)')).reduce((sum, d) => sum + d.amount, 0);
+            taxableIncome = Math.max(0, grossTotalIncome - 75000 - employerNPS);
 
             // New Slabs
             if (taxableIncome > 2400000) { tax += (taxableIncome - 2400000) * 0.3; taxableIncome = 2400000; }
@@ -513,10 +561,6 @@ const TaxPlanning: React.FC = () => {
 
    const handleAmountChange = (id: number, value: string) => {
       setDeclarations(declarations.map(d => d.id === id ? { ...d, amount: parseFloat(value) || 0 } : d));
-   };
-
-   const toggleExpand = (id: number) => {
-      setDeclarations(declarations.map(d => d.id === id ? { ...d, isExpanded: !d.isExpanded } : d));
    };
 
    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -577,26 +621,36 @@ const TaxPlanning: React.FC = () => {
       setIsSubmitting(true);
       setTimeout(() => {
          setDeclarationStatus('SUBMITTED');
+         setIsEditMode(false);
          setIsSubmitting(false);
          setShowConfirmModal(false);
          setView('DASHBOARD');
       }, 1500);
-   };
-
-   const sections = [
+   };   const sections = [
       { code: 'PREV_EMPLOYMENT', name: 'Previous Employment Income', description: 'Declare income and tax details from your previous workplace within this FY.', limit: 'Gross Total Income', availableInNew: true },
-      { code: 'HRA', name: 'Do you stay in a Rented house?', description: 'Rent paid for accommodation', limit: 'Exemption based on Rent Paid', availableInNew: false },
-      { code: 'HOME_LOAN', name: 'Are you paying a home loan on a self-occupied home?', description: 'Principal & Interest deduction', limit: 'Sec 80C & Sec 24', availableInNew: false },
-      { code: 'LET_OUT', name: 'Do you have a let out property with or without rental income?', description: 'Rental Income & Interest Deduction', limit: 'Income from House Property', availableInNew: false },
+      { code: 'HRA', name: 'House Rent Allowance (HRA)', description: 'Rent paid for accommodation (Section 10(13A))', limit: 'Exemption based on Rent Paid', availableInNew: false },
+      { code: 'HOME_LOAN', name: 'Home Loan Interest (Section 24)', description: 'Interest deduction on self-occupied home loan.', limit: '₹ 2,00,000', availableInNew: false },
+      { code: 'LET_OUT', name: 'Income from Let Out Property', description: 'Rental Income & Interest Deduction for rented properties.', limit: 'Loss setoff up to ₹ 2,00,000', availableInNew: false },
       { code: 'OTHER_INCOME', name: 'Other Sources of Income', description: 'Declare income from other sources including savings interest.', limit: 'Taxable Income', availableInNew: true },
-      { code: '80C', name: 'Section 80C', description: 'Declare investments such as LIC premium, mutual funds and PPF under this section. The maximum tax saving limit is 1,50,000 INR under this section.', limit: '', availableInNew: false },
-      { code: '80D', name: 'Section 80D', description: 'Declare the mediclaim insurance policies for yourself, spouse, children and parents. The maximum tax saving limit is 1,00,000 INR under this section.', limit: '', availableInNew: false },
-      { code: 'OTHERS', name: 'Other Investments & Exemptions', description: 'Declare other investments & exemptions such as Voluntary NPS, Interest Paid on Education Loan and Medical Expenses under this section.', limit: '', availableInNew: true },
+      { code: '80C', name: 'Section 80C', description: 'Declare investments such as LIC premium, mutual funds and PPF under this section. The maximum tax saving limit is ₹ 1,50,000.', limit: '₹ 1,50,000', availableInNew: false },
+      { code: '80D', name: 'Section 80D', description: 'Declare the mediclaim insurance policies for yourself, spouse, children and parents. The maximum tax saving limit is up to ₹ 1,00,000.', limit: 'Up to ₹ 1,00,000', availableInNew: false },
+      { code: '80CCD', name: 'Section 80CCD - NPS Contribution', description: 'Declare additional NPS contribution under 80CCD(1B) and Employer NPS contribution.', limit: '₹ 50,000 extra', availableInNew: true },
+      { code: '80E', name: 'Section 80E - Education Loan', description: 'Deduction for interest paid on Higher Education Loan.', limit: 'No Max Limit', availableInNew: false },
+      { code: '80G', name: 'Section 80G - Donations', description: 'Deduction for donations made to specific charitable funds or institutions.', limit: '50% / 100% of donation', availableInNew: false },
+      { code: '80DDB', name: 'Section 80DDB - Medical Treatment', description: 'Medical expenses incurred for treatment of specified diseases.', limit: '₹ 40,000 / ₹ 1,00,000', availableInNew: false },
+      { code: 'OTHERS', name: 'Other Investments & Exemptions', description: 'Declare other investments & exemptions such as Section 80U, 80EEA, and LTA.', limit: '', availableInNew: true },
    ];
+;
 
    const historyData = [
       {
+         year: 'FY 2025-26',
+         status: 'Submitted',
+         items: []
+      },
+      {
          year: 'FY 2024-25',
+         status: 'Approved',
          items: [
             { type: '80C Investments', amount: 150000, date: '15 Jan 2025', status: 'Approved' },
             { type: 'Medical Insurance (80D)', amount: 25000, date: '12 Jan 2025', status: 'Approved' },
@@ -605,6 +659,7 @@ const TaxPlanning: React.FC = () => {
       },
       {
          year: 'FY 2023-24',
+         status: 'Approved',
          items: [
             { type: '80C Investments', amount: 150000, date: '20 Jan 2024', status: 'Approved' },
             { type: 'Medical Insurance (80D)', amount: 20000, date: '18 Jan 2024', status: 'Approved' },
@@ -613,6 +668,7 @@ const TaxPlanning: React.FC = () => {
       },
       {
          year: 'FY 2022-23',
+         status: 'Approved',
          items: [
             { type: '80C Investments', amount: 145000, date: '22 Jan 2023', status: 'Approved' },
             { type: 'Medical Insurance (80D)', amount: 15000, date: '22 Jan 2023', status: 'Approved' }
@@ -645,19 +701,21 @@ const TaxPlanning: React.FC = () => {
          </div>
 
          {/* Hero Card */}
-         <div className="bg-[#0f172a] rounded-2xl p-10 text-white relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 shadow-xl">
+         <div className="bg-[#1e293b] rounded-2xl py-6 px-10 text-white relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 shadow-xl">
             <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full -translate-y-40 translate-x-40 blur-3xl pointer-events-none"></div>
 
             <div className="space-y-8 z-10 max-w-xl relative">
                <div>
                   <h2 className="text-4xl font-bold mb-3 tracking-tight">Tax Planning FY 2025-26</h2>
-                  <p className="text-slate-400 text-lg leading-relaxed">Optimize your taxes. Compare regimes, declare investments, and upload proofs to save maximum tax.</p>
                </div>
 
                <div>
                   <div className="flex flex-col sm:flex-row gap-4">
                      <button
-                        onClick={() => setView('PLANNING')}
+                        onClick={() => {
+                           setIsEditMode(declarationStatus !== 'SUBMITTED');
+                           setView('PLANNING');
+                        }}
                         className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20 group whitespace-nowrap"
                      >
                         {declarationStatus === 'NEW' ? 'Start Planning' : declarationStatus === 'DRAFT' ? 'Continue Planning' : 'View Submission'} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -666,7 +724,7 @@ const TaxPlanning: React.FC = () => {
                         onClick={() => setView('CALCULATOR')}
                         className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
                      >
-                        <Plus size={20} className="rotate-45" /> Income Tax Calculator
+                        Income Tax Calculator
                      </button>
                   </div>
                   <div className="flex items-center gap-6 mt-4 text-sm font-medium text-slate-500">
@@ -681,17 +739,18 @@ const TaxPlanning: React.FC = () => {
             {/* TDS Projection Box - Dynamic */}
             <div className="bg-slate-800/40 border border-slate-700/50 p-8 rounded-xl w-full lg:w-96 backdrop-blur-md relative z-10">
                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Current TDS Projection</p>
-               <div className="space-y-5">
-                  <div className="flex justify-between items-center">
-                     <span className="text-base font-bold text-white">New Regime</span>
-                     <span className="text-2xl font-bold text-emerald-400">₹ {taxCalc.newRegimeTax.toLocaleString()}</span>
+               <div className="flex flex-col gap-6">
+                  <div className="flex items-start gap-10">
+                     <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Regime</span>
+                        <span className="text-2xl font-black text-emerald-400">₹ {taxCalc.newRegimeTax.toLocaleString()}</span>
+                     </div>
+                     <div className="flex flex-col gap-1.5 pt-0.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Old Regime</span>
+                        <span className="text-xl font-bold text-slate-500">₹ {taxCalc.oldRegimeTax.toLocaleString()}</span>
+                     </div>
                   </div>
-                  <div className="h-px bg-slate-700/50"></div>
-                  <div className="flex justify-between items-center">
-                     <span className="text-base font-medium text-slate-400">Old Regime</span>
-                     <span className="text-xl font-bold text-slate-500">₹ {taxCalc.oldRegimeTax.toLocaleString()}</span>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <div className="pt-4 border-t border-slate-700/50">
                      {taxCalc.oldRegimeTax < taxCalc.newRegimeTax ? (
                         <p className="text-xs text-emerald-400 font-bold flex items-center gap-2">
                            <TrendingDown size={14} /> Old Regime saves ₹ {(taxCalc.newRegimeTax - taxCalc.oldRegimeTax).toLocaleString()}
@@ -708,53 +767,56 @@ const TaxPlanning: React.FC = () => {
 
          {/* Previous Declarations */}
          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 pl-1">Previous FY Declarations</h3>
+            <h3 className="text-lg font-bold text-slate-800 pl-1">My Declarations</h3>
 
-            {historyData.map((data) => (
-               <div key={data.year} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all">
-                  <div
-                     onClick={() => setExpandedYear(expandedYear === data.year ? null : data.year)}
-                     className={`px-8 py-5 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors ${expandedYear === data.year ? 'bg-slate-50/50 border-b border-slate-200' : ''}`}
-                  >
-                     <div className="flex items-center gap-4">
-                        <div className={`p-2 rounded-lg transition-colors ${expandedYear === data.year ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
-                           <FileText size={20} />
-                        </div>
-                        <span className={`font-bold text-lg ${expandedYear === data.year ? 'text-slate-700' : 'text-slate-600'}`}>{data.year}</span>
-                     </div>
-                     {expandedYear === data.year ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-                  </div>
-
-                  {expandedYear === data.year && (
-                     <div className="p-0 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <table className="w-full text-left text-sm">
-                           <thead className="text-[11px] font-bold text-slate-400 uppercase bg-white border-b border-slate-100">
-                              <tr>
-                                 <th className="px-8 py-4 tracking-wider">Declaration Type</th>
-                                 <th className="px-8 py-4 tracking-wider">Amount</th>
-                                 <th className="px-8 py-4 tracking-wider">Date</th>
-                                 <th className="px-8 py-4 text-right tracking-wider">Status</th>
-                              </tr>
-                           </thead>
-                           <tbody className="divide-y divide-slate-100">
-                              {data.items.map((item, idx) => (
-                                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-8 py-5 font-bold text-slate-700">{item.type}</td>
-                                    <td className="px-8 py-5 font-bold text-slate-900">₹ {item.amount.toLocaleString()}</td>
-                                    <td className="px-8 py-5 text-slate-500 font-medium">{item.date}</td>
-                                    <td className="px-8 py-5 text-right">
-                                       <span className="text-emerald-600 font-bold text-xs flex items-center justify-end gap-1.5">
-                                          <CheckCircle size={14} /> {item.status}
-                                       </span>
-                                    </td>
-                                 </tr>
-                              ))}
-                           </tbody>
-                        </table>
-                     </div>
-                  )}
-               </div>
-            ))}
+            {/* History Table replaces Accordions */}
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+               <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                     <tr>
+                        <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Financial Year</th>
+                        <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Action</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                     {historyData.map((data) => (
+                        <tr key={data.year} className="hover:bg-slate-50/50 transition-colors">
+                           <td className="px-8 py-5">
+                              <div className="flex items-center gap-3">
+                                 <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                                    <FileText size={18} />
+                                 </div>
+                                 <span className="font-bold text-slate-700">{data.year}</span>
+                              </div>
+                           </td>
+                           <td className="px-8 py-5">
+                              <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                                 data.status === 'Approved' 
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                              }`}>
+                                 {data.status}
+                              </span>
+                           </td>
+                           <td className="px-8 py-5 text-right">
+                              <button 
+                                 onClick={() => {
+                                    setSelectedHistoryYear(data);
+                                    setIsEditMode(false);
+                                    setView('PLANNING');
+                                 }}
+                                 className="inline-flex w-10 h-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-slate-100 shadow-sm group ml-auto"
+                                 title="View Details"
+                              >
+                                 <Eye size={18} className="group-hover:scale-110 transition-transform" />
+                              </button>
+                           </td>
+                        </tr>
+                     ))}
+                  </tbody>
+               </table>
+            </div>
          </div>
       </div>
    );
@@ -1471,42 +1533,65 @@ const TaxPlanning: React.FC = () => {
       );
    };
 
-   return (
-      <div className="pb-10 max-w-[1536px] mx-auto xl:max-w-screen-2xl px-4">
-         {view === 'DASHBOARD' ? renderDashboard() : view === 'CALCULATOR' ? renderCalculator() : (
-            <div className="space-y-6 animate-fade-in-up">
-
-               {/* Planning Header */}
-               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                  <div className="flex items-center gap-4">
-                     <button
-                        onClick={() => setView('DASHBOARD')}
-                        className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
-                     >
-                        <ArrowLeft size={20} />
-                     </button>
-                     <div>
-                        <h1 className="text-2xl font-bold text-slate-800">Tax Planning {declarationStatus === 'SUBMITTED' && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-2 align-middle border border-emerald-200">Submitted</span>}</h1>
-                        <p className="text-sm text-slate-500 font-medium">Select your regime and declare investments</p>
+   const renderPlanning = () => {
+      return (
+         <div className="space-y-6 animate-fade-in-up">
+            {/* Planning Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+               <div className="flex items-center gap-4">
+                  <button
+                     onClick={() => {
+                        setView('DASHBOARD');
+                        setSelectedHistoryYear(null);
+                     }}
+                     className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                  >
+                     <ArrowLeft size={20} />
+                  </button>
+                  <div>
+                     <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold text-slate-800">
+                           {selectedHistoryYear ? `Declaration Details - ${selectedHistoryYear.year}` : 'Tax Planning'}
+                        </h1>
+                        {!isEditMode && (
+                           <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                              (selectedHistoryYear?.status === 'Approved' || (declarationStatus === 'SUBMITTED' && !selectedHistoryYear))
+                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                 : 'bg-amber-50 text-amber-600 border-amber-100'
+                           }`}>
+                              {selectedHistoryYear ? selectedHistoryYear.status : (declarationStatus === 'SUBMITTED' ? 'Submitted' : 'Submitted')}
+                           </span>
+                        )}
                      </div>
+                     <p className="text-sm text-slate-500 font-medium">
+                        {selectedHistoryYear ? `Historical view for ${selectedHistoryYear.year}` : 'Select your regime and declare investments'}
+                     </p>
                   </div>
+               </div>
 
-                  <div className="flex items-center gap-3">
-                     {/* Edit Button for Submitted Mode */}
-                     {isReadOnly && !isDeadlinePassed && (
+               <div className="flex items-center gap-3">
+                  {/* Regime Switcher / Display */}
+                  <div className="flex items-center gap-2">
+                     {/* Edit Button next to Regime selection */}
+                     {isReadOnly && !isDeadlinePassed && (!selectedHistoryYear || selectedHistoryYear?.year === 'FY 2025-26') && (
                         <button
-                           onClick={() => setDeclarationStatus('DRAFT')}
-                           className="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-sm"
+                           onClick={() => {
+                              setIsEditMode(true);
+                              if (declarationStatus === 'SUBMITTED' && !selectedHistoryYear) {
+                                 setDeclarationStatus('DRAFT');
+                              }
+                              setSelectedHistoryYear(null);
+                           }}
+                           className="p-2 bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 rounded-lg transition-all shadow-sm group"
+                           title="Edit Declaration"
                         >
-                           <Edit2 size={16} /> Edit Declaration
+                           <Edit2 size={18} className="group-hover:scale-110 transition-transform" />
                         </button>
                      )}
 
-                     {/* Regime Switcher / Display */}
                      {isReadOnly ? (
                         <div className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm border ${planningRegime === 'OLD' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
                            {planningRegime === 'OLD' ? 'Old Regime Selected' : 'New Regime Selected'}
-                           <CheckCircle size={16} className="fill-current" />
                         </div>
                      ) : (
                         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
@@ -1526,1051 +1611,1039 @@ const TaxPlanning: React.FC = () => {
                      )}
                   </div>
                </div>
+            </div>
 
-               {/* Sticky Calculation Bar */}
-               <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-4">
-                  <div className="flex items-center gap-6 divide-x divide-slate-200">
-                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Projected Income</p>
-                        <p className="text-lg font-bold text-slate-800">₹ {taxCalc.grossTotalIncome.toLocaleString()}</p>
-                     </div>
-                     <div className="pl-6">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Deductions (Old)</p>
-                        <p className="text-lg font-bold text-emerald-600">₹ {taxCalc.totalDeductionsOld.toLocaleString()}</p>
-                     </div>
+            {/* Sticky Calculation Bar */}
+            <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-4">
+               <div className="flex items-center gap-6 divide-x divide-slate-200">
+                  <div>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Projected Income</p>
+                     <p className="text-lg font-bold text-slate-800">₹ {taxCalc.grossTotalIncome.toLocaleString()}</p>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                     <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'OLD' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Old Tax Liability</p>
-                        <p className={`text-xl font-black ${planningRegime === 'OLD' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.oldRegimeTax.toLocaleString()}</p>
-                     </div>
-                     <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'NEW' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">New Tax Liability</p>
-                        <p className={`text-xl font-black ${planningRegime === 'NEW' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.newRegimeTax.toLocaleString()}</p>
-                     </div>
+                  <div className="pl-6">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Deductions (Old)</p>
+                     <p className="text-lg font-bold text-emerald-600">₹ {taxCalc.totalDeductionsOld.toLocaleString()}</p>
                   </div>
                </div>
 
-               <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-               {/* Sections Rendering */}
-               {planningRegime === 'NEW' && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                     <Info size={20} className="text-blue-600 shrink-0 mt-0.5" />
-                     <p className="text-sm text-blue-800">
-                        <strong>New Regime Selected:</strong> Most deductions like 80C, 80D, HRA, and Home Loan interest are not applicable. Standard Deduction of ₹75,000 is automatically applied. You may still declare specific investments under 'Others' if eligible (e.g. Employer NPS).
-                     </p>
+               <div className="flex items-center gap-4">
+                  <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'OLD' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase">Old Tax Liability</p>
+                     <p className={`text-xl font-black ${planningRegime === 'OLD' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.oldRegimeTax.toLocaleString()}</p>
                   </div>
-               )}
+                  <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'NEW' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase">New Tax Liability</p>
+                     <p className={`text-xl font-black ${planningRegime === 'NEW' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.newRegimeTax.toLocaleString()}</p>
+                  </div>
+               </div>
+            </div>
 
-               {sections.map((section) => {
-                  // Skip incompatible sections if New Regime is selected
-                  if (planningRegime === 'NEW' && !section.availableInNew) return null;
+            <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+            {/* Sections Rendering */}
+            {planningRegime === 'NEW' && (
+               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                  <Info size={20} className="text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-800">
+                     <strong>New Regime Selected:</strong> Most deductions like 80C, 80D, HRA, and Home Loan interest are not applicable. Standard Deduction of ₹75,000 is automatically applied. You may still declare specific investments under 'Others' if eligible (e.g. Employer NPS).
+                  </p>
+               </div>
+            )}
 
-                  if (section.code === 'PREV_EMPLOYMENT') {
-                     return (
-                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                              <div>
-                                 <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                              </div>
+            {sections.map((section) => {
+               // Skip incompatible sections if New Regime is selected
+               if (planningRegime === 'NEW' && !section.availableInNew) return null;
 
-                              <div className="flex items-center gap-4">
-                                 {prevEmploymentEnabled && (
-                                    <button
-                                       onClick={() => !isReadOnly && setIsPrevEmploymentSaved(!isPrevEmploymentSaved)}
-                                       disabled={isReadOnly}
-                                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isPrevEmploymentSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                       title={isPrevEmploymentSaved ? "Edit Details" : "Save Details"}
-                                    >
-                                       {isPrevEmploymentSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                    </button>
-                                 )}
-
-                                 <div className="flex items-center gap-3">
-                                    <span className={`text-xs font-bold ${prevEmploymentEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{prevEmploymentEnabled ? 'Yes' : 'No'}</span>
-                                    <button
-                                       onClick={() => {
-                                          if (!isPrevEmploymentSaved && !isReadOnly) {
-                                             setPrevEmploymentEnabled(!prevEmploymentEnabled);
-                                             if (prevEmploymentEnabled) setIsPrevEmploymentSaved(false);
-                                          }
-                                       }}
-                                       disabled={isPrevEmploymentSaved || isReadOnly}
-                                       className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${prevEmploymentEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isPrevEmploymentSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    >
-                                       <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                    </button>
-                                 </div>
-                              </div>
+               if (section.code === 'PREV_EMPLOYMENT') {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
                            </div>
 
-                           {prevEmploymentEnabled && (
-                              <div className={`p-6 space-y-6 animate-fade-in-up ${isPrevEmploymentSaved ? 'opacity-70' : ''}`}>
-                                 <div className="grid grid-cols-12 gap-6">
-                                    {/* --- New Employer Fields --- */}
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Name</label>
-                                       <div className="relative">
-                                          <input
-                                             type="text"
-                                             value={prevEmploymentDetails.employerName || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerName: e.target.value })}
-                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                             placeholder="Enter company name"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer PAN</label>
-                                       <div className="relative">
-                                          <input
-                                             type="text"
-                                             value={prevEmploymentDetails.employerPAN || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             maxLength={10}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerPAN: e.target.value.toUpperCase() })}
-                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 uppercase"
-                                             placeholder="ABCDE1234F"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Address</label>
-                                       <div className="relative">
-                                          <textarea
-                                             value={prevEmploymentDetails.employerAddress || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerAddress: e.target.value })}
-                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 min-h-[80px] resize-none"
-                                             placeholder="Enter full address"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-4">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment From</label>
-                                       <div className="relative">
-                                          <input
-                                             type="date"
-                                             value={prevEmploymentDetails.employmentFrom || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             min="2025-04-01"
-                                             max="2026-03-31"
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentFrom: e.target.value })}
-                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-4">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment To</label>
-                                       <div className="relative">
-                                          <input
-                                             type="date"
-                                             value={prevEmploymentDetails.employmentTo || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             min={prevEmploymentDetails.employmentFrom}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentTo: e.target.value })}
-                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-4">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Last Working Day</label>
-                                       <div className="relative">
-                                          <input
-                                             type="date"
-                                             value={prevEmploymentDetails.lastWorkingDay || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, lastWorkingDay: e.target.value })}
-                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 h-px bg-slate-100 my-2"></div>
-
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
-                                          Total Taxable Salary
-                                          <div className="group relative">
-                                             <Info size={12} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
-                                                Gross salary minus exemptions like HRA or LTA
-                                                <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                          </div>
-                                       </label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={prevEmploymentDetails.totalTaxableSalary || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTaxableSalary: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Total TDS Deducted</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={prevEmploymentDetails.totalTDSDeducted || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTDSDeducted: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Professional Tax (PT)</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={prevEmploymentDetails.professionalTax || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, professionalTax: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
-                                          Provident Fund (PF)
-                                          <div className="group relative">
-                                             <Info size={12} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
-                                                Employee’s contribution to PF
-                                                <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                          </div>
-                                       </label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={prevEmploymentDetails.providentFund || ''}
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, providentFund: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Form 12B (PDF Only)</label>
-                                       <div className="relative border border-slate-200 rounded-lg p-3 bg-slate-50">
-                                          <input
-                                             type="file"
-                                             accept="application/pdf"
-                                             disabled={isPrevEmploymentSaved || isReadOnly}
-                                             onChange={(e) => {
-                                                if (e.target.files && e.target.files[0]) {
-                                                   if (e.target.files[0].type === 'application/pdf') {
-                                                      setPrevEmploymentDetails({ ...prevEmploymentDetails, form12B: e.target.files[0].name });
-                                                   } else {
-                                                      alert("Only PDF files are allowed");
-                                                      e.target.value = '';
-                                                   }
-                                                }
-                                             }}
-                                             className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
-                                          />
-                                          {prevEmploymentDetails.form12B && (
-                                             <div className="mt-2 text-xs text-emerald-600 font-medium flex items-center gap-1 bg-emerald-50 p-1.5 rounded border border-emerald-100 w-fit">
-                                                <Check size={12} /> Selected: {prevEmploymentDetails.form12B}
-                                             </div>
-                                          )}
-                                       </div>
-                                    </div>
-                                 </div>
-                              </div>
-                           )}
-                        </div>
-                     );
-                  }
-
-                  if (section.code === 'HRA') {
-                     return (
-                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                              <div>
-                                 <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                              </div>
-
-                              <div className="flex items-center gap-4">
-                                 {hraEnabled && (
-                                    <button
-                                       onClick={() => !isReadOnly && setIsHraSaved(!isHraSaved)}
-                                       disabled={isReadOnly}
-                                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isHraSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                       title={isHraSaved ? "Edit Details" : "Save Details"}
-                                    >
-                                       {isHraSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                    </button>
-                                 )}
-
-                                 {/* Toggle Switch */}
-                                 <div className="flex items-center gap-3">
-                                    <span className={`text-xs font-bold ${hraEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{hraEnabled ? 'Yes' : 'No'}</span>
-                                    <button
-                                       onClick={() => {
-                                          if (!isHraSaved && !isReadOnly) {
-                                             setHraEnabled(!hraEnabled);
-                                             if (hraEnabled) setIsHraSaved(false);
-                                          }
-                                       }}
-                                       disabled={isHraSaved || isReadOnly}
-                                       className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${hraEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isHraSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    >
-                                       <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                    </button>
-                                 </div>
-                              </div>
-                           </div>
-
-                           {hraEnabled && (
-                              <div className="p-6 space-y-6">
-                                 {rentedHouses.map((house, index) => (
-                                    <div key={house.id} className={`relative animate-fade-in-up ${isHraSaved ? 'opacity-70' : ''}`}>
-                                       {index > 0 && !isHraSaved && !isReadOnly && <div className="absolute top-0 right-0"><button onClick={() => removeHouse(house.id)} className="text-red-500"><X size={16} /></button></div>}
-                                       <h4 className="text-sm font-bold text-slate-800 mb-4">House Rent Details {rentedHouses.length > 1 ? `#${index + 1}` : ''}</h4>
-
-                                       <div className="grid grid-cols-12 gap-6">
-                                          {/* Row 1 */}
-                                          <div className="col-span-6">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Rental Period</label>
-                                             <div className="flex items-center gap-2">
-                                                <input
-                                                   type="date"
-                                                   value={house.from}
-                                                   disabled={isHraSaved || isReadOnly}
-                                                   onChange={(e) => updateHouse(house.id, 'from', e.target.value)}
-                                                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                                />
-                                                <span className="text-slate-400 text-xs">To</span>
-                                                <input
-                                                   type="date"
-                                                   value={house.to}
-                                                   disabled={isHraSaved || isReadOnly}
-                                                   onChange={(e) => updateHouse(house.id, 'to', e.target.value)}
-                                                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                                />
-                                             </div>
-                                          </div>
-                                          <div className="col-span-6 md:col-span-4 md:col-start-9">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Amount / Month</label>
-                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                                <input
-                                                   type="number"
-                                                   value={house.amount}
-                                                   disabled={isHraSaved || isReadOnly}
-                                                   onChange={(e) => updateHouse(house.id, 'amount', Number(e.target.value))}
-                                                   className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                                />
-                                             </div>
-                                          </div>
-
-                                          {/* Row 2 */}
-                                          <div className="col-span-12">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Address</label>
-                                             <input
-                                                type="text"
-                                                value={house.address}
-                                                disabled={isHraSaved || isReadOnly}
-                                                onChange={(e) => updateHouse(house.id, 'address', e.target.value)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                             />
-                                          </div>
-
-                                          {/* Row 3 */}
-                                          <div className="col-span-12">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Landlord Name</label>
-                                             <input
-                                                type="text"
-                                                value={house.landlord}
-                                                disabled={isHraSaved || isReadOnly}
-                                                onChange={(e) => updateHouse(house.id, 'landlord', e.target.value)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                             />
-                                          </div>
-
-                                          {/* Row 4 */}
-                                          <div className="col-span-4">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Urbanization Type</label>
-                                             <select
-                                                value={house.cityType}
-                                                disabled={isHraSaved || isReadOnly}
-                                                onChange={(e) => updateHouse(house.id, 'cityType', e.target.value)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 bg-white disabled:bg-slate-50"
-                                             >
-                                                <option>Metro</option>
-                                                <option>Non-Metro</option>
-                                             </select>
-                                          </div>
-                                          <div className="col-span-5">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">LANDLORD'S PAN</label>
-                                             <input
-                                                type="text"
-                                                value={house.pan}
-                                                disabled={isHraSaved || isReadOnly}
-                                                onChange={(e) => updateHouse(house.id, 'pan', e.target.value)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 uppercase disabled:bg-slate-50"
-                                             />
-                                          </div>
-                                       </div>
-                                    </div>
-                                 ))}
-
-                                 {!isHraSaved && !isReadOnly && (
-                                    <button
-                                       onClick={() => setRentedHouses([...rentedHouses, { id: Date.now(), from: '', to: '', amount: 0, address: '', landlord: '', cityType: 'Non-Metro', pan: '' }])}
-                                       className="text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1"
-                                    >
-                                       <Plus size={16} className="bg-blue-100 rounded-full p-0.5" /> Add Rented House
-                                    </button>
-                                 )}
-                              </div>
-                           )}
-                        </div>
-                     );
-                  } else if (section.code === 'HOME_LOAN') {
-                     return (
-                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                              <div>
-                                 <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                              </div>
-
-                              <div className="flex items-center gap-4">
-                                 {homeLoanEnabled && (
-                                    <button
-                                       onClick={() => !isReadOnly && setIsHomeLoanSaved(!isHomeLoanSaved)}
-                                       disabled={isReadOnly}
-                                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isHomeLoanSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                       title={isHomeLoanSaved ? "Edit Details" : "Save Details"}
-                                    >
-                                       {isHomeLoanSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                    </button>
-                                 )}
-
-                                 <div className="flex items-center gap-3">
-                                    <span className={`text-xs font-bold ${homeLoanEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{homeLoanEnabled ? 'Yes' : 'No'}</span>
-                                    <button
-                                       onClick={() => {
-                                          if (!isHomeLoanSaved && !isReadOnly) {
-                                             setHomeLoanEnabled(!homeLoanEnabled);
-                                             if (homeLoanEnabled) setIsHomeLoanSaved(false);
-                                          }
-                                       }}
-                                       disabled={isHomeLoanSaved || isReadOnly}
-                                       className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${homeLoanEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isHomeLoanSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    >
-                                       <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                    </button>
-                                 </div>
-                              </div>
-                           </div>
-
-                           {homeLoanEnabled && (
-                              <div className={`p-6 space-y-6 animate-fade-in-up ${isHomeLoanSaved ? 'opacity-70' : ''}`}>
-                                 <div className="grid grid-cols-12 gap-6">
-                                    {/* Loan Sanction Details */}
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
-                                          Loan Sanction Date
-                                          <div className="group relative">
-                                             <Info size={12} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
-                                                Enter the date when your home loan was officially approved/sanctioned by the lender. This date is mentioned in your loan sanction letter.
-                                                <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                          </div>
-                                       </label>
-                                       <input
-                                          type="date"
-                                          max={new Date().toISOString().split('T')[0]}
-                                          value={homeLoanDetails.sanctionDate}
-                                          disabled={isHomeLoanSaved || isReadOnly}
-                                          onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, sanctionDate: e.target.value })}
-                                          className={`w-full px-3 py-2 border rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50 ${homeLoanDetails.sanctionDate && new Date(homeLoanDetails.sanctionDate) > new Date() ? 'border-rose-500 bg-rose-50' : 'border-slate-200'
-                                             }`}
-                                       />
-                                       {homeLoanDetails.sanctionDate && new Date(homeLoanDetails.sanctionDate) > new Date() && (
-                                          <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-                                             <AlertTriangle size={10} /> Invalid Loan sanction date
-                                          </p>
-                                       )}
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
-                                          Sanctioned Loan Amount
-                                          <div className="group relative">
-                                             <Info size={12} className="text-slate-400 cursor-help" />
-                                             <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
-                                                Enter the total home loan amount approved by your lender (as mentioned in your loan sanction letter).
-                                                <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
-                                             </div>
-                                          </div>
-                                       </label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={homeLoanDetails.sanctionedAmount}
-                                             disabled={isHomeLoanSaved || isReadOnly}
-                                             onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, sanctionedAmount: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    {/* Principal */}
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Principal Paid on Home Loan</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={homeLoanDetails.principal}
-                                             disabled={isHomeLoanSaved || isReadOnly}
-                                             onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, principal: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                       <p className="text-[10px] text-slate-400 mt-1 italic">This will be automatically included in the 80C section</p>
-                                    </div>
-
-                                    {/* Interest */}
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest Paid on Home Loan</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={homeLoanDetails.interest}
-                                             disabled={isHomeLoanSaved || isReadOnly}
-                                             onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, interest: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                       <p className="text-[10px] text-slate-400 mt-1 italic">This will be automatically included in the Section 24</p>
-                                    </div>
-
-                                    {/* Lender Name */}
-                                    <div className="col-span-12">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Name of the Lender</label>
-                                       <input
-                                          type="text"
-                                          value={homeLoanDetails.lender}
-                                          disabled={isHomeLoanSaved || isReadOnly}
-                                          onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, lender: e.target.value })}
-                                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                       />
-                                    </div>
-
-                                    {/* Lender PAN */}
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Lender PAN</label>
-                                       <input
-                                          type="text"
-                                          value={homeLoanDetails.lenderPan}
-                                          disabled={isHomeLoanSaved || isReadOnly}
-                                          onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, lenderPan: e.target.value })}
-                                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 uppercase disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                              </div>
-                           )}
-                        </div>
-                     );
-                  } else if (section.code === 'LET_OUT') {
-                     return (
-                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                              <div>
-                                 <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                              </div>
-
-                              <div className="flex items-center gap-4">
-                                 {letOutEnabled && (
-                                    <button
-                                       onClick={() => !isReadOnly && setIsLetOutSaved(!isLetOutSaved)}
-                                       disabled={isReadOnly}
-                                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isLetOutSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                       title={isLetOutSaved ? "Edit Details" : "Save Details"}
-                                    >
-                                       {isLetOutSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                    </button>
-                                 )}
-
-                                 <div className="flex items-center gap-3">
-                                    <span className={`text-xs font-bold ${letOutEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{letOutEnabled ? 'Yes' : 'No'}</span>
-                                    <button
-                                       onClick={() => {
-                                          if (!isLetOutSaved && !isReadOnly) {
-                                             setLetOutEnabled(!letOutEnabled);
-                                             if (letOutEnabled) setIsLetOutSaved(false);
-                                          }
-                                       }}
-                                       disabled={isLetOutSaved || isReadOnly}
-                                       className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${letOutEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isLetOutSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    >
-                                       <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                    </button>
-                                 </div>
-                              </div>
-                           </div>
-
-                           {letOutEnabled && (
-                              <div className="p-6 space-y-8">
-                                 {letOutProperties.map((prop, index) => (
-                                    <div key={prop.id} className={`space-y-6 animate-fade-in-up ${isLetOutSaved ? 'opacity-70' : ''}`}>
-                                       <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                                          <h4 className="text-sm font-bold text-slate-800">Property Details {letOutProperties.length > 1 ? `#${index + 1}` : ''}</h4>
-                                          {index > 0 && !isLetOutSaved && !isReadOnly && (
-                                             <button onClick={() => removeLetOutProperty(prop.id)} className="text-rose-500 hover:bg-rose-50 p-1 rounded-md transition-colors">
-                                                <Trash2 size={16} />
-                                             </button>
-                                          )}
-                                       </div>
-
-                                       <div className="grid grid-cols-12 gap-6">
-                                          <div className="col-span-12 md:col-span-6">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Annual Rent Received</label>
-                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                                <input
-                                                   type="number"
-                                                   value={prop.annualRent}
-                                                   disabled={isLetOutSaved || isReadOnly}
-                                                   onChange={(e) => updateLetOutProperty(prop.id, 'annualRent', Number(e.target.value))}
-                                                   className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                                />
-                                             </div>
-                                          </div>
-                                          <div className="col-span-12 md:col-span-6">
-                                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Municipal Taxes Paid</label>
-                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                                <input
-                                                   type="number"
-                                                   value={prop.municipalTaxes}
-                                                   disabled={isLetOutSaved || isReadOnly}
-                                                   onChange={(e) => updateLetOutProperty(prop.id, 'municipalTaxes', Number(e.target.value))}
-                                                   className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                                />
-                                             </div>
-                                          </div>
-
-                                          <div className="col-span-12">
-                                             <label className="flex items-center gap-3 cursor-pointer group">
-                                                <input
-                                                   type="checkbox"
-                                                   checked={prop.hasHomeLoan}
-                                                   disabled={isLetOutSaved || isReadOnly}
-                                                   onChange={(e) => updateLetOutProperty(prop.id, 'hasHomeLoan', e.target.checked)}
-                                                   className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-                                                />
-                                                <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Does this property have a home loan?</span>
-                                             </label>
-                                          </div>
-
-                                          {prop.hasHomeLoan && (
-                                             <div className="col-span-12 grid grid-cols-12 gap-6 pt-2 animate-in slide-in-from-top-2">
-                                                <div className="col-span-12 md:col-span-6">
-                                                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Principal Paid</label>
-                                                   <div className="relative">
-                                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                                      <input
-                                                         type="number"
-                                                         value={prop.principal}
-                                                         disabled={isLetOutSaved || isReadOnly}
-                                                         onChange={(e) => updateLetOutProperty(prop.id, 'principal', Number(e.target.value))}
-                                                         className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                                      />
-                                                   </div>
-                                                </div>
-                                                <div className="col-span-12 md:col-span-6">
-                                                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest Paid</label>
-                                                   <div className="relative">
-                                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                                      <input
-                                                         type="number"
-                                                         value={prop.interest}
-                                                         disabled={isLetOutSaved || isReadOnly}
-                                                         onChange={(e) => updateLetOutProperty(prop.id, 'interest', Number(e.target.value))}
-                                                         className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                                      />
-                                                   </div>
-                                                </div>
-                                                <div className="col-span-12 md:col-span-6">
-                                                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Lender Name</label>
-                                                   <input
-                                                      type="text"
-                                                      value={prop.lender}
-                                                      disabled={isLetOutSaved || isReadOnly}
-                                                      onChange={(e) => updateLetOutProperty(prop.id, 'lender', e.target.value)}
-                                                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                                   />
-                                                </div>
-                                                <div className="col-span-12 md:col-span-6">
-                                                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Lender PAN</label>
-                                                   <input
-                                                      type="text"
-                                                      value={prop.lenderPan}
-                                                      disabled={isLetOutSaved || isReadOnly}
-                                                      onChange={(e) => updateLetOutProperty(prop.id, 'lenderPan', e.target.value)}
-                                                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 uppercase disabled:bg-slate-50"
-                                                   />
-                                                </div>
-                                             </div>
-                                          )}
-                                       </div>
-                                    </div>
-                                 ))}
-
-                                 {!isLetOutSaved && !isReadOnly && (
-                                    <button
-                                       onClick={() => setLetOutProperties([...letOutProperties, { id: Date.now(), annualRent: 0, municipalTaxes: 0, hasHomeLoan: false, principal: 0, interest: 0, lender: '', lenderPan: '' }])}
-                                       className="text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1"
-                                    >
-                                       <Plus size={16} className="bg-blue-100 rounded-full p-0.5" /> Add Let Out Property
-                                    </button>
-                                 )}
-                              </div>
-                           )}
-                        </div>
-                     );
-                  } else if (section.code === 'OTHER_INCOME') {
-                     return (
-                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                              <div>
-                                 <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                              </div>
-
-                              <div className="flex items-center gap-4">
-                                 {otherIncomeEnabled && (
-                                    <button
-                                       onClick={() => !isReadOnly && setIsOtherIncomeSaved(!isOtherIncomeSaved)}
-                                       disabled={isReadOnly}
-                                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOtherIncomeSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                       title={isOtherIncomeSaved ? "Edit Details" : "Save Details"}
-                                    >
-                                       {isOtherIncomeSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                    </button>
-                                 )}
-
-                                 <div className="flex items-center gap-3">
-                                    <span className={`text-xs font-bold ${otherIncomeEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{otherIncomeEnabled ? 'Yes' : 'No'}</span>
-                                    <button
-                                       onClick={() => {
-                                          if (!isOtherIncomeSaved && !isReadOnly) {
-                                             setOtherIncomeEnabled(!otherIncomeEnabled);
-                                             if (otherIncomeEnabled) setIsOtherIncomeSaved(false);
-                                          }
-                                       }}
-                                       disabled={isOtherIncomeSaved || isReadOnly}
-                                       className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${otherIncomeEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isOtherIncomeSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    >
-                                       <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                    </button>
-                                 </div>
-                              </div>
-                           </div>
-
-                           {otherIncomeEnabled && (
-                              <div className={`p-6 space-y-6 animate-fade-in-up ${isOtherIncomeSaved ? 'opacity-70' : ''}`}>
-                                 <div className="grid grid-cols-12 gap-6">
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Any Other Income (Interest, etc.)</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={otherIncomeDetails.otherSourceIncome}
-                                             disabled={isOtherIncomeSaved || isReadOnly}
-                                             onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, otherSourceIncome: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from Savings Account</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={otherIncomeDetails.savingsInterest}
-                                             disabled={isOtherIncomeSaved || isReadOnly}
-                                             onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, savingsInterest: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                       <p className="text-[10px] text-slate-400 mt-1 italic">Deduction up to ₹10,000 under 80TTA applied in Old Regime only</p>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from Fixed Deposits (FDs)</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={otherIncomeDetails.fdInterest}
-                                             disabled={isOtherIncomeSaved || isReadOnly}
-                                             onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, fdInterest: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from NSC</label>
-                                       <div className="relative">
-                                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={otherIncomeDetails.nscInterest}
-                                             disabled={isOtherIncomeSaved || isReadOnly}
-                                             onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, nscInterest: Number(e.target.value) })}
-                                             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                          />
-                                       </div>
-                                    </div>
-                                 </div>
-                              </div>
-                           )}
-                        </div>
-                     );
-                  } else {
-                     return (
-                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
-                           {/* Section Header */}
-                           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center group cursor-pointer" onClick={() => !isReadOnly && addNewRow(section.code)}>
-                              <div>
-                                 <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                              </div>
-                              {!isReadOnly && (
-                                 <button className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors">
-                                    <Plus size={16} />
+                           <div className="flex items-center gap-4">
+                              {prevEmploymentEnabled && (
+                                 <button
+                                    onClick={() => !isReadOnly && setIsPrevEmploymentSaved(!isPrevEmploymentSaved)}
+                                    disabled={isReadOnly}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isPrevEmploymentSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={isPrevEmploymentSaved ? "Edit Details" : "Save Details"}
+                                 >
+                                    {isPrevEmploymentSaved ? <Edit2 size={14} /> : <Check size={16} />}
                                  </button>
                               )}
-                           </div>
 
-                           {/* Section Rows */}
-                           <div className="divide-y divide-slate-100">
-                              {declarations.filter(d => d.section === section.code).map((row) => (
-                                 <div key={row.id} className="p-6 space-y-4 animate-in slide-in-from-left-2">
-                                    <div className="flex flex-col md:flex-row gap-4">
-                                       <div className="flex-1">
-                                          {['80C', '80D', 'OTHERS'].includes(section.code) ? (
-                                             <select
-                                                value={row.title}
-                                                disabled={isReadOnly}
-                                                onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-9.3%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
-                                             >
-                                                <option value="">Select Investment Type</option>
-                                                {(section.code === '80C' ? SECTION_80C_OPTIONS :
-                                                   section.code === '80D' ? SECTION_80D_OPTIONS :
-                                                      SECTION_OTHERS_OPTIONS).map(opt => (
-                                                         <option key={opt} value={opt}>{opt}</option>
-                                                      ))}
-                                             </select>
-                                          ) : (
-                                             <input
-                                                type="text"
-                                                placeholder="Investment Description (e.g. LIC Policy #123)"
-                                                value={row.title}
-                                                disabled={isReadOnly}
-                                                onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
-                                             />
-                                          )}
-                                       </div>
-                                       <div className="w-full md:w-48">
-                                          <div className="relative">
-                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
-                                             <input
-                                                type="number"
-                                                placeholder="0"
-                                                value={row.amount || ''}
-                                                disabled={isReadOnly}
-                                                onChange={(e) => handleAmountChange(row.id, e.target.value)}
-                                                className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
-                                             />
+                              <div className="flex items-center gap-3">
+                                 <span className={`text-xs font-bold ${prevEmploymentEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{prevEmploymentEnabled ? 'Yes' : 'No'}</span>
+                                 <button
+                                    onClick={() => {
+                                       if (!isPrevEmploymentSaved && !isReadOnly) {
+                                          setPrevEmploymentEnabled(!prevEmploymentEnabled);
+                                          if (prevEmploymentEnabled) setIsPrevEmploymentSaved(false);
+                                       }
+                                    }}
+                                    disabled={isPrevEmploymentSaved || isReadOnly}
+                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${prevEmploymentEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isPrevEmploymentSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                 >
+                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+
+                        {prevEmploymentEnabled && (
+                           <div className={`p-6 space-y-6 animate-fade-in-up ${isPrevEmploymentSaved ? 'opacity-70' : ''}`}>
+                              <div className="grid grid-cols-12 gap-6">
+                                 {/* --- New Employer Fields --- */}
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Name</label>
+                                    <div className="relative">
+                                       <input
+                                          type="text"
+                                          value={prevEmploymentDetails.employerName || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerName: e.target.value })}
+                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                          placeholder="Enter company name"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer PAN</label>
+                                    <div className="relative">
+                                       <input
+                                          type="text"
+                                          value={prevEmploymentDetails.employerPAN || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          maxLength={10}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerPAN: e.target.value.toUpperCase() })}
+                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 uppercase"
+                                          placeholder="ABCDE1234F"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Address</label>
+                                    <div className="relative">
+                                       <textarea
+                                          value={prevEmploymentDetails.employerAddress || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerAddress: e.target.value })}
+                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 min-h-[80px] resize-none"
+                                          placeholder="Enter full address"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-4">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment From</label>
+                                    <div className="relative">
+                                       <input
+                                          type="date"
+                                          value={prevEmploymentDetails.employmentFrom || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          min="2025-04-01"
+                                          max="2026-03-31"
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentFrom: e.target.value })}
+                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-4">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment To</label>
+                                    <div className="relative">
+                                       <input
+                                          type="date"
+                                          value={prevEmploymentDetails.employmentTo || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          min={prevEmploymentDetails.employmentFrom}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentTo: e.target.value })}
+                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-4">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Last Working Day</label>
+                                    <div className="relative">
+                                       <input
+                                          type="date"
+                                          value={prevEmploymentDetails.lastWorkingDay || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, lastWorkingDay: e.target.value })}
+                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 h-px bg-slate-100 my-2"></div>
+
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                                       Total Taxable Salary
+                                       <div className="group relative">
+                                          <Info size={12} className="text-slate-400 cursor-help" />
+                                          <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
+                                             Gross salary minus exemptions like HRA or LTA
+                                             <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
                                           </div>
-                                          {getLimitWarning(row.title, row.amount) && (
-                                             <p className="text-[10px] text-rose-500 font-bold mt-1 text-right">{getLimitWarning(row.title, row.amount)}</p>
-                                          )}
                                        </div>
-                                       {!isReadOnly && (
-                                          <button onClick={() => handleDeleteRow(row.id)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors group">
-                                             <Trash2 size={18} />
-                                          </button>
+                                    </label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={prevEmploymentDetails.totalTaxableSalary || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTaxableSalary: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Total TDS Deducted</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={prevEmploymentDetails.totalTDSDeducted || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTDSDeducted: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Professional Tax (PT)</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={prevEmploymentDetails.professionalTax || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, professionalTax: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                                       Provident Fund (PF)
+                                       <div className="group relative">
+                                          <Info size={12} className="text-slate-400 cursor-help" />
+                                          <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
+                                             Employee’s contribution to PF
+                                             <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
+                                          </div>
+                                       </div>
+                                    </label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={prevEmploymentDetails.providentFund || ''}
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, providentFund: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Form 12B (PDF Only)</label>
+                                    <div className="relative border border-slate-200 rounded-lg p-3 bg-slate-50">
+                                       <input
+                                          type="file"
+                                          accept="application/pdf"
+                                          disabled={isPrevEmploymentSaved || isReadOnly}
+                                          onChange={(e) => {
+                                             if (e.target.files && e.target.files[0]) {
+                                                if (e.target.files[0].type === 'application/pdf') {
+                                                   setPrevEmploymentDetails({ ...prevEmploymentDetails, form12B: e.target.files[0].name });
+                                                } else {
+                                                   alert("Only PDF files are allowed");
+                                                   e.target.value = '';
+                                                }
+                                             }
+                                          }}
+                                          className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
+                                       />
+                                       {prevEmploymentDetails.form12B && (
+                                          <div className="mt-2 text-xs text-emerald-600 font-medium flex items-center gap-1 bg-emerald-50 p-1.5 rounded border border-emerald-100 w-fit">
+                                             <Check size={12} /> Selected: {prevEmploymentDetails.form12B}
+                                          </div>
                                        )}
                                     </div>
+                                 </div>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                  );
+               }
 
-                                    {/* Proof Uploads Area */}
-                                    <div className="bg-slate-50/50 rounded-lg p-4 border border-dashed border-slate-200">
-                                       <div className="flex flex-wrap gap-2 items-center">
-                                          <span className="text-[10px] font-bold text-slate-400 uppercase mr-2">Proofs:</span>
-                                          {row.files.map((file, fIdx) => (
-                                             <div key={fIdx} className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 group shadow-sm animate-in zoom-in-95">
-                                                <Paperclip size={12} className="text-blue-500" />
-                                                <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]">{file}</span>
-                                                {!isReadOnly && (
-                                                   <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
-                                                      <X size={12} />
-                                                   </button>
-                                                )}
-                                             </div>
-                                          ))}
+               if (section.code === 'HRA') {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
+                           </div>
 
-                                          {!isReadOnly && (
-                                             <button
-                                                onClick={() => {
-                                                   setActiveUploadId(row.id);
-                                                   fileInputRef.current?.click();
-                                                }}
-                                                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors border border-blue-100"
-                                             >
-                                                <CloudUpload size={14} /> Upload Proof
-                                             </button>
-                                          )}
+                           <div className="flex items-center gap-4">
+                              {hraEnabled && (
+                                 <button
+                                    onClick={() => !isReadOnly && setIsHraSaved(!isHraSaved)}
+                                    disabled={isReadOnly}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isHraSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={isHraSaved ? "Edit Details" : "Save Details"}
+                                 >
+                                    {isHraSaved ? <Edit2 size={14} /> : <Check size={16} />}
+                                 </button>
+                              )}
 
-                                          {row.files.length === 0 && isReadOnly && (
-                                             <span className="text-xs text-slate-400 italic">No proofs uploaded</span>
-                                          )}
+                              {/* Toggle Switch */}
+                              <div className="flex items-center gap-3">
+                                 <span className={`text-xs font-bold ${hraEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{hraEnabled ? 'Yes' : 'No'}</span>
+                                 <button
+                                    onClick={() => {
+                                       if (!isHraSaved && !isReadOnly) {
+                                          setHraEnabled(!hraEnabled);
+                                          if (hraEnabled) setIsHraSaved(false);
+                                       }
+                                    }}
+                                    disabled={isHraSaved || isReadOnly}
+                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${hraEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isHraSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                 >
+                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+
+                        {hraEnabled && (
+                           <div className="p-6 space-y-6">
+                              {rentedHouses.map((house, index) => (
+                                 <div key={house.id} className={`relative animate-fade-in-up ${isHraSaved ? 'opacity-70' : ''}`}>
+                                    {index > 0 && !isHraSaved && !isReadOnly && <div className="absolute top-0 right-0"><button onClick={() => removeHouse(house.id)} className="text-red-500"><X size={16} /></button></div>}
+                                    <h4 className="text-sm font-bold text-slate-800 mb-4">House Rent Details {rentedHouses.length > 1 ? `#${index + 1}` : ''}</h4>
+
+                                    <div className="grid grid-cols-12 gap-6">
+                                       {/* Row 1 */}
+                                       <div className="col-span-6">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Rental Period</label>
+                                          <div className="flex items-center gap-2">
+                                             <input
+                                                type="date"
+                                                value={house.from}
+                                                disabled={isHraSaved || isReadOnly}
+                                                onChange={(e) => updateHouse(house.id, 'from', e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                             />
+                                             <span className="text-slate-400 text-xs">To</span>
+                                             <input
+                                                type="date"
+                                                value={house.to}
+                                                disabled={isHraSaved || isReadOnly}
+                                                onChange={(e) => updateHouse(house.id, 'to', e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                             />
+                                          </div>
+                                       </div>
+                                       <div className="col-span-6 md:col-span-4 md:col-start-9">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Amount / Month</label>
+                                          <div className="relative">
+                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={house.amount}
+                                                disabled={isHraSaved || isReadOnly}
+                                                onChange={(e) => updateHouse(house.id, 'amount', Number(e.target.value))}
+                                                className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       {/* Row 2 */}
+                                       <div className="col-span-12">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Address</label>
+                                          <input
+                                             type="text"
+                                             value={house.address}
+                                             disabled={isHraSaved || isReadOnly}
+                                             onChange={(e) => updateHouse(house.id, 'address', e.target.value)}
+                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                          />
+                                       </div>
+
+                                       {/* Row 3 */}
+                                       <div className="col-span-12">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Landlord Name</label>
+                                          <input
+                                             type="text"
+                                             value={house.landlord}
+                                             disabled={isHraSaved || isReadOnly}
+                                             onChange={(e) => updateHouse(house.id, 'landlord', e.target.value)}
+                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                          />
+                                       </div>
+
+                                       {/* Row 4 */}
+                                       <div className="col-span-4">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Urbanization Type</label>
+                                          <select
+                                             value={house.cityType}
+                                             disabled={isHraSaved || isReadOnly}
+                                             onChange={(e) => updateHouse(house.id, 'cityType', e.target.value)}
+                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 bg-white disabled:bg-slate-50"
+                                          >
+                                             <option>Metro</option>
+                                             <option>Non-Metro</option>
+                                          </select>
+                                       </div>
+                                       <div className="col-span-5">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">LANDLORD'S PAN</label>
+                                          <input
+                                             type="text"
+                                             value={house.pan}
+                                             disabled={isHraSaved || isReadOnly}
+                                             onChange={(e) => updateHouse(house.id, 'pan', e.target.value)}
+                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 uppercase disabled:bg-slate-50"
+                                          />
                                        </div>
                                     </div>
                                  </div>
                               ))}
 
-                              {declarations.filter(d => d.section === section.code).length === 0 && (
-                                 <div className="px-6 py-10 text-center">
-                                    <p className="text-sm text-slate-400 font-medium">No items declared in this section</p>
+                              {!isHraSaved && !isReadOnly && (
+                                 <button
+                                    onClick={() => setRentedHouses([...rentedHouses, { id: Date.now(), from: '', to: '', amount: 0, address: '', landlord: '', cityType: 'Non-Metro', pan: '' }])}
+                                    className="text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1"
+                                 >
+                                    <Plus size={16} className="bg-blue-100 rounded-full p-0.5" /> Add Rented House
+                                 </button>
+                              )}
+                           </div>
+                        )}
+                     </div>
+                  );
+               } else if (section.code === 'HOME_LOAN') {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
+                           </div>
+
+                           <div className="flex items-center gap-4">
+                              {homeLoanEnabled && (
+                                 <button
+                                    onClick={() => !isReadOnly && setIsHomeLoanSaved(!isHomeLoanSaved)}
+                                    disabled={isReadOnly}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isHomeLoanSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={isHomeLoanSaved ? "Edit Details" : "Save Details"}
+                                 >
+                                    {isHomeLoanSaved ? <Edit2 size={14} /> : <Check size={16} />}
+                                 </button>
+                              )}
+
+                              <div className="flex items-center gap-3">
+                                 <span className={`text-xs font-bold ${homeLoanEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{homeLoanEnabled ? 'Yes' : 'No'}</span>
+                                 <button
+                                    onClick={() => {
+                                       if (!isHomeLoanSaved && !isReadOnly) {
+                                          setHomeLoanEnabled(!homeLoanEnabled);
+                                          if (homeLoanEnabled) setIsHomeLoanSaved(false);
+                                       }
+                                    }}
+                                    disabled={isHomeLoanSaved || isReadOnly}
+                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${homeLoanEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isHomeLoanSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                 >
+                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+
+                        {homeLoanEnabled && (
+                           <div className={`p-6 space-y-6 animate-fade-in-up ${isHomeLoanSaved ? 'opacity-70' : ''}`}>
+                              <div className="grid grid-cols-12 gap-6">
+                                 {/* Loan Sanction Details */}
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                                       Loan Sanction Date
+                                       <div className="group relative">
+                                          <Info size={12} className="text-slate-400 cursor-help" />
+                                          <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
+                                             Enter the date when your home loan was officially approved/sanctioned by the lender. This date is mentioned in your loan sanction letter.
+                                             <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
+                                          </div>
+                                       </div>
+                                    </label>
+                                    <input
+                                       type="date"
+                                       max={new Date().toISOString().split('T')[0]}
+                                       value={homeLoanDetails.sanctionDate}
+                                       disabled={isHomeLoanSaved || isReadOnly}
+                                       onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, sanctionDate: e.target.value })}
+                                       className={`w-full px-3 py-2 border rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50 ${homeLoanDetails.sanctionDate && new Date(homeLoanDetails.sanctionDate) > new Date() ? 'border-rose-500 bg-rose-50' : 'border-slate-200'
+                                          }`}
+                                    />
+                                    {homeLoanDetails.sanctionDate && new Date(homeLoanDetails.sanctionDate) > new Date() && (
+                                       <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                                          <AlertTriangle size={10} /> Invalid Loan sanction date
+                                       </p>
+                                    )}
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                                       Sanctioned Loan Amount
+                                       <div className="group relative">
+                                          <Info size={12} className="text-slate-400 cursor-help" />
+                                          <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
+                                             Enter the total home loan amount approved by your lender (as mentioned in your loan sanction letter).
+                                             <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
+                                          </div>
+                                       </div>
+                                    </label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={homeLoanDetails.sanctionedAmount}
+                                          disabled={isHomeLoanSaved || isReadOnly}
+                                          onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, sanctionedAmount: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+
+                                 {/* Principal */}
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Principal Paid on Home Loan</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={homeLoanDetails.principal}
+                                          disabled={isHomeLoanSaved || isReadOnly}
+                                          onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, principal: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 italic">This will be automatically included in the 80C section</p>
+                                 </div>
+
+                                 {/* Interest */}
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest Paid on Home Loan</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={homeLoanDetails.interest}
+                                          disabled={isHomeLoanSaved || isReadOnly}
+                                          onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, interest: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 italic">This will be automatically included in the Section 24</p>
+                                 </div>
+
+                                 {/* Lender Name */}
+                                 <div className="col-span-12">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Name of the Lender</label>
+                                    <input
+                                       type="text"
+                                       value={homeLoanDetails.lender}
+                                       disabled={isHomeLoanSaved || isReadOnly}
+                                       onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, lender: e.target.value })}
+                                       className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                    />
+                                 </div>
+
+                                 {/* Lender PAN */}
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Lender PAN</label>
+                                    <input
+                                       type="text"
+                                       value={homeLoanDetails.lenderPan}
+                                       disabled={isHomeLoanSaved || isReadOnly}
+                                       onChange={(e) => setHomeLoanDetails({ ...homeLoanDetails, lenderPan: e.target.value })}
+                                       className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 uppercase disabled:bg-slate-50"
+                                    />
+                                 </div>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                  );
+               } else if (section.code === 'LET_OUT') {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
+                           </div>
+
+                           <div className="flex items-center gap-4">
+                              {letOutEnabled && (
+                                 <button
+                                    onClick={() => !isReadOnly && setIsLetOutSaved(!isLetOutSaved)}
+                                    disabled={isReadOnly}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isLetOutSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={isLetOutSaved ? "Edit Details" : "Save Details"}
+                                 >
+                                    {isLetOutSaved ? <Edit2 size={14} /> : <Check size={16} />}
+                                 </button>
+                              )}
+
+                              <div className="flex items-center gap-3">
+                                 <span className={`text-xs font-bold ${letOutEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{letOutEnabled ? 'Yes' : 'No'}</span>
+                                 <button
+                                    onClick={() => {
+                                       if (!isLetOutSaved && !isReadOnly) {
+                                          setLetOutEnabled(!letOutEnabled);
+                                          if (letOutEnabled) setIsLetOutSaved(false);
+                                       }
+                                    }}
+                                    disabled={isLetOutSaved || isReadOnly}
+                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${letOutEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isLetOutSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                 >
+                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+
+                        {letOutEnabled && (
+                           <div className="p-6 space-y-8">
+                              {letOutProperties.map((prop, index) => (
+                                 <div key={prop.id} className={`space-y-6 animate-fade-in-up ${isLetOutSaved ? 'opacity-70' : ''}`}>
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                       <h4 className="text-sm font-bold text-slate-800">Property Details {letOutProperties.length > 1 ? `#${index + 1}` : ''}</h4>
+                                       {index > 0 && !isLetOutSaved && !isReadOnly && (
+                                          <button onClick={() => removeLetOutProperty(prop.id)} className="text-rose-500 hover:bg-rose-50 p-1 rounded-md transition-colors">
+                                             <Trash2 size={16} />
+                                          </button>
+                                       )}
+                                    </div>
+
+                                    <div className="grid grid-cols-12 gap-6">
+                                       <div className="col-span-12 md:col-span-6">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Annual Rent Received</label>
+                                          <div className="relative">
+                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={prop.annualRent}
+                                                disabled={isLetOutSaved || isReadOnly}
+                                                onChange={(e) => updateLetOutProperty(prop.id, 'annualRent', Number(e.target.value))}
+                                                className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                             />
+                                          </div>
+                                       </div>
+                                       <div className="col-span-12 md:col-span-6">
+                                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Municipal Taxes Paid</label>
+                                          <div className="relative">
+                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={prop.municipalTaxes}
+                                                disabled={isLetOutSaved || isReadOnly}
+                                                onChange={(e) => updateLetOutProperty(prop.id, 'municipalTaxes', Number(e.target.value))}
+                                                className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       <div className="col-span-12">
+                                          <label className="flex items-center gap-3 cursor-pointer group">
+                                             <input
+                                                type="checkbox"
+                                                checked={prop.hasHomeLoan}
+                                                disabled={isLetOutSaved || isReadOnly}
+                                                onChange={(e) => updateLetOutProperty(prop.id, 'hasHomeLoan', e.target.checked)}
+                                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                                             />
+                                             <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Does this property have a home loan?</span>
+                                          </label>
+                                       </div>
+
+                                       {prop.hasHomeLoan && (
+                                          <div className="col-span-12 grid grid-cols-12 gap-6 pt-2 animate-in slide-in-from-top-2">
+                                             <div className="col-span-12 md:col-span-6">
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Principal Paid</label>
+                                                <div className="relative">
+                                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                                   <input
+                                                      type="number"
+                                                      value={prop.principal}
+                                                      disabled={isLetOutSaved || isReadOnly}
+                                                      onChange={(e) => updateLetOutProperty(prop.id, 'principal', Number(e.target.value))}
+                                                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                                   />
+                                                </div>
+                                             </div>
+                                             <div className="col-span-12 md:col-span-6">
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest Paid</label>
+                                                <div className="relative">
+                                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                                   <input
+                                                      type="number"
+                                                      value={prop.interest}
+                                                      disabled={isLetOutSaved || isReadOnly}
+                                                      onChange={(e) => updateLetOutProperty(prop.id, 'interest', Number(e.target.value))}
+                                                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                                   />
+                                                </div>
+                                             </div>
+                                             <div className="col-span-12 md:col-span-6">
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Lender Name</label>
+                                                <input
+                                                   type="text"
+                                                   value={prop.lender}
+                                                   disabled={isLetOutSaved || isReadOnly}
+                                                   onChange={(e) => updateLetOutProperty(prop.id, 'lender', e.target.value)}
+                                                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
+                                                />
+                                             </div>
+                                             <div className="col-span-12 md:col-span-6">
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Lender PAN</label>
+                                                <input
+                                                   type="text"
+                                                   value={prop.lenderPan}
+                                                   disabled={isLetOutSaved || isReadOnly}
+                                                   onChange={(e) => updateLetOutProperty(prop.id, 'lenderPan', e.target.value)}
+                                                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 uppercase disabled:bg-slate-50"
+                                                />
+                                             </div>
+                                          </div>
+                                       )}
+                                    </div>
+                                 </div>
+                              ))}
+
+                              {!isLetOutSaved && !isReadOnly && (
+                                 <button
+                                    onClick={() => setLetOutProperties([...letOutProperties, { id: Date.now(), annualRent: 0, municipalTaxes: 0, hasHomeLoan: false, principal: 0, interest: 0, lender: '', lenderPan: '' }])}
+                                    className="text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1"
+                                 >
+                                    <Plus size={16} className="bg-blue-100 rounded-full p-0.5" /> Add Let Out Property
+                                 </button>
+                              )}
+                           </div>
+                        )}
+                     </div>
+                  );
+               } else if (section.code === 'OTHER_INCOME') {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
+                           </div>
+
+                           <div className="flex items-center gap-4">
+                              {otherIncomeEnabled && (
+                                 <button
+                                    onClick={() => !isReadOnly && setIsOtherIncomeSaved(!isOtherIncomeSaved)}
+                                    disabled={isReadOnly}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOtherIncomeSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={isOtherIncomeSaved ? "Edit Details" : "Save Details"}
+                                 >
+                                    {isOtherIncomeSaved ? <Edit2 size={14} /> : <Check size={16} />}
+                                 </button>
+                              )}
+
+                              <div className="flex items-center gap-3">
+                                 <span className={`text-xs font-bold ${otherIncomeEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{otherIncomeEnabled ? 'Yes' : 'No'}</span>
+                                 <button
+                                    onClick={() => {
+                                       if (!isOtherIncomeSaved && !isReadOnly) {
+                                          setOtherIncomeEnabled(!otherIncomeEnabled);
+                                          if (otherIncomeEnabled) setIsOtherIncomeSaved(false);
+                                       }
+                                    }}
+                                    disabled={isOtherIncomeSaved || isReadOnly}
+                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${otherIncomeEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isOtherIncomeSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                 >
+                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+
+                        {otherIncomeEnabled && (
+                           <div className={`p-6 space-y-6 animate-fade-in-up ${isOtherIncomeSaved ? 'opacity-70' : ''}`}>
+                              <div className="grid grid-cols-12 gap-6">
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Any Other Income (Interest, etc.)</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={otherIncomeDetails.otherSourceIncome}
+                                          disabled={isOtherIncomeSaved || isReadOnly}
+                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, otherSourceIncome: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from Savings Account</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={otherIncomeDetails.savingsInterest}
+                                          disabled={isOtherIncomeSaved || isReadOnly}
+                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, savingsInterest: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 italic">Deduction up to ₹10,000 under 80TTA applied in Old Regime only</p>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from Fixed Deposits (FDs)</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={otherIncomeDetails.fdInterest}
+                                          disabled={isOtherIncomeSaved || isReadOnly}
+                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, fdInterest: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="col-span-12 md:col-span-6">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from NSC</label>
+                                    <div className="relative">
+                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                                       <input
+                                          type="number"
+                                          value={otherIncomeDetails.nscInterest}
+                                          disabled={isOtherIncomeSaved || isReadOnly}
+                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, nscInterest: Number(e.target.value) })}
+                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                  );
+               } else {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
+                        {/* Section Header */}
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center group cursor-pointer" onClick={() => !isReadOnly && addNewRow(section.code)}>
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
+                           </div>
+                           {!isReadOnly && (
+                              <button className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors">
+                                 <Plus size={16} />
+                              </button>
+                           )}
+                        </div>
+
+                        {/* Section Rows */}
+                        <div className="divide-y divide-slate-100">
+                           {declarations.filter(d => d.section === section.code).map((row) => (
+                              <div key={row.id} className="p-6 space-y-4 animate-in slide-in-from-left-2">
+                                 <div className="flex flex-col md:flex-row gap-4">
+                                    <div className="flex-1">
+                                       {['80C', '80D', '80CCD', '80E', '80G', '80DDB', 'OTHERS'].includes(section.code) ? (
+                                          <select
+                                             value={row.title}
+                                             disabled={isReadOnly}
+                                             onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
+                                             className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-93%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
+                                          >
+                                             <option value="">Select Investment Type</option>
+                                             {(section.code === '80C' ? SECTION_80C_OPTIONS :
+                                                section.code === '80D' ? SECTION_80D_OPTIONS :
+                                                   section.code === '80CCD' ? SECTION_80CCD_OPTIONS :
+                                                      section.code === '80E' ? SECTION_80E_OPTIONS :
+                                                         section.code === '80G' ? SECTION_80G_OPTIONS :
+                                                            section.code === '80DDB' ? SECTION_80DDB_OPTIONS :
+                                                               SECTION_OTHERS_OPTIONS).map(opt => (
+                                                                  <option key={opt} value={opt}>{opt}</option>
+                                                               ))}
+                                          </select>
+                                       ) : (
+                                          <input
+                                             type="text"
+                                             placeholder="Investment Description (e.g. LIC Policy #123)"
+                                             value={row.title}
+                                             disabled={isReadOnly}
+                                             onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
+                                             className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
+                                          />
+                                       )}
+                                    </div>
+                                    <div className="w-full md:w-48">
+                                       <div className="relative">
+                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
+                                          <input
+                                             type="number"
+                                             placeholder="0"
+                                             value={row.amount || ''}
+                                             disabled={isReadOnly}
+                                             onChange={(e) => handleAmountChange(row.id, e.target.value)}
+                                             className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
+                                          />
+                                       </div>
+                                       {getLimitWarning(row.title, row.amount) && (
+                                          <p className="text-[10px] text-rose-500 font-bold mt-1 text-right">{getLimitWarning(row.title, row.amount)}</p>
+                                       )}
+                                    </div>
                                     {!isReadOnly && (
-                                       <button
-                                          onClick={() => addNewRow(section.code)}
-                                          className="mt-3 text-xs font-bold text-blue-600 hover:underline"
-                                       >
-                                          + Add First Investment
+                                       <button onClick={() => handleDeleteRow(row.id)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors group">
+                                          <Trash2 size={18} />
                                        </button>
                                     )}
                                  </div>
-                              )}
-                           </div>
-                        </div>
-                     );
-                  }
-               })}
 
-               {/* Action Buttons */}
-               <div className="pt-8 flex flex-col items-center gap-6">
-                  {isReadOnly ? (
-                     <div className="flex flex-col items-center gap-4">
-                        <div className="bg-emerald-50 border border-emerald-100 px-6 py-4 rounded-xl flex items-center gap-3">
-                           <div className="bg-emerald-500 text-white p-2 rounded-full shadow-lg shadow-emerald-500/20">
-                              <Check size={24} />
-                           </div>
-                           <div>
-                              <h4 className="font-bold text-emerald-800">Declarations Submitted Successfully</h4>
-                              <p className="text-xs text-emerald-600">Your tax planning for FY 2025-26 is now locked and under review.</p>
-                           </div>
-                        </div>
-                        <button
-                           onClick={() => setView('DASHBOARD')}
-                           className="text-slate-500 hover:text-slate-800 font-bold text-sm flex items-center gap-2 transition-colors"
-                        >
-                           <ArrowLeft size={16} /> Back to Dashboard
-                        </button>
-                     </div>
-                  ) : (
-                     <>
-                        <div className="flex items-center gap-4">
-                           <button
-                              onClick={onDraft}
-                              className="px-8 py-3.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold transition-all shadow-sm"
-                           >
-                              Save as Draft
-                           </button>
-                           <button
-                              onClick={onSubmitClick}
-                              className="px-10 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
-                           >
-                              <Send size={18} /> Submit Declarations
-                           </button>
-                        </div>
-                        <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
-                           <Shield size={14} /> All data is securely encrypted and stored as per company policy
-                        </p>
-                     </>
-                  )}
-               </div>
-            </div>
-         )}
+                                 {/* Proof Uploads Area */}
+                                 <div className="bg-slate-50/50 rounded-lg p-4 border border-dashed border-slate-200">
+                                    <div className="flex flex-wrap gap-2 items-center">
+                                       <span className="text-[10px] font-bold text-slate-400 uppercase mr-2">Proofs:</span>
+                                       {row.files.map((file, fIdx) => (
+                                          <div key={fIdx} className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 group shadow-sm animate-in zoom-in-95">
+                                             <Paperclip size={12} className="text-blue-500" />
+                                             <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]">{file}</span>
+                                             {!isReadOnly && (
+                                                <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
+                                                   <X size={12} />
+                                                </button>
+                                             )}
+                                          </div>
+                                       ))}
 
-         {/* Confirmation Modal */}
-         {showConfirmModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-               <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)}></div>
-               <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
-                  <div className="p-8">
-                     <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
-                        <Send size={32} />
-                     </div>
-                     <h3 className="text-2xl font-bold text-slate-900 mb-3">Submit Declarations?</h3>
-                     <p className="text-slate-500 leading-relaxed mb-8">
-                        You are about to submit your tax declarations for <strong>FY 2025-26</strong> using the <strong>{planningRegime} Regime</strong>.
-                        Ensure all details and proofs are accurate. You can edit this until the deadline (31 Mar 2026).
-                     </p>
+                                       {!isReadOnly && (
+                                          <button
+                                             onClick={() => {
+                                                setActiveUploadId(row.id);
+                                                fileInputRef.current?.click();
+                                             }}
+                                             className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors border border-blue-100"
+                                          >
+                                             <CloudUpload size={14} /> Upload Proof
+                                          </button>
+                                       )}
 
-                     <div className="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-100">
-                        <div className="flex justify-between items-center mb-3 text-sm">
-                           <span className="text-slate-500 font-medium">Selected Regime</span>
-                           <span className="font-bold text-slate-900">{planningRegime} Regime</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                           <span className="text-slate-500 font-medium">Projected Tax Liability</span>
-                           <span className="text-lg font-black text-blue-600">₹ {(planningRegime === 'OLD' ? taxCalc.oldRegimeTax : taxCalc.newRegimeTax).toLocaleString()}</span>
-                        </div>
-                     </div>
+                                       {row.files.length === 0 && isReadOnly && (
+                                          <span className="text-xs text-slate-400 italic">No proofs uploaded</span>
+                                       )}
+                                    </div>
+                                 </div>
+                              </div>
+                           ))}
 
-                     <div className="flex gap-4">
-                        <button
-                           onClick={() => setShowConfirmModal(false)}
-                           className="flex-1 px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors"
-                        >
-                           Not yet
-                        </button>
-                        <button
-                           onClick={onConfirmSubmit}
-                           disabled={isSubmitting}
-                           className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
-                        >
-                           {isSubmitting ? (
-                              <>
-                                 <Loader2 size={20} className="animate-spin" /> Submitting...
-                              </>
-                           ) : (
-                              'Yes, Submit'
+                           {declarations.filter(d => d.section === section.code).length === 0 && (
+                              <div className="px-6 py-10 text-center">
+                                 <p className="text-sm text-slate-400 font-medium">No items declared in this section</p>
+                                 {!isReadOnly && (
+                                    <button
+                                       onClick={() => addNewRow(section.code)}
+                                       className="mt-3 text-xs font-bold text-blue-600 hover:underline"
+                                    >
+                                       + Add First Investment
+                                    </button>
+                                 )}
+                              </div>
                            )}
+                        </div>
+                     </div>
+                  );
+               }
+            })}
+
+            {/* Action Buttons */}
+            <div className="pt-8 flex flex-col items-center gap-6">
+               {isReadOnly ? null : (
+                  <>
+                     <div className="flex items-center gap-4">
+                        <button
+                           onClick={onSubmitClick}
+                           className="px-10 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
+                        >
+                           <Send size={18} /> Submit Declarations
                         </button>
+                     </div>
+                     <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
+                        <Shield size={14} /> All data is securely encrypted and stored as per company policy
+                     </p>
+                  </>
+               )}
+            </div>
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+               <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                  <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)}></div>
+                  <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
+                     <div className="p-8">
+                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
+                           <Send size={32} />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-900 mb-3">Submit Declarations?</h3>
+                        <p className="text-slate-500 leading-relaxed mb-8">
+                           You are about to submit your tax declarations for <strong>FY 2025-26</strong> using the <strong>{planningRegime} Regime</strong>.
+                           Ensure all details and proofs are accurate. You can edit this until the deadline (31 Mar 2026).
+                        </p>
+
+                        <div className="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-100">
+                           <div className="flex justify-between items-center mb-3 text-sm">
+                              <span className="text-slate-500 font-medium">Selected Regime</span>
+                              <span className="font-bold text-slate-900">{planningRegime} Regime</span>
+                           </div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-500 font-medium">Projected Tax Liability</span>
+                              <span className="text-lg font-black text-blue-600">₹ {(planningRegime === 'OLD' ? taxCalc.oldRegimeTax : taxCalc.newRegimeTax).toLocaleString()}</span>
+                           </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                           <button
+                              onClick={() => setShowConfirmModal(false)}
+                              className="flex-1 px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors"
+                           >
+                              Cancel
+                           </button>
+                           <button
+                              onClick={onConfirmSubmit}
+                              disabled={isSubmitting}
+                              className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                           >
+                              {isSubmitting ? (
+                                 <>
+                                    <Loader2 size={20} className="animate-spin" /> Submitting...
+                                 </>
+                              ) : (
+                                 'Submit'
+                              )}
+                           </button>
+                        </div>
                      </div>
                   </div>
                </div>
-            </div>
-         )}
+            )}
+         </div>
+      );
+   };
+
+   return (
+      <div className="pb-10 max-w-[1536px] mx-auto xl:max-w-screen-2xl px-4">
+         {view === 'DASHBOARD' && renderDashboard()}
+         {view === 'PLANNING' && renderPlanning()}
+         {view === 'CALCULATOR' && renderCalculator()}
       </div>
    );
 };
