@@ -358,7 +358,7 @@ const TaxPlanning: React.FC = () => {
    }, []);
 
    // Save Data
-   const saveData = async () => {
+   const saveData = async (statusOverride?: 'NEW' | 'DRAFT' | 'SUBMITTED') => {
       // Prepare JSONB blob
       const currentData: TaxPlanningData = {
          declarations,
@@ -379,6 +379,8 @@ const TaxPlanning: React.FC = () => {
          isPrevEmploymentSaved
       };
 
+      const finalStatus = statusOverride || declarationStatus;
+
       try {
          const { error } = await supabase
             .from('tax_declarations')
@@ -387,7 +389,7 @@ const TaxPlanning: React.FC = () => {
                employee_id: EMPLOYEE_ID,
                financial_year: FINANCIAL_YEAR,
                regime: planningRegime,
-               status: declarationStatus === 'SUBMITTED' ? 'Submitted' : 'Draft',
+               status: finalStatus === 'SUBMITTED' ? 'Submitted' : finalStatus === 'DRAFT' ? 'Draft' : 'New',
                declaration_data: currentData,
                last_updated_at: new Date().toISOString()
             }, { onConflict: 'id' });
@@ -617,16 +619,23 @@ const TaxPlanning: React.FC = () => {
       setShowConfirmModal(true);
    };
 
-   const onConfirmSubmit = () => {
+   const onConfirmSubmit = async () => {
       setIsSubmitting(true);
-      setTimeout(() => {
+      try {
+         // Immediate persistence with SUBMITTED status
+         await saveData('SUBMITTED');
          setDeclarationStatus('SUBMITTED');
          setIsEditMode(false);
-         setIsSubmitting(false);
          setShowConfirmModal(false);
          setView('DASHBOARD');
-      }, 1500);
-   };   const sections = [
+      } catch (error) {
+         console.error("Failed to submit declaration:", error);
+      } finally {
+         setIsSubmitting(false);
+      }
+   };
+
+   const sections = [
       { code: 'PREV_EMPLOYMENT', name: 'Previous Employment Income', description: 'Declare income and tax details from your previous workplace within this FY.', limit: 'Gross Total Income', availableInNew: true },
       { code: 'HRA', name: 'House Rent Allowance (HRA)', description: 'Rent paid for accommodation (Section 10(13A))', limit: 'Exemption based on Rent Paid', availableInNew: false },
       { code: 'HOME_LOAN', name: 'Home Loan Interest (Section 24)', description: 'Interest deduction on self-occupied home loan.', limit: '₹ 2,00,000', availableInNew: false },
