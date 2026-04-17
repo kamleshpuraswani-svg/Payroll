@@ -231,7 +231,7 @@ const EmployeeLoansView = ({ onBack, loans }: { onBack: () => void, loans: any[]
     });
 
     return (
-        <div className="animate-fade-in space-y-6 max-w-[1400px] mx-auto relative">
+        <div className="animate-fade-in space-y-6 max-w-screen-2xl mx-auto relative px-4">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"><ArrowLeft size={20} /></button>

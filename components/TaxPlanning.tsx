@@ -623,11 +623,13 @@ const TaxPlanning: React.FC = () => {
    const renderDashboard = () => (
       <div className="space-y-8 animate-fade-in-up">
          {/* My Investments Header Card */}
-         <div className="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-3xl border border-slate-200 shadow-sm gap-4">
+         <div className="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl border border-slate-200 shadow-sm gap-4 transition-all">
             <div className="flex items-center gap-4">
-               <div className="w-14 h-14 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center">
-                  <Layers size={28} className="text-blue-600" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+               <div className="group relative">
+                  <div className="w-14 h-14 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                     <Layers size={28} className="text-blue-600" />
+                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+                  </div>
                </div>
                <div>
                   <h1 className="text-2xl font-bold text-slate-800">My Investments</h1>
@@ -635,15 +637,15 @@ const TaxPlanning: React.FC = () => {
                </div>
             </div>
 
+            {/* Investment Declarations Banner - Moved from separate section */}
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-2.5 flex items-center gap-3 animate-pulse-slow">
+               <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-full shrink-0"><Clock size={16} /></div>
+               <p className="text-xs font-bold text-emerald-800">Investment Declarations Open – Submit by 31 Mar 2026</p>
+            </div>
          </div>
 
-         {/* Green Banner */}
-         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-4">
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-full shrink-0"><Clock size={20} /></div>
-            <p className="text-sm font-bold text-emerald-800">Investment Declarations Open – Submit by 31 Mar 2026</p>
-         </div>
          {/* Hero Card */}
-         <div className="bg-[#0f172a] rounded-[32px] p-10 text-white relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 shadow-xl">
+         <div className="bg-[#0f172a] rounded-2xl p-10 text-white relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 shadow-xl">
             <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full -translate-y-40 translate-x-40 blur-3xl pointer-events-none"></div>
 
             <div className="space-y-8 z-10 max-w-xl relative">
@@ -656,13 +658,13 @@ const TaxPlanning: React.FC = () => {
                   <div className="flex flex-col sm:flex-row gap-4">
                      <button
                         onClick={() => setView('PLANNING')}
-                        className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20 group whitespace-nowrap"
+                        className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20 group whitespace-nowrap"
                      >
                         {declarationStatus === 'NEW' ? 'Start Planning' : declarationStatus === 'DRAFT' ? 'Continue Planning' : 'View Submission'} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                      </button>
                      <button
                         onClick={() => setView('CALCULATOR')}
-                        className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
+                        className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
                      >
                         <Plus size={20} className="rotate-45" /> Income Tax Calculator
                      </button>
@@ -677,7 +679,7 @@ const TaxPlanning: React.FC = () => {
             </div>
 
             {/* TDS Projection Box - Dynamic */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-8 rounded-3xl w-full lg:w-96 backdrop-blur-md relative z-10">
+            <div className="bg-slate-800/40 border border-slate-700/50 p-8 rounded-xl w-full lg:w-96 backdrop-blur-md relative z-10">
                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Current TDS Projection</p>
                <div className="space-y-5">
                   <div className="flex justify-between items-center">
@@ -709,7 +711,7 @@ const TaxPlanning: React.FC = () => {
             <h3 className="text-lg font-bold text-slate-800 pl-1">Previous FY Declarations</h3>
 
             {historyData.map((data) => (
-               <div key={data.year} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all">
+               <div key={data.year} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all">
                   <div
                      onClick={() => setExpandedYear(expandedYear === data.year ? null : data.year)}
                      className={`px-8 py-5 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors ${expandedYear === data.year ? 'bg-slate-50/50 border-b border-slate-200' : ''}`}
@@ -847,7 +849,7 @@ const TaxPlanning: React.FC = () => {
                </div>
             </div>
 
-            <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden p-0">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-0">
                <div className="grid grid-cols-12">
                   {/* Left Main Content */}
                   <div className={`col-span-12 ${calcStep !== 'BASIC' ? 'lg:col-span-8 border-r' : ''} border-slate-200`}>
@@ -877,7 +879,7 @@ const TaxPlanning: React.FC = () => {
                                        <select
                                           value={calcFY}
                                           onChange={(e) => setCalcFY(e.target.value)}
-                                          className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none overflow-hidden text-ellipsis whitespace-nowrap"
+                                          className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none overflow-hidden text-ellipsis whitespace-nowrap"
                                        >
                                           <option>FY 2026-2027 (Return to be filed between 1st April 2027 - 31st March 2028)</option>
                                           <option>FY 2025-2026 (Return to be filed between 1st April 2026 - 31st March 2027)</option>
@@ -891,7 +893,7 @@ const TaxPlanning: React.FC = () => {
                                        <select
                                           value={calcAgeGroup}
                                           onChange={(e) => setCalcAgeGroup(e.target.value as any)}
-                                          className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none"
+                                          className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none"
                                        >
                                           <option value="0-60">0-60</option>
                                           <option value="60-80">60-80</option>
@@ -908,7 +910,7 @@ const TaxPlanning: React.FC = () => {
                                     {/* New Regime Table */}
                                     <div className="space-y-4">
                                        <p className="text-center font-bold text-slate-600">New Regime Slab Rates</p>
-                                       <table className="w-full border-collapse rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+                                       <table className="w-full border-collapse rounded-xl overflow-hidden border border-slate-100 shadow-sm">
                                           <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-500 tracking-wider">
                                              <tr>
                                                 <th className="px-6 py-4 text-left border-b border-slate-100">Income Tax Slabs (Rs.)</th>
@@ -929,7 +931,7 @@ const TaxPlanning: React.FC = () => {
                                     {/* Old Regime Table */}
                                     <div className="space-y-4">
                                        <p className="text-center font-bold text-slate-600">Old Regime Slab Rates</p>
-                                       <table className="w-full border-collapse rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+                                       <table className="w-full border-collapse rounded-xl overflow-hidden border border-slate-100 shadow-sm">
                                           <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-500 tracking-wider">
                                              <tr>
                                                 <th className="px-6 py-4 text-left border-b border-slate-100">Income Tax Slabs (Rs.)</th>
@@ -951,7 +953,7 @@ const TaxPlanning: React.FC = () => {
                               <div className="flex justify-center pt-10">
                                  <button
                                     onClick={() => setCalcStep('INCOME')}
-                                    className="px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/20 transition-all border border-blue-500"
+                                    className="px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black shadow-lg shadow-blue-500/20 transition-all border border-blue-500"
                                  >
                                     Continue
                                  </button>
@@ -975,7 +977,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcSalary || ''}
                                              onChange={(e) => setCalcSalary(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -991,7 +993,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcInterestIncome || ''}
                                              onChange={(e) => setCalcInterestIncome(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1007,7 +1009,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcRentalIncome || ''}
                                              onChange={(e) => setCalcRentalIncome(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1023,7 +1025,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcDigitalAssetsIncome || ''}
                                              onChange={(e) => setCalcDigitalAssetsIncome(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1042,7 +1044,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcExemptAllowances || ''}
                                              onChange={(e) => setCalcExemptAllowances(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1058,7 +1060,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcHomeLoanInterestSelf || ''}
                                              onChange={(e) => setCalcHomeLoanInterestSelf(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1074,7 +1076,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcHomeLoanInterestLetOut || ''}
                                              onChange={(e) => setCalcHomeLoanInterestLetOut(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1090,7 +1092,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcOtherIncome || ''}
                                              onChange={(e) => setCalcOtherIncome(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1100,13 +1102,13 @@ const TaxPlanning: React.FC = () => {
                               <div className="flex justify-center gap-6 pt-10">
                                  <button
                                     onClick={() => setCalcStep('BASIC')}
-                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-all min-w-[160px]"
+                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold transition-all min-w-[160px]"
                                  >
                                     Back
                                  </button>
                                  <button
                                     onClick={() => setCalcStep('DEDUCTION')}
-                                    className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all min-w-[160px]"
+                                    className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg shadow-blue-500/20 transition-all min-w-[160px]"
                                  >
                                     Continue
                                  </button>
@@ -1130,7 +1132,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80C || ''}
                                              onChange={(e) => setCalc80C(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1146,7 +1148,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80D || ''}
                                              onChange={(e) => setCalc80D(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1162,7 +1164,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80EEA || ''}
                                              onChange={(e) => setCalc80EEA(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1178,7 +1180,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80CCD2 || ''}
                                              onChange={(e) => setCalc80CCD2(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1197,7 +1199,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80TTA || ''}
                                              onChange={(e) => setCalc80TTA(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1213,7 +1215,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80G || ''}
                                              onChange={(e) => setCalc80G(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1229,7 +1231,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80CCD || ''}
                                              onChange={(e) => setCalc80CCD(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1245,7 +1247,7 @@ const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calcOtherDeductions || ''}
                                              onChange={(e) => setCalcOtherDeductions(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1255,13 +1257,13 @@ const TaxPlanning: React.FC = () => {
                               <div className="flex justify-center gap-6 pt-10">
                                  <button
                                     onClick={() => setCalcStep('INCOME')}
-                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-all min-w-[170px]"
+                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold transition-all min-w-[170px]"
                                  >
                                     Back
                                  </button>
                                  <button
                                     onClick={() => setCalcStep('SUMMARY')}
-                                    className="px-10 py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl font-bold transition-all min-w-[170px]"
+                                    className="px-10 py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg font-bold transition-all min-w-[170px]"
                                  >
                                     View Calculation
                                  </button>
@@ -1360,19 +1362,19 @@ const TaxPlanning: React.FC = () => {
                                  <div className="lg:col-span-7 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                        {/* Total Income Card */}
-                                       <div className="bg-slate-50/50 rounded-[28px] p-8 border border-slate-100 flex flex-col items-center justify-center text-center space-y-3">
+                                       <div className="bg-slate-50/50 rounded-xl p-8 border border-slate-100 flex flex-col items-center justify-center text-center space-y-3">
                                           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total income</p>
                                           <p className="text-4xl font-black text-slate-800">₹ {(calcSummaryRegime === 'NEW' ? newResult.totalIncome : oldResult.totalIncome).toLocaleString()}</p>
                                        </div>
 
                                        {/* Taxable Income Card */}
-                                       <div className="bg-slate-50/50 rounded-[28px] p-8 border border-slate-100 flex flex-col items-center justify-center text-center space-y-3">
+                                       <div className="bg-slate-50/50 rounded-xl p-8 border border-slate-100 flex flex-col items-center justify-center text-center space-y-3">
                                           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Taxable income</p>
                                           <p className="text-4xl font-black text-slate-800">₹ {(calcSummaryRegime === 'NEW' ? newResult.taxableIncome : oldResult.taxableIncome).toLocaleString()}</p>
                                        </div>
 
                                        {/* Exemptions Breakdown Card */}
-                                       <div className="bg-slate-50/50 rounded-[28px] p-8 border border-slate-100 space-y-6">
+                                       <div className="bg-slate-50/50 rounded-xl p-8 border border-slate-100 space-y-6">
                                           <div className="text-center">
                                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Exemption and deduction</p>
                                              <p className="text-4xl font-black text-slate-800">₹ {(calcSummaryRegime === 'NEW' ? (newResult.exemptAllowances + newResult.standardDeduction) : (oldResult.exemptAllowances + oldResult.standardDeduction + oldResult.chapterVIA)).toLocaleString()}</p>
@@ -1394,7 +1396,7 @@ const TaxPlanning: React.FC = () => {
                                        </div>
 
                                        {/* Tax Payable Breakdown Card */}
-                                       <div className="bg-slate-50/50 rounded-[28px] p-8 border border-slate-100 space-y-6">
+                                       <div className="bg-slate-50/50 rounded-xl p-8 border border-slate-100 space-y-6">
                                           <div className="text-center">
                                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tax payable</p>
                                              <p className="text-4xl font-black text-slate-800">₹ {(calcSummaryRegime === 'NEW' ? newResult.totalTax : oldResult.totalTax).toLocaleString()}</p>
@@ -1426,7 +1428,7 @@ const TaxPlanning: React.FC = () => {
                   {calcStep !== 'BASIC' && calcStep !== 'SUMMARY' && (
                      <div className="col-span-12 lg:col-span-4 bg-slate-50/50 p-8 h-full">
                         <div className="sticky top-8 space-y-8">
-                           <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 space-y-8">
+                           <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 space-y-8">
                               <h3 className="text-xl font-bold text-center text-slate-800">Tax Liability Summary</h3>
 
                               <div className="space-y-6">
@@ -1447,14 +1449,14 @@ const TaxPlanning: React.FC = () => {
                                  </div>
                               </div>
 
-                              <div className={`p-6 rounded-2xl text-center transition-all ${newTax <= oldTax ? 'bg-emerald-50 border border-emerald-100' : 'bg-blue-50 border border-blue-100'}`}>
+                              <div className={`p-6 rounded-xl text-center transition-all ${newTax <= oldTax ? 'bg-emerald-50 border border-emerald-100' : 'bg-blue-50 border border-blue-100'}`}>
                                  <p className={`text-sm font-bold mb-1 ${newTax <= oldTax ? 'text-emerald-600' : 'text-blue-600'}`}>You save</p>
                                  <p className={`text-3xl font-black ${newTax <= oldTax ? 'text-emerald-700' : 'text-blue-700'}`}>₹ {Math.abs(oldTax - newTax).toLocaleString()}</p>
                               </div>
 
                            </div>
 
-                           <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 flex gap-4 items-start">
+                           <div className="bg-amber-50 rounded-xl p-5 border border-amber-100 flex gap-4 items-start">
                               <Info size={18} className="text-amber-500 mt-1 shrink-0" />
                               <p className="text-xs text-amber-800 leading-relaxed font-medium">
                                  Standard deduction of ₹75,000 is included in New Regime calculation for FY 2025-26.
@@ -1470,7 +1472,7 @@ const TaxPlanning: React.FC = () => {
    };
 
    return (
-      <div className="pb-10 max-w-[1400px] mx-auto">
+      <div className="pb-10 max-w-[1536px] mx-auto xl:max-w-screen-2xl px-4">
          {view === 'DASHBOARD' ? renderDashboard() : view === 'CALCULATOR' ? renderCalculator() : (
             <div className="space-y-6 animate-fade-in-up">
 
@@ -1507,7 +1509,7 @@ const TaxPlanning: React.FC = () => {
                            <CheckCircle size={16} className="fill-current" />
                         </div>
                      ) : (
-                        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
                            <button
                               onClick={() => setPlanningRegime('OLD')}
                               className={`px-5 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${planningRegime === 'OLD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -1526,7 +1528,7 @@ const TaxPlanning: React.FC = () => {
                </div>
 
                {/* Sticky Calculation Bar */}
-               <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg rounded-2xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-4">
+               <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-4">
                   <div className="flex items-center gap-6 divide-x divide-slate-200">
                      <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Projected Income</p>
@@ -1539,11 +1541,11 @@ const TaxPlanning: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-4">
-                     <div className={`px-4 py-2 rounded-xl border flex flex-col items-center ${planningRegime === 'OLD' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                     <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'OLD' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
                         <p className="text-[10px] font-bold text-slate-400 uppercase">Old Tax Liability</p>
                         <p className={`text-xl font-black ${planningRegime === 'OLD' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.oldRegimeTax.toLocaleString()}</p>
                      </div>
-                     <div className={`px-4 py-2 rounded-xl border flex flex-col items-center ${planningRegime === 'NEW' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                     <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'NEW' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
                         <p className="text-[10px] font-bold text-slate-400 uppercase">New Tax Liability</p>
                         <p className={`text-xl font-black ${planningRegime === 'NEW' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.newRegimeTax.toLocaleString()}</p>
                      </div>
@@ -1553,7 +1555,7 @@ const TaxPlanning: React.FC = () => {
                <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                {/* Sections Rendering */}
                {planningRegime === 'NEW' && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
                      <Info size={20} className="text-blue-600 shrink-0 mt-0.5" />
                      <p className="text-sm text-blue-800">
                         <strong>New Regime Selected:</strong> Most deductions like 80C, 80D, HRA, and Home Loan interest are not applicable. Standard Deduction of ₹75,000 is automatically applied. You may still declare specific investments under 'Others' if eligible (e.g. Employer NPS).
@@ -1567,7 +1569,7 @@ const TaxPlanning: React.FC = () => {
 
                   if (section.code === 'PREV_EMPLOYMENT') {
                      return (
-                        <div key={section.code} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                               <div>
                                  <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
@@ -1793,7 +1795,7 @@ const TaxPlanning: React.FC = () => {
 
                   if (section.code === 'HRA') {
                      return (
-                        <div key={section.code} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                               <div>
                                  <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
@@ -1939,7 +1941,7 @@ const TaxPlanning: React.FC = () => {
                      );
                   } else if (section.code === 'HOME_LOAN') {
                      return (
-                        <div key={section.code} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                               <div>
                                  <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
@@ -2091,7 +2093,7 @@ const TaxPlanning: React.FC = () => {
                      );
                   } else if (section.code === 'LET_OUT') {
                      return (
-                        <div key={section.code} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                               <div>
                                  <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
@@ -2250,7 +2252,7 @@ const TaxPlanning: React.FC = () => {
                      );
                   } else if (section.code === 'OTHER_INCOME') {
                      return (
-                        <div key={section.code} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                               <div>
                                  <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
@@ -2350,7 +2352,7 @@ const TaxPlanning: React.FC = () => {
                      );
                   } else {
                      return (
-                        <div key={section.code} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
                            {/* Section Header */}
                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center group cursor-pointer" onClick={() => !isReadOnly && addNewRow(section.code)}>
                               <div>
@@ -2375,7 +2377,7 @@ const TaxPlanning: React.FC = () => {
                                                 value={row.title}
                                                 disabled={isReadOnly}
                                                 onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-9.3%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
+                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-9.3%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
                                              >
                                                 <option value="">Select Investment Type</option>
                                                 {(section.code === '80C' ? SECTION_80C_OPTIONS :
@@ -2391,7 +2393,7 @@ const TaxPlanning: React.FC = () => {
                                                 value={row.title}
                                                 disabled={isReadOnly}
                                                 onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
+                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
                                              />
                                           )}
                                        </div>
@@ -2404,7 +2406,7 @@ const TaxPlanning: React.FC = () => {
                                                 value={row.amount || ''}
                                                 disabled={isReadOnly}
                                                 onChange={(e) => handleAmountChange(row.id, e.target.value)}
-                                                className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
+                                                className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
                                              />
                                           </div>
                                           {getLimitWarning(row.title, row.amount) && (
@@ -2419,7 +2421,7 @@ const TaxPlanning: React.FC = () => {
                                     </div>
 
                                     {/* Proof Uploads Area */}
-                                    <div className="bg-slate-50/50 rounded-xl p-4 border border-dashed border-slate-200">
+                                    <div className="bg-slate-50/50 rounded-lg p-4 border border-dashed border-slate-200">
                                        <div className="flex flex-wrap gap-2 items-center">
                                           <span className="text-[10px] font-bold text-slate-400 uppercase mr-2">Proofs:</span>
                                           {row.files.map((file, fIdx) => (
@@ -2477,7 +2479,7 @@ const TaxPlanning: React.FC = () => {
                <div className="pt-8 flex flex-col items-center gap-6">
                   {isReadOnly ? (
                      <div className="flex flex-col items-center gap-4">
-                        <div className="bg-emerald-50 border border-emerald-100 px-6 py-4 rounded-2xl flex items-center gap-3">
+                        <div className="bg-emerald-50 border border-emerald-100 px-6 py-4 rounded-xl flex items-center gap-3">
                            <div className="bg-emerald-500 text-white p-2 rounded-full shadow-lg shadow-emerald-500/20">
                               <Check size={24} />
                            </div>
@@ -2498,13 +2500,13 @@ const TaxPlanning: React.FC = () => {
                         <div className="flex items-center gap-4">
                            <button
                               onClick={onDraft}
-                              className="px-8 py-3.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-2xl font-bold transition-all shadow-sm"
+                              className="px-8 py-3.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold transition-all shadow-sm"
                            >
                               Save as Draft
                            </button>
                            <button
                               onClick={onSubmitClick}
-                              className="px-10 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
+                              className="px-10 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
                            >
                               <Send size={18} /> Submit Declarations
                            </button>
@@ -2522,9 +2524,9 @@ const TaxPlanning: React.FC = () => {
          {showConfirmModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)}></div>
-               <div className="bg-white w-full max-w-lg rounded-[32px] overflow-hidden shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
+               <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
                   <div className="p-8">
-                     <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                     <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
                         <Send size={32} />
                      </div>
                      <h3 className="text-2xl font-bold text-slate-900 mb-3">Submit Declarations?</h3>
@@ -2533,7 +2535,7 @@ const TaxPlanning: React.FC = () => {
                         Ensure all details and proofs are accurate. You can edit this until the deadline (31 Mar 2026).
                      </p>
 
-                     <div className="bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-100">
+                     <div className="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-100">
                         <div className="flex justify-between items-center mb-3 text-sm">
                            <span className="text-slate-500 font-medium">Selected Regime</span>
                            <span className="font-bold text-slate-900">{planningRegime} Regime</span>
@@ -2547,14 +2549,14 @@ const TaxPlanning: React.FC = () => {
                      <div className="flex gap-4">
                         <button
                            onClick={() => setShowConfirmModal(false)}
-                           className="flex-1 px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-colors"
+                           className="flex-1 px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors"
                         >
                            Not yet
                         </button>
                         <button
                            onClick={onConfirmSubmit}
                            disabled={isSubmitting}
-                           className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                           className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                         >
                            {isSubmitting ? (
                               <>

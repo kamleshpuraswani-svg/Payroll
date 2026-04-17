@@ -1,0 +1,61 @@
+540:      <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300">
+543:         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+544:            <div className="flex items-center gap-3">
+551:               <div>
+552:                  <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+566:            <div className="flex items-center gap-3">
+603:         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+606:            <div className="xl:col-span-2 space-y-6">                {/* 1. Identity & Basic Info */}
+607:                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden text-slate-400">
+608:                   <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+613:                   <div className="p-6 flex flex-col sm:flex-row gap-6">
+615:                      <div className="flex flex-col items-center gap-3">
+616:                         <div className="relative group">
+617:                            <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
+625:                      <div className="flex-1 space-y-6">
+626:                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+627:                            <div className="sm:col-span-2">
+631:                            <div>
+635:                            <div>
+639:                            <div>
+643:                            <div>
+653:               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+654:                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+659:                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+661:                     <div className="space-y-6">
+662:                        <div>
+665:                              <div className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-slate-50">
+669:                              <div className="relative">
+685:                        <div id="effective-from-field-main">
+687:                           <div className="relative">
+705:                     <div className="space-y-6">
+706:                        <div>
+708:                           <div className="relative">
+720:                        <div>
+722:                           <div className="relative">
+737:                  <div className="px-6 pb-8 pt-6 border-t border-slate-100 bg-slate-50/30">
+739:                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-y-4 gap-x-6">
+750:                              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'bg-sky-600 border-sky-600 shadow-sm' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}>
+770:               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+771:                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+776:                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+777:                     <div>
+781:                     <div>
+783:                        <div className="relative">
+788:                     <div>
+792:                     <div>
+800:               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+801:                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+806:                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+807:                     <div>
+809:                        <div className="relative">
+814:                     <div>
+816:                        <div className="relative">
+821:                     <div>
+825:                     <div>
+827:                        <div className="relative">
+847:            <div className="xl:col-span-1">
+848:               <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-24">
+849:                  <div className="bg-slate-800 px-6 py-4 flex justify-between items-center text-white">
+855:                  <div className="overflow-x-auto">
+942:                     <div className="p-4 bg-yellow-50 border-t border-yellow-100 flex gap-3">
