@@ -753,50 +753,6 @@ const OperationalConfig: React.FC = () => {
                 {isExpenseExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
                         <div className="max-w-3xl space-y-8">
-                            {/* Submission Rules */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
-                                        Submission Deadline (Date)
-                                        <div className="group relative">
-                                            <Info size={14} className="text-slate-400 cursor-help" />
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case text-center">
-                                                The day of each month by which expense claims must be submitted.
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <select
-                                        value={expenseSettings.deadline_claims_date}
-                                        onChange={(e) => setExpenseSettings({...expenseSettings, deadline_claims_date: parseInt(e.target.value)})}
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-sky-500 transition-all"
-                                    >
-                                        {[...Array(31)].map((_, i) => (
-                                            <option key={i+1} value={i+1}>{i+1}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
-                                        Back-dated Claims Limit (Months)
-                                        <div className="group relative">
-                                            <Info size={14} className="text-slate-400 cursor-help" />
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case text-center">
-                                                Employees cannot claim expenses older than this period.
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <select
-                                        value={expenseSettings.backdated_limit_months}
-                                        onChange={(e) => setExpenseSettings({...expenseSettings, backdated_limit_months: parseInt(e.target.value)})}
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-sky-500 transition-all"
-                                    >
-                                        {[...Array(12)].map((_, i) => (
-                                            <option key={i+1} value={i+1}>{i+1} Months</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
                             {/* Approval Workflow */}
                             <div className="pt-6 border-t border-slate-100">
                                 <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
