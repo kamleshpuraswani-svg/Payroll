@@ -1486,12 +1486,17 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         <td className="px-6 py-4 text-right font-medium text-slate-600">₹{(loan.requestedAmount || 0).toLocaleString()}</td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">{loan.approvedAmount ? `₹${loan.approvedAmount.toLocaleString()}` : '—'}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(loan.status)}`}>
-                                                {userRole === 'EMPLOYEE' 
+                                            {(() => {
+                                                const displayStatus = userRole === 'EMPLOYEE' 
                                                     ? (['Active', 'Repaying'].includes(loan.status) ? 'Active' : (['Approved', 'Partially Approved'].includes(loan.status) ? 'Approved' : loan.status))
-                                                    : loan.status
-                                                }
-                                            </span>
+                                                    : loan.status;
+                                                const statusColor = getStatusColor(displayStatus);
+                                                return (
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${statusColor}`}>
+                                                        {displayStatus}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-right text-slate-600 font-bold">
                                             {loan.emiAmount ? `₹${loan.emiAmount.toLocaleString()}` : '—'}
