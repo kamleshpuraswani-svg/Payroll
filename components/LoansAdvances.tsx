@@ -223,10 +223,18 @@ const ViewLoanModal: React.FC<{
                 <div className="px-8 py-5 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
                     <div className="flex items-center gap-3">
                         <h3 className="font-black text-slate-800 text-xl tracking-tight">Loan Details</h3>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black border uppercase tracking-wider shadow-sm ${getStatusColor(loan.status)}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusColor(loan.status).split(' ')[1].replace('text-', 'bg-')}`} />
-                            {loan.status}
-                        </span>
+                        {(() => {
+                            const displayStatus = userRole === 'EMPLOYEE' 
+                                ? (['Active', 'Repaying'].includes(loan.status) ? 'Active' : (['Approved', 'Partially Approved'].includes(loan.status) ? 'Approved' : loan.status))
+                                : loan.status;
+                            const statusColor = getStatusColor(displayStatus);
+                            return (
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black border uppercase tracking-wider shadow-sm ${statusColor}`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusColor.split(' ')[1].replace('text-', 'bg-')}`} />
+                                    {displayStatus}
+                                </span>
+                            );
+                        })()}
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full text-slate-300 hover:text-slate-500 transition-all">
                         <X size={24} />
