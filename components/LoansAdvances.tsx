@@ -590,7 +590,7 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
 
                 <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3 sticky bottom-0 z-10 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
                     <button onClick={onClose} className="px-8 py-3 dark:bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm">Cancel</button>
-                    <button onClick={handleSave} className="px-8 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all transform active:scale-95">Save</button>
+                    <button onClick={handleSave} className="px-8 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all transform active:scale-95">Save</button>
                 </div>
             </div>
         </div>
@@ -677,9 +677,9 @@ const RejectLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onReje
 };
 
 // New Modal Component
-const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSave: (data: any) => void }> = ({ userRole, onClose, onSave }) => {
+const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string; onClose: () => void; onSave: (data: any) => void }> = ({ userRole, currentEmployeeId, onClose, onSave }) => {
     // Form State
-    const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState(currentEmployeeId || '');
     const [loanType, setLoanType] = useState<'Salary Advance' | 'Loan'>('Salary Advance');
     const [interestRate, setInterestRate] = useState('0');
     const [maxTenure, setMaxTenure] = useState('0');
@@ -1090,7 +1090,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; onClose: () => void; onSav
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-8 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all transform active:scale-95"
+                        className="px-8 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all transform active:scale-95"
                     >
                         Submit
                     </button>
@@ -1123,9 +1123,11 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
     
      const fetchLoans = async () => {
          const { data, error } = await supabase.from('employee_loans').select('*').order('created_at', { ascending: false });
+         let dbLoans: LoanRequest[] = [];
+         
          if (!error && data && data.length > 0) {
-             const formattedLoans: LoanRequest[] = data.map((item: any) => {
-                 const emp = MOCK_EMPLOYEES.find(e => e.id === item.employee_id) || MOCK_EMPLOYEES[0];
+             dbLoans = data.map((item: any) => {
+                 const emp = MOCK_EMPLOYEES.find(e => e.id === item.employee_id || e.employee_id === item.employee_id) || MOCK_EMPLOYEES[0];
                  return {
                      id: item.id,
                      employee: {
@@ -1144,16 +1146,18 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                      totalEmis: item.tenure_months,
                      remainingBalance: item.remaining_balance || item.amount,
                      interestRate: item.interest_rate,
+                     interestCalcType: item.interest_calc_type || 'flat',
                      disbursedDate: item.disbursed_date,
                      repaymentSchedule: item.repayment_schedule,
                      reason: item.reason,
                      repaymentMonth: item.repayment_month
                  };
              });
-             setLoans(formattedLoans);
-         } else {
-             setLoans(MOCK_LOANS);
          }
+         
+         // Merge DB loans with MOCK_LOANS (DB loans take priority if IDs clash, though unlikely)
+         const combined = [...dbLoans, ...MOCK_LOANS.filter(ml => !dbLoans.some(dl => dl.id === ml.id))];
+         setLoans(combined);
      };
 
     useEffect(() => {
@@ -1248,7 +1252,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
     };
 
     const handleCreateRequest = async (data: any) => {
-        const selectedEmp = MOCK_EMPLOYEES.find(e => e.id === data.employeeId);
+        const selectedEmp = MOCK_EMPLOYEES.find(e => e.id === data.employeeId || e.employee_id === data.employeeId);
         if (selectedEmp) {
             const requestedAmount = data.requestedAmount || 0;
             const maxTenure = data.maxTenure || 1;
@@ -1264,7 +1268,8 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                 interest_rate: interestRate,
                 remaining_balance: requestedAmount,
                 emi_amount: calculateInitialEmi(requestedAmount, interestRate, maxTenure),
-                repayment_month: data.repaymentMonth || 'February 2026'
+                repayment_month: data.repaymentMonth || 'February 2026',
+                interest_calc_type: data.interestCalcType || 'flat'
             };
             
             await supabase.from('employee_loans').insert([payload]);
@@ -1359,7 +1364,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
 
                         <button
                             onClick={() => setIsNewRequestOpen(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 shadow-sm transition-all ml-2"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2"
                         >
                             New Request
                         </button>
@@ -1499,6 +1504,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
             {isNewRequestOpen && (
                 <CreateLoanModal
                     userRole={userRole}
+                    currentEmployeeId={currentEmployeeId}
                     onClose={() => setIsNewRequestOpen(false)}
                     onSave={handleCreateRequest}
                 />
