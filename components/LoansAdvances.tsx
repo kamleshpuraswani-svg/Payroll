@@ -81,7 +81,7 @@ const MOCK_LOANS: LoanRequest[] = [
         requestedAmount: 200000,
         approvedAmount: 200000,
         requestDate: '05 Jan 2026',
-        status: 'Repaying',
+        status: 'Active',
         emiAmount: 18333,
         totalEmis: 12,
         remainingBalance: 146667,
