@@ -249,13 +249,14 @@ const ViewLoanModal: React.FC<{
                             </div>
                         </div>
 
-                        {/* Quick Action Icons (Only for Pending/HR) */}
                         <div className="flex items-center gap-2">
                             {loan.status === 'Pending' && (
+                                <button onClick={() => onEdit?.(loan)} title="Edit" className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all border border-indigo-100/50 shadow-sm">
+                                    <Edit2 size={18} />
+                                </button>
+                            )}
+                            {userRole !== 'EMPLOYEE' && loan.status === 'Pending' && (
                                 <>
-                                    <button onClick={() => onEdit?.(loan)} title="Edit" className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all border border-indigo-100/50 shadow-sm">
-                                        <Edit2 size={18} />
-                                    </button>
                                     <button onClick={() => onApprove?.(loan)} title="Approve" className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-100 transition-all border border-emerald-100/50 shadow-sm">
                                         <Check size={18} />
                                     </button>
@@ -1446,7 +1447,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                 {!['Rejected', 'Closed'].includes(loan.status) && (
+                                                {loan.status === 'Pending' && (
                                                     <button
                                                         onClick={() => setEditLoan(loan)}
                                                         className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
@@ -1454,7 +1455,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                     >
                                                         <Edit2 size={14} />
                                                     </button>
-                                                 )}
+                                                )}
                                              </div>
                                          </td>
                                     </tr>
