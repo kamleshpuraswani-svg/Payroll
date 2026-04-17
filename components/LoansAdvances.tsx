@@ -174,7 +174,13 @@ const MOCK_LOANS: LoanRequest[] = [
         remainingBalance: 150000,
         interestRate: 10,
         reason: 'Personal expense',
-        repaymentMonth: 'March 2026'
+        repaymentMonth: 'March 2026',
+        repaymentSchedule: Array.from({ length: 12 }, (_, i) => ({
+            emiNo: i + 1,
+            dueDate: new Date(2026, 2 + i, 10).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            amount: 13187,
+            status: 'Pending',
+        }))
     },
     {
         id: 'LA-2026-008',
