@@ -1277,11 +1277,13 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
         <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50 animate-in fade-in duration-300 relative">
 
             {/* Top Summary Cards */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
-                <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Active Loans</span>
-                    <span className="text-xl font-bold text-slate-800">{metricsData.activeCount}</span>
-                </div>
+            <div className={`bg-white border-b border-slate-200 px-6 py-4 grid ${userRole === 'EMPLOYEE' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 shrink-0`}>
+                {userRole !== 'EMPLOYEE' && (
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Active Loans</span>
+                        <span className="text-xl font-bold text-slate-800">{metricsData.activeCount}</span>
+                    </div>
+                )}
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Outstanding</span>
                     <span className="text-xl font-bold text-orange-600">₹{(metricsData.totalOutstanding / 100000).toFixed(2)}L</span>
@@ -1291,8 +1293,13 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                     <span className="text-xl font-bold text-slate-800">₹{(metricsData.totalLoanIssued / 100000).toFixed(2)}L</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overdue EMIs</span>
-                    <span className="text-xl font-bold text-rose-600 flex items-center gap-1"><AlertCircle size={16} /> ₹{metricsData.overdueAmount.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {userRole === 'EMPLOYEE' ? 'Upcoming EMIs' : 'Overdue EMIs'}
+                    </span>
+                    <span className={`text-xl font-bold ${userRole === 'EMPLOYEE' ? 'text-blue-600' : 'text-rose-600'} flex items-center gap-1`}>
+                        {userRole === 'EMPLOYEE' ? <Calendar size={16} /> : <AlertCircle size={16} />}
+                        ₹{metricsData.overdueAmount.toLocaleString()}
+                    </span>
                 </div>
             </div>
 
@@ -1363,7 +1370,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                         <table className="w-full text-left text-sm border-collapse">
                             <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0 z-10 shadow-sm border-b border-slate-200">
                                 <tr>
-                                    <th className="px-6 py-3">Employee Name & ID</th>
+                                    {userRole !== 'EMPLOYEE' && <th className="px-6 py-3">Employee Name & ID</th>}
                                     <th className="px-6 py-3">Loan Type</th>
                                     <th className="px-6 py-3 text-right">Requested Amount</th>
                                     <th className="px-6 py-3 text-right">Approved Amount</th>
@@ -1382,15 +1389,17 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         key={loan.id}
                                         className="hover:bg-slate-50 transition-colors group"
                                     >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <img src={loan.employee.avatar} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 object-cover" />
-                                                <div>
-                                                    <div className="font-bold text-slate-800">{loan.employee.name}</div>
-                                                    <div className="text-xs text-slate-400 font-mono">{loan.employee.id}</div>
+                                        {userRole !== 'EMPLOYEE' && (
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={loan.employee.avatar} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 object-cover" />
+                                                    <div>
+                                                        <div className="font-bold text-slate-800">{loan.employee.name}</div>
+                                                        <div className="text-xs text-slate-400 font-mono">{loan.employee.id}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold border ${getTypeColor(loan.type)}`}>
                                                 {loan.type}
@@ -1400,7 +1409,10 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">{loan.approvedAmount ? `₹${loan.approvedAmount.toLocaleString()}` : '—'}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(loan.status)}`}>
-                                                {loan.status}
+                                                {userRole === 'EMPLOYEE' 
+                                                    ? (['Active', 'Repaying'].includes(loan.status) ? 'Active' : (['Approved', 'Partially Approved'].includes(loan.status) ? 'Approved' : loan.status))
+                                                    : loan.status
+                                                }
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right text-slate-600 font-bold">
