@@ -94,9 +94,8 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
         </button>
       </div>
 
-      {/* Financial Cockpit & Budgets */}
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <div className="flex justify-between mb-4">
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Wallet size={20} /></div>
@@ -131,21 +130,7 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
             <p className="text-2xl font-black text-slate-900">12</p>
           </div>
 
-          {/* Loans & Advances Card */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm group">
-            <div className="flex justify-between mb-4">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Banknote size={20} /></div>
-              <button
-                onClick={onViewLoans}
-                className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                title="View Details"
-              >
-                <Eye size={20} />
-              </button>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Loans & Advances</p>
-            <p className="text-2xl font-black text-slate-900">₹{(loans?.reduce((sum: number, l: any) => sum + (l.status === 'Active' ? l.amount : 0), 0) || 0).toLocaleString()}</p>
-          </div>
+
 
           {/* Rejected Claims */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
@@ -477,10 +462,6 @@ const ClaimViewPanel = ({ claim, onClose, onEdit }: { claim: any; onClose: () =>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Submitted Date</p>
               <p className="text-sm font-bold text-slate-800">{claim.submittedAt || '—'}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Items</p>
-              <p className="text-sm font-bold text-slate-800">{claim.items?.length || 0} line item{(claim.items?.length || 0) !== 1 ? 's' : ''}</p>
             </div>
           </div>
 
