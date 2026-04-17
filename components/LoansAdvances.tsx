@@ -355,18 +355,31 @@ const ViewLoanModal: React.FC<{
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
-                                                {loan.repaymentSchedule.map((emi) => (
-                                                    <tr key={emi.emiNo} className="hover:bg-slate-50/50 transition-colors">
-                                                        <td className="px-4 py-3 text-slate-500 font-mono">{emi.emiNo}</td>
-                                                        <td className="px-4 py-3 text-slate-800 font-bold">{emi.dueDate}</td>
-                                                        <td className="px-4 py-3 text-right text-indigo-600 font-black">₹{emi.amount.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">
-                                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${emi.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                                                                {emi.status}
-                                                            </span>
-                                                         </td>
-                                                    </tr>
-                                                ))}
+                                                {(() => {
+                                                    const fullSchedule = loan.repaymentSchedule || [];
+                                                    if (userRole !== 'EMPLOYEE') return fullSchedule.map(renderRow);
+                                                    
+                                                    const paid = fullSchedule.filter(e => e.status === 'Paid');
+                                                    const nextPending = fullSchedule.find(e => e.status === 'Pending');
+                                                    const displaySchedule = nextPending ? [...paid, nextPending] : paid;
+                                                    
+                                                    return displaySchedule.map(renderRow);
+
+                                                    function renderRow(emi: any) {
+                                                        return (
+                                                            <tr key={emi.emiNo} className="hover:bg-slate-50/50 transition-colors">
+                                                                <td className="px-4 py-3 text-slate-500 font-mono">{emi.emiNo}</td>
+                                                                <td className="px-4 py-3 text-slate-800 font-bold">{emi.dueDate}</td>
+                                                                <td className="px-4 py-3 text-right text-indigo-600 font-black">₹{emi.amount.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${emi.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                                                        {emi.status}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    }
+                                                })()}
                                             </tbody>
                                         </table>
                                     </div>
