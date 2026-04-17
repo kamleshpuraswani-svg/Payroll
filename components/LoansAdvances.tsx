@@ -161,6 +161,51 @@ const MOCK_LOANS: LoanRequest[] = [
         disbursedDate: '20 Nov 2025',
         reason: 'Home down-payment assistance',
     },
+    {
+        id: 'LN-2026-007',
+        employee: { name: 'Priya Sharma', id: 'TF00912', department: 'Engineering', ctc: '1850000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
+        type: 'Loan',
+        requestedAmount: 150000,
+        approvedAmount: 150000,
+        requestDate: '10 Feb 2026',
+        status: 'Approved',
+        emiAmount: 13750,
+        totalEmis: 12,
+        remainingBalance: 150000,
+        interestRate: 10,
+        reason: 'Personal expense',
+        repaymentMonth: 'March 2026'
+    },
+    {
+        id: 'LA-2026-008',
+        employee: { name: 'Priya Sharma', id: 'TF00912', department: 'Engineering', ctc: '1850000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
+        type: 'Salary Advance',
+        requestedAmount: 50000,
+        requestDate: '15 Mar 2026',
+        status: 'Rejected',
+        reason: 'Exceeds monthly limit',
+    },
+    {
+        id: 'LN-2024-009',
+        employee: { name: 'Priya Sharma', id: 'TF00912', department: 'Engineering', ctc: '1850000', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
+        type: 'Loan',
+        requestedAmount: 100000,
+        approvedAmount: 100000,
+        requestDate: '10 Oct 2024',
+        status: 'Closed',
+        emiAmount: 8333,
+        totalEmis: 12,
+        remainingBalance: 0,
+        interestRate: 0,
+        disbursedDate: '15 Oct 2024',
+        reason: 'Emergency fund',
+        repaymentSchedule: Array.from({ length: 12 }, (_, i) => ({
+            emiNo: i + 1,
+            dueDate: new Date(2024, 10 + i, 15).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            amount: 8333,
+            status: 'Paid',
+        }))
+    },
 ];
 
 
