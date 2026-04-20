@@ -690,7 +690,7 @@ const StatutorySettings: React.FC = () => {
                                                 <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'ceiling' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Ceiling</span>
                                             </label>
                                         </div>
-                                    </div>
+                                    
 
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEmprContriEsi ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
