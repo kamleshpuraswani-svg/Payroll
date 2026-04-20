@@ -65,12 +65,16 @@ interface TaxDocumentsModuleProps {
   onNavigateToPlanning?: () => void;
 }
 
+const FINANCIAL_YEARS = ['2025-26', '2024-25', '2023-24', '2022-23', '2021-22', '2020-21'];
+
 export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNavigateToPlanning }) => {
   const [activeTab, setActiveTab] = useState<'current' | 'archives'>('current');
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [previewDoc, setPreviewDoc] = useState<string | null>(null);
+  const [selectedFY, setSelectedFY] = useState<string>('2025-26');
+  const [fyDropdownOpen, setFyDropdownOpen] = useState(false);
 
   const availableYears = useMemo(() => ARCHIVE_DATA.map(y => y.fy), []);
 
@@ -115,23 +119,53 @@ export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNaviga
           <p className="text-sm text-slate-500 font-medium mt-1">Self-service portal for statutory forms and tax proofs.</p>
         </div>
         
-        <div className="flex bg-slate-100 p-1.5 rounded-xl w-fit border border-slate-200 shadow-inner">
-          <button 
-            onClick={() => setActiveTab('current')}
-            className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2
-              ${activeTab === 'current' ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-900'}
-            `}
-          >
-            <Zap size={14} /> Current FY
-          </button>
-          <button 
-            onClick={() => setActiveTab('archives')}
-            className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2
-              ${activeTab === 'archives' ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-900'}
-            `}
-          >
-            <Archive size={14} /> Archives
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-slate-100 p-1.5 rounded-xl w-fit border border-slate-200 shadow-inner">
+            <button
+              onClick={() => setActiveTab('archives')}
+              className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2
+                ${activeTab === 'archives' ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-900'}
+              `}
+            >
+              <Archive size={14} /> Archives
+            </button>
+          </div>
+
+          {/* Financial Year Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setFyDropdownOpen((prev: boolean) => !prev)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-700 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
+            >
+              <Calendar size={14} />
+              FY {selectedFY}
+              <ChevronDown size={14} className={`transition-transform ${fyDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {fyDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                {FINANCIAL_YEARS.map(fy => (
+                  <button
+                    key={fy}
+                    onClick={() => {
+                      setSelectedFY(fy);
+                      setFyDropdownOpen(false);
+                      if (fy === '2025-26') {
+                        setActiveTab('current');
+                      } else {
+                        setActiveTab('archives');
+                        setSelectedYear(fy);
+                      }
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-colors
+                      ${selectedFY === fy ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                    `}
+                  >
+                    FY {fy}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

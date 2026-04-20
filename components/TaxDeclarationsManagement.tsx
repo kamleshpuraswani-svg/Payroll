@@ -713,41 +713,30 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
     });
     const [approvedAmount, setApprovedAmount] = useState<number>(doc.amount);
     const [reason, setReason] = useState('');
-    const [rejectedItems, setRejectedItems] = useState<Set<number>>(() => {
-        const allIndices = new Set<number>();
-        if (doc.breakdown) {
-            doc.breakdown.forEach((_item: { label: string; amount: number }, idx: number) => allIndices.add(idx));
-        }
-        return allIndices;
-    });
+    const [rejectedItems, setRejectedItems] = useState<Set<number>>(new Set());
 
-    const allRejected = doc.breakdown ? doc.breakdown.every((_item: { label: string; amount: number }, idx: number) => rejectedItems.has(idx)) : true;
-
-    const toggleRejectedItem = (idx: number) => {
-        setRejectedItems((prev: Set<number>) => {
+    const toggleItemReject = (idx: number) => {
+        setRejectedItems(prev => {
             const next = new Set(prev);
-            if (next.has(idx)) next.delete(idx);
-            else next.add(idx);
+            if (next.has(idx)) {
+                next.delete(idx);
+                // Restore original amount if un-rejecting (or just leave at 0?)
+                // Let's restore to original to be helpful
+                setItemApprovals(ia => ({ ...ia, [idx]: doc.breakdown[idx].amount }));
+            } else {
+                next.add(idx);
+                setItemApprovals(ia => ({ ...ia, [idx]: 0 }));
+            }
             return next;
         });
     };
 
-    const toggleRejectAll = () => {
-        if (allRejected) {
-            setRejectedItems(new Set<number>());
-        } else {
-            const all = new Set<number>();
-            if (doc.breakdown) doc.breakdown.forEach((_item: { label: string; amount: number }, idx: number) => all.add(idx));
-            setRejectedItems(all);
-        }
-    };
-
     useEffect(() => {
-        if (doc.breakdown && doc.breakdown.length > 0) {
+        if (decision === 'Partially Approved' && doc.breakdown && doc.breakdown.length > 0) {
             const total = Object.values(itemApprovals).reduce((sum, val) => sum + val, 0);
             setApprovedAmount(total);
         }
-    }, [itemApprovals, doc.breakdown]);
+    }, [itemApprovals, doc.breakdown, decision]);
 
     const handleSubmit = () => {
         onDecide(doc.id, decision, approvedAmount, reason);
@@ -809,18 +798,35 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                                             <p className="text-sm font-bold text-slate-700">{item.label}</p>
                                                             <p className="text-[10px] text-slate-500 font-medium">Declared: ₹{item.amount.toLocaleString()}</p>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-bold text-slate-400">₹</span>
-                                                            <input
-                                                                type="text"
-                                                                value={(itemApprovals[idx] || 0).toLocaleString()}
-                                                                onChange={(e) => {
-                                                                    const rawVal = e.target.value.replace(/[^0-9]/g, '');
-                                                                    const val = Math.min(item.amount, Math.max(0, parseInt(rawVal) || 0));
-                                                                    setItemApprovals(prev => ({ ...prev, [idx]: val }));
-                                                                }}
-                                                                className="w-24 px-2 py-1 border border-slate-200 rounded text-sm font-bold focus:border-orange-500 focus:outline-none text-right"
-                                                            />
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs font-bold text-slate-400">₹</span>
+                                                                <input
+                                                                    type="text"
+                                                                    value={(itemApprovals[idx] || 0).toLocaleString()}
+                                                                    disabled={rejectedItems.has(idx)}
+                                                                    onChange={(e) => {
+                                                                        const rawVal = e.target.value.replace(/[^0-9]/g, '');
+                                                                        const val = Math.min(item.amount, Math.max(0, parseInt(rawVal) || 0));
+                                                                        setItemApprovals(prev => ({ ...prev, [idx]: val }));
+                                                                        if (val > 0 && rejectedItems.has(idx)) {
+                                                                            setRejectedItems(prev => {
+                                                                                const next = new Set(prev);
+                                                                                next.delete(idx);
+                                                                                return next;
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                    className={`w-24 px-2 py-1 border rounded text-sm font-bold focus:outline-none text-right transition-all ${rejectedItems.has(idx) ? 'bg-slate-50 border-slate-200 text-slate-400 font-medium' : 'border-slate-200 focus:border-orange-500'}`}
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => { e.preventDefault(); toggleItemReject(idx); }}
+                                                                title={rejectedItems.has(idx) ? "Approve Item" : "Reject Item"}
+                                                                className={`p-1.5 rounded-lg transition-all ${rejectedItems.has(idx) ? 'bg-rose-500 text-white shadow-md' : 'text-slate-300 hover:text-rose-500 hover:bg-rose-50'}`}
+                                                            >
+                                                                <XCircle size={18} />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ))
@@ -860,59 +866,29 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                     }} className="w-4 h-4 text-rose-600 focus:ring-rose-500 border-gray-300" />
                                     <span className="ml-3 font-bold text-slate-700">Reject</span>
                                 </div>
-                                {decision === 'Rejected' && (
-                                    <div className="mt-3 ml-7 space-y-3 animate-in fade-in slide-in-from-top-1">
-                                        {doc.breakdown && doc.breakdown.length > 0 && (
-                                            <div className="bg-rose-50/50 p-4 rounded-xl border border-rose-100 space-y-2">
-                                                <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-2">Select Items to Reject</p>
-                                                {/* Per-item icons */}
-                                                {doc.breakdown.map((item: { label: string; amount: number }, idx: number) => (
-                                                    <div
-                                                        key={idx}
-                                                        onClick={(e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); toggleRejectedItem(idx); }}
-                                                        className={`flex items-center justify-between p-2 bg-white rounded-lg border cursor-pointer transition-colors ${rejectedItems.has(idx) ? 'border-rose-300 bg-rose-50/40' : 'border-slate-100 hover:bg-slate-50'}`}
-                                                    >
-                                                        <div className="flex-1">
-                                                            <p className="text-sm font-bold text-slate-700">{item.label}</p>
-                                                            <p className="text-[10px] text-slate-500 font-medium">Declared: ₹{item.amount.toLocaleString()}</p>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 ml-3">
-                                                            {rejectedItems.has(idx) && (
-                                                                <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wide animate-in fade-in duration-150">Rejected</span>
-                                                            )}
-                                                            <XCircle
-                                                                size={20}
-                                                                className={`transition-all duration-150 ${rejectedItems.has(idx) ? 'text-rose-500 scale-110' : 'text-slate-300 hover:text-rose-400'}`}
-                                                                fill={rejectedItems.has(idx) ? '#fca5a5' : 'transparent'}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                         <textarea
                                             placeholder="Reason for rejection (Mandatory)"
                                             value={reason}
                                             onChange={(e) => setReason(e.target.value)}
                                             className="w-full px-3 py-2 border border-rose-200 rounded-lg text-sm focus:outline-none focus:border-rose-500 min-h-[60px]"
                                         ></textarea>
-                                    </div>
-                                )}
                             </label>
                         </div>
                     </div>
 
                     {/* Note to Employee */}
-                    <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Remarks</label>
-                        <p className="text-[10px] text-slate-400 mb-2 font-medium">These remarks will also be visible to employees</p>
-                        <textarea
-                            value={reason}
-                            onChange={e => setReason(e.target.value)}
-                            placeholder="Optional comment..."
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 min-h-[80px]"
-                        />
-                    </div>
+                    {decision !== 'Rejected' && (
+                        <div className="pt-4 border-t border-slate-100">
+                            <label className="block text-xs font-bold text-slate-500 uppercase">Remarks</label>
+                            <p className="text-[10px] text-slate-400 mb-2 font-medium">These remarks will also be visible to employees</p>
+                            <textarea
+                                value={reason}
+                                onChange={e => setReason(e.target.value)}
+                                placeholder="Optional comment..."
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 min-h-[80px]"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
