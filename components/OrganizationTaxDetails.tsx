@@ -8,6 +8,24 @@ const BUSINESS_UNITS = [
     "CollabCRM"
 ];
 
+const INDIAN_BANKS = [
+    "State Bank of India",
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Mahindra Bank",
+    "Punjab National Bank",
+    "Bank of Baroda",
+    "Canara Bank",
+    "Union Bank of India",
+    "IndusInd Bank",
+    "IDFC FIRST Bank",
+    "Yes Bank",
+    "Federal Bank",
+    "IDBI Bank",
+    "Central Bank of India"
+];
+
 const OrganizationTaxDetails: React.FC = () => {
     const [viewMode, setViewMode] = useState<'cards' | 'details'>('cards');
     const [isEditing, setIsEditing] = useState(false);
@@ -33,6 +51,7 @@ const OrganizationTaxDetails: React.FC = () => {
     const [designation, setDesignation] = useState('');
 
     // Company's Bank Information
+    const [bankName, setBankName] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
     const [accountName, setAccountName] = useState('');
     const [ifscCode, setIfscCode] = useState('');
@@ -81,6 +100,7 @@ const OrganizationTaxDetails: React.FC = () => {
             setDeductorName(config.deductorName || 'Suresh Kumar');
             setFatherName(config.fatherName || 'Ramesh Kumar');
             setDesignation(config.designation || '');
+            setBankName(config.bankName || '');
             setAccountNumber(config.accountNumber || '');
             setAccountName(config.accountName || '');
             setIfscCode(config.ifscCode || '');
@@ -99,6 +119,7 @@ const OrganizationTaxDetails: React.FC = () => {
             setDeductorName('Suresh Kumar');
             setFatherName('Ramesh Kumar');
             setDesignation('');
+            setBankName('');
             setAccountNumber('');
             setAccountName('');
             setIfscCode('');
@@ -145,7 +166,7 @@ const OrganizationTaxDetails: React.FC = () => {
                 ao1, ao2, ao3, ao4,
                 frequency,
                 deductorType, deductorName, fatherName, designation,
-                accountNumber, accountName, ifscCode, branch
+                bankName, accountNumber, accountName, ifscCode, branch
             };
 
             // Merge into the global map
@@ -393,6 +414,23 @@ const OrganizationTaxDetails: React.FC = () => {
                             <div className="p-6 border-t border-slate-100 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Bank Name</label>
+                                        <div className="relative">
+                                            <select
+                                                value={bankName}
+                                                onChange={e => setBankName(e.target.value)}
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 appearance-none focus:outline-none focus:border-sky-500 transition-colors"
+                                            >
+                                                <option value="">Select Bank</option>
+                                                {INDIAN_BANKS.map(bank => (
+                                                    <option key={bank} value={bank}>{bank}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
+                                    <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Number</label>
                                         <input 
                                             type="text" 
@@ -403,6 +441,8 @@ const OrganizationTaxDetails: React.FC = () => {
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-colors" 
                                         />
                                     </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Name</label>
                                         <input 
@@ -414,8 +454,6 @@ const OrganizationTaxDetails: React.FC = () => {
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-colors" 
                                         />
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">IFSC Code</label>
                                         <input 
@@ -427,6 +465,8 @@ const OrganizationTaxDetails: React.FC = () => {
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500 transition-colors" 
                                         />
                                     </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Branch</label>
                                         <input 
@@ -437,6 +477,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                             className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-500 transition-colors" 
                                         />
                                     </div>
+                                    <div />
                                 </div>
                             </div>
                         )}
