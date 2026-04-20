@@ -126,6 +126,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [proofCutoffMonth, setProofCutoffMonth] = useState('January');
     const [proofCutoffDay, setProofCutoffDay] = useState('22');
 
+    const [selectedYear, setSelectedYear] = useState('2025-2026');
+    const [availableYears] = useState(['2025-2026', '2024-2025', '2023-2024']);
+
     const fetchPaygroups = async () => {
         try {
             const { data, error } = await supabase
@@ -141,13 +144,30 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            const { data, error } = await supabase
+            // First try year-prefixed key
+            const yearKey = `income_tax_settings:${selectedYear}:${selectedTarget}`;
+            const legacyKey = `income_tax_settings:${selectedTarget}`;
+
+            let { data, error } = await supabase
                 .from('operational_config')
                 .select('config_value')
-                .eq('config_key', `income_tax_settings:${selectedTarget}`)
+                .eq('config_key', yearKey)
                 .single();
 
-            if (error && error.code !== 'PGRST116') throw error;
+            // If not found for current year, try legacy fallback
+            if (error && error.code === 'PGRST116') {
+                const { data: legacyData, error: legacyError } = await supabase
+                    .from('operational_config')
+                    .select('config_value')
+                    .eq('config_key', legacyKey)
+                    .single();
+                
+                if (!legacyError) {
+                    data = legacyData;
+                }
+            } else if (error) {
+                throw error;
+            }
 
             if (data?.config_value) {
                 const config = data.config_value;
@@ -264,7 +284,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     React.useEffect(() => {
         fetchPaygroups();
         fetchSettings();
-    }, [selectedTarget]);
+    }, [selectedTarget, selectedYear]);
     // --- Investment Declaration State ---
     const [isEditingInv, setIsEditingInv] = useState(false);
     const [invEnabled, setInvEnabled] = useState(true);
@@ -468,7 +488,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             const { error } = await supabase
                 .from('operational_config')
                 .upsert({
-                    config_key: `income_tax_settings:${selectedTarget}`,
+                    config_key: `income_tax_settings:${selectedYear}:${selectedTarget}`,
                     config_value: configValue,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'config_key' });
@@ -542,7 +562,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             const { error } = await supabase
                 .from('operational_config')
                 .upsert({
-                    config_key: `income_tax_settings:${selectedTarget}`,
+                    config_key: `income_tax_settings:${selectedYear}:${selectedTarget}`,
                     config_value: configValue,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'config_key' });
@@ -919,6 +939,21 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                         <p className="text-slate-500 mt-1">Configure investment declaration, limits, and POI verification rules.</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {/* Financial Year Selector */}
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm h-10 px-2 lg:px-3">
+                            <Calendar size={16} className="text-slate-400" />
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(e.target.value)}
+                                className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-0"
+                            >
+                                {availableYears.map(year => (
+                                    <option key={year} value={year}>FY {year}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Business Unit Selector */}
                         <div className="relative">
                             <select
                                 value={selectedTarget}

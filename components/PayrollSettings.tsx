@@ -200,8 +200,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     const [smSecondCustomDay, setSmSecondCustomDay] = useState(() => initialData?.smSecondCustomDay || '16');
 
     // Attendance & Payroll Period State
-    const [attendanceStartDay, setAttendanceStartDay] = useState(() => initialData?.attendanceStartDay || '26');
-    const [attendanceEndDay, setAttendanceEndDay] = useState(() => initialData?.attendanceEndDay || '25');
+    const [attendanceStartDay, setAttendanceStartDay] = useState(() => initialData?.attendanceStartDay || '1');
+    const [attendanceEndDay, setAttendanceEndDay] = useState(() => initialData?.attendanceEndDay || '31');
     const [payrollStartDay, setPayrollStartDay] = useState(() => initialData?.payrollStartDay || '1');
     const [payrollEndDay, setPayrollEndDay] = useState(() => initialData?.payrollEndDay || '31');
 

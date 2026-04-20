@@ -93,8 +93,7 @@ const computeParentStatus = (sections: TaxDeclaration[]): string => {
     if (statuses.every(s => s === 'Approved')) return 'Approved';
     if (statuses.every(s => s === 'Rejected')) return 'Rejected';
     if (statuses.every(s => s === 'Pending')) return 'Pending';
-    if (statuses.some(s => s === 'Pending')) return 'In Review';
-    return 'Partially Approved'; // mix of Approved + Rejected, no Pending remaining
+    return 'Partially Approved'; // If not all Pending, and not all Approved/Rejected, it's mixed
 };
 
 // --- Custom Icons ---
@@ -1498,11 +1497,10 @@ const TaxDeclarationsManagement: React.FC = () => {
                                     <thead className="bg-slate-50/50 sticky top-0 z-10 text-[11px] font-bold uppercase text-slate-400 border-b border-slate-100">
                                         <tr>
                                             <th className="px-6 py-4">Employee Name & ID</th>
-                                            <th className="px-6 py-4">Tax Section</th>
-                                            <th className="px-6 py-4">Declared Amount</th>
-                                            <th className="px-6 py-4">Section Status</th>
-                                            <th className="px-6 py-4">Overall Status</th>
-                                            <th className="px-6 py-4">Created By</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Tax Section</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Declared Amount</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Status</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Created By</th>
                                             <th className="px-6 py-4">Last Modified By</th>
                                             <th className="px-6 py-4 text-right">ACTIONS</th>
                                         </tr>
@@ -1563,11 +1561,6 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusStyle(doc?.status || 'Pending')}`}>
-                                                            {doc?.status || 'Pending'}
-                                                        </span>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {(() => {
