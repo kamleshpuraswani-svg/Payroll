@@ -661,17 +661,19 @@ const StatutorySettings: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-6 pt-2">
-                                    <div className="flex flex-col gap-2 pt-4">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings</h4>
-                                            <div className="group relative inline-block">
-                                                <Info size={14} className="text-slate-400 cursor-help" />
-                                                <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                    Floor: Rounds decimal down to the nearest whole number (e.g., 3.7 → 3). Ceiling: Rounds decimal up to the nearest whole number (e.g., 3.2 → 4).
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings</h4>
+                                                <div className="group relative inline-block">
+                                                    <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal normal-case whitespace-normal">
+                                                        <div className="space-y-1.5 leading-relaxed text-left">
+                                                            <p><span className="font-bold text-purple-300">Floor:</span> Rounds decimals down to the nearest whole number (e.g. 3.7 to 3)</p>
+                                                            <p><span className="font-bold text-purple-300">Ceiling:</span> Rounds decimals up to the nearest whole number (e.g. 3.2 to 4)</p>
+                                                        </div>
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800" />
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
                                         <div className="flex items-center gap-6 pt-2">
                                             <label className="flex items-center gap-2 cursor-pointer group">
                                                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'floor' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
@@ -932,10 +934,13 @@ const StatutorySettings: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Round Off Setting</label>
                                         <div className="group relative inline-block">
-                                            <Info size={14} className="text-slate-400 cursor-help" />
-                                            <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                Gratuity calculations often result in decimal amounts. This setting controls how the final gratuity amount is rounded. Floor: Always rounded down to the nearest rupee (e.g., ₹1,24,856.75 → ₹1,24,856). Ceiling: Always rounded up to the nearest rupee (e.g., ₹1,24,856.10 → ₹1,24,857). Ceiling is recommended to ensure the employee receives the full entitled amount without shortfall.
-                                                <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                            <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                            <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal normal-case whitespace-normal">
+                                                <div className="space-y-1.5 leading-relaxed text-left">
+                                                    <p><span className="font-bold text-purple-300">Floor:</span> Rounds decimals down to the nearest whole number (e.g. 3.7 to 3)</p>
+                                                    <p><span className="font-bold text-purple-300">Ceiling:</span> Rounds decimals up to the nearest whole number (e.g. 3.2 to 4)</p>
+                                                </div>
+                                                <div className="absolute top-full left-4 border-[6px] border-transparent border-t-slate-800" />
                                             </div>
                                         </div>
                                     </div>

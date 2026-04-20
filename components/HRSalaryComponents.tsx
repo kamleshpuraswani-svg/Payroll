@@ -672,7 +672,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         )}
                     </div>
 
-                    <div>
+                    {/* <div>
                         <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
                             {['Fixed', 'Variable'].map((type) => (
@@ -688,7 +688,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 </label>
                             ))}
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Calculation Method - Visible for Both Fixed and Variable per request */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -924,7 +924,19 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
                         {/* Round off settings */}
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Round off settings <span className="text-rose-500">*</span></label>
+                            <label className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
+                                <span>Round off settings <span className="text-rose-500">*</span></span>
+                                <div className="group relative">
+                                    <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal">
+                                        <div className="space-y-1.5 leading-relaxed">
+                                            <p><span className="font-bold text-purple-300">Floor:</span> Rounds decimals down to the nearest whole number (e.g. 3.7 to 3)</p>
+                                            <p><span className="font-bold text-purple-300">Ceiling:</span> Rounds decimals up to the nearest whole number (e.g. 3.2 to 4)</p>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800" />
+                                    </div>
+                                </div>
+                            </label>
                             <div className="flex gap-6">
                                 {['Floor', 'Ceiling'].map((option) => (
                                     <label key={option} className="flex items-center gap-2 cursor-pointer group">
@@ -977,10 +989,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {isProRata && <Check size={14} className="text-white" />}
                                 </div>
                                 <input type="checkbox" className="hidden" checked={isProRata} onChange={() => setIsProRata(!isProRata)} />
-                                <div>
-                                    <span className="block text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
-                                    <span className="block text-xs text-slate-500 mt-0.5">Pay will be adjusted based on employee working days.</span>
-                                </div>
+                                <span className="text-sm font-bold text-slate-700">Calculate on pro-rata basis</span>
                             </label>
                         </div>
 
@@ -993,10 +1002,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {isConsiderEPF && <Check size={14} className="text-white" />}
                                 </div>
                                 <input type="checkbox" className="hidden" checked={isConsiderEPF} onChange={() => setIsConsiderEPF(!isConsiderEPF)} />
-                                <div>
-                                    <span className="block text-sm font-bold text-slate-700">Consider for EPF Contribution</span>
-                                    <span className="block text-xs text-slate-500 mt-0.5">This will be included when calculating the employee's EPF contribution.</span>
-                                </div>
+                                <span className="text-sm font-bold text-slate-700">Consider for EPF Contribution</span>
                             </label>
 
                         </div>
@@ -1016,10 +1022,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {isConsiderGratuity && <Check size={14} className="text-white" />}
                                 </div>
                                 <input type="checkbox" className="hidden" checked={isConsiderGratuity} onChange={() => setIsConsiderGratuity(!isConsiderGratuity)} />
-                                <div>
-                                    <span className="block text-sm font-bold text-slate-700">Consider for Gratuity</span>
-                                    <span className="block text-xs text-slate-500 mt-0.5">This component will be included in gratuity computation.</span>
-                                </div>
+                                <span className="text-sm font-bold text-slate-700">Consider for Gratuity</span>
                             </label>
 
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -1463,7 +1466,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
 
                     {/* Nature of Deduction */}
-                    <div>
+                    {/* <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Nature of Deduction <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
                             {(['Variable'] as const).map((option) => (
@@ -1482,7 +1485,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         {natureOfDeduction === 'Variable' && (
                             <p className="text-xs text-slate-500 mt-1.5">Amount can be edited per employee during payroll processing.</p>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Calculation Method */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1721,7 +1724,19 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     <div className="pt-2 flex flex-col gap-3">
                         {/* Round off settings */}
                         <div className="pb-1">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Round off settings <span className="text-rose-500">*</span></label>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                                <span>Round off settings <span className="text-rose-500">*</span></span>
+                                <div className="group relative">
+                                    <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal">
+                                        <div className="space-y-1.5 leading-relaxed">
+                                            <p><span className="font-bold text-purple-300">Floor:</span> Rounds decimals down to the nearest whole number (e.g. 3.7 to 3)</p>
+                                            <p><span className="font-bold text-purple-300">Ceiling:</span> Rounds decimals up to the nearest whole number (e.g. 3.2 to 4)</p>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800" />
+                                    </div>
+                                </div>
+                            </label>
                             <div className="flex gap-6">
                                 {(['Floor', 'Ceiling'] as const).map((option) => (
                                     <label key={option} className="flex items-center gap-2 cursor-pointer group">
