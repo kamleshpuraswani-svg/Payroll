@@ -930,9 +930,11 @@ const HRDashboard: React.FC = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
                 {stats.map((stat, index) => (
-                    <StatCard key={index} stat={stat} />
+                    <div key={index} className={index === 2 ? "md:col-span-2" : "md:col-span-1"}>
+                        <StatCard stat={stat} />
+                    </div>
                 ))}
             </div>
 
