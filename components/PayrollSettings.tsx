@@ -641,14 +641,33 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                             <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                         </button>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">
-                                {activeTab === 'History' ? 'Audit History' : (initialData ? `Edit ${frequency} Pay Schedule` : 'Create New Pay Schedule')}
-                            </h3>
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-bold text-slate-800">
+                                    {activeTab === 'History' ? 'Audit History' : (initialData ? 'Edit Pay Schedule' : 'Create New Pay Schedule')}
+                                </h3>
+                                {activeTab !== 'History' && frequency && (
+                                    <span className="px-3 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm">
+                                        {frequency}
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-xs text-slate-500 font-medium">
-                                {activeTab === 'History' ? '' : 'Configure payment cycles and processing rules'}
+                                {activeTab === 'History' ? '' : ''}
                             </p>
                         </div>
                     </div>
+
+                    {/* Business Unit display (read-only, edit mode only) */}
+                    {activeTab !== 'History' && initialData && localSelectedTarget && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
+                            <Building2 size={15} className="text-slate-400 shrink-0" />
+                            <span className="text-sm font-semibold text-slate-700">
+                                {localSelectedTarget.startsWith('bu:')
+                                    ? localSelectedTarget.split(':')[1]
+                                    : paygroups.find(pg => pg.id === localSelectedTarget.split(':')[1])?.name || localSelectedTarget.split(':')[1]}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Audit History Button (only in Config tab and for HR_MANAGER/ADMIN) */}
                     {activeTab === 'Configuration' && initialData && (
@@ -670,6 +689,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                         <div className="flex-1">
                             <div className="space-y-8">
                                 {/* Target Selection */}
+                                {!initialData && (
                                 <div className="w-full lg:w-1/2">
                                     <label className="block text-sm font-bold text-slate-700 mb-2">
                                         Business Unit <span className="text-red-500">*</span>
@@ -692,6 +712,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                     </div>
                                     {errors.target && <p className="text-xs text-rose-500 mt-1">{errors.target}</p>}
                                 </div>
+                                )}
 
                                 {/* Frequency */}
                                 <div>
