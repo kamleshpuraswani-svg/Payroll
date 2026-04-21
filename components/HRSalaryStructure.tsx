@@ -19,7 +19,8 @@ import {
     Sigma,
     ChevronDown,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Clock
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -445,6 +446,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     const [effectiveFrom, setEffectiveFrom] = useState('');
     const [currentStatus, setCurrentStatus] = useState<'Active' | 'Draft' | 'Inactive' | 'Archived'>('Draft');
     const [errors, setErrors] = useState<{ name?: string, earnings?: string, deductions?: string }>({});
+    const [activeTab, setActiveTab] = useState<'CONFIGURATION' | 'HISTORY'>('CONFIGURATION');
 
     // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -499,6 +501,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     };
 
     const handleBack = () => {
+        if (activeTab === 'HISTORY') {
+            setActiveTab('CONFIGURATION');
+            return;
+        }
         if (onBack) {
             onBack();
         } else {
@@ -753,29 +759,52 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                     </div>
                     <div className="flex gap-2">
                         <button onClick={handleBack} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
-                            {isReadOnly ? 'Back' : 'Cancel'}
+                            {activeTab === 'HISTORY' ? 'Back' : (isReadOnly ? 'Back' : 'Cancel')}
                         </button>
-                        {!isReadOnly ? (
+                        {activeTab === 'CONFIGURATION' && (
                             <>
-                        {!isReadOnly && !activeStructureId && (
-                            <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
-                                Save as Draft
-                            </button>
-                        )}
-                                <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
-                                    <Save size={16} /> {publishLabel}
-                                </button>
+                                {activeStructureId && !activeStructureId.startsWith('mock-') && (
+                                    <button 
+                                        onClick={() => setActiveTab('HISTORY')}
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors flex items-center gap-2"
+                                    >
+                                        <Clock size={16} /> Audit History
+                                    </button>
+                                )}
+                                {!isReadOnly ? (
+                                    <>
+                                        {!activeStructureId && (
+                                            <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
+                                                Save as Draft
+                                            </button>
+                                        )}
+                                        <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
+                                            <Save size={16} /> {publishLabel}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button onClick={handleEditMode} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
+                                        <Edit2 size={16} /> Edit Structure
+                                    </button>
+                                )}
                             </>
-                        ) : (
-                            <button onClick={handleEditMode} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
-                                <Edit2 size={16} /> Edit Structure
-                            </button>
                         )}
                     </div>
                 </div>
 
-                {/* Main Form Area */}
-                <div className="grid grid-cols-1 gap-8">
+                {activeTab === 'HISTORY' ? (
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-right-2 duration-300">
+                        <div className="p-8 text-center py-20">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                <Clock size={32} />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">No History Available</h3>
+                            <p className="text-slate-500 max-w-sm mx-auto">We'll start tracking changes once you make edits to this salary structure.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 gap-8 animate-in fade-in duration-300">
                     {/* Left Column: Builder */}
                     <div className="space-y-6">
                         {/* Basic Info */}
@@ -1026,6 +1055,8 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                     onAdd={handleAddComponents}
                     existingIds={[...earnings, ...deductions, ...benefits, ...reimbursements].map(c => c.id)}
                 />
+                    </>
+                )}
             </ContentWrapper>
         );
     }

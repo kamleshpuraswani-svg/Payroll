@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat } from 'lucide-react';
+import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock } from 'lucide-react';
 
 const BUSINESS_UNITS = [
     "MindInventory",
@@ -14,6 +14,7 @@ const ExpenseSettings: React.FC = () => {
     const [isShowCategoriesDialog, setIsShowCategoriesDialog] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [expenseActiveTab, setExpenseActiveTab] = useState<'CONFIGURATION' | 'HISTORY'>('CONFIGURATION');
 
     // State for Expense Categories
     const [categories, setCategories] = useState<any[]>([]);
@@ -314,6 +315,10 @@ const ExpenseSettings: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => {
+                                if (expenseActiveTab === 'HISTORY') {
+                                    setExpenseActiveTab('CONFIGURATION');
+                                    return;
+                                }
                                 setIsAddingExpense(false);
                                 setEditingExpense(null);
                                 setSelectedEntities([]);
@@ -333,223 +338,249 @@ const ExpenseSettings: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => {
+                                if (expenseActiveTab === 'HISTORY') {
+                                    setExpenseActiveTab('CONFIGURATION');
+                                    return;
+                                }
                                 setIsAddingExpense(false);
                                 setEditingExpense(null);
                                 setSelectedEntities([]);
                             }}
                             className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all shadow-sm"
                         >
-                            Cancel
+                            {expenseActiveTab === 'HISTORY' ? 'Back' : 'Cancel'}
                         </button>
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {isSaving ? 'Saving...' : 'Submit'}
-                        </button>
+                        {expenseActiveTab === 'CONFIGURATION' && (
+                            <>
+                                {editingExpense && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpenseActiveTab('HISTORY')}
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all shadow-sm flex items-center gap-2"
+                                    >
+                                        <Clock size={16} /> Audit History
+                                    </button>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isSaving ? 'Saving...' : 'Submit'}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
-                {/* Form Body */}
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="max-w-4xl mx-auto space-y-6">
-                        
-                        {/* Section 1: Basic Details */}
-                        <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 relative overflow-hidden">
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">1</span> 
-                                Expense Category & Settings
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense Category Name <span className="text-rose-500">*</span></label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                            <Receipt size={16} className="text-slate-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            name="category_name"
-                                            defaultValue={editingExpense?.name || ""}
-                                            placeholder="e.g. Travel & Conveyance"
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                            required
-                                        />
-                                    </div>
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-in fade-in duration-300">
+                    <div className="max-w-4xl mx-auto">
+                        {expenseActiveTab === 'HISTORY' ? (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px] flex flex-col items-center justify-center text-center p-12">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                                    <Clock size={32} />
                                 </div>
-                                
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effective From</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                            <Calendar size={16} className="text-slate-400" />
-                                        </div>
-                                        <input
-                                            type="date"
-                                            name="effectiveFrom"
-                                            defaultValue={editingExpense?.effective_from || ""}
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer"
-                                        />
-                                    </div>
-                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">No History Recorded</h3>
+                                <p className="text-slate-500 max-w-sm mx-auto font-medium">Changes to this expense rule will be tracked here once you perform updates.</p>
                             </div>
-                        </div>
-
-                        {/* Section 2: Target Configuration */}
-                        <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-4">
-                                <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">2</span> 
-                                Target Limits & Defaults
-                            </h3>
-                            
-                            {/* Entity Search & Selection */}
-                            <div className="space-y-5 pt-2">
-                                <div className="space-y-2 relative">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation</label>
-                                    <div className="relative mt-1">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <Search size={18} className="text-slate-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={entitySearch}
-                                            onChange={(e) => {
-                                                setEntitySearch(e.target.value);
-                                                setShowEntityDropdown(true);
-                                            }}
-                                            onFocus={() => setShowEntityDropdown(true)}
-                                            placeholder="Search to add... e.g., 'Engineering'"
-                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-inner"
-                                        />
-                                    </div>
-
-                                    {/* Results Dropdown */}
-                                    {showEntityDropdown && entitySearch.length > 0 && (
-                                        <div className="absolute z-10 top-full inset-x-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-72 overflow-y-auto scrollbar-hide py-2 animate-in slide-in-from-top-2 duration-200">
-                                            {/* Departments */}
-                                            <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2">
-                                                <Home size={12} className="text-slate-500" />
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Departments</span>
+                        ) : (
+                            <div className="space-y-6">
+                                {/* Section 1: Basic Details */}
+                                <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 relative overflow-hidden">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                        <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">1</span> 
+                                        Expense Category & Settings
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense Category Name <span className="text-rose-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                    <Receipt size={16} className="text-slate-400" />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    name="category_name"
+                                                    defaultValue={editingExpense?.name || ""}
+                                                    placeholder="e.g. Travel & Conveyance"
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    required
+                                                />
                                             </div>
-                                            {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(dept => (
-                                                <div key={`dept-${dept}`} onClick={() => addEntityToSelection('dept', dept)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
-                                                    {dept}
+                                        </div>
+                                        
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effective From</label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                    <Calendar size={16} className="text-slate-400" />
+                                                </div>
+                                                <input
+                                                    type="date"
+                                                    name="effectiveFrom"
+                                                    defaultValue={editingExpense?.effective_from || ""}
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 2: Target Configuration */}
+                                <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-4">
+                                        <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">2</span> 
+                                        Target Limits & Defaults
+                                    </h3>
+                                    
+                                    {/* Entity Search & Selection */}
+                                    <div className="space-y-5 pt-2">
+                                        <div className="space-y-2 relative">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation</label>
+                                            <div className="relative mt-1">
+                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                    <Search size={18} className="text-slate-400" />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={entitySearch}
+                                                    onChange={(e) => {
+                                                        setEntitySearch(e.target.value);
+                                                        setShowEntityDropdown(true);
+                                                    }}
+                                                    onFocus={() => setShowEntityDropdown(true)}
+                                                    placeholder="Search to add... e.g., 'Engineering'"
+                                                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-inner"
+                                                />
+                                            </div>
+
+                                            {/* Results Dropdown */}
+                                            {showEntityDropdown && entitySearch.length > 0 && (
+                                                <div className="absolute z-10 top-full inset-x-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-72 overflow-y-auto scrollbar-hide py-2 animate-in slide-in-from-top-2 duration-200">
+                                                    {/* Departments */}
+                                                    <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2">
+                                                        <Home size={12} className="text-slate-500" />
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Departments</span>
+                                                    </div>
+                                                    {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(dept => (
+                                                        <div key={`dept-${dept}`} onClick={() => addEntityToSelection('dept', dept)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
+                                                            {dept}
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Designations */}
+                                                    <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2 mt-2">
+                                                        <ShieldCheck size={12} className="text-slate-500" />
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Designations</span>
+                                                    </div>
+                                                    {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(desig => (
+                                                        <div key={`desig-${desig}`} onClick={() => addEntityToSelection('desig', desig)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
+                                                            {desig}
+                                                        </div>
+                                                    ))}
+                                                    
+                                                    {/* No Results */}
+                                                    {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 &&
+                                                     availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 && (
+                                                        <div className="px-5 py-4 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
+                                                            No matches found
+                                                        </div>
+                                                     )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Selected Entities List with Inputs */}
+                                        <div className="space-y-4 mt-6">
+                                            {selectedEntities.map((entity, index) => (
+                                                <div key={`${entity.type}-${entity.id}`} className="px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-xl space-y-4 hover:border-slate-300 transition-colors group">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 shadow-sm border ${
+                                                                entity.type === 'dept' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                                                                entity.type === 'desig' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
+                                                                'bg-emerald-50 border-emerald-100 text-emerald-600'
+                                                            }`}>
+                                                                {entity.type === 'dept' ? <Home size={18} /> : entity.type === 'desig' ? <ShieldCheck size={18} /> : <User size={18} />}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-black text-slate-800">{entity.name}</p>
+                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{entity.type === 'dept' ? 'Department' : entity.type === 'desig' ? 'Designation' : 'Employee'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeEntityFromSelection(entity.type, entity.id)}
+                                                            className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-6 pt-2">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly Limit (₹)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={entity.max_limit}
+                                                                onChange={(e) => updateEntityLimit(entity.type, entity.id, 'max_limit', parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Receipt Threshold (₹)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={entity.receipt_threshold}
+                                                                onChange={(e) => updateEntityLimit(entity.type, entity.id, 'receipt_threshold', parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
-
-                                            {/* Designations */}
-                                            <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2 mt-2">
-                                                <ShieldCheck size={12} className="text-slate-500" />
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Designations</span>
-                                            </div>
-                                            {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(desig => (
-                                                <div key={`desig-${desig}`} onClick={() => addEntityToSelection('desig', desig)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
-                                                    {desig}
-                                                </div>
-                                            ))}
-                                            
-                                            {/* No Results */}
-                                            {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 &&
-                                             availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 && (
-                                                <div className="px-5 py-4 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
-                                                    No matches found
-                                                </div>
-                                             )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Selected Entities List with Inputs */}
-                                <div className="space-y-4 mt-6">
-                                    {selectedEntities.map((entity, index) => (
-                                        <div key={`${entity.type}-${entity.id}`} className="px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-xl space-y-4 hover:border-slate-300 transition-colors group">
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 shadow-sm border ${
-                                                        entity.type === 'dept' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
-                                                        entity.type === 'desig' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
-                                                        'bg-emerald-50 border-emerald-100 text-emerald-600'
-                                                    }`}>
-                                                        {entity.type === 'dept' ? <Home size={18} /> : entity.type === 'desig' ? <ShieldCheck size={18} /> : <User size={18} />}
+                                            {selectedEntities.length === 0 && (
+                                                <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-3 text-slate-300">
+                                                        <Search size={20} />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-slate-800">{entity.name}</p>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{entity.type === 'dept' ? 'Department' : entity.type === 'desig' ? 'Designation' : 'Employee'}</p>
-                                                    </div>
+                                                    <h4 className="text-sm font-bold text-slate-600">No targets added</h4>
+                                                    <p className="text-xs font-semibold text-slate-400 mt-1 max-w-xs text-center">Search and select a department or designation to set specific expense limits.</p>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeEntityFromSelection(entity.type, entity.id)}
-                                                    className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-6 pt-2">
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly Limit (₹)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={entity.max_limit}
-                                                        onChange={(e) => updateEntityLimit(entity.type, entity.id, 'max_limit', parseFloat(e.target.value) || 0)}
-                                                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Receipt Threshold (₹)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={entity.receipt_threshold}
-                                                        onChange={(e) => updateEntityLimit(entity.type, entity.id, 'receipt_threshold', parseFloat(e.target.value) || 0)}
-                                                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
-                                    ))}
-                                    {selectedEntities.length === 0 && (
-                                        <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-3 text-slate-300">
-                                                <Search size={20} />
-                                            </div>
-                                            <h4 className="text-sm font-bold text-slate-600">No targets added</h4>
-                                            <p className="text-xs font-semibold text-slate-400 mt-1 max-w-xs text-center">Search and select a department or designation to set specific expense limits.</p>
-                                        </div>
-                                    )}
+                                    </div>
+
+                                    {/* Info helper text */}
+                                    <p className="text-xs text-slate-400 font-medium mt-2 flex items-start gap-1.5 leading-relaxed">
+                                        <span className="text-sky-400 mt-0.5 flex-shrink-0">ℹ</span>
+                                        If an employee matches both a department rule and a designation rule for the same category, the designation limit will be applied automatically.
+                                    </p>
                                 </div>
 
-                                {/* Info helper text */}
-                                <p className="text-xs text-slate-400 font-medium mt-2 flex items-start gap-1.5 leading-relaxed">
-                                    <span className="text-sky-400 mt-0.5 flex-shrink-0">ℹ</span>
-                                    If an employee matches both a department rule and a designation rule for the same category, the designation limit will be applied automatically.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Section 3: Status */}
-                        <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
-                                    <ShieldCheck size={20} />
-                                </div>
-                                <div className="space-y-0.5">
-                                    <label className="text-base font-black text-slate-800">Status</label>
+                                {/* Section 3: Status */}
+                                <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
+                                            <ShieldCheck size={20} />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <label className="text-base font-black text-slate-800">Status</label>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer scale-110 mr-2">
+                                        <input
+                                            type="checkbox"
+                                            name="status"
+                                            defaultChecked={editingExpense ? editingExpense.status === 'Active' : true}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                                    </label>
                                 </div>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer scale-110 mr-2">
-                                <input
-                                    type="checkbox"
-                                    name="status"
-                                    defaultChecked={editingExpense ? editingExpense.status === 'Active' : true}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                            </label>
-                        </div>
-
+                        )}
                     </div>
                 </div>
             </form>

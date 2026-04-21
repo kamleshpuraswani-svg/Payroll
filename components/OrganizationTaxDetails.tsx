@@ -533,16 +533,18 @@ const OrganizationTaxDetails: React.FC = () => {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Father's Name</label>
-                                        <input
-                                            type="text"
-                                            value={fatherName}
-                                            onChange={e => setFatherName(e.target.value)}
-                                            disabled={!isEditing}
-                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-sky-500 transition-colors"
-                                        />
-                                    </div>
+                                    {deductorType !== 'Employee' && (
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Father's Name</label>
+                                            <input
+                                                type="text"
+                                                value={fatherName}
+                                                onChange={e => setFatherName(e.target.value)}
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-sky-500 transition-colors"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {deductorType === 'Non-Employee' && (
