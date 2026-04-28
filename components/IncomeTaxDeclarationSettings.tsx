@@ -183,16 +183,27 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setDeclarationFrequency(config.declarationFrequency ?? 'Annually');
                 setInvApprovers(config.invApprovers ?? ["Kavita Sharma (HR)"]);
                 const defaultLimits = [
-                    { id: '1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old' },
-                    { id: '2', section: '80CCC', limit: '1,50,000 (within 80C)', description: 'Pension fund contributions', regime: 'Old' },
-                    { id: '3', section: '80CCD(1)', limit: '1,50,000 (within 80C)', description: 'Employee NPS contribution', regime: 'Old' },
+                    { id: '1', section: '80C', limit: '1,50,000', description: 'Investments under section 80C', regime: 'Old' },
+                    { id: '1a', section: '80C', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
+                    { id: '1b', section: '80C', limit: '150000', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
+                    { id: '1c', section: '80C', limit: '150000', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
+                    { id: '1d', section: '80C', limit: '150000', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
+                    { id: '1e', section: '80C', limit: '150000', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
+                    { id: '1f', section: '80C', limit: '150000', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
+                    { id: '1g', section: '80C', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
+                    { id: '1h', section: '80C', limit: '150000', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
+                    { id: '1i', section: '80C', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
+                    { id: '1j', section: '80C', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
+                    { id: '1k', section: '80C', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
+                    { id: '2', section: '80CCC', limit: '1,50,000', description: 'Pension fund contributions', regime: 'Old' },
+                    { id: '3', section: '80CCD(1)', limit: '1,50,000', description: 'Employee NPS contribution', regime: 'Old' },
                     { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution (over 80C limit)', regime: 'Old' },
-                    { id: '5', section: '80CCD(2)', limit: '10% of salary (no upper cap)', description: 'Employer NPS contribution', regime: 'Old' },
+                    { id: '5', section: '80CCD(2)', limit: '10% of salary', description: 'Employer NPS contribution', regime: 'Old' },
                     { id: '6', section: '80D', limit: '25,000', description: 'Medical insurance — Self & Family', regime: 'Old' },
                     { id: '7', section: '80D', limit: '25,000', description: 'Medical insurance — Parents', regime: 'Old' },
                     { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
                     { id: '9', section: '80DDB', limit: '40,000', description: 'Treatment of specified diseases', regime: 'Old' },
-                    { id: '10', section: '80E', limit: 'Actual (no limit, 8 years)', description: 'Interest on education loan', regime: 'Old' },
+                    { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
                     { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤35L)', regime: 'Old' },
                     { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
                     { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
@@ -200,11 +211,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
                     { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (non-senior)', regime: 'Old' },
                     { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (senior citizens)', regime: 'Old' },
-                    { id: '18', section: '80U', limit: '75,000 / 1,25,000 (severe)', description: 'Self disability deduction', regime: 'Old' },
+                    { id: '18', section: '80U', limit: '75,000 / 1,25,000', description: 'Self disability deduction', regime: 'Old' },
                     { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
                     { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 40/50% of salary, rent–10% salary', description: 'HRA exemption', regime: 'Old' },
                     { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
-                    { id: '22', section: '16(ia)', limit: '75,000 (FY 2024-25 onwards)', description: 'Standard Deduction (salaried)', regime: 'Old' },
+                    { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
                     { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
                     { id: '24', section: '80CCD(2)', limit: '14% of salary (govt); 10% (others)', description: 'Employer NPS contribution', regime: 'New' },
                     { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
@@ -234,11 +245,21 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 // Smarter migration: If they have exactly the 2 old defaults, override them with the new 28 entries
                 const isLegacyDefaults = config.limits && config.limits.length === 2 && config.limits[0].description === 'Investments & Expenses';
                 const baseLoaded = (!config.limits || config.limits.length === 0 || isLegacyDefaults) ? defaultLimits : config.limits;
-                // Merge in any defaultLimits entries missing from the loaded set (e.g. newly added ageGroup rows)
-                const mergedLimits = [
+                let mergedLimits = [
                     ...baseLoaded,
                     ...defaultLimits.filter(def => !baseLoaded.some((l: any) => l.id === def.id))
                 ];
+
+                // Ensure 80C subsections are placed immediately after the main 80C entry
+                const main80CIndex = mergedLimits.findIndex(l => l.id === '1');
+                if (main80CIndex !== -1) {
+                    const subSections = mergedLimits.filter(l => l.id.startsWith('1') && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.id.startsWith('1') && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection));
+                    // Re-evaluate main80CIndex after filtering just in case it shifted (though it shouldn't have)
+                    const newMain80CIndex = mergedLimits.findIndex(l => l.id === '1');
+                    mergedLimits.splice(newMain80CIndex + 1, 0, ...subSections);
+                }
+
                 setLimits(mergedLimits);
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setAllowSwitch(config.allowSwitch ?? true);
@@ -300,18 +321,28 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [invApprovers, setInvApprovers] = useState<string[]>(["Kavita Sharma (HR)"]);
     const [selectedInvApprover, setSelectedInvApprover] = useState("");
     
-    // Limits State
     const [limits, setLimits] = useState([
-        { id: '1', section: '80C', limit: '1,50,000', description: 'PPF, EPF, LIC, ELSS, NSC, Home Loan Principal, Tuition Fees, etc.', regime: 'Old' },
-        { id: '2', section: '80CCC', limit: '1,50,000 (within 80C)', description: 'Pension fund contributions', regime: 'Old' },
-        { id: '3', section: '80CCD(1)', limit: '1,50,000 (within 80C)', description: 'Employee NPS contribution', regime: 'Old' },
+        { id: '1', section: '80C', limit: '1,50,000', description: 'Investments under section 80C', regime: 'Old' },
+        { id: '1a', section: '80C', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
+        { id: '1b', section: '80C', limit: '150000', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
+        { id: '1c', section: '80C', limit: '150000', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
+        { id: '1d', section: '80C', limit: '150000', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
+        { id: '1e', section: '80C', limit: '150000', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
+        { id: '1f', section: '80C', limit: '150000', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
+        { id: '1g', section: '80C', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
+        { id: '1h', section: '80C', limit: '150000', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
+        { id: '1i', section: '80C', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
+        { id: '1j', section: '80C', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
+        { id: '1k', section: '80C', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
+        { id: '2', section: '80CCC', limit: '1,50,000', description: 'Pension fund contributions', regime: 'Old' },
+        { id: '3', section: '80CCD(1)', limit: '1,50,000', description: 'Employee NPS contribution', regime: 'Old' },
         { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution (over 80C limit)', regime: 'Old' },
-        { id: '5', section: '80CCD(2)', limit: '10% of salary (no upper cap)', description: 'Employer NPS contribution', regime: 'Old' },
+        { id: '5', section: '80CCD(2)', limit: '10% of salary', description: 'Employer NPS contribution', regime: 'Old' },
         { id: '6', section: '80D', limit: '25,000', description: 'Medical insurance — Self & Family', regime: 'Old' },
         { id: '7', section: '80D', limit: '25,000', description: 'Medical insurance — Parents', regime: 'Old' },
         { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
         { id: '9', section: '80DDB', limit: '40,000', description: 'Treatment of specified diseases', regime: 'Old' },
-        { id: '10', section: '80E', limit: 'Actual (no limit, 8 years)', description: 'Interest on education loan', regime: 'Old' },
+        { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
         { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤35L)', regime: 'Old' },
         { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
         { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
@@ -319,11 +350,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
         { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (non-senior)', regime: 'Old' },
         { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (senior citizens)', regime: 'Old' },
-        { id: '18', section: '80U', limit: '75,000 / 1,25,000 (severe)', description: 'Self disability deduction', regime: 'Old' },
+        { id: '18', section: '80U', limit: '75,000 / 1,25,000', description: 'Self disability deduction', regime: 'Old' },
         { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
         { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 40/50% of salary, rent–10% salary', description: 'HRA exemption', regime: 'Old' },
         { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
-        { id: '22', section: '16(ia)', limit: '75,000 (FY 2024-25 onwards)', description: 'Standard Deduction (salaried)', regime: 'Old' },
+        { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
         { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
         { id: '24', section: '80CCD(2)', limit: '14% of salary (govt); 10% (others)', description: 'Employer NPS contribution', regime: 'New' },
         { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
@@ -1573,7 +1604,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             return (
                                                 <tr key={limit.id} className="hover:bg-slate-50/50 transition-colors group">
                                                     <td className="px-6 py-4 font-bold text-slate-700">
-                                                        {isEditingInv ? (
+                                                        {!(limit as any).isSubSection && (isEditingInv ? (
                                                             <input 
                                                                 type="text" 
                                                                 value={limit.section} 
@@ -1585,22 +1616,24 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                 className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
                                                                 placeholder="e.g. 80C"
                                                             />
-                                                        ) : <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>}
+                                                        ) : <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>)}
                                                     </td>
                                                     <td className="px-6 py-4 text-slate-500 text-xs font-medium">
-                                                        {isEditingInv ? (
-                                                            <input 
-                                                                type="text" 
-                                                                value={limit.description} 
-                                                                onChange={(e) => {
-                                                                    const newLimits = [...limits];
-                                                                    newLimits[actualIdx].description = e.target.value;
-                                                                    setLimits(newLimits);
-                                                                }}
-                                                                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
-                                                                placeholder="Section description..."
-                                                            />
-                                                        ) : limit.description}
+                                                        <div className={`relative flex items-center w-full ${(limit as any).isSubSection ? 'pl-6 before:absolute before:left-0 before:w-3 before:h-[1px] before:bg-slate-300' : ''}`}>
+                                                            {isEditingInv ? (
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={limit.description} 
+                                                                    onChange={(e) => {
+                                                                        const newLimits = [...limits];
+                                                                        newLimits[actualIdx].description = e.target.value;
+                                                                        setLimits(newLimits);
+                                                                    }}
+                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                    placeholder="Section description..."
+                                                                />
+                                                            ) : limit.description}
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-4 font-black text-slate-800">
                                                         {isEditingInv ? (

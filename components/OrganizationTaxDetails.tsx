@@ -359,7 +359,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">
                                             TDS circle / AO code <Info size={14} className="text-slate-400" />
@@ -374,7 +374,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                             <input type="text" value={ao4} onChange={e => setAo4(e.target.value)} disabled={!isEditing} placeholder="00" className="w-16 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center font-bold text-slate-700 focus:outline-none focus:border-sky-500" />
                                         </div>
                                     </div>
-                                    <div className="max-w-xs">
+                                    <div>
                                         <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">
                                             Tax Payment Frequency <Info size={14} className="text-slate-400" />
                                         </label>
@@ -391,6 +391,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                     </div>
+                                    <div />
                                 </div>
                             </div>
                         )}
@@ -412,7 +413,7 @@ const OrganizationTaxDetails: React.FC = () => {
                         </div>
                         {isBankExpanded && (
                             <div className="p-6 border-t border-slate-100 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Bank Name</label>
                                         <div className="relative">
@@ -441,8 +442,6 @@ const OrganizationTaxDetails: React.FC = () => {
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-colors" 
                                         />
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Name</label>
                                         <input 
@@ -465,8 +464,6 @@ const OrganizationTaxDetails: React.FC = () => {
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500 transition-colors" 
                                         />
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Branch</label>
                                         <input 
@@ -516,7 +513,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Name</label>
                                         <div className="relative">
@@ -545,21 +542,20 @@ const OrganizationTaxDetails: React.FC = () => {
                                             />
                                         </div>
                                     )}
+                                    {deductorType === 'Non-Employee' && (
+                                        <div className="animate-in slide-in-from-top-2 duration-300">
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Designation</label>
+                                            <input
+                                                type="text"
+                                                value={designation}
+                                                onChange={e => setDesignation(e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="Enter Designation"
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-sky-500 transition-colors"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-
-                                {deductorType === 'Non-Employee' && (
-                                    <div className="max-w-md animate-in slide-in-from-top-2 duration-300">
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Designation</label>
-                                        <input
-                                            type="text"
-                                            value={designation}
-                                            onChange={e => setDesignation(e.target.value)}
-                                            disabled={!isEditing}
-                                            placeholder="Enter Designation"
-                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-sky-500 transition-colors"
-                                        />
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>

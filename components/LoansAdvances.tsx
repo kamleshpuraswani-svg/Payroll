@@ -529,9 +529,9 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                     </div>
 
                     <div className="space-y-6">
-                        {/* Loan Type (Read-only Context) */}
+                        {/* Request Type (Read-only Context) */}
                         <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">LOAN TYPE</label>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">REQUEST TYPE</label>
                             <div className="flex gap-4">
                                 <label className={`flex items-center gap-4 px-6 py-4 border-2 rounded-2xl cursor-not-allowed opacity-50 min-w-[200px] ${loan.type === 'Salary Advance' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100'}`}>
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${loan.type === 'Salary Advance' ? 'border-purple-600' : 'border-slate-300'}`}>
@@ -939,9 +939,9 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                     )}
 
                     <div className="space-y-6">
-                        {/* Loan Type */}
+                        {/* Request Type */}
                         <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">LOAN TYPE <span className="text-rose-500">*</span></label>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">REQUEST TYPE <span className="text-rose-500">*</span></label>
                             <div className="flex gap-4">
                                 <label
                                     className={`flex items-center gap-4 px-6 py-4 border-2 rounded-2xl cursor-pointer transition-all min-w-[200px] ${loanType === 'Salary Advance' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100 hover:border-slate-200'}`}
@@ -1407,7 +1407,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                             </button>
                                         )}
                                         <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <CreditCard size={16} className="text-slate-400" /> Loan Type
+                                            <CreditCard size={16} className="text-slate-400" /> Request Type
                                         </button>
                                         <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
                                             <Calendar size={16} className="text-slate-400" /> Request Date
@@ -1449,7 +1449,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                             <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0 z-10 shadow-sm border-b border-slate-200">
                                 <tr>
                                     {userRole !== 'EMPLOYEE' && <th className="px-6 py-3">Employee Name & ID</th>}
-                                    <th className="px-6 py-3">Loan Type</th>
+                                    <th className="px-6 py-3">Request Type</th>
                                     <th className="px-6 py-3 text-right">Requested Amount</th>
                                     <th className="px-6 py-3 text-right">Approved Amount</th>
                                     <th className="px-6 py-3">Status</th>
