@@ -775,7 +775,6 @@ const ExpenseManagement: React.FC<{
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Category</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Amount</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Status</th>
-                                    <th className="px-6 py-3 border-b border-slate-200 text-center whitespace-nowrap">Expense Date</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Created By</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Last Modified By</th>
                                     <th className="px-4 py-3 border-b border-slate-200 text-right">Actions</th>
@@ -813,7 +812,6 @@ const ExpenseManagement: React.FC<{
                                                 {claim.status.replace(/_/g, ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap text-center font-bold text-xs">{claim.submittedDate}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-700">{claim.createdByName}</span>

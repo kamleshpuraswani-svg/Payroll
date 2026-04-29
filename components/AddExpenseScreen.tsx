@@ -55,6 +55,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     const [isFetchingData, setIsFetchingData] = useState(false);
     const [editingItemId, setEditingItemId] = useState<number | string | null>(null);
     const [claimStatus, setClaimStatus] = useState('Pending');
+    const [showAddItemModal, setShowAddItemModal] = useState(false);
 
     useEffect(() => {
         if (editId) {
@@ -199,6 +200,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         setReceipt(null);
         setSelectedCategory(null);
         setExpenseDate(expenseFromDate);
+        setShowAddItemModal(false);
     };
 
     const handleEditItem = (item: any) => {
@@ -210,6 +212,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         const cat = categories.find(c => c.name === item.category);
         setSelectedCategory(cat || null);
         setExpenseDate(item.expenseDate || (item.fromDate === item.toDate ? item.fromDate : new Date().toISOString().split('T')[0]));
+        setShowAddItemModal(true);
         // Note: keeping existing receipt name if no new file is selected
     };
 
@@ -393,11 +396,23 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                         )}
 
                         <div className="space-y-6 mt-10">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expense details</h3>
+                            {editId && !showAddItemModal && (
+                                <div className="flex justify-end w-full">
+                                    <button 
+                                        onClick={() => setShowAddItemModal(true)}
+                                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 transition-all flex items-center gap-2 shadow-md shadow-purple-100"
+                                    >
+                                        <Plus size={14} /> Add Item
+                                    </button>
+                                </div>
+                            )}
 
                             <div className="flex flex-col lg:flex-row gap-8 items-start">
                                 {/* Add Item Form */}
-                                <div className="w-full lg:w-1/3 shrink-0 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                                {(!editId || showAddItemModal) && (
+                                <div className="w-full lg:w-1/3 shrink-0">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Expense details</h3>
+                                    <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
                                     <div className="space-y-5">
                                         {/* Expense category per item */}
                                         <div>
@@ -524,16 +539,8 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                             </div>
                                         </div>
 
-                                        <button 
-                                            onClick={handleAddItem}
-                                            disabled={!amount || !reason || !selectedCategory}
-                                            className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                        >
-                                            {editingItemId !== null ? <CheckCircle size={18} /> : <Plus size={18} />}
-                                            {editingItemId !== null ? 'UPDATE ITEM' : 'ADD'}
-                                        </button>
-                                        {editingItemId !== null && (
-                                            <button 
+                                        <div className="flex gap-4">
+                                            <button
                                                 onClick={() => {
                                                     setEditingItemId(null);
                                                     setMerchant('');
@@ -541,14 +548,26 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                                     setAmount('');
                                                     setReason('');
                                                     setReceipt(null);
+                                                    setSelectedCategory(null);
+                                                    setShowAddItemModal(false);
                                                 }}
-                                                className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500 transition-all"
+                                                className="w-1/2 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center shadow-sm"
                                             >
-                                                Cancel Edit
+                                                Cancel
                                             </button>
-                                        )}
+                                            <button 
+                                                onClick={handleAddItem}
+                                                disabled={!amount || !reason || !selectedCategory}
+                                                className="w-1/2 py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                            >
+                                                {editingItemId !== null ? <CheckCircle size={18} /> : <Plus size={18} />}
+                                                {editingItemId !== null ? 'UPDATE' : 'ADD'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+                                </div>
+                                )}
 
                                 {/* Items List Container */}
                                 <div className="flex-1 w-full bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px] flex flex-col">
