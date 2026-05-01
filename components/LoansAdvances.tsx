@@ -408,7 +408,6 @@ const ViewLoanModal: React.FC<{
                                             <tbody className="divide-y divide-slate-50">
                                                 {(() => {
                                                     const fullSchedule = loan.repaymentSchedule || [];
-                                                    if (userRole !== 'EMPLOYEE') return fullSchedule.map(renderRow);
                                                     
                                                     const paid = fullSchedule.filter(e => e.status === 'Paid');
                                                     const nextPending = fullSchedule.find(e => e.status === 'Pending');
@@ -455,6 +454,7 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
     const [amount, setAmount] = useState(loan.requestedAmount);
     const [tenure, setTenure] = useState(loan.totalEmis || 1);
     const [interestRate, setInterestRate] = useState(String(loan.interestRate || '0'));
+    const [interestCalcType, setInterestCalcType] = useState<'flat'|'reducing'>(loan.interestCalcType || 'flat');
     const [repaymentMonth, setRepaymentMonth] = useState('February 2026'); // Mock default
     const [reason, setReason] = useState(loan.reason || '');
     const [approvers, setApprovers] = useState<any[]>([]);
@@ -495,14 +495,33 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
 
     const stats = calculateEMI();
 
+    const hasChanges = Number(amount) !== loan.requestedAmount || Number(interestRate) !== (loan.interestRate || 0) || Number(tenure) !== (loan.totalEmis || 1) || interestCalcType !== (loan.interestCalcType || 'flat');
+
+    const handleSaveAndApprove = () => {
+        onSave({ 
+            ...loan, 
+            requestedAmount: Number(amount), 
+            totalEmis: Number(tenure), 
+            interestRate: Number(interestRate),
+            interestCalcType,
+            reason: reason,
+            remainingBalance: Number(amount),
+            emiAmount: stats.emi,
+            status: 'Approved'
+        });
+        onClose();
+    };
+
     const handleSave = () => {
         onSave({ 
             ...loan, 
             requestedAmount: Number(amount), 
             totalEmis: Number(tenure), 
             interestRate: Number(interestRate),
+            interestCalcType,
             reason: reason,
-            remainingBalance: Number(amount)
+            remainingBalance: Number(amount),
+            emiAmount: stats.emi
         });
         onClose();
     };
@@ -548,22 +567,21 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                             </div>
                         </div>
 
-                        {/* Requested Amount */}
-                        <div className="max-w-md">
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REQUESTED AMOUNT <span className="text-rose-500">*</span></label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                <input
-                                    type="text"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
-                                />
+                        {/* Requested Amount, Interest, Tenure */}
+                        <div className="flex flex-col md:flex-row gap-6">
+                            <div className="w-full md:w-[50%]">
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REQUESTED AMOUNT <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                    <input
+                                        type="text"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                    />
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6 max-w-md">
-                            <div>
+                            <div className="w-full md:w-[25%]">
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">INTEREST RATE (% P.A.)</label>
                                 <input
                                     type="text"
@@ -573,7 +591,7 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                                 />
                                 <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Set 0 for interest-free advances.</p>
                             </div>
-                            <div>
+                            <div className="w-full md:w-[25%]">
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">MAX TENURE (MONTHS) <span className="text-rose-500">*</span></label>
                                 <input
                                     type="text"
@@ -587,8 +605,38 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
 
                         {/* Detailed EMI Table & Repayment Month */}
                         <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REPAYMENT MONTH</label>
+                            <div className="w-full flex flex-col gap-6">
+                                <div>
+                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">INTEREST CALCULATION TYPE</label>
+                                    <div className="flex gap-2">
+                                        {(['flat', 'reducing'] as const).map((type) => {
+                                            const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
+                                            const isSelected = interestCalcType === type;
+                                            return (
+                                                <label
+                                                    key={type}
+                                                    className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl cursor-pointer transition-all text-sm font-bold ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 text-purple-900' : 'bg-white border-slate-200 hover:border-purple-200 text-slate-600'}`}
+                                                >
+                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                        {isSelected && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                    </div>
+                                                    <input
+                                                        type="radio"
+                                                        className="hidden"
+                                                        checked={isSelected}
+                                                        onChange={() => setInterestCalcType(type)}
+                                                    />
+                                                    {label}
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="mt-1.5 text-[10px] text-slate-400 font-medium">
+                                        {interestCalcType === 'flat' ? 'Calculated on original principal.' : 'Calculated on outstanding balance.'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI start month</label>
                                 <div className="relative">
                                     <select
                                         value={repaymentMonth}
@@ -600,6 +648,7 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                                         <option>April 2026</option>
                                     </select>
                                     <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
                                 </div>
                             </div>
                             
@@ -639,7 +688,7 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                         </div>
 
                         {/* Approval Flow Section (Read-Only List) */}
-                        <div>
+                        <div className="hidden">
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow</label>
                             <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/30 space-y-4">
                                 <div className="min-h-[80px] border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center p-4">
@@ -664,15 +713,22 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                 <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3 sticky bottom-0 z-10 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
                     <button onClick={onClose} className="px-8 py-3 dark:bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm">Cancel</button>
                     <button onClick={handleSave} className="px-8 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all transform active:scale-95">Save</button>
+                    {hasChanges && (
+                        <button onClick={handleSaveAndApprove} className="px-8 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all transform active:scale-95">Save & Approve</button>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
-const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApprove: (amount: number, remarks: string) => void }> = ({ loan, onClose, onApprove }) => {
+const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApprove: (amount: number, remarks: string, interestRate: number, tenure: number, interestCalcType: string, repaymentMonth: string) => void }> = ({ loan, onClose, onApprove }) => {
     const [amount, setAmount] = useState(loan.requestedAmount);
     const [remarks, setRemarks] = useState('');
+    const [interestRate, setInterestRate] = useState(String(loan.interestRate || '0'));
+    const [tenure, setTenure] = useState(loan.totalEmis || 1);
+    const [interestCalcType, setInterestCalcType] = useState<'flat'|'reducing'>(loan.interestCalcType || 'flat');
+    const [repaymentMonth, setRepaymentMonth] = useState('February 2026'); // Mock default
 
     const isPartial = amount < loan.requestedAmount;
     const isSubmitDisabled = isPartial && !remarks.trim();
@@ -701,6 +757,66 @@ const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApp
                         <input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className={`w-full px-3 py-2 border rounded-lg text-sm font-bold focus:outline-none transition-colors ${isPartial ? 'border-amber-400 focus:border-amber-500' : 'border-slate-200 focus:border-emerald-500'}`} />
                         {isPartial && <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> Amount is less than requested.</p>}
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">INTEREST RATE (% P.A.)</label>
+                            <input
+                                type="text"
+                                value={interestRate}
+                                onChange={(e) => setInterestRate(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">MAX TENURE (MONTHS)</label>
+                            <input
+                                type="text"
+                                value={tenure}
+                                onChange={(e) => setTenure(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">INTEREST CALC TYPE</label>
+                            <div className="flex gap-2">
+                                {(['flat', 'reducing'] as const).map((type) => {
+                                    const label = type === 'flat' ? 'Flat' : 'Reducing';
+                                    const isSelected = interestCalcType === type;
+                                    return (
+                                        <label
+                                            key={type}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 border rounded-lg cursor-pointer transition-all text-xs font-bold ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'}`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                className="hidden"
+                                                checked={isSelected}
+                                                onChange={() => setInterestCalcType(type)}
+                                            />
+                                            {label}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">EMI start month</label>
+                            <div className="relative">
+                                <select
+                                    value={repaymentMonth}
+                                    onChange={(e) => setRepaymentMonth(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer bg-white"
+                                >
+                                    <option>February 2026</option>
+                                    <option>March 2026</option>
+                                    <option>April 2026</option>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
                     <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Reason {isPartial && <span className="text-rose-500">*</span>}</label>
                         <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none transition-colors h-24 resize-none ${isSubmitDisabled ? 'border-amber-300 focus:border-amber-500' : 'border-slate-200 focus:border-emerald-500'}`} placeholder={isPartial ? "Please provide a reason for partial approval..." : "Add any comments..."}></textarea>
@@ -709,7 +825,7 @@ const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApp
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 text-sm">Cancel</button>
                     <button 
-                        onClick={() => { onApprove(amount, remarks); onClose(); }} 
+                        onClick={() => { onApprove(amount, remarks, Number(interestRate), Number(tenure), interestCalcType, repaymentMonth); onClose(); }} 
                         disabled={isSubmitDisabled}
                         className={`px-6 py-2 text-white rounded-lg font-medium text-sm shadow-sm flex items-center gap-2 transition-all ${isSubmitDisabled ? 'bg-slate-300 cursor-not-allowed opacity-50' : (isPartial ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200')}`}
                     >
@@ -1047,7 +1163,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                 {userRole !== 'EMPLOYEE' && (
                                     <div>
                                         <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
-                                            {loanType === 'Loan' ? 'REPAYMENT MONTH' : 'REPAYMENT MONTH'}
+                                            EMI START MONTH
                                         </label>
                                         <div className="relative">
                                             <select
@@ -1090,7 +1206,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
 
                         {loanType === 'Salary Advance' && userRole !== 'EMPLOYEE' && (
                             <div className="max-w-md">
-                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">REPAYMENT MONTH</label>
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI START MONTH</label>
                                 <div className="relative">
                                     <select
                                         value={repaymentMonth}
@@ -1125,7 +1241,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                         </div>
 
                         {/* Approval Flow Section */}
-                        <div>
+                        <div className="hidden">
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">Approval Flow</label>
                             <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/30 space-y-4">
                                 {/* Manual approver addition removed per requirement */}
@@ -1266,7 +1382,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
     }, [allLoans, userRole, currentEmployeeId]);
 
     const handleUpdateLoan = async (updatedLoan: LoanRequest) => {
-        const payload = {
+        const payload: any = {
             loan_type: updatedLoan.type,
             amount: updatedLoan.requestedAmount,
             status: updatedLoan.status,
@@ -1277,19 +1393,31 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
             remaining_balance: updatedLoan.remainingBalance,
             repayment_month: updatedLoan.repaymentMonth
         };
+
+        if (updatedLoan.status === 'Approved') {
+            payload.approved_amount = updatedLoan.requestedAmount;
+            payload.remaining_balance = updatedLoan.requestedAmount;
+            payload.repayment_schedule = Array.from({ length: updatedLoan.totalEmis || 12 }).map((_, i) => ({
+                emiNo: i + 1,
+                dueDate: '31 Jan 2026', // Mock date
+                amount: Math.round(updatedLoan.requestedAmount / (updatedLoan.totalEmis || 12)),
+                status: 'Pending'
+            }));
+        }
+
         await supabase.from('employee_loans').update(payload).eq('id', updatedLoan.id);
         fetchLoans();
         setEditLoan(null);
     };
 
-    const handleApproveAction = async (id: string, amount: number, remarks: string) => {
+    const handleApproveAction = async (id: string, amount: number, remarks: string, interestRate: number, tenure: number, interestCalcType: string, repaymentMonth: string) => {
         const loan = loans.find(l => l.id === id);
         if (!loan) return;
         const status = amount < loan.requestedAmount ? 'Partially Approved' : 'Approved';
-        const dummySchedule = Array.from({ length: loan.totalEmis || 12 }).map((_, i) => ({
+        const dummySchedule = Array.from({ length: tenure || 12 }).map((_, i) => ({
             emiNo: i + 1,
             dueDate: '31 Jan 2026', // Mock date
-            amount: Math.round(amount / (loan.totalEmis || 12)),
+            amount: Math.round(amount / (tenure || 12)),
             status: 'Pending'
         }));
         
@@ -1297,6 +1425,10 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
             status,
             approved_amount: amount,
             remaining_balance: amount,
+            interest_rate: interestRate,
+            tenure_months: tenure,
+            interest_calc_type: interestCalcType,
+            repayment_month: repaymentMonth,
             repayment_schedule: dummySchedule
         }).eq('id', id);
         fetchLoans();
@@ -1524,15 +1656,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                {loan.status === 'Pending' && (
-                                                    <button
-                                                        onClick={() => setEditLoan(loan)}
-                                                        className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
-                                                        title="Edit Request"
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                )}
+
                                              </div>
                                          </td>
                                     </tr>
@@ -1567,7 +1691,8 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                 <ApproveLoanModal
                     loan={approveLoan}
                     onClose={() => setApproveLoan(null)}
-                    onApprove={(amount, remarks) => handleApproveAction(approveLoan.id, amount, remarks)}
+                    onApprove={(amount, remarks, interestRate, tenure, interestCalcType, repaymentMonth) => 
+                        handleApproveAction(approveLoan.id, amount, remarks, interestRate, tenure, interestCalcType, repaymentMonth)}
                 />
             )}
 
