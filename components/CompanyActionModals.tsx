@@ -1395,7 +1395,6 @@ export const RunPayrollModal: React.FC<{
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                            <tr>
                               <th className="px-6 py-3">Employee Name</th>
-                              <th className="px-4 py-3 text-center text-indigo-600 font-bold">Working Days</th>
                               <th className="px-4 py-3 text-center">Present Days</th>
                               <th className="px-4 py-3 text-center">Leave Days</th>
                               <th className="px-4 py-3 text-center">LOP Days</th>
@@ -1415,7 +1414,6 @@ export const RunPayrollModal: React.FC<{
                                         )}
                                      </div>
                                   </td>
-                                  <td className="px-4 py-3 text-center text-indigo-600 font-bold bg-indigo-50/30">22</td>
                                   <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
                                   <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
                                   <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop || '-'}</td>
@@ -2118,10 +2116,25 @@ export const RunPayrollModal: React.FC<{
                   <div className="grid grid-cols-2 gap-6">
                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
                         <div className="flex items-start justify-between mb-4">
+                           <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Download size={20} /></div>
+                           {bankFileDownloaded && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
+                        </div>
+                        <h3 className="font-bold text-slate-800">1. Bank Disbursal</h3>
+                        <button 
+                           onClick={handleDownloadBankFile} 
+                           disabled={readOnly} 
+                           className={`mt-auto w-full py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${bankFileDownloaded ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                        >
+                           {bankFileDownloaded ? <><CheckCircle size={16} /> File Downloaded</> : <><Download size={16} /> Download File</>}
+                        </button>
+                     </div>
+
+                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                        <div className="flex items-start justify-between mb-4">
                            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></div>
                            {payslipsGenerated && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
                         </div>
-                        <h3 className="font-bold text-slate-800">1. Generate Payslips</h3>
+                        <h3 className="font-bold text-slate-800">2. Generate Payslips</h3>
 
                         <div className="mt-auto">
                            {!payslipsGenerated ? (
@@ -2153,7 +2166,7 @@ export const RunPayrollModal: React.FC<{
                            <div className="p-2 bg-sky-50 text-sky-600 rounded-lg"><Mail size={20} /></div>
                            {emailsSent && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Sent</span>}
                         </div>
-                        <h3 className="font-bold text-slate-800">2. Distribute Payslips</h3>
+                        <h3 className="font-bold text-slate-800">3. Distribute Payslips</h3>
                         <p className="text-xs text-slate-500 mt-1 mb-4">Payslip will be uploaded to Employees account in People module.</p>
 
                         <button
@@ -2162,21 +2175,6 @@ export const RunPayrollModal: React.FC<{
                            className={`w-full py-2 rounded-lg text-sm font-medium transition-colors mt-auto ${(!payslipsGenerated || readOnly) ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : emailsSent ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-sky-600 text-white hover:bg-sky-700'}`}
                         >
                            {emailsSent ? 'Notifications Sent' : 'Send Now'}
-                        </button>
-                     </div>
-
-                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
-                        <div className="flex items-start justify-between mb-4">
-                           <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Download size={20} /></div>
-                           {bankFileDownloaded && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
-                        </div>
-                        <h3 className="font-bold text-slate-800">3. Bank Disbursal</h3>
-                        <button 
-                           onClick={handleDownloadBankFile} 
-                           disabled={readOnly} 
-                           className={`mt-auto w-full py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${bankFileDownloaded ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'text-slate-700 border-slate-200 hover:bg-slate-50'}`}
-                        >
-                           {bankFileDownloaded ? <><CheckCircle size={16} /> File Downloaded</> : <><Download size={16} /> Download File</>}
                         </button>
                      </div>
                   </div>
@@ -2310,13 +2308,23 @@ export const RunPayrollModal: React.FC<{
                      ) : <div />}
                      
                      {currentStep === 5 ? (
-                        <button
-                           onClick={handleNext}
-                           disabled={(!isConfirmed && !readOnly) || readOnly}
-                           className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                           <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
-                        </button>
+                        <div className="flex gap-3">
+                           {isConfirmed && !readOnly && (
+                              <button
+                                 onClick={handleNext}
+                                 className="px-8 py-2.5 bg-rose-600 text-white rounded-lg font-bold text-sm hover:bg-rose-700 shadow-sm flex items-center gap-2 transition-all"
+                              >
+                                 <AlertTriangle size={16} /> Force Lock & Approve Payroll
+                              </button>
+                           )}
+                           <button
+                              onClick={handleNext}
+                              disabled={(!isConfirmed && !readOnly) || readOnly}
+                              className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                           >
+                              <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
+                           </button>
+                        </div>
                      ) : currentStep === 6 ? (
                         <button onClick={onClose} className="px-8 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all">
                            Finish <CheckCircle size={16} />

@@ -406,7 +406,15 @@ const PayrollApprovalRequests: React.FC = () => {
                         </span>
                      </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    {selectedRun.status === 'Pending Approval' && (
+                        <button 
+                            onClick={handleEditPayroll}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 shadow-sm text-slate-700 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all"
+                        >
+                            <Edit2 size={14} /> Edit
+                        </button>
+                    )}
                     <button onClick={() => setSelectedRun(null)} className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-slate-600 border border-transparent hover:border-slate-200 transition-all">
                         <X size={20} />
                     </button>
@@ -507,20 +515,12 @@ const PayrollApprovalRequests: React.FC = () => {
                {/* Sticky Footer Actions */}
                <div className="p-6 border-t border-slate-100 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                   {selectedRun.status === 'Pending Approval' ? (
-                    <div className="flex gap-3">
-                        <button 
-                            onClick={handleEditPayroll}
-                            className="flex-1 py-3 bg-white border border-slate-300 shadow-sm text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 hover:border-slate-400 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Edit2 size={18} /> Edit
-                        </button>
-                        <button 
-                            onClick={handleApproveClick}
-                            className="flex-[2] py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
-                        >
-                            <CheckCircle size={18} /> Approve
-                        </button>
-                    </div>
+                    <button 
+                        onClick={handleApproveClick}
+                        className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                    >
+                        <CheckCircle size={18} /> Approve
+                    </button>
                   ) : (
                     <div className="w-full py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
                         <CheckCircle size={18} /> Payroll Approved

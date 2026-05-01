@@ -1025,6 +1025,9 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
 
     const employeeSections = allDeclarations.filter((d: TaxDeclaration) => d.employee_id === doc.employee_id);
     const parentStatus = computeParentStatus(employeeSections);
+    
+    const totalDeclared = employeeSections.reduce((sum, section) => sum + (section.amount || 0), 0);
+    const totalApproved = employeeSections.reduce((sum, section) => sum + (section.approved_amount || 0), 0);
 
     const maxLimit = SECTION_LIMITS[doc.type] || 'NA';
 
@@ -1088,6 +1091,14 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                         </div>
 
                             <div className="flex items-center gap-4">
+                                <div className="hidden sm:flex flex-col items-end mr-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Declared</span>
+                                    <span className="text-sm font-black text-slate-800 leading-none">₹{totalDeclared.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="hidden sm:flex flex-col items-end mr-4">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Approved</span>
+                                    <span className="text-sm font-black text-emerald-600 leading-none">₹{totalApproved.toLocaleString('en-IN')}</span>
+                                </div>
                                 <span className={`hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold bg-white border border-slate-200 text-slate-600 shadow-sm`}>
                                     Tax Regime: {doc?.regime || 'N/A'}
                                 </span>
@@ -1101,13 +1112,13 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                                 <div className="flex items-center gap-2 ml-2 border-l border-slate-200 pl-4">
                                     <button
                                         onClick={onClose}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all shadow-sm"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={onClose}
-                                        className="px-4 py-2 bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-100 hover:bg-emerald-600 transition-all active:scale-95 flex items-center gap-1.5"
+                                        className="px-4 py-2 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-1.5"
                                     >
                                         <CheckCircle size={14} /> Submit
                                     </button>
