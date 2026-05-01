@@ -25,6 +25,17 @@ import {
 import { supabase } from '../services/supabaseClient';
 import { MOCK_CLAIMS } from './mockData';
 
+const DUMMY_CLAIMS_FOR_EDIT = [
+    { id: 'CLM-00124', name: 'Client Meeting - Food & Cab', category: 'Travel', items: [{ merchant: 'Uber', amount: 750, reason: 'Cab to client office for Q4 meeting', expenseDate: '2025-12-05' }, { merchant: 'Swiggy', amount: 500, reason: 'Lunch with client', expenseDate: '2025-12-05' }], submittedAt: '2025-12-06', createdAt: '2025-12-05T10:00:00Z', modifiedAt: '2025-12-06T14:30:00Z', status: 'settled' },
+    { id: 'CLM-00123', name: 'Broadband Subscription - Dec', category: 'Broadband', items: [{ merchant: 'Airtel', amount: 999, reason: 'Monthly broadband reimbursement - Dec 2025', expenseDate: '2025-12-01' }], submittedAt: '2025-12-01', createdAt: '2025-12-01T09:00:00Z', modifiedAt: '2025-12-02T11:00:00Z', status: 'approved' },
+    { id: 'CLM-00122', name: 'Team Lunch - Q4 Review', category: 'Meal', items: [{ merchant: 'Barbeque Nation', amount: 3200, reason: 'Team lunch for Q4 performance review', expenseDate: '2025-11-28' }], submittedAt: '2025-11-28', createdAt: '2025-11-28T13:00:00Z', modifiedAt: '2025-11-29T10:00:00Z', status: 'approved' },
+    { id: 'CLM-00121', name: 'Mobile Recharge - Nov', category: 'Mobile', items: [{ merchant: 'Jio', amount: 599, reason: 'Monthly mobile reimbursement - Nov 2025', expenseDate: '2025-11-15' }], submittedAt: '2025-11-15', createdAt: '2025-11-15T11:00:00Z', modifiedAt: '2025-11-16T09:00:00Z', status: 'settled' },
+    { id: 'CLM-00120', name: 'Flight - Bangalore to Mumbai', category: 'Travel', items: [{ merchant: 'IndiGo', amount: 5800, reason: 'Business travel to Mumbai for client presentation', expenseDate: '2025-11-10' }], submittedAt: '2025-11-10', createdAt: '2025-11-10T08:00:00Z', modifiedAt: '2025-11-11T16:00:00Z', status: 'approved' },
+    { id: 'CLM-00119', name: 'AWS Certification Course', category: 'Learning', items: [{ merchant: 'Coursera', amount: 4500, reason: 'AWS Solutions Architect certification fee', expenseDate: '2025-10-22' }], submittedAt: '2025-10-22', createdAt: '2025-10-22T14:00:00Z', modifiedAt: null, status: 'pending' },
+    { id: 'CLM-00118', name: 'Hotel Stay - Client Visit', category: 'Travel', items: [{ merchant: 'Marriott', amount: 7200, reason: '2-night hotel stay for client visit in Mumbai', expenseDate: '2025-10-15' }], submittedAt: '2025-10-15', createdAt: '2025-10-15T09:00:00Z', modifiedAt: '2025-10-17T12:00:00Z', status: 'settled' },
+    { id: 'CLM-00117', name: 'Internet Bill - Oct', category: 'Broadband', items: [{ merchant: 'ACT Fibernet', amount: 1299, reason: 'Monthly broadband reimbursement - Oct 2025', expenseDate: '2025-10-05' }], submittedAt: '2025-10-05', createdAt: '2025-10-05T10:00:00Z', modifiedAt: '2025-10-06T08:00:00Z', status: 'approved' },
+];
+
 
 export interface AddExpenseScreenProps {
     onClose: () => void;
@@ -88,21 +99,28 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
         setIsFetchingData(true);
         try {
             // Handle mock claims
-            if (editId && editId.toString().startsWith('EXP-')) {
-                const mockClaim = MOCK_CLAIMS.find(c => c.id === editId);
+            if (editId && (editId.toString().startsWith('EXP-') || editId.toString().startsWith('CLM-'))) {
+                const mockClaim = editId.toString().startsWith('EXP-') 
+                    ? MOCK_CLAIMS.find(c => c.id === editId)
+                    : DUMMY_CLAIMS_FOR_EDIT.find(c => c.id === editId);
+
                 if (mockClaim) {
-                    setSelectedEmployeeId(mockClaim.employee.id || '');
-                    const cat = categories.find(c => c.name === mockClaim.category);
+                    setSelectedEmployeeId(mockClaim.employee?.id || '1');
+                    const catName = mockClaim.category;
+                    const cat = categories.find(c => c.name === catName);
                     setSelectedCategory(cat || null);
-                    setClaimStatus(mockClaim.status);
+                    setClaimStatus(mockClaim.status.charAt(0).toUpperCase() + mockClaim.status.slice(1));
                     
-                    if (mockClaim.submittedDate) {
-                        // Mock dates are already in reasonable format or handled by expenseDate normalization
+                    if (mockClaim.submittedAt) {
+                        const date = mockClaim.submittedAt.includes('-') ? mockClaim.submittedAt : new Date().toISOString().split('T')[0];
+                        setExpenseFromDate(date);
+                        setExpenseToDate(date);
                     }
 
                     const items = (mockClaim.items || []).map((item: any) => ({
                         ...item,
-                        id: item.id || Date.now() + Math.random()
+                        id: item.id || Date.now() + Math.random(),
+                        category: item.category || mockClaim.category
                     }));
                     setExpenseItems(items);
                     return;

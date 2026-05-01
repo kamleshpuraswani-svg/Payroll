@@ -236,6 +236,8 @@ const TaxPlanning: React.FC = () => {
    const [view, setView] = useState<'DASHBOARD' | 'PLANNING' | 'CALCULATOR'>('DASHBOARD');
    const [selectedHistoryYear, setSelectedHistoryYear] = useState<any>(null);
    const [isEditMode, setIsEditMode] = useState(false);
+   const [showPastDeclarations, setShowPastDeclarations] = useState(false);
+   const [historyFilterYear, setHistoryFilterYear] = useState('All');
 
    // Persisted States
    const [declarationStatus, setDeclarationStatus] = useState<'NEW' | 'DRAFT' | 'SUBMITTED'>('NEW'); // Fetched from DB
@@ -651,39 +653,70 @@ const TaxPlanning: React.FC = () => {
    ];
 ;
 
+   const recentDeclarations = [
+      { id: 1, type: 'Investment Declaration FY 2025-26', amount: 355000, approvedAmount: 0, status: 'Submitted', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
+      { id: 2, type: 'Investment Declaration FY 2025-26', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2026, 02:45 PM', modifiedDate: '16 Jan 2026, 10:20 AM' },
+      { id: 3, type: 'Investment Declaration FY 2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' }
+   ];
+
+   const hasSubmitted = recentDeclarations.some(d => d.status === 'Submitted');
+
    const historyData = [
       {
          year: 'FY 2025-26',
          status: 'Submitted',
+         totalAmount: 355000,
+         approvedAmount: 0,
+         createdBy: 'Priya Sharma',
+         modifiedBy: 'Priya Sharma',
+         createdDate: '10 Dec 2025, 11:30 AM',
+         modifiedDate: '10 Dec 2025, 11:30 AM',
          items: []
       },
       {
          year: 'FY 2024-25',
          status: 'Approved',
+         totalAmount: 280000,
+         approvedAmount: 280000,
+         createdBy: 'Priya Sharma',
+         modifiedBy: 'HR Admin',
+         createdDate: '12 Jan 2025, 10:15 AM',
+         modifiedDate: '15 Jan 2025, 04:20 PM',
          items: [
             { type: '80C Investments', amount: 150000, date: '15 Jan 2025', status: 'Approved' },
-            { type: 'Medical Insurance (80D)', amount: 25000, date: '12 Jan 2025', status: 'Approved' },
-            { type: 'HRA Rent Receipts', amount: 240000, date: '10 Jan 2025', status: 'Approved' }
+            { type: 'Medical Insurance (80D)', amount: 25000, date: '10 Feb 2025', status: 'Approved' }
          ]
       },
       {
          year: 'FY 2023-24',
          status: 'Approved',
-         items: [
-            { type: '80C Investments', amount: 150000, date: '20 Jan 2024', status: 'Approved' },
-            { type: 'Medical Insurance (80D)', amount: 20000, date: '18 Jan 2024', status: 'Approved' },
-            { type: 'HRA Rent Receipts', amount: 216000, date: '15 Jan 2024', status: 'Approved' }
-         ]
+         totalAmount: 250000,
+         approvedAmount: 250000,
+         createdBy: 'Priya Sharma',
+         modifiedBy: 'HR Admin',
+         createdDate: '10 Jan 2024, 09:30 AM',
+         modifiedDate: '18 Jan 2024, 11:45 AM',
+         items: []
       },
       {
          year: 'FY 2022-23',
          status: 'Approved',
+         totalAmount: 210000,
+         approvedAmount: 210000,
+         createdBy: 'Priya Sharma',
+         modifiedBy: 'HR Admin',
+         createdDate: '05 Jan 2023, 10:00 AM',
+         modifiedDate: '12 Jan 2023, 03:30 PM',
          items: [
             { type: '80C Investments', amount: 145000, date: '22 Jan 2023', status: 'Approved' },
             { type: 'Medical Insurance (80D)', amount: 15000, date: '22 Jan 2023', status: 'Approved' }
          ]
       }
    ];
+
+   const filteredHistoryData = historyFilterYear === 'All' 
+      ? historyData 
+      : historyData.filter(d => d.year === historyFilterYear);
 
    const renderDashboard = () => (
       <div className="space-y-8 animate-fade-in-up">
@@ -722,7 +755,11 @@ const TaxPlanning: React.FC = () => {
                   <div className="flex flex-col sm:flex-row gap-4">
                      <button
                         onClick={() => {
-                           setIsEditMode(declarationStatus !== 'SUBMITTED');
+                           if (hasSubmitted) {
+                              setIsEditMode(false);
+                           } else {
+                              setIsEditMode(declarationStatus !== 'SUBMITTED');
+                           }
                            setView('PLANNING');
                         }}
                         className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20 group whitespace-nowrap"
@@ -776,50 +813,106 @@ const TaxPlanning: React.FC = () => {
 
          {/* Previous Declarations */}
          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 pl-1">My Declarations</h3>
+            <div className="flex justify-between items-center pr-1">
+               <h3 className="text-lg font-bold text-slate-800 pl-1">Recent Declarations</h3>
+               <button 
+                  onClick={() => setShowPastDeclarations(true)}
+                  className="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors shadow-sm"
+               >
+                  View Past Declarations
+               </button>
+            </div>
 
-            {/* History Table replaces Accordions */}
+            {/* Recent Declarations Table */}
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                <table className="w-full text-left border-collapse">
                   <thead className="bg-slate-50 border-b border-slate-100">
                      <tr>
-                        <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Financial Year</th>
-                        <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Action</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Sr. No.</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Investment Type</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Total Declared Amount</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Approved Amount</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Created By</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Last Modified By</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-center">Actions</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                     {historyData.map((data) => (
-                        <tr key={data.year} className="hover:bg-slate-50/50 transition-colors">
-                           <td className="px-8 py-5">
-                              <div className="flex items-center gap-3">
-                                 <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-                                    <FileText size={18} />
-                                 </div>
-                                 <span className="font-bold text-slate-700">{data.year}</span>
+                     {recentDeclarations.map((data, index) => (
+                        <tr key={data.id} className="hover:bg-slate-50/50 transition-colors">
+                           <td className="px-6 py-4 text-sm font-bold text-slate-600">{index + 1}</td>
+                           <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                 <span className="font-bold text-slate-700 text-sm">{data.type}</span>
                               </div>
                            </td>
-                           <td className="px-8 py-5">
+                           <td className="px-6 py-4 text-right">
+                              <span className="font-bold text-slate-700">₹ {data.amount.toLocaleString()}</span>
+                           </td>
+                           <td className="px-6 py-4 text-right">
+                              <span className="font-bold text-emerald-600">₹ {(data.approvedAmount || 0).toLocaleString()}</span>
+                           </td>
+                           <td className="px-6 py-4">
                               <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
                                  data.status === 'Approved' 
                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                    : data.status === 'Submitted'
+                                    ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                    : data.status === 'Rejected'
+                                    ? 'bg-rose-50 text-rose-600 border-rose-100'
                                     : 'bg-amber-50 text-amber-600 border-amber-100'
                               }`}>
                                  {data.status}
                               </span>
                            </td>
-                           <td className="px-8 py-5 text-right">
-                              <button 
-                                 onClick={() => {
-                                    setSelectedHistoryYear(data);
-                                    setIsEditMode(false);
-                                    setView('PLANNING');
-                                 }}
-                                 className="inline-flex w-10 h-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-slate-100 shadow-sm group ml-auto"
-                                 title="View Details"
-                              >
-                                 <Eye size={18} className="group-hover:scale-110 transition-transform" />
-                              </button>
+                           <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                 <span className="text-sm text-slate-600 font-bold">{data.createdBy}</span>
+                                 <span className="text-[10px] text-slate-400 font-medium">{data.createdDate}</span>
+                              </div>
+                           </td>
+                           <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                 <span className="text-sm text-slate-600 font-bold">{data.modifiedBy}</span>
+                                 <span className="text-[10px] text-slate-400 font-medium">{data.modifiedDate}</span>
+                              </div>
+                           </td>
+                           <td className="px-6 py-4 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                 <button 
+                                    onClick={() => {
+                                       setIsEditMode(false);
+                                       setSelectedHistoryYear({
+                                          year: 'FY 2025-26',
+                                          status: data.status,
+                                          items: [],
+                                          hideEdit: true
+                                       });
+                                       setView('PLANNING');
+                                    }}
+                                    className="p-2 bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all border border-slate-100 shadow-sm"
+                                    title="View Details"
+                                 >
+                                    <Eye size={16} />
+                                 </button>
+                                 {(data.status !== 'Rejected' && !(data.status === 'Approved' && hasSubmitted)) && (
+                                    <button 
+                                       onClick={() => {
+                                          setIsEditMode(true);
+                                          setSelectedHistoryYear(null);
+                                          if (declarationStatus === 'SUBMITTED') {
+                                             setDeclarationStatus('DRAFT');
+                                          }
+                                          setView('PLANNING');
+                                       }}
+                                       className="p-2 bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-all border border-slate-100 shadow-sm"
+                                       title="Edit Declaration"
+                                    >
+                                       <Edit2 size={16} />
+                                    </button>
+                                 )}
+                              </div>
                            </td>
                         </tr>
                      ))}
@@ -827,6 +920,114 @@ const TaxPlanning: React.FC = () => {
                </table>
             </div>
          </div>
+
+         {/* View Past Declarations Panel */}
+         {showPastDeclarations && (
+            <div className="fixed inset-0 z-[150] flex justify-end">
+               <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowPastDeclarations(false)}></div>
+               <div className="relative w-full max-w-5xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                  <div className="bg-slate-50 border-b border-slate-200 p-6 flex justify-between items-center">
+                     <div>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight">Past Declarations</h2>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="relative">
+                           <select 
+                              value={historyFilterYear}
+                              onChange={(e) => setHistoryFilterYear(e.target.value)}
+                              className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-sm"
+                           >
+                              <option value="All">All Years</option>
+                              {Array.from(new Set(historyData.map(d => d.year))).map(year => (
+                                 <option key={year} value={year}>{year}</option>
+                              ))}
+                           </select>
+                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                        <button 
+                           onClick={() => setShowPastDeclarations(false)}
+                           className="p-2 hover:bg-slate-200 rounded-full transition-colors group"
+                        >
+                           <X size={20} className="text-slate-400 group-hover:text-slate-600" />
+                        </button>
+                     </div>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                           <thead className="bg-slate-50 border-b border-slate-100">
+                              <tr>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Financial Year</th>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Total Declared Amount</th>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Approved Amount</th>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Status</th>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Created By</th>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Last Modified By</th>
+                                 <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Action</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                              {filteredHistoryData.map((data) => (
+                                 <tr key={data.year} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-6 py-5">
+                                       <div className="flex items-center gap-3">
+                                          <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                                             <FileText size={18} />
+                                          </div>
+                                          <span className="font-bold text-slate-700">{data.year}</span>
+                                       </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-right">
+                                       <span className="font-bold text-slate-700 text-sm">₹ {(data.totalAmount || 0).toLocaleString()}</span>
+                                    </td>
+                                    <td className="px-6 py-5 text-right">
+                                       <span className="font-bold text-emerald-600 text-sm">₹ {(data.approvedAmount || 0).toLocaleString()}</span>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                       <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                                          data.status === 'Approved' 
+                                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                             : 'bg-amber-50 text-amber-600 border-amber-100'
+                                       }`}>
+                                          {data.status}
+                                       </span>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                       <div className="flex flex-col">
+                                          <span className="text-xs text-slate-600 font-bold">{data.createdBy}</span>
+                                          <span className="text-[9px] text-slate-400 font-medium">{data.createdDate}</span>
+                                       </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                       <div className="flex flex-col">
+                                          <span className="text-xs text-slate-600 font-bold">{data.modifiedBy}</span>
+                                          <span className="text-[9px] text-slate-400 font-medium">{data.modifiedDate}</span>
+                                       </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-right">
+                                       <button 
+                                          onClick={() => {
+                                             setSelectedHistoryYear(data);
+                                             setIsEditMode(false);
+                                             setView('PLANNING');
+                                             setShowPastDeclarations(false);
+                                          }}
+                                          className="inline-flex w-10 h-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-slate-100 shadow-sm group ml-auto"
+                                          title="View Details"
+                                       >
+                                          <Eye size={18} className="group-hover:scale-110 transition-transform" />
+                                       </button>
+                                    </td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 
@@ -1550,8 +1751,12 @@ const TaxPlanning: React.FC = () => {
                <div className="flex items-center gap-4">
                   <button
                      onClick={() => {
+                        const wasHistory = !!selectedHistoryYear;
                         setView('DASHBOARD');
                         setSelectedHistoryYear(null);
+                        if (wasHistory) {
+                           setShowPastDeclarations(true);
+                        }
                      }}
                      className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
                   >
@@ -1582,7 +1787,7 @@ const TaxPlanning: React.FC = () => {
                   {/* Regime Switcher / Display */}
                   <div className="flex items-center gap-2">
                      {/* Edit Button next to Regime selection */}
-                     {isReadOnly && !isDeadlinePassed && (!selectedHistoryYear || selectedHistoryYear?.year === 'FY 2025-26') && (
+                     {isReadOnly && !isDeadlinePassed && (!selectedHistoryYear || (selectedHistoryYear?.year === 'FY 2025-26' && !selectedHistoryYear?.hideEdit)) && (
                         <button
                            onClick={() => {
                               setIsEditMode(true);

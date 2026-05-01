@@ -229,7 +229,6 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                 <th className="px-6 py-5">Description/Reason</th>
                 <th className="px-6 py-5">Merchant/Payee</th>
                 <th className="px-6 py-5 text-right">Amount</th>
-                <th className="px-6 py-5">Expense Date</th>
                 <th className="px-6 py-5">Created By</th>
                 <th className="px-6 py-5">Last Modified By</th>
                 <th className="px-6 py-5">Status</th>
@@ -238,7 +237,7 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
             </thead>
             <tbody className="divide-y divide-slate-200">
               {mergedClaims.filter((c: any) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toLowerCase().includes(searchTerm.toLowerCase())).map((claim: any) => {
-                const isSettled = claim.status === 'settled' || claim.status === 'approved';
+                const isSettled = claim.status === 'settled' || claim.status === 'approved' || claim.status === 'rejected';
                 const merchant = claim.items?.length > 0
                   ? (claim.items.length > 1
                     ? `${claim.items[0].merchant || 'N/A'} +${claim.items.length - 1} more`
@@ -250,7 +249,7 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                   ? `${firstReason} +${claim.items.length - 1} more`
                   : firstReason;
 
-                const modifiedBy = claim.status === 'settled' || claim.status === 'approved' ? 'Finance Team' : null;
+                const modifiedBy = claim.status === 'settled' || claim.status === 'approved' || claim.status === 'rejected' ? 'Finance Team' : null;
                 const modifiedAt = claim.modifiedAt || (modifiedBy ? claim.createdAt : null);
 
                 return (
@@ -263,7 +262,6 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                     </td>
                     <td className="px-6 py-5 text-xs font-medium text-slate-600">{merchant}</td>
                     <td className="px-6 py-5 text-right font-black text-slate-900">₹{claim.items.reduce((s: number, i: any) => s + i.amount, 0).toLocaleString()}</td>
-                    <td className="px-6 py-5 text-xs font-medium text-slate-500">{claim.submittedAt}</td>
                     <td className="px-6 py-5">
                       <p className="text-xs font-bold text-slate-700">Priya Sharma</p>
                       {claim.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(claim.createdAt)}</p>}
@@ -290,17 +288,15 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                         >
                           <Eye size={16} />
                         </button>
-                        <button
-                          onClick={() => onEditClaim(claim)}
-                          disabled={isSettled}
-                          className={`p-2 rounded-lg transition-colors ${isSettled
-                            ? 'text-slate-300 cursor-not-allowed'
-                            : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                            }`}
-                          title={isSettled ? "Editing disabled for settled claims" : "Edit Claim"}
-                        >
-                          <Edit2 size={16} />
-                        </button>
+                        {!isSettled && (
+                          <button
+                            onClick={() => onEditClaim(claim)}
+                            className="p-2 rounded-lg transition-colors text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                            title="Edit Claim"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -385,7 +381,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   let classes = "bg-slate-100 text-slate-600 border-slate-200";
   if (status === 'settled' || status === 'approved') classes = "bg-emerald-50 text-emerald-700 border-emerald-100";
   else if (status === 'pending') classes = "bg-amber-50 text-amber-700 border-amber-100";
-  else if (status === 'action_required') classes = "bg-red-50 text-red-700 border-red-200";
+  else if (status === 'action_required' || status === 'rejected') classes = "bg-red-50 text-red-700 border-red-200";
 
   return (
     <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${classes}`}>
