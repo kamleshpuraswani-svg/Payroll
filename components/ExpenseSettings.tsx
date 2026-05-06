@@ -15,6 +15,7 @@ const ExpenseSettings: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [expenseActiveTab, setExpenseActiveTab] = useState<'CONFIGURATION' | 'HISTORY'>('CONFIGURATION');
+    const [selectedVersion, setSelectedVersion] = useState(0);
 
     // State for Expense Categories
     const [categories, setCategories] = useState<any[]>([]);
@@ -376,12 +377,140 @@ const ExpenseSettings: React.FC = () => {
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-in fade-in duration-300">
                     <div className="max-w-4xl mx-auto">
                         {expenseActiveTab === 'HISTORY' ? (
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px] flex flex-col items-center justify-center text-center p-12">
-                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
-                                    <Clock size={32} />
+                            <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {/* Left Column: Configuration Details */}
+                                <div className="flex-1 space-y-6">
+                                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                                            <h3 className="text-lg font-black text-slate-800 flex items-center gap-3">
+                                                Configuration Details 
+                                                {selectedVersion === 0 && (
+                                                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md uppercase tracking-wider">Current Version</span>
+                                                )}
+                                            </h3>
+                                        </div>
+                                        
+                                        <div className="p-8 space-y-8">
+                                            {/* Basic Info Grid */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expense Category</label>
+                                                    <div className="px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl">
+                                                        <p className="text-sm font-bold text-slate-700">{editingExpense?.name || "Travel & Conveyance"}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Business Unit</label>
+                                                    <div className="px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl">
+                                                        <p className="text-sm font-bold text-slate-700">{selectedTarget.split(':')[1]}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Effective Date</label>
+                                                    <div className="px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between">
+                                                        <p className="text-sm font-bold text-slate-700">01 Apr 2026</p>
+                                                        {selectedVersion === 0 && (
+                                                            <span className="text-[9px] font-black bg-sky-100 text-sky-700 px-2 py-0.5 rounded uppercase">Changed</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</label>
+                                                    <div className="px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl">
+                                                        <p className="text-sm font-bold text-slate-700">Active</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Targets Section */}
+                                            <div className="space-y-4 pt-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Limits</label>
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    {(selectedVersion === 0 ? [
+                                                        { name: 'Engineering', type: 'Department', limit: 7500, threshold: 1000, changed: true },
+                                                        { name: 'Senior Software Engineer', type: 'Designation', limit: 10000, threshold: 2000 }
+                                                    ] : [
+                                                        { name: 'Engineering', type: 'Department', limit: 5000, threshold: 1000 },
+                                                        { name: 'Senior Software Engineer', type: 'Designation', limit: 10000, threshold: 2000 }
+                                                    ]).map((target, i) => (
+                                                        <div key={i} className="flex items-center justify-between p-4 bg-slate-50/30 border border-slate-100 rounded-2xl group hover:bg-white hover:shadow-md hover:border-sky-200 transition-all duration-300">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${target.type === 'Department' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                                    {target.type === 'Department' ? <Home size={18} /> : <ShieldCheck size={18} />}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-slate-800">{target.name}</p>
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{target.type}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-8 text-right">
+                                                                <div className="space-y-0.5">
+                                                                    <p className="text-[9px] font-black text-slate-400 uppercase">Limit</p>
+                                                                    <p className="text-sm font-black text-slate-700 flex items-center gap-2">
+                                                                        ₹{target.limit.toLocaleString()}
+                                                                        {target.changed && (
+                                                                            <span className="w-1.5 h-1.5 bg-sky-500 rounded-full"></span>
+                                                                        )}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="space-y-0.5">
+                                                                    <p className="text-[9px] font-black text-slate-400 uppercase">Threshold</p>
+                                                                    <p className="text-sm font-black text-slate-700">₹{target.threshold.toLocaleString()}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">No History Recorded</h3>
-                                <p className="text-slate-500 max-w-sm mx-auto font-medium">Changes to this expense rule will be tracked here once you perform updates.</p>
+
+                                {/* Right Column: Version History */}
+                                <div className="w-full lg:w-80 space-y-4">
+                                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+                                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Version History</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-1">View previous versions of rules.</p>
+                                        </div>
+                                        <div className="p-3 space-y-2">
+                                            {[
+                                                { date: '19 Mar 2026', time: '03:20 PM', user: 'HR Manager', current: true },
+                                                { date: '15 Mar 2026', time: '11:45 AM', user: 'Admin User' },
+                                                { date: '01 Mar 2026', time: '09:30 AM', user: 'System Auto' },
+                                                { date: '15 Feb 2026', time: '02:15 PM', user: 'HR Associate' }
+                                            ].map((v, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setSelectedVersion(i)}
+                                                    className={`w-full text-left p-4 rounded-2xl transition-all duration-300 border ${
+                                                        selectedVersion === i 
+                                                        ? 'bg-white border-sky-200 shadow-lg shadow-sky-50 ring-1 ring-sky-100' 
+                                                        : 'bg-transparent border-transparent hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <p className={`text-sm font-black ${selectedVersion === i ? 'text-slate-800' : 'text-slate-600'}`}>{v.date}</p>
+                                                            <p className="text-[10px] font-bold text-slate-400">{v.time}</p>
+                                                        </div>
+                                                        {v.current && (
+                                                            <span className="text-[8px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Current</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                                            selectedVersion === i ? 'bg-sky-50 text-sky-600' : 'bg-slate-100 text-slate-500'
+                                                        }`}>
+                                                            {v.user[0]}
+                                                        </div>
+                                                        <p className={`text-xs font-bold ${selectedVersion === i ? 'text-slate-700' : 'text-slate-500'}`}>{v.user}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-6">

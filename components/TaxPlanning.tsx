@@ -32,7 +32,8 @@ import {
    ArrowDown,
    RefreshCcw,
    Loader,
-   Eye
+   Eye,
+   Search
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -238,6 +239,7 @@ const TaxPlanning: React.FC = () => {
    const [isEditMode, setIsEditMode] = useState(false);
    const [showPastDeclarations, setShowPastDeclarations] = useState(false);
    const [historyFilterYear, setHistoryFilterYear] = useState('All');
+   const [recentSearchQuery, setRecentSearchQuery] = useState('');
 
    // Persisted States
    const [declarationStatus, setDeclarationStatus] = useState<'NEW' | 'DRAFT' | 'SUBMITTED'>('NEW'); // Fetched from DB
@@ -654,9 +656,13 @@ const TaxPlanning: React.FC = () => {
 ;
 
    const recentDeclarations = [
-      { id: 1, type: 'Investment Declaration FY 2025-26', amount: 355000, approvedAmount: 0, status: 'Submitted', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
-      { id: 2, type: 'Investment Declaration FY 2025-26', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2026, 02:45 PM', modifiedDate: '16 Jan 2026, 10:20 AM' },
-      { id: 3, type: 'Investment Declaration FY 2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' }
+      { id: 1, type: '80C, 80D, 80CCD', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Submitted', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
+      { id: 2, type: '80C, 80D', fy: '2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' },
+      { id: 3, type: '80C, 80G', fy: '2024-25', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2025, 02:45 PM', modifiedDate: '16 Jan 2025, 10:20 AM' },
+      { id: 4, type: '80D, 80E', fy: '2024-25', amount: 35000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '12 Feb 2025, 10:00 AM', modifiedDate: '12 Feb 2025, 03:15 PM' },
+      { id: 5, type: '80C, 80D, 80E', fy: '2023-24', amount: 250000, approvedAmount: 250000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2024, 09:15 AM', modifiedDate: '20 Jan 2024, 04:30 PM' },
+      { id: 6, type: '80G, OTHERS', fy: '2023-24', amount: 15000, approvedAmount: 15000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '05 Mar 2024, 11:00 AM', modifiedDate: '10 Mar 2024, 02:00 PM' },
+      { id: 7, type: '80C', fy: '2022-23', amount: 210000, approvedAmount: 210000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '10 Jan 2023, 09:30 AM', modifiedDate: '18 Jan 2023, 11:45 AM' }
    ];
 
    const hasSubmitted = recentDeclarations.some(d => d.status === 'Submitted');
@@ -815,11 +821,26 @@ const TaxPlanning: React.FC = () => {
          <div className="space-y-4">
             <div className="flex justify-between items-center pr-1">
                <h3 className="text-lg font-bold text-slate-800 pl-1">Recent Declarations</h3>
-               <button 
-                  onClick={() => setShowPastDeclarations(true)}
-                  className="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors shadow-sm"
-               >
-                  View Past Declarations
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200 shadow-sm">
+               <div className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm cursor-pointer">
+                  <span className="text-blue-600 font-bold text-lg">Σ</span>
+                  <ChevronDown size={14} className="text-slate-400" />
+               </div>
+               <div className="flex-1 relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                  <input 
+                     type="text" 
+                     placeholder="Filter Results..." 
+                     value={recentSearchQuery}
+                     onChange={(e) => setRecentSearchQuery(e.target.value)}
+                     className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+                  />
+               </div>
+               <button className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-all border border-slate-200">
+                  Filter
                </button>
             </div>
 
@@ -829,22 +850,32 @@ const TaxPlanning: React.FC = () => {
                   <thead className="bg-slate-50 border-b border-slate-100">
                      <tr>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Sr. No.</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Investment Type</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Sections Declared</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Financial Year</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Total Declared Amount</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Approved Amount</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Created By</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Created On</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Last Modified By</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-center">Actions</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                     {recentDeclarations.map((data, index) => (
+                     {recentDeclarations.filter(d => 
+                        d.type.toLowerCase().includes(recentSearchQuery.toLowerCase()) ||
+                        d.fy.toLowerCase().includes(recentSearchQuery.toLowerCase()) ||
+                        d.status.toLowerCase().includes(recentSearchQuery.toLowerCase())
+                     ).map((data, index) => (
                         <tr key={data.id} className="hover:bg-slate-50/50 transition-colors">
                            <td className="px-6 py-4 text-sm font-bold text-slate-600">{index + 1}</td>
                            <td className="px-6 py-4">
                               <div className="flex flex-col">
                                  <span className="font-bold text-slate-700 text-sm">{data.type}</span>
+                              </div>
+                           </td>
+                           <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                 <span className="font-bold text-slate-700 text-sm">{data.fy}</span>
                               </div>
                            </td>
                            <td className="px-6 py-4 text-right">
@@ -868,8 +899,7 @@ const TaxPlanning: React.FC = () => {
                            </td>
                            <td className="px-6 py-4">
                               <div className="flex flex-col">
-                                 <span className="text-sm text-slate-600 font-bold">{data.createdBy}</span>
-                                 <span className="text-[10px] text-slate-400 font-medium">{data.createdDate}</span>
+                                 <span className="text-xs text-slate-600 font-bold">{data.createdDate}</span>
                               </div>
                            </td>
                            <td className="px-6 py-4">
