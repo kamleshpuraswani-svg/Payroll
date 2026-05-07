@@ -1239,7 +1239,16 @@ const StatutorySettings: React.FC = () => {
                                             {ptExemptionDisabled && <Check size={14} className="text-white stroke-[3]" />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={ptExemptionDisabled} onChange={() => isEditing && setPtExemptionDisabled(!ptExemptionDisabled)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">PT Exemption for Physically Disabled Employees</span>
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors flex items-center gap-2">
+                                            PT Exemption for Physically Disabled Employees
+                                            <div className="group relative inline-block">
+                                                <Info size={14} className="text-slate-400 cursor-help" />
+                                                <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                    Employees with physical disabilities are exempt from Professional Tax in many Indian states
+                                                    <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        </span>
                                     </label>
 
                                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -1247,7 +1256,16 @@ const StatutorySettings: React.FC = () => {
                                             {ptExemptionSenior && <Check size={14} className="text-white stroke-[3]" />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={ptExemptionSenior} onChange={() => isEditing && setPtExemptionSenior(!ptExemptionSenior)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">State PT Exemption for Senior Citizens</span>
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors flex items-center gap-2">
+                                            State PT Exemption for Senior Citizens
+                                            <div className="group relative inline-block">
+                                                <Info size={14} className="text-slate-400 cursor-help" />
+                                                <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                    Senior citizen employees (usually 60+ years) are exempt from PT in certain states
+                                                    <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        </span>
                                     </label>
                                 </div>
                             </div>
@@ -1268,7 +1286,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
 
                                 <div className="pt-0 border-slate-50">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Exemption Limit</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Exemption Limit (Monthly Gross)</label>
                                     <input
                                         type="text"
                                         value={ptExemptionLimit}

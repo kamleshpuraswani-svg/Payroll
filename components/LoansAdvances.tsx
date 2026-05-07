@@ -1117,8 +1117,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                     type="text"
                                     value={maxTenure}
                                     onChange={(e) => setMaxTenure(e.target.value)}
-                                    readOnly={userRole === 'EMPLOYEE'}
-                                    className={`w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold ${userRole === 'EMPLOYEE' ? 'bg-slate-50/50 cursor-not-allowed opacity-70' : 'bg-white'}`}
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
                                     placeholder="e.g. 12"
                                 />
                                 <p className="mt-1.5 text-[10px] text-slate-400 font-medium">
@@ -1160,7 +1159,6 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                         {/* Show EMI table for Loan OR for Salary Advance with Interest > 0 and Tenure > 1 */}
                         {(loanType === 'Loan' || (loanType === 'Salary Advance' && (parseFloat(interestRate) || 0) > 0 && (parseInt(maxTenure) || 0) > 1)) && (
                             <div className="grid grid-cols-2 gap-6">
-                                {userRole !== 'EMPLOYEE' && (
                                     <div>
                                         <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
                                             EMI START MONTH
@@ -1178,7 +1176,6 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                             <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                         </div>
                                     </div>
-                                )}
                                 <div className={`bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3 ${(userRole === 'EMPLOYEE' || loanType === 'Salary Advance') ? 'col-span-2' : ''}`}>
                                     <div className="flex justify-between items-center">
                                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">MONTHLY EMI</span>
@@ -1204,14 +1201,14 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                             </div>
                         )}
 
-                        {loanType === 'Salary Advance' && userRole !== 'EMPLOYEE' && (
+                        {loanType === 'Salary Advance' && (
                             <div className="max-w-md">
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI START MONTH</label>
                                 <div className="relative">
                                     <select
                                         value={repaymentMonth}
                                         onChange={(e) => setRepaymentMonth(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
                                     >
                                         <option>February 2026</option>
                                         <option>March 2026</option>
@@ -1219,7 +1216,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                     </select>
                                     <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                 </div>
-                                {loanType === 'Salary Advance' && (parseInt(maxTenure) || 0) === 1 && (
+                                {(parseInt(maxTenure) || 0) === 1 && (
                                     <p className="mt-3 text-xs text-purple-600 font-medium bg-purple-50 p-3 rounded-xl border border-purple-100 flex items-center gap-2.5">
                                         <Info size={14} className="flex-shrink-0" />
                                         <span>This advance will be recovered in full from the <span className="font-bold underline">{repaymentMonth}</span> payroll.</span>
