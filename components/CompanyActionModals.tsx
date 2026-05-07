@@ -745,10 +745,10 @@ export const RunPayrollModal: React.FC<{
    if (!company) return null;
 
    const handleNext = async () => {
-       if (currentStep === 1) {
+       if (currentStep === 2) {
            await initiatePayrollRun();
        }
-       setCurrentStep(prev => Math.min(prev + 1, 6));
+       setCurrentStep(prev => Math.min(prev + 1, 7));
    };
 
    const initiatePayrollRun = async () => {
@@ -1221,7 +1221,7 @@ export const RunPayrollModal: React.FC<{
 
    const renderStepContent = () => {
       switch (currentStep) {
-         case 1: // PERIOD
+         case 1: // PERIOD & SCOPE
             return (
                <div className="w-full space-y-6">
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row w-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
@@ -1269,7 +1269,12 @@ export const RunPayrollModal: React.FC<{
                         </div>
                      </div>
                   </div>
+               </div>
+            );
 
+         case 2: // EMPLOYEES
+            return (
+               <div className="w-full space-y-6">
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
                      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4">
                         <div className="flex justify-between items-center">
@@ -1351,7 +1356,7 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 2: // ATTENDANCE
+         case 3: // ATTENDANCE
             return (
                <div className="w-full space-y-6">
                   <div className="flex items-center justify-between">
@@ -1426,68 +1431,9 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 3: // ADJUSTMENTS
+         case 4: // ADJUSTMENTS
             return (
                <div className="flex flex-col h-full space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-3">
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
-                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
-                     </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimb.</p>
-                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.expenseReimb)}</p>
-                     </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
-                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
-                     </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan & Salary Advance Recovery</p>
-                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery + summary.salaryAdvance)}</p>
-                     </div>
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
-                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
-                     </div>
-                     
-                     {/* New On-hold Employees Card */}
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
-                        <div>
-                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
-                           <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount} Selected</p>
-                        </div>
-                        <button 
-                           onClick={() => setShowWizardOnHoldPanel(true)}
-                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
-                        >
-                           <Eye size={12} /> View Details
-                        </button>
-                     </div>
-
-                     {/* New Employee Exits Card */}
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
-                        <div>
-                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">Employee Exits (This month)</p>
-                           <p className="text-base font-bold text-rose-600 relative z-10">{exitEmployees.length} Detected</p>
-                        </div>
-                        <button 
-                           onClick={() => setShowWizardExitPanel(true)}
-                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors relative z-10"
-                        >
-                           <Eye size={12} /> View Details
-                        </button>
-                     </div>
-
-                     <div className={`p-3 rounded-xl border shadow-sm transition-all hover:shadow-md ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
-                        <p className={`text-[10px] font-bold uppercase mb-1 leading-tight ${netImpact >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>Net Impact</p>
-                        <p className={`text-base font-bold truncate ${netImpact >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
-                           {netImpact >= 0 ? '+' : '-'} ₹{formatLakh(Math.abs(netImpact))}
-                        </p>
-                     </div>
-                  </div>
 
                   <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                      <div className="relative flex-1 max-w-md">
@@ -1876,24 +1822,81 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 4: // REVIEW
+         case 5: // REVIEW
             return (
                <div className="w-full space-y-6 pb-20">
                    {/* KPI Summary - 3 Cards */}
-                   <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                         <p className="text-xs font-bold text-slate-400 uppercase mb-1">Total Gross</p>
-                         <p className="text-2xl font-bold text-slate-800">₹ 82.08 L</p>
+                   <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-3">
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Gross</p>
+                         <p className="text-base font-bold text-slate-800 truncate">₹ 82.08 L</p>
                       </div>
-                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                         <p className="text-xs font-bold text-slate-400 uppercase mb-1">Deductions</p>
-                         <p className="text-2xl font-bold text-rose-600">₹ 9.85 L</p>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Deductions</p>
+                         <p className="text-base font-bold text-rose-600 truncate">₹ 9.85 L</p>
                       </div>
-                      <div className="bg-white p-5 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm">
-                         <p className="text-xs font-bold text-emerald-700 uppercase mb-1">Net Payout</p>
-                         <p className="text-2xl font-bold text-emerald-800">₹ 72.23 L</p>
+                      <div className="bg-white p-3 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm transition-all hover:shadow-md">
+                         <p className="text-[10px] font-bold text-emerald-700 uppercase mb-1 leading-tight">Net Payout</p>
+                         <p className="text-base font-bold text-emerald-800 truncate">₹ 72.23 L</p>
                       </div>
-                   </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
+                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
+                     </div>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimb.</p>
+                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.expenseReimb)}</p>
+                     </div>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
+                        <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
+                     </div>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan & Salary Advance Recovery</p>
+                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery + summary.salaryAdvance)}</p>
+                     </div>
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
+                        <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
+                     </div>
+                     
+                     {/* New On-hold Employees Card */}
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
+                           <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount} Selected</p>
+                        </div>
+                        <button 
+                           onClick={() => setShowWizardOnHoldPanel(true)}
+                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
+                        >
+                           <Eye size={12} /> View Details
+                        </button>
+                     </div>
+
+                     {/* New Employee Exits Card */}
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">Employee Exits (This month)</p>
+                           <p className="text-base font-bold text-rose-600 relative z-10">{exitEmployees.length} Detected</p>
+                        </div>
+                        <button 
+                           onClick={() => setShowWizardExitPanel(true)}
+                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors relative z-10"
+                        >
+                           <Eye size={12} /> View Details
+                        </button>
+                     </div>
+
+                     <div className={`p-3 rounded-xl border shadow-sm transition-all hover:shadow-md ${netImpact >= 0 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+                        <p className={`text-[10px] font-bold uppercase mb-1 leading-tight ${netImpact >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>Net Impact</p>
+                        <p className={`text-base font-bold truncate ${netImpact >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
+                           {netImpact >= 0 ? '+' : '-'} ₹{formatLakh(Math.abs(netImpact))}
+                        </p>
+                     </div>
+                  </div>
 
                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                       <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -1956,12 +1959,9 @@ export const RunPayrollModal: React.FC<{
                 </div>
             );
 
-         case 5: // FINALIZE
+         case 6: // FINALIZE
             return (
                <div className="w-full space-y-8">
-                  <div className="flex items-center justify-end">
-                     <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">Draft Mode</span>
-                  </div>
 
                   <div className="grid grid-cols-3 gap-6">
                      <div className="bg-white p-6 rounded-xl border border-slate-200 border-t-4 border-t-blue-600 shadow-sm space-y-4">
@@ -2102,7 +2102,7 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 6: // DISBURSE
+         case 7: // DISBURSE
             return (
                <div className="space-y-6">
                   <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
@@ -2188,42 +2188,46 @@ export const RunPayrollModal: React.FC<{
 
    const getStepButtonLabel = () => {
       switch (currentStep) {
-         case 1: return 'Next: Attendance';
-         case 2: return 'Next: Adjustments';
-         case 3: return 'Next: Review';
-         case 4: return 'Next: Finalize';
+         case 1: return 'Next: Period';
+         case 2: return 'Next: Attendance';
+         case 3: return 'Next: Adjustments';
+         case 4: return 'Next: Review';
+         case 5: return 'Next: Finalize';
+         case 6: return 'Next: Disburse';
          default: return 'Next Step';
       }
    };
 
    const ModalContainer = isPage ? React.Fragment : 'div';
    const containerProps = isPage ? {} : { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200" };
-
    const stepDescriptions: Record<number, string> = {
-      1: 'Pay cycle & employees',
-      2: 'Leaves & working days',
-      3: 'Arrears & deductions',
-      4: 'Final salary register',
-      5: 'Totals & approvals',
-      6: 'Payslips & bank sheet'
+      1: 'Select Month, Year, and Business Unit',
+      2: 'Filter, search, and confirm the list of eligible/on-hold employees.',
+      3: 'Leaves & working days',
+      4: 'Arrears & deductions',
+      5: 'Final salary register',
+      6: 'Totals & approvals',
+      7: 'Payslips & bank sheet'
    };
 
    const stepTitles: Record<number, string> = {
-      1: 'Pay period & employees',
-      2: 'Attendance & Time Data',
-      3: 'Salary Adjustments',
-      4: 'Review & Verify',
-      5: 'Finalize & Lock',
-      6: 'Disburse Salaries'
+      1: 'Period & Scope',
+      2: 'Employees',
+      3: 'Attendance & Time Data',
+      4: 'Salary Adjustments',
+      5: 'Review & Verify',
+      6: 'Finalize & Lock',
+      7: 'Disburse Salaries'
    };
 
    const stepSubtitles: Record<number, string> = {
-      1: 'Set the payroll cycle dates and select which employees to include in this run.',
-      2: 'Review imported biometric attendance and verify paydays.',
-      3: 'Add bonuses, recover LOPs, or process ad-hoc deductions.',
-      4: 'Preview final salary calculations before locking.',
-      5: 'Approve payroll totals to lock editing and generate files.',
-      6: 'Distribute payslips and process bank transfer file.'
+      1: 'Select Month, Year, and Business Unit',
+      2: 'Filter, search, and confirm the list of eligible/on-hold employees.',
+      3: 'Review imported biometric attendance and verify paydays.',
+      4: 'Add bonuses, recover LOPs, or process ad-hoc deductions.',
+      5: 'Preview final salary calculations before locking.',
+      6: 'Approve payroll totals to lock editing and generate files.',
+      7: 'Distribute payslips and process bank transfer file.'
    };
 
    const innerContent = (
@@ -2256,12 +2260,13 @@ export const RunPayrollModal: React.FC<{
                    <div className="absolute left-[24px] top-6 bottom-6 w-px border-l-2 border-dashed border-slate-200"></div>
                    
                    {[
-                      { id: 1, label: 'Period' },
-                      { id: 2, label: 'Attendance' },
-                      { id: 3, label: 'Adjustments' },
-                      { id: 4, label: 'Review' },
-                      { id: 5, label: 'Finalise' },
-                      { id: 6, label: 'Disburse' }
+                      { id: 1, label: 'Period & Scope' },
+                      { id: 2, label: 'Employees' },
+                      { id: 3, label: 'Attendance' },
+                      { id: 4, label: 'Adjustments' },
+                      { id: 5, label: 'Review' },
+                      { id: 6, label: 'Finalise' },
+                      { id: 7, label: 'Disburse' }
                    ].map((step) => {
                       const isActive = step.id === currentStep;
                       const isCompleted = step.id < currentStep;
@@ -2301,13 +2306,13 @@ export const RunPayrollModal: React.FC<{
 
                  {/* Sticky Footer */}
                  <div className="bg-white border-t border-slate-200 px-8 py-5 flex justify-between items-center shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] sticky bottom-0 z-20">
-                     {currentStep > 1 && currentStep < 6 ? (
+                     {currentStep > 1 && currentStep < 7 ? (
                         <button onClick={handleBack} className="px-6 py-2.5 text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm">
                            <ChevronLeft size={16} /> Back
                         </button>
                      ) : <div />}
                      
-                     {currentStep === 5 ? (
+                     {currentStep === 6 ? (
                         <div className="flex gap-3">
                            {isConfirmed && !readOnly && (
                               <button
@@ -2325,7 +2330,7 @@ export const RunPayrollModal: React.FC<{
                               <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
                            </button>
                         </div>
-                     ) : currentStep === 6 ? (
+                     ) : currentStep === 7 ? (
                         <button onClick={onClose} className="px-8 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all">
                            Finish <CheckCircle size={16} />
                         </button>

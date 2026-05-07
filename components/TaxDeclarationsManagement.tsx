@@ -700,7 +700,9 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
 // --- 2. Approve Declaration Modal ---
 
 const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, onDecide, initialDecision = 'Approved' }) => {
-    const [decision, setDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>(initialDecision);
+    const [decision, setDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>(
+        initialDecision === 'Approved' ? 'Partially Approved' : initialDecision
+    );
     const [itemApprovals, setItemApprovals] = useState<Record<number, number>>(() => {
         const initialMap: Record<number, number> = {};
         if (doc.breakdown) {
@@ -772,27 +774,30 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                     {/* Approval Options */}
                     <div>
                         <div className="space-y-3">
-                            <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Approved' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                <input type="radio" name="decision" checked={decision === 'Approved'} onChange={() => {
-                                    setDecision('Approved');
-                                    setApprovedAmount(doc.amount);
-                                }} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
-                                <span className="ml-3 font-bold text-slate-700">Full Approve</span>
-                                <span className="ml-auto text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded">₹{(doc?.amount || 0).toLocaleString()}</span>
-                            </label>
+                            {/* Full Approve hidden as per requirement - hide original block */}
+                            {false && (
+                                <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Approved' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    <input type="radio" name="decision" checked={decision === 'Approved'} onChange={() => {
+                                        setDecision('Approved');
+                                        setApprovedAmount(doc.amount);
+                                    }} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
+                                    <span className="ml-3 font-bold text-slate-700">Full Approve</span>
+                                    <span className="ml-auto text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded">₹{(doc?.amount || 0).toLocaleString()}</span>
+                                </label>
+                            )}
 
-                            <label className={`flex flex-col p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Partially Approved' ? 'border-orange-500 bg-orange-50/30' : 'border-slate-200 hover:bg-slate-50'}`}>
+                            <label className={`flex flex-col p-3 border rounded-xl cursor-pointer transition-all ${decision === 'Partially Approved' ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-200 hover:bg-slate-50'}`}>
                                 <div className="flex items-center w-full">
-                                    <input type="radio" name="decision" checked={decision === 'Partially Approved'} onChange={() => setDecision('Partially Approved')} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                    <span className="ml-3 font-bold text-slate-700">Partial Approve</span>
+                                    <input type="radio" name="decision" checked={decision === 'Partially Approved'} onChange={() => setDecision('Partially Approved')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
+                                    <span className="ml-3 font-bold text-slate-700">Approve</span>
                                 </div>
                                 {decision === 'Partially Approved' && (
                                     <div className="mt-3 ml-7 space-y-4 animate-in fade-in slide-in-from-top-1">
-                                        <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100 space-y-3">
-                                            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider mb-2">Item-wise Approval</p>
+                                        <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-3">
+                                            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Item-wise Approval</p>
                                             {doc.breakdown && doc.breakdown.length > 0 ? (
                                                 doc.breakdown.map((item, idx) => (
-                                                    <div key={idx} className="flex items-center justify-between gap-4 p-2 bg-white rounded-lg border border-orange-100/50">
+                                                    <div key={idx} className="flex items-center justify-between gap-4 p-2 bg-white rounded-lg border border-emerald-100/50">
                                                         <div className="flex-1">
                                                             <p className="text-sm font-bold text-slate-700">{item.label}</p>
                                                             <p className="text-[10px] text-slate-500 font-medium">Declared: ₹{item.amount.toLocaleString()}</p>
@@ -816,7 +821,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                                                             });
                                                                         }
                                                                     }}
-                                                                    className={`w-24 px-2 py-1 border rounded text-sm font-bold focus:outline-none text-right transition-all ${rejectedItems.has(idx) ? 'bg-slate-50 border-slate-200 text-slate-400 font-medium' : 'border-slate-200 focus:border-orange-500'}`}
+                                                                    className={`w-24 px-2 py-1 border rounded text-sm font-bold focus:outline-none text-right transition-all ${rejectedItems.has(idx) ? 'bg-slate-50 border-slate-200 text-slate-400 font-medium' : 'border-slate-200 focus:border-emerald-500'}`}
                                                                 />
                                                             </div>
                                                             <button
@@ -836,7 +841,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                                                         type="number"
                                                         value={approvedAmount}
                                                         onChange={(e) => setApprovedAmount(parseInt(e.target.value) || 0)}
-                                                        className="w-32 px-2 py-1 border border-slate-300 rounded text-sm font-bold focus:border-orange-500 focus:outline-none"
+                                                        className="w-32 px-2 py-1 border border-slate-300 rounded text-sm font-bold focus:border-emerald-500 focus:outline-none"
                                                     />
                                                 </div>
                                             )}
@@ -844,14 +849,21 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
 
                                         <div className="flex items-center justify-between px-4 py-2 bg-slate-100 rounded-lg">
                                             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Calculated Total Approval</span>
-                                            <span className="text-base font-black text-slate-800">₹{approvedAmount.toLocaleString()}</span>
+                                            <div className="flex items-center gap-3">
+                                                {approvedAmount < (doc?.amount || 0) && (
+                                                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black uppercase rounded-md border border-amber-200 animate-pulse">
+                                                        Partial Approval
+                                                    </span>
+                                                )}
+                                                <span className="text-base font-black text-slate-800">₹{approvedAmount.toLocaleString()}</span>
+                                            </div>
                                         </div>
 
                                         <textarea
                                             placeholder="Reason for partial approval (Mandatory)"
                                             value={reason}
                                             onChange={(e) => setReason(e.target.value)}
-                                            className="w-full px-3 py-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:border-orange-500 min-h-[60px]"
+                                            className="w-full px-3 py-2 border border-emerald-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 min-h-[60px]"
                                         ></textarea>
                                     </div>
                                 )}
@@ -899,7 +911,7 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                         onClick={handleSubmit}
                         className={`px-8 py-2.5 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center gap-2 ${
                             decision === 'Approved' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100' :
-                            decision === 'Partially Approved' ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-100' :
+                            decision === 'Partially Approved' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100' :
                             'bg-rose-500 hover:bg-rose-600 shadow-rose-100'
                         }`}
                     >
