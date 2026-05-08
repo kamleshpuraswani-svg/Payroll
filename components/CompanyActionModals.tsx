@@ -50,7 +50,8 @@ import {
    PauseCircle,
    PlayCircle,
    Eye,
-   Trash2
+   Trash2,
+   RefreshCw
 } from 'lucide-react';
 import { Company } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -502,7 +503,8 @@ export const RunPayrollModal: React.FC<{
    const [isAlertsOpen, setIsAlertsOpen] = useState(false);
    const [isLoading, setIsLoading] = useState(false);
    const [currentRunId, setCurrentRunId] = useState<string | null>(null);
-
+   const [step3Complete, setStep3Complete] = useState(false);
+   const [step4Complete, setStep4Complete] = useState(false);
    // Step 1: Employee Selection State
    const [payrollEmployees, setPayrollEmployees] = useState<any[]>([]);
    
@@ -1224,6 +1226,10 @@ export const RunPayrollModal: React.FC<{
          case 1: // PERIOD & SCOPE
             return (
                <div className="w-full space-y-6">
+                  <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3">
+                     <Info size={18} className="mt-0.5 shrink-0 text-blue-600" />
+                     <p>Please select the <strong>Payroll Period</strong> and at least one <strong>Business Unit</strong> to proceed to the next steps.</p>
+                  </div>
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row w-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
                      <div className="p-6 w-full lg:w-1/2">
                         <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
@@ -1390,9 +1396,28 @@ export const RunPayrollModal: React.FC<{
                               >
                                  <Download size={16} /> Export
                               </button>
+                              <button
+                                 onClick={() => {
+                                    if(window.confirm('This will recalculate attendance and override the existing attendance data. Are you sure you want to proceed?')) {
+                                       alert('Attendance data has been recalculated successfully.');
+                                    }
+                                 }}
+                                 className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 rounded-lg text-sm font-bold transition-colors"
+                              >
+                                 <RefreshCw size={16} /> Recalculate
+                              </button>
                            </>
                         )}
                      </div>
+                     {!readOnly && (
+                        <button
+                           onClick={() => setStep3Complete(true)}
+                           disabled={step3Complete}
+                           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors w-full sm:w-auto justify-center ${step3Complete ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'}`}
+                        >
+                           <CheckCircle size={16} /> {step3Complete ? 'Completed' : 'Mark as Complete'}
+                        </button>
+                     )}
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -1435,6 +1460,22 @@ export const RunPayrollModal: React.FC<{
             return (
                <div className="flex flex-col h-full space-y-4">
 
+                  <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-3">
+                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
+                        <div>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
+                           <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount} Selected</p>
+                        </div>
+                        <button 
+                           onClick={() => setShowWizardOnHoldPanel(true)}
+                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
+                        >
+                           <Eye size={12} /> View Details
+                        </button>
+                     </div>
+                  </div>
+
                   <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                      <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -1453,6 +1494,15 @@ export const RunPayrollModal: React.FC<{
                         <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all shadow-sm">
                            <Upload size={16} /> Upload CSV
                         </button>
+                        {!readOnly && (
+                           <button
+                              onClick={() => setStep4Complete(true)}
+                              disabled={step4Complete}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${step4Complete ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'}`}
+                           >
+                              <CheckCircle size={16} /> {step4Complete ? 'Completed' : 'Mark as Complete'}
+                           </button>
+                        )}
                      </div>
                   </div>
 
@@ -1858,21 +1908,6 @@ export const RunPayrollModal: React.FC<{
                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
                         <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
-                     </div>
-                     
-                     {/* New On-hold Employees Card */}
-                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
-                        <div>
-                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
-                           <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount} Selected</p>
-                        </div>
-                        <button 
-                           onClick={() => setShowWizardOnHoldPanel(true)}
-                           className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
-                        >
-                           <Eye size={12} /> View Details
-                        </button>
                      </div>
 
                      {/* New Employee Exits Card */}
