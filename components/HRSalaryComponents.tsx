@@ -672,23 +672,22 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         )}
                     </div>
 
-                    {/* <div>
+                    <div>
                         <label className="block text-xs font-bold text-slate-500 mb-2">Nature of Pay <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
                             {['Fixed', 'Variable'].map((type) => (
                                 <label key={type} 
                                        className="flex items-center gap-2 cursor-pointer group"
-                                       style={{ display: type === 'Variable' ? 'none' : 'flex' }}
                                 >
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfPay === type ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {natureOfPay === type && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={natureOfPay === type} onChange={() => setNatureOfPay(type as any)} />
-                                    <span className="text-sm text-slate-700 font-medium">{type} Pay</span>
+                                    <span className="text-sm text-slate-700 font-medium">{type}</span>
                                 </label>
                             ))}
                         </div>
-                    </div> */}
+                    </div>
 
                     {/* Calculation Method - Visible for Both Fixed and Variable per request */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1466,26 +1465,23 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
 
                     {/* Nature of Deduction */}
-                    {/* <div>
+                    <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Nature of Deduction <span className="text-rose-500">*</span></label>
                         <div className="flex gap-6">
-                            {(['Variable'] as const).map((option) => (
+                            {(['Fixed', 'Variable'] as const).map((option) => (
                                 <label key={option} className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${natureOfDeduction === option ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {natureOfDeduction === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={natureOfDeduction === option} onChange={() => {
                                         setNatureOfDeduction(option);
-                                        if (option === 'Variable') setCalcMethod('Flat');
+                                        setCalcMethod('Flat');
                                     }} />
                                     <span className="text-sm text-slate-700 font-medium">{option}</span>
                                 </label>
                             ))}
                         </div>
-                        {natureOfDeduction === 'Variable' && (
-                            <p className="text-xs text-slate-500 mt-1.5">Amount can be edited per employee during payroll processing.</p>
-                        )}
-                    </div> */}
+                    </div>
 
                     {/* Calculation Method */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1499,54 +1495,6 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                     <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
                                     <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
                                 </label>
-                                {natureOfDeduction === 'Fixed' && (
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
-                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
-                                </label>
-                                )}
-                                {natureOfDeduction === 'Fixed' && <div className="relative">
-                                    <button
-                                        type="button"
-                                        disabled={calcMethod !== 'Percentage'}
-                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between transition-all"
-                                    >
-                                        <span className="truncate max-w-[80px]">{selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}</span>
-                                        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                                    </button>
-
-                                    {isDropdownOpen && (
-                                        <>
-                                            <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
-                                            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
-                                                {['CTC', 'Basic'].map(comp => (
-                                                    <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer group transition-colors">
-                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedComponents.includes(comp) ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                                            {selectedComponents.includes(comp) && <Check size={12} className="text-white" />}
-                                                        </div>
-                                                        <input
-                                                            type="checkbox"
-                                                            className="hidden"
-                                                            checked={selectedComponents.includes(comp)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) {
-                                                                    setSelectedComponents(prev => [...prev, comp]);
-                                                                } else {
-                                                                    setSelectedComponents(prev => prev.filter(c => c !== comp));
-                                                                }
-                                                            }}
-                                                        />
-                                                        <span className="text-sm text-slate-700 font-medium">{comp}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>}
                             </div>
                         </div>
                         <div className="w-1/2">
