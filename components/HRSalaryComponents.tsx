@@ -657,7 +657,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <input type="text" value={payslipName} onChange={e => { setPayslipName(e.target.value); setError(null); }} placeholder="Enter Name in Payslip" className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${error === 'Name in Payslip is mandatory' ? 'border-rose-500' : 'border-slate-200'}`} />
                             {error === 'Name in Payslip is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                         </div>
-                        {initialData && (
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Month</label>
                                 <div className="relative">
@@ -669,7 +668,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
                             </div>
-                        )}
                     </div>
 
                     <div>
@@ -752,9 +750,9 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span></label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'} <span className="text-rose-500">*</span></label>
                             <div className="relative max-w-[200px]">
-                                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
                                     {calcMethod === 'Percentage' ? '%' : '₹'}
                                 </div>
@@ -1449,7 +1447,6 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {initialData && (
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Month</label>
                                 <div className="relative">
@@ -1461,7 +1458,6 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
                             </div>
-                        )}
                     </div>
 
                     {/* Nature of Deduction */}
@@ -1499,14 +1495,14 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                         </div>
                         <div className="w-1/2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'} <span className="text-rose-500">*</span>
+                                {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'} <span className="text-rose-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
                                     type="text"
                                     value={amountOrPercent}
                                     onChange={(e) => setAmountOrPercent(e.target.value)}
-                                    placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount'}
+                                    placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'}
                                     className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                                 />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">

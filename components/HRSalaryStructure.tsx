@@ -847,7 +847,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Effective From <span className="text-rose-500">*</span></label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Effective Month <span className="text-rose-500">*</span></label>
                                     {isReadOnly ? (
                                         <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">{effectiveFrom || '-'}</div>
                                     ) : (
