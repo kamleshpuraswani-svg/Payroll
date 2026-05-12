@@ -45,6 +45,7 @@ interface DeclarationRow {
    isExpanded: boolean;
    proofs: number;
    files: string[];
+   approvedAmount?: number;
 }
 
 interface HouseRentDetails {
@@ -770,13 +771,13 @@ export const TaxPlanning: React.FC = () => {
 ;
 
    const recentDeclarations = [
-      { id: 1, type: '80C, 80D, 80CCD', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Submitted', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
-      { id: 2, type: '80C, 80D', fy: '2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' },
-      { id: 3, type: '80C, 80G', fy: '2024-25', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2025, 02:45 PM', modifiedDate: '16 Jan 2025, 10:20 AM' },
-      { id: 4, type: '80D, 80E', fy: '2024-25', amount: 35000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '12 Feb 2025, 10:00 AM', modifiedDate: '12 Feb 2025, 03:15 PM' },
-      { id: 5, type: '80C, 80D, 80E', fy: '2023-24', amount: 250000, approvedAmount: 250000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2024, 09:15 AM', modifiedDate: '20 Jan 2024, 04:30 PM' },
-      { id: 6, type: '80G, OTHERS', fy: '2023-24', amount: 15000, approvedAmount: 15000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '05 Mar 2024, 11:00 AM', modifiedDate: '10 Mar 2024, 02:00 PM' },
-      { id: 7, type: '80C', fy: '2022-23', amount: 210000, approvedAmount: 210000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '10 Jan 2023, 09:30 AM', modifiedDate: '18 Jan 2023, 11:45 AM' }
+      { id: 1, type: 'Proposed Investment', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Submitted', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
+      { id: 2, type: 'Proposed Investment', fy: '2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' },
+      { id: 3, type: 'Confirmed Investment', fy: '2024-25', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2025, 02:45 PM', modifiedDate: '16 Jan 2025, 10:20 AM' },
+      { id: 4, type: 'Proposed Investment', fy: '2024-25', amount: 35000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '12 Feb 2025, 10:00 AM', modifiedDate: '12 Feb 2025, 03:15 PM' },
+      { id: 5, type: 'Confirmed Investment', fy: '2023-24', amount: 250000, approvedAmount: 250000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2024, 09:15 AM', modifiedDate: '20 Jan 2024, 04:30 PM' },
+      { id: 6, type: 'Confirmed Investment', fy: '2023-24', amount: 15000, approvedAmount: 15000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '05 Mar 2024, 11:00 AM', modifiedDate: '10 Mar 2024, 02:00 PM' },
+      { id: 7, type: 'Confirmed Investment', fy: '2022-23', amount: 210000, approvedAmount: 210000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '10 Jan 2023, 09:30 AM', modifiedDate: '18 Jan 2023, 11:45 AM' }
    ];
 
    const hasSubmitted = recentDeclarations.some(d => d.status === 'Submitted');
@@ -964,7 +965,7 @@ export const TaxPlanning: React.FC = () => {
                   <thead className="bg-slate-50 border-b border-slate-100">
                      <tr>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Sr. No.</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Sections Declared</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Declaration Type</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider">Financial Year</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Total Declared Amount</th>
                         <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Approved Amount</th>
@@ -1895,12 +1896,9 @@ export const TaxPlanning: React.FC = () => {
                <div className="flex items-center gap-4">
                   <button
                      onClick={() => {
-                        const wasHistory = !!selectedHistoryYear;
                         setView('DASHBOARD');
                         setSelectedHistoryYear(null);
-                        if (wasHistory) {
-                           setShowPastDeclarations(true);
-                        }
+                        setShowPastDeclarations(false);
                      }}
                      className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
                   >
@@ -1922,7 +1920,7 @@ export const TaxPlanning: React.FC = () => {
                         )}
                      </div>
                      <p className="text-sm text-slate-500 font-medium">
-                        {selectedHistoryYear ? `Historical view for ${selectedHistoryYear.year}` : 'Select your regime and declare investments'}
+                        {selectedHistoryYear ? '' : 'Select your regime and declare investments'}
                      </p>
                   </div>
                </div>
@@ -2210,8 +2208,12 @@ export const TaxPlanning: React.FC = () => {
                      <div className="flex items-center gap-8">
                         <div className="flex items-center gap-6">
                            <div className="text-right">
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Deduction</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Declared Amount</p>
                               <p className="text-sm font-bold text-slate-700">₹ {declarations.filter(d => d.section === '80C').reduce((sum, d) => sum + (d.amount || 0), 0).toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Approved Amount</p>
+                               <p className="text-sm font-bold text-emerald-600">₹ {declarations.filter(d => d.section === '80C').reduce((sum, d) => sum + (d.approvedAmount || 0), 0).toLocaleString()}</p>
                            </div>
                            <div className="text-right pr-6 border-r border-slate-200">
                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Maximum Limit</p>
@@ -2348,8 +2350,12 @@ export const TaxPlanning: React.FC = () => {
                      <div className="flex items-center gap-8">
                         <div className="flex items-center gap-6">
                            <div className="text-right">
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Deduction</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Declared Amount</p>
                               <p className="text-sm font-bold text-slate-700">₹ {declarations.filter(d => d.section === '80D').reduce((sum, d) => sum + (d.amount || 0), 0).toLocaleString()}</p>
+                           </div>
+                           <div className="text-right">
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Approved Amount</p>
+                              <p className="text-sm font-bold text-emerald-600">₹ {declarations.filter(d => d.section === '80D').reduce((sum, d) => sum + (d.approvedAmount || 0), 0).toLocaleString()}</p>
                            </div>
                            <div className="text-right pr-6 border-r border-slate-200">
                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Maximum Limit</p>
@@ -2485,8 +2491,12 @@ export const TaxPlanning: React.FC = () => {
                      
                      <div className="flex items-center gap-8">
                         <div className="text-right pr-6 border-r border-slate-200">
-                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Deduction</p>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Declared Amount</p>
                            <p className="text-sm font-bold text-slate-700">₹ {declarations.filter(d => d.section === 'OTHERS').reduce((sum, d) => sum + (d.amount || 0), 0).toLocaleString()}</p>
+                        </div>
+                        <div className="text-right pr-6 border-r border-slate-200">
+                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Approved Amount</p>
+                           <p className="text-sm font-bold text-emerald-600">₹ {declarations.filter(d => d.section === 'OTHERS').reduce((sum, d) => sum + (d.approvedAmount || 0), 0).toLocaleString()}</p>
                         </div>
 
                         {!isReadOnly && (

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
    X,
    Building,
@@ -56,6 +56,30 @@ import {
 import { Company } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
 import { supabase } from '../services/supabaseClient';
+
+const EARNING_COMPONENTS = [
+   "Overtime Pay",
+   "Performance Bonus",
+   "Retention Bonus",
+   "Referral Bonus",
+   "Leave Encashment",
+   "Commission",
+   "Shift Allowance",
+   "Travel Allowance",
+   "Other Earning"
+];
+
+const DEDUCTION_COMPONENTS = [
+   "Professional Tax",
+   "Provident Fund (Employee)",
+   "ESI (Employee)",
+   "Income Tax (TDS)",
+   "Loan Recovery",
+   "Advance Recovery",
+   "Penalty / Fine",
+   "Notice Period Recovery",
+   "Other Deduction"
+];
 
 // --- View Company Modal ---
 export const ViewCompanyModal: React.FC<{ isOpen: boolean; onClose: () => void; company: Company | null }> = ({ isOpen, onClose, company }) => {
@@ -505,6 +529,10 @@ export const RunPayrollModal: React.FC<{
    const [currentRunId, setCurrentRunId] = useState<string | null>(null);
    const [step3Complete, setStep3Complete] = useState(false);
    const [step4Complete, setStep4Complete] = useState(false);
+   const [showStep3ConfirmDialog, setShowStep3ConfirmDialog] = useState(false);
+   const [showStep4BackConfirmDialog, setShowStep4BackConfirmDialog] = useState(false);
+   const [showStep4NextConfirmDialog, setShowStep4NextConfirmDialog] = useState(false);
+   const [showStep5BackConfirmDialog, setShowStep5BackConfirmDialog] = useState(false);
    // Step 1: Employee Selection State
    const [payrollEmployees, setPayrollEmployees] = useState<any[]>([]);
    
@@ -619,18 +647,53 @@ export const RunPayrollModal: React.FC<{
    const [adjustmentSearch, setAdjustmentSearch] = useState('');
    const [adjustments, setAdjustments] = useState<any[]>([]);
 
+   const handleCustomComponentChange = (rowId: any, compName: string, val: string) => {
+      const num = parseFloat(val) || 0;
+      setAdjustments(prev => prev.map(row => {
+         if (row.id === rowId || row.employee_id === rowId) {
+            let customComponents = [...(row.customComponents || [])];
+            const compIndex = customComponents.findIndex((c: any) => c.name === compName);
+            
+            if (compIndex > -1) {
+               customComponents[compIndex] = { ...customComponents[compIndex], amount: num };
+            } else if (num !== 0) {
+               // Find type from any other employee who has this component
+               const existingComp = adjustments.flatMap(r => r.customComponents || []).find(c => c.name === compName);
+               const type = existingComp?.type || 'Earning';
+               customComponents.push({ name: compName, amount: num, type });
+            }
+            
+            const updatedRow = { ...row, customComponents };
+            saveAdjustmentToDb(updatedRow);
+            return updatedRow;
+         }
+         return row;
+      }));
+   };
+
    // Build mock adjustments from payrollEmployees when Supabase has no data
    const buildMockAdjustments = (employees: any[]) =>
        employees.map((emp, i) => {
            const grossValues = [154166, 200000, 131666, 176666, 158333, 185000, 142500, 168000, 195000, 122000];
            const gross = grossValues[i % grossValues.length];
            const tdsRate = [12500, 18000, 8500, 16200, 14000, 17500, 9800, 15000, 19200, 7500];
+           const basic = Math.round(gross * 0.40);
+           const hra = Math.round(gross * 0.20);
+           const specialAllowance = Math.round(gross * 0.30);
+           const transport = gross - basic - hra - specialAllowance;
            return {
                id: emp.id,
                db_id: null,
                employee_id: emp.employee_id,
                name: `${emp.first_name} ${emp.last_name}`,
                gross,
+               salaryComponents: [
+                   { name: 'Basic', amount: basic, type: 'Earning' },
+                   { name: 'HRA', amount: hra, type: 'Earning' },
+                   { name: 'Special Allowance', amount: specialAllowance, type: 'Earning' },
+                   { name: 'Transport', amount: transport, type: 'Earning' },
+               ],
+               customComponents: [],
                bonus: i % 5 === 1 ? 25000 : 0,
                arrears: i % 7 === 2 ? 5000 : 0,
                loanRecovery: i % 4 === 3 ? 5000 : 0,
@@ -683,7 +746,21 @@ export const RunPayrollModal: React.FC<{
                proposedTds: adj.proposed_tds || 0,
                actualTds: adj.actual_tds || 0,
                is_exit: adj.is_exit,
-               isEditing: false
+               isEditing: false,
+               salaryComponents: (() => {
+                   const g = adj.gross || 0;
+                   const basic = Math.round(g * 0.40);
+                   const hra = Math.round(g * 0.20);
+                   const specialAllowance = Math.round(g * 0.30);
+                   const transport = g - basic - hra - specialAllowance;
+                   return [
+                       { name: 'Basic', amount: basic, type: 'Earning' },
+                       { name: 'HRA', amount: hra, type: 'Earning' },
+                       { name: 'Special Allowance', amount: specialAllowance, type: 'Earning' },
+                       { name: 'Transport', amount: transport, type: 'Earning' },
+                   ];
+               })(),
+               customComponents: []
            }));
 
            if (mapped.length > 0) {
@@ -742,16 +819,31 @@ export const RunPayrollModal: React.FC<{
    const [rowLopTargetId, setRowLopTargetId] = useState<number | null>(null);
    const [rowLopDays, setRowLopDays] = useState('0');
 
+   // Add Component Modal State
+   const [showAddCompModal, setShowAddCompModal] = useState(false);
+   const [addCompTargetId, setAddCompTargetId] = useState<any>(null);
+   const [addCompType, setAddCompType] = useState<'Earning' | 'Deduction'>('Earning');
+   const [addCompName, setAddCompName] = useState('');
+   const [addCompAmount, setAddCompAmount] = useState('');
+
    // If not page mode, check isOpen
    if (!isPage && !isOpen) return null;
    if (!company) return null;
 
    const handleNext = async () => {
-       if (currentStep === 2) {
-           await initiatePayrollRun();
-       }
-       setCurrentStep(prev => Math.min(prev + 1, 7));
-   };
+        if (currentStep === 2) {
+            await initiatePayrollRun();
+        }
+        if (currentStep === 3) {
+            setShowStep3ConfirmDialog(true);
+            return;
+        }
+        if (currentStep === 4) {
+            setShowStep4NextConfirmDialog(true);
+            return;
+        }
+        setCurrentStep(prev => Math.min(prev + 1, 7));
+    };
 
    const initiatePayrollRun = async () => {
        setIsLoading(true);
@@ -806,7 +898,17 @@ export const RunPayrollModal: React.FC<{
        }
    };
 
-   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+   const handleBack = () => {
+       if (currentStep === 4) {
+          setShowStep4BackConfirmDialog(true);
+          return;
+       }
+       if (currentStep === 5) {
+          setShowStep5BackConfirmDialog(true);
+          return;
+       }
+       setCurrentStep(prev => Math.max(prev - 1, 1));
+    };
 
    const handleGeneratePayslips = async () => {
       setIsGenerating(true);
@@ -997,6 +1099,29 @@ export const RunPayrollModal: React.FC<{
 
    const toggleEdit = (id: number) => {
       setAdjustments(prev => prev.map(row => row.id === id ? { ...row, isEditing: !row.isEditing } : row));
+   };
+
+   const handleAddCustomComponent = () => {
+      const amount = parseFloat(addCompAmount);
+      if (!addCompName.trim() || !amount || !addCompTargetId) return;
+      setAdjustments(prev => prev.map(row => {
+         if (row.id === addCompTargetId || row.employee_id === addCompTargetId) {
+            return {
+               ...row,
+               customComponents: [...(row.customComponents || []), {
+                  name: addCompName.trim(),
+                  amount,
+                  type: addCompType,
+               }]
+            };
+         }
+         return row;
+      }));
+      setShowAddCompModal(false);
+      setAddCompName('');
+      setAddCompAmount('');
+      setAddCompType('Earning');
+      setAddCompTargetId(null);
    };
 
    const handleAddBonus = async () => {
@@ -1194,6 +1319,16 @@ export const RunPayrollModal: React.FC<{
       row.name.toLowerCase().includes(adjustmentSearch.toLowerCase())
    );
 
+   const uniqueCustomComponentNames = useMemo(() => {
+      const names = new Set<string>();
+      adjustments.forEach(row => {
+         (row.customComponents || []).forEach((comp: any) => {
+            names.add(comp.name);
+         });
+      });
+      return Array.from(names).sort();
+   }, [adjustments]);
+
    // Derived Summary
    const summary = {
       bonus: adjustments.reduce((s, i) => s + i.bonus, 0),
@@ -1311,6 +1446,7 @@ export const RunPayrollModal: React.FC<{
                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
                               <tr>
                                  <th className="px-4 py-3">Employee Name</th>
+                                 <th className="px-4 py-3">Employee ID</th>
                                  <th className="px-4 py-3">Designation</th>
                                  <th className="px-4 py-3">Department</th>
                                  {!readOnly && <th className="px-4 py-3 text-right">Action</th>}
@@ -1326,10 +1462,10 @@ export const RunPayrollModal: React.FC<{
                                           </div>
                                           <div>
                                              <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
-                                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{emp.employee_id}</div>
                                           </div>
                                        </div>
                                     </td>
+                                    <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
                                     <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
                                     <td className="px-4 py-3 text-slate-500">{emp.department}</td>
                                     {!readOnly && (
@@ -1350,7 +1486,7 @@ export const RunPayrollModal: React.FC<{
                               ))}
                               {filteredEmployees.length === 0 && (
                                  <tr>
-                                    <td colSpan={readOnly ? 3 : 4} className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan={readOnly ? 4 : 5} className="px-6 py-12 text-center text-slate-400 italic">
                                        No employees found matching "{empSearch}"
                                     </td>
                                  </tr>
@@ -1409,15 +1545,6 @@ export const RunPayrollModal: React.FC<{
                            </>
                         )}
                      </div>
-                     {!readOnly && (
-                        <button
-                           onClick={() => setStep3Complete(true)}
-                           disabled={step3Complete}
-                           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors w-full sm:w-auto justify-center ${step3Complete ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'}`}
-                        >
-                           <CheckCircle size={16} /> {step3Complete ? 'Completed' : 'Mark as Complete'}
-                        </button>
-                     )}
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -1425,6 +1552,7 @@ export const RunPayrollModal: React.FC<{
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                            <tr>
                               <th className="px-6 py-3">Employee Name</th>
+                              <th className="px-4 py-3">Employee ID</th>
                               <th className="px-4 py-3 text-center">Present Days</th>
                               <th className="px-4 py-3 text-center">Leave Days</th>
                               <th className="px-4 py-3 text-center">LOP Days</th>
@@ -1444,6 +1572,7 @@ export const RunPayrollModal: React.FC<{
                                         )}
                                      </div>
                                   </td>
+                                  <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{row.employee_id || `MI00${100 + row.id}`}</td>
                                   <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
                                   <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
                                   <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop || '-'}</td>
@@ -1507,31 +1636,48 @@ export const RunPayrollModal: React.FC<{
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm flex-1 overflow-y-auto">
-                     <table className="w-full text-sm text-left table-fixed min-w-[1200px]">
+                     <table className="w-full text-sm text-left table-fixed min-w-[1800px]">
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
                            <tr>
-                              <th className="px-4 py-3 w-48">Employee Name</th>
-                              <th className="px-2 py-3 text-right w-24">Gross</th>
-                              <th className="px-2 py-3 text-right text-emerald-600 w-24">LOP Reversal</th>
-                              <th className="px-2 py-3 text-right w-24">Bonus</th>
-                              <th className="px-2 py-3 text-right w-40">Expense Reimbursement</th>
-                              <th className="px-2 py-3 text-right w-24">Arrears</th>
-                              <th className="px-2 py-3 text-right text-rose-600 w-28">Loan Recovery</th>
-                              <th className="px-2 py-3 text-right text-rose-600 w-32">Salary Advance Recovery</th>
-                              <th className="px-2 py-3 text-right w-24">Proposed TDS</th>
-                              <th className="px-2 py-3 text-right w-24">Actual TDS</th>
-                              <th className="px-4 py-3 text-right font-bold bg-slate-100 w-32">Final Gross</th>
-                              <th className="px-4 py-3 text-right font-bold bg-emerald-50 text-emerald-700 w-32">Net Pay</th>
-                              <th className="px-4 py-3 w-20 text-center">Actions</th>
+                              <th className="px-4 py-3 w-48 text-left uppercase text-[10px] font-black tracking-wider">Employee Name</th>
+                              <th className="px-4 py-3 w-32 text-left uppercase text-[10px] font-black tracking-wider">Employee ID</th>
+                              <th className="px-2 py-3 text-right text-[10px] font-black text-indigo-500 uppercase w-24">Basic</th>
+                              <th className="px-2 py-3 text-right text-[10px] font-black text-indigo-500 uppercase w-24">HRA</th>
+                              <th className="px-2 py-3 text-right text-[10px] font-black text-indigo-500 uppercase w-32">Special Allow.</th>
+                              <th className="px-2 py-3 text-right text-[10px] font-black text-indigo-500 uppercase w-24">Transport</th>
+                              <th className="px-2 py-3 text-right w-28 text-slate-700 font-black uppercase text-[10px] tracking-wider">Gross Total</th>
+                              <th className="px-2 py-3 text-right text-emerald-600 w-24 uppercase text-[10px] font-black tracking-wider">LOP Reversal</th>
+                              <th className="px-2 py-3 text-right w-24 uppercase text-[10px] font-black tracking-wider">Bonus</th>
+                              <th className="px-2 py-3 text-right w-40 uppercase text-[10px] font-black tracking-wider">Expense Reimbursement</th>
+                              <th className="px-2 py-3 text-right w-24 uppercase text-[10px] font-black tracking-wider">Arrears</th>
+                              <th className="px-2 py-3 text-right text-rose-600 w-28 uppercase text-[10px] font-black tracking-wider">Loan Recovery</th>
+                              <th className="px-2 py-3 text-right text-rose-600 w-32 uppercase text-[10px] font-black tracking-wider">Salary Advance Recovery</th>
+                              <th className="px-2 py-3 text-right w-24 uppercase text-[10px] font-black tracking-wider">Proposed TDS</th>
+                              <th className="px-2 py-3 text-right w-24 uppercase text-[10px] font-black tracking-wider">Actual TDS</th>
+                              {uniqueCustomComponentNames.map(name => (
+                                 <th key={name} className="px-2 py-3 text-right w-28 uppercase text-[10px] font-black tracking-wider text-violet-600 bg-violet-50/30 whitespace-nowrap overflow-hidden text-ellipsis" title={name}>
+                                    {name}
+                                 </th>
+                              ))}
+                              <th className="px-4 py-3 text-right font-black bg-slate-100 w-32 uppercase text-[10px] tracking-wider">Final Gross</th>
+                              <th className="px-4 py-3 text-right font-black bg-emerald-50 text-emerald-700 w-32 uppercase text-[10px] tracking-wider">Net Pay</th>
+                              <th className="px-4 py-3 w-32 text-center uppercase text-[10px] font-black tracking-wider">Actions</th>
                            </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-medium">
                            {filteredAdjustments.length > 0 ? filteredAdjustments.map((row) => {
-                              const total = row.gross + row.bonus + row.arrears + row.expenseReimbursement - row.loanRecovery - row.salaryAdvanceRecovery - row.actualTds - row.lop + row.lopReversal + row.other;
+                              const customEarnings = (row.customComponents || []).filter((c: any) => c.type === 'Earning').reduce((s: number, c: any) => s + c.amount, 0);
+                              const customDeductions = (row.customComponents || []).filter((c: any) => c.type === 'Deduction').reduce((s: number, c: any) => s + c.amount, 0);
+                              const total = row.gross + row.bonus + row.arrears + row.expenseReimbursement - row.loanRecovery - row.salaryAdvanceRecovery - row.actualTds - row.lop + row.lopReversal + row.other + customEarnings - customDeductions;
                               return (
-                                 <tr key={row.id} className={`hover:bg-slate-50/80 transition-colors group ${row.isEditing ? 'bg-purple-50/30' : ''}`}>
+                                 <React.Fragment key={row.id}>
+                                 <tr className={`hover:bg-slate-50/80 transition-colors group ${row.isEditing ? 'bg-purple-50/30' : ''}`}>
                                     <td className="px-4 py-3 text-slate-800 truncate">{row.name}</td>
-                                    <td className="px-2 py-3 text-right text-slate-500">₹{row.gross.toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{row.employee_id}</td>
+                                    {(row.salaryComponents || []).map((comp: any, idx: number) => (
+                                       <td key={idx} className="px-2 py-3 text-right text-indigo-700 font-medium">₹{comp.amount.toLocaleString()}</td>
+                                    ))}
+                                    <td className="px-2 py-3 text-right text-slate-700 font-semibold">₹{row.gross.toLocaleString()}</td>
                                     <td className="px-2 py-3 text-right">
                                        {row.isEditing ? (
                                           <input
@@ -1626,6 +1772,28 @@ export const RunPayrollModal: React.FC<{
                                           <span className="text-rose-600">₹{row.actualTds.toLocaleString()}</span>
                                        )}
                                     </td>
+                                    {uniqueCustomComponentNames.map(name => {
+                                       const comp = (row.customComponents || []).find((c: any) => c.name === name);
+                                       return (
+                                          <td key={name} className="px-2 py-3 text-right font-medium">
+                                             {row.isEditing ? (
+                                                <input
+                                                   type="number"
+                                                   value={comp ? comp.amount : ''}
+                                                   onChange={(e) => handleCustomComponentChange(row.id, name, e.target.value)}
+                                                   className={`w-full text-right p-1.5 border border-purple-200 rounded-lg font-bold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none bg-white transition-all ${comp?.type === 'Deduction' ? 'text-rose-600' : 'text-emerald-600'}`}
+                                                   placeholder="0"
+                                                />
+                                             ) : comp ? (
+                                                <span className={comp.type === 'Earning' ? 'text-emerald-600' : 'text-rose-600'}>
+                                                   {comp.type === 'Earning' ? '+' : '−'}₹{comp.amount.toLocaleString()}
+                                                </span>
+                                             ) : (
+                                                <span className="text-slate-300">-</span>
+                                             )}
+                                          </td>
+                                       );
+                                    })}
                                     <td className="px-4 py-3 text-right font-bold text-slate-800 bg-slate-50 group-hover:bg-slate-100 transition-colors">
                                        ₹{total.toLocaleString()}
                                     </td>
@@ -1635,7 +1803,7 @@ export const RunPayrollModal: React.FC<{
                                        </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                       <div className="flex items-center justify-center gap-2">
+                                       <div className="flex items-center justify-center gap-3">
                                           <button
                                              onClick={() => handleRowLopClick(row.id)}
                                              className="p-1.5 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all"
@@ -1650,13 +1818,21 @@ export const RunPayrollModal: React.FC<{
                                           >
                                              {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
                                           </button>
+                                          <button
+                                             onClick={() => { setAddCompTargetId(row.id); setShowAddCompModal(true); }}
+                                             className="p-1.5 rounded-lg text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all"
+                                             title="Add one-time earning or deduction"
+                                          >
+                                             <Plus size={18} />
+                                          </button>
                                        </div>
                                     </td>
                                  </tr>
+                                 </React.Fragment>
                               );
                            }) : (
                               <tr>
-                                 <td colSpan={12} className="px-4 py-12 text-center text-slate-400">
+                                 <td colSpan={17 + uniqueCustomComponentNames.length} className="px-4 py-12 text-center text-slate-400">
                                     <div className="flex flex-col items-center gap-2">
                                        <Search size={32} className="text-slate-200" />
                                        <p>No employees found matching your search.</p>
@@ -1956,13 +2132,19 @@ export const RunPayrollModal: React.FC<{
                                   <th className="px-4 py-4 text-right text-rose-600">Salary Adv. Recovery</th>
                                   <th className="px-4 py-4 text-right">Proposed TDS</th>
                                   <th className="px-4 py-4 text-right text-rose-500">Actual TDS</th>
+                                  {uniqueCustomComponentNames.map(name => (
+                                     <th key={name} className="px-4 py-4 text-right text-violet-600">{name}</th>
+                                  ))}
                                   <th className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/50">Net Pay</th>
                                </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                {previewEmployees.map((emp) => {
-                                  // Net Pay = Gross + LOP Reversal + Bonus + Reimb + Arrears - Loan - Advance - TDS
-                                  const netPay = emp.gross + (emp.lopReversal || 0) + (emp.bonus || 0) + (emp.expenseReimbursement || 0) + (emp.arrears || 0) - (emp.loanRecovery || 0) - (emp.salaryAdvanceRecovery || 0) - (emp.actualTds || 0);
+                                  // Net Pay = Gross + LOP Reversal + Bonus + Reimb + Arrears + Custom - Loan - Advance - TDS
+                                  const customImpact = (emp.customComponents || []).reduce((acc: number, c: any) => 
+                                     acc + (c.type === 'Earning' ? c.amount : -c.amount), 0
+                                  );
+                                  const netPay = emp.gross + (emp.lopReversal || 0) + (emp.bonus || 0) + (emp.expenseReimbursement || 0) + (emp.arrears || 0) - (emp.loanRecovery || 0) - (emp.salaryAdvanceRecovery || 0) - (emp.actualTds || 0) + customImpact;
                                   
                                   return (
                                      <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
@@ -1981,7 +2163,21 @@ export const RunPayrollModal: React.FC<{
                                         <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.salaryAdvanceRecovery > 0 ? `-₹${emp.salaryAdvanceRecovery.toLocaleString()}` : '-'}</td>
                                         <td className="px-4 py-4 text-right text-slate-400 font-medium italic">₹{emp.proposedTds.toLocaleString()}</td>
                                         <td className="px-4 py-4 text-right text-rose-500 font-bold">₹{emp.actualTds.toLocaleString()}</td>
-                                        <td className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/30">
+                                        {uniqueCustomComponentNames.map(name => {
+                                           const comp = (emp.customComponents || []).find((c: any) => c.name === name);
+                                           return (
+                                              <td key={name} className="px-4 py-4 text-right font-medium">
+                                                 {comp ? (
+                                                    <span className={comp.type === 'Earning' ? 'text-emerald-600' : 'text-rose-600'}>
+                                                       {comp.type === 'Earning' ? '+' : '−'}₹{comp.amount.toLocaleString()}
+                                                    </span>
+                                                 ) : (
+                                                    <span className="text-slate-300">-</span>
+                                                  )}
+                                               </td>
+                                            );
+                                         })}
+                                         <td className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/30">
                                            ₹{netPay.toLocaleString()}
                                         </td>
                                      </tr>
@@ -2370,8 +2566,8 @@ export const RunPayrollModal: React.FC<{
                            Finish <CheckCircle size={16} />
                         </button>
                      ) : (
-                        <button 
-                           onClick={handleNext} 
+                        <button
+                           onClick={currentStep === 3 ? () => setShowStep3ConfirmDialog(true) : handleNext}
                            disabled={currentStep === 1 && selectedBUs.length === 0}
                            className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:shadow-none"
                         >
@@ -2482,6 +2678,94 @@ export const RunPayrollModal: React.FC<{
                         className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 shadow-sm"
                      >
                         Add Bonus
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* Add One-Time Component Modal */}
+         {showAddCompModal && addCompTargetId && !readOnly && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden border border-violet-100">
+                  <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-violet-50/50">
+                     <div className="flex items-center gap-2">
+                        <div>
+                           <h3 className="font-bold text-violet-900 text-sm">Add One-Time Component</h3>
+                           <p className="text-[11px] text-violet-500 font-medium">
+                              {adjustments.find(a => a.id === addCompTargetId)?.name || ''}
+                           </p>
+                        </div>
+                     </div>
+                     <button onClick={() => { setShowAddCompModal(false); setAddCompName(''); setAddCompAmount(''); setAddCompType('Earning'); }}>
+                        <X size={18} className="text-slate-400 hover:text-slate-600" />
+                     </button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Component Type</label>
+                        <div className="flex gap-3">
+                           <label className="flex items-center gap-2 cursor-pointer group flex-1">
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${addCompType === 'Earning' ? 'border-emerald-600' : 'border-slate-300 group-hover:border-emerald-300'}`}>
+                                 {addCompType === 'Earning' && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />}
+                              </div>
+                              <input type="radio" name="compType" className="hidden" checked={addCompType === 'Earning'} onChange={() => { setAddCompType('Earning'); setAddCompName(''); }} />
+                              <span className={`text-sm font-semibold ${addCompType === 'Earning' ? 'text-emerald-700' : 'text-slate-500'}`}>Earning</span>
+                           </label>
+                           <label className="flex items-center gap-2 cursor-pointer group flex-1">
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${addCompType === 'Deduction' ? 'border-rose-600' : 'border-slate-300 group-hover:border-rose-300'}`}>
+                                 {addCompType === 'Deduction' && <div className="w-2.5 h-2.5 rounded-full bg-rose-600" />}
+                              </div>
+                              <input type="radio" name="compType" className="hidden" checked={addCompType === 'Deduction'} onChange={() => { setAddCompType('Deduction'); setAddCompName(''); }} />
+                              <span className={`text-sm font-semibold ${addCompType === 'Deduction' ? 'text-rose-700' : 'text-slate-500'}`}>Deduction</span>
+                           </label>
+                        </div>
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Component Name</label>
+                        <select
+                           value={addCompName}
+                           onChange={(e) => setAddCompName(e.target.value)}
+                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white"
+                        >
+                           <option value="">Select Component</option>
+                           {(addCompType === 'Earning' ? EARNING_COMPONENTS : DEDUCTION_COMPONENTS).map(comp => (
+                              <option key={comp} value={comp}>{comp}</option>
+                           ))}
+                        </select>
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Amount</label>
+                        <div className="relative">
+                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
+                           <input
+                              type="number"
+                              value={addCompAmount}
+                              onChange={(e) => setAddCompAmount(e.target.value)}
+                              className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                              placeholder="0.00"
+                           />
+                        </div>
+                     </div>
+                     {addCompName && addCompAmount && (
+                        <div className={`px-3 py-2 rounded-lg text-xs font-bold border ${addCompType === 'Earning' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                           {addCompType === 'Earning' ? '+' : '−'}₹{parseFloat(addCompAmount || '0').toLocaleString()} will be {addCompType === 'Earning' ? 'added to' : 'deducted from'} Net Pay
+                        </div>
+                     )}
+                  </div>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+                     <button
+                        onClick={() => { setShowAddCompModal(false); setAddCompName(''); setAddCompAmount(''); setAddCompType('Earning'); }}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50"
+                     >
+                        Cancel
+                     </button>
+                     <button
+                        onClick={handleAddCustomComponent}
+                        disabled={!addCompName.trim() || !addCompAmount}
+                        className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50 shadow-sm"
+                     >
+                        Add
                      </button>
                   </div>
                </div>
@@ -2628,6 +2912,152 @@ export const RunPayrollModal: React.FC<{
                         className="px-6 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900 disabled:opacity-50 shadow-sm"
                      >
                         Apply Reversal
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+         {showStep3ConfirmDialog && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-blue-50">
+                     <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                        <Info size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-extrabold text-slate-800 text-base">Confirm Completion</h3>
+                     </div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                     <p className="text-slate-600 leading-relaxed font-medium">
+                        Are you sure you want to continue to next step and mark this step as complete?
+                     </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+                     <button 
+                        onClick={() => setShowStep3ConfirmDialog(false)} 
+                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                     >
+                        No
+                     </button>
+                     <button
+                        onClick={() => {
+                           setStep3Complete(true);
+                           setCurrentStep(4);
+                           setShowStep3ConfirmDialog(false);
+                        }}
+                        className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all"
+                     >
+                        Yes
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+         {showStep4BackConfirmDialog && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-rose-50">
+                     <div className="p-2 bg-rose-100 text-rose-600 rounded-xl">
+                        <AlertTriangle size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-extrabold text-slate-800 text-base">Confirm Go Back</h3>
+                     </div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                     <p className="text-slate-600 leading-relaxed font-medium">
+                        Are you sure you want to go back to previous screen, going back will discard your unsaved changes.
+                     </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+                     <button 
+                        onClick={() => setShowStep4BackConfirmDialog(false)} 
+                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                     >
+                        No
+                     </button>
+                     <button
+                        onClick={() => {
+                           setCurrentStep(3);
+                           setShowStep4BackConfirmDialog(false);
+                        }}
+                        className="px-8 py-2 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200/50 transition-all"
+                     >
+                        Yes
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+         {showStep4NextConfirmDialog && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-blue-50">
+                     <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                        <Info size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-extrabold text-slate-800 text-base">Confirm Completion</h3>
+                     </div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                     <p className="text-slate-600 leading-relaxed font-medium">
+                        Are you sure you want to continue to next step and mark this step as complete?
+                     </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+                     <button 
+                        onClick={() => setShowStep4NextConfirmDialog(false)} 
+                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                     >
+                        No
+                     </button>
+                     <button
+                        onClick={() => {
+                           setStep4Complete(true);
+                           setCurrentStep(5);
+                           setShowStep4NextConfirmDialog(false);
+                        }}
+                        className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all"
+                     >
+                        Yes
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+         {showStep5BackConfirmDialog && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-rose-50">
+                     <div className="p-2 bg-rose-100 text-rose-600 rounded-xl">
+                        <AlertTriangle size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-extrabold text-slate-800 text-base">Confirm Go Back</h3>
+                     </div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                     <p className="text-slate-600 leading-relaxed font-medium">
+                        Are you sure you want to go back to previous screen, going back will discard your unsaved changes.
+                     </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+                     <button 
+                        onClick={() => setShowStep5BackConfirmDialog(false)} 
+                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                     >
+                        No
+                     </button>
+                     <button
+                        onClick={() => {
+                           setCurrentStep(4);
+                           setShowStep5BackConfirmDialog(false);
+                        }}
+                        className="px-8 py-2 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200/50 transition-all"
+                     >
+                        Yes
                      </button>
                   </div>
                </div>

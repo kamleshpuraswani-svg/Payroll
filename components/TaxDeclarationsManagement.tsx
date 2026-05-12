@@ -586,9 +586,9 @@ const EditDeclarationModal: React.FC<EditModalProps> = ({ doc, onClose, onSave }
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Section</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Declaration Type</label>
                                 <div className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500 font-medium cursor-not-allowed">
-                                    {doc?.type_label || 'N/A'}
+                                    {doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'Confirmed Investment' : 'Proposed Investment'}
                                 </div>
                             </div>
                             <div>
@@ -1188,8 +1188,8 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                         {/* Declaration Summary */}
                         <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-6 border-b border-slate-100 pb-8`}>
                             <div>
-                                <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Tax Section</p>
-                                <p className="font-bold text-purple-700 text-base">{doc?.type_label || 'N/A'}</p>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Declaration Type</p>
+                                <p className="font-bold text-purple-700 text-base">{doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'Confirmed Investment' : 'Proposed Investment'}</p>
                             </div>
                             <div>
                                 <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Maximum Limit</p>
@@ -1520,8 +1520,9 @@ const TaxDeclarationsManagement: React.FC = () => {
                                     <thead className="bg-slate-50/50 sticky top-0 z-10 text-[11px] font-bold uppercase text-slate-400 border-b border-slate-100">
                                         <tr>
                                             <th className="px-6 py-4">Employee Name & ID</th>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Tax Section</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Declaration Type</th>
                                             <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Declared Amount</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Approved Amount</th>
                                             <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Status</th>
                                             <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Created By</th>
                                             <th className="px-6 py-4">Last Modified By</th>
@@ -1542,6 +1543,7 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4"><div className="h-6 w-16 bg-slate-100 rounded-lg"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
                                                     <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
                                                     <td className="px-6 py-4"><div className="h-5 w-20 bg-slate-100 rounded-full"></div></td>
                                                     <td className="px-6 py-4"><div className="h-3 w-20 bg-slate-50 rounded italic"></div></td>
@@ -1579,11 +1581,14 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getTypeStyle(doc?.type || '')}`}>
-                                                            {doc?.type_label || 'N/A'}
+                                                            {doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'Confirmed Investment' : 'Proposed Investment'}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-black text-emerald-700">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {(() => {
