@@ -376,6 +376,26 @@ const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, 
     );
 };
 
+// Helper Wrapper for embedded scrolling
+const ContentWrapper: React.FC<{ children: React.ReactNode; embedded?: boolean }> = ({ children, embedded }) => {
+    if (embedded) {
+        return (
+            <div className="h-full overflow-y-auto">
+                <div className="p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
+                    {children}
+                </div>
+            </div>
+        );
+    }
+    return (
+        <div className="h-full overflow-y-auto">
+            <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300 pb-20">
+                {children}
+            </div>
+        </div>
+    );
+};
+
 // --- Main Component ---
 
 const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView = 'LIST', onBack }) => {
@@ -548,20 +568,9 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
             reimbursements,
         };
 
-        // Check if columns exist in the database before sending them
-        // This handles cases where the user hasn't run the migration yet
-        const { data: sample } = structures.length > 0 ? { data: structures[0] } : await supabase.from('salary_structures').select('*').limit(1).single();
-        
-        if (sample) {
-            if ('effective_from' in sample) payload.effective_from = effectiveFrom;
-            if ('target_id' in sample) payload.target_id = localSelectedTarget ? localSelectedTarget.split(':')[1] : null;
-            if ('target_type' in sample) payload.target_type = localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null;
-        } else {
-            // Fallback if no data, assume they exist but wrap in try-catch or just send and let it fail normally
-            payload.effective_from = effectiveFrom;
-            payload.target_id = localSelectedTarget ? localSelectedTarget.split(':')[1] : null;
-            payload.target_type = localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null;
-        }
+        payload.effective_from = effectiveFrom;
+        payload.target_id = localSelectedTarget ? localSelectedTarget.split(':')[1] : null;
+        payload.target_type = localSelectedTarget ? (localSelectedTarget.startsWith('pg:') ? 'Paygroup' : 'BusinessUnit') : null;
 
         let savedId = activeStructureId;
 
@@ -670,11 +679,38 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     };
 
     const handleDeleteStructure = async () => {
-        if (deleteConfirmation.id) {
-            const { error } = await supabase.from('salary_structures').delete().eq('id', deleteConfirmation.id);
-            if(!error) await fetchStructures();
+        if (!deleteConfirmation.id) return;
+
+        const id = deleteConfirmation.id;
+        
+        // Real-time check for assigned employees in the database to prevent FK constraint errors
+        const { count, error: countError } = await supabase
+            .from('employees')
+            .select('*', { count: 'exact', head: true })
+            .eq('salary_structure_id', id);
+
+        if (count && count > 0) {
+            alert(`Cannot delete this structure because it is currently assigned to ${count} employee(s). Please unassign these employees before deleting the structure.`);
+            setDeleteConfirmation({ isOpen: false, id: null });
+            return;
         }
-        setDeleteConfirmation({ isOpen: false, id: null });
+
+        try {
+            const { error } = await supabase.from('salary_structures').delete().eq('id', id);
+            
+            if (error) {
+                console.error("Error deleting structure:", error);
+                alert(`Failed to delete structure: ${error.message}`);
+            } else {
+                await fetchStructures();
+                alert('Salary structure deleted successfully.');
+            }
+        } catch (err: any) {
+            console.error("Unexpected error deleting structure:", err);
+            alert(`An unexpected error occurred: ${err.message}`);
+        } finally {
+            setDeleteConfirmation({ isOpen: false, id: null });
+        }
     };
 
     const deptInfo = "If no department is selected, it will be assigned to all the departments.";
@@ -713,25 +749,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         return allS;
     }, [structures, selectedTarget, paygroups]);
 
-    // Helper Wrapper for embedded scrolling
-    const ContentWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-        if (embedded) {
-            return (
-                <div className="h-full overflow-y-auto">
-                    <div className="p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
-                        {children}
-                    </div>
-                </div>
-            );
-        }
-        return (
-            <div className="h-full overflow-y-auto">
-                <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300 pb-20">
-                    {children}
-                </div>
-            </div>
-        );
-    };
 
     // --- Render Editor / View ---
     if (view === 'EDITOR' || view === 'VIEW') {
@@ -742,7 +759,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         const publishLabel = isDraft || !activeStructureId ? 'Submit' : 'Update';
 
         return (
-            <ContentWrapper>
+            <ContentWrapper embedded={embedded}>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4 border-b border-slate-200 pb-4">
                     <div className="flex items-center gap-3">
@@ -1063,7 +1080,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
 
     // --- Render List View ---
     return (
-        <ContentWrapper>
+        <ContentWrapper embedded={embedded}>
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

@@ -288,7 +288,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
 const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSave, initialData, paygroups, selectedTarget }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [payslipName, setPayslipName] = useState(initialData?.payslipName || '');
-    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || EFFECTIVE_MONTHS[0]);
+    const currentMonthStrEarning = new Date().toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    const [effectiveDate, setEffectiveDate] = useState(initialData ? currentMonthStrEarning : EFFECTIVE_MONTHS[0]);
     const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
     const [history] = useState<ComponentChangeHistory[]>((initialData as any)?.history || []);
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
@@ -661,12 +662,21 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Month</label>
                                 <div className="relative">
                                     <select value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 appearance-none bg-white">
-                                        {EFFECTIVE_MONTHS.map(m => (
+                                        {EFFECTIVE_MONTHS.filter(m => {
+                                            const mDate = new Date(`1 ${m}`);
+                                            const now = new Date();
+                                            return mDate >= new Date(now.getFullYear(), now.getMonth(), 1);
+                                        }).map(m => (
                                             <option key={m} value={m}>{m}</option>
                                         ))}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
+                                {initialData?.effectiveDate && (
+                                    <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                                        Originally effective from: <span className="font-bold text-slate-500">{initialData.effectiveDate}</span>
+                                    </p>
+                                )}
                             </div>
                     </div>
 
@@ -1118,7 +1128,8 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [isCreatingSection, setIsCreatingSection] = useState(false);
     const [customTaxSection, setCustomTaxSection] = useState('');
     const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
-    const [effectiveDate, setEffectiveDate] = useState(initialData?.effectiveDate || EFFECTIVE_MONTHS[0]);
+    const currentMonthStrDeduction = new Date().toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    const [effectiveDate, setEffectiveDate] = useState(initialData ? currentMonthStrDeduction : EFFECTIVE_MONTHS[0]);
     const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
     const [history] = useState<ComponentChangeHistory[]>((initialData as any)?.history || []);
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
@@ -1451,12 +1462,21 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Month</label>
                                 <div className="relative">
                                     <select value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 appearance-none bg-white">
-                                        {EFFECTIVE_MONTHS.map(m => (
+                                        {EFFECTIVE_MONTHS.filter(m => {
+                                            const mDate = new Date(`1 ${m}`);
+                                            const now = new Date();
+                                            return mDate >= new Date(now.getFullYear(), now.getMonth(), 1);
+                                        }).map(m => (
                                             <option key={m} value={m}>{m}</option>
                                         ))}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
+                                {initialData?.effectiveDate && (
+                                    <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                                        Originally effective from: <span className="font-bold text-slate-500">{initialData.effectiveDate}</span>
+                                    </p>
+                                )}
                             </div>
                     </div>
 

@@ -274,6 +274,24 @@ const AddComponentModal: React.FC<AddComponentModalProps> = ({ isOpen, onClose, 
     );
 };
 
+// Helper Wrapper for embedded scrolling
+const ContentWrapper: React.FC<{ children: React.ReactNode; embedded?: boolean }> = ({ children, embedded }) => {
+    if (embedded) {
+        return (
+            <div className="h-full overflow-y-auto">
+                <div className="p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
+                    {children}
+                </div>
+            </div>
+        );
+    }
+    return (
+        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+            {children}
+        </div>
+    );
+};
+
 // --- Main Component ---
 
 const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView = 'LIST', onBack }) => {
@@ -538,23 +556,6 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
     const deptInfo = "If no department is selected, it will be assigned to all the departments.";
     const desgInfo = "If no designation is selected, it will be assigned to all the designations.";
 
-    // Helper Wrapper for embedded scrolling
-    const ContentWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-        if (embedded) {
-            return (
-                <div className="h-full overflow-y-auto">
-                    <div className="p-6 w-full space-y-6 animate-in fade-in duration-300 pb-20">
-                        {children}
-                    </div>
-                </div>
-            );
-        }
-        return (
-            <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
-                {children}
-            </div>
-        );
-    };
 
     // --- Render Editor / View ---
     if (view === 'EDITOR' || view === 'VIEW') {
@@ -565,7 +566,7 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
         const publishLabel = isDraft || !activeStructureId ? 'Submit' : 'Update';
 
         return (
-            <ContentWrapper>
+            <ContentWrapper embedded={embedded}>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4 border-b border-slate-200 pb-4">
                     <div className="flex items-center gap-3">
@@ -865,7 +866,7 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
 
     // --- Render List View ---
     return (
-        <ContentWrapper>
+        <ContentWrapper embedded={embedded}>
             {/* Header */}
             {!embedded && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
