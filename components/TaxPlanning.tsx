@@ -284,7 +284,8 @@ export const TaxPlanning: React.FC = () => {
    const [declarationStatus, setDeclarationStatus] = useState<'NEW' | 'DRAFT' | 'SUBMITTED'>('NEW'); // Fetched from DB
 
    // Regime State
-   const [planningRegime, setPlanningRegime] = useState<'OLD' | 'NEW'>('OLD'); // Default, will fetch from DB
+   const [planningRegime, setPlanningRegime] = useState<'OLD' | 'NEW'>('OLD');
+   const [isChangingRegime, setIsChangingRegime] = useState(false);
    const [isLoading, setIsLoading] = useState(true);
 
    // State Management (Initialized with Defaults)
@@ -766,12 +767,12 @@ export const TaxPlanning: React.FC = () => {
       { code: '80E', name: 'Section 80E - Education Loan', description: 'Deduction for interest paid on Higher Education Loan.', limit: 'No Max Limit', availableInNew: false },
       { code: '80G', name: 'Section 80G - Donations', description: 'Deduction for donations made to specific charitable funds or institutions.', limit: '50% / 100% of donation', availableInNew: false },
       { code: '80DDB', name: 'Section 80DDB - Medical Treatment', description: 'Medical expenses incurred for treatment of specified diseases.', limit: '₹ 40,000 / ₹ 1,00,000', availableInNew: false },
-      { code: 'OTHERS', name: 'Other Investments & Exemptions', description: 'Declare other investments & exemptions such as Section 80U, 80EEA, and LTA.', limit: '', availableInNew: true },
+      { code: 'OTHERS', name: 'Other Investments & Exemptions', description: 'Declare other investments & exemptions such as Section 80U, 80EEA, and LTA.', limit: '', availableInNew: false },
    ];
 ;
 
    const recentDeclarations = [
-      { id: 1, type: 'Proposed Investment', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Submitted', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
+      { id: 1, type: 'Proposed Investment', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Pending', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
       { id: 2, type: 'Proposed Investment', fy: '2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' },
       { id: 3, type: 'Confirmed Investment', fy: '2024-25', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2025, 02:45 PM', modifiedDate: '16 Jan 2025, 10:20 AM' },
       { id: 4, type: 'Proposed Investment', fy: '2024-25', amount: 35000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '12 Feb 2025, 10:00 AM', modifiedDate: '12 Feb 2025, 03:15 PM' },
@@ -780,12 +781,12 @@ export const TaxPlanning: React.FC = () => {
       { id: 7, type: 'Confirmed Investment', fy: '2022-23', amount: 210000, approvedAmount: 210000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '10 Jan 2023, 09:30 AM', modifiedDate: '18 Jan 2023, 11:45 AM' }
    ];
 
-   const hasSubmitted = recentDeclarations.some(d => d.status === 'Submitted');
+   const hasSubmitted = recentDeclarations.some(d => d.status === 'Pending');
 
    const historyData = [
       {
          year: 'FY 2025-26',
-         status: 'Submitted',
+         status: 'Pending',
          totalAmount: 355000,
          approvedAmount: 0,
          createdBy: 'Priya Sharma',
@@ -869,7 +870,12 @@ export const TaxPlanning: React.FC = () => {
 
             <div className="space-y-8 z-10 max-w-xl relative">
                <div>
-                  <h2 className="text-4xl font-bold mb-3 tracking-tight">Tax Planning FY 2025-26</h2>
+                  <h2 className="text-4xl font-bold mb-3 tracking-tight flex items-center gap-4">
+                     Tax Planning FY 2025-26
+                     <span className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-bold border ${planningRegime === 'OLD' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                        {planningRegime} Regime Selected
+                     </span>
+                  </h2>
                </div>
 
                <div>
@@ -904,29 +910,56 @@ export const TaxPlanning: React.FC = () => {
             </div>
 
             {/* TDS Projection Box - Dynamic */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-8 rounded-xl w-full lg:w-96 backdrop-blur-md relative z-10">
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Current TDS Projection</p>
-               <div className="flex flex-col gap-6">
-                  <div className="flex items-start gap-10">
-                     <div className="flex flex-col gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Regime</span>
-                        <span className="text-2xl font-black text-emerald-400">₹ {taxCalc.newRegimeTax.toLocaleString()}</span>
-                     </div>
-                     <div className="flex flex-col gap-1.5 pt-0.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Old Regime</span>
-                        <span className="text-xl font-bold text-slate-500">₹ {taxCalc.oldRegimeTax.toLocaleString()}</span>
-                     </div>
+            <div className="bg-[#1e293b]/60 border border-slate-700/50 p-6 rounded-xl w-full lg:w-96 backdrop-blur-md relative z-10">
+               <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between mb-1">
+                     <p className="text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-2">
+                        YOUR SELECTED TAX REGIME (FY 2025-26) <Calendar size={14} className="text-slate-400" />
+                     </p>
                   </div>
-                  <div className="pt-4 border-t border-slate-700/50">
-                     {taxCalc.oldRegimeTax < taxCalc.newRegimeTax ? (
-                        <p className="text-xs text-emerald-400 font-bold flex items-center gap-2">
-                           <TrendingDown size={14} /> Old Regime saves ₹ {(taxCalc.newRegimeTax - taxCalc.oldRegimeTax).toLocaleString()}
-                        </p>
-                     ) : (
-                        <p className="text-xs text-blue-400 font-bold flex items-center gap-2">
-                           <Zap size={14} /> New Regime saves ₹ {(taxCalc.oldRegimeTax - taxCalc.newRegimeTax).toLocaleString()}
-                        </p>
-                     )}
+                  
+                  {!isChangingRegime ? (
+                     <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                        <div className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-white font-black text-xl tracking-wide shadow-lg ${planningRegime === 'NEW' ? 'bg-[#10b981]' : 'bg-[#3b82f6]'}`}>
+                           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                              <Check size={16} className="text-white stroke-[4]" />
+                           </div>
+                           {planningRegime === 'NEW' ? 'NEW REGIME' : 'OLD REGIME'}
+                        </div>
+                        <button 
+                           onClick={() => setIsChangingRegime(true)}
+                           className="flex items-center gap-2 px-5 py-4 bg-[#3b82f6] text-white font-black text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg group"
+                        >
+                           <Edit2 size={16} className="group-hover:rotate-12 transition-transform" />
+                           EDIT
+                        </button>
+                     </div>
+                  ) : (
+                     <div className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-300">
+                        <button 
+                           onClick={() => { setPlanningRegime('OLD'); setIsChangingRegime(false); }}
+                           className={`flex-1 py-3 rounded-lg font-bold text-xs border-2 transition-all ${planningRegime === 'OLD' ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-900/40 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                        >
+                           OLD REGIME
+                        </button>
+                        <button 
+                           onClick={() => { setPlanningRegime('NEW'); setIsChangingRegime(false); }}
+                           className={`flex-1 py-3 rounded-lg font-bold text-xs border-2 transition-all ${planningRegime === 'NEW' ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' : 'bg-slate-900/40 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                        >
+                           NEW REGIME
+                        </button>
+                        <button 
+                           onClick={() => setIsChangingRegime(false)}
+                           className="p-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all"
+                        >
+                           <X size={16} />
+                        </button>
+                     </div>
+                  )}
+
+                  <div className="flex items-center gap-4 mt-2 text-[11px] font-bold text-slate-400">
+                     <span className="flex items-center gap-1.5"><Clock size={14} /> Window closes Mar 31</span>
+                     <span className="text-[#f59e0b]">25 days remaining</span>
                   </div>
                </div>
             </div>
@@ -1003,11 +1036,13 @@ export const TaxPlanning: React.FC = () => {
                               <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
                                  data.status === 'Approved' 
                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                    : data.status === 'Submitted'
+                                    : data.status === 'Pending'
                                     ? 'bg-blue-50 text-blue-600 border-blue-100'
                                     : data.status === 'Rejected'
                                     ? 'bg-rose-50 text-rose-600 border-rose-100'
-                                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                                    : data.status === 'Partially Approved'
+                                    ? 'bg-amber-50 text-amber-600 border-amber-100'
+                                    : 'bg-slate-50 text-slate-500 border-slate-100'
                               }`}>
                                  {data.status}
                               </span>
@@ -1133,7 +1168,13 @@ export const TaxPlanning: React.FC = () => {
                                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
                                           data.status === 'Approved' 
                                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                             : 'bg-amber-50 text-amber-600 border-amber-100'
+                                             : data.status === 'Pending'
+                                             ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                             : data.status === 'Rejected'
+                                             ? 'bg-rose-50 text-rose-600 border-rose-100'
+                                             : data.status === 'Partially Approved'
+                                             ? 'bg-amber-50 text-amber-600 border-amber-100'
+                                             : 'bg-slate-50 text-slate-500 border-slate-100'
                                        }`}>
                                           {data.status}
                                        </span>
@@ -1945,26 +1986,11 @@ export const TaxPlanning: React.FC = () => {
                         </button>
                      )}
 
-                     {isReadOnly ? (
-                        <div className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm border ${planningRegime === 'OLD' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                           {planningRegime === 'OLD' ? 'Old Regime Selected' : 'New Regime Selected'}
-                        </div>
-                     ) : (
-                        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-                           <button
-                              onClick={() => setPlanningRegime('OLD')}
-                              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${planningRegime === 'OLD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                           >
-                              Old Regime
-                           </button>
-                           <button
-                              onClick={() => setPlanningRegime('NEW')}
-                              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${planningRegime === 'NEW' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                           >
-                              New Regime <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">Default</span>
-                           </button>
-                        </div>
-                     )}
+                      <div className={`px-4 py-2 rounded-lg text-xs font-bold shadow-sm border flex items-center gap-2 ${planningRegime === 'OLD' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                         <div className={`w-2 h-2 rounded-full ${planningRegime === 'OLD' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                         {planningRegime === 'OLD' ? 'OLD REGIME' : 'NEW REGIME'}
+                      </div>
+                     
                   </div>
                </div>
             </div>
@@ -1977,7 +2003,7 @@ export const TaxPlanning: React.FC = () => {
                      <p className="text-lg font-bold text-slate-800">₹ {taxCalc.grossTotalIncome.toLocaleString()}</p>
                   </div>
                   <div className="pl-6">
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Deductions (Old)</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Declared Amount</p>
                      <p className="text-lg font-bold text-emerald-600">₹ {taxCalc.totalDeductionsOld.toLocaleString()}</p>
                   </div>
                </div>
@@ -2607,557 +2633,15 @@ export const TaxPlanning: React.FC = () => {
                </div>
             )}
 
-            {/* Income from Other sources */}
-            {planningRegime === 'OLD' && (
-               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  {/* Section Header */}
-                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center group">
-                     <div>
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Income from Other sources</h3>
-                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">Declare income from other sources such as interest, dividends, etc.</p>
-                     </div>
-                     
-                     <div className="flex items-center gap-8">
-                        <div className="text-right pr-6 border-r border-slate-200">
-                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Income</p>
-                           <p className="text-sm font-bold text-slate-700">₹ {declarations.filter(d => d.section === 'OTHER_INCOME').reduce((sum, d) => sum + (d.amount || 0), 0).toLocaleString()}</p>
-                        </div>
 
-                        {!isReadOnly && (
-                           <button 
-                              onClick={() => addNewRow('OTHER_INCOME')}
-                              className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
-                           >
-                              <Plus size={16} />
-                           </button>
-                        )}
-                     </div>
-                  </div>
-
-                  {/* Section Rows */}
-                  <div className="divide-y divide-slate-100">
-                     {declarations.filter(d => d.section === 'OTHER_INCOME').map((row) => (
-                        <div key={row.id} className="p-6 space-y-4 animate-in slide-in-from-left-2">
-                           <div className="flex flex-col md:flex-row gap-6 items-start">
-                              <div className="flex-1">
-                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Income Type</label>
-                                 <select
-                                    value={row.title}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-93%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
-                                 >
-                                    <option value="">Select Income Type</option>
-                                    {SECTION_OTHER_INCOME_OPTIONS.map(opt => (
-                                       <option key={opt} value={opt}>{opt}</option>
-                                    ))}
-                                 </select>
-                              </div>
-
-                              <div className="w-full md:w-48">
-                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Amount</label>
-                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
-                                    <input
-                                       type="number"
-                                       placeholder="0"
-                                       value={row.amount || ''}
-                                       disabled={isReadOnly}
-                                       onChange={(e) => handleAmountChange(row.id, e.target.value)}
-                                       className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
-                                    />
-                                 </div>
-                              </div>
-
-                              <div className="flex-1 min-w-[200px]">
-                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proofs</label>
-                                 <div className="flex flex-wrap gap-2 items-center min-h-[42px] px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
-                                    {row.files.length > 0 ? (
-                                       <div className="flex flex-wrap gap-2">
-                                          {row.files.map((file, fIdx) => (
-                                             <div key={fIdx} className="bg-white border border-slate-100 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
-                                                <Paperclip size={10} className="text-blue-500" />
-                                                <span className="text-[10px] font-medium text-slate-600 truncate max-w-[80px]">{file}</span>
-                                                {!isReadOnly && (
-                                                   <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
-                                                      <X size={10} />
-                                                   </button>
-                                                )}
-                                             </div>
-                                          ))}
-                                          {!isReadOnly && (
-                                             <button
-                                                onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
-                                                className="w-7 h-7 bg-blue-50 text-blue-600 rounded-md flex items-center justify-center hover:bg-blue-100 transition-colors"
-                                                title="Add Proof"
-                                             >
-                                                <Plus size={14} />
-                                             </button>
-                                          )}
-                                       </div>
-                                    ) : (
-                                       !isReadOnly && (
-                                          <button
-                                             onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
-                                             className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
-                                          >
-                                             <Upload size={12} /> Upload Proof
-                                          </button>
-                                       )
-                                    )}
-                                 </div>
-                              </div>
-
-                              <div className="pt-7">
-                                 {!isReadOnly && (
-                                    <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
-                                       <Trash2 size={18} />
-                                    </button>
-                                 )}
-                              </div>
-                           </div>
-                        </div>
-                     ))}
-                     
-                     {declarations.filter(d => d.section === 'OTHER_INCOME').length === 0 && (
-                        <div className="p-12 text-center">
-                           <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <Plus size={20} className="text-slate-300" />
-                           </div>
-                           <p className="text-xs text-slate-400 font-medium tracking-tight">No other income declared yet. Click '+' to add one.</p>
-                        </div>
-                     )}
-                  </div>
-               </div>
-            )}
-
-            {/* Previous Employment Income */}
-            {planningRegime === 'OLD' && (
-               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  {/* Section Header */}
-                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center group">
-                     <div>
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">PREVIOUS EMPLOYMENT INCOME</h3>
-                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">Declare income and tax details from your previous workplace within this FY.</p>
-                     </div>
-                     
-                     <div className="flex items-center gap-8">
-                        {!isReadOnly && (
-                           <button 
-                              onClick={() => setShowPrevEmpFields(!showPrevEmpFields)}
-                              className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors shadow-sm"
-                           >
-                              <Plus size={16} className={`transition-transform duration-300 ${showPrevEmpFields ? 'rotate-45' : ''}`} />
-                           </button>
-                        )}
-                     </div>
-                  </div>
-
-                  {/* Section Content */}
-                  {(showPrevEmpFields || prevEmploymentDetails.employerName) && (
-                     <div className="p-8 space-y-8 animate-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div className="md:col-span-1">
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Previous Employer Name</label>
-                              <input
-                                 type="text"
-                                 placeholder="Enter employer name"
-                                 value={prevEmploymentDetails.employerName}
-                                 disabled={isReadOnly}
-                                 onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerName: e.target.value })}
-                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
-                              />
-                           </div>
-                           <div className="md:col-span-1">
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Previous Employer PAN</label>
-                              <input
-                                 type="text"
-                                 placeholder="ABCDE1234A"
-                                 value={prevEmploymentDetails.employerPAN}
-                                 disabled={isReadOnly}
-                                 onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerPAN: e.target.value.toUpperCase() })}
-                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all uppercase disabled:opacity-70"
-                              />
-                           </div>
-                           <div className="md:col-span-2">
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Previous Employer Address</label>
-                              <textarea
-                                 placeholder="Enter full address"
-                                 value={prevEmploymentDetails.employerAddress}
-                                 disabled={isReadOnly}
-                                 onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerAddress: e.target.value })}
-                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 min-h-[100px] resize-none"
-                              />
-                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                           <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Employment From</label>
-                              <div className="relative">
-                                 <input
-                                    type="date"
-                                    value={prevEmploymentDetails.employmentFrom}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentFrom: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                           <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Employment To</label>
-                              <div className="relative">
-                                 <input
-                                    type="date"
-                                    value={prevEmploymentDetails.employmentTo}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentTo: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                           <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Last Working Day</label>
-                              <div className="relative">
-                                 <input
-                                    type="date"
-                                    value={prevEmploymentDetails.lastWorkingDay}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, lastWorkingDay: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div>
-                              <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                 Total Taxable Salary
-                                 <Info size={12} className="text-slate-300" />
-                              </label>
-                              <div className="relative">
-                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
-                                 <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={prevEmploymentDetails.totalTaxableSalary || ''}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTaxableSalary: Number(e.target.value) })}
-                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                           <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total TDS Deducted</label>
-                              <div className="relative">
-                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
-                                 <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={prevEmploymentDetails.totalTDSDeducted || ''}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTDSDeducted: Number(e.target.value) })}
-                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                           <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Professional Tax (PT)</label>
-                              <div className="relative">
-                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
-                                 <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={prevEmploymentDetails.professionalTax || ''}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, professionalTax: Number(e.target.value) })}
-                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                           <div>
-                              <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                 Provident Fund (PF)
-                                 <Info size={12} className="text-slate-300" />
-                              </label>
-                              <div className="relative">
-                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
-                                 <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={prevEmploymentDetails.providentFund || ''}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, providentFund: Number(e.target.value) })}
-                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
-                                 />
-                              </div>
-                           </div>
-                        </div>
-
-                        <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Form 12B (PDF ONLY)</label>
-                           <div className="flex items-center gap-4 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-                              <button
-                                 onClick={() => !isReadOnly && document.getElementById('form12b-upload')?.click()}
-                                 disabled={isReadOnly}
-                                 className="px-6 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors disabled:opacity-70"
-                              >
-                                 Choose File
-                              </button>
-                              <input 
-                                 id="form12b-upload"
-                                 type="file" 
-                                 accept=".pdf"
-                                 className="hidden"
-                                 onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                       setPrevEmploymentDetails({ ...prevEmploymentDetails, form12B: e.target.files[0].name });
-                                    }
-                                 }}
-                              />
-                              <span className="text-xs text-slate-400 font-medium">
-                                 {prevEmploymentDetails.form12B || 'No file chosen'}
-                              </span>
-                           </div>
-                        </div>
-                     </div>
-                  )}
-               </div>
-            )}
 
             {sections.map((section) => {
-               // Hide all existing details for Old Regime only
-               if (planningRegime === 'OLD') return null;
-
-               // Skip incompatible sections if New Regime is selected
+               // Skip incompatible sections if New Regime is selected OR if Old Regime and Editing (as requested)
                if (planningRegime === 'NEW' && !section.availableInNew) return null;
+               if (planningRegime === 'OLD' && ['HRA', '80C', '80D', 'OTHERS', 'HOME_LOAN', 'LET_OUT', '80CCD', '80E', '80G', '80DDB'].includes(section.code)) return null;
 
-               if (section.code === 'PREV_EMPLOYMENT') {
-                  return (
-                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                           <div>
-                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                           </div>
 
-                           <div className="flex items-center gap-4">
-                              {prevEmploymentEnabled && (
-                                 <button
-                                    onClick={() => !isReadOnly && setIsPrevEmploymentSaved(!isPrevEmploymentSaved)}
-                                    disabled={isReadOnly}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isPrevEmploymentSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    title={isPrevEmploymentSaved ? "Edit Details" : "Save Details"}
-                                 >
-                                    {isPrevEmploymentSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                 </button>
-                              )}
 
-                              <div className="flex items-center gap-3">
-                                 <span className={`text-xs font-bold ${prevEmploymentEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{prevEmploymentEnabled ? 'Yes' : 'No'}</span>
-                                 <button
-                                    onClick={() => {
-                                       if (!isPrevEmploymentSaved && !isReadOnly) {
-                                          setPrevEmploymentEnabled(!prevEmploymentEnabled);
-                                          if (prevEmploymentEnabled) setIsPrevEmploymentSaved(false);
-                                       }
-                                    }}
-                                    disabled={isPrevEmploymentSaved || isReadOnly}
-                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${prevEmploymentEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isPrevEmploymentSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                 >
-                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                 </button>
-                              </div>
-                           </div>
-                        </div>
-
-                        {prevEmploymentEnabled && (
-                           <div className={`p-6 space-y-6 animate-fade-in-up ${isPrevEmploymentSaved ? 'opacity-70' : ''}`}>
-                              <div className="grid grid-cols-12 gap-6">
-                                 {/* --- New Employer Fields --- */}
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Name</label>
-                                    <div className="relative">
-                                       <input
-                                          type="text"
-                                          value={prevEmploymentDetails.employerName || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerName: e.target.value })}
-                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                          placeholder="Enter company name"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer PAN</label>
-                                    <div className="relative">
-                                       <input
-                                          type="text"
-                                          value={prevEmploymentDetails.employerPAN || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          maxLength={10}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerPAN: e.target.value.toUpperCase() })}
-                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 uppercase"
-                                          placeholder="ABCDE1234F"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Previous Employer Address</label>
-                                    <div className="relative">
-                                       <textarea
-                                          value={prevEmploymentDetails.employerAddress || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employerAddress: e.target.value })}
-                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50 min-h-[80px] resize-none"
-                                          placeholder="Enter full address"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-4">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment From</label>
-                                    <div className="relative">
-                                       <input
-                                          type="date"
-                                          value={prevEmploymentDetails.employmentFrom || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          min="2025-04-01"
-                                          max="2026-03-31"
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentFrom: e.target.value })}
-                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-4">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employment To</label>
-                                    <div className="relative">
-                                       <input
-                                          type="date"
-                                          value={prevEmploymentDetails.employmentTo || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          min={prevEmploymentDetails.employmentFrom}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, employmentTo: e.target.value })}
-                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-4">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Last Working Day</label>
-                                    <div className="relative">
-                                       <input
-                                          type="date"
-                                          value={prevEmploymentDetails.lastWorkingDay || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, lastWorkingDay: e.target.value })}
-                                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 h-px bg-slate-100 my-2"></div>
-
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
-                                       Total Taxable Salary
-                                       <div className="group relative">
-                                          <Info size={12} className="text-slate-400 cursor-help" />
-                                          <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
-                                             Gross salary minus exemptions like HRA or LTA
-                                             <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
-                                          </div>
-                                       </div>
-                                    </label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={prevEmploymentDetails.totalTaxableSalary || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTaxableSalary: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Total TDS Deducted</label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={prevEmploymentDetails.totalTDSDeducted || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, totalTDSDeducted: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Professional Tax (PT)</label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={prevEmploymentDetails.professionalTax || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, professionalTax: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase mb-1.5">
-                                       Provident Fund (PF)
-                                       <div className="group relative">
-                                          <Info size={12} className="text-slate-400 cursor-help" />
-                                          <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl z-50 normal-case leading-relaxed">
-                                             Employee’s contribution to PF
-                                             <div className="absolute top-full left-2 border-4 border-transparent border-t-slate-800"></div>
-                                          </div>
-                                       </div>
-                                    </label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={prevEmploymentDetails.providentFund || ''}
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, providentFund: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Form 12B (PDF Only)</label>
-                                    <div className="relative border border-slate-200 rounded-lg p-3 bg-slate-50">
-                                       <input
-                                          type="file"
-                                          accept="application/pdf"
-                                          disabled={isPrevEmploymentSaved || isReadOnly}
-                                          onChange={(e) => {
-                                             if (e.target.files && e.target.files[0]) {
-                                                if (e.target.files[0].type === 'application/pdf') {
-                                                   setPrevEmploymentDetails({ ...prevEmploymentDetails, form12B: e.target.files[0].name });
-                                                } else {
-                                                   alert("Only PDF files are allowed");
-                                                   e.target.value = '';
-                                                }
-                                             }
-                                          }}
-                                          className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
-                                       />
-                                       {prevEmploymentDetails.form12B && (
-                                          <div className="mt-2 text-xs text-emerald-600 font-medium flex items-center gap-1 bg-emerald-50 p-1.5 rounded border border-emerald-100 w-fit">
-                                             <Check size={12} /> Selected: {prevEmploymentDetails.form12B}
-                                          </div>
-                                       )}
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-                        )}
-                     </div>
-                  );
-               }
 
                if (section.code === 'HRA') {
                   return (
@@ -3616,106 +3100,7 @@ export const TaxPlanning: React.FC = () => {
                         )}
                      </div>
                   );
-               } else if (section.code === 'OTHER_INCOME') {
-                  return (
-                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                           <div>
-                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
-                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
-                           </div>
 
-                           <div className="flex items-center gap-4">
-                              {otherIncomeEnabled && (
-                                 <button
-                                    onClick={() => !isReadOnly && setIsOtherIncomeSaved(!isOtherIncomeSaved)}
-                                    disabled={isReadOnly}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOtherIncomeSaved ? 'bg-slate-200 text-slate-600 hover:bg-blue-100 hover:text-blue-600' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'} ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    title={isOtherIncomeSaved ? "Edit Details" : "Save Details"}
-                                 >
-                                    {isOtherIncomeSaved ? <Edit2 size={14} /> : <Check size={16} />}
-                                 </button>
-                              )}
-
-                              <div className="flex items-center gap-3">
-                                 <span className={`text-xs font-bold ${otherIncomeEnabled ? 'text-blue-600' : 'text-slate-400'}`}>{otherIncomeEnabled ? 'Yes' : 'No'}</span>
-                                 <button
-                                    onClick={() => {
-                                       if (!isOtherIncomeSaved && !isReadOnly) {
-                                          setOtherIncomeEnabled(!otherIncomeEnabled);
-                                          if (otherIncomeEnabled) setIsOtherIncomeSaved(false);
-                                       }
-                                    }}
-                                    disabled={isOtherIncomeSaved || isReadOnly}
-                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${otherIncomeEnabled ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'} ${(isOtherIncomeSaved || isReadOnly) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                 >
-                                    <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
-                                 </button>
-                              </div>
-                           </div>
-                        </div>
-
-                        {otherIncomeEnabled && (
-                           <div className={`p-6 space-y-6 animate-fade-in-up ${isOtherIncomeSaved ? 'opacity-70' : ''}`}>
-                              <div className="grid grid-cols-12 gap-6">
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Any Other Income (Interest, etc.)</label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={otherIncomeDetails.otherSourceIncome}
-                                          disabled={isOtherIncomeSaved || isReadOnly}
-                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, otherSourceIncome: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from Savings Account</label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={otherIncomeDetails.savingsInterest}
-                                          disabled={isOtherIncomeSaved || isReadOnly}
-                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, savingsInterest: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 mt-1 italic">Deduction up to ₹10,000 under 80TTA applied in Old Regime only</p>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from Fixed Deposits (FDs)</label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={otherIncomeDetails.fdInterest}
-                                          disabled={isOtherIncomeSaved || isReadOnly}
-                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, fdInterest: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                                 <div className="col-span-12 md:col-span-6">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Interest from NSC</label>
-                                    <div className="relative">
-                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                                       <input
-                                          type="number"
-                                          value={otherIncomeDetails.nscInterest}
-                                          disabled={isOtherIncomeSaved || isReadOnly}
-                                          onChange={(e) => setOtherIncomeDetails({ ...otherIncomeDetails, nscInterest: Number(e.target.value) })}
-                                          className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
-                                       />
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-                        )}
-                     </div>
-                  );
                } else {
                   return (
                      <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
@@ -3830,7 +3215,7 @@ export const TaxPlanning: React.FC = () => {
                               <div className="px-6 py-10 text-center">
                                  <p className="text-sm text-slate-400 font-medium">No items declared in this section</p>
                                  {!isReadOnly && (
-                                    <button
+                                       <button
                                        onClick={() => addNewRow(section.code)}
                                        className="mt-3 text-xs font-bold text-blue-600 hover:underline"
                                     >
@@ -3842,7 +3227,7 @@ export const TaxPlanning: React.FC = () => {
                         </div>
                      </div>
                   );
-               }
+                }
             })}
 
             {/* Action Buttons */}

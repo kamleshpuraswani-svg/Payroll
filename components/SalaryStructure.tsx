@@ -821,7 +821,8 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                             </div>
                         </div>
 
-                        {/* Employer Contributions Section */}
+                        {/* Employer Contributions Section - hidden as per request */}
+                        <div style={{ display: 'none' }}>
                         <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
                             <div className="px-6 py-3 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
                                 <h3 className="font-bold text-blue-800 text-sm">4. Employer Contributions</h3>
@@ -848,6 +849,7 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                                     </button>
                                 )}
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
