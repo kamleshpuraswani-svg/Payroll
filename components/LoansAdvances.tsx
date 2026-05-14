@@ -342,8 +342,19 @@ const ViewLoanModal: React.FC<{
                                 </div>
                             </div>
 
+                            {/* Approved Amount Box (Shown if status is Approved/Partially Approved/Active/Repaying) */}
+                            {['Approved', 'Partially Approved', 'Active', 'Repaying', 'Closed'].includes(loan.status) && (
+                                <div className="flex flex-col items-center gap-3">
+                                    <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Approved Amount</span>
+                                    <div className="w-full aspect-[16/9] max-h-24 bg-emerald-50/50 border border-emerald-100 rounded-3xl shadow-sm flex flex-col items-center justify-center p-4">
+                                        <span className="text-xl font-black text-emerald-700">₹{(loan.approvedAmount || loan.requestedAmount).toLocaleString()}</span>
+                                        <span className="text-[10px] font-bold text-emerald-600/60 mt-0.5">Final Amount</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Center Bubble: Tenure & Interest */}
-                            <div className="flex flex-col items-center justify-center mt-6">
+                            <div className={`flex flex-col items-center justify-center mt-6 ${['Approved', 'Partially Approved', 'Active', 'Repaying', 'Closed'].includes(loan.status) ? 'hidden' : ''}`}>
                                 <div className="px-6 py-2 bg-indigo-50 border border-indigo-100 rounded-full shadow-sm">
                                     <span className="text-xs font-black text-indigo-600">{loan.totalEmis || 1} Month(s)</span>
                                 </div>
@@ -385,7 +396,7 @@ const ViewLoanModal: React.FC<{
 
                             {/* Repayment Month */}
                             <div className="space-y-3">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Repayment Month:</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">EMI Start Month:</span>
                                 <p className="text-slate-800 font-bold ml-1 text-sm">
                                     {loan.repaymentMonth || 'Not specified'}
                                 </p>
@@ -636,7 +647,7 @@ const EditLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onSave: 
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI start month</label>
+                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">EMI START MONTH</label>
                                 <div className="relative">
                                     <select
                                         value={repaymentMonth}
@@ -754,7 +765,17 @@ const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApp
                                 </span>
                             )}
                         </div>
-                        <input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className={`w-full px-3 py-2 border rounded-lg text-sm font-bold focus:outline-none transition-colors ${isPartial ? 'border-amber-400 focus:border-amber-500' : 'border-slate-200 focus:border-emerald-500'}`} />
+                        <input 
+                            type="number" 
+                            value={amount} 
+                            onChange={(e) => {
+                                const val = Number(e.target.value);
+                                if (val <= loan.requestedAmount) {
+                                    setAmount(val);
+                                }
+                            }} 
+                            className={`w-full px-3 py-2 border rounded-lg text-sm font-bold focus:outline-none transition-colors ${isPartial ? 'border-amber-400 focus:border-amber-500' : 'border-slate-200 focus:border-emerald-500'}`} 
+                        />
                         {isPartial && <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> Amount is less than requested.</p>}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -802,7 +823,7 @@ const ApproveLoanModal: React.FC<{ loan: LoanRequest; onClose: () => void; onApp
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">EMI start month</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">EMI Start Month</label>
                             <div className="relative">
                                 <select
                                     value={repaymentMonth}

@@ -612,6 +612,15 @@ export const RunPayrollModal: React.FC<{
    const [selectedOnHoldIds, setSelectedOnHoldIds] = useState<string[]>([]);
    const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
 
+   // Step 2 Pagination
+   const [empPage, setEmpPage] = useState(1);
+   const empRowsPerPage = 5;
+
+   // Reset pagination on search or filter
+   useEffect(() => {
+       setEmpPage(1);
+   }, [empSearch, selectedBUs]);
+
    const [showHoldModal, setShowHoldModal] = useState(false);
    const [holdReason, setHoldReason] = useState('');
    const [holdTargetId, setHoldTargetId] = useState<string | null>(null);
@@ -1481,7 +1490,7 @@ export const RunPayrollModal: React.FC<{
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-slate-100">
-                              {filteredEmployees.map(emp => (
+                              {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
                                  <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
                                     <td className="px-4 py-3">
                                        <div className="flex items-center gap-3">
@@ -1532,6 +1541,42 @@ export const RunPayrollModal: React.FC<{
                            </tbody>
                         </table>
                      </div>
+
+                     {/* Pagination Controls */}
+                     {filteredEmployees.length > empRowsPerPage && (
+                        <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
+                           <div className="text-xs text-slate-500">
+                              Showing <span className="font-bold text-slate-700">{((empPage - 1) * empRowsPerPage) + 1}</span> to <span className="font-bold text-slate-700">{Math.min(empPage * empRowsPerPage, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
+                           </div>
+                           <div className="flex items-center gap-2">
+                              <button
+                                 onClick={() => setEmpPage(prev => Math.max(1, prev - 1))}
+                                 disabled={empPage === 1}
+                                 className={`p-2 rounded-lg border transition-all ${empPage === 1 ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
+                              >
+                                 <ChevronLeft size={16} />
+                              </button>
+                              <div className="flex items-center gap-1">
+                                 {Array.from({ length: Math.ceil(filteredEmployees.length / empRowsPerPage) }).map((_, i) => (
+                                    <button
+                                       key={i}
+                                       onClick={() => setEmpPage(i + 1)}
+                                       className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${empPage === i + 1 ? 'bg-sky-600 text-white shadow-md shadow-sky-100' : 'text-slate-500 hover:bg-slate-50'}`}
+                                    >
+                                       {i + 1}
+                                    </button>
+                                 ))}
+                              </div>
+                              <button
+                                 onClick={() => setEmpPage(prev => Math.min(Math.ceil(filteredEmployees.length / empRowsPerPage), prev + 1))}
+                                 disabled={empPage === Math.ceil(filteredEmployees.length / empRowsPerPage)}
+                                 className={`p-2 rounded-lg border transition-all ${empPage === Math.ceil(filteredEmployees.length / empRowsPerPage) ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
+                              >
+                                 <ChevronRight size={16} />
+                              </button>
+                           </div>
+                        </div>
+                     )}
                   </div>
                </div>
             );
@@ -2268,6 +2313,7 @@ export const RunPayrollModal: React.FC<{
                             </tbody>
                          </table>
                       </div>
+
                    </div>
                 </div>
             );
@@ -2501,7 +2547,7 @@ export const RunPayrollModal: React.FC<{
 
    const getStepButtonLabel = () => {
       switch (currentStep) {
-         case 1: return 'Next: Period';
+         case 1: return 'Next: Employees';
          case 2: return 'Next: Attendance';
          case 3: return 'Next: Adjustments';
          case 4: return 'Next: Review';
@@ -2558,9 +2604,6 @@ export const RunPayrollModal: React.FC<{
              <div className="flex items-center gap-3">
                  <button onClick={onClose} className="px-4 py-2 border border-blue-600 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors">
                      <X size={16} className="text-blue-600" /> Cancel
-                 </button>
-                 <button className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
-                     <MoreHorizontal size={16} />
                  </button>
              </div>
          </div>

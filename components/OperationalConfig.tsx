@@ -75,6 +75,7 @@ const OperationalConfig: React.FC = () => {
     // Leave Encashment Settings state
     const [isLeaveEncashmentExpanded, setIsLeaveEncashmentExpanded] = useState(true);
     const [encashmentComponents, setEncashmentComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
+    const [divisor, setDivisor] = useState<string>('26');
     const [isEncashmentDropdownOpen, setIsEncashmentDropdownOpen] = useState(false);
     const encashmentDropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -239,6 +240,12 @@ const OperationalConfig: React.FC = () => {
                         employees: settings?.employees || []
                     });
                 }
+
+                const encashment = data.find(c => c.config_key === 'leave_encashment_settings');
+                if (encashment && encashment.config_value) {
+                    setEncashmentComponents(encashment.config_value.components || ["Basic Salary", "Dearness Allowance (DA)"]);
+                    setDivisor(encashment.config_value.divisor || '26');
+                }
             }
 
             // Fetch expense settings
@@ -302,6 +309,19 @@ const OperationalConfig: React.FC = () => {
                 }, { onConflict: 'config_key' });
 
             if (eligibilityError) throw eligibilityError;
+
+            // Save leave encashment settings
+            const { error: encashmentError } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'leave_encashment_settings',
+                    config_value: {
+                        components: encashmentComponents,
+                        divisor: divisor
+                    }
+                }, { onConflict: 'config_key' });
+
+            if (encashmentError) throw encashmentError;
 
             // Save expense settings
             const { error: expSettingsError } = await supabase
@@ -756,7 +776,7 @@ const OperationalConfig: React.FC = () => {
                             {/* Approval Workflow */}
                             <div className="pt-6 border-t border-slate-100">
                                 <label className="block text-sm font-medium text-slate-500 mb-4 flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-bold">
-                                    SELECT APPROVER FOR EXPENSES/CLAIMS
+                                    SELECT APPROVER FOR EXPENSES/CLAIMS <span className="text-rose-500">*</span>
                                     <Info size={14} className="text-slate-400 cursor-help" />
                                 </label>
                                 
@@ -1051,6 +1071,27 @@ const OperationalConfig: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Divisor Selection */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                            <Calculator size={16} />
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor</h4>
+                                    </div>
+
+                                    <div className="max-w-xs">
+                                        <input 
+                                            type="text" 
+                                            value={divisor} 
+                                            onChange={(e) => setDivisor(e.target.value.replace(/[^0-9]/g, ''))}
+                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                                            placeholder="e.g. 26"
+                                        />
+                                        <p className="text-[10px] text-slate-400 font-medium mt-2 italic">Enter the number of days used as divisor for daily rate calculation.</p>
+                                    </div>
+                                </div>
+
                                 {/* Formula Preview */}
                                 <div className="self-start lg:mt-14 w-full max-w-sm">
                                     <div className="p-4 bg-slate-50/50 border border-slate-200 rounded-xl shadow-sm">
@@ -1062,12 +1103,12 @@ const OperationalConfig: React.FC = () => {
                                             <div className="font-mono text-[15px] text-indigo-700 pl-4 py-1 tracking-tight">
                                                 {(() => {
                                                     const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => encashmentComponents.includes(opt));
-                                                    if (active.length === 0) return "(None Selected) / 26";
+                                                    if (active.length === 0) return `(None Selected) / ${divisor || '0'}`;
                                                     const labels = active.map(a => {
                                                         if (a === "Dearness Allowance (DA)") return "DA";
                                                         return a.replace(" Salary", "").replace(" Allowance", "");
                                                     });
-                                                    return `(${labels.join(" + ")}) / 26`;
+                                                    return `(${labels.join(" + ")}) / ${divisor || '0'}`;
                                                 })()}
                                             </div>
                                         </div>

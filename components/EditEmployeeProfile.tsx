@@ -57,6 +57,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [panNumber, setPanNumber] = useState('');
    const [aadhaarNumber, setAadhaarNumber] = useState('');
    const [uanNumber, setUanNumber] = useState('');
+   const [pfNumber, setPfNumber] = useState('');
 
    const [ctc, setCtc] = useState<number>(0);
    const [annualGross, setAnnualGross] = useState<number>(0);
@@ -272,6 +273,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    }
                    if (configData.config_value.appraisal_month) {
                       setAppraisalMonth(configData.config_value.appraisal_month);
+                   }
+                   if (configData.config_value.pf_no) {
+                      setPfNumber(configData.config_value.pf_no);
                    }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
@@ -578,7 +582,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                config_value: { 
                   ...statutoryDeductions, 
                   arrears_payout_month: arrearsPayoutDate,
-                  appraisal_month: appraisalMonth
+                  appraisal_month: appraisalMonth,
+                  pf_no: pfNumber
                },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
@@ -799,7 +804,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   </div>
 
                   <div className="px-6 pb-8 pt-6 border-t border-slate-100 bg-slate-50/30">
-                     <label className="block text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Applicable Statutory Deductions</label>
+                     <label className="block text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Applicable Statutory Deductions <span className="text-rose-500">*</span></label>
                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-y-4 gap-x-6">
                         {[
                            { id: 'providentFund', label: 'Provident Fund' },
@@ -846,15 +851,14 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">IFSC Code {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <div className="relative">
                            <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
-                           {!isReadOnly && <button className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-sky-600 hover:text-sky-700">VERIFY</button>}
                         </div>
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Branch</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Branch {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
                      </div>
                   </div>
@@ -876,18 +880,27 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Aadhaar Number</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Aadhaar Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <div className="relative">
                            <input type="text" value={aadhaarNumber} onChange={(e) => setAadhaarNumber(e.target.value)} disabled={isReadOnly} className={`w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                            <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         </div>
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">UAN (PF)</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PF Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
+                        <div className="relative group">
+                           <input type="text" value={pfNumber} onChange={(e) => setPfNumber(e.target.value.toUpperCase())} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} placeholder="AA/BBB/1234567/000/7654321" />
+                           <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl z-10 leading-relaxed">
+                              Format: AA/BBB/1234567/000/7654321 (Region/Office/EstID/Extension/MemberID)
+                           </div>
+                        </div>
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">UAN Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <input type="text" value={uanNumber} onChange={(e) => setUanNumber(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Regime (FY 2025-26)</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Regime {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <div className="relative">
                            <select
                               value={regime}
@@ -912,7 +925,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   </div>
                   <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Appraisal Month</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Appraisal Month {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <div className="relative">
                            <select
                               value={appraisalMonth}
@@ -940,15 +953,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <h3 className="font-bold flex items-center gap-2">
                         <Calculator size={18} className="text-emerald-400" /> Salary Structure
                      </h3>
-                     {!isReadOnly && (
-                        <button
-                           onClick={() => { fetchMasterComponents(); setShowAddExtraCompModal(true); }}
-                           title="Add Extra Component"
-                           className="w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-colors"
-                        >
-                           <Plus size={15} />
-                        </button>
-                     )}
                   </div>
 
                   <div className="overflow-x-auto">

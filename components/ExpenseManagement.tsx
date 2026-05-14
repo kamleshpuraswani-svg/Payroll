@@ -328,7 +328,7 @@ const ApproveClaimModal: React.FC<{
     onClose: () => void;
     onConfirm: (action: 'FULL' | 'PARTIAL' | 'REJECT', amount?: number, reason?: string, itemAmounts?: {[key: string | number]: number}) => void;
 }> = ({ claim, onClose, onConfirm }) => {
-    const [action, setAction] = useState<'FULL' | 'PARTIAL' | 'REJECT'>('FULL');
+    const [action, setAction] = useState<'PARTIAL' | 'REJECT'>('PARTIAL');
     const [itemAmounts, setItemAmounts] = useState<{[key: string | number]: number}>(
         (claim.items || []).reduce((acc: any, item: any, idx: number) => {
             acc[item.id || idx] = item.amount || 0;
@@ -338,9 +338,15 @@ const ApproveClaimModal: React.FC<{
     const [reason, setReason] = useState('');
 
     const totalApprovedAmount = Object.values(itemAmounts).reduce((sum, val) => sum + val, 0);
+    const isAnyItemReduced = (claim.items || []).some((item: any, idx: number) => {
+        const itemId = item.id || idx;
+        return (itemAmounts[itemId] || 0) < (item.amount || 0);
+    });
+
+    const isReasonMandatory = action === 'REJECT';
 
     const handleSubmit = () => {
-        if ((action === 'REJECT' || action === 'PARTIAL') && !reason.trim()) return;
+        if (isReasonMandatory && !reason.trim()) return;
         onConfirm(action, totalApprovedAmount, reason, itemAmounts);
         onClose();
     };
@@ -349,13 +355,13 @@ const ApproveClaimModal: React.FC<{
         setItemAmounts(prev => ({ ...prev, [id]: val }));
     };
 
-    const isFormValid = action === 'FULL' || (reason.trim().length > 0);
+    const isFormValid = !isReasonMandatory || (reason.trim().length > 0);
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <h3 className="font-bold text-slate-800 text-lg">Action Claim</h3>
+                    <h3 className="font-bold text-slate-800 text-lg">Claim Details</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
                         <X size={20} />
                     </button>
@@ -369,9 +375,9 @@ const ApproveClaimModal: React.FC<{
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
                                 <h4 className="font-bold text-slate-800 text-base">{claim.employee.name}</h4>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded">Submitted: {claim.submittedDate}</span>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded">Submitted on: {claim.submittedDate}</span>
                             </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{claim.employee.department} • ID: {claim.employee.id}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{claim.employee.department}</p>
                         </div>
                     </div>
 
@@ -380,67 +386,81 @@ const ApproveClaimModal: React.FC<{
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Claimed Amount</p>
                             <p className="text-xl font-black text-slate-800">₹{claim.amount.toLocaleString('en-IN')}</p>
                         </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</p>
-                            <p className="text-sm font-bold text-slate-700">{claim.category}</p>
-                        </div>
                     </div>
 
                     <div className="space-y-3">
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Select Action</label>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <button onClick={() => setAction('FULL')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'FULL' ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Full Approve</button>
-                            <button onClick={() => setAction('PARTIAL')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'PARTIAL' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Partial Approve</button>
-                            <button onClick={() => setAction('REJECT')} className={`p-3 rounded-xl border text-sm font-bold transition-all ${action === 'REJECT' ? 'bg-rose-50 border-rose-500 text-rose-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>Reject</button>
-                        </div>
-                    </div>
-
-                    {action === 'PARTIAL' && (
-                        <div className="animate-in fade-in slide-in-from-top-2 border border-yellow-100 bg-yellow-50/30 rounded-2xl overflow-hidden shadow-sm">
-                            <div className="p-3 bg-yellow-50 border-b border-yellow-100 flex justify-between items-center">
-                                <label className="text-[10px] font-black text-yellow-800 uppercase tracking-widest">Adjust Approved Amounts</label>
-                                <span className="text-xs font-black text-yellow-700">Total Approved: ₹{totalApprovedAmount.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className="max-h-[220px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Expense Items</label>
+                        <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                            <div className="max-h-[220px] overflow-y-auto p-3 space-y-2 bg-slate-50/30 custom-scrollbar">
                                 {(claim.items || []).map((item: any, idx: number) => {
                                     const itemId = item.id || idx;
+                                    const isReduced = (itemAmounts[itemId] || 0) < (item.amount || 0);
                                     return (
-                                        <div key={itemId} className="flex flex-col gap-2 p-3 bg-white border border-yellow-100/50 rounded-xl">
+                                        <div key={itemId} className={`flex flex-col gap-2 p-3 bg-white border rounded-xl transition-colors ${isReduced ? 'border-amber-200' : 'border-slate-100'}`}>
                                             <div className="flex justify-between items-start">
                                                 <div className="max-w-[70%]">
-                                                    <p className="text-[10px] font-bold text-slate-700 line-clamp-1 leading-tight">{item.reason || item.description}</p>
-                                                    <p className="text-[9px] text-slate-400 uppercase font-bold mt-0.5 tracking-tight">{item.category} • {item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-[10px] font-black text-slate-700 uppercase tracking-tight">{item.category}</p>
+                                                        {isReduced && (
+                                                            <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase tracking-tighter border border-amber-100">Partially Approved</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">{item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
                                                 </div>
-                                                <p className="text-[10px] font-black text-slate-400">Claimed: ₹{(item.amount || 0).toLocaleString('en-IN')}</p>
+                                                <p className="text-[10px] font-black text-slate-500">Claimed: ₹{(item.amount || 0).toLocaleString('en-IN')}</p>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[11px] font-bold text-slate-400">Approved: ₹</span>
-                                                <input
-                                                    type="number"
-                                                    value={itemAmounts[itemId]}
-                                                    onChange={(e) => handleItemAmountChange(itemId, parseInt(e.target.value) || 0)}
-                                                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 bg-slate-50/50"
-                                                    max={item.amount || 0}
-                                                />
+                                            <div className="border-t border-slate-50 pt-2 pb-1">
+                                                <p className="text-[10px] text-slate-600 font-medium leading-relaxed italic">"{item.reason || item.description || 'No reason provided'}"</p>
                                             </div>
+                                            {action === 'PARTIAL' && (
+                                                <div className="flex items-center gap-2 mt-1 pt-2 border-t border-dashed border-slate-100">
+                                                    <span className="text-[10px] font-black text-emerald-600 uppercase">Approved: ₹</span>
+                                                    <input
+                                                        type="number"
+                                                        value={itemAmounts[itemId]}
+                                                        onChange={(e) => handleItemAmountChange(itemId, parseInt(e.target.value) || 0)}
+                                                        className={`flex-1 px-3 py-1 border rounded-lg text-sm font-black focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white ${isReduced ? 'text-amber-600 border-amber-200' : 'text-slate-800 border-slate-200'}`}
+                                                        max={item.amount || 0}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
+                                {(!claim.items || claim.items.length === 0) && (
+                                    <div className="py-8 text-center text-slate-400 text-xs italic">No items available</div>
+                                )}
                             </div>
+                            {action === 'PARTIAL' && (
+                                <div className="p-3 bg-emerald-50 border-t border-emerald-100 flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-emerald-700 uppercase">Total Approved</span>
+                                    <span className="text-sm font-black text-emerald-800">₹{totalApprovedAmount.toLocaleString('en-IN')}</span>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
+
+                     <div className="space-y-3">
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Select Action</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <button onClick={() => setAction('PARTIAL')} className={`p-3 rounded-xl border text-sm font-bold transition-all shadow-sm ${action === 'PARTIAL' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 ring-2 ring-emerald-500/20' : 'border-slate-200 hover:bg-slate-50 text-slate-600 bg-white'}`}>Approve</button>
+                            <button onClick={() => setAction('REJECT')} className={`p-3 rounded-xl border text-sm font-bold transition-all shadow-sm ${action === 'REJECT' ? 'bg-rose-50 border-rose-500 text-rose-700 ring-2 ring-rose-500/20' : 'border-slate-200 hover:bg-slate-50 text-slate-600 bg-white'}`}>Reject</button>
+                        </div>
+                    </div>
+
+
 
                     {(action === 'REJECT' || action === 'PARTIAL') && (
                         <div className="animate-in fade-in slide-in-from-top-2">
                             <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
-                                Reason <span className="text-rose-500">*</span>
+                                Reason {isReasonMandatory && <span className="text-rose-500">*</span>}
                             </label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-300 min-h-[100px] resize-none bg-slate-50/30 font-medium"
                                 placeholder={`Include a reason for ${action === 'REJECT' ? 'rejecting' : 'partial approval'}...`}
-                                required
+                                required={isReasonMandatory}
                             ></textarea>
                         </div>
                     )}
@@ -450,7 +470,7 @@ const ApproveClaimModal: React.FC<{
                     <button 
                         onClick={handleSubmit} 
                         disabled={!isFormValid}
-                        className={`px-8 py-2 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transition-all ${isFormValid ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
+                        className={`px-8 py-2 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transition-all ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/25' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
                     >
                         Confirm
                     </button>

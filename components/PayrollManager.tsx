@@ -50,16 +50,19 @@ interface PastPayroll {
     processedDate: string;
     employeeCount: number;
     grossAmount: string;
+    totalDeductions: string;
     netPay: string;
     status: 'Paid' | 'Locked' | 'Draft' | 'Failed';
+    createdBy: string;
+    lastModifiedBy: string;
 }
 
 const MOCK_HISTORY: PastPayroll[] = [
-    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', netPay: '₹ 1.40 Cr', status: 'Paid' },
-    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', netPay: '₹ 1.38 Cr', status: 'Paid' },
-    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', netPay: '₹ 1.36 Cr', status: 'Paid' },
-    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', netPay: '₹ 1.34 Cr', status: 'Paid' },
-    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', netPay: '₹ 1.32 Cr', status: 'Paid' },
+    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.40 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
+    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.38 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
+    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.36 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
+    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', totalDeductions: '₹ 41.00 L', netPay: '₹ 1.34 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
+    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', totalDeductions: '₹ 40.00 L', netPay: '₹ 1.32 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
 ];
 
 const MOCK_24Q_HISTORY = [
@@ -1113,9 +1116,12 @@ const PayrollManager: React.FC = () => {
                                 <th className="px-8 py-4">Payroll Month</th>
                                 <th className="px-6 py-4">Business Unit</th>
                                 <th className="px-6 py-4">Employees</th>
-                                <th className="px-6 py-4">Gross Amount</th>
+                                <th className="px-6 py-4">Total Gross</th>
+                                <th className="px-6 py-4">Total Deductions</th>
                                 <th className="px-6 py-4">Net Payout</th>
                                 <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Created By</th>
+                                <th className="px-6 py-4">Last Modified By</th>
                                 <th className="px-6 py-4 text-right pr-8">Actions</th>
                             </tr>
                         </thead>
@@ -1136,10 +1142,13 @@ const PayrollManager: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-5 font-bold text-slate-600">452</td>
                                 <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
+                                <td className="px-6 py-5 font-bold text-rose-600">₹ 43.00 L</td>
                                 <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
                                 <td className="px-6 py-5">
                                     <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100">Draft</span>
                                 </td>
+                                <td className="px-6 py-5 text-slate-600 font-medium text-xs">Admin</td>
+                                <td className="px-6 py-5 text-slate-600 font-medium text-xs">HR Manager</td>
                                 <td className="px-6 py-5 text-right pr-8">
                                     <div className="flex items-center justify-end gap-2">
                                         <button
@@ -1182,12 +1191,15 @@ const PayrollManager: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
                                     <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
+                                    <td className="px-6 py-5 text-rose-600 font-bold">{payroll.totalDeductions}</td>
                                     <td className="px-6 py-5 text-slate-800 font-black">{payroll.netPay}</td>
                                     <td className="px-6 py-5">
                                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(payroll.status)}`}>
                                             {payroll.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-5 text-slate-600 font-medium text-xs">{payroll.createdBy}</td>
+                                    <td className="px-6 py-5 text-slate-600 font-medium text-xs">{payroll.lastModifiedBy}</td>
                                     <td className="px-6 py-5 text-right pr-8">
                                         <div className="flex items-center justify-end gap-2">
                                             <button

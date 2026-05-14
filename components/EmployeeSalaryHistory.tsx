@@ -156,6 +156,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   // Graph State
   const [graphYear, setGraphYear] = useState('2025');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(MOCK_HISTORY_ROWS.length / itemsPerPage);
+  const paginatedRows = MOCK_HISTORY_ROWS.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Disbursed': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
@@ -272,14 +278,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <span className="text-slate-400 font-medium">Date of Joining</span>
                   <span className="text-slate-700 font-semibold">{employeeData?.join_date || '---'}</span>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-slate-400 font-medium">Current CTC</span>
-                  <span className="text-slate-700 font-bold">{formatINR(employeeData?.ctc || 0)}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-slate-400 font-medium">Monthly Net</span>
-                  <span className="text-emerald-600 font-bold">{formatINR(128400)}</span>
-                </div>
+                {/* Hidden per user request */}
                 <div className="flex flex-col">
                   <span className="text-slate-400 font-medium">Next Appraisal Due</span>
                   <span className="text-purple-600 font-bold">
@@ -389,7 +388,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                       <tr>
-                        <th className="px-6 py-4">Payroll Period</th>
+                        <th className="px-6 py-4">Payroll Month</th>
                         <th className="px-6 py-4 text-right">Gross Salary</th>
                         <th className="px-6 py-4 text-right">Deductions</th>
                         <th className="px-6 py-4 text-right">Net Pay</th>
@@ -402,7 +401,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {MOCK_HISTORY_ROWS.map((row, index) => {
+                      {paginatedRows.map((row, index) => {
                         const isExpanded = expandedRow === row.id;
                         const totalDeduct = row.deductions.pf + row.deductions.tds + row.deductions.others;
                         const isIncrement = isIncrementMonth(index);
@@ -502,6 +501,37 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     </tbody>
                   </table>
                 </div>
+                {/* Pagination Controls */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                   <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                     Showing <span className="text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-800">{Math.min(currentPage * itemsPerPage, MOCK_HISTORY_ROWS.length)}</span> of <span className="text-slate-800">{MOCK_HISTORY_ROWS.length}</span> records
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <button 
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                     >
+                       Previous
+                     </button>
+                     {[...Array(totalPages)].map((_, i) => (
+                       <button
+                          key={i + 1}
+                          onClick={() => setCurrentPage(i + 1)}
+                          className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentPage === i + 1 ? 'bg-purple-600 text-white shadow-lg shadow-purple-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                       >
+                         {i + 1}
+                       </button>
+                     ))}
+                     <button 
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                     >
+                       Next
+                     </button>
+                   </div>
+                 </div>
               </div>
             </div>
           ) : (
@@ -607,11 +637,26 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <div>
-                <h3 className="font-bold text-slate-800">Salary Structure Annexure</h3>
-                <p className="text-xs text-slate-500">Priya Sharma (TF00912)</p>
-              </div>
-              <button onClick={() => setShowAnnexureModal(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-400"><X size={20} /></button>
+               <div className="flex items-center gap-8">
+                 <div>
+                    <h3 className="font-bold text-slate-800">Salary Structure Annexure</h3>
+                    <p className="text-xs text-slate-500">{employeeData?.name || '---'} ({employeeData?.eid || '---'})</p>
+                 </div>
+                 
+                 <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+
+                 <div className="hidden sm:flex items-center gap-8 text-[11px]">
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider">Current CTC</span>
+                      <span className="text-slate-700 font-black">{formatINR(employeeData?.ctc || 0)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider">Monthly Net</span>
+                      <span className="text-emerald-600 font-black">{formatINR(128400)}</span>
+                    </div>
+                 </div>
+               </div>
+              <button onClick={() => setShowAnnexureModal(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"><X size={20} /></button>
             </div>
 
             {/* Content */}
