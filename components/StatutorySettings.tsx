@@ -146,6 +146,7 @@ const StatutorySettings: React.FC = () => {
                 setPtExemptionDisabled(config.ptExemptionDisabled ?? true);
                 setPtExemptionSenior(config.ptExemptionSenior ?? false);
                 setPtExemptionLimit(config.ptExemptionLimit ?? '0');
+                setPtMonthlyContribution(config.ptMonthlyContribution ?? '0');
             } else {
                 // Reset to defaults if no config found
                 setEnableEsi(true);
@@ -189,6 +190,7 @@ const StatutorySettings: React.FC = () => {
                 setPtExemptionDisabled(true);
                 setPtExemptionSenior(false);
                 setPtExemptionLimit('0');
+                setPtMonthlyContribution('0');
                 
                 setEnableLwf(true);
                 setLwfState('Karnataka');
@@ -300,6 +302,7 @@ const StatutorySettings: React.FC = () => {
     const [ptExemptionDisabled, setPtExemptionDisabled] = useState(true);
     const [ptExemptionSenior, setPtExemptionSenior] = useState(false);
     const [ptExemptionLimit, setPtExemptionLimit] = useState('0');
+    const [ptMonthlyContribution, setPtMonthlyContribution] = useState('0');
 
     // NPS State
     const [enableNps, setEnableNps] = useState(true);
@@ -339,7 +342,7 @@ const StatutorySettings: React.FC = () => {
             enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
             lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
             ptState, ptNumber,
-            ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit,
+            ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
             enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
         });
         // isEditing is now derived from editingSection
@@ -361,7 +364,7 @@ const StatutorySettings: React.FC = () => {
                 enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
                 lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
                 ptState, ptNumber,
-                ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit,
+                ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
             };
 
@@ -451,6 +454,7 @@ const StatutorySettings: React.FC = () => {
             setPtExemptionDisabled(backupState.ptExemptionDisabled);
             setPtExemptionSenior(backupState.ptExemptionSenior);
             setPtExemptionLimit(backupState.ptExemptionLimit);
+            setPtMonthlyContribution(backupState.ptMonthlyContribution);
             setEnableNps(backupState.enableNps);
             setNpsRegistrationId(backupState.npsRegistrationId);
             setNpsDeductionCycle(backupState.npsDeductionCycle);
@@ -559,71 +563,72 @@ const StatutorySettings: React.FC = () => {
                         {enableEsi && (
                             <div className="space-y-8 animate-in fade-in">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">ESIC Employer Code/Insurance Number <span className="text-rose-500">*</span></label>
-                                        <input
-                                            type="text"
-                                            value={esiNumber}
-                                            onChange={(e) => setEsiNumber(e.target.value)}
-                                            disabled={!isEditing}
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed font-mono"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name <span className="text-rose-500">*</span></label>
-                                        <input
-                                            type="text"
-                                            value={esiEstablishmentName}
-                                            onChange={(e) => setEsiEstablishmentName(e.target.value)}
-                                            disabled={!isEditing}
-                                            placeholder="Enter Establishment Name"
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date of Coverage / Applicability Date <span className="text-rose-500">*</span></label>
-                                        <input
-                                            type="date"
-                                            value={esiCoverageDate}
-                                            onChange={(e) => setEsiCoverageDate(e.target.value)}
-                                            disabled={!isEditing}
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
-                                            Deduction Cycle
-                                            <div className="group relative inline-block">
-                                                <Info size={14} className="text-slate-400 cursor-help" />
-                                                <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                    Employee State Insurance (ESI) contribution for each month should be deposited to the Employee State Insurance Corporation (ESIC) within the 21st of the following month.
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                                </div>
-                                            </div>
-                                        </label>
-                                        <input type="text" value="Monthly" disabled className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Monthly gross salary eligible for ESI <span className="text-rose-500">*</span></label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
+                                    <div className="space-y-8">
+                                        <div className="max-w-xs w-full">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">ESIC Employer Code/Insurance Number <span className="text-rose-500">*</span></label>
                                             <input
                                                 type="text"
-                                                value={esiMaxMonthlySalary}
-                                                onChange={(e) => setEsiMaxMonthlySalary(e.target.value)}
+                                                value={esiNumber}
+                                                onChange={(e) => setEsiNumber(e.target.value)}
                                                 disabled={!isEditing}
-                                                className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 font-bold focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed font-mono"
                                             />
+                                        </div>
+                                        <div className="max-w-xs w-full">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">Date of Coverage / Applicability Date <span className="text-rose-500">*</span></label>
+                                            <input
+                                                type="date"
+                                                value={esiCoverageDate}
+                                                onChange={(e) => setEsiCoverageDate(e.target.value)}
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                            />
+                                        </div>
+                                        <div className="max-w-xs w-full">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">Monthly gross salary eligible for ESI <span className="text-rose-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
+                                                <input
+                                                    type="text"
+                                                    value={esiMaxMonthlySalary}
+                                                    onChange={(e) => setEsiMaxMonthlySalary(e.target.value)}
+                                                    disabled={!isEditing}
+                                                    className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 font-bold focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-8">
+                                        <div className="max-w-xs w-full">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">Establishment Name <span className="text-rose-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                value={esiEstablishmentName}
+                                                onChange={(e) => setEsiEstablishmentName(e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="Enter Establishment Name"
+                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                            />
+                                        </div>
+                                        <div className="max-w-xs w-full">
+                                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                                                Deduction Cycle
+                                                <div className="group relative inline-block">
+                                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                        Employee State Insurance (ESI) contribution for each month should be deposited to the Employee State Insurance Corporation (ESIC) within the 21st of the following month.
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                            <input type="text" value="Monthly" disabled className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employees' Contribution</label>
+
+                                <div className="flex flex-wrap gap-6">
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employees' Contribution <span className="text-rose-500">*</span></label>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="text"
@@ -645,8 +650,8 @@ const StatutorySettings: React.FC = () => {
                                             Contribution Period
                                         </button>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employer's Contribution</label>
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employer's Contribution <span className="text-rose-500">*</span></label>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="text"
@@ -662,7 +667,7 @@ const StatutorySettings: React.FC = () => {
 
                                 <div className="space-y-6 pt-2">
                                             <div className="flex items-center gap-2">
-                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings</h4>
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings <span className="text-rose-500">*</span></h4>
                                                 <div className="group relative inline-block">
                                                     <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
                                                     <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal normal-case whitespace-normal">
@@ -802,148 +807,154 @@ const StatutorySettings: React.FC = () => {
 
                                 {enableGratuity && (
                                     <div className="space-y-10 animate-in fade-in">
-                                        {/* Gratuity provision rate */}
-                                        <div className="space-y-2">
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year)</label>
-                                            <div className="relative max-w-[240px]">
-                                                <input
-                                                    type="text"
-                                                    value={gratuityProvisionRate}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.replace(/[^\d.]/g, '');
-                                                        if (val === '' || !isNaN(Number(val))) {
-                                                            setGratuityProvisionRate(val);
-                                                        }
-                                                    }}
-                                                    disabled={!isEditing}
-                                                    placeholder="Enter %"
-                                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
-                                                />
-                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
-                                            </div>
-                                        </div>
-
-                                {/* Gratuity Formula Button */}
-                                <div className="pt-4 border-t border-slate-300 flex justify-end">
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowGratuityFormulaModal(true)}
-                                        className="text-sky-600 hover:text-sky-700 text-xs font-bold underline flex items-center gap-1"
-                                    >
-                                        Gratuity Formula
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-8 border-t border-slate-300">
-                                    {/* Tenure for gratuity applicability */}
-                                    <div className="space-y-4">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tenure for gratuity applicability</label>
-                                        <div className="grid grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                            {/* Gratuity provision rate */}
                                             <div className="space-y-2">
-                                                <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Year</label>
-                                                <div className="relative">
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year) <span className="text-rose-500">*</span></label>
+                                                <div className="relative max-w-[240px]">
                                                     <input
                                                         type="text"
-                                                        value={gratuityTenureYears}
+                                                        value={gratuityProvisionRate}
                                                         onChange={(e) => {
-                                                            const val = e.target.value.replace(/[^\d]/g, '');
-                                                            setGratuityTenureYears(val);
+                                                            const val = e.target.value.replace(/[^\d.]/g, '');
+                                                            if (val === '' || !isNaN(Number(val))) {
+                                                                setGratuityProvisionRate(val);
+                                                            }
                                                         }}
                                                         disabled={!isEditing}
-                                                        placeholder="Enter years"
-                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                        placeholder="Enter %"
+                                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
                                                     />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Years</div>
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Month</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        value={gratuityTenureMonths}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value.replace(/[^\d]/g, '');
-                                                            setGratuityTenureMonths(val);
-                                                        }}
-                                                        disabled={!isEditing}
-                                                        placeholder="Enter months"
-                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
-                                                    />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Months</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Employee Eligibility */}
-                                    <div className="space-y-4">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Employee Eligibility</label>
-                                        <div className="flex flex-wrap gap-x-8 gap-y-4 pt-2">
-                                            {['Probation', 'Confirmed', 'Notice Period', 'Intern'].map((item) => (
-                                                <label key={item} className="flex items-center gap-2.5 cursor-pointer group">
-                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${gratuityEmployeeEligibility.includes(item) ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
-                                                        {gratuityEmployeeEligibility.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
+                                            {/* Tenure for gratuity applicability */}
+                                            <div className="space-y-4">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tenure for gratuity applicability</label>
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Year</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="text"
+                                                                value={gratuityTenureYears}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value.replace(/[^\d]/g, '');
+                                                                    setGratuityTenureYears(val);
+                                                                }}
+                                                                disabled={!isEditing}
+                                                                placeholder="Enter years"
+                                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                            />
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Years</div>
+                                                        </div>
                                                     </div>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="hidden" 
-                                                        checked={gratuityEmployeeEligibility.includes(item)}
-                                                        onChange={() => {
-                                                            if (!isEditing) return;
-                                                            setGratuityEmployeeEligibility(prev => 
-                                                                prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-                                                            );
-                                                        }}
-                                                        disabled={!isEditing}
-                                                    />
-                                                    <span className={`text-sm font-semibold transition-colors ${gratuityEmployeeEligibility.includes(item) ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{item}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Tax-free gratuity limit (₹) */}
-                                <div className="space-y-4 pt-8 border-t border-slate-300">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tax-free gratuity limit (₹)</label>
-                                    <div className="max-w-xs relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
-                                        <input 
-                                            type="text"
-                                            value={gratuityTaxFreeLimit}
-                                            onChange={(e) => {
-                                                const raw = e.target.value.replace(/[^\d]/g, '');
-                                                const formatted = raw ? parseInt(raw).toLocaleString('en-IN') : '';
-                                                setGratuityTaxFreeLimit(formatted);
-                                            }}
-                                            disabled={!isEditing}
-                                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm transition-all"
-                                            placeholder="Enter Limit"
-                                        />
-                                    </div>
-                                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 mt-2">
-                                        <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
-                                            Tax Exemption: Up to ₹20 lakhs of gratuity is tax-free for non-government employees as per the GRATUITY Act.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Round Off Setting */}
-                                <div className="space-y-4 pt-8 border-t border-slate-300">
-                                    <div className="flex items-center gap-2">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Round Off Setting</label>
-                                        <div className="group relative inline-block">
-                                            <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
-                                            <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal normal-case whitespace-normal">
-                                                <div className="space-y-1.5 leading-relaxed text-left">
-                                                    <p><span className="font-bold text-purple-300">Floor:</span> Rounds decimals down to the nearest whole number (e.g. 3.7 to 3)</p>
-                                                    <p><span className="font-bold text-purple-300">Ceiling:</span> Rounds decimals up to the nearest whole number (e.g. 3.2 to 4)</p>
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-bold text-slate-500"><span className="text-rose-500">*</span> Month</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="text"
+                                                                value={gratuityTenureMonths}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value.replace(/[^\d]/g, '');
+                                                                    setGratuityTenureMonths(val);
+                                                                }}
+                                                                disabled={!isEditing}
+                                                                placeholder="Enter months"
+                                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm disabled:bg-slate-50 border-b-2 border-b-slate-300"
+                                                            />
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">Months</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="absolute top-full left-4 border-[6px] border-transparent border-t-slate-800" />
                                             </div>
                                         </div>
-                                    </div>
+
+                                        {/* Gratuity Formula Button */}
+                                        <div className="pt-4 flex justify-end">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowGratuityFormulaModal(true)}
+                                                className="text-sky-600 hover:text-sky-700 text-xs font-bold underline flex items-center gap-1"
+                                            >
+                                                Gratuity Formula
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-8 border-t border-slate-300">
+                                            {/* Tax-free gratuity limit (₹) */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2">
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Tax-free gratuity limit (₹) <span className="text-rose-500">*</span></label>
+                                                    <div className="group relative inline-block">
+                                                        <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                                        <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal normal-case whitespace-normal border border-slate-700">
+                                                            Tax Exemption: Up to ₹20 lakhs of gratuity is tax-free for non-government employees as per the GRATUITY Act.
+                                                            <div className="absolute top-full left-4 border-[6px] border-transparent border-t-slate-800" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="max-w-xs relative">
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
+                                                    <input 
+                                                        type="text"
+                                                        value={gratuityTaxFreeLimit}
+                                                        onChange={(e) => {
+                                                            const raw = e.target.value.replace(/[^\d]/g, '');
+                                                            const formatted = raw ? parseInt(raw).toLocaleString('en-IN') : '';
+                                                            setGratuityTaxFreeLimit(formatted);
+                                                        }}
+                                                        disabled={!isEditing}
+                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm transition-all"
+                                                        placeholder="Enter Limit"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Employee Eligibility */}
+                                            <div className="space-y-4">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Employee Eligibility <span className="text-rose-500">*</span></label>
+                                                <div className="flex flex-wrap gap-x-8 gap-y-4 pt-2">
+                                                    {['Probation', 'Confirmed', 'Notice Period', 'Intern'].map((item) => (
+                                                        <label key={item} className="flex items-center gap-2.5 cursor-pointer group">
+                                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${gratuityEmployeeEligibility.includes(item) ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                                                {gratuityEmployeeEligibility.includes(item) && <Check size={14} className="text-white stroke-[3]" />}
+                                                            </div>
+                                                            <input 
+                                                                type="checkbox" 
+                                                                className="hidden" 
+                                                                checked={gratuityEmployeeEligibility.includes(item)}
+                                                                onChange={() => {
+                                                                    if (!isEditing) return;
+                                                                    setGratuityEmployeeEligibility(prev => 
+                                                                        prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+                                                                    );
+                                                                }}
+                                                                disabled={!isEditing}
+                                                            />
+                                                            <span className={`text-sm font-semibold transition-colors ${gratuityEmployeeEligibility.includes(item) ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{item}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Round Off Setting */}
+                                        <div className="space-y-4 pt-8 border-t border-slate-300">
+                                            <div className="flex items-center gap-2">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Round Off Setting <span className="text-rose-500">*</span></label>
+                                                <div className="group relative inline-block">
+                                                    <Info size={14} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                                    <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-72 p-3 bg-slate-800 text-white text-[11px] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal normal-case whitespace-normal border border-slate-700">
+                                                        <div className="space-y-1.5 leading-relaxed text-left border border-slate-700">
+                                                            <p><span className="font-bold text-purple-300">Floor:</span> Rounds decimals down to the nearest whole number (e.g. 3.7 to 3)</p>
+                                                            <p><span className="font-bold text-purple-300">Ceiling:</span> Rounds decimals up to the nearest whole number (e.g. 3.2 to 4)</p>
+                                                        </div>
+                                                        <div className="absolute top-full left-4 border-[6px] border-transparent border-t-slate-800" />
+                                                    </div>
+                                                </div>
+                                            </div>
                                     <div className="flex items-center gap-8 pt-1">
                                         {['Floor', 'Ceiling'].map((option) => (
                                             <label key={option} className="flex items-center gap-2.5 cursor-pointer group">
@@ -1091,8 +1102,8 @@ const StatutorySettings: React.FC = () => {
 
                         {enableLwf && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">State</label>
+                                <div className="max-w-xs">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">State <span className="text-rose-500">*</span></label>
                                     <div className="relative">
                                         <select
                                             value={lwfState}
@@ -1105,12 +1116,12 @@ const StatutorySettings: React.FC = () => {
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
                                 </div>
-                                <div>
+                                <div className="max-w-xs">
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Deduction Cycle</label>
                                     <input type="text" value="Half Yearly" disabled className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Establishment ID</label>
+                                <div className="max-w-xs">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Establishment ID <span className="text-rose-500">*</span></label>
                                     <input
                                         type="text"
                                         value={lwfEstablishmentId}
@@ -1120,8 +1131,8 @@ const StatutorySettings: React.FC = () => {
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Registration Date</label>
+                                <div className="max-w-xs">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Registration Date <span className="text-rose-500">*</span></label>
                                     <input
                                         type="date"
                                         value={lwfRegistrationDate}
@@ -1131,7 +1142,7 @@ const StatutorySettings: React.FC = () => {
                                     />
                                 </div>
 
-                                    <div className="space-y-4 pt-4 border-t border-slate-50 mt-2">
+                                    <div className="space-y-4 pt-4 border-t border-slate-50 mt-2 col-span-full">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer group">
                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProcessBasis ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
@@ -1182,7 +1193,7 @@ const StatutorySettings: React.FC = () => {
                                             {lwfProvisionEmployerCtc && <Check size={14} className="text-white stroke-[3]" />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={lwfProvisionEmployerCtc} onChange={() => isEditing && setLwfProvisionEmployerCtc(!lwfProvisionEmployerCtc)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Do you want to provision LWF employer contribution in Employee CTC?</span>
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include LWF employer contribution in Employee CTC</span>
                                     </label>
 
                                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -1190,7 +1201,7 @@ const StatutorySettings: React.FC = () => {
                                             {lwfProvisionCtc && <Check size={14} className="text-white stroke-[3]" />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={lwfProvisionCtc} onChange={() => isEditing && setLwfProvisionCtc(!lwfProvisionCtc)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Do you want to provision LWF in CTC?</span>
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include LWF contribution in CTC</span>
                                     </label>
                                 </div>
                             </div>
@@ -1212,17 +1223,43 @@ const StatutorySettings: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax State</label>
-                                <div className="relative">
-                                    <select
-                                        value={ptState}
-                                        onChange={(e) => setPtState(e.target.value)}
+                                <div className="max-w-xs">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax State <span className="text-rose-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            value={ptState}
+                                            onChange={(e) => setPtState(e.target.value)}
+                                            disabled={!isEditing}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none focus:outline-none focus:border-slate-400 disabled:bg-slate-50 disabled:cursor-not-allowed bg-white"
+                                        >
+                                            {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                </div>
+
+                                <div className="max-w-xs mt-6">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <label className="block text-sm font-bold text-slate-700">Employee contribution for every month <span className="text-rose-500">*</span></label>
+                                        <div className="group relative inline-block">
+                                            <Info size={14} className="text-slate-400 cursor-help hover:text-sky-500 transition-colors" />
+                                            <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-72 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                Employee's monthly contribution towards PT from April to March month of Financial Year.
+                                                <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={ptMonthlyContribution}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^\d]/g, '');
+                                            setPtMonthlyContribution(val || '0');
+                                        }}
                                         disabled={!isEditing}
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none focus:outline-none focus:border-slate-400 disabled:bg-slate-50 disabled:cursor-not-allowed bg-white"
-                                    >
-                                        {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        placeholder="Enter amount"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50"
+                                    />
                                 </div>
 
                                 <div className="space-y-4 mt-6 pt-6 border-t border-slate-50">
@@ -1270,7 +1307,7 @@ const StatutorySettings: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Number</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Number <span className="text-rose-500">*</span></label>
                                 <div className="relative mb-6">
                                     <input
                                         type="text"
@@ -1285,8 +1322,17 @@ const StatutorySettings: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="pt-0 border-slate-50">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Professional Tax Exemption Limit (Monthly Gross)</label>
+                                <div className="pt-0 border-slate-50 max-w-xs">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <label className="block text-sm font-bold text-slate-700">Professional Tax Exemption Limit (Monthly Gross) <span className="text-rose-500">*</span></label>
+                                        <div className="group relative inline-block">
+                                            <Info size={14} className="text-slate-400 cursor-help hover:text-sky-500 transition-colors" />
+                                            <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-72 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                Below this limit employees contribution towards PT would be 0 (Zero).
+                                                <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-800"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <input
                                         type="text"
                                         value={ptExemptionLimit}
@@ -1344,8 +1390,8 @@ const StatutorySettings: React.FC = () => {
 
                                 {/* Registration ID */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Corporate NPS Registration ID</label>
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Corporate NPS Registration ID <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
                                             value={npsRegistrationId}
@@ -1360,8 +1406,8 @@ const StatutorySettings: React.FC = () => {
 
                                 {/* Cycle & Base */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Deduction Cycle</label>
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Deduction Cycle <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <select
                                                 value={npsDeductionCycle}
@@ -1375,7 +1421,7 @@ const StatutorySettings: React.FC = () => {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                     </div>
-                                    <div>
+                                    <div className="max-w-xs w-full">
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Contribution Base</label>
                                         <input
                                             type="text"
@@ -1388,8 +1434,8 @@ const StatutorySettings: React.FC = () => {
 
                                 {/* Rates */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employee Contribution Rate</label>
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employee Contribution Rate <span className="text-rose-500">*</span></label>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="number"
@@ -1398,11 +1444,11 @@ const StatutorySettings: React.FC = () => {
                                                 disabled={!isEditing}
                                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                             />
-                                            <span className="text-sm text-slate-500 whitespace-nowrap bg-slate-50 px-3 py-2.5 rounded-lg border border-slate-200">% of (Basic + DA)</span>
+                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employer Contribution Rate</label>
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employer Contribution Rate <span className="text-rose-500">*</span></label>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="number"
@@ -1411,9 +1457,9 @@ const StatutorySettings: React.FC = () => {
                                                 disabled={!isEditing}
                                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                             />
-                                            <span className="text-sm text-slate-500 whitespace-nowrap bg-slate-50 px-3 py-2.5 rounded-lg border border-slate-200">% of (Basic + DA)</span>
+                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400">
+                                        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
                                             <Info size={12} />
                                             Tax benefit capped at 10% for private sector
                                         </div>
@@ -1431,10 +1477,6 @@ const StatutorySettings: React.FC = () => {
                                     </label>
                                 </div>
 
-                                <div className="bg-indigo-50 text-indigo-800 text-xs font-medium px-4 py-3 rounded-lg flex items-center gap-2 border border-indigo-100">
-                                    <Info size={16} className="text-indigo-600" />
-                                    NPS is voluntary for private companies. Consult tax advisor for latest benefits.
-                                </div>
                             </div>
                         )}
                     </div>

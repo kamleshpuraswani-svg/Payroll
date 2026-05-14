@@ -714,8 +714,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                 </div>
                                 )}
 
-                                {/* Frequency */}
-                                <div>
+                                {/* Frequency - hidden as per request */}
+                                <div style={{ display: 'none' }}>
                                     <label className="block text-sm font-bold text-slate-700 mb-3">Pay Schedule <span className="text-rose-500">*</span></label>
                                     <div className="flex gap-6">
                                         {['Weekly', 'Semi-Monthly', 'Monthly'].map(f => (
@@ -1011,7 +1011,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         <div className="space-y-8 animate-in fade-in slide-in-from-right-2 col-span-full">
                                             {/* Monthly Salary Processing Date - Full Width Row */}
                                             <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100/50">
-                                                <label className="block text-sm font-bold text-slate-700 mb-4">Monthly Salary Processing Date <span className="text-rose-500">*</span></label>
+                                                <label className="block text-sm font-bold text-slate-700 mb-4">Monthly Salary Processing Date</label>
                                                 <div className="flex flex-wrap items-center gap-8">
                                                     <div className="relative w-24">
                                                         <select
@@ -1210,7 +1210,8 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                         </div>
                                     )}
 
-                            <div className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8 space-y-2">
+                            {/* Pay Period text block - hidden as per request; holiday note moved to Payroll Summary */}
+                            <div style={{ display: 'none' }} className="text-sm text-slate-500 pt-8 border-t border-slate-100 mt-8 space-y-2">
                                 <div>
                                     Pay Period: <span className="font-medium text-sky-600">
                                         {frequency === 'Monthly' && userRole === 'HR_MANAGER' && payPeriodEndDate ? (
@@ -1272,6 +1273,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                             </p>
                                         </div>
                                     </div>
+                                    <p className="text-[11px] text-slate-400 italic mt-4 pt-4 border-t border-slate-200">
+                                        If the pay date falls on a holiday or Sunday, payroll will be processed on the previous working day.
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -2009,7 +2013,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                         <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500">
                             <tr>
                                 <th className="px-4 py-3">Schedule Name</th>
-                                <th className="px-4 py-3">Pay Day</th>
+                                <th className="px-4 py-3">Salary Processing Date</th>
                                 <th className="px-4 py-3">Created By</th>
                                 <th className="px-4 py-3">Last Modified By</th>
                                 <th className="px-4 py-3 text-right">Actions</th>

@@ -659,8 +659,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             {error === 'Name in Payslip is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                         </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Month</label>
-                                <div className="relative">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">Effective Month <span className="text-rose-500">*</span></label>
+                                <div className="relative w-44">
                                     <select value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 appearance-none bg-white">
                                         {EFFECTIVE_MONTHS.filter(m => {
                                             const mDate = new Date(`1 ${m}`);
@@ -1459,8 +1459,8 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Month</label>
-                                <div className="relative">
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Effective Month <span className="text-rose-500">*</span></label>
+                                <div className="relative w-44">
                                     <select value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-600 appearance-none bg-white">
                                         {EFFECTIVE_MONTHS.filter(m => {
                                             const mDate = new Date(`1 ${m}`);
@@ -2735,8 +2735,21 @@ const HRSalaryComponents: React.FC = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 font-medium text-slate-700">{item.taxable !== 'Fully Exempt' ? 'Yes' : 'No'}</td>
-                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.lastModified || '-'}</td>
-                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.created || '-'}</td>
+                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                                        {item.lastModified ? (
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <span className="font-medium text-slate-700">{item.lastModified}</span>
+                                                                <span className="text-slate-400">{item.effectiveDate || ''}</span>
+                                                            </div>
+                                                        ) : '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                                        {item.created ? (
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <span className="font-medium text-slate-700">{item.created}</span>
+                                                            </div>
+                                                        ) : '-'}
+                                                    </td>
                                                 </>
                                             ) : (
                                                 <>
@@ -2776,15 +2789,24 @@ const HRSalaryComponents: React.FC = () => {
                                                     >
                                                         <Edit2 size={16} />
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleStatusClick(item.id, item.status)}
-                                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${item.status ? 'bg-sky-500' : 'bg-slate-200'}`}
-                                                        title={item.status ? 'Deactivate' : 'Activate'}
-                                                    >
-                                                        <span
-                                                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${item.status ? 'translate-x-5' : 'translate-x-1'}`}
-                                                        />
-                                                    </button>
+                                                    <div className="relative group/toggle">
+                                                        <button
+                                                            onClick={() => !item.isSystem && handleStatusClick(item.id, item.status)}
+                                                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${item.isSystem ? 'bg-slate-200 cursor-not-allowed opacity-60' : item.status ? 'bg-sky-500' : 'bg-slate-200'}`}
+                                                            title={item.isSystem ? 'System defined components cannot be deactivated' : (item.status ? 'Deactivate' : 'Activate')}
+                                                            disabled={item.isSystem}
+                                                        >
+                                                            <span
+                                                                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${item.status ? 'translate-x-5' : 'translate-x-1'}`}
+                                                            />
+                                                        </button>
+                                                        {item.isSystem && (
+                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-slate-800 text-white text-[10px] rounded-lg opacity-0 group-hover/toggle:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
+                                                                System defined components cannot be deactivated
+                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 rotate-45 -mt-1" />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <button
                                                         onClick={() => {
                                                             const isBasic = item.name?.trim().toLowerCase() === 'basic';

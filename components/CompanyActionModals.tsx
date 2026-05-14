@@ -51,7 +51,8 @@ import {
    PlayCircle,
    Eye,
    Trash2,
-   RefreshCw
+   RefreshCw,
+   TrendingDown
 } from 'lucide-react';
 import { Company } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -576,10 +577,22 @@ export const RunPayrollModal: React.FC<{
          last_name: e.last_name || (e.name ? e.name.split(' ').slice(1).join(' ') : String(i + 1)),
        }));
 
-       // Merge Supabase employees with mock data to guarantee 10 per BU
-       const mockIds = new Set(MOCK_PAYROLL_EMPLOYEES.map(m => m.employee_id));
-       const supabaseOnly = mapped.filter(e => !mockIds.has(e.employee_id));
-       setPayrollEmployees([...MOCK_PAYROLL_EMPLOYEES, ...supabaseOnly]);
+       // Merge logic: Prioritize DB data (mapped) over mock data
+       const supabaseMap = new Map(mapped.map(e => [e.employee_id, e]));
+       const mergedMock = MOCK_PAYROLL_EMPLOYEES.map(mockEmp => {
+           const dbEmp = supabaseMap.get(mockEmp.employee_id);
+           if (dbEmp) {
+               // If found in DB, use DB data but keep mock BU/Designation as fallbacks if needed
+               return { ...mockEmp, ...dbEmp };
+           }
+           return mockEmp;
+       });
+
+       // Get employees that are in DB but NOT in the mock list
+       const mockEmpIds = new Set(MOCK_PAYROLL_EMPLOYEES.map(m => m.employee_id));
+       const extraSupabase = mapped.filter(e => !mockEmpIds.has(e.employee_id));
+       
+       setPayrollEmployees([...mergedMock, ...extraSupabase]);
      } catch (err) {
        console.error('Error fetching employees:', err);
        setPayrollEmployees(MOCK_PAYROLL_EMPLOYEES);
@@ -589,7 +602,6 @@ export const RunPayrollModal: React.FC<{
    };
    const [empSearch, setEmpSearch] = useState('');
    const [selectedBUs, setSelectedBUs] = useState<string[]>(initialBusinessUnits);
-   
    useEffect(() => {
      if (isOpen) {
        setSelectedBUs(initialBusinessUnits);
@@ -597,6 +609,7 @@ export const RunPayrollModal: React.FC<{
    }, [isOpen, initialBusinessUnits]);
 
    const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
+   const [selectedOnHoldIds, setSelectedOnHoldIds] = useState<string[]>([]);
    const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
 
    const [showHoldModal, setShowHoldModal] = useState(false);
@@ -646,6 +659,7 @@ export const RunPayrollModal: React.FC<{
    // Step 3 State & Modals
    const [adjustmentSearch, setAdjustmentSearch] = useState('');
    const [adjustments, setAdjustments] = useState<any[]>([]);
+   const [releasedEmpIds, setReleasedEmpIds] = useState<string[]>([]);
 
    const handleCustomComponentChange = (rowId: any, compName: string, val: string) => {
       const num = parseFloat(val) || 0;
@@ -1220,42 +1234,56 @@ export const RunPayrollModal: React.FC<{
            setHoldReason('');
            setShowHoldModal(true);
         } else {
-           // Release from Hold
-           try {
-               const { error } = await supabase
-                   .from('employees')
-                   .update({ payroll_status: 'Eligible', hold_reason: '' })
-                   .eq('id', id);
-               
-               if (error) throw error;
-               await fetchEmployees();
-           } catch (err) {
-               console.error('Error releasing hold:', err);
+           // Release from Hold — update UI
+           setPayrollEmployees(prev => prev.map(e =>
+               e.id === id ? { ...e, payrollStatus: 'Eligible', holdReason: '' } : e
+           ));
+
+           // Track released employees for highlighting in Step 4
+           setReleasedEmpIds(prev => [...new Set([...prev, id])]);
+
+           // Add to selected IDs so they appear in the payroll run
+           setSelectedEmpIds(prev => prev.includes(id) ? prev : [...prev, id]);
+
+           // If a run is in progress, ensure they have a record in payroll_adjustments
+           if (currentRunId) {
+              await supabase.from('payroll_adjustments').upsert({
+                 payroll_run_id: currentRunId,
+                 employee_id: id,
+                 gross: 0,
+              }, { onConflict: 'payroll_run_id,employee_id' });
+              
+              // Refresh adjustments to show the newly released employee in Step 4
+              await fetchAdjustments();
            }
+
+           // Persist status change to DB in background
+           supabase.from('employees').update({ payroll_status: 'Eligible', hold_reason: '' }).eq('eid', emp.employee_id)
+               .then(({ error }) => { if (error) console.error('Error releasing hold:', error); });
         }
     };
 
-    const confirmHold = async () => {
-        if (holdTargetId) {
-           try {
-               const { error } = await supabase
-                   .from('employees')
-                   .update({ 
-                       payroll_status: 'On Hold', 
-                       hold_reason: holdReason || 'Managerial Hold' 
-                   })
-                   .eq('id', holdTargetId);
-               
-               if (error) throw error;
-               await fetchEmployees();
-               setShowHoldModal(false);
-               setHoldTargetId(null);
-               setHoldReason('');
-           } catch (err) {
-               console.error('Error confirming hold:', err);
-           }
-        }
-    };
+    const confirmHold = () => {
+         if (!holdTargetId) return;
+
+         const emp = payrollEmployees.find(e => String(e.id) === String(holdTargetId));
+         const currentId = holdTargetId;
+         const currentReason = holdReason || 'Managerial Hold';
+
+         // Update UI immediately
+         setShowHoldModal(false);
+         setHoldTargetId(null);
+         setHoldReason('');
+         setPayrollEmployees(prev => prev.map(e =>
+             String(e.id) === String(currentId) ? { ...e, payrollStatus: 'On Hold', holdReason: currentReason } : e
+         ));
+
+         // Persist to DB in background (best-effort)
+         if (emp) {
+             supabase.from('employees').update({ payroll_status: 'On Hold', hold_reason: currentReason }).eq('eid', emp.employee_id)
+                 .then(({ error }) => { if (error) console.error('Error confirming hold:', error); });
+         }
+     };
 
    const toggleSelection = (id: string) => {
       setSelectedEmpIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -1423,7 +1451,6 @@ export const RunPayrollModal: React.FC<{
                               <Users size={16} className="text-sky-600" /> Select Employees
                            </h3>
                            <div className="flex gap-2">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded border border-emerald-100"><Check size={12} /> {eligibleCount} Eligible</span>
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded border border-amber-100"><AlertTriangle size={12} /> {onHoldCount} On Hold</span>
                            </div>
                         </div>
@@ -1447,6 +1474,7 @@ export const RunPayrollModal: React.FC<{
                               <tr>
                                  <th className="px-4 py-3">Employee Name</th>
                                  <th className="px-4 py-3">Employee ID</th>
+                                 <th className="px-4 py-3">Employee Status</th>
                                  <th className="px-4 py-3">Designation</th>
                                  <th className="px-4 py-3">Department</th>
                                  {!readOnly && <th className="px-4 py-3 text-right">Action</th>}
@@ -1454,7 +1482,7 @@ export const RunPayrollModal: React.FC<{
                            </thead>
                            <tbody className="divide-y divide-slate-100">
                               {filteredEmployees.map(emp => (
-                                 <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
+                                 <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
                                     <td className="px-4 py-3">
                                        <div className="flex items-center gap-3">
                                           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
@@ -1466,6 +1494,16 @@ export const RunPayrollModal: React.FC<{
                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
+                                    <td className="px-4 py-3">
+                                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                          emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                          emp.status === 'New Joinee' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                          emp.status === 'On Notice' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                          'bg-slate-50 text-slate-500 border-slate-100'
+                                       }`}>
+                                          {emp.status || 'Active'}
+                                       </span>
+                                    </td>
                                     <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
                                     <td className="px-4 py-3 text-slate-500">{emp.department}</td>
                                     {!readOnly && (
@@ -1474,7 +1512,7 @@ export const RunPayrollModal: React.FC<{
                                              onClick={() => toggleHold(emp.id)}
                                              className={`p-1.5 rounded-lg border transition-colors ${emp.payrollStatus === 'Eligible'
                                                 ? 'bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200'
-                                                : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                                                : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100'
                                                 }`}
                                              title={emp.payrollStatus === 'Eligible' ? "Keep On Hold" : "Remove Hold"}
                                           >
@@ -1505,15 +1543,23 @@ export const RunPayrollModal: React.FC<{
                      <h3 className="text-lg font-bold text-slate-800">Attendance & Time Data</h3>
                   </div>
 
-                  <div className="flex">
-                     <div className="bg-amber-50 border border-amber-200 rounded-xl py-2.5 px-4 flex items-center gap-3 shadow-sm border-l-4 border-l-amber-400">
-                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0">
-                           <AlertCircle size={18} />
+                  <div className="flex flex-wrap gap-4">
+                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4 shadow-sm relative overflow-hidden group w-full sm:w-72">
+                        <div className="absolute top-0 right-0 p-1 bg-amber-100/50 rounded-bl-lg">
+                           <Clock size={14} className="text-amber-500" />
                         </div>
-                        <div className="text-amber-900 font-bold text-sm whitespace-nowrap">
-                           {attendanceData.filter(e => e.pendingLeaves > 0).length} Employees with Pending Leaves
+                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 shrink-0">
+                           <AlertCircle size={24} />
+                        </div>
+                        <div>
+                           <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Pending Leaves</div>
+                           <div className="flex items-baseline gap-1.5">
+                              <span className="text-2xl font-black text-amber-900">{attendanceData.filter(e => e.pendingLeaves > 0 || (e.days + (e.leaves || 0) < 22)).length}</span>
+                              <span className="text-xs font-bold text-amber-700/60 uppercase">Employees</span>
+                           </div>
                         </div>
                      </div>
+
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -1532,19 +1578,21 @@ export const RunPayrollModal: React.FC<{
                               >
                                  <Download size={16} /> Export
                               </button>
-                              <button
-                                 onClick={() => {
-                                    if(window.confirm('This will recalculate attendance and override the existing attendance data. Are you sure you want to proceed?')) {
-                                       alert('Attendance data has been recalculated successfully.');
-                                    }
-                                 }}
-                                 className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 rounded-lg text-sm font-bold transition-colors"
-                              >
-                                 <RefreshCw size={16} /> Recalculate
-                              </button>
                            </>
                         )}
                      </div>
+                     {!readOnly && (
+                        <button
+                           onClick={() => {
+                              if(window.confirm('This will recalculate attendance and override the existing attendance data. Are you sure you want to proceed?')) {
+                                 alert('Attendance data has been recalculated successfully.');
+                              }
+                           }}
+                           className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 rounded-lg text-sm font-bold transition-colors ml-auto"
+                        >
+                           <RefreshCw size={16} /> Recalculate
+                        </button>
+                     )}
                   </div>
 
                   <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -1623,15 +1671,6 @@ export const RunPayrollModal: React.FC<{
                         <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all shadow-sm">
                            <Upload size={16} /> Upload CSV
                         </button>
-                        {!readOnly && (
-                           <button
-                              onClick={() => setStep4Complete(true)}
-                              disabled={step4Complete}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${step4Complete ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'}`}
-                           >
-                              <CheckCircle size={16} /> {step4Complete ? 'Completed' : 'Mark as Complete'}
-                           </button>
-                        )}
                      </div>
                   </div>
 
@@ -1671,7 +1710,7 @@ export const RunPayrollModal: React.FC<{
                               const total = row.gross + row.bonus + row.arrears + row.expenseReimbursement - row.loanRecovery - row.salaryAdvanceRecovery - row.actualTds - row.lop + row.lopReversal + row.other + customEarnings - customDeductions;
                               return (
                                  <React.Fragment key={row.id}>
-                                 <tr className={`hover:bg-slate-50/80 transition-colors group ${row.isEditing ? 'bg-purple-50/30' : ''}`}>
+                                 <tr className={`hover:bg-slate-50/80 transition-colors group ${row.isEditing ? 'bg-purple-50/30' : ''} ${releasedEmpIds.includes(String(row.id)) ? 'bg-slate-100/70 border-l-4 border-l-slate-400' : ''}`}>
                                     <td className="px-4 py-3 text-slate-800 truncate">{row.name}</td>
                                     <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{row.employee_id}</td>
                                     {(row.salaryComponents || []).map((comp: any, idx: number) => (
@@ -1848,7 +1887,7 @@ export const RunPayrollModal: React.FC<{
                   {showWizardOnHoldPanel && (
                      <div className="fixed inset-0 z-[150] flex justify-end">
                         <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowWizardOnHoldPanel(false)}></div>
-                        <div className="relative w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                        <div className="relative w-full max-w-[82vw] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
                            <div className="bg-slate-50 border-b border-slate-200 p-6 flex flex-col gap-4">
                               <div className="flex justify-between items-center">
                                  <div className="flex items-center gap-3">
@@ -1857,7 +1896,6 @@ export const RunPayrollModal: React.FC<{
                                     </div>
                                     <div>
                                        <h2 className="text-xl font-black text-slate-800 tracking-tight">On-hold Employees</h2>
-                                       <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Wizard Step 3 • Detail Oversight</p>
                                     </div>
                                  </div>
                                  <button 
@@ -1866,51 +1904,71 @@ export const RunPayrollModal: React.FC<{
                                  >
                                     <X size={20} className="text-slate-400 group-hover:text-slate-600" />
                                  </button>
-                              </div>
-                              
-                              <div className="flex items-center gap-4 bg-amber-50/50 border border-amber-100 p-3 rounded-xl">
-                                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 font-bold text-lg">{onHoldCount}</div>
-                                 <div>
-                                    <p className="text-xs font-bold text-amber-900">Review Hold Status</p>
-                                    <p className="text-[10px] text-amber-700 font-medium">Please review each employee on hold before proceeding to final verification.</p>
                                  </div>
                               </div>
-                           </div>
 
                            <div className="flex-1 overflow-y-auto">
-                              <table className="w-full text-left text-sm border-collapse">
+                              <table className="w-full text-left text-sm border-collapse table-auto">
                                  <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 sticky top-0 z-10 border-b border-slate-200 tracking-wider">
                                     <tr>
-                                       <th className="px-5 py-4 w-28">Emp ID</th>
-                                       <th className="px-5 py-4">Name</th>
-                                       <th className="px-5 py-4">Department</th>
-                                       <th className="px-5 py-4">Designation</th>
-                                       <th className="px-5 py-4 w-28">LWD</th>
-                                       <th className="px-5 py-4">Hold Reason</th>
-                                       <th className="px-5 py-4 w-32">Hold Since</th>
-                                       <th className="px-5 py-4 text-center">Action</th>
+                                       <th className="px-3 py-3 w-10">
+                                          <input
+                                             type="checkbox"
+                                             checked={selectedOnHoldIds.length === payrollEmployees.filter(e => e.payrollStatus === 'On Hold').length && onHoldCount > 0}
+                                             onChange={(e) => {
+                                                if (e.target.checked) {
+                                                   setSelectedOnHoldIds(payrollEmployees.filter(emp => emp.payrollStatus === 'On Hold').map(emp => emp.id));
+                                                } else {
+                                                   setSelectedOnHoldIds([]);
+                                                }
+                                             }}
+                                             className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                          />
+                                       </th>
+                                       <th className="px-3 py-3">Employee ID</th>
+                                       <th className="px-3 py-3">Employee Name</th>
+                                       <th className="px-3 py-3">Department</th>
+                                       <th className="px-3 py-3">Designation</th>
+                                       <th className="px-3 py-3">Last Working Date</th>
+                                       <th className="px-3 py-3">Hold Reason</th>
+                                       <th className="px-3 py-3">Hold Month</th>
+                                       <th className="px-3 py-3 text-center">Action</th>
                                     </tr>
                                  </thead>
                                  <tbody className="divide-y divide-slate-100">
                                     {payrollEmployees.filter(e => e.payrollStatus === 'On Hold').map(emp => (
-                                       <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
-                                          <td className="px-5 py-4 font-bold text-slate-400">{emp.employee_id}</td>
-                                          <td className="px-5 py-4">
-                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 overflow-hidden ring-2 ring-white">
+                                       <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${selectedOnHoldIds.includes(emp.id) ? 'bg-indigo-50/50' : ''}`}>
+                                          <td className="px-3 py-3">
+                                             <input
+                                                type="checkbox"
+                                                checked={selectedOnHoldIds.includes(emp.id)}
+                                                onChange={(e) => {
+                                                   if (e.target.checked) {
+                                                      setSelectedOnHoldIds(prev => [...prev, emp.id]);
+                                                   } else {
+                                                      setSelectedOnHoldIds(prev => prev.filter(id => id !== emp.id));
+                                                   }
+                                                }}
+                                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                             />
+                                          </td>
+                                          <td className="px-3 py-3 font-bold text-slate-400">{emp.employee_id}</td>
+                                          <td className="px-3 py-3">
+                                             <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 overflow-hidden ring-2 ring-white">
                                                    <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                                 <div className="font-bold text-slate-700">{emp.first_name} {emp.last_name}</div>
                                              </div>
                                           </td>
-                                          <td className="px-5 py-4 text-slate-500 font-medium">{emp.department}</td>
-                                          <td className="px-5 py-4 text-slate-500 font-medium">{emp.designation}</td>
-                                          <td className="px-5 py-4 text-slate-500 font-bold">30/11/2025</td>
-                                          <td className="px-5 py-4 font-medium text-slate-600 truncate max-w-[150px]" title={emp.holdReason}>
+                                          <td className="px-3 py-3 text-slate-500 font-medium">{emp.department}</td>
+                                          <td className="px-3 py-3 text-slate-500 font-medium">{emp.designation}</td>
+                                          <td className="px-3 py-3 text-slate-500 font-bold whitespace-nowrap">30/11/2025</td>
+                                          <td className="px-3 py-3 font-medium text-slate-600 truncate max-w-[120px]" title={emp.holdReason}>
                                              {emp.holdReason || 'No reason provided'}
                                           </td>
-                                          <td className="px-5 py-4 text-slate-500 font-bold uppercase text-[10px] tracking-tight">Nov 2025</td>
-                                          <td className="px-5 py-4">
+                                          <td className="px-3 py-3 text-slate-500 font-bold uppercase text-[10px] tracking-tight whitespace-nowrap">Nov 2025</td>
+                                          <td className="px-3 py-3">
                                              <div className="flex items-center justify-center gap-2">
                                                 <button 
                                                    onClick={() => toggleHold(emp.id)}
@@ -1938,7 +1996,31 @@ export const RunPayrollModal: React.FC<{
                               </table>
                            </div>
 
-                           <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
+                           <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                 {selectedOnHoldIds.length > 0 && (
+                                    <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left duration-200">
+                                       <span className="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1.5 rounded-lg">{selectedOnHoldIds.length} Selected</span>
+                                       <div className="h-4 w-px bg-slate-300 mx-1"></div>
+                                       <button 
+                                          onClick={async () => {
+                                             for (const id of selectedOnHoldIds) {
+                                                await toggleHold(id);
+                                             }
+                                             setSelectedOnHoldIds([]);
+                                          }}
+                                          className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all"
+                                       >
+                                          <PlayCircle size={16} /> Release Selected
+                                       </button>
+                                       <button 
+                                          className="px-4 py-2 bg-slate-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-700 shadow-sm flex items-center gap-2 transition-all"
+                                       >
+                                          <CheckCircle size={16} /> Continue Hold Selected
+                                       </button>
+                                    </div>
+                                 )}
+                              </div>
                               <button 
                                  onClick={() => setShowWizardOnHoldPanel(false)}
                                  className="px-8 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 shadow-sm transition-all"

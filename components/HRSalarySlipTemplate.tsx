@@ -225,8 +225,10 @@ const HeaderConfigModal: React.FC<{
     onClose: () => void;
     config: HeaderConfig;
     onChange: (cfg: HeaderConfig) => void;
+    settings: TemplateSettings;
+    onSettingsChange: (s: TemplateSettings) => void;
     slipType: 'Payslip' | 'F&F Settlement Slip';
-}> = ({ isOpen, onClose, config, onChange, slipType }) => {
+}> = ({ isOpen, onClose, config, onChange, settings, onSettingsChange, slipType }) => {
     if (!isOpen) return null;
 
     const toggleField = (field: keyof HeaderConfig['employeeFields']) => {
@@ -311,6 +313,45 @@ const HeaderConfigModal: React.FC<{
                                     </label>
                                 )
                             })}
+                        </div>
+                    </div>
+
+                    {/* Additional Settings moved here */}
+                    <div className="pt-4 border-t border-slate-100 space-y-5">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase">Display Settings</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input 
+                                    type="checkbox" 
+                                    checked={settings.showYTD}
+                                    onChange={() => onSettingsChange({ ...settings, showYTD: !settings.showYTD })}
+                                    className="rounded text-purple-600 focus:ring-purple-500" 
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-700">Show YTD Columns</span>
+                                </div>
+                            </label>
+                            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input 
+                                    type="checkbox" 
+                                    checked={settings.passwordProtect}
+                                    onChange={() => onSettingsChange({ ...settings, passwordProtect: !settings.passwordProtect })}
+                                    className="rounded text-purple-600 focus:ring-purple-500" 
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-700">Password Protect PDF</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div className="w-1/2">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Decimal Places</label>
+                            <input 
+                                type="number"
+                                value={settings.decimalPlaces || '2'}
+                                onChange={(e) => onSettingsChange({...settings, decimalPlaces: e.target.value})}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                            />
                         </div>
                     </div>
                 </div>
@@ -1074,6 +1115,12 @@ const HRSalarySlipTemplate: React.FC = () => {
                         </button>
                     ) : (
                         <>
+                            <button 
+                                onClick={() => setActiveTab('PREVIEW')} 
+                                className="px-4 py-2 bg-white border border-purple-200 text-purple-600 rounded-lg text-sm font-bold hover:bg-purple-50 transition-colors flex items-center gap-2 shadow-sm"
+                            >
+                                <Eye size={16} /> View Template
+                            </button>
                             <select
                                 value={slipType}
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -1098,9 +1145,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 <option value="F&F Settlement Slip">F&amp;F Settlement Slip</option>
                             </select>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                            {!editingTemplateId && <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>}
                             <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
-                                <Save size={16} /> Submit
+                                <Save size={16} /> Save
                             </button>
                         </>
                     )}
@@ -1111,7 +1157,8 @@ const HRSalarySlipTemplate: React.FC = () => {
             <div className="px-6 border-b border-slate-200 bg-white shrink-0">
                 <div className="flex gap-6">
                     <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview Sample Slip</button>
+                    {/* Preview Sample Slip tab hidden as requested */}
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`hidden py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview Sample Slip</button>
                 </div>
             </div>
 
@@ -1259,8 +1306,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Right: Settings Sidebar */}
-                        <div className="w-80 bg-white border-l border-slate-200 p-6 overflow-y-auto">
+                        {/* Right: Settings Sidebar - Hidden as requested */}
+                        <div className="hidden w-80 bg-white border-l border-slate-200 p-6 overflow-y-auto">
                             <h3 className="font-bold text-slate-800 mb-6">Settings</h3>
                             <div className="space-y-6">
 
@@ -1543,7 +1590,15 @@ const HRSalarySlipTemplate: React.FC = () => {
             </div>
 
             {/* Modals */}
-            <HeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} slipType={slipType} />
+            <HeaderConfigModal 
+                isOpen={headerConfigOpen} 
+                onClose={() => setHeaderConfigOpen(false)} 
+                config={headerConfig} 
+                onChange={setHeaderConfig} 
+                settings={settings}
+                onSettingsChange={setSettings}
+                slipType={slipType} 
+            />
             <SettingsConfigModal isOpen={settingsModal.isOpen} onClose={() => setSettingsModal({ isOpen: false, type: null })} type={settingsModal.type} settings={settings} onSave={s => setSettings(s)} />
             <AddComponentModal
                 isOpen={addComponentModal.isOpen}

@@ -44,6 +44,8 @@ interface Structure {
     employeeCount: number;
     status: 'Active' | 'Draft' | 'Archived' | 'Inactive';
     createdBy?: string;
+    createdAt?: string;
+    lastModifiedBy?: string;
     lastModified: string;
     effectiveFrom?: string;
     earnings: SalaryComponent[];
@@ -428,7 +430,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 reimbursements: d.reimbursements || [],
                 effectiveFrom: d.effective_from || '',
                 employeeCount: d.employeeCount || 0,
-                lastModified: d.last_modified ? new Date(d.last_modified).toLocaleDateString() : 'Just now',
+                createdBy: d.created_by || '',
+                createdAt: d.created_at || '',
+                lastModifiedBy: d.last_modified_by || d.updated_by || '',
+                lastModified: d.last_modified ? new Date(d.last_modified).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (d.updated_at ? new Date(d.updated_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''),
                 targetId: d.target_id,
                 targetType: d.target_type
             }));
@@ -790,10 +795,13 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                 )}
                                 {!isReadOnly ? (
                                     <>
+                                        {/* Save as Draft button - hidden as per request */}
                                         {!activeStructureId && (
+                                            <div style={{ display: 'none' }}>
                                             <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
                                                 Save as Draft
                                             </button>
+                                            </div>
                                         )}
                                         <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
                                             <Save size={16} /> {publishLabel}
@@ -1168,8 +1176,22 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                         {item.designations && item.designations.length > 0 ? item.designations.join(', ') : 'All'}
                                     </td>
                                     <td className="px-6 py-4">{item.employeeCount}</td>
-                                    <td className="px-6 py-4 text-xs text-slate-500">{item.createdBy || 'System'}</td>
-                                    <td className="px-6 py-4 text-xs text-slate-500">{item.lastModified}</td>
+                                    <td className="px-6 py-4">
+                                        {item.createdBy ? (
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-xs font-semibold text-slate-700">{item.createdBy}</span>
+                                                {item.createdAt && <span className="text-[10px] text-slate-400">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>}
+                                            </div>
+                                        ) : <span className="text-xs text-slate-400">System</span>}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {item.lastModified ? (
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-xs font-semibold text-slate-700">{item.lastModifiedBy || item.lastModified}</span>
+                                                <span className="text-[10px] text-slate-400">{item.lastModified}</span>
+                                            </div>
+                                        ) : <span className="text-xs text-slate-400">—</span>}
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-4">
                                             <button

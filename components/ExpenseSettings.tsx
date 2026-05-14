@@ -539,7 +539,7 @@ const ExpenseSettings: React.FC = () => {
                                         </div>
                                         
                                         <div className="space-y-1.5 md:col-span-2">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effective From</label>
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effective From <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                                     <Calendar size={16} className="text-slate-400" />
@@ -565,7 +565,7 @@ const ExpenseSettings: React.FC = () => {
                                     {/* Entity Search & Selection */}
                                     <div className="space-y-5 pt-2">
                                         <div className="space-y-2 relative">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation</label>
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation <span className="text-rose-500">*</span></label>
                                             <div className="relative mt-1">
                                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                                     <Search size={18} className="text-slate-400" />
@@ -647,7 +647,7 @@ const ExpenseSettings: React.FC = () => {
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-6 pt-2">
                                                         <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly Limit (₹)</label>
+                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly Limit (₹) <span className="text-rose-500">*</span></label>
                                                             <input
                                                                 type="number"
                                                                 value={entity.max_limit}

@@ -136,7 +136,9 @@ const FnFHeaderConfigModal: React.FC<{
     onClose: () => void;
     config: FnFHeaderConfig;
     onChange: (cfg: FnFHeaderConfig) => void;
-}> = ({ isOpen, onClose, config, onChange }) => {
+    settings: FnFTemplateSettings;
+    onSettingsChange: (s: FnFTemplateSettings) => void;
+}> = ({ isOpen, onClose, config, onChange, settings, onSettingsChange }) => {
     if (!isOpen) return null;
 
     const toggleField = (field: keyof FnFHeaderConfig['employeeFields']) => {
@@ -229,6 +231,45 @@ const FnFHeaderConfigModal: React.FC<{
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                                 <input type="checkbox" checked={config.employeeFields.uan} onChange={() => toggleField('uan')} className="rounded text-purple-600 focus:ring-purple-500" /> UAN
                             </label>
+                        </div>
+                    </div>
+
+                    {/* Additional Settings moved here */}
+                    <div className="pt-4 border-t border-slate-100 space-y-5">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase">Display Settings</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input 
+                                    type="checkbox" 
+                                    checked={settings.showYTD}
+                                    onChange={() => onSettingsChange({ ...settings, showYTD: !settings.showYTD })}
+                                    className="rounded text-purple-600 focus:ring-purple-500" 
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-700">Show YTD Columns</span>
+                                </div>
+                            </label>
+                            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input 
+                                    type="checkbox" 
+                                    checked={settings.passwordProtect}
+                                    onChange={() => onSettingsChange({ ...settings, passwordProtect: !settings.passwordProtect })}
+                                    className="rounded text-purple-600 focus:ring-purple-500" 
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-700">Password Protect PDF</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div className="w-1/2">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Decimal Places</label>
+                            <input 
+                                type="number"
+                                value={settings.decimalPlaces || '2'}
+                                onChange={(e) => onSettingsChange({...settings, decimalPlaces: e.target.value})}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                            />
                         </div>
                     </div>
                 </div>
@@ -914,10 +955,15 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                         </button>
                     ) : (
                         <>
+                            <button 
+                                onClick={() => setActiveTab('PREVIEW')} 
+                                className="px-4 py-2 bg-white border border-purple-200 text-purple-600 rounded-lg text-sm font-bold hover:bg-purple-50 transition-colors flex items-center gap-2 shadow-sm"
+                            >
+                                <Eye size={16} /> View Template
+                            </button>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                            <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
                             <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Will instantly update F&F template for all companies using default">
-                                <Save size={16} /> {userRole === 'HR_MANAGER' ? 'Save' : 'Publish'}
+                                <Save size={16} /> Save
                             </button>
                         </>
                     )}
@@ -928,7 +974,8 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
             <div className="px-6 border-b border-slate-200 bg-white shrink-0">
                 <div className="flex gap-6">
                     <button onClick={() => setActiveTab('EDITOR')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'EDITOR' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Template Editor</button>
-                    <button onClick={() => setActiveTab('PREVIEW')} className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview</button>
+                    {/* Preview tab hidden as requested */}
+                    <button onClick={() => setActiveTab('PREVIEW')} className={`hidden py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PREVIEW' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500'}`}>Preview</button>
                 </div>
             </div>
 
@@ -1042,8 +1089,8 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                             </div>
                         </div>
 
-                        {/* Right: Settings Panel */}
-                        <div className="w-80 border-l border-slate-200 bg-white flex flex-col overflow-y-auto">
+                        {/* Right: Settings Panel - Hidden as requested */}
+                        <div className="hidden w-80 border-l border-slate-200 bg-white flex flex-col overflow-y-auto">
                             <div className="p-6">
                                 <h3 className="text-sm font-bold text-slate-800 mb-6">Settings</h3>
                                 
@@ -1293,7 +1340,14 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
             </div>
 
             {/* Modals */}
-            <FnFHeaderConfigModal isOpen={headerConfigOpen} onClose={() => setHeaderConfigOpen(false)} config={headerConfig} onChange={setHeaderConfig} />
+            <FnFHeaderConfigModal 
+                isOpen={headerConfigOpen} 
+                onClose={() => setHeaderConfigOpen(false)} 
+                config={headerConfig} 
+                onChange={setHeaderConfig} 
+                settings={settings}
+                onSettingsChange={setSettings}
+            />
             <AddFnFComponentModal
                 isOpen={addComponentModal.isOpen}
                 onClose={() => setAddComponentModal({ isOpen: false, section: null })}

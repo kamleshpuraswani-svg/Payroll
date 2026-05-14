@@ -563,7 +563,7 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
         const currentStructure = activeStructureId ? structures.find(s => s.id === activeStructureId) : null;
         const isDraft = currentStructure?.status === 'Draft';
 
-        const publishLabel = isDraft || !activeStructureId ? 'Submit' : 'Update';
+        const publishLabel = isDraft || !activeStructureId ? 'Save' : 'Update';
 
         return (
             <ContentWrapper embedded={embedded}>
@@ -592,9 +592,11 @@ const SalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialView
                         </button>
                         {!isReadOnly ? (
                             <>
-                                <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
-                                    Save as Draft
-                                </button>
+                                {activeStructureId && (
+                                    <button onClick={() => handleSaveStructure('Draft')} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
+                                        Save as Draft
+                                    </button>
+                                )}
                                 <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
                                     <Save size={16} /> {publishLabel}
                                 </button>

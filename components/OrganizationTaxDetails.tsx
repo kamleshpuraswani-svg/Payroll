@@ -306,7 +306,7 @@ const OrganizationTaxDetails: React.FC = () => {
                             <div className="p-6 border-t border-slate-100 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Registered Company Name</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Registered Company Name <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
                                             defaultValue="TechFlow Systems Pvt Ltd"
@@ -315,7 +315,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Company Address</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Company Address <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
                                             defaultValue="123, Business Park, Sector 4, Bangalore - 560001"
@@ -350,11 +350,11 @@ const OrganizationTaxDetails: React.FC = () => {
                                         <input type="text" value={panNumber} onChange={e => setPanNumber(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">TAN NUMBER</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">TAN NUMBER <span className="text-rose-500">*</span></label>
                                         <input type="text" value={tanNumber} onChange={e => setTanNumber(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">GSTIN</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">GSTIN <span className="text-rose-500">*</span></label>
                                         <input type="text" value={gstin} onChange={e => setGstin(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500" />
                                     </div>
                                 </div>
@@ -362,7 +362,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">
-                                            TDS circle / AO code <Info size={14} className="text-slate-400" />
+                                            TDS circle / AO code <span className="text-rose-500">*</span> <Info size={14} className="text-slate-400" />
                                         </label>
                                         <div className="flex items-center gap-2">
                                             <input type="text" value={ao1} onChange={e => setAo1(e.target.value)} disabled={!isEditing} placeholder="AAA" className="w-20 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center font-bold text-slate-700 focus:outline-none focus:border-sky-500" />
@@ -376,7 +376,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                     </div>
                                     <div>
                                         <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">
-                                            Tax Payment Frequency <Info size={14} className="text-slate-400" />
+                                            Tax Payment Frequency <span className="text-rose-500">*</span> <Info size={14} className="text-slate-400" />
                                         </label>
                                         <div className="relative">
                                             <select
@@ -415,7 +415,7 @@ const OrganizationTaxDetails: React.FC = () => {
                             <div className="p-6 border-t border-slate-100 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Bank Name</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Bank Name <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <select
                                                 value={bankName}
@@ -432,7 +432,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Number</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Number <span className="text-rose-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={accountNumber} 
@@ -443,7 +443,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Name</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Account Name <span className="text-rose-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={accountName} 
@@ -454,7 +454,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">IFSC Code</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">IFSC Code <span className="text-rose-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={ifscCode} 
@@ -465,7 +465,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Branch</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Branch <span className="text-rose-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={branch} 
@@ -515,7 +515,7 @@ const OrganizationTaxDetails: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Name</label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Name <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <select
                                                 value={deductorName}
@@ -532,7 +532,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                     </div>
                                     {deductorType !== 'Employee' && (
                                         <div>
-                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Father's Name</label>
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Father's Name <span className="text-rose-500">*</span></label>
                                             <input
                                                 type="text"
                                                 value={fatherName}
@@ -544,7 +544,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                     )}
                                     {deductorType === 'Non-Employee' && (
                                         <div className="animate-in slide-in-from-top-2 duration-300">
-                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Designation</label>
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Deductor's Designation <span className="text-rose-500">*</span></label>
                                             <input
                                                 type="text"
                                                 value={designation}

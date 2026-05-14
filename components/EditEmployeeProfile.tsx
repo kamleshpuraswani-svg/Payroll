@@ -21,7 +21,8 @@ import {
    ChevronDown,
    Calendar,
    Clock,
-   Info
+   Info,
+   Plus
 } from 'lucide-react';
 
 const EFFECTIVE_MONTHS = (() => {
@@ -83,6 +84,14 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [salaryStructures, setSalaryStructures] = useState<{ id: string, name: string, departments?: string[], designations?: string[], employees?: string[] }[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [employeeRawData, setEmployeeRawData] = useState<any>(null);
+
+   const [additionalComponents, setAdditionalComponents] = useState<{ id: string; name: string; type: 'Earning' | 'Deduction'; calculation: string; amount: number; effectiveFrom: string; }[]>([]);
+   const [showAddExtraCompModal, setShowAddExtraCompModal] = useState(false);
+   const [masterSalaryComps, setMasterSalaryComps] = useState<any[]>([]);
+   const [selectedMasterCompId, setSelectedMasterCompId] = useState('');
+   const [extraCompEffectiveFrom, setExtraCompEffectiveFrom] = useState('');
+   const [selectedCompType, setSelectedCompType] = useState<'Earnings' | 'Deductions'>('Earnings');
+   const [flatAmountInput, setFlatAmountInput] = useState('');
 
    // Refs to track initial values for change detection
    const initialValues = useRef({
@@ -159,6 +168,17 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          if (data) setSalaryStructures(data);
       } catch (error) {
          console.error('Error fetching structures:', error);
+      }
+   };
+
+   const fetchMasterComponents = async () => {
+      try {
+         const { data } = await supabase
+            .from('salary_components')
+            .select('id, name, category, calculation');
+         if (data) setMasterSalaryComps(data);
+      } catch (err) {
+         console.error('Error fetching master components:', err);
       }
    };
 
@@ -486,9 +506,20 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       };
    };
    const salary = calculateSalary(ctc);
+
+   const calcExtraCompAmount = (calculation: string): number => {
+      const calc = calculation || '';
+      if (calc.includes('% of CTC')) return ctc * (parseFloat(calc) / 100);
+      if (calc.includes('% of Basic')) return salary.basic * (parseFloat(calc) / 100);
+      if (calc.includes('Fixed ₹') || calc.includes('Flat ₹')) return parseFloat(calc.replace(/[^\d.]/g, '')) * 12;
+      return 0;
+   };
+
    const totalDeductionsAnnual = salary.employeeDeductions.reduce((sum, d) => sum + d.annual, 0);
    const totalDeductionsMonthly = salary.employeeDeductions.reduce((sum, d) => sum + d.monthly, 0);
-   const monthlyTakeHome = salary.monthlyGross - totalDeductionsMonthly;
+   const additionalEarningsMonthly = additionalComponents.filter(c => c.type === 'Earning').reduce((sum, c) => sum + c.amount / 12, 0);
+   const additionalDeductionsMonthly = additionalComponents.filter(c => c.type === 'Deduction').reduce((sum, c) => sum + c.amount / 12, 0);
+   const monthlyTakeHome = salary.monthlyGross + additionalEarningsMonthly - totalDeductionsMonthly - additionalDeductionsMonthly;
 
    const handleSave = async () => {
       // Check if critical fields changed
@@ -570,6 +601,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    };
 
    return (
+      <>
       <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300">
          {/* Header */}
          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
@@ -908,6 +940,15 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <h3 className="font-bold flex items-center gap-2">
                         <Calculator size={18} className="text-emerald-400" /> Salary Structure
                      </h3>
+                     {!isReadOnly && (
+                        <button
+                           onClick={() => { fetchMasterComponents(); setShowAddExtraCompModal(true); }}
+                           title="Add Extra Component"
+                           className="w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-colors"
+                        >
+                           <Plus size={15} />
+                        </button>
+                     )}
                   </div>
 
                   <div className="overflow-x-auto">
@@ -926,15 +967,36 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            {salary.earnings.map((comp, idx) => (
                               <tr key={idx}>
                                  <td className="px-4 py-2.5 text-slate-700 font-medium flex items-center gap-1">
-                                    {comp.name} 
+                                    {comp.name}
                                     {comp.name.toLowerCase().includes('hra') && <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 rounded border border-emerald-100">Exempt</span>}
                                  </td>
                                  <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
                                  <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.annual))}</td>
                               </tr>
                            ))}
+                           {additionalComponents.filter(c => c.type === 'Earning').map((comp) => (
+                              <tr key={`extra-earn-${comp.id}`} className="bg-violet-50/40">
+                                 <td className="px-4 py-2.5 text-slate-700 font-medium">
+                                    <div className="flex items-center gap-1.5">
+                                       {comp.name}
+                                       <span className="text-[10px] bg-violet-100 text-violet-700 px-1.5 rounded border border-violet-200 font-bold">Custom</span>
+                                       {!isReadOnly && (
+                                          <button
+                                             onClick={() => setAdditionalComponents(prev => prev.filter(c => c.id !== comp.id))}
+                                             className="ml-1 text-rose-400 hover:text-rose-600"
+                                             title="Remove"
+                                          >
+                                             <X size={12} />
+                                          </button>
+                                       )}
+                                    </div>
+                                 </td>
+                                 <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.amount / 12))}</td>
+                                 <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.amount))}</td>
+                              </tr>
+                           ))}
 
-                           {salary.employeeDeductions.length > 0 && (
+                           {(salary.employeeDeductions.length > 0 || additionalComponents.some(c => c.type === 'Deduction')) && (
                               <>
                                  <tr className="bg-slate-50/50">
                                     <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Deductions (Employee Share)</td>
@@ -944,6 +1006,27 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                        <td className="px-4 py-2.5 text-slate-700">{comp.name}</td>
                                        <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
                                        <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.annual))}</td>
+                                    </tr>
+                                 ))}
+                                 {additionalComponents.filter(c => c.type === 'Deduction').map((comp) => (
+                                    <tr key={`extra-ded-${comp.id}`} className="bg-violet-50/40">
+                                       <td className="px-4 py-2.5 text-slate-700">
+                                          <div className="flex items-center gap-1.5">
+                                             {comp.name}
+                                             <span className="text-[10px] bg-violet-100 text-violet-700 px-1.5 rounded border border-violet-200 font-bold">Custom</span>
+                                             {!isReadOnly && (
+                                                <button
+                                                   onClick={() => setAdditionalComponents(prev => prev.filter(c => c.id !== comp.id))}
+                                                   className="ml-1 text-rose-400 hover:text-rose-600"
+                                                   title="Remove"
+                                                >
+                                                   <X size={12} />
+                                                </button>
+                                             )}
+                                          </div>
+                                       </td>
+                                       <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.amount / 12))}</td>
+                                       <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.amount))}</td>
                                     </tr>
                                  ))}
                               </>
@@ -1005,6 +1088,145 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             </div>
          </div>
       </div>
+
+      {/* Add Extra Salary Component Modal */}
+      {showAddExtraCompModal && (
+         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-slate-800">Add Extra Salary Component</h2>
+                  <button
+                     onClick={() => { setShowAddExtraCompModal(false); setSelectedMasterCompId(''); setExtraCompEffectiveFrom(''); setSelectedCompType('Earnings'); setFlatAmountInput(''); }}
+                     className="p-2 hover:bg-slate-100 rounded-full"
+                  >
+                     <X size={18} className="text-slate-500" />
+                  </button>
+               </div>
+               <div className="p-6 space-y-5">
+                  <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Component Type</label>
+                     <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+                        <button
+                           onClick={() => { setSelectedCompType('Earnings'); setSelectedMasterCompId(''); }}
+                           className={`flex-1 py-2 text-sm font-semibold transition-colors ${selectedCompType === 'Earnings' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                        >
+                           Earning
+                        </button>
+                        <button
+                           onClick={() => { setSelectedCompType('Deductions'); setSelectedMasterCompId(''); }}
+                           className={`flex-1 py-2 text-sm font-semibold transition-colors border-l border-slate-200 ${selectedCompType === 'Deductions' ? 'bg-rose-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                        >
+                           Deduction
+                        </button>
+                     </div>
+                  </div>
+
+                  <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Select Component</label>
+                     <select
+                        value={selectedMasterCompId}
+                        onChange={(e) => { setSelectedMasterCompId(e.target.value); setFlatAmountInput(''); }}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                     >
+                        <option value="">-- Select a component --</option>
+                        {masterSalaryComps
+                           .filter(mc => mc.category === selectedCompType && !additionalComponents.some(ac => ac.id === mc.id))
+                           .map(mc => (
+                              <option key={mc.id} value={mc.id}>{mc.name}</option>
+                           ))
+                        }
+                     </select>
+                  </div>
+
+                  {selectedMasterCompId && (() => {
+                     const mc = masterSalaryComps.find(c => c.id === selectedMasterCompId);
+                     if (!mc) return null;
+                     const isFlat = !mc.calculation || (!mc.calculation.includes('% of') && !mc.calculation.includes('Balancing'));
+                     const annual = isFlat
+                        ? (parseFloat(flatAmountInput || '0') * 12)
+                        : calcExtraCompAmount(mc.calculation || '');
+                     return (
+                        <div className="space-y-3">
+                           <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Formula</label>
+                              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">{mc.calculation || 'Flat Amount'}</div>
+                           </div>
+                           {isFlat ? (
+                              <div>
+                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                                    Amount (Monthly) <span className="text-rose-500">*</span>
+                                 </label>
+                                 <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">₹</span>
+                                    <input
+                                       type="number"
+                                       value={flatAmountInput}
+                                       onChange={(e) => setFlatAmountInput(e.target.value)}
+                                       placeholder="Enter monthly amount"
+                                       className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                                    />
+                                 </div>
+                                 {flatAmountInput && parseFloat(flatAmountInput) > 0 && (
+                                    <p className="text-xs text-slate-500 mt-1.5">Annual: ₹ {formatCurrency(Math.round(parseFloat(flatAmountInput) * 12))}</p>
+                                 )}
+                              </div>
+                           ) : (
+                              <div>
+                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Calculated Amount</label>
+                                 <div className="px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-bold text-emerald-800 flex justify-between">
+                                    <span>₹ {formatCurrency(Math.round(annual / 12))} / month</span>
+                                    <span className="text-emerald-600 font-medium">₹ {formatCurrency(Math.round(annual))} / year</span>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
+                     );
+                  })()}
+
+                  <div className="flex gap-3 justify-end pt-2">
+                     <button
+                        onClick={() => { setShowAddExtraCompModal(false); setSelectedMasterCompId(''); setExtraCompEffectiveFrom(''); setSelectedCompType('Earnings'); setFlatAmountInput(''); }}
+                        className="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
+                     >
+                        Cancel
+                     </button>
+                     <button
+                        onClick={() => {
+                           const mc = masterSalaryComps.find(c => c.id === selectedMasterCompId);
+                           if (!mc) return;
+                           const isFlat = !mc.calculation || (!mc.calculation.includes('% of') && !mc.calculation.includes('Balancing'));
+                           const annual = isFlat
+                              ? (parseFloat(flatAmountInput || '0') * 12)
+                              : calcExtraCompAmount(mc.calculation || '');
+                           setAdditionalComponents(prev => [...prev, {
+                              id: mc.id,
+                              name: mc.name,
+                              type: mc.category === 'Earnings' ? 'Earning' : 'Deduction',
+                              calculation: mc.calculation || '',
+                              amount: annual,
+                              effectiveFrom: ''
+                           }]);
+                           setShowAddExtraCompModal(false);
+                           setSelectedMasterCompId('');
+                           setFlatAmountInput('');
+                        }}
+                        disabled={(() => {
+                           if (!selectedMasterCompId) return true;
+                           const mc = masterSalaryComps.find(c => c.id === selectedMasterCompId);
+                           if (!mc) return true;
+                           const isFlat = !mc.calculation || (!mc.calculation.includes('% of') && !mc.calculation.includes('Balancing'));
+                           return isFlat && (!flatAmountInput || parseFloat(flatAmountInput) <= 0);
+                        })()}
+                        className="px-4 py-2 text-sm text-white bg-sky-600 rounded-lg hover:bg-sky-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                        Add
+                     </button>
+                  </div>
+               </div>
+            </div>
+         </div>
+      )}
+      </>
    );
 };
 

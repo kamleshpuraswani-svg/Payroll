@@ -553,7 +553,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 <table className="w-full text-left text-sm text-slate-600">
                                     <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b border-slate-200">
                                         <tr>
-                                            <th className="px-6 py-4">Loan Type</th>
+                                            <th className="px-6 py-4">Request Type</th>
                                             <th className="px-6 py-4">Interest Rate</th>
                                             <th className="px-6 py-4">Max Amount</th>
                                             <th className="px-6 py-4">Max Tenure</th>
@@ -696,7 +696,7 @@ const LoanAdvancesTypes: React.FC = () => {
                     /* Edit/Add Form */
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden w-full mx-auto">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h2 className="text-lg font-bold text-slate-800">{currentLoan.id ? 'Edit Loan Type' : 'Add New Loan Type'}</h2>
+                            <h2 className="text-lg font-bold text-slate-800">{currentLoan.id ? 'Edit Request Type' : 'Add New Request Type'}</h2>
                             <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
                         </div>
 
@@ -715,7 +715,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Loan Type <span className="text-rose-500">*</span></label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Request Type <span className="text-rose-500">*</span></label>
                                     <div className="flex flex-wrap gap-4">
                                         <label className={`flex items-center gap-3 px-4 py-3 border rounded-xl transition-all ${currentLoan.name === 'Salary Advance' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'} ${currentLoan.id ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${currentLoan.name === 'Salary Advance' ? 'border-purple-600' : 'border-slate-300'}`}>
@@ -775,7 +775,9 @@ const LoanAdvancesTypes: React.FC = () => {
                                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                                     {/* Interest Rate */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Interest Rate</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                                            Interest Rate {currentLoan.name === 'Loan' && <span className="text-rose-500">*</span>}
+                                        </label>
                                         <div className={`flex border rounded-lg overflow-hidden transition-all w-fit ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
                                             <input
                                                 type="number"
@@ -796,7 +798,11 @@ const LoanAdvancesTypes: React.FC = () => {
 
                                     {/* Interest Calculation Type */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Interest Calculation Type</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                                            Interest Calculation Type
+                                            {currentLoan.name === 'Loan' && <span className="text-rose-500"> *</span>}
+                                            {currentLoan.name === 'Salary Advance' && (currentLoan.interestRate ?? 0) > 0 && <span className="text-rose-500"> *</span>}
+                                        </label>
                                         <div className="flex gap-3">
                                             {(['flat', 'reducing'] as const).map((type) => {
                                                 const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
