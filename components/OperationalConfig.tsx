@@ -75,9 +75,18 @@ const OperationalConfig: React.FC = () => {
     // Leave Encashment Settings state
     const [isLeaveEncashmentExpanded, setIsLeaveEncashmentExpanded] = useState(true);
     const [encashmentComponents, setEncashmentComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
+    const [encashmentType, setEncashmentType] = useState<string>('custom');
     const [divisor, setDivisor] = useState<string>('26');
     const [isEncashmentDropdownOpen, setIsEncashmentDropdownOpen] = useState(false);
     const encashmentDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Loss of Pay Settings state
+    const [isLossOfPayExpanded, setIsLossOfPayExpanded] = useState(true);
+    const [lopComponents, setLopComponents] = useState<string[]>(["Basic Salary", "Dearness Allowance (DA)"]);
+    const [lopType, setLopType] = useState<string>('custom');
+    const [lopDivisor, setLopDivisor] = useState<string>('30');
+    const [isLopDropdownOpen, setIsLopDropdownOpen] = useState(false);
+    const lopDropdownRef = React.useRef<HTMLDivElement>(null);
 
     const fetchPaygroups = async () => {
         try {
@@ -124,6 +133,9 @@ const OperationalConfig: React.FC = () => {
         const handleClickOutside = (event: MouseEvent) => {
             if (encashmentDropdownRef.current && !encashmentDropdownRef.current.contains(event.target as Node)) {
                 setIsEncashmentDropdownOpen(false);
+            }
+            if (lopDropdownRef.current && !lopDropdownRef.current.contains(event.target as Node)) {
+                setIsLopDropdownOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -189,6 +201,12 @@ const OperationalConfig: React.FC = () => {
         );
     };
 
+    const toggleLopComponent = (comp: string) => {
+        setLopComponents(prev =>
+            prev.includes(comp) ? prev.filter(c => c !== comp) : [...prev, comp]
+        );
+    };
+
     useEffect(() => {
         fetchConfig();
     }, []);
@@ -244,7 +262,15 @@ const OperationalConfig: React.FC = () => {
                 const encashment = data.find(c => c.config_key === 'leave_encashment_settings');
                 if (encashment && encashment.config_value) {
                     setEncashmentComponents(encashment.config_value.components || ["Basic Salary", "Dearness Allowance (DA)"]);
+                    setEncashmentType(encashment.config_value.calculation_type || 'custom');
                     setDivisor(encashment.config_value.divisor || '26');
+                }
+
+                const lopSettings = data.find(c => c.config_key === 'loss_of_pay_settings');
+                if (lopSettings && lopSettings.config_value) {
+                    setLopComponents(lopSettings.config_value.components || ["Basic Salary", "Dearness Allowance (DA)"]);
+                    setLopType(lopSettings.config_value.calculation_type || 'custom');
+                    setLopDivisor(lopSettings.config_value.divisor || '30');
                 }
             }
 
@@ -317,11 +343,27 @@ const OperationalConfig: React.FC = () => {
                     config_key: 'leave_encashment_settings',
                     config_value: {
                         components: encashmentComponents,
+                        calculation_type: encashmentType,
                         divisor: divisor
                     }
                 }, { onConflict: 'config_key' });
 
             if (encashmentError) throw encashmentError;
+
+            // Save loss of pay settings
+            const { error: lopError } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'loss_of_pay_settings',
+                    config_value: {
+                        components: lopComponents,
+                        calculation_type: lopType,
+                        divisor: lopDivisor
+                    },
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (lopError) throw lopError;
 
             // Save expense settings
             const { error: expSettingsError } = await supabase
@@ -972,12 +1014,20 @@ const OperationalConfig: React.FC = () => {
             </div>
 
             {/* Leave Encashment Settings Section */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div
                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
                     onClick={() => setIsLeaveEncashmentExpanded(!isLeaveEncashmentExpanded)}
                 >
-                    <h3 className="font-semibold text-slate-800">Leave Encashment Settings</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-800">Leave Encashment Settings</h3>
+                        <div className="group relative">
+                            <Info size={14} className="text-slate-400 cursor-help" />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
+                                Configure which salary components contribute to the daily rate calculation during F&F settlement. These are used for leave balance encashment calculation during year end processing, full & final settlement etc.
+                            </div>
+                        </div>
+                    </div>
                     <button className="text-slate-400">
                         {isLeaveEncashmentExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </button>
@@ -985,11 +1035,7 @@ const OperationalConfig: React.FC = () => {
 
                 {isLeaveEncashmentExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <div className="max-w-4xl space-y-10">
-                            <div>
-                                <h4 className="font-bold text-slate-800 text-lg tracking-tight">Daily Rate Configuration</h4>
-                                <p className="text-sm text-slate-500 mt-1">Configure which salary components contribute to the daily rate calculation during F&F settlement. These are used for leave balance encashment calculation during year end processing, full & final settlement etc.</p>
-                            </div>
+                        <div className="max-w-4xl">
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                 {/* Component Selection */}
@@ -998,77 +1044,111 @@ const OperationalConfig: React.FC = () => {
                                         <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
                                             <Users size={16} />
                                         </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Components for Daily Rate</h4>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Daily Configuration Rate</h4>
                                     </div>
 
-                                    <div className="relative" ref={encashmentDropdownRef}>
-                                        <div 
-                                            onClick={() => setIsEncashmentDropdownOpen(!isEncashmentDropdownOpen)}
-                                            className={`min-h-[48px] w-full p-2 bg-white border rounded-xl flex flex-wrap gap-2 items-center cursor-pointer transition-all duration-200 ${
-                                                isEncashmentDropdownOpen ? 'border-sky-500 ring-2 ring-sky-500/10 shadow-sm' : 'border-slate-200 hover:border-slate-300'
-                                            }`}
-                                        >
-                                            {encashmentComponents.length === 0 ? (
-                                                <span className="text-slate-400 text-sm ml-2">Select components...</span>
-                                            ) : (
-                                                encashmentComponents.map(comp => (
-                                                    <div 
-                                                        key={comp}
-                                                        className="flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-2.5 py-1 rounded-lg text-xs font-bold animate-in zoom-in duration-200"
-                                                    >
-                                                        {comp}
+                                    <div className="flex flex-wrap gap-6 mb-4">
+                                        {['Gross Salary', 'Net Pay', 'Select Component'].map((opt) => {
+                                            const value = opt === 'Select Component' ? 'custom' : opt === 'Gross Salary' ? 'gross' : 'net';
+                                            return (
+                                                <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className="relative flex items-center justify-center">
+                                                        <input 
+                                                            type="radio" 
+                                                            name="encashmentType"
+                                                            value={value}
+                                                            checked={encashmentType === value}
+                                                            onChange={() => setEncashmentType(value)}
+                                                            className="sr-only"
+                                                        />
+                                                        <div className={`w-5 h-5 rounded-full border-2 transition-all ${
+                                                            encashmentType === value 
+                                                                ? 'border-sky-500 bg-sky-500' 
+                                                                : 'border-slate-300 group-hover:border-slate-400'
+                                                        }`}>
+                                                            {encashmentType === value && (
+                                                                <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <span className={`text-sm font-medium transition-colors ${
+                                                        encashmentType === value ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'
+                                                    }`}>{opt}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {encashmentType === 'custom' && (
+                                        <div className="relative animate-in fade-in slide-in-from-top-2 duration-300" ref={encashmentDropdownRef}>
+                                            <div 
+                                                onClick={() => setIsEncashmentDropdownOpen(!isEncashmentDropdownOpen)}
+                                                className={`min-h-[48px] w-full p-2 bg-white border rounded-xl flex flex-wrap gap-2 items-center cursor-pointer transition-all duration-200 ${
+                                                    isEncashmentDropdownOpen ? 'border-sky-500 ring-2 ring-sky-500/10 shadow-sm' : 'border-slate-200 hover:border-slate-300'
+                                                }`}
+                                            >
+                                                {encashmentComponents.length === 0 ? (
+                                                    <span className="text-slate-400 text-sm ml-2">Select components...</span>
+                                                ) : (
+                                                    encashmentComponents.map(comp => (
+                                                        <div 
+                                                            key={comp}
+                                                            className="flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-2.5 py-1 rounded-lg text-xs font-bold animate-in zoom-in duration-200"
+                                                        >
+                                                            {comp}
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleEncashmentComponent(comp);
+                                                                }}
+                                                                className="hover:bg-sky-200/50 rounded-full p-0.5 transition-colors"
+                                                            >
+                                                                <X size={12} className="stroke-[3]" />
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                                )}
+                                                <div className="ml-auto pr-2 flex items-center gap-2">
+                                                    {encashmentComponents.length > 0 && (
                                                         <button 
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                toggleEncashmentComponent(comp);
+                                                                setEncashmentComponents([]);
                                                             }}
-                                                            className="hover:bg-sky-200/50 rounded-full p-0.5 transition-colors"
+                                                            className="text-slate-300 hover:text-slate-450 transition-colors"
                                                         >
-                                                            <X size={12} className="stroke-[3]" />
+                                                            <X size={16} />
                                                         </button>
-                                                    </div>
-                                                ))
-                                            )}
-                                            <div className="ml-auto pr-2 flex items-center gap-2">
-                                                {encashmentComponents.length > 0 && (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEncashmentComponents([]);
-                                                        }}
-                                                        className="text-slate-300 hover:text-slate-450 transition-colors"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
-                                                )}
-                                                <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${isEncashmentDropdownOpen ? 'rotate-180' : ''}`} />
-                                            </div>
-                                        </div>
-
-                                        {isEncashmentDropdownOpen && (
-                                            <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                                <div className="max-h-60 overflow-y-auto p-1.5">
-                                                    {["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].map(opt => {
-                                                        const isSelected = encashmentComponents.includes(opt);
-                                                        return (
-                                                            <div
-                                                                key={opt}
-                                                                onClick={() => toggleEncashmentComponent(opt)}
-                                                                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
-                                                                    isSelected 
-                                                                    ? 'bg-sky-50 text-sky-700' 
-                                                                    : 'text-slate-600 hover:bg-slate-50'
-                                                                }`}
-                                                            >
-                                                                <span>{opt}</span>
-                                                                {isSelected && <Check size={16} className="text-sky-600 stroke-[3]" />}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                    )}
+                                                    <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${isEncashmentDropdownOpen ? 'rotate-180' : ''}`} />
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
+
+                                            {isEncashmentDropdownOpen && (
+                                                <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <div className="max-h-60 overflow-y-auto p-1.5">
+                                                        {["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].map(opt => {
+                                                            const isSelected = encashmentComponents.includes(opt);
+                                                            return (
+                                                                <div
+                                                                    key={opt}
+                                                                    onClick={() => toggleEncashmentComponent(opt)}
+                                                                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+                                                                        isSelected 
+                                                                        ? 'bg-sky-50 text-sky-700' 
+                                                                        : 'text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                                >
+                                                                    <span>{opt}</span>
+                                                                    {isSelected && <Check size={16} className="text-sky-600 stroke-[3]" />}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Divisor Selection */}
@@ -1102,6 +1182,8 @@ const OperationalConfig: React.FC = () => {
                                             </div>
                                             <div className="font-mono text-[15px] text-indigo-700 pl-4 py-1 tracking-tight">
                                                 {(() => {
+                                                    if (encashmentType === 'gross') return `Gross Salary / ${divisor || '0'}`;
+                                                    if (encashmentType === 'net') return `Net Pay / ${divisor || '0'}`;
                                                     const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => encashmentComponents.includes(opt));
                                                     if (active.length === 0) return `(None Selected) / ${divisor || '0'}`;
                                                     const labels = active.map(a => {
@@ -1134,6 +1216,218 @@ const OperationalConfig: React.FC = () => {
                                         <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
                                             <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
                                             <span>"Days" = number of eligible leave days being encashed.</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Loss of Pay Settings Section */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsLossOfPayExpanded(!isLossOfPayExpanded)}
+                >
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-800">Loss of Pay Settings</h3>
+                        <div className="group relative">
+                            <Info size={14} className="text-slate-400 cursor-help" />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
+                                Configure which salary components contribute to the daily rate calculation for Loss of Pay (LOP) deductions during payroll processing.
+                            </div>
+                        </div>
+                    </div>
+                    <button className="text-slate-400">
+                        {isLossOfPayExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isLossOfPayExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-4xl">
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                {/* Component Selection */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                            <Users size={16} />
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Daily Configuration Rate</h4>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-6 mb-4">
+                                        {['Gross Salary', 'Net Pay', 'Select Component'].map((opt) => {
+                                            const value = opt === 'Select Component' ? 'custom' : opt === 'Gross Salary' ? 'gross' : 'net';
+                                            return (
+                                                <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className="relative flex items-center justify-center">
+                                                        <input 
+                                                            type="radio" 
+                                                            name="lopType"
+                                                            value={value}
+                                                            checked={lopType === value}
+                                                            onChange={() => setLopType(value)}
+                                                            className="sr-only"
+                                                        />
+                                                        <div className={`w-5 h-5 rounded-full border-2 transition-all ${
+                                                            lopType === value 
+                                                                ? 'border-sky-500 bg-sky-500' 
+                                                                : 'border-slate-300 group-hover:border-slate-400'
+                                                        }`}>
+                                                            {lopType === value && (
+                                                                <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <span className={`text-sm font-medium transition-colors ${
+                                                        lopType === value ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'
+                                                    }`}>{opt}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {lopType === 'custom' && (
+                                        <div className="relative animate-in fade-in slide-in-from-top-2 duration-300" ref={lopDropdownRef}>
+                                            <div 
+                                                onClick={() => setIsLopDropdownOpen(!isLopDropdownOpen)}
+                                                className={`min-h-[48px] w-full p-2 bg-white border rounded-xl flex flex-wrap gap-2 items-center cursor-pointer transition-all duration-200 ${
+                                                    isLopDropdownOpen ? 'border-sky-500 ring-2 ring-sky-500/10 shadow-sm' : 'border-slate-200 hover:border-slate-300'
+                                                }`}
+                                            >
+                                                {lopComponents.length === 0 ? (
+                                                    <span className="text-slate-400 text-sm ml-2">Select components...</span>
+                                                ) : (
+                                                    lopComponents.map(comp => (
+                                                        <div 
+                                                            key={comp}
+                                                            className="flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-2.5 py-1 rounded-lg text-xs font-bold animate-in zoom-in duration-200"
+                                                        >
+                                                            {comp}
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleLopComponent(comp);
+                                                                }}
+                                                                className="hover:bg-sky-200/50 rounded-full p-0.5 transition-colors"
+                                                            >
+                                                                <X size={12} className="stroke-[3]" />
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                                )}
+                                                <div className="ml-auto pr-2 flex items-center gap-2">
+                                                    {lopComponents.length > 0 && (
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setLopComponents([]);
+                                                            }}
+                                                            className="text-slate-300 hover:text-slate-450 transition-colors"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    )}
+                                                    <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${isLopDropdownOpen ? 'rotate-180' : ''}`} />
+                                                </div>
+                                            </div>
+
+                                            {isLopDropdownOpen && (
+                                                <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <div className="max-h-60 overflow-y-auto p-1.5">
+                                                        {["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].map(opt => {
+                                                            const isSelected = lopComponents.includes(opt);
+                                                            return (
+                                                                <div
+                                                                    key={opt}
+                                                                    onClick={() => toggleLopComponent(opt)}
+                                                                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+                                                                        isSelected 
+                                                                        ? 'bg-sky-50 text-sky-700' 
+                                                                        : 'text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                                >
+                                                                    <span>{opt}</span>
+                                                                    {isSelected && <Check size={16} className="text-sky-600 stroke-[3]" />}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Divisor Selection */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                            <Calculator size={16} />
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor</h4>
+                                    </div>
+
+                                    <div className="max-w-xs">
+                                        <input 
+                                            type="text" 
+                                            value={lopDivisor} 
+                                            onChange={(e) => setLopDivisor(e.target.value.replace(/[^0-9]/g, ''))}
+                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                                            placeholder="e.g. 30"
+                                        />
+                                        <p className="text-[10px] text-slate-400 font-medium mt-2 italic">Enter the number of days used as divisor for LOP daily rate calculation.</p>
+                                    </div>
+                                </div>
+
+                                {/* Formula Preview */}
+                                <div className="self-start lg:mt-14 w-full max-w-sm">
+                                    <div className="p-4 bg-slate-50/50 border border-slate-200 rounded-xl shadow-sm">
+                                        <div className="mb-3">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                                                <span className="text-sm font-medium text-slate-700">Daily rate</span>
+                                            </div>
+                                            <div className="font-mono text-[15px] text-indigo-700 pl-4 py-1 tracking-tight">
+                                                {(() => {
+                                                    if (lopType === 'gross') return `Gross Salary / ${lopDivisor || '0'}`;
+                                                    if (lopType === 'net') return `Net Pay / ${lopDivisor || '0'}`;
+                                                    const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => lopComponents.includes(opt));
+                                                    if (active.length === 0) return `(None Selected) / ${lopDivisor || '0'}`;
+                                                    const labels = active.map(a => {
+                                                        if (a === "Dearness Allowance (DA)") return "DA";
+                                                        return a.replace(" Salary", "").replace(" Allowance", "");
+                                                    });
+                                                    return `(${labels.join(" + ")}) / ${lopDivisor || '0'}`;
+                                                })()}
+                                            </div>
+                                        </div>
+
+                                        <hr className="my-3 border-slate-200" />
+
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                                                <span className="text-sm font-medium text-slate-700">LOP Deduction</span>
+                                            </div>
+                                            <div className="font-mono text-[15px] text-amber-700 pl-4 py-1 tracking-tight">
+                                                Daily Rate × LOP Days
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 space-y-2">
+                                        <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
+                                            <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
+                                            <span>The divisor is typically 30 (calendar days) or the actual days in the month for LOP calculations.</span>
+                                        </p>
+                                        <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
+                                            <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
+                                            <span>"LOP Days" = number of unpaid leave days in the payroll period.</span>
                                         </p>
                                     </div>
                                 </div>

@@ -24,7 +24,7 @@ interface SalaryComponent {
     category: 'Earnings' | 'Deductions' | 'Benefits' | 'Reimbursements';
     // Additional fields for editing context
     amount_or_percent?: string;
-    calc_method?: 'Flat' | 'Percentage';
+    calc_method?: 'Flat' | 'Percentage' | 'PercentOfCTC';
     payslip_name?: string;
     frequency?: 'One-time' | 'Recurring';
     // New fields for Earnings list view
@@ -244,7 +244,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
     );
-    const [calc_method, setCalc_method] = useState<'Flat' | 'Percentage'>(
+    const [calc_method, setCalc_method] = useState<'Flat' | 'Percentage' | 'PercentOfCTC'>(
         initialData?.calc_method || 'Flat'
     );
     const [amount_or_percent, setAmount_or_percent] = useState(initialData?.amount_or_percent || '');
@@ -289,7 +289,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
         }
         setError(null);
         const calculateString = natureOfPay === 'Fixed'
-            ? (calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : `${amount_or_percent}% of ${selectedComponents.join(', ')}`)
+            ? (calc_method === 'Flat' ? `Flat ₹${amount_or_percent}` : (calc_method === 'PercentOfCTC' ? `${amount_or_percent}% of CTC` : `${amount_or_percent}% of ${selectedComponents.join(', ')}`))
             : 'Variable';
 
         const newHistoryRecords: ComponentChangeHistory[] = [];
@@ -577,13 +577,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <div className="space-y-3">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Calculation Method</label>
                                 <div className="flex p-1.5 bg-slate-100/50 rounded-xl border border-slate-200/60 shadow-inner">
-                                    {['Flat', 'Percentage'].map(m => (
+                                    {['Flat', 'Percentage', 'PercentOfCTC'].map(m => (
                                         <button
                                             key={m}
-                                            onClick={() => setCalc_method(m as any)}
+                                            onClick={() => {
+                                                setCalc_method(m as any);
+                                                if (m === 'PercentOfCTC') setSelectedComponents(['CTC']);
+                                            }}
                                             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${calc_method === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
-                                            {m === 'Flat' ? 'Flat Amount' : 'Percentage'}
+                                            {m === 'Flat' ? 'Flat Amount' : m === 'Percentage' ? 'Percentage of' : 'Percentage of CTC'}
                                         </button>
                                     ))}
                                 </div>
@@ -595,11 +598,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         type="text"
                                         value={amount_or_percent}
                                         onChange={(e) => setAmount_or_percent(e.target.value)}
-                                        placeholder={calc_method === 'Percentage' ? 'e.g. 50' : 'e.g. 10000'}
+                                        placeholder={calc_method === 'Flat' ? 'e.g. 10000' : 'e.g. 50'}
                                         className="w-full pl-4 pr-14 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
                                     />
                                     <div className="absolute right-0 top-0 h-full px-4 bg-slate-100/80 border-l border-slate-200 rounded-r-xl flex items-center text-slate-500 font-bold text-sm">
-                                        {calc_method === 'Percentage' ? '%' : '₹'}
+                                        {calc_method === 'Flat' ? '₹' : '%'}
                                     </div>
                                 </div>
                             </div>
@@ -849,7 +852,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             status: isActive,
             type: 'Fixed Pay',
             category: 'Deductions',
-            calc_method: calc_method,
+            calc_method: calc_method as any,
             calculation: calculateString,
             taxable: 'Tax Deductible',
             is_pro_rata: isProRata,
@@ -1095,7 +1098,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                             onClick={() => setCalc_method(m as any)}
                                             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${calc_method === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
-                                            {m === 'Flat' ? 'Flat Amount' : 'Percentage'}
+                                            {m === 'Flat' ? 'Flat Amount' : m === 'Percentage' ? 'Percentage of' : 'Percentage of CTC'}
                                         </button>
                                     ))}
                                 </div>
@@ -1613,7 +1616,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                             onClick={() => setCalc_method(m as any)}
                                             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${calc_method === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
-                                            {m === 'Flat' ? 'Flat Amount' : 'Percentage'}
+                                            {m === 'Flat' ? 'Flat Amount' : m === 'Percentage' ? 'Percentage of' : 'Percentage of CTC'}
                                         </button>
                                     ))}
                                 </div>
