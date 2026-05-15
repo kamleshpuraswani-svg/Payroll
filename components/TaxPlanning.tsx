@@ -120,6 +120,32 @@ interface TaxPlanningData {
    isPrevEmploymentSaved: boolean;
 }
 
+// Mock data for "Use last approved request" — Proposed Investment
+const LAST_APPROVED_PROPOSED_DATA: Partial<TaxPlanningData> = {
+   declarations: [
+      { id: 9001, section: '80C', title: 'Life Insurance Premium (LIC)', amount: 25000, isExpanded: false, proofs: 0, files: [], approvedAmount: 25000 },
+      { id: 9002, section: '80C', title: 'Public Provident Fund (PPF)', amount: 20000, isExpanded: false, proofs: 0, files: [], approvedAmount: 20000 },
+   ],
+   hraEnabled: true,
+   rentedHouses: [{ id: 1, from: '2025-04-01', to: '2026-03-31', amount: 15000, address: 'Sector 44, Gurgaon', landlord: 'Vikram Singh', cityType: 'Metro', pan: 'ABCDE1234F' }],
+   isHraSaved: true
+};
+
+// Mock data for "Use last approved request" — Confirmed Investment
+const LAST_APPROVED_CONFIRMED_DATA: Partial<TaxPlanningData> = {
+   declarations: [
+      { id: 9101, section: '80C', title: 'Life Insurance Premium (LIC)', amount: 80000, isExpanded: false, proofs: 0, files: [], approvedAmount: 80000 },
+      { id: 9102, section: '80C', title: 'Equity Linked Saving Scheme (ELSS)', amount: 25000, isExpanded: false, proofs: 0, files: [], approvedAmount: 15000 },
+      { id: 9103, section: '80D', title: 'Self, Spouse, Children (below 60 years)', amount: 15000, isExpanded: false, proofs: 0, files: [], approvedAmount: 0 },
+   ],
+   hraEnabled: true,
+   rentedHouses: [{ id: 1, from: '2025-04-01', to: '2026-03-31', amount: 15000, address: 'Sector 44, Gurgaon', landlord: 'Vikram Singh', cityType: 'Metro', pan: 'ABCDE1234F' }],
+   isHraSaved: true,
+   homeLoanEnabled: true,
+   homeLoanDetails: { principal: 50000, interest: 120000, lender: 'HDFC Bank', lenderPan: 'AAAAA0000A', sanctionDate: '2020-01-01', sanctionedAmount: 5000000 },
+   isHomeLoanSaved: true
+};
+
 const DEFAULT_PLANNING_DATA: TaxPlanningData = {
    declarations: [],
    hraEnabled: false,
@@ -274,6 +300,7 @@ interface RentedHouse {
 
 export const TaxPlanning: React.FC = () => {
    const [view, setView] = useState<'DASHBOARD' | 'PLANNING' | 'CALCULATOR'>('DASHBOARD');
+   const [previousView, setPreviousView] = useState<'DASHBOARD' | 'PLANNING'>('DASHBOARD');
    const [selectedHistoryYear, setSelectedHistoryYear] = useState<any>(null);
    const [isEditMode, setIsEditMode] = useState(false);
    const [showPastDeclarations, setShowPastDeclarations] = useState(false);
@@ -327,6 +354,9 @@ export const TaxPlanning: React.FC = () => {
    // UI States
    const [showConfirmModal, setShowConfirmModal] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
+   const [showStartPlanningDialog, setShowStartPlanningDialog] = useState(false);
+   const [startPlanningOption, setStartPlanningOption] = useState<'use_last' | 'new'>('use_last');
+   const [confirmedInvestmentMode, setConfirmedInvestmentMode] = useState(false);
    const [hraType, setHraType] = useState<'HRA' | '80GG' | null>('HRA');
 
    // Calculator State
@@ -518,6 +548,44 @@ export const TaxPlanning: React.FC = () => {
    const isDeadlinePassed = new Date() > DEADLINE_DATE;
    const isReadOnly = !isEditMode || isDeadlinePassed;
 
+   const getSectionLimit = (sectionCode: string): number => {
+      switch (sectionCode) {
+         case '80C': return 150000;
+         case '80D': return 100000;
+         case '80CCD': return 50000;
+         case '80EEA': return 150000;
+         case '80DDB': return 100000;
+         case '80U': return 125000;
+         default: return Infinity;
+      }
+   };
+
+   const isSectionLimitReached = (sectionCode: string): boolean => {
+      const limit = getSectionLimit(sectionCode);
+      if (limit === Infinity) return false;
+      const totalApproved = declarations
+         .filter(d => d.section === sectionCode)
+         .reduce((sum, d) => sum + (d.approvedAmount || 0), 0);
+      return totalApproved >= limit;
+   };
+
+   const isRowLocked = (row: DeclarationRow): boolean => {
+      if (!confirmedInvestmentMode) return false;
+      const approvedAmount = row.approvedAmount ?? 0;
+      
+      // Fully approved
+      if (approvedAmount > 0 && approvedAmount >= row.amount) return true;
+      
+      // Partially approved
+      if (approvedAmount > 0 && approvedAmount < row.amount) {
+         // Locked if section limit reached
+         return isSectionLimitReached(row.section);
+      }
+      
+      // Rejected (approvedAmount === 0)
+      return false;
+   };
+
    const fileInputRef = useRef<HTMLInputElement>(null);
    const [activeUploadId, setActiveUploadId] = useState<number | null>(null);
    const [showHraFields, setShowHraFields] = useState(false);
@@ -646,11 +714,14 @@ export const TaxPlanning: React.FC = () => {
          return Math.round(tax * 1.04); // 4% Cess
       };
 
+      const totalApprovedAmount = declarations.reduce((sum, d) => sum + (d.approvedAmount || 0), 0);
+
       return {
          oldRegimeTax: calculateTaxLiability('OLD'),
          newRegimeTax: calculateTaxLiability('NEW'),
          totalDeductionsOld,
-         grossTotalIncome
+         grossTotalIncome,
+         totalApprovedAmount
       };
    }, [declarations, hraEnabled, rentedHouses, homeLoanEnabled, homeLoanDetails, letOutEnabled, letOutProperties, otherIncomeEnabled, otherIncomeDetails, prevEmploymentEnabled, prevEmploymentDetails]);
 
@@ -772,8 +843,8 @@ export const TaxPlanning: React.FC = () => {
 ;
 
    const recentDeclarations = [
-      { id: 1, type: 'Proposed Investment', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Pending', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
-      { id: 2, type: 'Proposed Investment', fy: '2025-26', amount: 45000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' },
+      { id: 1, type: 'Proposed Investment', fy: '2025-26', amount: 355000, approvedAmount: 0, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'Priya Sharma', createdDate: '10 Dec 2025, 11:30 AM', modifiedDate: '10 Dec 2025, 11:30 AM' },
+      { id: 2, type: 'Proposed Investment', fy: '2025-26', amount: 45000, approvedAmount: 0, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2026, 09:15 AM', modifiedDate: '20 Jan 2026, 04:30 PM' },
       { id: 3, type: 'Confirmed Investment', fy: '2024-25', amount: 120000, approvedAmount: 120000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '15 Jan 2025, 02:45 PM', modifiedDate: '16 Jan 2025, 10:20 AM' },
       { id: 4, type: 'Proposed Investment', fy: '2024-25', amount: 35000, approvedAmount: 0, status: 'Rejected', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '12 Feb 2025, 10:00 AM', modifiedDate: '12 Feb 2025, 03:15 PM' },
       { id: 5, type: 'Confirmed Investment', fy: '2023-24', amount: 250000, approvedAmount: 250000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '20 Jan 2024, 09:15 AM', modifiedDate: '20 Jan 2024, 04:30 PM' },
@@ -781,7 +852,16 @@ export const TaxPlanning: React.FC = () => {
       { id: 7, type: 'Confirmed Investment', fy: '2022-23', amount: 210000, approvedAmount: 210000, status: 'Approved', createdBy: 'Priya Sharma', modifiedBy: 'HR Admin', createdDate: '10 Jan 2023, 09:30 AM', modifiedDate: '18 Jan 2023, 11:45 AM' }
    ];
 
+   const parseDeclarationDate = (dateStr: string) => {
+      return new Date(dateStr.replace(',', ''));
+   };
+
+   const sortedRecentDeclarations = [...recentDeclarations].sort(
+      (a, b) => parseDeclarationDate(b.createdDate).getTime() - parseDeclarationDate(a.createdDate).getTime()
+   );
+
    const hasSubmitted = recentDeclarations.some(d => d.status === 'Pending');
+   const hasLastApproved = recentDeclarations.some(d => d.status === 'Approved');
 
    const historyData = [
       {
@@ -882,19 +962,27 @@ export const TaxPlanning: React.FC = () => {
                   <div className="flex flex-col sm:flex-row gap-4">
                      <button
                         onClick={() => {
-                           if (hasSubmitted) {
+                           if (declarationStatus === 'DRAFT') {
+                              setIsEditMode(true);
+                              setView('PLANNING');
+                           } else if (declarationStatus === 'SUBMITTED' && hasSubmitted) {
                               setIsEditMode(false);
+                              setView('PLANNING');
                            } else {
-                              setIsEditMode(declarationStatus !== 'SUBMITTED');
+                              setStartPlanningOption(hasLastApproved ? 'use_last' : 'new');
+                              setShowStartPlanningDialog(true);
                            }
-                           setView('PLANNING');
                         }}
                         className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20 group whitespace-nowrap"
                      >
-                        {declarationStatus === 'NEW' ? 'Start Planning' : declarationStatus === 'DRAFT' ? 'Continue Planning' : 'View Submission'} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        {declarationStatus === 'DRAFT' ? 'Continue Planning' : (declarationStatus === 'SUBMITTED' && hasSubmitted) ? 'View Submission' : 'Start Planning'} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                      </button>
                      <button
-                        onClick={() => setView('CALCULATOR')}
+                        onClick={() => {
+                           setPreviousView(view);
+                           setCalcSalary(ANNUAL_GROSS_SALARY);
+                           setView('CALCULATOR');
+                        }}
                         className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
                      >
                         Income Tax Calculator
@@ -1009,7 +1097,7 @@ export const TaxPlanning: React.FC = () => {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                     {recentDeclarations.filter(d => 
+                     {sortedRecentDeclarations.filter(d =>
                         d.type.toLowerCase().includes(recentSearchQuery.toLowerCase()) ||
                         d.fy.toLowerCase().includes(recentSearchQuery.toLowerCase()) ||
                         d.status.toLowerCase().includes(recentSearchQuery.toLowerCase())
@@ -1214,6 +1302,128 @@ export const TaxPlanning: React.FC = () => {
                </div>
             </div>
          )}
+
+         {/* Add Investment / Start Planning Dialog */}
+         {showStartPlanningDialog && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center">
+               <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowStartPlanningDialog(false)}></div>
+               <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 animate-in zoom-in-95 fade-in duration-200">
+                  <div className="flex items-start justify-between p-6 pb-4">
+                     <h2 className="text-xl font-bold text-slate-800">Add Investment</h2>
+                     <button
+                        onClick={() => setShowStartPlanningDialog(false)}
+                        className="p-1 hover:bg-slate-100 rounded-full transition-colors -mt-1"
+                     >
+                        <X size={20} className="text-slate-500" />
+                     </button>
+                  </div>
+                  <div className="px-6 pb-6 space-y-5">
+                     <p className="text-slate-400 text-sm">Please select how you wish to proceed</p>
+                     <div className="space-y-4">
+                        {hasLastApproved && (
+                           <label className="flex items-center gap-3 cursor-pointer group">
+                              <div
+                                 onClick={() => setStartPlanningOption('use_last')}
+                                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${startPlanningOption === 'use_last' ? 'border-blue-600 bg-white' : 'border-slate-300'}`}
+                              >
+                                 {startPlanningOption === 'use_last' && <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>}
+                              </div>
+                              <span
+                                 onClick={() => setStartPlanningOption('use_last')}
+                                 className="text-slate-700 font-medium text-sm"
+                              >Use last approved request</span>
+                           </label>
+                        )}
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                           <div
+                              onClick={() => setStartPlanningOption('new')}
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${startPlanningOption === 'new' ? 'border-blue-600 bg-white' : 'border-slate-300'}`}
+                           >
+                              {startPlanningOption === 'new' && <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>}
+                           </div>
+                           <span
+                              onClick={() => setStartPlanningOption('new')}
+                              className="text-slate-700 font-medium text-sm"
+                           >Make a new request</span>
+                        </label>
+                     </div>
+                     <button
+                        onClick={() => {
+                           setShowStartPlanningDialog(false);
+                           setIsEditMode(true);
+                           setSelectedHistoryYear(null);
+                           if (startPlanningOption === 'new') {
+                              // Reset to blank form
+                              setDeclarations(DEFAULT_PLANNING_DATA.declarations);
+                              setHraEnabled(DEFAULT_PLANNING_DATA.hraEnabled);
+                              setIsHraSaved(DEFAULT_PLANNING_DATA.isHraSaved);
+                              setRentedHouses([{ fromDate: '', toDate: '', monthlyRent: '0', address: '', landlordName: '', landlordPan: '', city: '' }]);
+                              setHomeLoanEnabled(DEFAULT_PLANNING_DATA.homeLoanEnabled);
+                              setIsHomeLoanSaved(DEFAULT_PLANNING_DATA.isHomeLoanSaved);
+                              setHomeLoanDetails(DEFAULT_PLANNING_DATA.homeLoanDetails);
+                              setLetOutEnabled(DEFAULT_PLANNING_DATA.letOutEnabled);
+                              setIsLetOutSaved(DEFAULT_PLANNING_DATA.isLetOutSaved);
+                              setLetOutProperties(DEFAULT_PLANNING_DATA.letOutProperties);
+                              setOtherIncomeEnabled(DEFAULT_PLANNING_DATA.otherIncomeEnabled);
+                              setIsOtherIncomeSaved(DEFAULT_PLANNING_DATA.isOtherIncomeSaved);
+                              setOtherIncomeDetails(DEFAULT_PLANNING_DATA.otherIncomeDetails);
+                              setPrevEmploymentEnabled(DEFAULT_PLANNING_DATA.prevEmploymentEnabled);
+                              setIsPrevEmploymentSaved(DEFAULT_PLANNING_DATA.isPrevEmploymentSaved);
+                              setPrevEmploymentDetails(DEFAULT_PLANNING_DATA.prevEmploymentDetails);
+                              setConfirmedInvestmentMode(false);
+                           } else {
+                              // Use last approved request
+                              const lastApproved = sortedRecentDeclarations.find(d => d.status === 'Approved');
+                              const isConfirmed = lastApproved?.type === 'Confirmed Investment';
+                              const mockData = isConfirmed ? LAST_APPROVED_CONFIRMED_DATA : LAST_APPROVED_PROPOSED_DATA;
+                              
+                              setDeclarations(mockData.declarations || DEFAULT_PLANNING_DATA.declarations);
+                              
+                              // Entire data population from mock
+                              setHraEnabled(mockData.hraEnabled ?? DEFAULT_PLANNING_DATA.hraEnabled);
+                              setIsHraSaved(mockData.isHraSaved ?? DEFAULT_PLANNING_DATA.isHraSaved);
+                              if (mockData.rentedHouses) {
+                                 setRentedHouses(mockData.rentedHouses.map(h => ({
+                                    fromDate: (h as any).from || '',
+                                    toDate: (h as any).to || '',
+                                    monthlyRent: String((h as any).amount || 0),
+                                    address: (h as any).address || '',
+                                    landlordName: (h as any).landlord || '',
+                                    landlordPan: (h as any).pan || '',
+                                    city: (h as any).cityType || ''
+                                 })));
+                              } else {
+                                 setRentedHouses(DEFAULT_PLANNING_DATA.rentedHouses.length > 0 ? DEFAULT_PLANNING_DATA.rentedHouses : [{ fromDate: '', toDate: '', monthlyRent: '0', address: '', landlordName: '', landlordPan: '', city: '' }]);
+                               }
+                              
+                              setHomeLoanEnabled(mockData.homeLoanEnabled ?? DEFAULT_PLANNING_DATA.homeLoanEnabled);
+                              setIsHomeLoanSaved(mockData.isHomeLoanSaved ?? DEFAULT_PLANNING_DATA.isHomeLoanSaved);
+                              setHomeLoanDetails(mockData.homeLoanDetails ?? DEFAULT_PLANNING_DATA.homeLoanDetails);
+                              
+                              setLetOutEnabled(mockData.letOutEnabled ?? DEFAULT_PLANNING_DATA.letOutEnabled);
+                              setIsLetOutSaved(mockData.isLetOutSaved ?? DEFAULT_PLANNING_DATA.isLetOutSaved);
+                              setLetOutProperties(mockData.letOutProperties ?? DEFAULT_PLANNING_DATA.letOutProperties);
+                              
+                              setOtherIncomeEnabled(mockData.otherIncomeEnabled ?? DEFAULT_PLANNING_DATA.otherIncomeEnabled);
+                              setIsOtherIncomeSaved(mockData.isOtherIncomeSaved ?? DEFAULT_PLANNING_DATA.isOtherIncomeSaved);
+                              setOtherIncomeDetails(mockData.otherIncomeDetails ?? DEFAULT_PLANNING_DATA.otherIncomeDetails);
+                              
+                              setPrevEmploymentEnabled(mockData.prevEmploymentEnabled ?? DEFAULT_PLANNING_DATA.prevEmploymentEnabled);
+                              setIsPrevEmploymentSaved(mockData.isPrevEmploymentSaved ?? DEFAULT_PLANNING_DATA.isPrevEmploymentSaved);
+                              setPrevEmploymentDetails(mockData.prevEmploymentDetails ?? DEFAULT_PLANNING_DATA.prevEmploymentDetails);
+                              
+                              setConfirmedInvestmentMode(isConfirmed);
+                           }
+                           setView('PLANNING');
+                        }}
+                        className="w-auto px-10 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-blue-100 tracking-wide uppercase"
+                     >
+                        PROCEED
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 
@@ -1296,7 +1506,7 @@ export const TaxPlanning: React.FC = () => {
          <div className="space-y-6 animate-fade-in-up">
             {/* Header */}
             <div className="flex items-center gap-4 mb-2">
-               <button onClick={() => setView('DASHBOARD')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+               <button onClick={() => setView(previousView)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
                   <ArrowLeft size={20} />
                </button>
                <div>
@@ -1999,24 +2209,29 @@ export const TaxPlanning: React.FC = () => {
             <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-4">
                <div className="flex items-center gap-6 divide-x divide-slate-200">
                   <div>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Projected Income</p>
-                     <p className="text-lg font-bold text-slate-800">₹ {taxCalc.grossTotalIncome.toLocaleString()}</p>
-                  </div>
-                  <div className="pl-6">
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Declared Amount</p>
                      <p className="text-lg font-bold text-emerald-600">₹ {taxCalc.totalDeductionsOld.toLocaleString()}</p>
                   </div>
+                  {taxCalc.totalApprovedAmount > 0 && (
+                     <div className="pl-6">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Approved Amount</p>
+                        <p className="text-lg font-bold text-blue-600">₹ {taxCalc.totalApprovedAmount.toLocaleString()}</p>
+                     </div>
+                  )}
                </div>
 
                <div className="flex items-center gap-4">
-                  <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'OLD' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase">Old Tax Liability</p>
-                     <p className={`text-xl font-black ${planningRegime === 'OLD' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.oldRegimeTax.toLocaleString()}</p>
-                  </div>
-                  <div className={`px-4 py-2 rounded-lg border flex flex-col items-center ${planningRegime === 'NEW' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase">New Tax Liability</p>
-                     <p className={`text-xl font-black ${planningRegime === 'NEW' ? 'text-blue-700' : 'text-slate-700'}`}>₹ {taxCalc.newRegimeTax.toLocaleString()}</p>
-                  </div>
+                  <button 
+                     onClick={() => {
+                        setPreviousView(view);
+                        setCalcSalary(ANNUAL_GROSS_SALARY);
+                        setView('CALCULATOR');
+                     }}
+                     className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-blue-700 transition-all flex items-center gap-2"
+                  >
+                     <Calculator size={14} />
+                     Tax Calculator
+                  </button>
                </div>
             </div>
 
@@ -2275,7 +2490,7 @@ export const TaxPlanning: React.FC = () => {
                                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Investment Type</label>
                                  <select
                                     value={row.title}
-                                    disabled={isReadOnly}
+                                    disabled={isReadOnly || isRowLocked(row)}
                                     onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-93%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
                                  >
@@ -2294,7 +2509,7 @@ export const TaxPlanning: React.FC = () => {
                                        type="number"
                                        placeholder="0"
                                        value={row.amount || ''}
-                                       disabled={isReadOnly}
+                                       disabled={isReadOnly || isRowLocked(row)}
                                        onChange={(e) => handleAmountChange(row.id, e.target.value)}
                                        className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
                                     />
@@ -2310,14 +2525,14 @@ export const TaxPlanning: React.FC = () => {
                                              <div key={fIdx} className="bg-white border border-slate-100 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
                                                 <Paperclip size={10} className="text-blue-500" />
                                                 <span className="text-[10px] font-medium text-slate-600 truncate max-w-[80px]">{file}</span>
-                                                {!isReadOnly && (
+                                                {!(isReadOnly || isRowLocked(row)) && (
                                                    <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
                                                       <X size={10} />
                                                    </button>
                                                 )}
                                              </div>
                                           ))}
-                                          {!isReadOnly && (
+                                          {!(isReadOnly || isRowLocked(row)) && (
                                              <button
                                                 onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
                                                 className="w-7 h-7 bg-blue-50 text-blue-600 rounded-md flex items-center justify-center hover:bg-blue-100 transition-colors"
@@ -2328,7 +2543,7 @@ export const TaxPlanning: React.FC = () => {
                                           )}
                                        </div>
                                     ) : (
-                                       !isReadOnly && (
+                                       !(isReadOnly || isRowLocked(row)) && (
                                           <button
                                              onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
                                              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
@@ -2341,7 +2556,7 @@ export const TaxPlanning: React.FC = () => {
                               </div>
 
                               <div className="pt-7">
-                                 {!isReadOnly && (
+                                 {!(isReadOnly || isRowLocked(row)) && (
                                     <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                                        <Trash2 size={18} />
                                     </button>
@@ -2417,7 +2632,7 @@ export const TaxPlanning: React.FC = () => {
                                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Investment Type</label>
                                  <select
                                     value={row.title}
-                                    disabled={isReadOnly}
+                                    disabled={isReadOnly || isRowLocked(row)}
                                     onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-93%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
                                  >
@@ -2436,7 +2651,7 @@ export const TaxPlanning: React.FC = () => {
                                        type="number"
                                        placeholder="0"
                                        value={row.amount || ''}
-                                       disabled={isReadOnly}
+                                       disabled={isReadOnly || isRowLocked(row)}
                                        onChange={(e) => handleAmountChange(row.id, e.target.value)}
                                        className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
                                     />
@@ -2452,14 +2667,14 @@ export const TaxPlanning: React.FC = () => {
                                              <div key={fIdx} className="bg-white border border-slate-100 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
                                                 <Paperclip size={10} className="text-blue-500" />
                                                 <span className="text-[10px] font-medium text-slate-600 truncate max-w-[80px]">{file}</span>
-                                                {!isReadOnly && (
+                                                {!(isReadOnly || isRowLocked(row)) && (
                                                    <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
                                                       <X size={10} />
                                                    </button>
                                                 )}
                                              </div>
                                           ))}
-                                          {!isReadOnly && (
+                                          {!(isReadOnly || isRowLocked(row)) && (
                                              <button
                                                 onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
                                                 className="w-7 h-7 bg-blue-50 text-blue-600 rounded-md flex items-center justify-center hover:bg-blue-100 transition-colors"
@@ -2470,7 +2685,7 @@ export const TaxPlanning: React.FC = () => {
                                           )}
                                        </div>
                                     ) : (
-                                       !isReadOnly && (
+                                       !(isReadOnly || isRowLocked(row)) && (
                                           <button
                                              onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
                                              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
@@ -2483,7 +2698,7 @@ export const TaxPlanning: React.FC = () => {
                               </div>
 
                               <div className="pt-7">
-                                 {!isReadOnly && (
+                                 {!(isReadOnly || isRowLocked(row)) && (
                                     <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                                        <Trash2 size={18} />
                                     </button>
@@ -2545,7 +2760,7 @@ export const TaxPlanning: React.FC = () => {
                                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Investment Type</label>
                                  <select
                                     value={row.title}
-                                    disabled={isReadOnly}
+                                    disabled={isReadOnly || isRowLocked(row)}
                                     onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-93%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
                                  >
@@ -2564,7 +2779,7 @@ export const TaxPlanning: React.FC = () => {
                                        type="number"
                                        placeholder="0"
                                        value={row.amount || ''}
-                                       disabled={isReadOnly}
+                                       disabled={isReadOnly || isRowLocked(row)}
                                        onChange={(e) => handleAmountChange(row.id, e.target.value)}
                                        className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
                                     />
@@ -2580,14 +2795,14 @@ export const TaxPlanning: React.FC = () => {
                                              <div key={fIdx} className="bg-white border border-slate-100 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
                                                 <Paperclip size={10} className="text-blue-500" />
                                                 <span className="text-[10px] font-medium text-slate-600 truncate max-w-[80px]">{file}</span>
-                                                {!isReadOnly && (
+                                                {!(isReadOnly || isRowLocked(row)) && (
                                                    <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
                                                       <X size={10} />
                                                    </button>
                                                 )}
                                              </div>
                                           ))}
-                                          {!isReadOnly && (
+                                          {!(isReadOnly || isRowLocked(row)) && (
                                              <button
                                                 onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
                                                 className="w-7 h-7 bg-blue-50 text-blue-600 rounded-md flex items-center justify-center hover:bg-blue-100 transition-colors"
@@ -2598,7 +2813,7 @@ export const TaxPlanning: React.FC = () => {
                                           )}
                                        </div>
                                     ) : (
-                                       !isReadOnly && (
+                                       !(isReadOnly || isRowLocked(row)) && (
                                           <button
                                              onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
                                              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
@@ -2611,7 +2826,7 @@ export const TaxPlanning: React.FC = () => {
                               </div>
 
                               <div className="pt-7">
-                                 {!isReadOnly && (
+                                 {!(isReadOnly || isRowLocked(row)) && (
                                     <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                                        <Trash2 size={18} />
                                     </button>
@@ -3126,7 +3341,7 @@ export const TaxPlanning: React.FC = () => {
                                        {['80C', '80D', '80CCD', '80E', '80G', '80DDB', 'OTHERS'].includes(section.code) ? (
                                           <select
                                              value={row.title}
-                                             disabled={isReadOnly}
+                                             disabled={isReadOnly || isRowLocked(row)}
                                              onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
                                              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70 appearance-none bg-[url('data:image/svg%2Bxml%3Bcharset%3DUS-ASCII,%3Csvg%2520xmlns%3D%2522http%3A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520width%3D%2522292.4%2522%2520height%3D%2522292.4%2522%3E%253Cpath%2520fill%3D%2522%252364748b%2522%2520d%3D%2522M287%252069.4a17.6%252017.6%25200%25200%25200-13-5.4H18.4c-5%25200-93%25201.8-12.9%25205.4A17.6%252017.6%25200%25200%25200%25200%252082.2c0%25205%25201.8%25209.3%25205.4%252012.9l128%2520127.9c3.6%25203.6%25207.8%25205.4%252012.8%25205.4s9.2-1.8%252012.8-5.4L287%252095c3.5-3.5%25205.4-7.8%25205.4-12.8%25200-5-1.9-9.2-5.5-12.8z%2522%252F%3E%253C%252Fsvg%3E')] bg-[length:12px_12px] bg-[right_1rem_center] bg-no-repeat"
                                           >
@@ -3146,7 +3361,7 @@ export const TaxPlanning: React.FC = () => {
                                              type="text"
                                              placeholder="Investment Description (e.g. LIC Policy #123)"
                                              value={row.title}
-                                             disabled={isReadOnly}
+                                             disabled={isReadOnly || isRowLocked(row)}
                                              onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
                                              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
                                           />
@@ -3159,7 +3374,7 @@ export const TaxPlanning: React.FC = () => {
                                              type="number"
                                              placeholder="0"
                                              value={row.amount || ''}
-                                             disabled={isReadOnly}
+                                             disabled={isReadOnly || isRowLocked(row)}
                                              onChange={(e) => handleAmountChange(row.id, e.target.value)}
                                              className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
                                           />
@@ -3168,7 +3383,7 @@ export const TaxPlanning: React.FC = () => {
                                           <p className="text-[10px] text-rose-500 font-bold mt-1 text-right">{getLimitWarning(row.title, row.amount)}</p>
                                        )}
                                     </div>
-                                    {!isReadOnly && (
+                                    {!(isReadOnly || isRowLocked(row)) && (
                                        <button onClick={() => handleDeleteRow(row.id)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors group">
                                           <Trash2 size={18} />
                                        </button>
@@ -3183,7 +3398,7 @@ export const TaxPlanning: React.FC = () => {
                                           <div key={fIdx} className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 group shadow-sm animate-in zoom-in-95">
                                              <Paperclip size={12} className="text-blue-500" />
                                              <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]">{file}</span>
-                                             {!isReadOnly && (
+                                             {!(isReadOnly || isRowLocked(row)) && (
                                                 <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
                                                    <X size={12} />
                                                 </button>
@@ -3191,7 +3406,7 @@ export const TaxPlanning: React.FC = () => {
                                           </div>
                                        ))}
 
-                                       {!isReadOnly && (
+                                       {!(isReadOnly || isRowLocked(row)) && (
                                           <button
                                              onClick={() => {
                                                 setActiveUploadId(row.id);
