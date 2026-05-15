@@ -710,18 +710,18 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
-                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
                                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'PercentOfCTC' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'PercentOfCTC' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={calcMethod === 'PercentOfCTC'} onChange={() => { setCalcMethod('PercentOfCTC'); setSelectedComponents(['CTC']); }} />
                                     <span className="text-sm text-slate-700 font-medium">Percentage of CTC</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
+                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
                                 </label>
                                 <div className="relative">
                                     <button

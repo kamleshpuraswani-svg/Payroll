@@ -577,7 +577,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <div className="space-y-3">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Calculation Method</label>
                                 <div className="flex p-1.5 bg-slate-100/50 rounded-xl border border-slate-200/60 shadow-inner">
-                                    {['Flat', 'Percentage', 'PercentOfCTC'].map(m => (
+                                    {['Flat', 'PercentOfCTC', 'Percentage'].map(m => (
                                         <button
                                             key={m}
                                             onClick={() => {
