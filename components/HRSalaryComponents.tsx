@@ -68,7 +68,7 @@ interface SalaryComponent {
     category: 'Earnings' | 'Deductions' | 'Benefits' | 'Reimbursements';
     // Additional fields for editing context
     amountOrPercent?: string;
-    calcMethod?: 'Flat' | 'Percentage';
+    calcMethod?: 'Flat' | 'Percentage' | 'PercentOfCTC';
     payslipName?: string;
     frequency?: 'One-time' | 'Recurring';
     // New fields for Earnings list view
@@ -305,7 +305,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
     );
-    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage'>(
+    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage' | 'PercentOfCTC'>(
         initialData?.calcMethod || 'Flat'
     );
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
@@ -361,7 +361,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             calcMethod: natureOfPay === 'Fixed' ? calcMethod : undefined,
             amountOrPercent: natureOfPay === 'Fixed' ? amount : undefined,
             calculation: natureOfPay === 'Fixed'
-                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : `${amount}% of ${selectedComponents.join(', ')}`)
+                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC` : `${amount}% of ${selectedComponents.join(', ')}`))
                 : 'Variable',
             taxable: isTaxable ? taxTreatment : 'Fully Exempt',
             considerEPF: isConsiderEPF,
@@ -716,6 +716,13 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
                                     <span className="text-sm text-slate-700 font-medium">Percentage of</span>
                                 </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'PercentOfCTC' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {calcMethod === 'PercentOfCTC' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={calcMethod === 'PercentOfCTC'} onChange={() => { setCalcMethod('PercentOfCTC'); setSelectedComponents(['CTC']); }} />
+                                    <span className="text-sm text-slate-700 font-medium">Percentage of CTC</span>
+                                </label>
                                 <div className="relative">
                                     <button
                                         type="button"
@@ -760,11 +767,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'} <span className="text-rose-500">*</span></label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} <span className="text-rose-500">*</span></label>
                             <div className="relative max-w-[200px]">
-                                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                                 <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                    {calcMethod === 'Percentage' ? '%' : '₹'}
+                                    {calcMethod === 'Flat' ? '₹' : '%'}
                                 </div>
                             </div>
                         </div>
