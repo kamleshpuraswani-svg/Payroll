@@ -854,18 +854,18 @@ export const RunPayrollModal: React.FC<{
    if (!company) return null;
 
    const handleNext = async () => {
-        if (currentStep === 2) {
+        if (currentStep === 1) {
             await initiatePayrollRun();
         }
-        if (currentStep === 3) {
+        if (currentStep === 2) {
             setShowStep3ConfirmDialog(true);
             return;
         }
-        if (currentStep === 4) {
+        if (currentStep === 3) {
             setShowStep4NextConfirmDialog(true);
             return;
         }
-        setCurrentStep(prev => Math.min(prev + 1, 7));
+        setCurrentStep(prev => Math.min(prev + 1, 6));
     };
 
    const initiatePayrollRun = async () => {
@@ -922,11 +922,11 @@ export const RunPayrollModal: React.FC<{
    };
 
    const handleBack = () => {
-       if (currentStep === 4) {
+       if (currentStep === 3) {
           setShowStep4BackConfirmDialog(true);
           return;
        }
-       if (currentStep === 5) {
+       if (currentStep === 4) {
           setShowStep5BackConfirmDialog(true);
           return;
        }
@@ -1395,12 +1395,12 @@ export const RunPayrollModal: React.FC<{
 
    const renderStepContent = () => {
       switch (currentStep) {
-         case 1: // PERIOD & SCOPE
+         case 1: // PERIOD & SCOPE + EMPLOYEES
             return (
                <div className="w-full space-y-6">
                   <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3">
                      <Info size={18} className="mt-0.5 shrink-0 text-blue-600" />
-                     <p>Please select the <strong>Payroll Period</strong> and at least one <strong>Business Unit</strong> to proceed to the next steps.</p>
+                     <p>Please select the <strong>Payroll Period</strong> and at least one <strong>Business Unit</strong> to confirm eligible employees.</p>
                   </div>
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row w-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
                      <div className="p-6 w-full lg:w-1/2">
@@ -1447,141 +1447,139 @@ export const RunPayrollModal: React.FC<{
                         </div>
                      </div>
                   </div>
-               </div>
-            );
 
-         case 2: // EMPLOYEES
-            return (
-               <div className="w-full space-y-6">
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-                     <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4">
-                        <div className="flex justify-between items-center">
-                           <h3 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
-                              <Users size={16} className="text-sky-600" /> Select Employees
-                           </h3>
-                           <div className="flex gap-2">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded border border-amber-100"><AlertTriangle size={12} /> {onHoldCount} On Hold</span>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <div className="relative flex-1">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                              <input
-                                 type="text"
-                                 value={empSearch}
-                                 onChange={(e) => setEmpSearch(e.target.value)}
-                                 placeholder="Search employees by name or ID..."
-                                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                              />
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="flex-1 overflow-y-auto">
-                        <table className="w-full text-left text-sm border-collapse">
-                           <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
-                              <tr>
-                                 <th className="px-4 py-3">Employee Name</th>
-                                 <th className="px-4 py-3">Employee ID</th>
-                                 <th className="px-4 py-3">Employee Status</th>
-                                 <th className="px-4 py-3">Designation</th>
-                                 <th className="px-4 py-3">Department</th>
-                                 {!readOnly && <th className="px-4 py-3 text-right">Action</th>}
-                              </tr>
-                           </thead>
-                           <tbody className="divide-y divide-slate-100">
-                              {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
-                                 <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
-                                    <td className="px-4 py-3">
-                                       <div className="flex items-center gap-3">
-                                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
-                                             <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
-                                          </div>
-                                          <div>
-                                             <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
-                                          </div>
-                                       </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
-                                    <td className="px-4 py-3">
-                                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                                          emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                          emp.status === 'New Joinee' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                          emp.status === 'On Notice' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                          'bg-slate-50 text-slate-500 border-slate-100'
-                                       }`}>
-                                          {emp.status || 'Active'}
-                                       </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
-                                    <td className="px-4 py-3 text-slate-500">{emp.department}</td>
-                                    {!readOnly && (
-                                       <td className="px-4 py-3 text-right">
-                                          <button
-                                             onClick={() => toggleHold(emp.id)}
-                                             className={`p-1.5 rounded-lg border transition-colors ${emp.payrollStatus === 'Eligible'
-                                                ? 'bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200'
-                                                : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100'
-                                                }`}
-                                             title={emp.payrollStatus === 'Eligible' ? "Keep On Hold" : "Remove Hold"}
-                                          >
-                                             {emp.payrollStatus === 'Eligible' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
-                                          </button>
-                                       </td>
-                                    )}
-                                 </tr>
-                              ))}
-                              {filteredEmployees.length === 0 && (
-                                 <tr>
-                                    <td colSpan={readOnly ? 4 : 5} className="px-6 py-12 text-center text-slate-400 italic">
-                                       No employees found matching "{empSearch}"
-                                    </td>
-                                 </tr>
-                              )}
-                           </tbody>
-                        </table>
-                     </div>
-
-                     {/* Pagination Controls */}
-                     {filteredEmployees.length > empRowsPerPage && (
-                        <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
-                           <div className="text-xs text-slate-500">
-                              Showing <span className="font-bold text-slate-700">{((empPage - 1) * empRowsPerPage) + 1}</span> to <span className="font-bold text-slate-700">{Math.min(empPage * empRowsPerPage, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
-                           </div>
-                           <div className="flex items-center gap-2">
-                              <button
-                                 onClick={() => setEmpPage(prev => Math.max(1, prev - 1))}
-                                 disabled={empPage === 1}
-                                 className={`p-2 rounded-lg border transition-all ${empPage === 1 ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
-                              >
-                                 <ChevronLeft size={16} />
-                              </button>
-                              <div className="flex items-center gap-1">
-                                 {Array.from({ length: Math.ceil(filteredEmployees.length / empRowsPerPage) }).map((_, i) => (
-                                    <button
-                                       key={i}
-                                       onClick={() => setEmpPage(i + 1)}
-                                       className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${empPage === i + 1 ? 'bg-sky-600 text-white shadow-md shadow-sky-100' : 'text-slate-500 hover:bg-slate-50'}`}
-                                    >
-                                       {i + 1}
-                                    </button>
-                                 ))}
+                  {/* Employee List - Only shown after BU selection */}
+                  {selectedBUs.length > 0 && (
+                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px] animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4">
+                           <div className="flex justify-between items-center">
+                              <h3 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
+                                 <Users size={16} className="text-sky-600" /> Select Employees
+                              </h3>
+                              <div className="flex gap-2">
+                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded border border-amber-100"><AlertTriangle size={12} /> {onHoldCount} On Hold</span>
                               </div>
-                              <button
-                                 onClick={() => setEmpPage(prev => Math.min(Math.ceil(filteredEmployees.length / empRowsPerPage), prev + 1))}
-                                 disabled={empPage === Math.ceil(filteredEmployees.length / empRowsPerPage)}
-                                 className={`p-2 rounded-lg border transition-all ${empPage === Math.ceil(filteredEmployees.length / empRowsPerPage) ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
-                              >
-                                 <ChevronRight size={16} />
-                              </button>
+                           </div>
+                           <div className="flex items-center gap-3">
+                              <div className="relative flex-1">
+                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                 <input
+                                    type="text"
+                                    value={empSearch}
+                                    onChange={(e) => setEmpSearch(e.target.value)}
+                                    placeholder="Search employees by name or ID..."
+                                    className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                                 />
+                              </div>
                            </div>
                         </div>
-                     )}
-                  </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                           <table className="w-full text-left text-sm border-collapse">
+                              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
+                                 <tr>
+                                    <th className="px-4 py-3">Employee Name</th>
+                                    <th className="px-4 py-3">Employee ID</th>
+                                    <th className="px-4 py-3">Employee Status</th>
+                                    <th className="px-4 py-3">Designation</th>
+                                    <th className="px-4 py-3">Department</th>
+                                    {!readOnly && <th className="px-4 py-3 text-right">Action</th>}
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                 {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
+                                    <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
+                                       <td className="px-4 py-3">
+                                          <div className="flex items-center gap-3">
+                                             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
+                                                <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
+                                             </div>
+                                             <div>
+                                                <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
+                                             </div>
+                                          </div>
+                                       </td>
+                                       <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
+                                       <td className="px-4 py-3">
+                                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                             emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                             emp.status === 'New Joinee' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                             emp.status === 'On Notice' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                             'bg-slate-50 text-slate-500 border-slate-100'
+                                          }`}>
+                                             {emp.status || 'Active'}
+                                          </span>
+                                       </td>
+                                       <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
+                                       <td className="px-4 py-3 text-slate-500">{emp.department}</td>
+                                       {!readOnly && (
+                                          <td className="px-4 py-3 text-right">
+                                             <button
+                                                onClick={() => toggleHold(emp.id)}
+                                                className={`p-1.5 rounded-lg border transition-colors ${emp.payrollStatus === 'Eligible'
+                                                   ? 'bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200'
+                                                   : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100'
+                                                   }`}
+                                                title={emp.payrollStatus === 'Eligible' ? "Keep On Hold" : "Remove Hold"}
+                                             >
+                                                {emp.payrollStatus === 'Eligible' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
+                                             </button>
+                                          </td>
+                                       )}
+                                    </tr>
+                                 ))}
+                                 {filteredEmployees.length === 0 && (
+                                    <tr>
+                                       <td colSpan={readOnly ? 4 : 5} className="px-6 py-12 text-center text-slate-400 italic">
+                                          No employees found matching "{empSearch}"
+                                       </td>
+                                    </tr>
+                                 )}
+                              </tbody>
+                           </table>
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {filteredEmployees.length > empRowsPerPage && (
+                           <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
+                              <div className="text-xs text-slate-500">
+                                 Showing <span className="font-bold text-slate-700">{((empPage - 1) * empRowsPerPage) + 1}</span> to <span className="font-bold text-slate-700">{Math.min(empPage * empRowsPerPage, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <button
+                                    onClick={() => setEmpPage(prev => Math.max(1, prev - 1))}
+                                    disabled={empPage === 1}
+                                    className={`p-2 rounded-lg border transition-all ${empPage === 1 ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
+                                 >
+                                    <ChevronLeft size={16} />
+                                 </button>
+                                 <div className="flex items-center gap-1">
+                                    {Array.from({ length: Math.ceil(filteredEmployees.length / empRowsPerPage) }).map((_, i) => (
+                                       <button
+                                          key={i}
+                                          onClick={() => setEmpPage(i + 1)}
+                                          className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${empPage === i + 1 ? 'bg-sky-600 text-white shadow-md shadow-sky-100' : 'text-slate-500 hover:bg-slate-50'}`}
+                                       >
+                                          {i + 1}
+                                       </button>
+                                    ))}
+                                 </div>
+                                 <button
+                                    onClick={() => setEmpPage(prev => Math.min(Math.ceil(filteredEmployees.length / empRowsPerPage), prev + 1))}
+                                    disabled={empPage === Math.ceil(filteredEmployees.length / empRowsPerPage)}
+                                    className={`p-2 rounded-lg border transition-all ${empPage === Math.ceil(filteredEmployees.length / empRowsPerPage) ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
+                                 >
+                                    <ChevronRight size={16} />
+                                 </button>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                  )}
                </div>
             );
 
-         case 3: // ATTENDANCE
+         case 2: // ATTENDANCE
             return (
                <div className="w-full space-y-6">
                   <div className="flex items-center justify-between">
@@ -1678,7 +1676,7 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 4: // ADJUSTMENTS
+         case 3: // ADJUSTMENTS
             return (
                <div className="flex flex-col h-full space-y-4">
 
@@ -2175,7 +2173,7 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 5: // REVIEW
+         case 4: // REVIEW
             return (
                <div className="w-full space-y-6 pb-20">
                    {/* KPI Summary - 3 Cards */}
@@ -2318,7 +2316,7 @@ export const RunPayrollModal: React.FC<{
                 </div>
             );
 
-         case 6: // FINALIZE
+         case 5: // FINALIZE
             return (
                <div className="w-full space-y-8">
 
@@ -2461,7 +2459,7 @@ export const RunPayrollModal: React.FC<{
                </div>
             );
 
-         case 7: // DISBURSE
+         case 6: // DISBURSE
             return (
                <div className="space-y-6">
                   <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
@@ -2547,12 +2545,11 @@ export const RunPayrollModal: React.FC<{
 
    const getStepButtonLabel = () => {
       switch (currentStep) {
-         case 1: return 'Next: Employees';
-         case 2: return 'Next: Attendance';
-         case 3: return 'Next: Adjustments';
-         case 4: return 'Next: Review';
-         case 5: return 'Next: Finalize';
-         case 6: return 'Next: Disburse';
+         case 1: return 'Next: Attendance';
+         case 2: return 'Next: Adjustments';
+         case 3: return 'Next: Review';
+         case 4: return 'Next: Finalize';
+         case 5: return 'Next: Disburse';
          default: return 'Next Step';
       }
    };
@@ -2560,33 +2557,30 @@ export const RunPayrollModal: React.FC<{
    const ModalContainer = isPage ? React.Fragment : 'div';
    const containerProps = isPage ? {} : { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200" };
    const stepDescriptions: Record<number, string> = {
-      1: 'Select Month, Year, and Business Unit',
-      2: 'Filter, search, and confirm the list of eligible/on-hold employees.',
-      3: 'Leaves & working days',
-      4: 'Arrears & deductions',
-      5: 'Final salary register',
-      6: 'Totals & approvals',
-      7: 'Payslips & bank sheet'
+      1: 'Select Month, Year, Business Unit and verify Employees',
+      2: 'Leaves & working days',
+      3: 'Arrears & deductions',
+      4: 'Final salary register',
+      5: 'Totals & approvals',
+      6: 'Payslips & bank sheet'
    };
 
    const stepTitles: Record<number, string> = {
       1: 'Period & Scope',
-      2: 'Employees',
-      3: 'Attendance & Time Data',
-      4: 'Salary Adjustments',
-      5: 'Review & Verify',
-      6: 'Finalize & Lock',
-      7: 'Disburse Salaries'
+      2: 'Attendance & Time Data',
+      3: 'Salary Adjustments',
+      4: 'Review & Verify',
+      5: 'Finalize & Lock',
+      6: 'Disburse Salaries'
    };
 
    const stepSubtitles: Record<number, string> = {
-      1: 'Select Month, Year, and Business Unit',
-      2: 'Filter, search, and confirm the list of eligible/on-hold employees.',
-      3: 'Review imported biometric attendance and verify paydays.',
-      4: 'Add bonuses, recover LOPs, or process ad-hoc deductions.',
-      5: 'Preview final salary calculations before locking.',
-      6: 'Approve payroll totals to lock editing and generate files.',
-      7: 'Distribute payslips and process bank transfer file.'
+      1: 'Select Month, Year, and Business Unit to confirm eligible employees',
+      2: 'Review imported biometric attendance and verify paydays.',
+      3: 'Add bonuses, recover LOPs, or process ad-hoc deductions.',
+      4: 'Preview final salary calculations before locking.',
+      5: 'Approve payroll totals to lock editing and generate files.',
+      6: 'Distribute payslips and process bank transfer file.'
    };
 
    const innerContent = (
@@ -2617,12 +2611,11 @@ export const RunPayrollModal: React.FC<{
                    
                    {[
                       { id: 1, label: 'Period & Scope' },
-                      { id: 2, label: 'Employees' },
-                      { id: 3, label: 'Attendance' },
-                      { id: 4, label: 'Adjustments' },
-                      { id: 5, label: 'Review' },
-                      { id: 6, label: 'Finalise' },
-                      { id: 7, label: 'Disburse' }
+                      { id: 2, label: 'Attendance' },
+                      { id: 3, label: 'Adjustments' },
+                      { id: 4, label: 'Review' },
+                      { id: 5, label: 'Finalise' },
+                      { id: 6, label: 'Disburse' }
                    ].map((step) => {
                       const isActive = step.id === currentStep;
                       const isCompleted = step.id < currentStep;
@@ -2662,13 +2655,13 @@ export const RunPayrollModal: React.FC<{
 
                  {/* Sticky Footer */}
                  <div className="bg-white border-t border-slate-200 px-8 py-5 flex justify-between items-center shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] sticky bottom-0 z-20">
-                     {currentStep > 1 && currentStep < 7 ? (
+                     {currentStep > 1 && currentStep < 6 ? (
                         <button onClick={handleBack} className="px-6 py-2.5 text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm">
                            <ChevronLeft size={16} /> Back
                         </button>
                      ) : <div />}
                      
-                     {currentStep === 6 ? (
+                     {currentStep === 5 ? (
                         <div className="flex gap-3">
                            {isConfirmed && !readOnly && (
                               <button
@@ -2686,13 +2679,13 @@ export const RunPayrollModal: React.FC<{
                               <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
                            </button>
                         </div>
-                     ) : currentStep === 7 ? (
+                     ) : currentStep === 6 ? (
                         <button onClick={onClose} className="px-8 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all">
                            Finish <CheckCircle size={16} />
                         </button>
                      ) : (
                         <button
-                           onClick={currentStep === 3 ? () => setShowStep3ConfirmDialog(true) : handleNext}
+                           onClick={currentStep === 2 ? () => setShowStep3ConfirmDialog(true) : handleNext}
                            disabled={currentStep === 1 && selectedBUs.length === 0}
                            className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:shadow-none"
                         >

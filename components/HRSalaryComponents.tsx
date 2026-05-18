@@ -68,7 +68,7 @@ interface SalaryComponent {
     category: 'Earnings' | 'Deductions' | 'Benefits' | 'Reimbursements';
     // Additional fields for editing context
     amountOrPercent?: string;
-    calcMethod?: 'Flat' | 'Percentage' | 'PercentOfCTC';
+    calcMethod?: 'Flat' | 'Percentage' | 'PercentOfCTC' | 'Balancing';
     payslipName?: string;
     frequency?: 'One-time' | 'Recurring';
     // New fields for Earnings list view
@@ -305,7 +305,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
     );
-    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage' | 'PercentOfCTC'>(
+    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage' | 'PercentOfCTC' | 'Balancing'>(
         initialData?.calcMethod || 'Flat'
     );
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
@@ -361,7 +361,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             calcMethod: natureOfPay === 'Fixed' ? calcMethod : undefined,
             amountOrPercent: natureOfPay === 'Fixed' ? amount : undefined,
             calculation: natureOfPay === 'Fixed'
-                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC` : `${amount}% of ${selectedComponents.join(', ')}`))
+                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC` : (calcMethod === 'Balancing' ? 'Balancing Component' : `${amount}% of ${selectedComponents.join(', ')}`)))
                 : 'Variable',
             taxable: isTaxable ? taxTreatment : 'Fully Exempt',
             considerEPF: isConsiderEPF,
@@ -703,21 +703,28 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
                             <div className="flex items-center gap-6 h-[42px]">
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
                                     <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'PercentOfCTC' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'Balancing' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                        {calcMethod === 'Balancing' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                    </div>
+                                    <input type="radio" className="hidden" checked={calcMethod === 'Balancing'} onChange={() => { setCalcMethod('Balancing'); setAmount('0'); }} />
+                                    <span className="text-sm text-slate-700 font-medium">Balancing Component.</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'PercentOfCTC' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'PercentOfCTC' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={calcMethod === 'PercentOfCTC'} onChange={() => { setCalcMethod('PercentOfCTC'); setSelectedComponents(['CTC']); }} />
                                     <span className="text-sm text-slate-700 font-medium">Percentage of CTC</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
+                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
                                         {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                     </div>
                                     <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
@@ -766,16 +773,30 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} <span className="text-rose-500">*</span></label>
-                            <div className="relative max-w-[200px]">
-                                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
-                                <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                    {calcMethod === 'Flat' ? '₹' : '%'}
+                        {calcMethod !== 'Balancing' && (
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} <span className="text-rose-500">*</span></label>
+                                <div className="relative max-w-[200px]">
+                                    <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                                    <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                        {calcMethod === 'Flat' ? '₹' : '%'}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
+
+                    {calcMethod === 'Balancing' && (
+                        <div className="bg-sky-50 border border-sky-100 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex gap-3">
+                                <Info className="text-sky-500 shrink-0" size={18} />
+                                <p className="text-xs text-sky-800 leading-relaxed font-medium">
+                                    This is a Balancing Component. System will automatically calculate this value as the remainder needed to reach the Total CTC. 
+                                    <span className="block mt-1 font-bold">Formula = Total Annual Gross - (Sum of all other components in Earnings)</span>
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
 
 
