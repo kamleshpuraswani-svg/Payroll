@@ -55,14 +55,15 @@ interface PastPayroll {
     status: 'Paid' | 'Locked' | 'Draft' | 'Failed';
     createdBy: string;
     lastModifiedBy: string;
+    payrollType?: 'Regular Monthly' | 'F&F Settlement';
 }
 
 const MOCK_HISTORY: PastPayroll[] = [
-    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.40 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
-    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.38 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
-    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.36 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
-    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', totalDeductions: '₹ 41.00 L', netPay: '₹ 1.34 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
-    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', totalDeductions: '₹ 40.00 L', netPay: '₹ 1.32 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager' },
+    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.40 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.38 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.36 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', totalDeductions: '₹ 41.00 L', netPay: '₹ 1.34 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', totalDeductions: '₹ 40.00 L', netPay: '₹ 1.32 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
 ];
 
 const MOCK_24Q_HISTORY = [
@@ -949,6 +950,11 @@ const PayrollManager: React.FC = () => {
     const [showForm16Modal, setShowForm16Modal] = useState(false);
     const [unlockedPayrolls, setUnlockedPayrolls] = useState<string[]>([]);
     const [wizardBU, setWizardBU] = useState<string[]>([]);
+    const [novPayrollStatus, setNovPayrollStatus] = useState<'Draft' | 'Locked' | 'Paid'>('Draft');
+    const [novPayrollType, setNovPayrollType] = useState<'Regular Monthly' | 'F&F Settlement'>('Regular Monthly');
+    const [wizardReadOnly, setWizardReadOnly] = useState(false);
+    const [wizardInitialStep, setWizardInitialStep] = useState(1);
+    const [unlockedRegularMonthly, setUnlockedRegularMonthly] = useState(false);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -961,16 +967,36 @@ const PayrollManager: React.FC = () => {
     };
 
     const handleUnlockConfirm = () => {
-        if (showUnlockModal) {
+        if (showUnlockModal === 'Nov 2025') {
+            setNovPayrollStatus('Draft');
+            if (novPayrollType === 'Regular Monthly') {
+                setWizardBU(['Mindinventory', '300 Minds']);
+                setWizardInitialStep(3);
+                setUnlockedRegularMonthly(true);
+                setWizardReadOnly(false);
+                setView('WIZARD');
+            }
+        } else if (showUnlockModal) {
+            const payroll = MOCK_HISTORY.find(p => p.id === showUnlockModal);
             setUnlockedPayrolls([...unlockedPayrolls, showUnlockModal]);
+            if (payroll && (payroll.payrollType === 'Regular Monthly' || !payroll.payrollType)) {
+                const bus = payroll.businessUnit.split(',').map(s => s.trim());
+                setWizardBU(bus);
+                setWizardInitialStep(3);
+                setUnlockedRegularMonthly(true);
+                setWizardReadOnly(false);
+                setView('WIZARD');
+            }
         }
         setShowUnlockModal(null);
     };
 
     const handleLockConfirm = () => {
+        if (showLockModal === 'Nov 2025') {
+            setNovPayrollStatus('Locked');
+        }
         setShowLockModal(null);
-        // In real app, would trigger locking logic
-    }
+    };
 
     if (view === 'WIZARD') {
         return (
@@ -979,6 +1005,11 @@ const PayrollManager: React.FC = () => {
                 company={MOCK_COMPANIES[0]}
                 onClose={() => setView('HISTORY')}
                 initialBusinessUnits={wizardBU}
+                readOnly={wizardReadOnly}
+                onStatusChange={setNovPayrollStatus}
+                onTypeChange={setNovPayrollType}
+                initialStep={wizardInitialStep}
+                unlockedRegularMonthly={unlockedRegularMonthly}
             />
         );
     }
@@ -993,7 +1024,7 @@ const PayrollManager: React.FC = () => {
                     <p className="text-slate-500 mt-1">Review past disbursements and manage current payroll processing.</p>
                 </div>
                 <button
-                    onClick={() => { setWizardBU([]); setView('WIZARD'); }}
+                    onClick={() => { setWizardBU([]); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
                     className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
                 >
                     <Plus size={20} /> Initiate Payroll
@@ -1115,6 +1146,7 @@ const PayrollManager: React.FC = () => {
                             <tr>
                                 <th className="px-8 py-4">Payroll Month</th>
                                 <th className="px-6 py-4">Business Unit</th>
+                                <th className="px-6 py-4">Payroll Type</th>
                                 <th className="px-6 py-4">Employees</th>
                                 <th className="px-6 py-4">Total Gross</th>
                                 <th className="px-6 py-4">Total Deductions</th>
@@ -1133,44 +1165,72 @@ const PayrollManager: React.FC = () => {
                                         <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold shadow-sm">N</div>
                                         <div>
                                             <div className="font-black text-slate-800">November 2025</div>
-                                            <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">In Progress</div>
+                                            <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
+                                                {novPayrollStatus === 'Locked' ? 'Locked' : 'In Progress'}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-5">
                                     <div className="text-sm font-bold text-slate-700">Mindinventory, 300 Minds</div>
                                 </td>
+                                <td className="px-6 py-5">
+                                    <div className="text-sm font-medium text-slate-600">{novPayrollType}</div>
+                                </td>
                                 <td className="px-6 py-5 font-bold text-slate-600">452</td>
                                 <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
                                 <td className="px-6 py-5 font-bold text-rose-600">₹ 43.00 L</td>
                                 <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
                                 <td className="px-6 py-5">
-                                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100">Draft</span>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(novPayrollStatus)}`}>
+                                        {novPayrollStatus}
+                                    </span>
                                 </td>
                                 <td className="px-6 py-5 text-slate-600 font-medium text-xs">Admin</td>
                                 <td className="px-6 py-5 text-slate-600 font-medium text-xs">HR Manager</td>
                                 <td className="px-6 py-5 text-right pr-8">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setView('WIZARD'); }}
-                                            className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                            title="Edit Draft"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => setShowLockModal('Nov 2025')}
-                                            className="p-2 hover:bg-white hover:text-emerald-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                            title="Lock Payroll"
-                                        >
-                                            <Lock size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setView('WIZARD'); }}
-                                            className="px-4 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-black hover:bg-purple-700 transition-all flex items-center gap-1.5 ml-2 shadow-md shadow-purple-100"
-                                        >
-                                            Continue <ArrowRight size={14} />
-                                        </button>
+                                        {novPayrollStatus === 'Locked' ? (
+                                            <>
+                                                <button
+                                                    onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(true); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                    className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                    title="View Details"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowUnlockModal('Nov 2025')}
+                                                    className="p-2 hover:bg-white hover:text-amber-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                    title="Unlock to Edit"
+                                                >
+                                                    <Unlock size={16} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                    className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                    title="Edit Draft"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowLockModal('Nov 2025')}
+                                                    className="p-2 hover:bg-white hover:text-emerald-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                    title="Lock Payroll"
+                                                >
+                                                    <Lock size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                    className="px-4 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-black hover:bg-purple-700 transition-all flex items-center gap-1.5 ml-2 shadow-md shadow-purple-100"
+                                                >
+                                                    Continue <ArrowRight size={14} />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -1188,6 +1248,9 @@ const PayrollManager: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="text-sm font-medium text-slate-600">{payroll.businessUnit}</div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="text-sm font-medium text-slate-600">{payroll.payrollType || 'Regular Monthly'}</div>
                                     </td>
                                     <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
                                     <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
@@ -1214,6 +1277,9 @@ const PayrollManager: React.FC = () => {
                                                     onClick={() => {
                                                         const bus = payroll.businessUnit.split(',').map(s => s.trim());
                                                         setWizardBU(bus);
+                                                        setWizardInitialStep(1);
+                                                        setUnlockedRegularMonthly(false);
+                                                        setWizardReadOnly(false);
                                                         setView('WIZARD');
                                                     }}
                                                     className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"

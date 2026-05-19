@@ -121,8 +121,9 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
     // Tab State
     const [activeTab, setActiveTab] = useState<'Configuration' | 'History'>('Configuration');
 
-    // Form State
-    const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>(initialData?.frequency || 'Weekly');
+    const [frequency, setFrequency] = useState<'Monthly' | 'Weekly' | 'Semi-Monthly'>(
+        initialData?.frequency || (userRole === 'HR_MANAGER' ? 'Monthly' : 'Weekly')
+    );
     const [weeklyPayDay, setWeeklyPayDay] = useState(() => {
         if (initialData?.weeklyPayDay) return initialData.weeklyPayDay;
         if (initialData?.frequency === 'Weekly' && initialData?.payDate?.startsWith('Every ')) {
@@ -1694,21 +1695,27 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [deactivatingSchedule, setDeactivatingSchedule] = useState<PaySchedule | null>(null);
 
     const filteredSchedules = useMemo(() => {
-        if (selectedTarget === 'all') return schedules;
+        let result = schedules;
+        if (selectedTarget !== 'all') {
+            const [type, id] = selectedTarget.split(':');
+            const targetType = type === 'pg' ? 'Paygroup' : 'BusinessUnit';
+            const savedForTarget = schedules.filter(s => s.targetType === targetType && s.targetId === id);
 
-        const [type, id] = selectedTarget.split(':');
-        const targetType = type === 'pg' ? 'Paygroup' : 'BusinessUnit';
-        
-        const savedForTarget = schedules.filter(s => s.targetType === targetType && s.targetId === id);
-
-        if (userRole === 'HR_MANAGER') {
-            return MOCK_SCHEDULES.map(mock => {
-                const saved = savedForTarget.find(s => s.frequency === mock.frequency);
-                return saved ? { ...saved } : { ...mock, id: `mock-${mock.frequency}-${id}`, status: 'Inactive' as const, targetId: id, targetType };
-            });
+            if (userRole === 'HR_MANAGER') {
+                result = MOCK_SCHEDULES.map(mock => {
+                    const saved = savedForTarget.find(s => s.frequency === mock.frequency);
+                    return saved ? { ...saved } : { ...mock, id: `mock-${mock.frequency}-${id}`, status: 'Inactive' as const, targetId: id, targetType };
+                });
+            } else {
+                result = savedForTarget;
+            }
         }
 
-        return savedForTarget;
+        if (userRole === 'HR_MANAGER') {
+            return result.filter(s => s.frequency !== 'Weekly' && s.frequency !== 'Semi-Monthly');
+        }
+
+        return result;
     }, [schedules, selectedTarget, userRole]);
 
     const fetchConfig = async () => {

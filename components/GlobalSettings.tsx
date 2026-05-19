@@ -58,9 +58,11 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'pf-tds', label: 'PF & TDS Settings', icon: Landmark },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
-      { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
-      { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
-      { id: 'fnf-settlement', label: 'F&F Settlement Payslip - DNU', icon: FileText },
+      ...(userRole === 'HR_MANAGER' ? [] : [
+         { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
+         { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
+         { id: 'fnf-settlement', label: 'F&F Settlement Payslip - DNU', icon: FileText },
+      ]),
    ];
 
    const renderContent = () => {
