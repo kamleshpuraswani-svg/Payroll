@@ -269,7 +269,7 @@ export const PayrollAlertsModal: React.FC<{ isOpen: boolean; onClose: () => void
 };
 
 // --- Payroll On-hold Panel ---
-export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void; userRole?: string }> = ({ isOpen, onClose, userRole }) => {
    if (!isOpen) return null;
 
    const onHoldEmployees = [
@@ -359,7 +359,9 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
                               <p className="text-sm font-bold text-slate-700">{emp.lwd}</p>
                            </div>
                            <div>
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hold Since</p>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                                 {userRole === 'HR_MANAGER' ? 'Hold Month' : 'Hold Since'}
+                              </p>
                               <p className="text-sm font-bold text-slate-700">{emp.holdSince}</p>
                            </div>
                            <div className="col-span-2 p-3 bg-rose-50/50 border border-rose-100/50 rounded-xl">
@@ -385,7 +387,11 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
             <div className="p-6 border-t border-slate-100 bg-white shrink-0">
                <button
                   onClick={onClose}
-                  className="w-full py-3.5 bg-slate-900 text-white text-sm font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group"
+                  className={`w-full py-3.5 text-white text-sm font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2 group ${
+                     userRole === 'HR_MANAGER'
+                        ? 'bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-100'
+                        : 'bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-200'
+                  }`}
                >
                   Close <X size={16} className="text-slate-500 group-hover:rotate-90 transition-transform" />
                </button>

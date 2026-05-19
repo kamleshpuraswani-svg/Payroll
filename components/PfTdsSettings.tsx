@@ -12,7 +12,7 @@ const BUSINESS_UNITS = [
     "CollabCRM"
 ];
 
-const PfTdsSettings: React.FC = () => {
+const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     // Selection State
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
     const [paygroups, setPaygroups] = useState<any[]>([]);
@@ -321,7 +321,9 @@ const PfTdsSettings: React.FC = () => {
                                                         </div>
 
                                                         <div className="flex items-center gap-3">
-                                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employee Contribution Rate (%) <span className="text-rose-500">*</span></h4>
+                                                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                                                                {userRole === 'HR_MANAGER' ? 'Employee Contribution Rate (%) (Account 1)' : 'Employee Contribution Rate (%)'} <span className="text-rose-500">*</span>
+                                                            </h4>
                                                             <button onClick={() => setShowBelowLimitModal(true)} className="text-[10px] font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest flex items-center gap-1.5 p-1 hover:bg-sky-50 rounded-lg">
                                                                 <Calculator size={14} /> PF wages below 15000?
                                                             </button>
@@ -496,12 +498,14 @@ const PfTdsSettings: React.FC = () => {
 
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex items-center gap-2">
-                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Employer Contribution Rate <span className="text-rose-500">*</span></h4>
+                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                                                                    {userRole === 'HR_MANAGER' ? 'Employer Contribution Rate (%)' : 'Employer Contribution Rate'} <span className="text-rose-500">*</span>
+                                                                </h4>
                                                             </div>
                                                             <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup</button>
                                                         </div>
                                                         <div className="space-y-4">
-                                                            <div className="relative w-full md:w-80">
+                                                            <div className={`relative w-full ${userRole === 'HR_MANAGER' ? 'md:w-64' : 'md:w-80'}`}>
                                                                 <input 
                                                                     type="text" 
                                                                     value={emprRate} 
@@ -589,7 +593,9 @@ const PfTdsSettings: React.FC = () => {
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                                                                 <div className="space-y-2">
-                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">PF admin charges (%) <span className="text-rose-500">*</span></label>
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">
+                                                                        {userRole === 'HR_MANAGER' ? 'PF admin charges (%) (Account 2)' : 'PF admin charges (%)'} <span className="text-rose-500">*</span>
+                                                                    </label>
                                                                     <div className="relative">
                                                                         <input 
                                                                             type="text" 
@@ -622,7 +628,9 @@ const PfTdsSettings: React.FC = () => {
                                                                 </div>
 
                                                                 <div className="space-y-2">
-                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">EDLI contribution (%) <span className="text-rose-500">*</span></label>
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">
+                                                                        {userRole === 'HR_MANAGER' ? 'EDLI contribution (%) (Account 21)' : 'EDLI contribution (%)'} <span className="text-rose-500">*</span>
+                                                                    </label>
                                                                     <div className="relative">
                                                                         <input 
                                                                             type="text" 
@@ -640,7 +648,9 @@ const PfTdsSettings: React.FC = () => {
                                                                 </div>
 
                                                                 <div className="space-y-2">
-                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">EDLI admin charges (%) <span className="text-rose-500">*</span></label>
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">
+                                                                        {userRole === 'HR_MANAGER' ? 'EDLI admin charges (%) (Account 22)' : 'EDLI admin charges (%)'} <span className="text-rose-500">*</span>
+                                                                    </label>
                                                                     <div className="relative">
                                                                         <input 
                                                                             type="text" 
@@ -1015,7 +1025,9 @@ const PfTdsSettings: React.FC = () => {
                             <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <div>
                                     <h3 className="text-xl font-black text-slate-800 tracking-tight">Employer Rate Splitup</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Statutory Contribution Distribution</p>
+                                    {userRole !== 'HR_MANAGER' && (
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Statutory Contribution Distribution</p>
+                                    )}
                                 </div>
                                 <button onClick={() => setShowSplitupModal(false)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-full transition-colors"><X size={20} /></button>
                             </div>
@@ -1029,21 +1041,27 @@ const PfTdsSettings: React.FC = () => {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         <tr className="group hover:bg-slate-50 transition-colors">
-                                            <td className="px-8 py-5 text-sm font-bold text-slate-700">Employees' Provident Fund (EPF)</td>
-                                            <td className="px-8 py-5 text-sm font-black text-sky-600 text-right">3.67% of Wage</td>
+                                            <td className="px-8 py-5 text-sm font-bold text-slate-700">
+                                                {userRole === 'HR_MANAGER' ? "Employees' Provident Fund (EPF) (Account 1)" : "Employees' Provident Fund (EPF)"}
+                                            </td>
+                                            <td className="px-8 py-5 text-sm font-black text-sky-600 text-right">
+                                                {userRole === 'HR_MANAGER' ? '3.67%' : '3.67% of Wage'}
+                                            </td>
                                         </tr>
                                         <tr className="group hover:bg-slate-50 transition-colors">
-                                            <td className="px-8 py-5 text-sm font-bold text-slate-700">Employees' Pension Scheme (EPS)</td>
+                                            <td className="px-8 py-5 text-sm font-bold text-slate-700">
+                                                {userRole === 'HR_MANAGER' ? "Employees' Pension Scheme (EPS) (Account 10)" : "Employees' Pension Scheme (EPS)"}
+                                            </td>
                                             <td className="px-8 py-5 text-sm font-black text-indigo-600 text-right flex items-center justify-end gap-2">
-                                                8.33% of Wage
-                                                <Info size={14} className="text-slate-300" />
+                                                {userRole === 'HR_MANAGER' ? '8.33%' : '8.33% of Wage'}
+                                                {userRole !== 'HR_MANAGER' && <Info size={14} className="text-slate-300" />}
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
-                                <button onClick={() => setShowSplitupModal(false)} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all uppercase tracking-widest">Close</button>
+                                <button onClick={() => setShowSplitupModal(false)} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all uppercase tracking-widest">Close</button>
                             </div>
                         </div>
                     </div>

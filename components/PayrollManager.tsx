@@ -938,7 +938,11 @@ const Form24QModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     );
 };
 
-const PayrollManager: React.FC = () => {
+interface PayrollManagerProps {
+    userRole?: string;
+}
+
+const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
     const [view, setView] = useState<'HISTORY' | 'WIZARD'>('HISTORY');
     const [showUnlockModal, setShowUnlockModal] = useState<string | null>(null);
     const [showLockModal, setShowLockModal] = useState<string | null>(null);
@@ -1086,9 +1090,11 @@ const PayrollManager: React.FC = () => {
                         </button>
                     </div>
                     <p className="text-xl font-bold text-slate-800">3 Employees</p>
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-amber-600">
-                        <PauseCircle size={14} /> Verification Pending
-                    </div>
+                    {userRole !== 'HR_MANAGER' && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-amber-600">
+                            <PauseCircle size={14} /> Verification Pending
+                        </div>
+                    )}
                 </div>
 
                 {/* Form 24Q TDS Return Card */}
@@ -1331,6 +1337,7 @@ const PayrollManager: React.FC = () => {
             <PayrollOnHoldPanel
                 isOpen={showOnHoldPanel}
                 onClose={() => setShowOnHoldPanel(false)}
+                userRole={userRole}
             />
 
             {/* Form 24Q Details Modal */}

@@ -244,7 +244,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_DASHBOARD && <HRDashboard />}
                 {currentView === ViewState.HR_EMPLOYEES && <Workforce />}
                 {currentView === ViewState.TAX_DECLARATIONS && <TaxDeclarationsManagement />}
-                {currentView === ViewState.HR_PAYROLL_RUN && <PayrollManager />}
+                {currentView === ViewState.HR_PAYROLL_RUN && <PayrollManager userRole={userRole} />}
                 {currentView === ViewState.PAYROLL_APPROVAL && <PayrollApprovalRequests />}
                 {currentView === ViewState.HR_DOCUMENTS && <DocumentsManager />}
                 {currentView === ViewState.HR_EXPENSES && (
