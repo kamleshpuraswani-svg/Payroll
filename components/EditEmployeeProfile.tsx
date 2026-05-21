@@ -40,9 +40,10 @@ interface EditEmployeeProfileProps {
    onBack?: () => void;
    onViewHistory?: () => void;
    isReadOnly?: boolean;
+   userRole?: string;
 }
 
-const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, onBack, onViewHistory, isReadOnly = false }) => {
+const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, onBack, onViewHistory, isReadOnly = false, userRole }) => {
    const [fullName, setFullName] = useState('Loading...');
    const [designation, setDesignation] = useState('');
    const [department, setDepartment] = useState('Engineering');
@@ -58,6 +59,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [aadhaarNumber, setAadhaarNumber] = useState('');
    const [uanNumber, setUanNumber] = useState('');
    const [pfNumber, setPfNumber] = useState('');
+   const [pranNumber, setPranNumber] = useState('');
 
    const [ctc, setCtc] = useState<number>(0);
    const [annualGross, setAnnualGross] = useState<number>(0);
@@ -66,7 +68,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [isSaving, setIsSaving] = useState(false);
    const [selectedStructureId, setSelectedStructureId] = useState('');
    const [effectiveFrom, setEffectiveFrom] = useState('');
-   const [errors, setErrors] = useState<{ effectiveFrom?: string }>({});
+   const [errors, setErrors] = useState<{ effectiveFrom?: string; pranNumber?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
    const [appraisalMonth, setAppraisalMonth] = useState('');
    const [statutoryDeductions, setStatutoryDeductions] = useState({
@@ -276,6 +278,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    }
                    if (configData.config_value.pf_no) {
                       setPfNumber(configData.config_value.pf_no);
+                   }
+                   if (configData.config_value.pran_no) {
+                      setPranNumber(configData.config_value.pran_no);
                    }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
@@ -537,6 +542,15 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          return;
       }
 
+      if (userRole === 'HR_MANAGER') {
+         if (!pranNumber || pranNumber.length !== 12 || !/^\d{12}$/.test(pranNumber)) {
+            setErrors(prev => ({ ...prev, pranNumber: 'PRAN Number must be exactly 12 digits.' }));
+            const errorField = document.getElementById('pran-number-field');
+            errorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+         }
+      }
+
       setIsSaving(true);
       try {
          // 1. Fetch current EID/Company if needed
@@ -583,7 +597,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   ...statutoryDeductions, 
                   arrears_payout_month: arrearsPayoutDate,
                   appraisal_month: appraisalMonth,
-                  pf_no: pfNumber
+                  pf_no: pfNumber,
+                  pran_no: pranNumber
                },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
@@ -814,7 +829,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            { id: 'lwf', label: 'LWF' },
                            { id: 'tds', label: 'TDS/Income Tax' },
                            { id: 'nps', label: 'NPS' }
-                        ].map((comp) => (
+                        ].filter(comp => !(userRole === 'HR_MANAGER' && comp.id === 'tds')).map((comp) => (
                            <label key={comp.id} className="flex items-center gap-2.5 cursor-pointer group">
                               <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'bg-sky-600 border-sky-600 shadow-sm' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}>
                                  {statutoryDeductions[comp.id as keyof typeof statutoryDeductions] && <CheckCircle size={14} className="text-white" />}
@@ -913,6 +928,32 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            </select>
                         </div>
                      </div>
+                     {userRole === 'HR_MANAGER' && (
+                        <div id="pran-number-field">
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PRAN Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
+                           <input
+                              type="text"
+                              value={pranNumber}
+                              onChange={(e) => {
+                                 const val = e.target.value;
+                                 const cleanVal = val.replace(/\D/g, '');
+                                 if (cleanVal.length <= 12) {
+                                    setPranNumber(cleanVal);
+                                    if (errors.pranNumber) {
+                                       setErrors(prev => {
+                                          const { pranNumber, ...rest } = prev;
+                                          return rest;
+                                       });
+                                    }
+                                 }
+                              }}
+                              disabled={isReadOnly}
+                              placeholder="Enter 12-digit PRAN number"
+                              className={`w-full px-3 py-2 border rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : errors.pranNumber ? 'border-rose-500' : 'border-slate-200'}`}
+                           />
+                           {errors.pranNumber && <p className="text-[10px] text-rose-500 font-bold mt-1">{errors.pranNumber}</p>}
+                        </div>
+                     )}
                   </div>
                </div>
 

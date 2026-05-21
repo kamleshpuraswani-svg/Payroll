@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Search,
     Bell,
@@ -466,11 +466,11 @@ const ApproveClaimModal: React.FC<{
                     )}
                 </div>
                 <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 shrink-0">
-                    <button onClick={onClose} className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">Cancel</button>
+                    <button onClick={onClose} className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">Cancel</button>
                     <button 
                         onClick={handleSubmit} 
                         disabled={!isFormValid}
-                        className={`px-8 py-2 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transition-all ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/25' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
+                        className={`px-8 py-2 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg transition-all ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/25' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
                     >
                         Confirm
                     </button>
@@ -527,8 +527,9 @@ const DownloadClaimModal: React.FC<{
 // --- Main Container ---
 const ExpenseManagement: React.FC<{ 
     onChangeView: (view: ViewState) => void,
-    onEditClaim?: (id: string) => void 
-}> = ({ onChangeView, onEditClaim }) => {
+    onEditClaim?: (id: string) => void,
+    userRole?: string
+}> = ({ onChangeView, onEditClaim, userRole = 'HR_MANAGER' }) => {
     const [employees, setEmployees] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [claims, setClaims] = useState<ExpenseClaim[]>([]);
@@ -627,22 +628,171 @@ const ExpenseManagement: React.FC<{
     };
 
     const [searchTerm, setSearchTerm] = useState('');
+
+    // FIELDS configuration for Lookup Filter
+    const FIELDS = [
+        { name: 'Employee', icon: UserCircle },
+        { name: 'Claim Category', icon: LayoutGrid },
+        { name: 'Status', icon: CheckCircle }
+    ];
+
+    // Lookup Filter States
+    const [completedFilters, setCompletedFilters] = useState<any[]>([]);
+    const [currentField, setCurrentField] = useState<string | null>(null);
+    const [currentOperator, setCurrentOperator] = useState<string | null>(null);
+    const [tempValues, setTempValues] = useState<string[]>([]);
+    const [tempContainsText, setTempContainsText] = useState('');
+    const [valSearchQuery, setValSearchQuery] = useState('');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Click outside hook
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getOptionsForField = (field: string) => {
+        if (field === 'Status') {
+            return ['Approved', 'Pending', 'Rejected', 'Partially Approved'];
+        }
+        if (field === 'Claim Category') {
+            const uniqueCategories = new Set<string>();
+            (claims || []).forEach(c => {
+                if (c.category) uniqueCategories.add(c.category);
+            });
+            return Array.from(uniqueCategories).filter(Boolean).sort();
+        }
+        
+        const uniqueValues = new Set<string>();
+        (claims || []).forEach(c => {
+            if (field === 'Employee' && c.employee?.name) {
+                uniqueValues.add(c.employee.name);
+            }
+        });
+        
+        return Array.from(uniqueValues).filter(Boolean).sort();
+    };
+
+    const selectField = (field: string) => {
+        setCurrentField(field);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const selectOperator = (operator: string) => {
+        setCurrentOperator(operator);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const toggleTempValue = (val: string) => {
+        setTempValues(prev => 
+            prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]
+        );
+    };
+
+    const applyCurrentFilter = () => {
+        if (currentField && currentOperator) {
+            const vals = currentOperator === 'Contains' ? [tempContainsText] : tempValues;
+            if (vals.length > 0 && (currentOperator !== 'Contains' || vals[0].trim() !== '')) {
+                setCompletedFilters(prev => [
+                    ...prev,
+                    {
+                        id: Math.random().toString(),
+                        field: currentField,
+                        operator: currentOperator,
+                        values: vals
+                    }
+                ]);
+                setCurrentField(null);
+                setCurrentOperator(null);
+                setTempValues([]);
+                setTempContainsText('');
+                setValSearchQuery('');
+                setDropdownOpen(false);
+            }
+        }
+    };
+
+    const cancelCurrentFilter = () => {
+        setCurrentField(null);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setTempContainsText('');
+        setValSearchQuery('');
+        setDropdownOpen(false);
+    };
+
+    const removeFilter = (id: string) => {
+        setCompletedFilters(prev => prev.filter(f => f.id !== id));
+    };
+
+    const clearAllFilters = () => {
+        setCompletedFilters([]);
+        cancelCurrentFilter();
+        setSearchTerm('');
+    };
+
+    const filteredClaims = useMemo(() => {
+        return (claims || []).filter(c => {
+            const matchesSearch = searchTerm ? (
+                (c.employee?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (c.category || '').toLowerCase().includes(searchTerm.toLowerCase())
+            ) : true;
+
+            if (!matchesSearch) return false;
+
+            if (userRole === 'HR_MANAGER') {
+                for (const filter of completedFilters) {
+                    let claimValue = '';
+                    if (filter.field === 'Status') claimValue = c.status || '';
+                    else if (filter.field === 'Claim Category') claimValue = c.category || '';
+                    else if (filter.field === 'Employee') claimValue = c.employee?.name || '';
+
+                    const isMatch = filter.operator === 'Contains'
+                        ? claimValue.toLowerCase().includes(filter.values[0].toLowerCase())
+                        : filter.values.some(val => val.toLowerCase() === claimValue.toLowerCase());
+
+                    if (filter.operator === 'Is' || filter.operator === 'Contains') {
+                        if (!isMatch) return false;
+                    } else { // 'Is not'
+                        if (isMatch) return false;
+                    }
+                }
+            }
+
+            return true;
+        });
+    }, [claims, searchTerm, completedFilters, userRole]);
     const [showSuccessToast, setShowSuccessToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [viewingProof, setViewingProof] = useState<ClaimProof | null>(null);
 
     // Summary Stats
     const stats = [
         { 
-            label: 'TOTAL CLAIMED (FY)', 
+            label: userRole === 'HR_MANAGER' ? 'TOTAL CLAIMED' : 'TOTAL CLAIMED (FY)', 
             val: `₹${(claims.reduce((s, c) => s + c.amount, 0)).toLocaleString('en-IN')}`, 
             color: 'text-slate-800', 
-            subtitle: 'Apr 2025 – Mar 2026',
+            subtitle: userRole === 'HR_MANAGER' ? undefined : 'Apr 2025 – Mar 2026',
             highlight: true 
         },
         { label: 'Total Claims', val: claims.length.toString(), color: 'text-slate-800' },
-        { label: 'Pending Approval', val: claims.filter(c => c.status === 'Pending').length.toString(), color: 'text-orange-600' },
         { 
-            label: 'Approved & Paid', 
+            label: userRole === 'HR_MANAGER' ? 'Pending' : 'Pending Approval', 
+            val: claims.filter(c => c.status === 'Pending').length.toString(), 
+            color: 'text-orange-600' 
+        },
+        { 
+            label: userRole === 'HR_MANAGER' ? 'Paid' : 'Approved & Paid', 
             val: `₹${(claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').reduce((s, c) => s + (c.approvedAmount || c.amount), 0) / 100000).toFixed(2)}L`, 
             color: 'text-emerald-600' 
         },
@@ -741,7 +891,7 @@ const ExpenseManagement: React.FC<{
         <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50 animate-in fade-in duration-300 relative">
 
             {/* Top Stats Bar */}
-            <div className="bg-white border-b border-slate-200 px-6 py-5 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0">
+            <div className={`bg-white border-b border-slate-200 px-6 py-5 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0 ${userRole === 'HR_MANAGER' ? 'max-w-4xl' : ''}`}>
                 {stats.map((stat, i) => (
                     <div key={i} className={`flex flex-col p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-slate-50/50 ${stat.highlight ? 'bg-purple-50/30' : 'bg-white'}`}>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</span>
@@ -756,7 +906,227 @@ const ExpenseManagement: React.FC<{
                 <div className="flex-1 flex flex-col bg-white w-full">
 
                     {/* Toolbar */}
-                    <div className="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center bg-white">
+                    <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center bg-white relative">
+                        {userRole === 'HR_MANAGER' ? (
+                            <div className="flex items-center gap-2 w-full flex-1">
+                                <div className="relative flex-1" ref={dropdownRef}>
+                                    {/* Input-like container */}
+                                    <div 
+                                        onClick={() => {
+                                            setDropdownOpen(true);
+                                            inputRef.current?.focus();
+                                        }}
+                                        className="w-full flex flex-wrap items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm min-h-[40px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all cursor-text pr-10"
+                                    >
+                                        {/* Search icon */}
+                                        {completedFilters.length === 0 && !currentField && (
+                                            <Search className="h-4 w-4 text-slate-400 shrink-0" />
+                                        )}
+
+                                        {/* 1. Completed Filters Chips */}
+                                        {completedFilters.map(filter => {
+                                            const fObj = FIELDS.find(f => f.name === filter.field);
+                                            const FIcon = fObj?.icon;
+                                            return (
+                                                <div 
+                                                    key={filter.id} 
+                                                    className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2.5 py-0.5 text-xs font-semibold text-slate-700 shadow-sm"
+                                                >
+                                                    {FIcon && <FIcon size={12} className="text-slate-500" />}
+                                                    <span>{filter.field}</span>
+                                                    <span className="text-slate-400 font-bold lowercase text-[10px]">{filter.operator}</span>
+                                                    <span className="bg-slate-100 px-1 rounded text-slate-800 max-w-[120px] truncate">
+                                                        {filter.values.join(', ')}
+                                                    </span>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }} 
+                                                        className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* 2. In-Progress Filter Pills */}
+                                        {currentField && (
+                                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700 shadow-sm">
+                                                {(() => {
+                                                    const fObj = FIELDS.find(f => f.name === currentField);
+                                                    const FIcon = fObj?.icon;
+                                                    return FIcon ? <FIcon size={12} className="text-slate-500" /> : null;
+                                                })()}
+                                                <span>{currentField}</span>
+                                            </div>
+                                        )}
+
+                                        {currentOperator && (
+                                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-xs font-bold text-slate-600 shadow-sm">
+                                                <span>{currentOperator}</span>
+                                            </div>
+                                        )}
+
+                                        {/* 3. Text Input / Placeholder */}
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={currentField && currentOperator ? valSearchQuery : searchTerm}
+                                            onChange={(e) => {
+                                                if (currentField && currentOperator) {
+                                                    setValSearchQuery(e.target.value);
+                                                } else {
+                                                    setSearchTerm(e.target.value);
+                                                    setDropdownOpen(false);
+                                                }
+                                            }}
+                                            placeholder={
+                                                completedFilters.length === 0 && !currentField
+                                                    ? "Filter Results..."
+                                                    : currentField && currentOperator
+                                                    ? "Select..."
+                                                    : ""
+                                            }
+                                            className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-slate-800 text-sm py-0.5 placeholder-slate-400 focus:ring-0 p-0"
+                                        />
+
+                                        {/* 4. Clear/Reset Button */}
+                                        {(completedFilters.length > 0 || currentField || searchTerm) && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    clearAllFilters();
+                                                }}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-all"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Dropdown Menu */}
+                                    {dropdownOpen && (
+                                        <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                            {!currentField && (
+                                                <div className="py-1">
+                                                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Field</div>
+                                                    {FIELDS.map(f => (
+                                                        <button
+                                                            key={f.name}
+                                                            onClick={() => selectField(f.name)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                        >
+                                                            <f.icon size={14} className="text-slate-400" />
+                                                            <span>{f.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {currentField && !currentOperator && (
+                                                <div className="py-1">
+                                                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Condition</div>
+                                                    {(currentField === 'Employee' 
+                                                        ? ['Is', 'Contains'] 
+                                                        : ['Is', 'Is not']
+                                                    ).map(op => (
+                                                        <button
+                                                            key={op}
+                                                            onClick={() => selectOperator(op)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                        >
+                                                            <div className="w-4 h-4 flex items-center justify-center font-mono text-xs font-bold text-slate-400">
+                                                                {op === 'Is' ? '=' : op === 'Contains' ? '⊃' : '!='}
+                                                            </div>
+                                                            <span>{op}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {currentField && currentOperator && (
+                                                <div className="flex flex-col max-h-[300px]">
+                                                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+                                                        Select values for {currentField}
+                                                    </div>
+                                                    {currentOperator === 'Contains' ? (
+                                                        <div className="p-3">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Type employee name..."
+                                                                value={tempContainsText}
+                                                                onChange={(e) => setTempContainsText(e.target.value)}
+                                                                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="p-2 border-b border-slate-100">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Search values..."
+                                                                    value={valSearchQuery}
+                                                                    onChange={(e) => setValSearchQuery(e.target.value)}
+                                                                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                                />
+                                                            </div>
+                                                            <div className="overflow-y-auto flex-1 py-1 max-h-[160px]">
+                                                                {(() => {
+                                                                    const opts = getOptionsForField(currentField);
+                                                                    const filteredOpts = opts.filter(opt => 
+                                                                        opt.toLowerCase().includes(valSearchQuery.toLowerCase())
+                                                                    );
+                                                                    if (filteredOpts.length === 0) {
+                                                                        return <div className="px-3 py-2 text-xs text-slate-400 italic">No values found</div>;
+                                                                    }
+                                                                    return filteredOpts.map(opt => {
+                                                                        const isChecked = tempValues.includes(opt);
+                                                                        return (
+                                                                            <label
+                                                                                key={opt}
+                                                                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={isChecked}
+                                                                                    onChange={() => toggleTempValue(opt)}
+                                                                                    className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-3.5 h-3.5"
+                                                                                />
+                                                                                <span>{opt}</span>
+                                                                            </label>
+                                                                        );
+                                                                    });
+                                                                })()}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    <div className="p-2 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                                                        <button
+                                                            onClick={cancelCurrentFilter}
+                                                            className="px-2.5 py-1 text-[10px] text-slate-500 font-bold hover:text-slate-700 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={applyCurrentFilter}
+                                                            disabled={currentOperator === 'Contains' ? tempContainsText.trim() === '' : tempValues.length === 0}
+                                                            className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                                        >
+                                                            Done
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => onChangeView(ViewState.HR_ADD_EXPENSE)}
+                                    className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all transform active:scale-95 shrink-0 ml-auto flex items-center justify-center"
+                                >
+                                    Add Expense for Employee
+                                </button>
+                            </div>
+                        ) : (
+                            <>
                                 <div className="relative flex-1 min-w-[200px]">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                     <input
@@ -767,23 +1137,25 @@ const ExpenseManagement: React.FC<{
                                         className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                                     />
                                 </div>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                Employee <ChevronDown size={14} />
-                            </button>
-                            <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                Claim Category <ChevronDown size={14} />
-                            </button>
-                            <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                Status <ChevronDown size={14} />
-                            </button>
-                                <button
-                                    onClick={() => onChangeView(ViewState.HR_ADD_EXPENSE)}
-                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 font-bold flex items-center gap-2 shadow-md shadow-purple-100 transition-all ml-auto"
-                                >
-                                    Add Expense for Employee
-                                </button>
-                        </div>
+                                <div className="flex gap-2">
+                                    <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
+                                        Employee <ChevronDown size={14} />
+                                    </button>
+                                    <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
+                                        Claim Category <ChevronDown size={14} />
+                                    </button>
+                                    <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
+                                        Status <ChevronDown size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => onChangeView(ViewState.HR_ADD_EXPENSE)}
+                                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 font-bold flex items-center gap-2 shadow-md shadow-purple-100 transition-all ml-auto"
+                                    >
+                                        Add Expense for Employee
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Table */}
@@ -801,12 +1173,7 @@ const ExpenseManagement: React.FC<{
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {claims
-                                    .filter(c => 
-                                        c.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                        c.category.toLowerCase().includes(searchTerm.toLowerCase())
-                                    )
-                                    .map((claim) => (
+                                {filteredClaims.map((claim) => (
                                     <tr
                                         key={claim.id}
                                         onClick={() => setViewClaim(claim)}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Search,
     Filter,
@@ -1313,7 +1313,11 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
 
 // --- Main Container ---
 
-const TaxDeclarationsManagement: React.FC = () => {
+interface TaxDeclarationsManagementProps {
+    userRole?: string;
+}
+
+const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ userRole = 'HR_MANAGER' }) => {
     const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
     const [modalMode, setModalMode] = useState<'VIEW' | 'EDIT' | 'APPROVE' | 'COMMENT' | null>(null);
     const [initialDecision, setInitialDecision] = useState<'Approved' | 'Partially Approved' | 'Rejected'>('Approved');
@@ -1321,6 +1325,119 @@ const TaxDeclarationsManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [declarations, setDeclarations] = useState<TaxDeclaration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // FIELDS configuration for Lookup Filter
+    const FIELDS = [
+        { name: 'Employee', icon: User },
+        { name: 'Declaration Type', icon: FileText },
+        { name: 'Status', icon: CheckSquare }
+    ];
+
+    // Lookup Filter States
+    const [completedFilters, setCompletedFilters] = useState<any[]>([]);
+    const [currentField, setCurrentField] = useState<string | null>(null);
+    const [currentOperator, setCurrentOperator] = useState<string | null>(null);
+    const [tempValues, setTempValues] = useState<string[]>([]);
+    const [tempContainsText, setTempContainsText] = useState('');
+    const [valSearchQuery, setValSearchQuery] = useState('');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Click outside hook
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getOptionsForField = (field: string) => {
+        if (field === 'Declaration Type') {
+            return ['Proposed Investment', 'Confirmed Investment'];
+        }
+        if (field === 'Status') {
+            return ['Approved', 'Pending', 'Rejected', 'Partially Approved'];
+        }
+        if (field === 'Section') {
+            return ['80C', '80D', '80CCD', 'HRA', '80G', 'Others'];
+        }
+        
+        // Extract unique values
+        const uniqueValues = new Set<string>();
+        (declarations || []).forEach(doc => {
+            if (field === 'Employee') {
+                uniqueValues.add(doc.employee_name || '');
+            }
+        });
+        
+        return Array.from(uniqueValues).filter(Boolean).sort();
+    };
+
+    const selectField = (field: string) => {
+        setCurrentField(field);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const selectOperator = (operator: string) => {
+        setCurrentOperator(operator);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const toggleTempValue = (val: string) => {
+        setTempValues(prev => 
+            prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]
+        );
+    };
+
+    const applyCurrentFilter = () => {
+        if (currentField && currentOperator) {
+            const vals = currentOperator === 'Contains' ? [tempContainsText] : tempValues;
+            if (vals.length > 0 && (currentOperator !== 'Contains' || vals[0].trim() !== '')) {
+                setCompletedFilters(prev => [
+                    ...prev,
+                    {
+                        id: Math.random().toString(),
+                        field: currentField,
+                        operator: currentOperator,
+                        values: vals
+                    }
+                ]);
+                setCurrentField(null);
+                setCurrentOperator(null);
+                setTempValues([]);
+                setTempContainsText('');
+                setValSearchQuery('');
+                setDropdownOpen(false);
+            }
+        }
+    };
+
+    const cancelCurrentFilter = () => {
+        setCurrentField(null);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setTempContainsText('');
+        setValSearchQuery('');
+        setDropdownOpen(false);
+    };
+
+    const removeFilter = (id: string) => {
+        setCompletedFilters(prev => prev.filter(f => f.id !== id));
+    };
+
+    const clearAllFilters = () => {
+        setCompletedFilters([]);
+        cancelCurrentFilter();
+        setSearchTerm('');
+    };
 
     const fetchDeclarations = async () => {
         setIsLoading(true);
@@ -1350,6 +1467,50 @@ const TaxDeclarationsManagement: React.FC = () => {
     }, []);
 
     const selectedDoc = declarations.find(d => d.id === selectedDocId);
+
+    const filteredDeclarations = useMemo(() => {
+        return (declarations || []).filter(doc => {
+            // 1. Text Search (searchTerm)
+            const matchesSearch = searchTerm ? (
+                (doc.employee_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (doc.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (doc.amount || 0).toString().includes(searchTerm) ||
+                (doc.approved_amount || 0).toString().includes(searchTerm)
+            ) : true;
+
+            if (!matchesSearch) return false;
+
+            // 2. Lookup Filters
+            for (const filter of completedFilters) {
+                let docValue = '';
+                if (filter.field === 'Employee') {
+                    docValue = doc.employee_name || '';
+                } else if (filter.field === 'Declaration Type') {
+                    docValue = (doc.status === 'Approved' || doc.status === 'Partially Approved')
+                        ? 'Confirmed Investment'
+                        : 'Proposed Investment';
+                } else if (filter.field === 'Status') {
+                    // Overall computed status
+                    const empSections = declarations.filter((d: TaxDeclaration) => d.employee_id === doc.employee_id);
+                    docValue = computeParentStatus(empSections);
+                } else if (filter.field === 'Section') {
+                    docValue = doc.type || '';
+                }
+
+                const isMatch = filter.operator === 'Contains'
+                    ? docValue.toLowerCase().includes(filter.values[0].toLowerCase())
+                    : filter.values.some(val => val.toLowerCase() === docValue.toLowerCase());
+
+                if (filter.operator === 'Is' || filter.operator === 'Contains') {
+                    if (!isMatch) return false;
+                } else { // 'Is not'
+                    if (isMatch) return false;
+                }
+            }
+
+            return true;
+        });
+    }, [declarations, searchTerm, completedFilters]);
 
     const handleOpenView = (id: string) => {
         setSelectedDocId(id);
@@ -1393,7 +1554,7 @@ const TaxDeclarationsManagement: React.FC = () => {
     const stats = [
         { title: 'Total Declarations', value: '1,842', color: 'bg-white text-slate-800' },
         { title: 'Pending Approvals', value: '214', color: 'bg-orange-50 text-orange-700' },
-        { title: 'Approved YTD', value: '1,628', color: 'bg-emerald-50 text-emerald-700' },
+        { title: userRole === 'HR_MANAGER' ? 'Approved' : 'Approved YTD', value: '1,628', color: 'bg-emerald-50 text-emerald-700' },
         { title: 'Rejected', value: '56', color: 'bg-rose-50 text-rose-700' },
     ];
 
@@ -1472,7 +1633,7 @@ const TaxDeclarationsManagement: React.FC = () => {
                         </div>
 
                         {/* Summary Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 ${userRole === 'HR_MANAGER' ? 'max-w-4xl' : ''}`}>
                             {stats.map((stat, i) => (
                                 <div key={i} className={`p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between ${stat.color}`}>
                                     <span className="text-[11px] font-bold uppercase tracking-wider opacity-60 mb-1">{stat.title}</span>
@@ -1487,29 +1648,225 @@ const TaxDeclarationsManagement: React.FC = () => {
                         {/* Main List Table */}
                         <div className="flex-1 flex flex-col bg-white">
                             {/* Filters Bar */}
-                            <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap gap-3 items-center">
-                                <div className="flex-1 min-w-[240px] relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search employee, ID or amount..."
-                                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                                        value={searchTerm}
-                                        onChange={e => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                        Employee <ChevronDown size={14} />
-                                    </button>
-                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                        Type <ChevronDown size={14} />
-                                    </button>
-                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                        Status <ChevronDown size={14} />
-                                    </button>
-                                    <button className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                                        Date <ChevronDown size={14} />
+                            <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row gap-4 justify-between items-center relative">
+                                <div className="flex items-center gap-2 w-full flex-1">
+                                    <div className="relative flex-1" ref={dropdownRef}>
+                                        {/* Input-like container */}
+                                        <div 
+                                            onClick={() => {
+                                                setDropdownOpen(true);
+                                                inputRef.current?.focus();
+                                            }}
+                                            className="w-full flex flex-wrap items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-sm min-h-[40px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all cursor-text pr-10"
+                                        >
+                                            {/* Search icon (only if not building a filter, or we can always show it) */}
+                                            {completedFilters.length === 0 && !currentField && (
+                                                <Search className="h-4 w-4 text-slate-400 shrink-0" />
+                                            )}
+
+                                            {/* 1. Completed Filters Chips */}
+                                            {completedFilters.map(filter => {
+                                                const fObj = FIELDS.find(f => f.name === filter.field);
+                                                const FIcon = fObj?.icon;
+                                                return (
+                                                    <div 
+                                                        key={filter.id} 
+                                                        className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-0.5 text-xs font-semibold text-slate-700"
+                                                    >
+                                                        {FIcon && <FIcon size={12} className="text-slate-500" />}
+                                                        <span>{filter.field}</span>
+                                                        <span className="text-slate-400 font-bold lowercase text-[10px]">{filter.operator}</span>
+                                                        <span className="bg-slate-200/60 px-1 rounded text-slate-800 max-w-[120px] truncate">
+                                                            {filter.values.join(', ')}
+                                                        </span>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }} 
+                                                            className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {/* 2. In-Progress Filter Pills */}
+                                            {currentField && (
+                                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700">
+                                                    {(() => {
+                                                        const fObj = FIELDS.find(f => f.name === currentField);
+                                                        const FIcon = fObj?.icon;
+                                                        return FIcon ? <FIcon size={12} className="text-slate-500" /> : null;
+                                                    })()}
+                                                    <span>{currentField}</span>
+                                                </div>
+                                            )}
+
+                                            {currentOperator && (
+                                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-1.5 py-0.5 text-xs font-bold text-slate-600">
+                                                    <span>{currentOperator}</span>
+                                                </div>
+                                            )}
+
+                                            {/* 3. Text Input / Placeholder */}
+                                            <input
+                                                ref={inputRef}
+                                                type="text"
+                                                value={currentField && currentOperator ? valSearchQuery : searchTerm}
+                                                onChange={(e) => {
+                                                    if (currentField && currentOperator) {
+                                                        setValSearchQuery(e.target.value);
+                                                    } else {
+                                                        setSearchTerm(e.target.value);
+                                                        setDropdownOpen(false); // don't open field dropdown when typing normal search
+                                                    }
+                                                }}
+                                                placeholder={
+                                                    completedFilters.length === 0 && !currentField
+                                                        ? "Filter Results..."
+                                                        : currentField && currentOperator
+                                                        ? "Select..."
+                                                        : ""
+                                                }
+                                                className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-slate-800 text-sm py-0.5 placeholder-slate-400 focus:ring-0 p-0"
+                                            />
+
+                                            {/* 4. Clear/Reset Button on the right of input container */}
+                                            {(completedFilters.length > 0 || currentField || searchTerm) && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        clearAllFilters();
+                                                    }}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Dropdown Menu */}
+                                        {dropdownOpen && (
+                                            <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                                {!currentField && (
+                                                    <div className="py-1">
+                                                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Field</div>
+                                                        {FIELDS.map(f => (
+                                                            <button
+                                                                key={f.name}
+                                                                onClick={() => selectField(f.name)}
+                                                                className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                            >
+                                                                <f.icon size={14} className="text-slate-400" />
+                                                                <span>{f.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {currentField && !currentOperator && (
+                                                    <div className="py-1">
+                                                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Condition</div>
+                                                        {(currentField === 'Employee' 
+                                                            ? ['Is', 'Contains'] 
+                                                            : currentField === 'Declaration Type' 
+                                                            ? ['Is'] 
+                                                            : ['Is', 'Is not']
+                                                        ).map(op => (
+                                                            <button
+                                                                key={op}
+                                                                onClick={() => selectOperator(op)}
+                                                                className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                            >
+                                                                <div className="w-4 h-4 flex items-center justify-center font-mono text-xs font-bold text-slate-400">
+                                                                    {op === 'Is' ? '=' : op === 'Contains' ? '⊃' : '!='}
+                                                                </div>
+                                                                <span>{op}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {currentField && currentOperator && (
+                                                    <div className="flex flex-col max-h-[300px]">
+                                                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+                                                            Select values for {currentField}
+                                                        </div>
+                                                        {currentOperator === 'Contains' ? (
+                                                            <div className="p-3">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Type employee name..."
+                                                                    value={tempContainsText}
+                                                                    onChange={(e) => setTempContainsText(e.target.value)}
+                                                                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {/* Search options input inside dropdown */}
+                                                                <div className="p-2 border-b border-slate-100">
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="Search values..."
+                                                                        value={valSearchQuery}
+                                                                        onChange={(e) => setValSearchQuery(e.target.value)}
+                                                                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                                    />
+                                                                </div>
+                                                                <div className="overflow-y-auto flex-1 py-1 max-h-[160px]">
+                                                                    {(() => {
+                                                                        const opts = getOptionsForField(currentField);
+                                                                        const filteredOpts = opts.filter(opt => 
+                                                                            opt.toLowerCase().includes(valSearchQuery.toLowerCase())
+                                                                        );
+                                                                        if (filteredOpts.length === 0) {
+                                                                            return <div className="px-3 py-2 text-xs text-slate-400 italic">No values found</div>;
+                                                                        }
+                                                                        return filteredOpts.map(opt => {
+                                                                            const isChecked = tempValues.includes(opt);
+                                                                            return (
+                                                                                <label
+                                                                                    key={opt}
+                                                                                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                                                >
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={isChecked}
+                                                                                        onChange={() => toggleTempValue(opt)}
+                                                                                        className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-3.5 h-3.5"
+                                                                                    />
+                                                                                    <span>{opt}</span>
+                                                                                </label>
+                                                                            );
+                                                                        });
+                                                                    })()}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        <div className="p-2 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                                                            <button
+                                                                onClick={cancelCurrentFilter}
+                                                                className="px-2.5 py-1 text-[10px] text-slate-500 font-bold hover:text-slate-700 transition-colors"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={applyCurrentFilter}
+                                                                disabled={currentOperator === 'Contains' ? tempContainsText.trim() === '' : tempValues.length === 0}
+                                                                className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                                            >
+                                                                Done
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button 
+                                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px]"
+                                    >
+                                        <Filter size={16} /> Filter
                                     </button>
                                 </div>
                             </div>
@@ -1551,14 +1908,14 @@ const TaxDeclarationsManagement: React.FC = () => {
                                                     <td className="px-6 py-4"></td>
                                                 </tr>
                                             ))
-                                        ) : declarations.length === 0 ? (
+                                        ) : filteredDeclarations.length === 0 ? (
                                             <tr>
                                                 <td colSpan={8} className="px-6 py-12 text-center text-slate-400 font-medium">
                                                     No declarations found.
                                                 </td>
                                             </tr>
                                         ) : (
-                                            declarations.map((doc) => (
+                                            filteredDeclarations.map((doc) => (
                                                 <tr
                                                     key={doc?.id || Math.random()}
                                                     onClick={() => handleOpenView(doc?.id || '')}
@@ -1633,7 +1990,7 @@ const TaxDeclarationsManagement: React.FC = () => {
 
                             {/* Pagination */}
                             <div className="px-6 py-4 border-t border-slate-200 bg-white flex justify-between items-center text-xs font-medium text-slate-500">
-                                <span>Showing 1-6 of 2,140 declarations</span>
+                                <span>Showing {filteredDeclarations.length} of {declarations.length} declarations</span>
                                 <div className="flex gap-2">
                                     <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors">Previous</button>
                                     <button className="px-3 py-1 bg-purple-600 text-white rounded-lg font-bold shadow-sm shadow-purple-100">1</button>

@@ -1596,7 +1596,9 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                                 disabled={!isEditing}
                                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                             />
-                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
+                                            {userRole !== 'HR_MANAGER' && (
+                                                <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="max-w-xs w-full">
@@ -1609,7 +1611,9 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                                 disabled={!isEditing}
                                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                             />
-                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
+                                            {userRole !== 'HR_MANAGER' && (
+                                                <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
                                             <Info size={12} />

@@ -52,6 +52,7 @@ interface EmployeeSalaryHistoryProps {
   onBack: () => void;
   employeeId: string;
   onEdit?: (id: string) => void;
+  userRole?: string;
 }
 
 const MOCK_HISTORY_ROWS: SalaryHistoryRow[] = [
@@ -97,11 +98,12 @@ const MOCK_HISTORY_ROWS: SalaryHistoryRow[] = [
   { id: '35', period: 'Jan 2023', gross: 145000, net: 120000, status: 'Disbursed', date: '31 Jan 2023', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 10440, tds: 12560, others: 2000 } },
 ];
 
-const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, employeeId, onEdit }) => {
+const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, employeeId, onEdit, userRole }) => {
   const [activeTab, setActiveTab] = useState<'HISTORY' | 'PROFILE'>('HISTORY');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [employeeData, setEmployeeData] = useState<any>(null);
   const [appraisalMonth, setAppraisalMonth] = useState('');
+  const [pranNumber, setPranNumber] = useState('');
   const [isDataLoading, setIsDataLoading] = useState(false);
 
   useEffect(() => {
@@ -126,6 +128,9 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
             
             if (configData?.config_value?.appraisal_month) {
               setAppraisalMonth(configData.config_value.appraisal_month);
+            }
+            if (configData?.config_value?.pran_no) {
+              setPranNumber(configData.config_value.pran_no);
             }
           } catch (e) {
             console.error('Error fetching appraisal month config:', e);
@@ -621,6 +626,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Regime (Current FY)</label>
                     <p className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded w-fit">{employeeData?.tax_regime || '---'}</p>
                   </div>
+                  {userRole === 'HR_MANAGER' && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">PRAN Number</label>
+                      <p className="text-sm font-mono font-bold text-slate-800">{pranNumber || '---'}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

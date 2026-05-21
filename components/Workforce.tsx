@@ -4,7 +4,11 @@ import EmployeeList from './EmployeeList';
 import EditEmployeeProfile from './EditEmployeeProfile';
 import EmployeeSalaryHistory from './EmployeeSalaryHistory';
 
-const Workforce: React.FC = () => {
+interface WorkforceProps {
+  userRole?: string;
+}
+
+const Workforce: React.FC<WorkforceProps> = ({ userRole }) => {
   const [view, setView] = useState<'LIST' | 'EDIT' | 'VIEW_HISTORY'>('LIST');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
@@ -25,13 +29,14 @@ const Workforce: React.FC = () => {
 
   return (
     <>
-      {view === 'LIST' && <EmployeeList onEdit={handleEdit} onView={handleView} />}
+      {view === 'LIST' && <EmployeeList onEdit={handleEdit} onView={handleView} userRole={userRole} />}
       {view === 'EDIT' && selectedEmployeeId && (
         <EditEmployeeProfile
           employeeId={selectedEmployeeId}
           onBack={() => setView('VIEW_HISTORY')}
           onViewHistory={() => setView('VIEW_HISTORY')}
           isReadOnly={false}
+          userRole={userRole}
         />
       )}
       {view === 'VIEW_HISTORY' && selectedEmployeeId && (
@@ -39,6 +44,7 @@ const Workforce: React.FC = () => {
           employeeId={selectedEmployeeId}
           onBack={handleBack}
           onEdit={handleEdit}
+          userRole={userRole}
         />
       )}
     </>
