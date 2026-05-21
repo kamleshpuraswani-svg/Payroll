@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock } from 'lucide-react';
+import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag } from 'lucide-react';
+
+const EXPENSE_FIELDS = [
+    { name: 'Category', icon: Tag },
+    { name: 'Created By', icon: User },
+];
 
 const BUSINESS_UNITS = [
     "MindInventory",
@@ -33,6 +38,17 @@ const ExpenseSettings: React.FC = () => {
     const [entitySearch, setEntitySearch] = useState('');
     const [showEntityDropdown, setShowEntityDropdown] = useState(false);
 
+    // Lookup Filter state
+    const [expCompletedFilters, setExpCompletedFilters] = useState<{ field: string; operator: string; values: string[] }[]>([]);
+    const [expCurrentField, setExpCurrentField] = useState<string | null>(null);
+    const [expCurrentOperator, setExpCurrentOperator] = useState<string | null>(null);
+    const [expTempValues, setExpTempValues] = useState<string[]>([]);
+    const [expTempContainsText, setExpTempContainsText] = useState('');
+    const [expValSearchQuery, setExpValSearchQuery] = useState('');
+    const [expDropdownOpen, setExpDropdownOpen] = useState(false);
+    const expDropdownRef = useRef<HTMLDivElement>(null);
+    const expInputRef = useRef<HTMLInputElement>(null);
+
     // Hardcoded fallbacks
     const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA', 'Customer Success', 'Design', 'Legal', 'Administration'];
     const FALLBACK_DESIGS = ['Software Engineer', 'Senior Software Engineer', 'Tech Lead', 'Product Manager', 'Designer', 'Senior Designer', 'Accountant', 'Finance Manager', 'HR Associate', 'HR Manager', 'Sales Lead', 'Sales Executive', 'QA Analyst', 'Business Analyst', 'Operations Manager', 'Director'];
@@ -40,6 +56,95 @@ const ExpenseSettings: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, [selectedTarget]);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (expDropdownRef.current && !expDropdownRef.current.contains(e.target as Node)) {
+                setExpDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const expGetOptionsForField = (field: string) => {
+        const rows = categories.filter(c => c.applicable_to && c.applicable_to.length > 0);
+        if (field === 'Category') return Array.from(new Set(rows.map(c => c.name).filter(Boolean))) as string[];
+        if (field === 'Created By') return Array.from(new Set(rows.map(c => c.created_by || 'HR Manager').filter(Boolean))) as string[];
+        return [];
+    };
+
+    const expSelectField = (field: string) => {
+        setExpCurrentField(field);
+        setExpCurrentOperator(null);
+        setExpTempValues([]);
+        setExpTempContainsText('');
+        setExpValSearchQuery('');
+    };
+
+    const expSelectOperator = (op: string) => {
+        setExpCurrentOperator(op);
+        setExpTempValues([]);
+        setExpTempContainsText('');
+        setExpValSearchQuery('');
+    };
+
+    const expToggleTempValue = (val: string) => {
+        setExpTempValues(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+    };
+
+    const expApplyFilter = () => {
+        if (!expCurrentField || !expCurrentOperator) return;
+        const values = expCurrentOperator === 'Contains' ? [expTempContainsText] : expTempValues;
+        if (values.length === 0 || (expCurrentOperator === 'Contains' && !expTempContainsText.trim())) return;
+        setExpCompletedFilters(prev => {
+            const existing = prev.findIndex(f => f.field === expCurrentField);
+            const newFilter = { field: expCurrentField, operator: expCurrentOperator, values };
+            if (existing >= 0) { const u = [...prev]; u[existing] = newFilter; return u; }
+            return [...prev, newFilter];
+        });
+        setExpCurrentField(null);
+        setExpCurrentOperator(null);
+        setExpTempValues([]);
+        setExpTempContainsText('');
+        setExpDropdownOpen(false);
+    };
+
+    const expCancelFilter = () => {
+        setExpCurrentField(null);
+        setExpCurrentOperator(null);
+        setExpTempValues([]);
+        setExpTempContainsText('');
+        setExpValSearchQuery('');
+        setExpDropdownOpen(false);
+    };
+
+    const expRemoveFilter = (field: string) => {
+        setExpCompletedFilters(prev => prev.filter(f => f.field !== field));
+    };
+
+    const expClearAllFilters = () => {
+        setExpCompletedFilters([]);
+        setExpCurrentField(null);
+        setExpCurrentOperator(null);
+        setExpTempValues([]);
+        setExpTempContainsText('');
+        setExpValSearchQuery('');
+    };
+
+    const filteredCategories = useMemo(() => {
+        let data = categories.filter(c => c.applicable_to && c.applicable_to.length > 0);
+        for (const filter of expCompletedFilters) {
+            data = data.filter(cat => {
+                let val = '';
+                if (filter.field === 'Category') val = cat.name || '';
+                else if (filter.field === 'Created By') val = cat.created_by || 'HR Manager';
+                if (filter.operator === 'Contains') return val.toLowerCase().includes(filter.values[0].toLowerCase());
+                return filter.values.includes(val);
+            });
+        }
+        return data;
+    }, [categories, expCompletedFilters]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -815,6 +920,143 @@ const ExpenseSettings: React.FC = () => {
 
                 </div>
 
+                {/* ── Lookup Filter Toolbar ── */}
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Completed filter chips */}
+                    {expCompletedFilters.map(f => {
+                        const fieldDef = EXPENSE_FIELDS.find(x => x.name === f.field);
+                        const IconComp = fieldDef?.icon;
+                        return (
+                            <div key={f.field} className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-full text-xs font-bold text-sky-700">
+                                {IconComp && <IconComp size={12} />}
+                                <span>{f.field}: {f.operator === 'Contains' ? `"${f.values[0]}"` : f.values.join(', ')}</span>
+                                <button onClick={() => expRemoveFilter(f.field)} className="ml-1 text-sky-400 hover:text-sky-700"><X size={12} /></button>
+                            </div>
+                        );
+                    })}
+                    {expCompletedFilters.length > 0 && (
+                        <button onClick={expClearAllFilters} className="text-xs font-bold text-slate-400 hover:text-slate-600 underline">Clear all</button>
+                    )}
+
+                    {/* In-progress field chip */}
+                    {expCurrentField && !expCurrentOperator && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-full text-xs font-bold text-slate-600">
+                            {(() => { const f = EXPENSE_FIELDS.find(x => x.name === expCurrentField); return f ? <f.icon size={12} /> : null; })()}
+                            <span>{expCurrentField}</span>
+                            <button onClick={expCancelFilter} className="ml-1 text-slate-400 hover:text-slate-600"><X size={12} /></button>
+                        </div>
+                    )}
+
+                    {/* Filter button + dropdown */}
+                    <div className="relative" ref={expDropdownRef}>
+                        <button
+                            onClick={() => { setExpDropdownOpen(o => !o); if (expDropdownOpen) expCancelFilter(); }}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                        >
+                            <Filter size={15} className="text-slate-400" />
+                            Filter
+                            {expCompletedFilters.length > 0 && (
+                                <span className="ml-1 bg-sky-500 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center">{expCompletedFilters.length}</span>
+                            )}
+                        </button>
+
+                        {expDropdownOpen && (
+                            <div className="absolute left-0 top-full mt-2 z-40 bg-white border border-slate-200 rounded-2xl shadow-2xl w-72 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                                {!expCurrentField ? (
+                                    /* Step 1: Choose field */
+                                    <div className="p-2">
+                                        <p className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter by</p>
+                                        {EXPENSE_FIELDS.map(field => (
+                                            <button
+                                                key={field.name}
+                                                onClick={() => expSelectField(field.name)}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-700 transition-colors"
+                                            >
+                                                <field.icon size={15} className="text-slate-400" />
+                                                {field.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : !expCurrentOperator ? (
+                                    /* Step 2: Choose operator */
+                                    <div className="p-2">
+                                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 mb-1">
+                                            {(() => { const f = EXPENSE_FIELDS.find(x => x.name === expCurrentField); return f ? <f.icon size={13} className="text-slate-400" /> : null; })()}
+                                            <p className="text-xs font-black text-slate-600">{expCurrentField}</p>
+                                        </div>
+                                        {['Is', 'Contains'].map(op => (
+                                            <button
+                                                key={op}
+                                                onClick={() => expSelectOperator(op)}
+                                                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-700 transition-colors"
+                                            >
+                                                {op}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    /* Step 3: Choose values */
+                                    <div className="flex flex-col max-h-80">
+                                        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+                                            {(() => { const f = EXPENSE_FIELDS.find(x => x.name === expCurrentField); return f ? <f.icon size={13} className="text-slate-400" /> : null; })()}
+                                            <p className="text-xs font-black text-slate-600">{expCurrentField} · <span className="text-sky-600">{expCurrentOperator}</span></p>
+                                        </div>
+                                        {expCurrentOperator === 'Contains' ? (
+                                            <div className="p-3">
+                                                <input
+                                                    ref={expInputRef}
+                                                    autoFocus
+                                                    type="text"
+                                                    value={expTempContainsText}
+                                                    onChange={e => setExpTempContainsText(e.target.value)}
+                                                    placeholder={`Type to filter ${expCurrentField}...`}
+                                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="px-3 pt-2">
+                                                    <div className="relative">
+                                                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                        <input
+                                                            ref={expInputRef}
+                                                            autoFocus
+                                                            type="text"
+                                                            value={expValSearchQuery}
+                                                            onChange={e => setExpValSearchQuery(e.target.value)}
+                                                            placeholder="Search..."
+                                                            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="overflow-y-auto flex-1 p-2 mt-1 space-y-0.5">
+                                                    {expGetOptionsForField(expCurrentField!)
+                                                        .filter(opt => opt.toLowerCase().includes(expValSearchQuery.toLowerCase()))
+                                                        .map(opt => (
+                                                            <label key={opt} className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={expTempValues.includes(opt)}
+                                                                    onChange={() => expToggleTempValue(opt)}
+                                                                    className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                                                />
+                                                                <span className="text-sm font-semibold text-slate-700">{opt}</span>
+                                                            </label>
+                                                        ))}
+                                                </div>
+                                            </>
+                                        )}
+                                        <div className="flex gap-2 p-3 border-t border-slate-100">
+                                            <button onClick={expCancelFilter} className="flex-1 px-3 py-1.5 text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                                            <button onClick={expApplyFilter} className="flex-1 px-3 py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors">Apply</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* ── Expense Configurations Section ── */}
                 <div className="space-y-6 animate-in fade-in duration-300">
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -829,7 +1071,7 @@ const ExpenseSettings: React.FC = () => {
                                  </tr>
                              </thead>
                              <tbody className="divide-y divide-slate-50">
-                                 {categories.filter(c => c.applicable_to && c.applicable_to.length > 0).map((cat) => (
+                                 {filteredCategories.map((cat) => (
                                      <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
                                          <td className="px-6 py-5">
                                              <p className="text-sm font-black text-slate-800">{cat.name}</p>
@@ -905,7 +1147,7 @@ const ExpenseSettings: React.FC = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {categories.filter(c => c.applicable_to && c.applicable_to.length > 0).length === 0 && (
+                                {filteredCategories.length === 0 && (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
                                             No special configurations defined

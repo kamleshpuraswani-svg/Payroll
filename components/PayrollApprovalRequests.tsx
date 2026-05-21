@@ -1,20 +1,20 @@
 
-import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Eye, 
-  Edit2, 
-  CheckCircle, 
-  Lock, 
-  Clock, 
-  AlertCircle, 
-  ChevronRight, 
-  X, 
-  FileText, 
-  Download, 
-  History, 
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import {
+  Search,
+  Filter,
+  Plus,
+  Eye,
+  Edit2,
+  CheckCircle,
+  Lock,
+  Clock,
+  AlertCircle,
+  ChevronRight,
+  X,
+  FileText,
+  Download,
+  History,
   MoreHorizontal,
   DollarSign,
   Users,
@@ -24,7 +24,9 @@ import {
   RefreshCw,
   FileSpreadsheet,
   AlertTriangle,
-  Unlock
+  Unlock,
+  CheckSquare,
+  User
 } from 'lucide-react';
 import { RunPayrollModal } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
@@ -103,11 +105,62 @@ const INITIAL_DATA: PayrollRun[] = [
   },
 ];
 
+const APPROVAL_FIELDS = [
+  { name: 'Status', icon: CheckSquare },
+  { name: 'Period', icon: Calendar },
+  { name: 'Created By', icon: User },
+];
+
 const PayrollApprovalRequests: React.FC = () => {
   const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>(INITIAL_DATA);
   const [selectedRun, setSelectedRun] = useState<PayrollRun | null>(null);
-  const [filterStatus, setFilterStatus] = useState('All');
-  
+
+  // Lookup Filter States
+  const [completedFilters, setCompletedFilters] = useState<any[]>([]);
+  const [currentField, setCurrentField] = useState<string | null>(null);
+  const [currentOperator, setCurrentOperator] = useState<string | null>(null);
+  const [tempValues, setTempValues] = useState<string[]>([]);
+  const [valSearchQuery, setValSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getOptionsForField = (field: string) => {
+    if (field === 'Status') return ['Pending Approval', 'Approved', 'Locked', 'In Progress', 'Draft'];
+    const uniqueValues = new Set<string>();
+    payrollRuns.forEach(run => {
+      if (field === 'Period') uniqueValues.add(run.period);
+      if (field === 'Created By') uniqueValues.add(run.initiatedBy);
+    });
+    return Array.from(uniqueValues).filter(Boolean).sort();
+  };
+
+  const selectField = (field: string) => { setCurrentField(field); setCurrentOperator(null); setTempValues([]); setValSearchQuery(''); };
+  const selectOperator = (operator: string) => { setCurrentOperator(operator); setTempValues([]); setValSearchQuery(''); };
+  const toggleTempValue = (val: string) => { setTempValues(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]); };
+
+  const applyCurrentFilter = () => {
+    if (currentField && currentOperator && tempValues.length > 0) {
+      setCompletedFilters(prev => [...prev, { id: Math.random().toString(), field: currentField, operator: currentOperator, values: tempValues }]);
+      setCurrentField(null); setCurrentOperator(null); setTempValues([]); setValSearchQuery(''); setDropdownOpen(false);
+    }
+  };
+
+  const cancelCurrentFilter = () => { setCurrentField(null); setCurrentOperator(null); setTempValues([]); setValSearchQuery(''); setDropdownOpen(false); };
+  const removeFilter = (id: string) => { setCompletedFilters(prev => prev.filter(f => f.id !== id)); };
+  const clearAllFilters = () => { setCompletedFilters([]); cancelCurrentFilter(); setSearchTerm(''); };
+
   // Modal States
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -119,10 +172,27 @@ const PayrollApprovalRequests: React.FC = () => {
   const pendingCount = payrollRuns.filter(r => r.status === 'Pending Approval').length;
   const lastApprovedRun = payrollRuns.find(r => r.status === 'Approved' || r.status === 'Locked');
 
-  // Filter the list based on selected status
-  const filteredRuns = filterStatus === 'All' 
-    ? payrollRuns 
-    : payrollRuns.filter(run => run.status === filterStatus);
+  // Filter the list using Lookup Filter + search
+  const filteredRuns = useMemo(() => {
+    return payrollRuns.filter(run => {
+      const matchesSearch = searchTerm
+        ? run.period.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          run.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          run.initiatedBy.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+      if (!matchesSearch) return false;
+      for (const filter of completedFilters) {
+        let val = '';
+        if (filter.field === 'Status') val = run.status;
+        else if (filter.field === 'Period') val = run.period;
+        else if (filter.field === 'Created By') val = run.initiatedBy;
+        const isMatch = filter.values.some((v: string) => v.toLowerCase() === val.toLowerCase());
+        if (filter.operator === 'Is' && !isMatch) return false;
+        if (filter.operator === 'Is not' && isMatch) return false;
+      }
+      return true;
+    });
+  }, [payrollRuns, searchTerm, completedFilters]);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -141,14 +211,6 @@ const PayrollApprovalRequests: React.FC = () => {
       case 'Locked': return <Lock size={14} />;
       case 'In Progress': return <Clock size={14} />;
       default: return <FileText size={14} />;
-    }
-  };
-
-  const handleReviewNow = () => {
-    setFilterStatus('Pending Approval');
-    const pendingRun = payrollRuns.find(run => run.status === 'Pending Approval');
-    if (pendingRun) {
-        setSelectedRun(pendingRun);
     }
   };
 
@@ -203,25 +265,18 @@ const PayrollApprovalRequests: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
-         <div className="bg-white p-5 rounded-2xl border border-orange-200 bg-orange-50/20 shadow-sm flex flex-col justify-between transition-all">
+      <div className="flex gap-3 shrink-0 flex-wrap">
+         <div className="bg-white p-4 rounded-2xl border border-orange-200 bg-orange-50/20 shadow-sm flex flex-col justify-between transition-all w-52">
             <div className="flex justify-between items-start">
                <div>
                   <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Pending Approvals</p>
                   <p className="text-2xl font-bold text-orange-600 mt-1">{pendingCount}</p>
                </div>
-               <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><AlertCircle size={20}/></div>
+               <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><AlertCircle size={18}/></div>
             </div>
-            <button 
-                onClick={handleReviewNow}
-                disabled={pendingCount === 0}
-                className={`mt-4 w-full py-2 bg-white border border-orange-200 text-orange-700 text-xs font-bold rounded-lg transition-colors shadow-sm ${pendingCount === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-50'}`}
-            >
-               {pendingCount > 0 ? 'Review Now' : 'All Caught Up'}
-            </button>
          </div>
 
-         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between w-52">
             <div className="flex justify-between items-start">
                <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Month Payroll</p>
@@ -230,28 +285,27 @@ const PayrollApprovalRequests: React.FC = () => {
                      <span className="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-[10px] font-bold rounded border border-yellow-100 uppercase">In Progress</span>
                   </div>
                </div>
-               <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg"><Clock size={20}/></div>
+               <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg"><Clock size={18}/></div>
             </div>
          </div>
 
-         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between w-52">
             <div className="flex justify-between items-start">
                <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last Approved Payroll</p>
                   <p className="text-lg font-bold text-slate-800 mt-1">{lastApprovedRun ? lastApprovedRun.period : '-'}</p>
-                  <p className="text-xs text-emerald-600 font-medium mt-0.5">{lastApprovedRun ? `Approved on ${lastApprovedRun.approvedDate}` : '-'}</p>
                </div>
-               <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><CheckCircle size={20}/></div>
+               <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><CheckCircle size={18}/></div>
             </div>
          </div>
 
-         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between w-52">
             <div className="flex justify-between items-start">
                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Payroll Runs YTD</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Payroll Runs</p>
                   <p className="text-2xl font-bold text-slate-800 mt-1">12</p>
                </div>
-               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><History size={20}/></div>
+               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><History size={18}/></div>
             </div>
          </div>
       </div>
@@ -259,39 +313,112 @@ const PayrollApprovalRequests: React.FC = () => {
       {/* Main List Section */}
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden min-h-[400px]">
          {/* Toolbar */}
-         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="relative w-full md:w-96">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-               <input 
-                 type="text" 
-                 placeholder="Search by period, status..." 
-                 className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-sm"
-               />
-            </div>
-            <div className="flex gap-3 w-full md:w-auto">
-               <div className="relative">
-                  <select className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 focus:outline-none appearance-none cursor-pointer shadow-sm">
-                     <option>Month/Year</option>
-                     <option>2025</option>
-                     <option>2024</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
+         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center gap-2 relative">
+            <div className="relative flex-1" ref={dropdownRef}>
+               <div
+                  onClick={() => { setDropdownOpen(true); inputRef.current?.focus(); }}
+                  className="w-full flex flex-wrap items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-sm min-h-[40px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all cursor-text pr-10"
+               >
+                  {completedFilters.length === 0 && !currentField && (
+                     <Search className="h-4 w-4 text-slate-400 shrink-0" />
+                  )}
+                  {completedFilters.map(filter => {
+                     const fObj = APPROVAL_FIELDS.find(f => f.name === filter.field);
+                     const FIcon = fObj?.icon;
+                     return (
+                        <div key={filter.id} className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                           {FIcon && <FIcon size={12} className="text-slate-500" />}
+                           <span>{filter.field}</span>
+                           <span className="text-slate-400 font-bold lowercase text-[10px]">{filter.operator}</span>
+                           <span className="bg-slate-200/60 px-1 rounded text-slate-800 max-w-[120px] truncate">{filter.values.join(', ')}</span>
+                           <button onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }} className="ml-1 text-slate-400 hover:text-slate-600 transition-colors">
+                              <X size={12} />
+                           </button>
+                        </div>
+                     );
+                  })}
+                  {currentField && (
+                     <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700">
+                        {(() => { const fObj = APPROVAL_FIELDS.find(f => f.name === currentField); const FIcon = fObj?.icon; return FIcon ? <FIcon size={12} className="text-slate-500" /> : null; })()}
+                        <span>{currentField}</span>
+                     </div>
+                  )}
+                  {currentOperator && (
+                     <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-1.5 py-0.5 text-xs font-bold text-slate-600">
+                        <span>{currentOperator}</span>
+                     </div>
+                  )}
+                  <input
+                     ref={inputRef}
+                     type="text"
+                     value={currentField && currentOperator ? valSearchQuery : searchTerm}
+                     onChange={(e) => {
+                        if (currentField && currentOperator) { setValSearchQuery(e.target.value); }
+                        else { setSearchTerm(e.target.value); setDropdownOpen(false); }
+                     }}
+                     placeholder={completedFilters.length === 0 && !currentField ? "Filter Results..." : currentField && currentOperator ? "Select..." : ""}
+                     className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-slate-800 text-sm py-0.5 placeholder-slate-400 focus:ring-0 p-0"
+                  />
+                  {(completedFilters.length > 0 || currentField || searchTerm) && (
+                     <button onClick={(e) => { e.stopPropagation(); clearAllFilters(); }} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+                        <X size={14} />
+                     </button>
+                  )}
                </div>
-               <div className="relative">
-                  <select 
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 focus:outline-none appearance-none cursor-pointer shadow-sm"
-                  >
-                     <option value="All">All Status</option>
-                     <option value="Pending Approval">Pending Approval</option>
-                     <option value="Approved">Approved</option>
-                     <option value="Locked">Locked</option>
-                     <option value="Draft">Draft</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
-               </div>
+               {dropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                     {!currentField && (
+                        <div className="py-1">
+                           <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Field</div>
+                           {APPROVAL_FIELDS.map(f => (
+                              <button key={f.name} onClick={() => selectField(f.name)} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
+                                 <f.icon size={14} className="text-slate-400" />
+                                 <span>{f.name}</span>
+                              </button>
+                           ))}
+                        </div>
+                     )}
+                     {currentField && !currentOperator && (
+                        <div className="py-1">
+                           <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Condition</div>
+                           {['Is', 'Is not'].map(op => (
+                              <button key={op} onClick={() => selectOperator(op)} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
+                                 <div className="w-4 h-4 flex items-center justify-center font-mono text-xs font-bold text-slate-400">{op === 'Is' ? '=' : '!='}</div>
+                                 <span>{op}</span>
+                              </button>
+                           ))}
+                        </div>
+                     )}
+                     {currentField && currentOperator && (
+                        <div className="flex flex-col max-h-[300px]">
+                           <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">Select values for {currentField}</div>
+                           <div className="p-2 border-b border-slate-100">
+                              <input type="text" placeholder="Search values..." value={valSearchQuery} onChange={(e) => setValSearchQuery(e.target.value)} className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500" />
+                           </div>
+                           <div className="overflow-y-auto flex-1 py-1 max-h-[160px]">
+                              {(() => {
+                                 const opts = getOptionsForField(currentField).filter(opt => opt.toLowerCase().includes(valSearchQuery.toLowerCase()));
+                                 if (opts.length === 0) return <div className="px-3 py-2 text-xs text-slate-400 italic">No values found</div>;
+                                 return opts.map(opt => (
+                                    <label key={opt} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                       <input type="checkbox" checked={tempValues.includes(opt)} onChange={() => toggleTempValue(opt)} className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-3.5 h-3.5" />
+                                       <span>{opt}</span>
+                                    </label>
+                                 ));
+                              })()}
+                           </div>
+                           <div className="p-2 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                              <button onClick={cancelCurrentFilter} className="px-2.5 py-1 text-[10px] text-slate-500 font-bold hover:text-slate-700 transition-colors">Cancel</button>
+                              <button onClick={applyCurrentFilter} disabled={tempValues.length === 0} className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded hover:bg-purple-700 transition-colors disabled:opacity-50">Done</button>
+                           </div>
+                        </div>
+                     )}
+                  </div>
+               )}
             </div>
+            <button onClick={() => setDropdownOpen(!dropdownOpen)} className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px]">
+               <Filter size={16} /> Filter
+            </button>
          </div>
 
          {/* Table */}
@@ -381,7 +508,7 @@ const PayrollApprovalRequests: React.FC = () => {
                   ) : (
                     <tr>
                         <td colSpan={8} className="px-6 py-8 text-center text-slate-400">
-                            No payroll runs found matching the filter "{filterStatus}".
+                            No payroll runs found matching the selected filters.
                         </td>
                     </tr>
                   )}

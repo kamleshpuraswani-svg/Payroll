@@ -1317,6 +1317,115 @@ interface LoansAdvancesProps {
 const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployeeId }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
+    // FIELDS configuration for Lookup Filter
+    const FIELDS = [
+        { name: 'Employee', icon: User },
+        { name: 'Request Type', icon: CreditCard },
+        { name: 'Status', icon: CheckCircle }
+    ];
+
+    // Lookup Filter States
+    const [completedFilters, setCompletedFilters] = useState<any[]>([]);
+    const [currentField, setCurrentField] = useState<string | null>(null);
+    const [currentOperator, setCurrentOperator] = useState<string | null>(null);
+    const [tempValues, setTempValues] = useState<string[]>([]);
+    const [tempContainsText, setTempContainsText] = useState('');
+    const [valSearchQuery, setValSearchQuery] = useState('');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Click outside hook
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getOptionsForField = (field: string) => {
+        if (field === 'Status') {
+            return ['Pending', 'Approved', 'Active', 'Partially Approved', 'Rejected'];
+        }
+        if (field === 'Request Type') {
+            return ['Loan', 'Salary Advance'];
+        }
+        
+        const uniqueValues = new Set<string>();
+        (loans || []).forEach(l => {
+            if (field === 'Employee' && l.employee?.name) {
+                uniqueValues.add(l.employee.name);
+            }
+        });
+        
+        return Array.from(uniqueValues).filter(Boolean).sort();
+    };
+
+    const selectField = (field: string) => {
+        setCurrentField(field);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const selectOperator = (operator: string) => {
+        setCurrentOperator(operator);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const toggleTempValue = (val: string) => {
+        setTempValues(prev => 
+            prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]
+        );
+    };
+
+    const applyCurrentFilter = () => {
+        if (currentField && currentOperator) {
+            const vals = currentOperator === 'Contains' ? [tempContainsText] : tempValues;
+            if (vals.length > 0 && (currentOperator !== 'Contains' || vals[0].trim() !== '')) {
+                setCompletedFilters(prev => [
+                    ...prev,
+                    {
+                        id: Math.random().toString(),
+                        field: currentField,
+                        operator: currentOperator,
+                        values: vals
+                    }
+                ]);
+                setCurrentField(null);
+                setCurrentOperator(null);
+                setTempValues([]);
+                setTempContainsText('');
+                setValSearchQuery('');
+                setDropdownOpen(false);
+            }
+        }
+    };
+
+    const cancelCurrentFilter = () => {
+        setCurrentField(null);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setTempContainsText('');
+        setValSearchQuery('');
+        setDropdownOpen(false);
+    };
+
+    const removeFilter = (id: string) => {
+        setCompletedFilters(prev => prev.filter(f => f.id !== id));
+    };
+
+    const clearAllFilters = () => {
+        setCompletedFilters([]);
+        cancelCurrentFilter();
+        setSearchTerm('');
+    };
+
     // Modal States
     const [viewLoan, setViewLoan] = useState<LoanRequest | null>(null);
     const [editLoan, setEditLoan] = useState<LoanRequest | null>(null);
@@ -1378,11 +1487,41 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
         if (userRole === 'EMPLOYEE' && currentEmployeeId) {
             filtered = filtered.filter(l => l.employee.id === currentEmployeeId);
         }
-        return filtered.filter(loan =>
-            `${loan.employee.name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            `${loan.id}`.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [allLoans, userRole, currentEmployeeId, searchTerm]);
+
+        const matchesSearch = (l: LoanRequest) => {
+            if (!searchTerm) return true;
+            return (
+                `${l.employee.name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                `${l.id}`.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        };
+
+        filtered = filtered.filter(matchesSearch);
+
+        if (userRole === 'HR_MANAGER') {
+            for (const filter of completedFilters) {
+                filtered = filtered.filter(l => {
+                    let loanValue = '';
+                    if (filter.field === 'Status') loanValue = l.status || '';
+                    else if (filter.field === 'Request Type') loanValue = l.type || '';
+                    else if (filter.field === 'Employee') loanValue = l.employee?.name || '';
+
+                    const isMatch = filter.operator === 'Contains'
+                        ? loanValue.toLowerCase().includes(filter.values[0].toLowerCase())
+                        : filter.values.some(val => val.toLowerCase() === loanValue.toLowerCase());
+
+                    if (filter.operator === 'Is' || filter.operator === 'Contains') {
+                        return isMatch;
+                    } else if (filter.operator === 'Is not') {
+                        return !isMatch;
+                    }
+                    return true;
+                });
+            }
+        }
+
+        return filtered;
+    }, [allLoans, userRole, currentEmployeeId, searchTerm, completedFilters]);
 
     // Metrics calculation based on filtered data (for Employee) or all data (for HR)
     const metricsData = useMemo(() => {
@@ -1536,61 +1675,285 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                 <div className="flex-1 flex flex-col bg-white w-full">
 
                     {/* Toolbar */}
-                    <div className="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center bg-white">
-                        <div className="flex items-center gap-2 flex-1">
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-purple-600 transition-colors shadow-sm"
-                                >
-                                    <Sigma size={18} className="text-purple-600" />
-                                    <ChevronDown size={14} className="text-slate-400" />
-                                </button>
-                                {isFilterOpen && (
-                                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100">
-                                        <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
-                                            Select Filter Field
-                                        </div>
-                                        {userRole !== 'EMPLOYEE' && (
-                                            <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                                <User size={16} className="text-slate-400" /> Employee Name
+                    <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center bg-white relative">
+                        {userRole === 'HR_MANAGER' ? (
+                            <div className="flex items-center gap-2 w-full flex-1">
+                                <div className="relative flex-1" ref={dropdownRef}>
+                                    {/* Input-like container */}
+                                    <div 
+                                        onClick={() => {
+                                            setDropdownOpen(true);
+                                            inputRef.current?.focus();
+                                        }}
+                                        className="w-full flex flex-wrap items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm min-h-[40px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all cursor-text pr-10"
+                                    >
+                                        {/* Search icon */}
+                                        {completedFilters.length === 0 && !currentField && (
+                                            <Search className="h-4 w-4 text-slate-400 shrink-0" />
+                                        )}
+
+                                        {/* 1. Completed Filters Chips */}
+                                        {completedFilters.map(filter => {
+                                            const fObj = FIELDS.find(f => f.name === filter.field);
+                                            const FIcon = fObj?.icon;
+                                            return (
+                                                <div 
+                                                    key={filter.id} 
+                                                    className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2.5 py-0.5 text-xs font-semibold text-slate-700 shadow-sm"
+                                                >
+                                                    {FIcon && <FIcon size={12} className="text-slate-500" />}
+                                                    <span>{filter.field}</span>
+                                                    <span className="text-slate-400 font-bold lowercase text-[10px]">{filter.operator}</span>
+                                                    <span className="bg-slate-100 px-1 rounded text-slate-800 max-w-[120px] truncate">
+                                                        {filter.values.join(', ')}
+                                                    </span>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }} 
+                                                        className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* 2. In-Progress Filter Pills */}
+                                        {currentField && (
+                                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700 shadow-sm">
+                                                {(() => {
+                                                    const fObj = FIELDS.find(f => f.name === currentField);
+                                                    const FIcon = fObj?.icon;
+                                                    return FIcon ? <FIcon size={12} className="text-slate-500" /> : null;
+                                                })()}
+                                                <span>{currentField}</span>
+                                            </div>
+                                        )}
+
+                                        {currentOperator && (
+                                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-xs font-bold text-slate-600 shadow-sm">
+                                                <span>{currentOperator}</span>
+                                            </div>
+                                        )}
+
+                                        {/* 3. Text Input / Placeholder */}
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={currentField && currentOperator ? valSearchQuery : searchTerm}
+                                            onChange={(e) => {
+                                                if (currentField && currentOperator) {
+                                                    setValSearchQuery(e.target.value);
+                                                } else {
+                                                    setSearchTerm(e.target.value);
+                                                    setDropdownOpen(false);
+                                                }
+                                            }}
+                                            placeholder={
+                                                completedFilters.length === 0 && !currentField
+                                                    ? "Filter Results..."
+                                                    : currentField && currentOperator
+                                                    ? "Select..."
+                                                    : ""
+                                            }
+                                            className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-slate-800 text-sm py-0.5 placeholder-slate-400 focus:ring-0 p-0"
+                                        />
+
+                                        {/* 4. Clear/Reset Button */}
+                                        {(completedFilters.length > 0 || currentField || searchTerm) && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    clearAllFilters();
+                                                }}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-all"
+                                            >
+                                                <X size={14} />
                                             </button>
                                         )}
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <CreditCard size={16} className="text-slate-400" /> Request Type
-                                        </button>
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <Calendar size={16} className="text-slate-400" /> Request Date
-                                        </button>
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                            <Activity size={16} className="text-slate-400" /> Status
-                                        </button>
                                     </div>
-                                )}
+
+                                    {/* Dropdown Menu */}
+                                    {dropdownOpen && (
+                                        <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                            {!currentField && (
+                                                <div className="py-1">
+                                                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Field</div>
+                                                    {FIELDS.map(f => (
+                                                        <button
+                                                            key={f.name}
+                                                            onClick={() => selectField(f.name)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                        >
+                                                            <f.icon size={14} className="text-slate-400" />
+                                                            <span>{f.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {currentField && !currentOperator && (
+                                                <div className="py-1">
+                                                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Condition</div>
+                                                    {(currentField === 'Request Type'
+                                                        ? ['Is']
+                                                        : currentField === 'Employee'
+                                                        ? ['Is', 'Contains']
+                                                        : ['Is', 'Is not']
+                                                    ).map(op => (
+                                                        <button
+                                                            key={op}
+                                                            onClick={() => selectOperator(op)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                        >
+                                                            <div className="w-4 h-4 flex items-center justify-center font-mono text-xs font-bold text-slate-400">
+                                                                {op === 'Is' ? '=' : op === 'Contains' ? '⊃' : '!='}
+                                                            </div>
+                                                            <span>{op}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {currentField && currentOperator && (
+                                                <div className="flex flex-col max-h-[300px]">
+                                                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+                                                        Select values for {currentField}
+                                                    </div>
+                                                    {currentOperator === 'Contains' ? (
+                                                        <div className="p-3">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Type employee name..."
+                                                                value={tempContainsText}
+                                                                onChange={(e) => setTempContainsText(e.target.value)}
+                                                                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="p-2 border-b border-slate-100">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Search values..."
+                                                                    value={valSearchQuery}
+                                                                    onChange={(e) => setValSearchQuery(e.target.value)}
+                                                                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                                />
+                                                            </div>
+                                                            <div className="overflow-y-auto flex-1 py-1 max-h-[160px]">
+                                                                {(() => {
+                                                                    const opts = getOptionsForField(currentField);
+                                                                    const filteredOpts = opts.filter(opt => 
+                                                                        opt.toLowerCase().includes(valSearchQuery.toLowerCase())
+                                                                    );
+                                                                    if (filteredOpts.length === 0) {
+                                                                        return <div className="px-3 py-2 text-xs text-slate-400 italic">No values found</div>;
+                                                                    }
+                                                                    return filteredOpts.map(opt => {
+                                                                        const isChecked = tempValues.includes(opt);
+                                                                        return (
+                                                                            <label
+                                                                                key={opt}
+                                                                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={isChecked}
+                                                                                    onChange={() => toggleTempValue(opt)}
+                                                                                    className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-3.5 h-3.5"
+                                                                                />
+                                                                                <span>{opt}</span>
+                                                                            </label>
+                                                                        );
+                                                                    });
+                                                                })()}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    <div className="p-2 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                                                        <button
+                                                            onClick={cancelCurrentFilter}
+                                                            className="px-2.5 py-1 text-[10px] text-slate-500 font-bold hover:text-slate-700 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={applyCurrentFilter}
+                                                            disabled={currentOperator === 'Contains' ? tempContainsText.trim() === '' : tempValues.length === 0}
+                                                            className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                                        >
+                                                            Done
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => setIsNewRequestOpen(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2 shrink-0"
+                                >
+                                    New Request
+                                </button>
                             </div>
+                        ) : (
+                            <div className="flex items-center gap-2 flex-1 w-full justify-between">
+                                <div className="flex items-center gap-2 flex-1">
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-purple-600 transition-colors shadow-sm"
+                                        >
+                                            <Sigma size={18} className="text-purple-600" />
+                                            <ChevronDown size={14} className="text-slate-400" />
+                                        </button>
+                                        {isFilterOpen && (
+                                            <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100">
+                                                <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
+                                                    Select Filter Field
+                                                </div>
+                                                {userRole !== 'EMPLOYEE' && (
+                                                    <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
+                                                        <User size={16} className="text-slate-400" /> Employee Name
+                                                    </button>
+                                                )}
+                                                <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
+                                                    <CreditCard size={16} className="text-slate-400" /> Request Type
+                                                </button>
+                                                <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
+                                                    <Calendar size={16} className="text-slate-400" /> Request Date
+                                                </button>
+                                                <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
+                                                    <Activity size={16} className="text-slate-400" /> Status
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
 
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                <input
-                                    type="text"
-                                    placeholder="Filter Results..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                />
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Filter Results..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                        />
+                                    </div>
+
+                                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                                        Filter
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={() => setIsNewRequestOpen(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2"
+                                >
+                                    New Request
+                                </button>
                             </div>
-
-                            <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                                Filter
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={() => setIsNewRequestOpen(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2"
-                        >
-                            New Request
-                        </button>
+                        )}
                     </div>
 
                     {/* Table */}

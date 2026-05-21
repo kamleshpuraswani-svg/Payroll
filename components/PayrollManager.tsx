@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
     Plus,
     Search,
@@ -960,6 +960,176 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
     const [wizardInitialStep, setWizardInitialStep] = useState(1);
     const [unlockedRegularMonthly, setUnlockedRegularMonthly] = useState(false);
 
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // FIELDS configuration for Lookup Filter
+    const FIELDS = [
+        { name: 'Payroll Month', icon: Calendar },
+        { name: 'Business Unit', icon: Users },
+        { name: 'Payroll Type', icon: FileText },
+        { name: 'Status', icon: CheckCircle }
+    ];
+
+    // Lookup Filter States
+    const [completedFilters, setCompletedFilters] = useState<any[]>([]);
+    const [currentField, setCurrentField] = useState<string | null>(null);
+    const [currentOperator, setCurrentOperator] = useState<string | null>(null);
+    const [tempValues, setTempValues] = useState<string[]>([]);
+    const [tempContainsText, setTempContainsText] = useState('');
+    const [valSearchQuery, setValSearchQuery] = useState('');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Click outside hook
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const combinedPayrolls = useMemo<PastPayroll[]>(() => {
+        const currentPayroll: PastPayroll = {
+            id: 'Nov-2025-Pending',
+            month: 'November 2025',
+            businessUnit: 'Mindinventory, 300 Minds',
+            processedDate: 'N/A',
+            employeeCount: 452,
+            grossAmount: '₹ 1.85 Cr',
+            totalDeductions: '₹ 43.00 L',
+            netPay: '₹ 1.42 Cr',
+            status: novPayrollStatus,
+            createdBy: 'Admin',
+            lastModifiedBy: 'HR Manager',
+            payrollType: novPayrollType
+        };
+        return [currentPayroll, ...MOCK_HISTORY];
+    }, [novPayrollStatus, novPayrollType]);
+
+    const getOptionsForField = (field: string) => {
+        if (field === 'Status') {
+            return ['Draft', 'Locked', 'Paid', 'Failed'];
+        }
+        if (field === 'Payroll Type') {
+            return ['Regular Monthly', 'F&F Settlement'];
+        }
+        
+        const uniqueValues = new Set<string>();
+        combinedPayrolls.forEach(p => {
+            if (field === 'Payroll Month' && p.month) {
+                uniqueValues.add(p.month);
+            } else if (field === 'Business Unit' && p.businessUnit) {
+                uniqueValues.add(p.businessUnit);
+            }
+        });
+        
+        return Array.from(uniqueValues).filter(Boolean).sort();
+    };
+
+    const selectField = (field: string) => {
+        setCurrentField(field);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const selectOperator = (operator: string) => {
+        setCurrentOperator(operator);
+        setTempValues([]);
+        setValSearchQuery('');
+    };
+
+    const toggleTempValue = (val: string) => {
+        setTempValues(prev => 
+            prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]
+        );
+    };
+
+    const applyCurrentFilter = () => {
+        if (currentField && currentOperator) {
+            const vals = tempValues;
+            if (vals.length > 0) {
+                setCompletedFilters(prev => [
+                    ...prev,
+                    {
+                        id: Math.random().toString(),
+                        field: currentField,
+                        operator: currentOperator,
+                        values: vals
+                    }
+                ]);
+                setCurrentField(null);
+                setCurrentOperator(null);
+                setTempValues([]);
+                setTempContainsText('');
+                setValSearchQuery('');
+                setDropdownOpen(false);
+            }
+        }
+    };
+
+    const cancelCurrentFilter = () => {
+        setCurrentField(null);
+        setCurrentOperator(null);
+        setTempValues([]);
+        setTempContainsText('');
+        setValSearchQuery('');
+        setDropdownOpen(false);
+    };
+
+    const removeFilter = (id: string) => {
+        setCompletedFilters(prev => prev.filter(f => f.id !== id));
+    };
+
+    const clearAllFilters = () => {
+        setCompletedFilters([]);
+        cancelCurrentFilter();
+        setSearchTerm('');
+    };
+
+    const displayHistory = useMemo(() => {
+        let filtered = combinedPayrolls;
+
+        // Apply standard Search Term
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(p => 
+                p.month.toLowerCase().includes(term) ||
+                p.id.toLowerCase().includes(term) ||
+                p.businessUnit.toLowerCase().includes(term)
+            );
+        }
+
+        // Apply Completed Filters (for HR_MANAGER)
+        if (userRole === 'HR_MANAGER') {
+            for (const filter of completedFilters) {
+                filtered = filtered.filter(p => {
+                    let pValue = '';
+                    if (filter.field === 'Payroll Month') pValue = p.month || '';
+                    else if (filter.field === 'Business Unit') pValue = p.businessUnit || '';
+                    else if (filter.field === 'Payroll Type') pValue = p.payrollType || 'Regular Monthly';
+                    else if (filter.field === 'Status') pValue = p.status || '';
+
+                    const isMatch = filter.values.some(val => val.toLowerCase() === pValue.toLowerCase());
+
+                    if (filter.operator === 'Is') {
+                        return isMatch;
+                    } else if (filter.operator === 'Is not') {
+                        return !isMatch;
+                    }
+                    return true;
+                });
+            }
+        }
+
+        return filtered;
+    }, [combinedPayrolls, searchTerm, completedFilters, userRole]);
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'Paid': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
@@ -1029,9 +1199,9 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 </div>
                 <button
                     onClick={() => { setWizardBU([]); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
                 >
-                    <Plus size={20} /> Initiate Payroll
+                    Initiate Payroll
                 </button>
             </div>
 
@@ -1120,28 +1290,226 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
 
                 {/* Toolbar */}
-                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                {/* Toolbar */}
+                <div className="p-6 border-b border-slate-100 flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                         <h2 className="text-lg font-bold text-slate-800">Payroll History</h2>
-                        <div className="relative flex-1 sm:w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search by month or ID..."
-                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                            />
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowForm16Modal(true)}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-2"
+                            >
+                                <FileText size={16} /> Distribute Form 16
+                            </button>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
-                            <Download size={16} /> Export History
-                        </button>
-                        <button
-                            onClick={() => setShowForm16Modal(true)}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-2"
-                        >
-                            <FileText size={16} /> Distribute Form 16
-                        </button>
+
+                    {/* Filter bar below */}
+                    <div className="w-full">
+                        {userRole === 'HR_MANAGER' ? (
+                            <div className="relative w-full" ref={dropdownRef}>
+                                {/* Input-like container */}
+                                <div 
+                                    onClick={() => {
+                                        setDropdownOpen(true);
+                                        inputRef.current?.focus();
+                                    }}
+                                    className="w-full flex flex-wrap items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm min-h-[40px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all cursor-text pr-10"
+                                >
+                                    {/* Search icon */}
+                                    {completedFilters.length === 0 && !currentField && (
+                                        <Search className="h-4 w-4 text-slate-400 shrink-0" />
+                                    )}
+
+                                    {/* 1. Completed Filters Chips */}
+                                    {completedFilters.map(filter => {
+                                        const fObj = FIELDS.find(f => f.name === filter.field);
+                                        const FIcon = fObj?.icon;
+                                        return (
+                                            <div 
+                                                key={filter.id} 
+                                                className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2.5 py-0.5 text-xs font-semibold text-slate-700 shadow-sm"
+                                            >
+                                                {FIcon && <FIcon size={12} className="text-slate-500" />}
+                                                <span>{filter.field}</span>
+                                                <span className="text-slate-400 font-bold lowercase text-[10px]">{filter.operator}</span>
+                                                <span className="bg-slate-100 px-1 rounded text-slate-800 max-w-[120px] truncate">
+                                                    {filter.values.join(', ')}
+                                                </span>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }} 
+                                                    className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* 2. In-Progress Filter Pills */}
+                                    {currentField && (
+                                        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700 shadow-sm">
+                                            {(() => {
+                                                const fObj = FIELDS.find(f => f.name === currentField);
+                                                const FIcon = fObj?.icon;
+                                                return FIcon ? <FIcon size={12} className="text-slate-500" /> : null;
+                                            })()}
+                                            <span>{currentField}</span>
+                                        </div>
+                                    )}
+
+                                    {currentOperator && (
+                                        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-xs font-bold text-slate-600 shadow-sm">
+                                            <span>{currentOperator}</span>
+                                        </div>
+                                    )}
+
+                                    {/* 3. Text Input / Placeholder */}
+                                    <input
+                                        ref={inputRef}
+                                        type="text"
+                                        value={currentField && currentOperator ? valSearchQuery : searchTerm}
+                                        onChange={(e) => {
+                                            if (currentField && currentOperator) {
+                                                setValSearchQuery(e.target.value);
+                                            } else {
+                                                setSearchTerm(e.target.value);
+                                                setDropdownOpen(false);
+                                            }
+                                        }}
+                                        placeholder={
+                                            completedFilters.length === 0 && !currentField
+                                                ? "Search by month or ID..."
+                                                : currentField && currentOperator
+                                                ? "Select..."
+                                                : ""
+                                        }
+                                        className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-slate-800 text-sm py-0.5 placeholder-slate-400 focus:ring-0 p-0"
+                                    />
+
+                                    {/* 4. Clear/Reset Button */}
+                                    {(completedFilters.length > 0 || currentField || searchTerm) && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                clearAllFilters();
+                                            }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-all"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Dropdown Menu */}
+                                {dropdownOpen && (
+                                    <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                        {!currentField && (
+                                            <div className="py-1">
+                                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Field</div>
+                                                {FIELDS.map(f => (
+                                                    <button
+                                                        key={f.name}
+                                                        onClick={() => selectField(f.name)}
+                                                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                    >
+                                                        <f.icon size={14} className="text-slate-400" />
+                                                        <span>{f.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {currentField && !currentOperator && (
+                                            <div className="py-1">
+                                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Condition</div>
+                                                {['Is', 'Is not'].map(op => (
+                                                    <button
+                                                        key={op}
+                                                        onClick={() => selectOperator(op)}
+                                                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                                                    >
+                                                        <div className="w-4 h-4 flex items-center justify-center font-mono text-xs font-bold text-slate-400">
+                                                            {op === 'Is' ? '=' : '!='}
+                                                        </div>
+                                                        <span>{op}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {currentField && currentOperator && (
+                                            <div className="flex flex-col max-h-[300px]">
+                                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+                                                    Select values for {currentField}
+                                                </div>
+                                                <div className="p-2 border-b border-slate-100">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search values..."
+                                                        value={valSearchQuery}
+                                                        onChange={(e) => setValSearchQuery(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-purple-500"
+                                                    />
+                                                </div>
+                                                <div className="overflow-y-auto flex-1 py-1 max-h-[160px]">
+                                                    {(() => {
+                                                        const opts = getOptionsForField(currentField);
+                                                        const filteredOpts = opts.filter(opt => 
+                                                            opt.toLowerCase().includes(valSearchQuery.toLowerCase())
+                                                        );
+                                                        if (filteredOpts.length === 0) {
+                                                            return <div className="px-3 py-2 text-xs text-slate-400 italic">No values found</div>;
+                                                        }
+                                                        return filteredOpts.map(opt => {
+                                                            const isChecked = tempValues.includes(opt);
+                                                            return (
+                                                                <label
+                                                                    key={opt}
+                                                                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={isChecked}
+                                                                        onChange={() => toggleTempValue(opt)}
+                                                                        className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-3.5 h-3.5"
+                                                                    />
+                                                                    <span>{opt}</span>
+                                                                </label>
+                                                            );
+                                                        });
+                                                    })()}
+                                                </div>
+                                                <div className="p-2 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                                                    <button
+                                                        onClick={cancelCurrentFilter}
+                                                        className="px-2.5 py-1 text-[10px] text-slate-500 font-bold hover:text-slate-700 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        onClick={applyCurrentFilter}
+                                                        disabled={tempValues.length === 0}
+                                                        className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                                    >
+                                                        Done
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by month or ID..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -1164,161 +1532,165 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {/* Special row for current pending payroll */}
-                            <tr className="bg-purple-50/20 group hover:bg-purple-50/40 transition-colors">
-                                <td className="px-8 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold shadow-sm">N</div>
-                                        <div>
-                                            <div className="font-black text-slate-800">November 2025</div>
-                                            <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
-                                                {novPayrollStatus === 'Locked' ? 'Locked' : 'In Progress'}
+                            {displayHistory.map((payroll) => {
+                                if (payroll.id === 'Nov-2025-Pending') {
+                                    return (
+                                        <tr key={payroll.id} className="bg-purple-50/20 group hover:bg-purple-50/40 transition-colors">
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold shadow-sm">N</div>
+                                                    <div>
+                                                        <div className="font-black text-slate-800">November 2025</div>
+                                                        <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
+                                                            {novPayrollStatus === 'Locked' ? 'Locked' : 'In Progress'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="text-sm font-bold text-slate-700">Mindinventory, 300 Minds</div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="text-sm font-medium text-slate-600">{novPayrollType}</div>
+                                            </td>
+                                            <td className="px-6 py-5 font-bold text-slate-600">452</td>
+                                            <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
+                                            <td className="px-6 py-5 font-bold text-rose-600">₹ 43.00 L</td>
+                                            <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
+                                            <td className="px-6 py-5">
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(novPayrollStatus)}`}>
+                                                    {novPayrollStatus}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 text-slate-600 font-medium text-xs">Admin</td>
+                                            <td className="px-6 py-5 text-slate-600 font-medium text-xs">HR Manager</td>
+                                            <td className="px-6 py-5 text-right pr-8">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {novPayrollStatus === 'Locked' ? (
+                                                        <>
+                                                            <button
+                                                                onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(true); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                                className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                                title="View Details"
+                                                            >
+                                                                <Eye size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setShowUnlockModal('Nov 2025')}
+                                                                className="p-2 hover:bg-white hover:text-amber-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                                title="Unlock to Edit"
+                                                            >
+                                                                <Unlock size={16} />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                                className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                                title="Edit Draft"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setShowLockModal('Nov 2025')}
+                                                                className="p-2 hover:bg-white hover:text-emerald-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                                title="Lock Payroll"
+                                                            >
+                                                                <Lock size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                                className="px-4 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-black hover:bg-purple-700 transition-all flex items-center gap-1.5 ml-2 shadow-md shadow-purple-100"
+                                                            >
+                                                                Continue <ArrowRight size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                }
+
+                                return (
+                                    <tr key={payroll.id} className="hover:bg-slate-50 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold">{payroll.month.charAt(0)}</div>
+                                                <div>
+                                                    <div className="font-bold text-slate-700">{payroll.month}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <div className="text-sm font-bold text-slate-700">Mindinventory, 300 Minds</div>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <div className="text-sm font-medium text-slate-600">{novPayrollType}</div>
-                                </td>
-                                <td className="px-6 py-5 font-bold text-slate-600">452</td>
-                                <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
-                                <td className="px-6 py-5 font-bold text-rose-600">₹ 43.00 L</td>
-                                <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
-                                <td className="px-6 py-5">
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(novPayrollStatus)}`}>
-                                        {novPayrollStatus}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-5 text-slate-600 font-medium text-xs">Admin</td>
-                                <td className="px-6 py-5 text-slate-600 font-medium text-xs">HR Manager</td>
-                                <td className="px-6 py-5 text-right pr-8">
-                                    <div className="flex items-center justify-end gap-2">
-                                        {novPayrollStatus === 'Locked' ? (
-                                            <>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <div className="text-sm font-medium text-slate-600">{payroll.businessUnit}</div>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <div className="text-sm font-medium text-slate-600">{payroll.payrollType || 'Regular Monthly'}</div>
+                                        </td>
+                                        <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
+                                        <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
+                                        <td className="px-6 py-5 text-rose-600 font-bold">{payroll.totalDeductions}</td>
+                                        <td className="px-6 py-5 text-slate-800 font-black">{payroll.netPay}</td>
+                                        <td className="px-6 py-5">
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(payroll.status)}`}>
+                                                {payroll.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-5 text-slate-600 font-medium text-xs">{payroll.createdBy}</td>
+                                        <td className="px-6 py-5 text-slate-600 font-medium text-xs">{payroll.lastModifiedBy}</td>
+                                        <td className="px-6 py-5 text-right pr-8">
+                                            <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(true); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                    onClick={() => setShowDetailsModal(payroll)}
                                                     className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                                     title="View Details"
                                                 >
                                                     <Eye size={16} />
                                                 </button>
+                                                { (payroll.status !== 'Paid' || unlockedPayrolls.includes(payroll.id)) && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const bus = payroll.businessUnit.split(',').map(s => s.trim());
+                                                            setWizardBU(bus);
+                                                            setWizardInitialStep(1);
+                                                            setUnlockedRegularMonthly(false);
+                                                            setWizardReadOnly(false);
+                                                            setView('WIZARD');
+                                                        }}
+                                                        className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                        title="Edit Payroll"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                )}
                                                 <button
-                                                    onClick={() => setShowUnlockModal('Nov 2025')}
+                                                    onClick={() => setShowUnlockModal(payroll.id)}
                                                     className="p-2 hover:bg-white hover:text-amber-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                                     title="Unlock to Edit"
                                                 >
                                                     <Unlock size={16} />
                                                 </button>
-                                            </>
-                                        ) : (
-                                            <>
                                                 <button
-                                                    onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
-                                                    className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                    title="Edit Draft"
+                                                    onClick={() => setShowDownloadModal(payroll)}
+                                                    className="p-2 hover:bg-white hover:text-slate-800 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
+                                                    title="Download Reports"
                                                 >
-                                                    <Edit2 size={16} />
+                                                    <Download size={16} />
                                                 </button>
-                                                <button
-                                                    onClick={() => setShowLockModal('Nov 2025')}
-                                                    className="p-2 hover:bg-white hover:text-emerald-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                    title="Lock Payroll"
-                                                >
-                                                    <Lock size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
-                                                    className="px-4 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-black hover:bg-purple-700 transition-all flex items-center gap-1.5 ml-2 shadow-md shadow-purple-100"
-                                                >
-                                                    Continue <ArrowRight size={14} />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-
-                            {/* Past Payrolls */}
-                            {MOCK_HISTORY.map((payroll) => (
-                                <tr key={payroll.id} className="hover:bg-slate-50 transition-colors group">
-                                    <td className="px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold">{payroll.month.charAt(0)}</div>
-                                            <div>
-                                                <div className="font-bold text-slate-700">{payroll.month}</div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="text-sm font-medium text-slate-600">{payroll.businessUnit}</div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="text-sm font-medium text-slate-600">{payroll.payrollType || 'Regular Monthly'}</div>
-                                    </td>
-                                    <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
-                                    <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
-                                    <td className="px-6 py-5 text-rose-600 font-bold">{payroll.totalDeductions}</td>
-                                    <td className="px-6 py-5 text-slate-800 font-black">{payroll.netPay}</td>
-                                    <td className="px-6 py-5">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(payroll.status)}`}>
-                                            {payroll.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-slate-600 font-medium text-xs">{payroll.createdBy}</td>
-                                    <td className="px-6 py-5 text-slate-600 font-medium text-xs">{payroll.lastModifiedBy}</td>
-                                    <td className="px-6 py-5 text-right pr-8">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => setShowDetailsModal(payroll)}
-                                                className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                title="View Details"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
-                                            { (payroll.status !== 'Paid' || unlockedPayrolls.includes(payroll.id)) && (
-                                                <button
-                                                    onClick={() => {
-                                                        const bus = payroll.businessUnit.split(',').map(s => s.trim());
-                                                        setWizardBU(bus);
-                                                        setWizardInitialStep(1);
-                                                        setUnlockedRegularMonthly(false);
-                                                        setWizardReadOnly(false);
-                                                        setView('WIZARD');
-                                                    }}
-                                                    className="p-2 hover:bg-white hover:text-purple-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                    title="Edit Payroll"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => setShowUnlockModal(payroll.id)}
-                                                className="p-2 hover:bg-white hover:text-amber-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                title="Unlock to Edit"
-                                            >
-                                                <Unlock size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => setShowDownloadModal(payroll)}
-                                                className="p-2 hover:bg-white hover:text-slate-800 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
-                                                title="Download Reports"
-                                            >
-                                                <Download size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
 
                 {/* Footer Pagination */}
                 <div className="p-6 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center text-xs font-medium text-slate-500">
-                    <span>Showing 6 of 24 payroll cycles</span>
+                    <span>Showing {displayHistory.length} of {combinedPayrolls.length} payroll cycles</span>
                     <div className="flex gap-2">
                         <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">Previous</button>
                         <button className="px-3 py-1 border border-slate-200 rounded-lg hover:bg-white transition-colors">Next</button>

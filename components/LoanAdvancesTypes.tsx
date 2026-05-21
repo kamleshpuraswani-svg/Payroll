@@ -485,45 +485,8 @@ const LoanAdvancesTypes: React.FC = () => {
                 {!isEditing ? (
                     <>
                         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[500px] flex flex-col">
-                            {/* Lookup Filter Toolbar */}
-                            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                                <div className="flex items-center gap-2 w-full sm:w-auto">
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-purple-600 transition-colors shadow-sm"
-                                        >
-                                            <Sigma size={18} className="text-purple-600" />
-                                            <ChevronDown size={14} className="text-slate-400" />
-                                        </button>
-                                        {isFilterOpen && (
-                                            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100">
-                                                <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
-                                                    Select Filter Field
-                                                </div>
-                                                <button className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 flex items-center gap-3 transition-colors">
-                                                    <FileText size={16} className="text-slate-400" /> Loan Type
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="flex-1 sm:w-80 relative group">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
-                                        <input
-                                            type="text"
-                                            placeholder="Filter Results..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-slate-400 shadow-sm"
-                                        />
-                                    </div>
-
-                                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                                        Filter
-                                    </button>
-                                </div>
-
+                            {/* Toolbar */}
+                            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-end items-center">
                                 <div className="flex items-center gap-3 w-full sm:w-auto">
                                     <div className="relative">
                                         <select 
