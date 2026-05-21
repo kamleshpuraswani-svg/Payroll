@@ -890,7 +890,7 @@ const ExpenseManagement: React.FC<{
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50 animate-in fade-in duration-300 relative">
 
-            {/* Top Stats Bar */}
+            {/* Top Stats Bar - updated */}
             <div className={`bg-white border-b border-slate-200 px-6 py-5 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0 ${userRole === 'HR_MANAGER' ? 'max-w-4xl' : ''}`}>
                 {stats.map((stat, i) => (
                     <div key={i} className={`flex flex-col p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-slate-50/50 ${stat.highlight ? 'bg-purple-50/30' : 'bg-white'}`}>
