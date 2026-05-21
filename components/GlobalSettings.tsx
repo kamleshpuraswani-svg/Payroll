@@ -80,7 +80,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          case 'payslip': return <HRSalarySlipTemplate />;
          case 'bank': return <HRBankDisbursalTemplate />;
          case 'pf-settings': return <PFSettings />;
-         case 'statutory': return <StatutorySettings />;
+         case 'statutory': return <StatutorySettings userRole={userRole} />;
          case 'pf-tds': return <PfTdsSettings userRole={userRole} />;
          case 'tds-settings': return <TDSSettings />;
          case 'statutory-bonus': return <StatutoryBonusSettings />;

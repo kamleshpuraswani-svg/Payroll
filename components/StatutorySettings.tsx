@@ -40,7 +40,11 @@ const DEPARTMENTS = [
     "Legal"
 ];
 
-const StatutorySettings: React.FC = () => {
+interface StatutorySettingsProps {
+    userRole?: string;
+}
+
+const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
     const [editingSection, setEditingSection] = useState<string | null>(null);
     const isEditing = editingSection !== null;
     const setIsEditing = (val: boolean) => { if (!val) setEditingSection(null); };
@@ -59,6 +63,28 @@ const StatutorySettings: React.FC = () => {
             setPaygroups(data || []);
         } catch (err) {
             console.error('Error fetching paygroups:', err);
+        }
+    };
+
+    const fetchEarningComponents = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('salary_components')
+                .select('name')
+                .eq('category', 'Earnings')
+                .eq('status', true);
+            if (error) throw error;
+            if (data && data.length > 0) {
+                const names = data.map((item: any) => item.name);
+                const uniqueNames = Array.from(new Set([
+                    "Basic Salary",
+                    "Dearness Allowance (DA)",
+                    ...names
+                ]));
+                setEarningComponents(uniqueNames);
+            }
+        } catch (err) {
+            console.error('Error fetching earning components:', err);
         }
     };
 
@@ -91,6 +117,7 @@ const StatutorySettings: React.FC = () => {
                 setEsiProcessArrear(config.esiProcessArrear ?? true);
                 setEnableGratuity(config.enableGratuity ?? true);
                 setIncludeInCtcGratuity(config.includeInCtcGratuity ?? true);
+                setIncludeGratuityInPayslip(config.includeGratuityInPayslip ?? false);
                 setGratuityMode(config.gratuityMode ?? 'all');
                 setGratuityCriteria(config.gratuityCriteria ?? ['Permanent employees only']);
                 setSelectedGratuityDepts(config.selectedGratuityDepts ?? []);
@@ -127,10 +154,24 @@ const StatutorySettings: React.FC = () => {
                 setEnableNps(config.enableNps ?? true);
                 setNpsRegistrationId(config.npsRegistrationId ?? '');
                 setNpsDeductionCycle(config.npsDeductionCycle ?? 'Monthly');
+                if (config.npsContributionBase) {
+                    if (typeof config.npsContributionBase === 'string') {
+                        if (config.npsContributionBase.includes('+')) {
+                            setNpsContributionBase(config.npsContributionBase.split('+').map((s: string) => s.trim()));
+                        } else {
+                            setNpsContributionBase([config.npsContributionBase]);
+                        }
+                    } else {
+                        setNpsContributionBase(config.npsContributionBase);
+                    }
+                } else {
+                    setNpsContributionBase(['Basic Salary', 'Dearness Allowance (DA)']);
+                }
                 setNpsEmpRate(config.npsEmpRate ?? '10');
                 setNpsEmprRate(config.npsEmprRate ?? '10');
                 setNpsWageCeiling(config.npsWageCeiling ?? false);
                 setNpsIncludeInCtc(config.npsIncludeInCtc ?? true);
+                setNpsIncludeEmployerInPayslip(config.npsIncludeEmployerInPayslip ?? false);
 
                 // Initialize new Gratuity UI fields
                 setGratuityProvisionRate(config.gratuityProvisionRate ?? '4.81');
@@ -167,6 +208,7 @@ const StatutorySettings: React.FC = () => {
                 
                 setEnableGratuity(true);
                 setIncludeInCtcGratuity(true);
+                setIncludeGratuityInPayslip(false);
                 setGratuityMode('all');
                 setGratuityCriteria(['Permanent employees only']);
                 setSelectedGratuityDepts([]);
@@ -207,10 +249,12 @@ const StatutorySettings: React.FC = () => {
                 setEnableNps(true);
                 setNpsRegistrationId('');
                 setNpsDeductionCycle('Monthly');
+                setNpsContributionBase(['Basic Salary', 'Dearness Allowance (DA)']);
                 setNpsEmpRate('10');
                 setNpsEmprRate('10');
                 setNpsWageCeiling(false);
                 setNpsIncludeInCtc(true);
+                setNpsIncludeEmployerInPayslip(false);
             }
         } catch (err) {
             console.error('Error fetching statutory settings:', err);
@@ -219,6 +263,7 @@ const StatutorySettings: React.FC = () => {
 
     React.useEffect(() => {
         fetchPaygroups();
+        fetchEarningComponents();
         fetchSettings();
     }, [selectedTarget]);
 
@@ -242,6 +287,7 @@ const StatutorySettings: React.FC = () => {
     // Gratuity State
     const [enableGratuity, setEnableGratuity] = useState(true);
     const [includeInCtcGratuity, setIncludeInCtcGratuity] = useState(true);
+    const [includeGratuityInPayslip, setIncludeGratuityInPayslip] = useState(false);
     const [gratuityMode, setGratuityMode] = useState<'all' | 'selective'>('all');
     const [gratuityCriteria, setGratuityCriteria] = useState<string[]>(['Permanent employees only']);
     const [selectedGratuityDepts, setSelectedGratuityDepts] = useState<string[]>([]);
@@ -308,11 +354,23 @@ const StatutorySettings: React.FC = () => {
     const [enableNps, setEnableNps] = useState(true);
     const [npsRegistrationId, setNpsRegistrationId] = useState('');
     const [npsDeductionCycle, setNpsDeductionCycle] = useState('Monthly');
-    const [npsContributionBase, setNpsContributionBase] = useState('Basic Salary + Dearness Allowance (DA)');
+    const [npsContributionBase, setNpsContributionBase] = useState<string[]>(['Basic Salary', 'Dearness Allowance (DA)']);
+    const [npsDropdownOpen, setNpsDropdownOpen] = useState(false);
+    const [earningComponents, setEarningComponents] = useState<string[]>([
+        "Basic Salary",
+        "Dearness Allowance (DA)",
+        "House Rent Allowance (HRA)",
+        "Conveyance Allowance",
+        "Special Allowance",
+        "LTA",
+        "Medical Allowance",
+        "Statutory Bonus"
+    ]);
     const [npsEmpRate, setNpsEmpRate] = useState('10');
     const [npsEmprRate, setNpsEmprRate] = useState('10');
     const [npsWageCeiling, setNpsWageCeiling] = useState(false);
     const [npsIncludeInCtc, setNpsIncludeInCtc] = useState(true);
+    const [npsIncludeEmployerInPayslip, setNpsIncludeEmployerInPayslip] = useState(false);
 
     // Backup State for Cancel
     const [backupState, setBackupState] = useState<any>(null);
@@ -329,7 +387,7 @@ const StatutorySettings: React.FC = () => {
     const handleEdit = () => {
         setBackupState({
             enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents: [...esiMappedComponents], esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact, esiProvisionInCtc, esiProcessOvertime, esiProcessArrear,
-            enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria: [...gratuityCriteria],
+            enableGratuity, includeInCtcGratuity, includeGratuityInPayslip, gratuityMode, gratuityCriteria: [...gratuityCriteria],
             selectedGratuityDepts: [...selectedGratuityDepts], gratuityCalculationComponents: [...gratuityCalculationComponents],
             minServicePeriod, customServiceYears,
             gratuityExceptions: [...gratuityExceptions], otherExceptionDetails,
@@ -343,7 +401,7 @@ const StatutorySettings: React.FC = () => {
             lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
             ptState, ptNumber,
             ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
-            enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
+            enableNps, npsRegistrationId, npsDeductionCycle, npsContributionBase: [...npsContributionBase], npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
         });
         // isEditing is now derived from editingSection
     };
@@ -352,7 +410,7 @@ const StatutorySettings: React.FC = () => {
         try {
             const configValue = {
                 enableEsi, esiNumber, esiEstablishmentName, esiCoverageDate, esiEmpRate, esiEmprRate, includeEmprContriEsi, esiMappedComponents, esiMaxMonthlySalary, allowEsiOverride, esiRoundOff, esiNegativeArrearImpact, esiProvisionInCtc, esiProcessOvertime, esiProcessArrear,
-                enableGratuity, includeInCtcGratuity, gratuityMode, gratuityCriteria,
+                enableGratuity, includeInCtcGratuity, includeGratuityInPayslip, gratuityMode, gratuityCriteria,
                 selectedGratuityDepts, gratuityCalculationComponents,
                 minServicePeriod, customServiceYears,
                 gratuityExceptions, otherExceptionDetails,
@@ -365,7 +423,7 @@ const StatutorySettings: React.FC = () => {
                 lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
                 ptState, ptNumber,
                 ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
-                enableNps, npsRegistrationId, npsDeductionCycle, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc
+                enableNps, npsRegistrationId, npsDeductionCycle, npsContributionBase, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
             };
 
             const { error } = await supabase
@@ -404,6 +462,7 @@ const StatutorySettings: React.FC = () => {
 
             setEnableGratuity(backupState.enableGratuity);
             setIncludeInCtcGratuity(backupState.includeInCtcGratuity);
+            setIncludeGratuityInPayslip(backupState.includeGratuityInPayslip);
             setGratuityMode(backupState.gratuityMode);
             setGratuityCriteria(backupState.gratuityCriteria);
             setSelectedGratuityDepts(backupState.selectedGratuityDepts);
@@ -458,10 +517,12 @@ const StatutorySettings: React.FC = () => {
             setEnableNps(backupState.enableNps);
             setNpsRegistrationId(backupState.npsRegistrationId);
             setNpsDeductionCycle(backupState.npsDeductionCycle);
+            setNpsContributionBase(backupState.npsContributionBase);
             setNpsEmpRate(backupState.npsEmpRate);
             setNpsEmprRate(backupState.npsEmprRate);
             setNpsWageCeiling(backupState.npsWageCeiling);
             setNpsIncludeInCtc(backupState.npsIncludeInCtc);
+            setNpsIncludeEmployerInPayslip(backupState.npsIncludeEmployerInPayslip);
         }
         setIsEditing(false);
     };
@@ -732,7 +793,9 @@ const StatutorySettings: React.FC = () => {
                                         <input type="checkbox" className="hidden" checked={esiProvisionInCtc} onChange={() => isEditing && setEsiProvisionInCtc(!esiProvisionInCtc)} disabled={!isEditing} />
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Do you want to provision employer ESI in CTC?</span>
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
+                                                    {userRole === 'HR_MANAGER' ? 'Do you want to show employer ESI in payslip?' : 'Do you want to provision employer ESI in CTC?'}
+                                                </span>
                                                 <div className="group relative inline-block">
                                                     <Info size={14} className="text-slate-400 cursor-help" />
                                                     <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-left leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
@@ -768,11 +831,13 @@ const StatutorySettings: React.FC = () => {
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Allow overriding of ESI at salary structure level.</span>
                                     </label>
 
-                                    <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-6 mt-4">
-                                        <p className="text-sm text-slate-700 leading-relaxed">
-                                            <span className="font-bold">Note:</span> ESI deductions will be made only if the employee’s monthly salary is less than or equal to ₹{esiMaxMonthlySalary}. If the employee gets a salary revision which increases their monthly salary above ₹{esiMaxMonthlySalary}, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).
-                                        </p>
-                                    </div>
+                                    {userRole !== 'HR_MANAGER' && (
+                                        <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-6 mt-4">
+                                            <p className="text-sm text-slate-700 leading-relaxed">
+                                                <span className="font-bold">Note:</span> ESI deductions will be made only if the employee’s monthly salary is less than or equal to ₹{esiMaxMonthlySalary}. If the employee gets a salary revision which increases their monthly salary above ₹{esiMaxMonthlySalary}, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -810,7 +875,9 @@ const StatutorySettings: React.FC = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                                             {/* Gratuity provision rate */}
                                             <div className="space-y-2">
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gratuity provision rate (% per year) <span className="text-rose-500">*</span></label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    {userRole === 'HR_MANAGER' ? 'Gratuity provision rate (%)' : 'Gratuity provision rate (% per year)'} <span className="text-rose-500">*</span>
+                                                </label>
                                                 <div className="relative max-w-[240px]">
                                                     <input
                                                         type="text"
@@ -825,7 +892,9 @@ const StatutorySettings: React.FC = () => {
                                                         placeholder="Enter %"
                                                         className="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm"
                                                     />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
+                                                    {userRole !== 'HR_MANAGER' && (
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -896,7 +965,9 @@ const StatutorySettings: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="max-w-xs relative">
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
+                                                    {userRole !== 'HR_MANAGER' && (
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">₹</div>
+                                                    )}
                                                     <input 
                                                         type="text"
                                                         value={gratuityTaxFreeLimit}
@@ -906,7 +977,9 @@ const StatutorySettings: React.FC = () => {
                                                             setGratuityTaxFreeLimit(formatted);
                                                         }}
                                                         disabled={!isEditing}
-                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm transition-all"
+                                                        className={`w-full pr-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 shadow-sm transition-all ${
+                                                            userRole === 'HR_MANAGER' ? 'pl-4' : 'pl-10'
+                                                        }`}
                                                         placeholder="Enter Limit"
                                                     />
                                                 </div>
@@ -991,6 +1064,23 @@ const StatutorySettings: React.FC = () => {
                                          />
                                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include Gratuity in employee's salary structure (CTC).</span>
                                      </label>
+                                     {userRole === 'HR_MANAGER' && (
+                                         <div className="mt-4">
+                                             <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${includeGratuityInPayslip ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                                     {includeGratuityInPayslip && <Check size={14} className="text-white stroke-[3]" />}
+                                                 </div>
+                                                 <input 
+                                                     type="checkbox" 
+                                                     className="hidden" 
+                                                     checked={includeGratuityInPayslip} 
+                                                     onChange={() => isEditing && setIncludeGratuityInPayslip(!includeGratuityInPayslip)} 
+                                                     disabled={!isEditing} 
+                                                 />
+                                                 <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include Gratuity's contribution in payslip</span>
+                                             </label>
+                                         </div>
+                                     )}
                                  </div>
 
                                  {/* Proration for Incomplete Year of Service */}
@@ -1201,7 +1291,9 @@ const StatutorySettings: React.FC = () => {
                                             {lwfProvisionCtc && <Check size={14} className="text-white stroke-[3]" />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={lwfProvisionCtc} onChange={() => isEditing && setLwfProvisionCtc(!lwfProvisionCtc)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include LWF contribution in CTC</span>
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
+                                            {userRole === 'HR_MANAGER' ? 'Include LWF contribution in payslip' : 'Include LWF contribution in CTC'}
+                                        </span>
                                     </label>
                                 </div>
                             </div>
@@ -1391,7 +1483,9 @@ const StatutorySettings: React.FC = () => {
                                 {/* Registration ID */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="max-w-xs w-full">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Corporate NPS Registration ID <span className="text-rose-500">*</span></label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">
+                                            {userRole === 'HR_MANAGER' ? 'Corporate NPS Registration ID (CHO No.)' : 'Corporate NPS Registration ID'} <span className="text-rose-500">*</span>
+                                        </label>
                                         <input
                                             type="text"
                                             value={npsRegistrationId}
@@ -1417,18 +1511,76 @@ const StatutorySettings: React.FC = () => {
                                             >
                                                 <option>Monthly</option>
                                                 <option>Quarterly</option>
+                                                {userRole === 'HR_MANAGER' && (
+                                                    <>
+                                                        <option>Half-Yearly</option>
+                                                        <option>Yearly</option>
+                                                    </>
+                                                )}
                                             </select>
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                     </div>
-                                    <div className="max-w-xs w-full">
+                                    <div className="max-w-xs w-full relative">
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Contribution Base</label>
-                                        <input
-                                            type="text"
-                                            value={npsContributionBase}
-                                            disabled
-                                            className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-700 cursor-not-allowed"
-                                        />
+                                        {userRole === 'HR_MANAGER' ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    disabled={!isEditing}
+                                                    onClick={() => setNpsDropdownOpen(!npsDropdownOpen)}
+                                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white flex items-center justify-between focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-not-allowed"
+                                                >
+                                                    <span className="truncate">
+                                                        {npsContributionBase.length > 0
+                                                            ? npsContributionBase.join(' + ')
+                                                            : 'Select components'}
+                                                    </span>
+                                                    <ChevronDown className="text-slate-400 shrink-0" size={16} />
+                                                </button>
+
+                                                {npsDropdownOpen && isEditing && (
+                                                    <>
+                                                        <div
+                                                            className="fixed inset-0 z-40"
+                                                            onClick={() => setNpsDropdownOpen(false)}
+                                                        />
+                                                        <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
+                                                             {earningComponents.map((comp) => {
+                                                                 const isSelected = npsContributionBase.includes(comp);
+                                                                 return (
+                                                                     <label
+                                                                         key={comp}
+                                                                         className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 cursor-pointer w-full text-left"
+                                                                     >
+                                                                         <input
+                                                                             type="checkbox"
+                                                                             checked={isSelected}
+                                                                             onChange={() => {
+                                                                                 if (isSelected) {
+                                                                                     setNpsContributionBase(npsContributionBase.filter((c) => c !== comp));
+                                                                                 } else {
+                                                                                     setNpsContributionBase([...npsContributionBase, comp]);
+                                                                                 }
+                                                                             }}
+                                                                             className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                                                         />
+                                                                         <span className="text-sm text-slate-700 font-medium">{comp}</span>
+                                                                     </label>
+                                                                 );
+                                                             })}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={Array.isArray(npsContributionBase) ? npsContributionBase.join(' + ') : npsContributionBase}
+                                                disabled
+                                                className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-700 cursor-not-allowed"
+                                            />
+                                        )}
                                     </div>
                                 </div>
 
@@ -1475,6 +1627,15 @@ const StatutorySettings: React.FC = () => {
                                         <input type="checkbox" className="hidden" checked={npsIncludeInCtc} onChange={() => isEditing && setNpsIncludeInCtc(!npsIncludeInCtc)} disabled={!isEditing} />
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer contribution in employee CTC</span>
                                     </label>
+                                    {userRole === 'HR_MANAGER' && (
+                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${npsIncludeEmployerInPayslip ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                {npsIncludeEmployerInPayslip && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                            </div>
+                                            <input type="checkbox" className="hidden" checked={npsIncludeEmployerInPayslip} onChange={() => isEditing && setNpsIncludeEmployerInPayslip(!npsIncludeEmployerInPayslip)} disabled={!isEditing} />
+                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer contribution in payslip</span>
+                                        </label>
+                                    )}
                                 </div>
 
                             </div>
@@ -1524,6 +1685,12 @@ const StatutorySettings: React.FC = () => {
                                     <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-2 shrink-0"></div>
                                     <span>For <strong>new employees</strong>, the first Contribution Period starts from the date of joining, and the Benefit Period begins after 9 months (to allow accumulation of contributions).</span>
                                 </li>
+                                {userRole === 'HR_MANAGER' && (
+                                    <li className="flex gap-3 text-sm text-slate-600 leading-relaxed">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-2 shrink-0"></div>
+                                        <span>If the employee gets a salary revision which increases their monthly salary above ₹21,000, they would have to continue making ESI contributions till the end of the contribution period in which the salary was revised (April-September or October-March).</span>
+                                    </li>
+                                )}
                             </ul>
 
                             <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl flex gap-3">
