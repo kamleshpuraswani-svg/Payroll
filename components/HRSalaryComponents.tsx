@@ -793,7 +793,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <Info className="text-sky-500 shrink-0" size={18} />
                                 <p className="text-xs text-sky-800 leading-relaxed font-medium">
                                     This is a Balancing Component. System will automatically calculate this value as the remainder needed to reach the Total CTC. 
-                                    <span className="block mt-1 font-bold">Formula = Total Annual Gross - (Sum of all other components in Earnings)</span>
+                                    <span className="block mt-1 font-bold">Formula = Total Annual CTC - (Sum of all other components in Earnings) - (Statutory Deductions)</span>
                                 </p>
                             </div>
                         </div>
