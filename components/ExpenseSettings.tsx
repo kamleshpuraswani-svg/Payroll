@@ -467,10 +467,10 @@ const ExpenseSettings: React.FC = () => {
                                         <Clock size={16} /> Audit History
                                     </button>
                                 )}
-                                <button
+                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {isSaving ? 'Saving...' : 'Submit'}
                                 </button>
@@ -911,7 +911,7 @@ const ExpenseSettings: React.FC = () => {
                                     setSelectedEntities([]);
                                     setIsAddingExpense(true);
                                 }}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
                             >
                                 ADD EXPENSE RULE
                             </button>

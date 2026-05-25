@@ -1166,6 +1166,7 @@ const ExpenseManagement: React.FC<{
                                     <th className="px-6 py-3 border-b border-slate-200">Employee Name & ID</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Category</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Claim Amount</th>
+                                    <th className="px-6 py-3 border-b border-slate-200">Approved Amount</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Status</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Created By</th>
                                     <th className="px-6 py-3 border-b border-slate-200">Last Modified By</th>
@@ -1194,6 +1195,13 @@ const ExpenseManagement: React.FC<{
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-bold text-slate-700">₹{claim.amount.toLocaleString('en-IN')}</td>
+                                        <td className="px-6 py-4 font-bold text-slate-700">
+                                            {claim.status === 'Pending' ? (
+                                                <span className="text-slate-400 font-normal">—</span>
+                                            ) : (
+                                                `₹${(claim.approvedAmount !== undefined && claim.approvedAmount !== null ? claim.approvedAmount : (claim.status === 'Approved' ? claim.amount : 0)).toLocaleString('en-IN')}`
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${getStatusBadge(claim.status)}`}>
                                                 {claim.status.replace(/_/g, ' ')}

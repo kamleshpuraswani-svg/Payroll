@@ -312,7 +312,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                         disabled={isSubmitting || (!hideTopFields && !selectedEmployeeId) || expenseItems.length === 0}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
                     >
-                        <Send size={16} /> {isSubmitting ? 'Submitting...' : (editId ? 'Update' : 'Submit')}
+                        {!(editId && claimStatus.toLowerCase() === 'pending') && <Send size={16} />} {isSubmitting ? 'Submitting...' : (editId ? 'Update' : 'Submit')}
                     </button>
                 </div>
             </div>
@@ -336,9 +336,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <select
                                         value={selectedEmployeeId}
-                                        onChange={(e) => !editId && setSelectedEmployeeId(e.target.value)}
-                                        disabled={!!editId}
-                                        className={`w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all appearance-none font-bold ${editId ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer'}`}
+                                        onChange={(e) => (!editId && expenseItems.length === 0) && setSelectedEmployeeId(e.target.value)}
+                                        disabled={!!editId || expenseItems.length > 0}
+                                        className={`w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all appearance-none font-bold ${(editId || expenseItems.length > 0) ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer'}`}
                                     >
                                         <option value="">Choose an employee...</option>
                                         {employees.map(emp => (
@@ -347,7 +347,11 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
-                                {editId && <p className="text-[10px] text-slate-400 italic">Employee cannot be changed when editing.</p>}
+                                {editId ? (
+                                    <p className="text-[10px] text-slate-400 italic">Employee cannot be changed when editing.</p>
+                                ) : (
+                                    expenseItems.length > 0 && <p className="text-[10px] text-slate-400 italic">Remove all items to change employee.</p>
+                                )}
                             </div>
 
                             {!hideDateRange && (
@@ -418,9 +422,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 <div className="flex justify-end w-full">
                                     <button 
                                         onClick={() => setShowAddItemModal(true)}
-                                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 transition-all flex items-center gap-2 shadow-md shadow-purple-100"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md shadow-blue-100"
                                     >
-                                        <Plus size={14} /> Add Item
+                                        Add Item
                                     </button>
                                 </div>
                             )}
@@ -576,9 +580,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                             <button 
                                                 onClick={handleAddItem}
                                                 disabled={!amount || !reason || !selectedCategory}
-                                                className="w-1/2 py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                                className="w-1/2 py-3 bg-blue-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                             >
-                                                {editingItemId !== null ? <CheckCircle size={18} /> : <Plus size={18} />}
+                                                {editingItemId !== null && <CheckCircle size={18} />}
                                                 {editingItemId !== null ? 'UPDATE' : 'ADD'}
                                             </button>
                                         </div>

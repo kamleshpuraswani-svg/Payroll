@@ -1051,7 +1051,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
                                                 <Clock size={16} className="text-indigo-600" />
                                             </div>
-                                            <h4 className="text-sm font-bold text-slate-800">Monthly window</h4>
+                                            <h4 className="text-sm font-bold text-slate-800">Monthly window <span className="text-rose-500">*</span></h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 max-w-sm">
                                             <div className="space-y-2">
@@ -1094,7 +1094,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
                                                 <Calendar size={16} className="text-rose-600" />
                                             </div>
-                                            <h4 className="text-sm font-bold text-slate-800">Financial year cutoff date</h4>
+                                            <h4 className="text-sm font-bold text-slate-800">Financial year cutoff date <span className="text-rose-500">*</span></h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 max-w-sm">
                                             <div className="space-y-2">
@@ -1157,7 +1157,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Tax Regime & Switching</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="md:col-span-1 max-w-[50%]">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Default Tax Regime</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Default Tax Regime <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <select 
                                                 value={defaultRegime}
@@ -1191,7 +1191,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             {/* Approval Hierarchy Section */}
                             <div className="pt-2 border-t border-slate-200">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval Hierarchy</h4>
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval Hierarchy <span className="text-rose-500">*</span></h4>
                                     <div className="group relative inline-block">
                                         <Info size={14} className="text-slate-400 cursor-help" />
                                         <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-nowrap border border-slate-700">
@@ -1270,36 +1270,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Alerts */}
-                            <div className="pt-4 border-t border-slate-200">
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-2">
-                                    <Bell size={16} className="text-slate-400" /> Manage alerts for Employees
-                                </h4>
-                                <p className="text-sm text-slate-500 mb-4">Let employer send mail notifications and reminders automatically based on the configured lock date.</p>
-                                <div className="space-y-3 pl-1">
-                                    <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${notifyRelease ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {notifyRelease && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={notifyRelease} onChange={() => isEditingInv && setNotifyRelease(!notifyRelease)} disabled={!isEditingInv} />
-                                        <span className="text-sm text-slate-700">Notify when IT Declaration is RELEASED</span>
-                                    </label>
-                                    <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${emailReminder ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {emailReminder && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={emailReminder} onChange={() => isEditingInv && setEmailReminder(!emailReminder)} disabled={!isEditingInv} />
-                                        <span className="text-sm text-slate-700">Enable e-mail reminder to employees to submit before lock date</span>
-                                    </label>
-                                    <label className={`flex items-center gap-3 group ${isEditingInv ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${notifyLock ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {notifyLock && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={notifyLock} onChange={() => isEditingInv && setNotifyLock(!notifyLock)} disabled={!isEditingInv} />
-                                        <span className="text-sm text-slate-700">Notify when IT Declaration is LOCKED</span>
-                                    </label>
-                                </div>
-                            </div>
+
 
                             {/* TDS Deduction Configuration */}
                             <div className="pt-6 border-t border-slate-200">
@@ -1308,7 +1279,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </h4>
 
                                 <div className="mt-4 pl-1">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Deduction Pattern</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Deduction Pattern <span className="text-rose-500">*</span></label>
                                     <div className="flex gap-6 mb-4">
                                         {['Monthly', 'Custom'].map((p) => (
                                             <label key={p} className={`flex items-center gap-2 cursor-pointer group ${!isEditingInv ? 'opacity-70' : ''}`}>
@@ -1358,7 +1329,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="mt-6 pl-1">
+                                <div className="mt-6 pl-1" style={{ display: 'none' }}>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Distribution Method</label>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                                         {/* Method Selection */}
@@ -1715,7 +1686,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             {/* Row 1: Deadline & File Types */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-6">
-                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Financial year cutoff date</h5>
+                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Financial year cutoff date <span className="text-rose-500">*</span></h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="flex gap-3">
                                             <div className="relative flex-1">
@@ -1784,7 +1755,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">POI Verification deadline</h5>
+                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">POI Verification deadline <span className="text-rose-500">*</span></h5>
                                     <div className="flex gap-3">
                                         <div className="relative w-1/2">
                                             <select
@@ -1821,7 +1792,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             {/* Approval Hierarchy Section - NEW for POI */}
                             <div className="pt-2 border-t border-slate-200">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">POI Approval Hierarchy</h4>
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">POI Approval Hierarchy <span className="text-rose-500">*</span></h4>
                                     <Info size={12} className="text-slate-400" />
                                 </div>
                                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
@@ -1897,26 +1868,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             <div className="pt-2"></div>
 
 
-                            {/* Other Configs */}
-                            <div className="pt-6 border-t border-slate-200">
-                                <h4 className="text-sm font-bold text-slate-800 mb-4">Other Configurations</h4>
-                                <div className="space-y-4">
-                                    <label className={`flex items-center gap-3 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${mandateComments ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {mandateComments && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={mandateComments} onChange={() => isEditingProof && setMandateComments(!mandateComments)} disabled={!isEditingProof} />
-                                        <span className="text-sm text-slate-700">Mandate reviewer comments for partial investment amount approval</span>
-                                    </label>
-                                    <label className={`flex items-center gap-3 group ${isEditingProof ? 'cursor-pointer' : ''}`}>
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${rejectionReasonMandatory ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
-                                            {rejectionReasonMandatory && <Check size={14} className="text-white" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={rejectionReasonMandatory} onChange={() => isEditingProof && setRejectionReasonMandatory(!rejectionReasonMandatory)} disabled={!isEditingProof} />
-                                        <span className="text-sm text-slate-700">Rejection reason mandatory</span>
-                                    </label>
-                                </div>
-                            </div>
+
                         </div>
                     )}
                 </div>

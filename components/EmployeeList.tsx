@@ -1082,7 +1082,12 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
         { name: 'Business Unit', icon: MapPin },
         { name: 'CTC Status', icon: Calculator },
         { name: 'Salary Structure', icon: CheckCircle },
-        { name: 'Employee', icon: Users }
+        { name: 'Employee', icon: Users },
+        { name: 'PF Applicable?', icon: CheckSquare },
+        { name: 'ESI Applicable?', icon: CheckSquare },
+        { name: 'LWF Applicable?', icon: CheckSquare },
+        { name: 'NPS Applicable?', icon: CheckSquare },
+        { name: 'Gratuity Applicable?', icon: CheckSquare }
     ];
 
     // Lookup Filter States for HR Manager
@@ -1114,6 +1119,15 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
         }
         if (field === 'CTC Status') {
             return ['Assigned', 'Pending'];
+        }
+        if ([
+            'PF Applicable?',
+            'ESI Applicable?',
+            'LWF Applicable?',
+            'NPS Applicable?',
+            'Gratuity Applicable?'
+        ].includes(field)) {
+            return ['Yes', 'No'];
         }
         
         // Extract unique values from employee list
@@ -1194,29 +1208,38 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
         setIsLoading(true);
         setFetchError(null);
         try {
-            // Attempt to fetch with join
-            let { data, error } = await supabase
-                .from('employees')
-                .select('*, salary_structures(name)')
-                .order('name', { ascending: true });
+            // Attempt to fetch with join and parallel fetch of operational configs
+            const [empRes, configRes] = await Promise.all([
+                supabase
+                    .from('employees')
+                    .select('*, salary_structures(name)')
+                    .order('name', { ascending: true }),
+                supabase
+                    .from('operational_config')
+                    .select('config_key, config_value')
+                    .like('config_key', 'emp_statutory:%')
+            ]);
+
+            let data = empRes.data;
+            let error = empRes.error;
 
             // If the join fails (e.g., relationship missing in cache), fallback to separate fetches
             if (error && error.message.includes('relationship')) {
                 console.warn('Relationship missing in schema cache, falling back to manual join');
                 
-                const [empRes, structRes] = await Promise.all([
+                const [empResFallback, structRes] = await Promise.all([
                     supabase.from('employees').select('*').order('name', { ascending: true }),
                     supabase.from('salary_structures').select('id, name')
                 ]);
 
-                if (empRes.error) throw empRes.error;
+                if (empResFallback.error) throw empResFallback.error;
                 
                 const structuresMap = (structRes.data || []).reduce((acc: any, s) => {
                     acc[s.id] = s.name;
                     return acc;
                 }, {});
 
-                data = (empRes.data || []).map(emp => ({
+                data = (empResFallback.data || []).map(emp => ({
                     ...emp,
                     salary_structures: { name: structuresMap[emp.salary_structure_id] || 'Not Assigned' }
                 }));
@@ -1227,25 +1250,47 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                 console.error('Error fetching employees:', error);
                 setFetchError(error.message);
             } else {
-                const mappedData: Employee[] = (data || []).map(item => ({
-                    id: item.id,
-                    first_name: item.name || 'N/A',
-                    last_name: '',
-                    employee_id: item.eid,
-                    company_id: item.company_id || '',
-                    department: item.department || 'N/A',
-                    designation: item.designation || 'N/A',
-                    location: item.location || 'N/A',
-                    ctc: item.ctc || 'N/A',
-                    date_of_joining: item.join_date || 'N/A',
-                    status: item.status || 'Active',
-                    avatar_url: item.avatar_url,
-                    email: item.email || '',
-                    business_unit: item.business_unit || item.location || 'CollabCRM',
-                    created_by: item.created_by || 'HR Manager',
-                    last_modified_by: item.last_updated_by || item.created_by || 'HR Manager',
-                    salary_structure_name: item.salary_structures?.name || 'Not Assigned'
-                }));
+                const configMap: Record<string, any> = {};
+                (configRes.data || []).forEach(row => {
+                    const parts = row.config_key.split(':');
+                    if (parts.length > 1) {
+                        configMap[parts[1]] = row.config_value;
+                    }
+                });
+
+                const mappedData: Employee[] = (data || []).map(item => {
+                    let statutory = configMap[item.id] || null;
+                    if (!statutory && item.statutory_deductions) {
+                        try {
+                            statutory = typeof item.statutory_deductions === 'string'
+                                ? JSON.parse(item.statutory_deductions)
+                                : item.statutory_deductions;
+                        } catch (e) {
+                            console.error('Error parsing statutory deductions:', e);
+                        }
+                    }
+
+                    return {
+                        id: item.id,
+                        first_name: item.name || 'N/A',
+                        last_name: '',
+                        employee_id: item.eid,
+                        company_id: item.company_id || '',
+                        department: item.department || 'N/A',
+                        designation: item.designation || 'N/A',
+                        location: item.location || 'N/A',
+                        ctc: item.ctc || 'N/A',
+                        date_of_joining: item.join_date || 'N/A',
+                        status: item.status || 'Active',
+                        avatar_url: item.avatar_url,
+                        email: item.email || '',
+                        business_unit: item.business_unit || item.location || 'CollabCRM',
+                        created_by: item.created_by || 'HR Manager',
+                        last_modified_by: item.last_updated_by || item.created_by || 'HR Manager',
+                        salary_structure_name: item.salary_structures?.name || 'Not Assigned',
+                        statutory_deductions: statutory || undefined
+                    };
+                });
                 setEmployees(mappedData);
             }
         } catch (err: any) {
@@ -1290,6 +1335,11 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                     else if (filter.field === 'Salary Structure') empValue = emp.salary_structure_name || 'Standard';
                     else if (filter.field === 'CTC Status') empValue = emp.salary_structure_name ? 'Assigned' : 'Pending';
                     else if (filter.field === 'Employee') empValue = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+                    else if (filter.field === 'PF Applicable?') empValue = emp.statutory_deductions?.providentFund ? 'Yes' : 'No';
+                    else if (filter.field === 'ESI Applicable?') empValue = emp.statutory_deductions?.esi ? 'Yes' : 'No';
+                    else if (filter.field === 'LWF Applicable?') empValue = emp.statutory_deductions?.lwf ? 'Yes' : 'No';
+                    else if (filter.field === 'NPS Applicable?') empValue = emp.statutory_deductions?.nps ? 'Yes' : 'No';
+                    else if (filter.field === 'Gratuity Applicable?') empValue = emp.statutory_deductions?.gratuity ? 'Yes' : 'No';
 
                     const isMatch = filter.operator === 'Contains'
                         ? empValue.toLowerCase().includes(filter.values[0].toLowerCase())
@@ -1478,7 +1528,21 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                         {currentField && !currentOperator && (
                                             <div className="py-1">
                                                 <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Condition</div>
-                                                {(currentField === 'Employee' ? ['Is', 'Contains'] : ['Is', 'Is not']).map(op => (
+                                                {(() => {
+                                                    let ops = ['Is', 'Is not'];
+                                                    if (currentField === 'Employee') {
+                                                        ops = ['Is', 'Contains'];
+                                                    } else if ([
+                                                        'PF Applicable?',
+                                                        'ESI Applicable?',
+                                                        'LWF Applicable?',
+                                                        'NPS Applicable?',
+                                                        'Gratuity Applicable?'
+                                                    ].includes(currentField)) {
+                                                        ops = ['Is'];
+                                                    }
+                                                    return ops;
+                                                })().map(op => (
                                                     <button
                                                         key={op}
                                                         onClick={() => selectOperator(op)}
@@ -1618,16 +1682,21 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Salary Structure</th>
                                 <th className="px-6 py-4">CTC Status</th>
+                                <th className="px-6 py-4 whitespace-nowrap">PF Applicable?</th>
+                                <th className="px-6 py-4 whitespace-nowrap">ESI Applicable?</th>
+                                <th className="px-6 py-4 whitespace-nowrap">LWF Applicable?</th>
+                                <th className="px-6 py-4 whitespace-nowrap">NPS Applicable?</th>
+                                <th className="px-6 py-4 whitespace-nowrap">Gratuity Applicable?</th>
 
                                 <th className="px-6 py-4">Created By</th>
                                 <th className="px-6 py-4 whitespace-nowrap">Last Modified By</th>
-                                <th className="px-4 py-4 text-right">Actions</th>
+                                <th className="sticky right-0 bg-slate-50 border-l border-slate-200 px-4 py-4 text-right z-20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={17} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading employees...</span>
@@ -1636,7 +1705,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : fetchError ? (
                                 <tr>
-                                    <td colSpan={12} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
+                                    <td colSpan={17} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <AlertTriangle size={24} />
                                             <span className="font-bold">Error loading employees</span>
@@ -1647,7 +1716,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : filteredEmployees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={17} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <Users size={24} className="text-slate-200" />
                                             <span>No employees found matching filters.</span>
@@ -1696,10 +1765,35 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                             {emp?.salary_structure_name ? 'Assigned' : 'Pending'}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.providentFund ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                                            {emp?.statutory_deductions?.providentFund ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.esi ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                                            {emp?.statutory_deductions?.esi ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.lwf ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                                            {emp?.statutory_deductions?.lwf ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.nps ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                                            {emp?.statutory_deductions?.nps ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.gratuity ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                                            {emp?.statutory_deductions?.gratuity ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
 
                                     <td className="px-6 py-4 text-xs font-medium text-slate-500">{emp?.created_by || 'HR Manager'}</td>
                                     <td className="px-6 py-4 text-xs font-medium text-slate-500">{emp?.last_modified_by || 'HR Manager'}</td>
-                                    <td className="px-4 py-4 text-right">
+                                    <td className={`sticky right-0 border-l border-slate-200/80 px-4 py-4 text-right transition-colors z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-[#faf8fd] group-hover:bg-[#f5f0fb]' : 'bg-white group-hover:bg-slate-50'}`}>
                                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => onView(emp?.id || '')} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors" title="View Profile"><Eye size={16} /></button>
                                             <button onClick={() => onEdit(emp?.id || '')} className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Edit"><Edit2 size={16} /></button>

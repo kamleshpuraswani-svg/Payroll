@@ -458,7 +458,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
-                        <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
+                        <button onClick={handleCreate} className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-sm flex items-center gap-2 h-10">
                             Create New Bank Format
                         </button>
                     </div>
@@ -566,10 +566,7 @@ const HRBankDisbursalTemplate: React.FC = () => {
                     ) : (
                         <>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                            {!editingTemplateId && (
-                                <button onClick={() => handleSave('Draft')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Save as Draft</button>
-                            )}
-                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
+                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
                                 <Save size={16} /> Submit
                             </button>
                         </>

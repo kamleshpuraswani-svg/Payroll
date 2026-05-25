@@ -918,13 +918,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
                                                         onChange={() => setCalcBase('Organisation working days')}
                                                         className="hidden"
                                                     />
-                                                    <span className="text-sm text-slate-700">Organisation working days (per {frequency === 'Weekly' ? 'week' : 'month'})</span>
-                                                    <div className="group relative ml-1 inline-block align-middle">
-                                                        <Info size={14} className="text-slate-400 cursor-help" />
-                                                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-pre-wrap w-48 pointer-events-none z-50 text-center">
-                                                            Based on configured company calendar excluding selected week-offs and holidays.
-                                                        </div>
-                                                    </div>
+                                                    <span className="text-sm text-slate-700">Organisation working days</span>
                                                 </label>
                                             </div>
                                         </div>

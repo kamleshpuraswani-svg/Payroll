@@ -1627,7 +1627,7 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                                     <p className="text-sm text-slate-500">Manage and verify employee investment declarations</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
+                            <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
                                 <FileText size={18} /> Generate Form 16
                             </button>
                         </div>

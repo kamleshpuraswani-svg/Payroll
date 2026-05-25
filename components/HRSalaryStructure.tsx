@@ -803,7 +803,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                             </button>
                                             </div>
                                         )}
-                                        <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
+                                        <button onClick={() => handleSaveStructure('Active')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm shadow-sm transition-colors flex items-center gap-2">
                                             <Save size={16} /> {publishLabel}
                                         </button>
                                     </>
@@ -935,14 +935,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                             placeholder="Brief description of this salary structure..."
                                         />
                                     )}
-                                </div>
-                                <div className="pb-1">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-tight">Status</label>
-                                        <span className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider inline-flex items-center justify-center border ${currentStatus === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : currentStatus === 'Draft' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                                            {currentStatus}
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1135,7 +1127,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                     </div>
-                    <button onClick={handleCreateClick} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium shadow-sm transition-colors flex items-center gap-2 text-sm">
+                    <button onClick={handleCreateClick} className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors flex items-center gap-2 text-sm">
                         Create Salary Structure
                     </button>
                 </div>

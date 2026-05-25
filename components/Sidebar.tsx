@@ -156,6 +156,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         { id: 'hr-statutory', label: 'Statutory Settings', viewState: ViewState.SETTINGS },
         { id: 'hr-operational', label: 'Operational Config', viewState: ViewState.HR_OPERATIONAL_CONFIG },
       ]
+    },
+    {
+      id: 'hr-payroll-reports',
+      label: 'Payroll Reports',
+      icon: <PieChart size={20} />,
+      viewState: ViewState.HR_PAYROLL_REPORTS
     }
   ];
 

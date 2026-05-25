@@ -980,7 +980,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
-                        <button onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 shadow-sm flex items-center gap-2 h-10">
+                        <button onClick={handleCreate} className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-sm flex items-center gap-2 h-10">
                             Create Payslip
                         </button>
                     </div>
@@ -1145,8 +1145,8 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 <option value="F&F Settlement Slip">F&amp;F Settlement Slip</option>
                             </select>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
-                                <Save size={16} /> Save
+                            <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
+                                <Save size={16} /> {editingTemplateId ? 'Save' : 'Submit'}
                             </button>
                         </>
                     )}

@@ -74,6 +74,7 @@ export enum ViewState {
   HR_SALARY_COMPONENTS = 'HR_SALARY_COMPONENTS',
   HR_EXPENSES_CONFIG = 'HR_EXPENSES_CONFIG',
   HR_OPERATIONAL_CONFIG = 'HR_OPERATIONAL_CONFIG',
+  HR_PAYROLL_REPORTS = 'HR_PAYROLL_REPORTS',
 
   // Employee Views
   EMP_OVERVIEW = 'EMP_OVERVIEW',
@@ -115,6 +116,15 @@ export interface Employee {
   created_by?: string;
   last_modified_by?: string;
   salary_structure_name?: string;
+  statutory_deductions?: {
+    providentFund?: boolean;
+    esi?: boolean;
+    professionalTax?: boolean;
+    gratuity?: boolean;
+    lwf?: boolean;
+    tds?: boolean;
+    nps?: boolean;
+  };
 }
 
 export interface StatutoryReport {
