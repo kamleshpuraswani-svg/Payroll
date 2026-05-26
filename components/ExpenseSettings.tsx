@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag } from 'lucide-react';
+import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag, Sigma, Power } from 'lucide-react';
 
 const EXPENSE_FIELDS = [
     { name: 'Category', icon: Tag },
@@ -32,22 +32,18 @@ const ExpenseSettings: React.FC = () => {
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
     
     // Multi-select state for Add Expense modal
+    const [applicableTarget, setApplicableTarget] = useState<'dept' | 'desig' | ''>('');
+    const [newEntityValue, setNewEntityValue] = useState('');
+    const [newMonthlyLimit, setNewMonthlyLimit] = useState('');
+    const [newReceiptThreshold, setNewReceiptThreshold] = useState('');
     const [selectedEntities, setSelectedEntities] = useState<any[]>([]);
     const [availableDesignations, setAvailableDesignations] = useState<string[]>([]);
     const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
-    const [entitySearch, setEntitySearch] = useState('');
-    const [showEntityDropdown, setShowEntityDropdown] = useState(false);
-
-    // Lookup Filter state
-    const [expCompletedFilters, setExpCompletedFilters] = useState<{ field: string; operator: string; values: string[] }[]>([]);
-    const [expCurrentField, setExpCurrentField] = useState<string | null>(null);
-    const [expCurrentOperator, setExpCurrentOperator] = useState<string | null>(null);
-    const [expTempValues, setExpTempValues] = useState<string[]>([]);
-    const [expTempContainsText, setExpTempContainsText] = useState('');
-    const [expValSearchQuery, setExpValSearchQuery] = useState('');
-    const [expDropdownOpen, setExpDropdownOpen] = useState(false);
+    // Filter states
+    const [filterField, setFilterField] = useState<'category' | 'created_by' | 'status'>('category');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const expDropdownRef = useRef<HTMLDivElement>(null);
-    const expInputRef = useRef<HTMLInputElement>(null);
 
     // Hardcoded fallbacks
     const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA', 'Customer Success', 'Design', 'Legal', 'Administration'];
@@ -60,91 +56,33 @@ const ExpenseSettings: React.FC = () => {
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (expDropdownRef.current && !expDropdownRef.current.contains(e.target as Node)) {
-                setExpDropdownOpen(false);
+                setIsFilterOpen(false);
             }
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    const expGetOptionsForField = (field: string) => {
-        const rows = categories.filter(c => c.applicable_to && c.applicable_to.length > 0);
-        if (field === 'Category') return Array.from(new Set(rows.map(c => c.name).filter(Boolean))) as string[];
-        if (field === 'Created By') return Array.from(new Set(rows.map(c => c.created_by || 'HR Manager').filter(Boolean))) as string[];
-        return [];
-    };
-
-    const expSelectField = (field: string) => {
-        setExpCurrentField(field);
-        setExpCurrentOperator(null);
-        setExpTempValues([]);
-        setExpTempContainsText('');
-        setExpValSearchQuery('');
-    };
-
-    const expSelectOperator = (op: string) => {
-        setExpCurrentOperator(op);
-        setExpTempValues([]);
-        setExpTempContainsText('');
-        setExpValSearchQuery('');
-    };
-
-    const expToggleTempValue = (val: string) => {
-        setExpTempValues(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
-    };
-
-    const expApplyFilter = () => {
-        if (!expCurrentField || !expCurrentOperator) return;
-        const values = expCurrentOperator === 'Contains' ? [expTempContainsText] : expTempValues;
-        if (values.length === 0 || (expCurrentOperator === 'Contains' && !expTempContainsText.trim())) return;
-        setExpCompletedFilters(prev => {
-            const existing = prev.findIndex(f => f.field === expCurrentField);
-            const newFilter = { field: expCurrentField, operator: expCurrentOperator, values };
-            if (existing >= 0) { const u = [...prev]; u[existing] = newFilter; return u; }
-            return [...prev, newFilter];
-        });
-        setExpCurrentField(null);
-        setExpCurrentOperator(null);
-        setExpTempValues([]);
-        setExpTempContainsText('');
-        setExpDropdownOpen(false);
-    };
-
-    const expCancelFilter = () => {
-        setExpCurrentField(null);
-        setExpCurrentOperator(null);
-        setExpTempValues([]);
-        setExpTempContainsText('');
-        setExpValSearchQuery('');
-        setExpDropdownOpen(false);
-    };
-
-    const expRemoveFilter = (field: string) => {
-        setExpCompletedFilters(prev => prev.filter(f => f.field !== field));
-    };
-
-    const expClearAllFilters = () => {
-        setExpCompletedFilters([]);
-        setExpCurrentField(null);
-        setExpCurrentOperator(null);
-        setExpTempValues([]);
-        setExpTempContainsText('');
-        setExpValSearchQuery('');
-    };
-
     const filteredCategories = useMemo(() => {
         let data = categories.filter(c => c.applicable_to && c.applicable_to.length > 0);
-        for (const filter of expCompletedFilters) {
-            data = data.filter(cat => {
-                let val = '';
-                if (filter.field === 'Category') val = cat.name || '';
-                else if (filter.field === 'Created By') val = cat.created_by || 'HR Manager';
-                if (filter.operator === 'Contains') return val.toLowerCase().includes(filter.values[0].toLowerCase());
-                return filter.values.includes(val);
-            });
-        }
-        return data;
-    }, [categories, expCompletedFilters]);
+        
+        if (!searchQuery) return data;
+        
+        const query = searchQuery.toLowerCase();
+        return data.filter(cat => {
+            if (filterField === 'category') {
+                return (cat.name || '').toLowerCase().includes(query);
+            }
+            if (filterField === 'created_by') {
+                return (cat.created_by || 'HR Manager').toLowerCase().includes(query);
+            }
+            if (filterField === 'status') {
+                const statusText = (cat.status || 'Active').toLowerCase();
+                return statusText.includes(query);
+            }
+            return false;
+        });
+    }, [categories, searchQuery, filterField]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -375,28 +313,6 @@ const ExpenseSettings: React.FC = () => {
         }
     };
 
-    const addEntityToSelection = (type: 'dept' | 'desig' | 'emp', item: any) => {
-        const entityLabel = type === 'dept' ? item : type === 'desig' ? item : item.name;
-        const entityId = type === 'emp' ? item.id : item;
-        
-        // Prevent duplicates
-        if (selectedEntities.some(e => e.id === entityId && e.type === type)) {
-            setEntitySearch('');
-            setShowEntityDropdown(false);
-            return;
-        }
-
-        setSelectedEntities([...selectedEntities, {
-            type,
-            id: entityId,
-            name: entityLabel,
-            max_limit: 0,
-            receipt_threshold: 0
-        }]);
-        setEntitySearch('');
-        setShowEntityDropdown(false);
-    };
-
     const removeEntityFromSelection = (type: string, id: string) => {
         setSelectedEntities(selectedEntities.filter(e => !(e.type === type && e.id === id)));
     };
@@ -405,6 +321,45 @@ const ExpenseSettings: React.FC = () => {
         setSelectedEntities(selectedEntities.map(e => 
             (e.type === type && e.id === id) ? { ...e, [field]: value } : e
         ));
+    };
+
+    const handleAddEntity = () => {
+        if (!applicableTarget) {
+            alert('Please select an Applicable Target.');
+            return;
+        }
+        if (!newEntityValue) {
+            alert(`Please select a ${applicableTarget === 'dept' ? 'Department' : 'Designation'}.`);
+            return;
+        }
+        const limit = parseInt(newMonthlyLimit, 10);
+        const threshold = parseInt(newReceiptThreshold, 10);
+        if (!newMonthlyLimit || isNaN(limit) || limit <= 0) {
+            alert('Please enter a valid Monthly Limit.');
+            return;
+        }
+        if (newReceiptThreshold === '' || isNaN(threshold) || threshold < 0) {
+            alert('Please enter a valid Receipt Threshold.');
+            return;
+        }
+        if (threshold >= limit) {
+            alert('Receipt Threshold must be less than Monthly Limit.');
+            return;
+        }
+        if (selectedEntities.some((e: any) => e.type === applicableTarget && e.id === newEntityValue)) {
+            alert(`This ${applicableTarget === 'dept' ? 'Department' : 'Designation'} has already been added.`);
+            return;
+        }
+        setSelectedEntities([...selectedEntities, {
+            type: applicableTarget,
+            id: newEntityValue,
+            name: newEntityValue,
+            max_limit: limit,
+            receipt_threshold: threshold
+        }]);
+        setNewEntityValue('');
+        setNewMonthlyLimit('');
+        setNewReceiptThreshold('');
     };
 
     const openEditModal = (category: any) => {
@@ -428,6 +383,10 @@ const ExpenseSettings: React.FC = () => {
                                 setIsAddingExpense(false);
                                 setEditingExpense(null);
                                 setSelectedEntities([]);
+                                setApplicableTarget('');
+                                setNewEntityValue('');
+                                setNewMonthlyLimit('');
+                                setNewReceiptThreshold('');
                             }}
                             className="p-2 -ml-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors focus:outline-none"
                         >
@@ -451,6 +410,10 @@ const ExpenseSettings: React.FC = () => {
                                 setIsAddingExpense(false);
                                 setEditingExpense(null);
                                 setSelectedEntities([]);
+                                setApplicableTarget('');
+                                setNewEntityValue('');
+                                setNewMonthlyLimit('');
+                                setNewReceiptThreshold('');
                             }}
                             className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all shadow-sm"
                         >
@@ -626,7 +589,7 @@ const ExpenseSettings: React.FC = () => {
                                         Expense Category & Settings
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                                        <div className="space-y-1.5 md:col-span-2">
+                                        <div className="space-y-1.5">
                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense Category Name <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -643,7 +606,7 @@ const ExpenseSettings: React.FC = () => {
                                             </div>
                                         </div>
                                         
-                                        <div className="space-y-1.5 md:col-span-2">
+                                        <div className="space-y-1.5">
                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effective From <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -669,120 +632,164 @@ const ExpenseSettings: React.FC = () => {
                                     
                                     {/* Entity Search & Selection */}
                                     <div className="space-y-5 pt-2">
-                                        <div className="space-y-2 relative">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Department or Designation <span className="text-rose-500">*</span></label>
-                                            <div className="relative mt-1">
-                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                    <Search size={18} className="text-slate-400" />
+                                        {/* Unified card: Applicable Target + conditional fields */}
+                                        <div className="p-5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-4">
+                                            {/* Applicable Target Dropdown — 50% width */}
+                                            <div className="space-y-1.5 w-1/2">
+                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                        <ChevronDown size={16} className="text-slate-400" />
+                                                    </div>
+                                                    <select
+                                                        value={applicableTarget}
+                                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                                            setApplicableTarget(e.target.value as 'dept' | 'desig' | '');
+                                                            setNewEntityValue('');
+                                                            setNewMonthlyLimit('');
+                                                            setNewReceiptThreshold('');
+                                                        }}
+                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                    >
+                                                        <option value="">Select target type...</option>
+                                                        <option value="dept">Department</option>
+                                                        <option value="desig">Designation</option>
+                                                    </select>
                                                 </div>
-                                                <input
-                                                    type="text"
-                                                    value={entitySearch}
-                                                    onChange={(e) => {
-                                                        setEntitySearch(e.target.value);
-                                                        setShowEntityDropdown(true);
-                                                    }}
-                                                    onFocus={() => setShowEntityDropdown(true)}
-                                                    placeholder="Search to add... e.g., 'Engineering'"
-                                                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-inner"
-                                                />
                                             </div>
 
-                                            {/* Results Dropdown */}
-                                            {showEntityDropdown && entitySearch.length > 0 && (
-                                                <div className="absolute z-10 top-full inset-x-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-72 overflow-y-auto scrollbar-hide py-2 animate-in slide-in-from-top-2 duration-200">
-                                                    {/* Departments */}
-                                                    <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2">
-                                                        <Home size={12} className="text-slate-500" />
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Departments</span>
-                                                    </div>
-                                                    {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(dept => (
-                                                        <div key={`dept-${dept}`} onClick={() => addEntityToSelection('dept', dept)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
-                                                            {dept}
+                                            {/* Conditional row: Dept/Desig + Monthly Limit + Receipt Threshold */}
+                                            {applicableTarget !== '' && (
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    {/* Department / Designation dropdown */}
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                            {applicableTarget === 'dept' ? 'Department' : 'Designation'} <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                                <ChevronDown size={14} className="text-slate-400" />
+                                                            </div>
+                                                            <select
+                                                                value={newEntityValue}
+                                                                onChange={(e) => setNewEntityValue(e.target.value)}
+                                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                            >
+                                                                <option value="">Select {applicableTarget === 'dept' ? 'department' : 'designation'}...</option>
+                                                                {(applicableTarget === 'dept' ? availableDepartments : availableDesignations).map((item: string) => (
+                                                                    <option key={item} value={item}>{item}</option>
+                                                                ))}
+                                                            </select>
                                                         </div>
-                                                    ))}
+                                                    </div>
 
-                                                    {/* Designations */}
-                                                    <div className="px-4 py-2 bg-slate-50/80 border-y border-slate-100 flex items-center gap-2 mt-2">
-                                                        <ShieldCheck size={12} className="text-slate-500" />
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Designations</span>
+                                                    {/* Monthly Limit */}
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                            Monthly Limit (₹) <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            value={newMonthlyLimit}
+                                                            onChange={(e) => setNewMonthlyLimit(e.target.value)}
+                                                            min="1"
+                                                            step="1"
+                                                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                                                            placeholder="e.g. 5000"
+                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                        />
                                                     </div>
-                                                    {availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).map(desig => (
-                                                        <div key={`desig-${desig}`} onClick={() => addEntityToSelection('desig', desig)} className="px-5 py-2.5 hover:bg-sky-50 hover:text-sky-700 cursor-pointer text-sm font-semibold text-slate-700 transition-colors">
-                                                            {desig}
-                                                        </div>
-                                                    ))}
-                                                    
-                                                    {/* No Results */}
-                                                    {availableDepartments.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 &&
-                                                     availableDesignations.filter(d => d.toLowerCase().includes(entitySearch.toLowerCase())).length === 0 && (
-                                                        <div className="px-5 py-4 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
-                                                            No matches found
-                                                        </div>
-                                                     )}
+
+                                                    {/* Receipt Threshold */}
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                            Receipt Threshold (₹) <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            value={newReceiptThreshold}
+                                                            onChange={(e) => setNewReceiptThreshold(e.target.value)}
+                                                            min="0"
+                                                            step="1"
+                                                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                                                            placeholder="e.g. 1000"
+                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                        />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Selected Entities List with Inputs */}
-                                        <div className="space-y-4 mt-6">
+                                        {/* Add button — outside the card, right-aligned, blue border */}
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={handleAddEntity}
+                                                className="flex items-center gap-2 px-5 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-lg font-bold text-sm hover:bg-blue-50 transition-all shadow-sm"
+                                            >
+                                                <Plus size={15} /> Add
+                                            </button>
+                                        </div>
+
+                                        {/* Selected Entities — rendered as cards matching the input layout */}
+                                        <div className="space-y-4">
                                             {selectedEntities.map((entity, index) => (
-                                                <div key={`${entity.type}-${entity.id}`} className="px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-xl space-y-4 hover:border-slate-300 transition-colors group">
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 shadow-sm border ${
-                                                                entity.type === 'dept' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
-                                                                entity.type === 'desig' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
-                                                                'bg-emerald-50 border-emerald-100 text-emerald-600'
-                                                            }`}>
-                                                                {entity.type === 'dept' ? <Home size={18} /> : entity.type === 'desig' ? <ShieldCheck size={18} /> : <User size={18} />}
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-black text-slate-800">{entity.name}</p>
-                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{entity.type === 'dept' ? 'Department' : entity.type === 'desig' ? 'Designation' : 'Employee'}</p>
+                                                <div key={`${entity.type}-${entity.id}`} className="p-5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-4 group">
+                                                    {/* Row 1: Applicable Target (read-only) + delete */}
+                                                    <div className="flex items-end justify-between">
+                                                        <div className="space-y-1.5 w-1/2">
+                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
+                                                            <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800">
+                                                                {entity.type === 'dept' ? 'Department' : 'Designation'}
                                                             </div>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => removeEntityFromSelection(entity.type, entity.id)}
-                                                            className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                            className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all mb-0.5"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>
-                                                    <div className="grid grid-cols-2 gap-6 pt-2">
+                                                    {/* Row 2: Entity name + Monthly Limit + Receipt Threshold */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly Limit (₹) <span className="text-rose-500">*</span></label>
+                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                {entity.type === 'dept' ? 'Department' : 'Designation'} <span className="text-rose-500">*</span>
+                                                            </label>
+                                                            <div className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800">
+                                                                {entity.name}
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit (₹) <span className="text-rose-500">*</span></label>
                                                             <input
                                                                 type="number"
                                                                 value={entity.max_limit}
                                                                 onChange={(e) => updateEntityLimit(entity.type, entity.id, 'max_limit', parseFloat(e.target.value) || 0)}
-                                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                                                                min="1"
+                                                                step="1"
+                                                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                                 placeholder="0"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Receipt Threshold (₹)</label>
+                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Threshold (₹) <span className="text-rose-500">*</span></label>
                                                             <input
                                                                 type="number"
                                                                 value={entity.receipt_threshold}
                                                                 onChange={(e) => updateEntityLimit(entity.type, entity.id, 'receipt_threshold', parseFloat(e.target.value) || 0)}
-                                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                                                                min="0"
+                                                                step="1"
+                                                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                                 placeholder="0"
                                                             />
                                                         </div>
                                                     </div>
                                                 </div>
                                             ))}
-                                            {selectedEntities.length === 0 && (
-                                                <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-3 text-slate-300">
-                                                        <Search size={20} />
-                                                    </div>
-                                                    <h4 className="text-sm font-bold text-slate-600">No targets added</h4>
-                                                    <p className="text-xs font-semibold text-slate-400 mt-1 max-w-xs text-center">Search and select a department or designation to set specific expense limits.</p>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 
@@ -921,140 +928,56 @@ const ExpenseSettings: React.FC = () => {
                 </div>
 
                 {/* ── Lookup Filter Toolbar ── */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    {/* Completed filter chips */}
-                    {expCompletedFilters.map(f => {
-                        const fieldDef = EXPENSE_FIELDS.find(x => x.name === f.field);
-                        const IconComp = fieldDef?.icon;
-                        return (
-                            <div key={f.field} className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-full text-xs font-bold text-sky-700">
-                                {IconComp && <IconComp size={12} />}
-                                <span>{f.field}: {f.operator === 'Contains' ? `"${f.values[0]}"` : f.values.join(', ')}</span>
-                                <button onClick={() => expRemoveFilter(f.field)} className="ml-1 text-sky-400 hover:text-sky-700"><X size={12} /></button>
-                            </div>
-                        );
-                    })}
-                    {expCompletedFilters.length > 0 && (
-                        <button onClick={expClearAllFilters} className="text-xs font-bold text-slate-400 hover:text-slate-600 underline">Clear all</button>
-                    )}
-
-                    {/* In-progress field chip */}
-                    {expCurrentField && !expCurrentOperator && (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-full text-xs font-bold text-slate-600">
-                            {(() => { const f = EXPENSE_FIELDS.find(x => x.name === expCurrentField); return f ? <f.icon size={12} /> : null; })()}
-                            <span>{expCurrentField}</span>
-                            <button onClick={expCancelFilter} className="ml-1 text-slate-400 hover:text-slate-600"><X size={12} /></button>
-                        </div>
-                    )}
-
-                    {/* Filter button + dropdown */}
+                <div className="flex items-center gap-2 w-full sm:w-auto mb-6">
                     <div className="relative" ref={expDropdownRef}>
                         <button
-                            onClick={() => { setExpDropdownOpen(o => !o); if (expDropdownOpen) expCancelFilter(); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-purple-600 transition-colors shadow-sm"
                         >
-                            <Filter size={15} className="text-slate-400" />
-                            Filter
-                            {expCompletedFilters.length > 0 && (
-                                <span className="ml-1 bg-sky-500 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center">{expCompletedFilters.length}</span>
-                            )}
+                            <Sigma size={18} className="text-purple-600" />
+                            <ChevronDown size={14} className="text-slate-400" />
                         </button>
-
-                        {expDropdownOpen && (
-                            <div className="absolute left-0 top-full mt-2 z-40 bg-white border border-slate-200 rounded-2xl shadow-2xl w-72 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
-                                {!expCurrentField ? (
-                                    /* Step 1: Choose field */
-                                    <div className="p-2">
-                                        <p className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter by</p>
-                                        {EXPENSE_FIELDS.map(field => (
-                                            <button
-                                                key={field.name}
-                                                onClick={() => expSelectField(field.name)}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-700 transition-colors"
-                                            >
-                                                <field.icon size={15} className="text-slate-400" />
-                                                {field.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : !expCurrentOperator ? (
-                                    /* Step 2: Choose operator */
-                                    <div className="p-2">
-                                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 mb-1">
-                                            {(() => { const f = EXPENSE_FIELDS.find(x => x.name === expCurrentField); return f ? <f.icon size={13} className="text-slate-400" /> : null; })()}
-                                            <p className="text-xs font-black text-slate-600">{expCurrentField}</p>
-                                        </div>
-                                        {['Is', 'Contains'].map(op => (
-                                            <button
-                                                key={op}
-                                                onClick={() => expSelectOperator(op)}
-                                                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-700 transition-colors"
-                                            >
-                                                {op}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    /* Step 3: Choose values */
-                                    <div className="flex flex-col max-h-80">
-                                        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
-                                            {(() => { const f = EXPENSE_FIELDS.find(x => x.name === expCurrentField); return f ? <f.icon size={13} className="text-slate-400" /> : null; })()}
-                                            <p className="text-xs font-black text-slate-600">{expCurrentField} · <span className="text-sky-600">{expCurrentOperator}</span></p>
-                                        </div>
-                                        {expCurrentOperator === 'Contains' ? (
-                                            <div className="p-3">
-                                                <input
-                                                    ref={expInputRef}
-                                                    autoFocus
-                                                    type="text"
-                                                    value={expTempContainsText}
-                                                    onChange={e => setExpTempContainsText(e.target.value)}
-                                                    placeholder={`Type to filter ${expCurrentField}...`}
-                                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="px-3 pt-2">
-                                                    <div className="relative">
-                                                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                                        <input
-                                                            ref={expInputRef}
-                                                            autoFocus
-                                                            type="text"
-                                                            value={expValSearchQuery}
-                                                            onChange={e => setExpValSearchQuery(e.target.value)}
-                                                            placeholder="Search..."
-                                                            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="overflow-y-auto flex-1 p-2 mt-1 space-y-0.5">
-                                                    {expGetOptionsForField(expCurrentField!)
-                                                        .filter(opt => opt.toLowerCase().includes(expValSearchQuery.toLowerCase()))
-                                                        .map(opt => (
-                                                            <label key={opt} className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 cursor-pointer">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={expTempValues.includes(opt)}
-                                                                    onChange={() => expToggleTempValue(opt)}
-                                                                    className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                                                                />
-                                                                <span className="text-sm font-semibold text-slate-700">{opt}</span>
-                                                            </label>
-                                                        ))}
-                                                </div>
-                                            </>
-                                        )}
-                                        <div className="flex gap-2 p-3 border-t border-slate-100">
-                                            <button onClick={expCancelFilter} className="flex-1 px-3 py-1.5 text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
-                                            <button onClick={expApplyFilter} className="flex-1 px-3 py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors">Apply</button>
-                                        </div>
-                                    </div>
-                                )}
+                        {isFilterOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
+                                    Select Filter Field
+                                </div>
+                                <button
+                                    onClick={() => { setFilterField('category'); setIsFilterOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'category' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                >
+                                    <Tag size={16} className={filterField === 'category' ? 'text-purple-500' : 'text-slate-400'} /> Category
+                                </button>
+                                <button
+                                    onClick={() => { setFilterField('created_by'); setIsFilterOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'created_by' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                >
+                                    <User size={16} className={filterField === 'created_by' ? 'text-purple-500' : 'text-slate-400'} /> Created By
+                                </button>
+                                <button
+                                    onClick={() => { setFilterField('status'); setIsFilterOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'status' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                >
+                                    <Power size={16} className={filterField === 'status' ? 'text-purple-500' : 'text-slate-400'} /> Status
+                                </button>
                             </div>
                         )}
                     </div>
+
+                    <div className="flex-1 sm:w-80 relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={`Filter by ${filterField === 'category' ? 'Category' : filterField === 'created_by' ? 'Created By' : 'Status'}...`}
+                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-slate-400 shadow-sm"
+                        />
+                    </div>
+
+                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                        Filter
+                    </button>
                 </div>
 
                 {/* ── Expense Configurations Section ── */}
@@ -1065,6 +988,7 @@ const ExpenseSettings: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Limits</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
                                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
@@ -1077,28 +1001,34 @@ const ExpenseSettings: React.FC = () => {
                                              <p className="text-sm font-black text-slate-800">{cat.name}</p>
                                          </td>
                                          <td className="px-6 py-5">
-                                             <div className="flex flex-wrap gap-2">
+                                             <div className="flex flex-col gap-2">
                                                  {cat.applicable_to
                                                      .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
                                                      .map((ent: any, i: number) => (
-                                                     <div key={i} className="flex flex-col gap-0.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg shadow-sm min-w-[140px]">
-                                                         <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1 mb-1">
-                                                             <div className="text-slate-400">
-                                                                 {ent.type === 'dept' ? <Home size={10} /> : ent.type === 'desig' ? <ShieldCheck size={10} /> : <User size={10} />}
-                                                             </div>
-                                                             <span className="text-[10px] font-black text-slate-800 uppercase truncate max-w-[120px]">
-                                                                 {ent.name}
-                                                             </span>
+                                                     <div key={i} className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-h-[44px]">
+                                                         <div className="text-slate-400 flex-shrink-0">
+                                                             {ent.type === 'dept' ? <Home size={10} /> : ent.type === 'desig' ? <ShieldCheck size={10} /> : <User size={10} />}
                                                          </div>
-                                                         <div className="grid grid-cols-1 gap-0.5">
-                                                             <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
-                                                                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">LIMIT</span>
-                                                                 <span className="text-[10px] font-black text-slate-700">₹{ent.max_limit?.toLocaleString()}</span>
-                                                             </div>
-                                                             <div className="flex justify-between items-center bg-white/50 px-1.5 py-0.5 rounded border border-slate-100/50">
-                                                                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">THRESH.</span>
-                                                                 <span className="text-[10px] font-black text-slate-700">₹{ent.receipt_threshold?.toLocaleString()}</span>
-                                                             </div>
+                                                         <span className="text-[10px] font-black text-slate-800 uppercase truncate max-w-[140px]">
+                                                             {ent.name}
+                                                         </span>
+                                                     </div>
+                                                 ))}
+                                             </div>
+                                         </td>
+                                         <td className="px-6 py-5">
+                                             <div className="flex flex-col gap-2">
+                                                 {cat.applicable_to
+                                                     .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
+                                                     .map((ent: any, i: number) => (
+                                                     <div key={i} className="flex flex-col gap-0.5 px-3 py-2 min-h-[44px] justify-center">
+                                                         <div className="flex items-center gap-1.5">
+                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">LIMIT</span>
+                                                             <span className="text-[10px] font-black text-slate-700">₹{ent.max_limit?.toLocaleString()}</span>
+                                                         </div>
+                                                         <div className="flex items-center gap-1.5">
+                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">THRESH.</span>
+                                                             <span className="text-[10px] font-black text-slate-700">₹{ent.receipt_threshold?.toLocaleString()}</span>
                                                          </div>
                                                      </div>
                                                  ))}
@@ -1149,7 +1079,7 @@ const ExpenseSettings: React.FC = () => {
                                 ))}
                                 {filteredCategories.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
+                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest italic">
                                             No special configurations defined
                                         </td>
                                     </tr>

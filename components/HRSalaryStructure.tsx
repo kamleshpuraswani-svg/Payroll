@@ -20,7 +20,9 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
-    Clock
+    Clock,
+    Tag,
+    Power
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -457,6 +459,22 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
 
     const [activeStructureId, setActiveStructureId] = useState<string | null>(null);
 
+    // Filter states
+    const [filterField, setFilterField] = useState<'name' | 'status'>('name');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
+                setIsFilterOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
     // Editor State
     const [structureName, setStructureName] = useState('');
     const [description, setDescription] = useState('');
@@ -751,8 +769,20 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         } else {
             allS = structures.filter(s => !s.targetId);
         }
-        return allS;
-    }, [structures, selectedTarget, paygroups]);
+
+        if (!searchQuery) return allS;
+
+        const query = searchQuery.toLowerCase();
+        return allS.filter(item => {
+            if (filterField === 'name') {
+                return item.name.toLowerCase().includes(query);
+            }
+            if (filterField === 'status') {
+                return (item.status || '').toLowerCase().includes(query);
+            }
+            return false;
+        });
+    }, [structures, selectedTarget, paygroups, searchQuery, filterField]);
 
 
     // --- Render Editor / View ---
@@ -1095,19 +1125,50 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
 
             {/* Action Bar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div className="w-full sm:w-auto flex items-center gap-3">
-                    <div className="relative flex-1 sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <input type="text" placeholder="Search structures..." className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                <div className="w-full sm:w-auto flex items-center gap-2">
+                    <div className="relative" ref={filterDropdownRef}>
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-purple-600 transition-colors shadow-sm"
+                        >
+                            <Sigma size={18} className="text-purple-600" />
+                            <ChevronDown size={14} className="text-slate-400" />
+                        </button>
+                        {isFilterOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
+                                    Select Filter Field
+                                </div>
+                                <button
+                                    onClick={() => { setFilterField('name'); setIsFilterOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'name' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                >
+                                    <Tag size={16} className={filterField === 'name' ? 'text-purple-500' : 'text-slate-400'} /> Structure Name
+                                </button>
+                                <button
+                                    onClick={() => { setFilterField('status'); setIsFilterOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${filterField === 'status' ? 'bg-purple-50 text-purple-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                                >
+                                    <Power size={16} className={filterField === 'status' ? 'text-purple-500' : 'text-slate-400'} /> Status
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    <div className="relative">
-                        <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none">
-                            <option>All Status</option>
-                            <option>Active</option>
-                            <option>Draft</option>
-                        </select>
-                        <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+
+                    <div className="flex-1 sm:w-80 relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={`Filter by ${filterField === 'name' ? 'Structure Name' : 'Status'}...`}
+                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-slate-400 shadow-sm"
+                        />
                     </div>
+
+                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                        Filter
+                    </button>
                 </div>
                 <div className="w-full sm:w-auto flex items-center justify-end gap-3">
                     <div className="relative">

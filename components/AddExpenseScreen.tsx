@@ -170,7 +170,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
     };
 
     const handleAddItem = () => {
-        if (!amount || !reason) return;
+        if (!amount || !reason || !merchant || !selectedCategory) return;
         
         if (editingItemId !== null) {
             // Update existing item
@@ -326,32 +326,62 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                 ) : (
                     <>
                         {(!hideTopFields || editId) && (
-                        <div className="flex flex-col lg:flex-row items-end gap-8 mb-10 pb-10 border-b border-slate-200/60">
+                        <div className="flex flex-col gap-6 mb-10 pb-10 border-b border-slate-200/60">
                             {!hideTopFields && (
                               <>
-                            {/* Select Employee */}
-                            <div className="w-full lg:w-80 space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest text-bold">Select Employee <span className="text-rose-500">*</span></label>
-                                <div className="relative group">
-                                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                    <select
-                                        value={selectedEmployeeId}
-                                        onChange={(e) => (!editId && expenseItems.length === 0) && setSelectedEmployeeId(e.target.value)}
-                                        disabled={!!editId || expenseItems.length > 0}
-                                        className={`w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all appearance-none font-bold ${(editId || expenseItems.length > 0) ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer'}`}
-                                    >
-                                        <option value="">Choose an employee...</option>
-                                        {employees.map(emp => (
-                                            <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            {/* Employee Selection Card */}
+                            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                                <div className="flex items-center gap-6">
+                                    {/* Left: Employee dropdown */}
+                                    <div className="w-72 shrink-0 space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Employee <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <select
+                                                value={selectedEmployeeId}
+                                                onChange={(e) => (!editId && expenseItems.length === 0) && setSelectedEmployeeId(e.target.value)}
+                                                disabled={!!editId || expenseItems.length > 0}
+                                                className={`w-full pl-4 pr-8 py-3 border border-slate-200 rounded-xl text-sm shadow-sm transition-all appearance-none font-bold ${(editId || expenseItems.length > 0) ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer'}`}
+                                            >
+                                                <option value="">Choose an employee...</option>
+                                                {employees.map(emp => (
+                                                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                        {editId ? (
+                                            <p className="text-[10px] text-slate-400 italic">Employee cannot be changed when editing.</p>
+                                        ) : (
+                                            expenseItems.length > 0 && <p className="text-[10px] text-slate-400 italic">Remove all items to change employee.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Right: Selected employee info */}
+                                    {(() => {
+                                        const selEmp = selectedEmployeeId ? employees.find((e: any) => e.id === selectedEmployeeId) : null;
+                                        if (!selEmp) return null;
+                                        const initials = (selEmp.name || 'E').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                                        return (
+                                            <>
+                                                <div className="h-14 w-px bg-slate-200 shrink-0" />
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-11 h-11 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                                                        {initials}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 text-sm">{selEmp.name}</p>
+                                                        <p className="text-xs text-slate-500 mt-0.5">Employee ID: {selEmp.eid}</p>
+                                                        {(selEmp.department || selEmp.designation) && (
+                                                            <p className="text-xs text-slate-400 mt-0.5">
+                                                                {[selEmp.department, selEmp.designation].filter(Boolean).join(' · ')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
-                                {editId ? (
-                                    <p className="text-[10px] text-slate-400 italic">Employee cannot be changed when editing.</p>
-                                ) : (
-                                    expenseItems.length > 0 && <p className="text-[10px] text-slate-400 italic">Remove all items to change employee.</p>
-                                )}
                             </div>
 
                             {!hideDateRange && (
@@ -418,273 +448,336 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                         )}
 
                         <div className="space-y-6 mt-10">
-                            {editId && !showAddItemModal && (
-                                <div className="flex justify-end w-full">
-                                    <button 
-                                        onClick={() => setShowAddItemModal(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md shadow-blue-100"
-                                    >
-                                        Add Item
-                                    </button>
-                                </div>
-                            )}
+                            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
-                            <div className="flex flex-col lg:flex-row gap-8 items-start">
-                                {/* Add Item Form */}
-                                {(!editId || showAddItemModal) && (
-                                <div className="w-full lg:w-1/3 shrink-0">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Expense details</h3>
-                                    <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
-                                    <div className="space-y-5">
-                                        {/* Expense category per item */}
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Expense CATEGORY <span className="text-rose-500">*</span></label>
-                                            <div className="relative group">
-                                                <select
-                                                    value={selectedCategory?.id || ""}
-                                                    onChange={(e) => {
-                                                        const catId = e.target.value;
-                                                        const cat = categories.find(c => String(c.id) === catId);
-                                                        setSelectedCategory(cat || null);
-                                                    }}
-                                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold appearance-none cursor-pointer"
-                                                >
-                                                    <option value="">Select category...</option>
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Expense Date <span className="text-rose-500">*</span></label>
-                                            <div className="relative group">
-                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
-                                                <input
-                                                    type="date"
-                                                    value={expenseDate}
-                                                    min={expenseFromDate}
-                                                    max={expenseToDate}
-                                                    onChange={(e) => setExpenseDate(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold cursor-pointer"
-                                                />
-                                            </div>
-                                            {expenseFromDate === expenseToDate && (
-                                                <p className="text-[9px] text-slate-400 mt-1 italic font-medium">Locked to selected from/to date.</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Merchant / Payee</label>
-                                            <div className="relative group">
-                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. Uber, Amazon, etc."
-                                                    value={merchant}
-                                                    onChange={(e) => setMerchant(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Project / client</label>
-                                            <div className="relative group">
-                                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. Project X, Client Y"
-                                                    value={project}
-                                                    onChange={(e) => setProject(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Amount <span className="text-rose-500">*</span></label>
-                                            <div className="relative group">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm font-bold">₹</div>
-                                                <input 
-                                                    type="number"
-                                                    placeholder="0.00"
-                                                    value={amount}
-                                                    onChange={(e) => setAmount(e.target.value)}
-                                                    className={`w-full pl-8 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold text-slate-700 ${selectedCategory?.receipt_threshold && parseFloat(amount) > selectedCategory.receipt_threshold ? 'bg-amber-50/30 border-amber-200' : 'bg-slate-50 border-slate-100'}`}
-                                                />
-                                            </div>
-                                            {selectedCategory?.receipt_threshold > 0 && parseFloat(amount) > selectedCategory.receipt_threshold && (
-                                                <p className="text-[10px] text-amber-600 mt-1.5 font-bold flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
-                                                    <FileText size={12} /> Please upload a receipt/bill for expenses over ₹{selectedCategory.receipt_threshold.toLocaleString()}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Reason/Description <span className="text-rose-500">*</span></label>
-                                            <textarea 
-                                                rows={3}
-                                                placeholder="Business purpose of this expense..."
-                                                value={reason}
-                                                onChange={(e) => setReason(e.target.value)}
-                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all resize-none shadow-blue-100 font-bold"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Bill / Receipt</label>
-                                            <div className="relative group">
-                                                <input
-                                                    type="file"
-                                                    id="receipt-upload"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files ? e.target.files[0] : null;
-                                                        setReceipt(file);
-                                                    }}
-                                                />
-                                                <label 
-                                                    htmlFor="receipt-upload"
-                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-purple-400 hover:text-purple-500 hover:bg-white transition-all cursor-pointer uppercase tracking-widest"
-                                                >
-                                                    {receipt ? (
-                                                        <>
-                                                            <Paperclip size={14} /> {receipt.name.length > 20 ? receipt.name.substring(0, 17) + '...' : receipt.name}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Upload size={14} /> UPLOAD RECEIPT
-                                                        </>
-                                                    )}
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-4">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingItemId(null);
-                                                    setMerchant('');
-                                                    setProject('');
-                                                    setAmount('');
-                                                    setReason('');
-                                                    setReceipt(null);
-                                                    setSelectedCategory(null);
-                                                    setShowAddItemModal(false);
-                                                }}
-                                                className="w-1/2 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center shadow-sm"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button 
-                                                onClick={handleAddItem}
-                                                disabled={!amount || !reason || !selectedCategory}
-                                                className="w-1/2 py-3 bg-blue-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                            >
-                                                {editingItemId !== null && <CheckCircle size={18} />}
-                                                {editingItemId !== null ? 'UPDATE' : 'ADD'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                </div>
-                                )}
-
-                                {/* Items List Container */}
-                                <div className="flex-1 w-full bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px] flex flex-col">
-                                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
-                                        <h4 className="text-sm font-bold text-slate-800">Expense Items List</h4>
+                                {/* TOP: Expense Items header */}
+                                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <h4 className="text-sm font-bold text-slate-800">Expense Items</h4>
                                         <div className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase">
                                             {expenseItems.length} items added
                                         </div>
                                     </div>
-
-                                    {expenseItems.length === 0 ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500 opacity-40">
-                                                <FileText size={32} />
-                                            </div>
-                                            <p className="text-slate-400 text-sm max-w-[200px] font-bold leading-relaxed">No items added to this claim yet.</p>
-                                            <p className="text-[10px] text-slate-300 uppercase mt-4 tracking-widest font-black">fill the form on the left to start</p>
-                                        </div>
-                                    ) : (
-                                        <div className="flex-1 overflow-auto">
-                                            <table className="w-full text-left text-sm border-collapse">
-                                                <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0 z-10 border-b border-slate-100">
-                                                    <tr>
-                                                        <th className="px-6 py-3">Expense Details</th>
-                                                        <th className="px-6 py-3">Expense Category</th>
-                                                        <th className="px-6 py-3">Expense Date</th>
-                                                        <th className="px-6 py-3">Amount</th>
-                                                        <th className="px-6 py-3">Receipt</th>
-                                                        <th className="px-4 py-3 text-right font-black">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-50">
-                                                    {expenseItems.map((item, idx) => (
-                                                        <tr key={item.id || idx} className="group hover:bg-slate-50/50 transition-colors">
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-[11px] font-bold text-slate-700 tracking-tight leading-relaxed">{item.reason || item.description}</span>
-                                                                    {item.project && <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{item.project}</span>}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight bg-slate-100 px-2 py-1 rounded-md">{item.category}</span>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</span>
-                                                            </td>
-                                                            <td className="px-6 py-4 font-black text-slate-800">
-                                                                ₹{(item.amount || 0).toLocaleString('en-IN')}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                {item.receiptName ? (
-                                                                    <div className="flex items-center gap-1.5 text-emerald-500 font-black text-[10px] uppercase">
-                                                                        <CheckCircle size={12} /> ATTACHED
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter opacity-50">NO RECEIPT</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-4 py-4 text-right">
-                                                                <div className="flex items-center justify-end gap-1">
-                                                                    <button 
-                                                                        onClick={() => handleEditItem(item)}
-                                                                        className={`p-1.5 rounded-lg transition-all ${editingItemId === item.id ? 'text-purple-600 bg-purple-50' : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50'}`}
-                                                                        title="Edit Item"
-                                                                    >
-                                                                        <Edit2 size={14} />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={() => handleRemoveItem(item.id)}
-                                                                        className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                                        title="Remove Item"
-                                                                    >
-                                                                        <Trash2 size={14} />
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                    
-                                    {expenseItems.length > 0 && (
-                                        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center shrink-0">
-                                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total amount</span>
-                                            <span className="text-lg font-black text-blue-600">₹{expenseItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString('en-IN')}</span>
-                                        </div>
-                                    )}
+                                    <button
+                                        onClick={() => {
+                                            setEditingItemId(null);
+                                            setMerchant('');
+                                            setProject('');
+                                            setAmount('');
+                                            setReason('');
+                                            setReceipt(null);
+                                            setSelectedCategory(null);
+                                            setExpenseDate(expenseFromDate);
+                                            setShowAddItemModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md shadow-blue-100"
+                                    >
+                                        <Plus size={14} /> Add Item
+                                    </button>
                                 </div>
+
+                                {/* Items list */}
+                                {expenseItems.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center p-12 text-center min-h-[200px]">
+                                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500 opacity-40">
+                                            <FileText size={32} />
+                                        </div>
+                                        <p className="text-slate-400 text-sm max-w-[200px] font-bold leading-relaxed">No items added to this claim yet.</p>
+                                        <p className="text-[10px] text-slate-300 uppercase mt-4 tracking-widest font-black">fill the form below to start</p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-auto">
+                                        <table className="w-full text-left text-sm border-collapse">
+                                            <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0 z-10 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-4 py-3">Sr. No.</th>
+                                                    <th className="px-4 py-3">Expense Category</th>
+                                                    <th className="px-4 py-3">Expense Date</th>
+                                                    <th className="px-4 py-3">Merchant / Payee</th>
+                                                    <th className="px-4 py-3">Project / Client</th>
+                                                    <th className="px-4 py-3">Amount</th>
+                                                    <th className="px-4 py-3">Reason</th>
+                                                    <th className="px-4 py-3">Bill / Receipt</th>
+                                                    <th className="px-4 py-3 text-right font-black">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {expenseItems.map((item, idx) => (
+                                                    <tr key={item.id || idx} className="group hover:bg-slate-50/50 transition-colors">
+                                                        <td className="px-4 py-4 text-[11px] font-bold text-slate-400 text-center">{idx + 1}</td>
+                                                        <td className="px-4 py-4">
+                                                            <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tight bg-slate-100 px-2 py-1 rounded-md">{item.category}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <span className="text-[11px] font-bold text-slate-700">{item.merchant || '—'}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <span className="text-[11px] text-slate-500">{item.project || '—'}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4 font-black text-slate-800 text-[12px]">
+                                                            ₹{(item.amount || 0).toLocaleString('en-IN')}
+                                                        </td>
+                                                        <td className="px-4 py-4 max-w-[160px]">
+                                                            <span className="text-[11px] font-bold text-slate-700 line-clamp-2 leading-relaxed">{item.reason || item.description || '—'}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            {item.receiptName ? (
+                                                                <div className="flex items-center gap-1.5 text-emerald-500 font-black text-[10px] uppercase">
+                                                                    <CheckCircle size={12} /> ATTACHED
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter opacity-50">NO RECEIPT</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <button
+                                                                    onClick={() => handleEditItem(item)}
+                                                                    className={`p-1.5 rounded-lg transition-all ${editingItemId === item.id ? 'text-purple-600 bg-purple-50' : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50'}`}
+                                                                    title="Edit Item"
+                                                                >
+                                                                    <Edit2 size={14} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleRemoveItem(item.id)}
+                                                                    className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                                    title="Remove Item"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {expenseItems.length > 0 && (
+                                    <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center">
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total amount</span>
+                                        <span className="text-lg font-black text-blue-600">₹{expenseItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString('en-IN')}</span>
+                                    </div>
+                                )}
+
                             </div>
                         </div>
                     </>
                 )}
             </div>
+
+            {/* Right Side Panel: Add / Edit Expense Item */}
+            {showAddItemModal && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[60] bg-black/20"
+                        onClick={() => {
+                            setEditingItemId(null);
+                            setMerchant('');
+                            setProject('');
+                            setAmount('');
+                            setReason('');
+                            setReceipt(null);
+                            setSelectedCategory(null);
+                            setShowAddItemModal(false);
+                        }}
+                    />
+                    {/* Panel */}
+                    <div className="fixed right-0 top-0 bottom-0 z-[70] w-[440px] bg-white shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
+                        {/* RSP Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-base">{editingItemId !== null ? 'Edit Expense Item' : 'Add Expense Item'}</h3>
+                                <p className="text-xs text-slate-400 mt-0.5">Fill in the details for this expense</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setEditingItemId(null);
+                                    setMerchant('');
+                                    setProject('');
+                                    setAmount('');
+                                    setReason('');
+                                    setReceipt(null);
+                                    setSelectedCategory(null);
+                                    setShowAddItemModal(false);
+                                }}
+                                className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* RSP Form */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                            {/* Expense Category */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense Category <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <select
+                                        value={selectedCategory?.id || ""}
+                                        onChange={(e) => {
+                                            const catId = e.target.value;
+                                            const cat = categories.find(c => String(c.id) === catId);
+                                            setSelectedCategory(cat || null);
+                                        }}
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select category...</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            {/* Expense Date */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense Date <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                                    <input
+                                        type="date"
+                                        value={expenseDate}
+                                        min={expenseFromDate}
+                                        max={expenseToDate}
+                                        onChange={(e) => setExpenseDate(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold cursor-pointer"
+                                    />
+                                </div>
+                                {expenseFromDate === expenseToDate && (
+                                    <p className="text-[9px] text-slate-400 mt-1 italic font-medium">Locked to selected from/to date.</p>
+                                )}
+                            </div>
+
+                            {/* Merchant / Payee */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Merchant / Payee <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Uber, Amazon, etc."
+                                        value={merchant}
+                                        onChange={(e) => setMerchant(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Project / Client */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Project / Client</label>
+                                <div className="relative group">
+                                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Project X, Client Y"
+                                        value={project}
+                                        onChange={(e) => setProject(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Amount */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Amount <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        className={`w-full pl-8 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold text-slate-700 ${selectedCategory?.receipt_threshold && parseFloat(amount) > selectedCategory.receipt_threshold ? 'bg-amber-50/30 border-amber-200' : 'bg-slate-50 border-slate-100'}`}
+                                    />
+                                </div>
+                                {selectedCategory?.receipt_threshold > 0 && parseFloat(amount) > selectedCategory.receipt_threshold && (
+                                    <p className="text-[10px] text-amber-600 mt-1.5 font-bold flex items-center gap-1">
+                                        <FileText size={12} /> Please upload a receipt/bill for expenses over ₹{selectedCategory.receipt_threshold.toLocaleString()}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Reason / Description */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Reason / Description <span className="text-rose-500">*</span></label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Business purpose of this expense..."
+                                    value={reason}
+                                    onChange={(e) => setReason(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all resize-none font-bold"
+                                />
+                            </div>
+
+                            {/* Bill / Receipt */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                                    Bill / Receipt{selectedCategory?.receipt_threshold > 0 && parseFloat(amount) > selectedCategory.receipt_threshold && <span className="text-rose-500"> *</span>}
+                                </label>
+                                <div className="relative group">
+                                    <input
+                                        type="file"
+                                        id="rsp-receipt-upload"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files ? e.target.files[0] : null;
+                                            setReceipt(file);
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="rsp-receipt-upload"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-purple-400 hover:text-purple-500 hover:bg-white transition-all cursor-pointer uppercase tracking-widest"
+                                    >
+                                        {receipt ? (
+                                            <>
+                                                <Paperclip size={14} /> {receipt.name.length > 20 ? receipt.name.substring(0, 17) + '...' : receipt.name}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={14} /> Upload Receipt
+                                            </>
+                                        )}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RSP Footer */}
+                        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center gap-3 shrink-0">
+                            <button
+                                onClick={() => {
+                                    setEditingItemId(null);
+                                    setMerchant('');
+                                    setProject('');
+                                    setAmount('');
+                                    setReason('');
+                                    setReceipt(null);
+                                    setSelectedCategory(null);
+                                    setShowAddItemModal(false);
+                                }}
+                                className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddItem}
+                                disabled={!amount || !reason || !merchant || !selectedCategory}
+                                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {editingItemId !== null ? 'Update' : 'Add'}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };
