@@ -95,6 +95,69 @@ const REPORTS_LIST: Report[] = [
         description: 'Comprehensive breakdown of employee active salary structure grades, fixed allowances, deductions, and tax regimes.',
         category: 'Summary',
         icon: 'spreadsheet'
+    },
+    {
+        id: 'salary_revision',
+        title: 'Salary Revision Report',
+        description: 'Month-wise record of salary revisions, increment percentages, and effective dates for all revised employees.',
+        category: 'Summary',
+        icon: 'trendingup'
+    },
+    {
+        id: 'fnf_settlement',
+        title: 'Employee Full & Final Settlement Report',
+        description: 'Detailed full and final settlement summary including earned salary, leave encashment, gratuity, and net payable amount.',
+        category: 'Summary',
+        icon: 'filetext'
+    },
+    {
+        id: 'loan_emi',
+        title: 'Loan / Salary Advance EMI Report',
+        description: 'Employee-wise EMI schedule and recovery status for active salary advances and loans.',
+        category: 'Loans',
+        icon: 'creditcard'
+    },
+    {
+        id: 'outstanding_loan',
+        title: 'Outstanding Loan Report',
+        description: 'Summary of outstanding loan and advance balances, disbursed amounts, and pending recovery details.',
+        category: 'Loans',
+        icon: 'creditcard'
+    },
+    {
+        id: 'pt_statement',
+        title: 'Professional Tax Monthly Statement',
+        description: 'Monthly professional tax deduction statement per employee with applicable slab and total PT liability.',
+        category: 'Compliance',
+        icon: 'percent'
+    },
+    {
+        id: 'esi_form5',
+        title: 'ESI Contribution Register (Form 5)',
+        description: 'Statutory ESI contribution register (Form 5) with employee and employer ESI contributions for covered employees.',
+        category: 'Compliance',
+        icon: 'piggybank'
+    },
+    {
+        id: 'esi_monthly_return',
+        title: 'ESI Monthly Return (Electronic)',
+        description: 'Electronic monthly return data for ESIC portal upload with IP numbers, wages, and contribution details.',
+        category: 'Compliance',
+        icon: 'spreadsheet'
+    },
+    {
+        id: 'esi_monthly_statement',
+        title: 'ESI Monthly Statement',
+        description: 'Detailed monthly statement of ESI contributions with challan and payment status for ESI-covered employees.',
+        category: 'Compliance',
+        icon: 'spreadsheet'
+    },
+    {
+        id: 'esi_summary',
+        title: 'ESI Summary Report',
+        description: 'Consolidated monthly ESI summary with total covered employees, wages, and combined ESI contribution amounts.',
+        category: 'Compliance',
+        icon: 'piggybank'
     }
 ];
 
@@ -470,6 +533,103 @@ const PayrollReports: React.FC = () => {
                         { id: 'TF00912', name: 'Siddharth Roy', structure: 'Finance Mgr Structure', regime: 'Old', basic: 30000, hra: 15000, special: 20000, pf: 1800, dept: 'Finance', business_unit: 'CollabCRM' }
                     );
                 }
+            } else if (selectedReport?.id === 'salary_revision') {
+                if (isEng) {
+                    mockData.push(
+                        { id: 'TF00123', name: 'Priya Sharma', dept: 'Engineering', business_unit: 'MindInventory', prevBasic: 22000, newBasic: 25000, revisionPct: 13.6, effectiveDate: '01 Apr 2025', revisedBy: 'HR Admin', status: 'Active' },
+                        { id: 'TF00456', name: 'Rohan Mehta', dept: 'Engineering', business_unit: '300 Minds', prevBasic: 30000, newBasic: 35000, revisionPct: 16.7, effectiveDate: '01 Apr 2025', revisedBy: 'HR Admin', status: 'Active' }
+                    );
+                }
+                if (isHR) {
+                    mockData.push(
+                        { id: 'TF00789', name: 'Anjali Verma', dept: 'HR', business_unit: 'CollabCRM', prevBasic: 19000, newBasic: 22000, revisionPct: 15.8, effectiveDate: '01 Apr 2025', revisedBy: 'HR Admin', status: 'Active' }
+                    );
+                }
+                if (isSales) {
+                    mockData.push(
+                        { id: 'TF00246', name: 'Vikram Singh', dept: 'Sales', business_unit: 'MindInventory', prevBasic: 20000, newBasic: 23000, revisionPct: 15.0, effectiveDate: '01 Apr 2025', revisedBy: 'HR Admin', status: 'Active' }
+                    );
+                }
+                if (isFinance) {
+                    mockData.push(
+                        { id: 'TF00912', name: 'Siddharth Roy', dept: 'Finance', business_unit: 'CollabCRM', prevBasic: 26000, newBasic: 30000, revisionPct: 15.4, effectiveDate: '01 Apr 2025', revisedBy: 'HR Admin', status: 'Active' }
+                    );
+                }
+            } else if (selectedReport?.id === 'fnf_settlement') {
+                mockData = [
+                    { id: 'TF00321', name: 'Karan Bajaj', dept: 'Engineering', business_unit: 'MindInventory', lastWorkingDay: '31 Oct 2025', earnedSalary: 42000, leaveEncashment: 18500, gratuity: 34615, noticePay: 0, deductions: 3600, netSettlement: 91515, status: 'Processed' },
+                    { id: 'TF00654', name: 'Meera Pillai', dept: 'Sales', business_unit: 'CollabCRM', lastWorkingDay: '15 Nov 2025', earnedSalary: 26667, leaveEncashment: 9600, gratuity: 0, noticePay: 35000, deductions: 1800, netSettlement: 70467, status: 'Pending' }
+                ];
+            } else if (selectedReport?.id === 'loan_emi') {
+                if (isEng) {
+                    mockData.push(
+                        { id: 'TF00123', name: 'Priya Sharma', dept: 'Engineering', business_unit: 'MindInventory', loanType: 'Salary Advance', loanAmount: 50000, emiAmount: 5000, totalEmis: 10, paidEmis: 4, remainingEmis: 6, balance: 30000, status: 'Active' }
+                    );
+                }
+                if (isHR) {
+                    mockData.push(
+                        { id: 'TF00789', name: 'Anjali Verma', dept: 'HR', business_unit: 'CollabCRM', loanType: 'Personal Loan', loanAmount: 100000, emiAmount: 8500, totalEmis: 12, paidEmis: 7, remainingEmis: 5, balance: 42500, status: 'Active' }
+                    );
+                }
+                if (isSales) {
+                    mockData.push(
+                        { id: 'TF00246', name: 'Vikram Singh', dept: 'Sales', business_unit: 'MindInventory', loanType: 'Salary Advance', loanAmount: 30000, emiAmount: 3000, totalEmis: 10, paidEmis: 10, remainingEmis: 0, balance: 0, status: 'Closed' }
+                    );
+                }
+                if (isFinance) {
+                    mockData.push(
+                        { id: 'TF00912', name: 'Siddharth Roy', dept: 'Finance', business_unit: 'CollabCRM', loanType: 'Personal Loan', loanAmount: 200000, emiAmount: 12000, totalEmis: 18, paidEmis: 3, remainingEmis: 15, balance: 164000, status: 'Active' }
+                    );
+                }
+            } else if (selectedReport?.id === 'outstanding_loan') {
+                if (isEng) {
+                    mockData.push(
+                        { id: 'TF00123', name: 'Priya Sharma', dept: 'Engineering', business_unit: 'MindInventory', loanType: 'Salary Advance', disbursedAmount: 50000, disbursedDate: '01 Jul 2025', totalPaid: 20000, outstandingBalance: 30000, nextEmiDate: '01 Dec 2025', status: 'Active' }
+                    );
+                }
+                if (isHR) {
+                    mockData.push(
+                        { id: 'TF00789', name: 'Anjali Verma', dept: 'HR', business_unit: 'CollabCRM', loanType: 'Personal Loan', disbursedAmount: 100000, disbursedDate: '01 May 2025', totalPaid: 59500, outstandingBalance: 40500, nextEmiDate: '01 Dec 2025', status: 'Active' }
+                    );
+                }
+                if (isFinance) {
+                    mockData.push(
+                        { id: 'TF00912', name: 'Siddharth Roy', dept: 'Finance', business_unit: 'CollabCRM', loanType: 'Personal Loan', disbursedAmount: 200000, disbursedDate: '01 Sep 2025', totalPaid: 36000, outstandingBalance: 164000, nextEmiDate: '01 Dec 2025', status: 'Active' }
+                    );
+                }
+            } else if (selectedReport?.id === 'pt_statement') {
+                if (isEng) {
+                    mockData.push(
+                        { id: 'TF00123', name: 'Priya Sharma', dept: 'Engineering', business_unit: 'MindInventory', grossSalary: 55000, ptSlab: 'Above ₹15,000', ptAmount: 200, month: 'November 2025', status: 'Deducted' },
+                        { id: 'TF00456', name: 'Rohan Mehta', dept: 'Engineering', business_unit: '300 Minds', grossSalary: 78000, ptSlab: 'Above ₹15,000', ptAmount: 200, month: 'November 2025', status: 'Deducted' }
+                    );
+                }
+                if (isHR) {
+                    mockData.push(
+                        { id: 'TF00789', name: 'Anjali Verma', dept: 'HR', business_unit: 'CollabCRM', grossSalary: 48000, ptSlab: 'Above ₹15,000', ptAmount: 200, month: 'November 2025', status: 'Deducted' }
+                    );
+                }
+                if (isSales) {
+                    mockData.push(
+                        { id: 'TF00246', name: 'Vikram Singh', dept: 'Sales', business_unit: 'MindInventory', grossSalary: 15000, ptSlab: '₹10,001 – ₹15,000', ptAmount: 150, month: 'November 2025', status: 'Deducted' }
+                    );
+                }
+                if (isFinance) {
+                    mockData.push(
+                        { id: 'TF00912', name: 'Siddharth Roy', dept: 'Finance', business_unit: 'CollabCRM', grossSalary: 65000, ptSlab: 'Above ₹15,000', ptAmount: 200, month: 'November 2025', status: 'Deducted' }
+                    );
+                }
+            } else if (selectedReport?.id === 'esi_form5' || selectedReport?.id === 'esi_monthly_return' || selectedReport?.id === 'esi_monthly_statement') {
+                mockData = [
+                    { id: 'TF00246', name: 'Vikram Singh', ipNumber: 'IP-40012345678', dept: 'Sales', business_unit: 'MindInventory', wages: 15000, days: 26, esicEmployee: 112.50, esicEmployer: 487.50, totalEsic: 600, month: 'November 2025', challanStatus: 'Paid' },
+                    { id: 'TF00531', name: 'Ritu Agarwal', ipNumber: 'IP-40012345679', dept: 'Sales', business_unit: 'CollabCRM', wages: 18000, days: 26, esicEmployee: 135.00, esicEmployer: 585.00, totalEsic: 720, month: 'November 2025', challanStatus: 'Paid' }
+                ];
+            } else if (selectedReport?.id === 'esi_summary') {
+                mockData = [
+                    { month: 'November 2025', coveredEmployees: 2, totalWages: 33000, esicEmployeeTotal: 247.50, esicEmployerTotal: 1072.50, grandTotal: 1320, paymentStatus: 'Paid' },
+                    { month: 'October 2025', coveredEmployees: 2, totalWages: 33000, esicEmployeeTotal: 247.50, esicEmployerTotal: 1072.50, grandTotal: 1320, paymentStatus: 'Paid' },
+                    { month: 'September 2025', coveredEmployees: 2, totalWages: 33000, esicEmployeeTotal: 247.50, esicEmployerTotal: 1072.50, grandTotal: 1320, paymentStatus: 'Paid' }
+                ];
             }
 
             // Filter by completedFilters
@@ -1205,6 +1365,343 @@ const PayrollReports: React.FC = () => {
                                                         <td className="px-6 py-4 text-right font-medium">{formatINR(row.hra)}</td>
                                                         <td className="px-6 py-4 text-right font-medium">{formatINR(row.special)}</td>
                                                         <td className="px-6 py-4 text-right text-rose-600 font-medium">{formatINR(row.pf)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* Salary Revision Table */}
+                                    {selectedReport.id === 'salary_revision' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee ID</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">Department</th>
+                                                    <th className="px-6 py-4 text-right">Previous Basic</th>
+                                                    <th className="px-6 py-4 text-right">Revised Basic</th>
+                                                    <th className="px-6 py-4 text-right">Revision %</th>
+                                                    <th className="px-6 py-4">Effective Date</th>
+                                                    <th className="px-6 py-4">Revised By</th>
+                                                    <th className="px-6 py-4 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4">{row.dept}</td>
+                                                        <td className="px-6 py-4 text-right font-medium text-slate-500">{formatINR(row.prevBasic)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-emerald-700">{formatINR(row.newBasic)}</td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                ↑ {row.revisionPct}%
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-slate-600">{row.effectiveDate}</td>
+                                                        <td className="px-6 py-4 text-slate-500">{row.revisedBy}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* Full & Final Settlement Table */}
+                                    {selectedReport.id === 'fnf_settlement' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee ID</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">Department</th>
+                                                    <th className="px-6 py-4">Last Working Day</th>
+                                                    <th className="px-6 py-4 text-right">Earned Salary</th>
+                                                    <th className="px-6 py-4 text-right">Leave Encashment</th>
+                                                    <th className="px-6 py-4 text-right">Gratuity</th>
+                                                    <th className="px-6 py-4 text-right">Notice Pay</th>
+                                                    <th className="px-6 py-4 text-right">Deductions</th>
+                                                    <th className="px-6 py-4 text-right">Net Settlement</th>
+                                                    <th className="px-6 py-4 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4">{row.dept}</td>
+                                                        <td className="px-6 py-4 text-slate-600">{row.lastWorkingDay}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.earnedSalary)}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.leaveEncashment)}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.gratuity)}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.noticePay)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.deductions)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-blue-700">{formatINR(row.netSettlement)}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                                                row.status === 'Processed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                                            }`}>
+                                                                {row.status === 'Processed' ? <CheckCircle size={10} /> : <Clock size={10} />}
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* Loan / Salary Advance EMI Table */}
+                                    {selectedReport.id === 'loan_emi' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee ID</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">Loan Type</th>
+                                                    <th className="px-6 py-4 text-right">Loan Amount</th>
+                                                    <th className="px-6 py-4 text-right">EMI Amount</th>
+                                                    <th className="px-6 py-4 text-center">Total EMIs</th>
+                                                    <th className="px-6 py-4 text-center">Paid</th>
+                                                    <th className="px-6 py-4 text-center">Remaining</th>
+                                                    <th className="px-6 py-4 text-right">Balance</th>
+                                                    <th className="px-6 py-4 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4 font-medium">{row.loanType}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.loanAmount)}</td>
+                                                        <td className="px-6 py-4 text-right font-medium text-rose-600">{formatINR(row.emiAmount)}</td>
+                                                        <td className="px-6 py-4 text-center">{row.totalEmis}</td>
+                                                        <td className="px-6 py-4 text-center text-emerald-600 font-semibold">{row.paidEmis}</td>
+                                                        <td className="px-6 py-4 text-center text-amber-600 font-semibold">{row.remainingEmis}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-slate-800">{formatINR(row.balance)}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                                                row.status === 'Closed' ? 'bg-slate-100 text-slate-600 border border-slate-200' : 'bg-blue-50 text-blue-700 border border-blue-100'
+                                                            }`}>
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* Outstanding Loan Table */}
+                                    {selectedReport.id === 'outstanding_loan' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee ID</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">Loan Type</th>
+                                                    <th className="px-6 py-4 text-right">Disbursed Amount</th>
+                                                    <th className="px-6 py-4">Disbursed Date</th>
+                                                    <th className="px-6 py-4 text-right">Total Paid</th>
+                                                    <th className="px-6 py-4 text-right">Outstanding Balance</th>
+                                                    <th className="px-6 py-4">Next EMI Date</th>
+                                                    <th className="px-6 py-4 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4 font-medium">{row.loanType}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.disbursedAmount)}</td>
+                                                        <td className="px-6 py-4 text-slate-600">{row.disbursedDate}</td>
+                                                        <td className="px-6 py-4 text-right text-emerald-600 font-medium">{formatINR(row.totalPaid)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-rose-600">{formatINR(row.outstandingBalance)}</td>
+                                                        <td className="px-6 py-4 text-slate-600">{row.nextEmiDate}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* Professional Tax Monthly Statement Table */}
+                                    {selectedReport.id === 'pt_statement' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee ID</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">Department</th>
+                                                    <th className="px-6 py-4 text-right">Gross Salary</th>
+                                                    <th className="px-6 py-4">PT Slab</th>
+                                                    <th className="px-6 py-4 text-right">PT Amount</th>
+                                                    <th className="px-6 py-4">Month</th>
+                                                    <th className="px-6 py-4 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4">{row.dept}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.grossSalary)}</td>
+                                                        <td className="px-6 py-4 text-slate-600 text-xs">{row.ptSlab}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-rose-600">{formatINR(row.ptAmount)}</td>
+                                                        <td className="px-6 py-4 text-slate-500">{row.month}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                <CheckCircle size={10} /> {row.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* ESI Contribution Register (Form 5) Table */}
+                                    {selectedReport.id === 'esi_form5' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee ID</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">IP Number</th>
+                                                    <th className="px-6 py-4 text-right">Wages</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employee (0.75%)</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employer (3.25%)</th>
+                                                    <th className="px-6 py-4 text-right">Total ESI</th>
+                                                    <th className="px-6 py-4">Month</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4 font-mono text-slate-600">{row.ipNumber}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.wages)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployee)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployer)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-slate-800">{formatINR(row.totalEsic)}</td>
+                                                        <td className="px-6 py-4 text-slate-500">{row.month}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* ESI Monthly Return (Electronic) Table */}
+                                    {selectedReport.id === 'esi_monthly_return' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">IP Number</th>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4 text-right">Wages</th>
+                                                    <th className="px-6 py-4 text-center">No. of Days</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employee</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employer</th>
+                                                    <th className="px-6 py-4 text-right">Total</th>
+                                                    <th className="px-6 py-4">Return Period</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-mono text-slate-600">{row.ipNumber}</td>
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.wages)}</td>
+                                                        <td className="px-6 py-4 text-center">{row.days}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployee)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployer)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-slate-800">{formatINR(row.totalEsic)}</td>
+                                                        <td className="px-6 py-4 text-slate-500">{row.month}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* ESI Monthly Statement Table */}
+                                    {selectedReport.id === 'esi_monthly_statement' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Employee Name</th>
+                                                    <th className="px-6 py-4">IP Number</th>
+                                                    <th className="px-6 py-4">Department</th>
+                                                    <th className="px-6 py-4 text-right">Monthly Wages</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employee (0.75%)</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employer (3.25%)</th>
+                                                    <th className="px-6 py-4 text-right">Total Contribution</th>
+                                                    <th className="px-6 py-4 text-center">Challan Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                                        <td className="px-6 py-4 font-mono text-slate-600">{row.ipNumber}</td>
+                                                        <td className="px-6 py-4">{row.dept}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.wages)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployee)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployer)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-slate-800">{formatINR(row.totalEsic)}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                <CheckCircle size={10} /> {row.challanStatus}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    )}
+
+                                    {/* ESI Summary Table */}
+                                    {selectedReport.id === 'esi_summary' && (
+                                        <>
+                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4">Month</th>
+                                                    <th className="px-6 py-4 text-center">Covered Employees</th>
+                                                    <th className="px-6 py-4 text-right">Total Wages</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employee Total</th>
+                                                    <th className="px-6 py-4 text-right">ESI Employer Total</th>
+                                                    <th className="px-6 py-4 text-right">Grand Total</th>
+                                                    <th className="px-6 py-4 text-center">Payment Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {reportData.map((row, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-6 py-4 font-semibold text-slate-700">{row.month}</td>
+                                                        <td className="px-6 py-4 text-center font-bold text-blue-700">{row.coveredEmployees}</td>
+                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.totalWages)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployeeTotal)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">{formatINR(row.esicEmployerTotal)}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-slate-800">{formatINR(row.grandTotal)}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                <CheckCircle size={10} /> {row.paymentStatus}
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
