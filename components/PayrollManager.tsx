@@ -959,6 +959,15 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
     const [wizardReadOnly, setWizardReadOnly] = useState(false);
     const [wizardInitialStep, setWizardInitialStep] = useState(1);
     const [unlockedRegularMonthly, setUnlockedRegularMonthly] = useState(false);
+    const [unlockStep, setUnlockStep] = useState<number>(3);
+    const [unlockReason, setUnlockReason] = useState<string>('');
+
+    useEffect(() => {
+        if (showUnlockModal) {
+            setUnlockStep(3);
+            setUnlockReason('');
+        }
+    }, [showUnlockModal]);
 
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -1145,7 +1154,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             setNovPayrollStatus('Draft');
             if (novPayrollType === 'Regular Monthly') {
                 setWizardBU(['Mindinventory', '300 Minds']);
-                setWizardInitialStep(3);
+                setWizardInitialStep(unlockStep);
                 setUnlockedRegularMonthly(true);
                 setWizardReadOnly(false);
                 setView('WIZARD');
@@ -1156,7 +1165,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             if (payroll && (payroll.payrollType === 'Regular Monthly' || !payroll.payrollType)) {
                 const bus = payroll.businessUnit.split(',').map(s => s.trim());
                 setWizardBU(bus);
-                setWizardInitialStep(3);
+                setWizardInitialStep(unlockStep);
                 setUnlockedRegularMonthly(true);
                 setWizardReadOnly(false);
                 setView('WIZARD');
@@ -1727,15 +1736,77 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             {/* Unlock Confirmation */}
             {showUnlockModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-8 text-center border-t-8 border-amber-500">
-                        <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-y-auto max-h-[90vh] p-8 text-center border-t-8 border-blue-600 scrollbar-none">
+                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Unlock size={32} />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">Unlock Payroll Run?</h3>
-                        <p className="text-sm text-slate-500 mb-8 leading-relaxed">
-                            Unlocking a completed payroll will allow you to make changes to adjustments, attendance, and bonuses. <br /><br />
-                            <span className="text-rose-600 font-bold">Caution:</span> Existing payslips for this period may become invalid.
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">Unlock Payroll Run</h3>
+                        <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                            Select the step from which you want to unlock. Steps following the selected step will also be unlocked.
                         </p>
+
+                        {/* Step Selection List */}
+                        <div className="text-left mb-6">
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Select Step to Unlock from</label>
+                            <div className="space-y-2">
+                                {[
+                                    { num: 1, name: 'Period & Employees' },
+                                    { num: 2, name: 'Attendance & Time Data' },
+                                    { num: 3, name: 'Salary Adjustments' },
+                                    { num: 4, name: 'Review & Verify' },
+                                ].map((step) => {
+                                    const isSelected = unlockStep === step.num;
+                                    return (
+                                        <button
+                                            key={step.num}
+                                            type="button"
+                                            onClick={() => setUnlockStep(step.num)}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                                isSelected
+                                                    ? 'border-blue-200 bg-blue-50/50 shadow-sm'
+                                                    : 'border-slate-100 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center font-bold text-xs transition-colors ${
+                                                isSelected
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-slate-100 text-slate-500'
+                                            }`}>
+                                                {step.num}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`text-xs font-bold ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>
+                                                    {step.name}
+                                                </p>
+                                                {isSelected && (
+                                                    <p className="text-[10px] text-blue-500 font-medium mt-0.5">
+                                                        Unlocks steps {step.num} to 4
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Reason Field */}
+                        <div className="text-left mb-6">
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Reason for Unlocking <span className="text-rose-500">*</span></label>
+                            <textarea
+                                value={unlockReason}
+                                onChange={(e) => setUnlockReason(e.target.value.slice(0, 200))}
+                                placeholder="Enter reason for unlocking this payroll (e.g. attendance corrections)..."
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 min-h-[60px] resize-none"
+                            />
+                            <div className="flex justify-end mt-1">
+                                <span className={`text-[10px] font-bold ${unlockReason.length >= 190 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {unlockReason.length}/200
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowUnlockModal(null)}
@@ -1745,9 +1816,10 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                             </button>
                             <button
                                 onClick={handleUnlockConfirm}
-                                className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 shadow-lg shadow-amber-100 transition-all flex items-center justify-center gap-2"
+                                disabled={!unlockReason.trim()}
+                                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Unlock size={18} /> Confirm Unlock
+                                <Unlock size={18} /> Confirm
                             </button>
                         </div>
                     </div>

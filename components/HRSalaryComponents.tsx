@@ -69,7 +69,7 @@ interface SalaryComponent {
     category: 'Earnings' | 'Deductions' | 'Benefits' | 'Reimbursements';
     // Additional fields for editing context
     amountOrPercent?: string;
-    calcMethod?: 'Flat' | 'Percentage' | 'PercentOfCTC' | 'Balancing';
+    calcMethod?: 'Flat' | 'Percentage' | 'PercentOfCTC' | 'PercentOfGross' | 'Balancing';
     payslipName?: string;
     frequency?: 'One-time' | 'Recurring';
     // New fields for Earnings list view
@@ -306,7 +306,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [natureOfPay, setNatureOfPay] = useState<'Fixed' | 'Variable'>(
         initialData?.type === 'Variable Pay' ? 'Variable' : 'Fixed'
     );
-    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage' | 'PercentOfCTC' | 'Balancing'>(
+    const [calcMethod, setCalcMethod] = useState<'Flat' | 'Percentage' | 'PercentOfCTC' | 'PercentOfGross' | 'Balancing'>(
         initialData?.calcMethod || 'Flat'
     );
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
@@ -362,7 +362,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             calcMethod: natureOfPay === 'Fixed' ? calcMethod : undefined,
             amountOrPercent: natureOfPay === 'Fixed' ? amount : undefined,
             calculation: natureOfPay === 'Fixed'
-                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC` : (calcMethod === 'Balancing' ? 'Balancing Component' : `${amount}% of ${selectedComponents.join(', ')}`)))
+                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC` : (calcMethod === 'PercentOfGross' ? `${amount}% of Gross` : (calcMethod === 'Balancing' ? 'Balancing Component' : `${amount}% of ${selectedComponents.join(', ')}`))))
                 : 'Variable',
             taxable: isTaxable ? taxTreatment : 'Fully Exempt',
             considerEPF: isConsiderEPF,
@@ -702,56 +702,43 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">Calculation Method <span className="text-rose-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[42px]">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
-                                    <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'Balancing' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Balancing' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Balancing'} onChange={() => { setCalcMethod('Balancing'); setAmount('0'); }} />
-                                    <span className="text-sm text-slate-700 font-medium">Balancing Component.</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'PercentOfCTC' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'PercentOfCTC' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'PercentOfCTC'} onChange={() => { setCalcMethod('PercentOfCTC'); setSelectedComponents(['CTC']); }} />
-                                    <span className="text-sm text-slate-700 font-medium">Percentage of CTC</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${calcMethod === 'Percentage' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Percentage' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Percentage'} onChange={() => setCalcMethod('Percentage')} />
-                                    <span className="text-sm text-slate-700 font-medium">Percentage of</span>
-                                </label>
-                                <div className="relative">
+                            <div className="relative">
+                                <select
+                                    value={calcMethod}
+                                    onChange={(e) => {
+                                        const val = e.target.value as 'Flat' | 'Balancing' | 'PercentOfCTC' | 'PercentOfGross' | 'Percentage';
+                                        setCalcMethod(val);
+                                        if (val === 'Balancing') setAmount('0');
+                                        if (val === 'PercentOfCTC') setSelectedComponents(['CTC']);
+                                    }}
+                                    className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                >
+                                    <option value="Flat">Flat Amount</option>
+                                    <option value="Balancing">Balancing Component</option>
+                                    <option value="PercentOfCTC">Percentage of CTC</option>
+                                    <option value="PercentOfGross">Percentage of Gross</option>
+                                    <option value="Percentage">Percentage of Component</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                            {/* Component selector shown only for Percentage of Component */}
+                            {calcMethod === 'Percentage' && (
+                                <div className="mt-3 relative">
                                     <button
                                         type="button"
-                                        disabled={calcMethod !== 'Percentage'}
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                        className="h-9 px-3 border border-slate-200 rounded text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 disabled:opacity-50 min-w-[100px] justify-between"
+                                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-sm text-slate-600 bg-slate-50 flex items-center gap-2 focus:outline-none focus:border-purple-500 justify-between"
                                     >
-                                        <span className="truncate max-w-[80px]">
-                                            {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select'}
+                                        <span className="truncate">
+                                            {selectedComponents.length > 0 ? selectedComponents.join(', ') : 'Select Component(s)'}
                                         </span>
-                                        <ChevronDown size={14} className="text-slate-400" />
+                                        <ChevronDown size={14} className="text-slate-400 shrink-0" />
                                     </button>
-
-                                    {isDropdownOpen && calcMethod === 'Percentage' && (
+                                    {isDropdownOpen && (
                                         <>
-                                            <div
-                                                className="fixed inset-0 z-40"
-                                                onClick={() => setIsDropdownOpen(false)}
-                                            />
-                                            <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
-                                                {['CTC', 'Basic'].map(comp => (
+                                            <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
+                                                {['CTC', 'Basic', 'Gross'].map(comp => (
                                                     <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
                                                         <input
                                                             type="checkbox"
@@ -772,7 +759,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         </>
                                     )}
                                 </div>
-                            </div>
+                            )}
                         </div>
                         {calcMethod !== 'Balancing' && (
                             <div>
@@ -792,8 +779,9 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             <div className="flex gap-3">
                                 <Info className="text-sky-500 shrink-0" size={18} />
                                 <p className="text-xs text-sky-800 leading-relaxed font-medium">
-                                    This is a Balancing Component. System will automatically calculate this value as the remainder needed to reach the Total CTC. 
-                                    <span className="block mt-1 font-bold">Formula = Total Annual CTC - (Sum of all other components in Earnings) - (Statutory Deductions)</span>
+                                    This is a Balancing Component. System will automatically calculate this value as the remainder needed to reach the Total Gross.
+                                    <span className="block mt-1 font-bold">Formula = Total Gross - (Sum of all other components in Earnings)</span>
+                                    <span className="block mt-1 font-bold">Total Gross = Total Annual CTC - Total of Employer's Deductions</span>
                                 </p>
                             </div>
                         </div>
@@ -992,7 +980,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {includeInCTC && <Check size={14} className="text-white" />}
                                 </div>
                                 <input type="checkbox" className="hidden" checked={includeInCTC} onChange={() => setIncludeInCTC(!includeInCTC)} />
-                                <span className="block text-sm font-bold text-slate-700">Include this component in CTC</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="block text-sm font-bold text-slate-700">Include this component in CTC</span>
+                                    <div className="group/tip relative">
+                                        <Info size={13} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                        <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-medium leading-relaxed">
+                                            Included in the employee's total annual CTC package
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-900"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </label>
 
                             <label className="flex items-start gap-2 cursor-pointer">
@@ -1000,7 +997,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {includeInGross && <Check size={14} className="text-white" />}
                                 </div>
                                 <input type="checkbox" className="hidden" checked={includeInGross} onChange={() => setIncludeInGross(!includeInGross)} />
-                                <span className="block text-sm font-bold text-slate-700">Include this component in Gross salary</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="block text-sm font-bold text-slate-700">Include this component in Gross salary</span>
+                                    <div className="group/tip relative">
+                                        <Info size={13} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                        <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-medium leading-relaxed">
+                                            Included in gross salary for computing statutory and tax deductions
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-900"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </label>
 
                             <label className="flex items-start gap-2 cursor-pointer">
@@ -1008,15 +1014,16 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     {includeInFirstSalary && <Check size={14} className="text-white" />}
                                 </div>
                                 <input type="checkbox" className="hidden" checked={includeInFirstSalary} onChange={() => setIncludeInFirstSalary(!includeInFirstSalary)} />
-                                <span className="block text-sm font-bold text-slate-700">Include in the employee’s first salary</span>
-                            </label>
-
-                            <label className="flex items-start gap-2 cursor-pointer">
-                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInPayout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                    {includeInPayout && <Check size={14} className="text-white" />}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="block text-sm font-bold text-slate-700">Include in the employee's first salary</span>
+                                    <div className="group/tip relative">
+                                        <Info size={13} className="text-slate-400 cursor-help hover:text-purple-500 transition-colors" />
+                                        <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-medium leading-relaxed">
+                                            Included in employee's first payroll cycle upon joining
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-900"></div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <input type="checkbox" className="hidden" checked={includeInPayout} onChange={() => setIncludeInPayout(!includeInPayout)} />
-                                <span className="block text-sm font-bold text-slate-700">Include this component in monthly payout</span>
                             </label>
 
                             {/* Pro Rata moved here */}
@@ -1124,7 +1131,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
                 <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                     <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                    <button onClick={handleSave} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
                 </>)}
             </div>
@@ -1532,19 +1539,14 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Calculation Method <span className="text-rose-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[42px]">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${calcMethod === 'Flat' ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {calcMethod === 'Flat' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={calcMethod === 'Flat'} onChange={() => setCalcMethod('Flat')} />
-                                    <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
-                                </label>
+                            <div className="flex items-center gap-2 h-[42px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-fit">
+                                <div className="w-2 h-2 rounded-full bg-sky-600"></div>
+                                <span className="text-sm text-slate-700 font-medium">Flat Amount</span>
                             </div>
                         </div>
                         <div className="w-1/2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                {calcMethod === 'Percentage' ? 'Enter Percentage' : 'Enter Amount (Annual)'} <span className="text-rose-500">*</span>
+                                Enter Amount (Annual) <span className="text-rose-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -1754,13 +1756,6 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                             </div>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer group">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeMonthlyPayout ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
-                                {includeMonthlyPayout && <Check size={14} className="text-white" />}
-                            </div>
-                            <input type="checkbox" className="hidden" checked={includeMonthlyPayout} onChange={() => setIncludeMonthlyPayout(!includeMonthlyPayout)} />
-                            <span className="text-sm font-medium text-slate-700">Include this component in monthly payout</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${prorateDojDol ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white group-hover:border-purple-400'}`}>
                                 {prorateDojDol && <Check size={14} className="text-white" />}
                             </div>
@@ -1799,7 +1794,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 </div>
                 <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                     <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                    <button onClick={handleSave} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
                 </>)}
             </div>
@@ -2144,7 +2139,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
                                                         onClick={() => setIsDropdownOpen(false)}
                                                     />
                                                     <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
-                                                        {['CTC', 'Basic'].map(comp => (
+                                                        {['CTC', 'Basic', 'Gross'].map(comp => (
                                                             <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
                                                                 <input
                                                                     type="checkbox"
@@ -2229,7 +2224,7 @@ const AddReimbursementComponentForm: React.FC<AddEarningFormProps> = ({ onCancel
 
                         <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                             <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                            <button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                            <button onClick={handleSave} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                         </div>
                     </>
                 )}
@@ -2849,7 +2844,7 @@ const HRSalaryComponents: React.FC = () => {
 
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
+                                className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
                             >
                                 Add Component
                             </button>
@@ -2919,8 +2914,8 @@ const HRSalaryComponents: React.FC = () => {
                                             </td>
                                             {activeTab !== 'Deductions' && (
                                                 <td className="px-6 py-4">
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
-                                                        {item.type}
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${item.type === 'Variable Pay' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-sky-50 text-sky-700 border-sky-100'}`}>
+                                                        {item.type === 'Fixed Pay' ? 'Fixed' : item.type === 'Variable Pay' ? 'Variable' : item.type}
                                                     </span>
                                                 </td>
                                             )}

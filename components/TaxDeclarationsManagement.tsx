@@ -44,7 +44,12 @@ import {
     CloudUpload,
     Pause,
     Play,
-    Activity
+    Activity,
+    Users,
+    ChevronUp,
+    AlertTriangle,
+    DollarSign,
+    Wallet
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { MOCK_TAX_DECLARATIONS } from '../constants';
@@ -1311,6 +1316,249 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
 );
 };
 
+// --- Mock data for HR Add Declarations feature ---
+const MOCK_PENDING_PROOFS = [
+    { empId: 'TF00456', name: 'Rahul Varma', dept: 'Marketing', desig: 'Marketing Manager', status: 'Proofs Pending', dueDate: '31 Mar 2026' },
+    { empId: 'SU00111', name: 'Kunal Singh', dept: 'Operations', desig: 'Operations Lead', status: 'Proofs Pending', dueDate: '31 Mar 2026' },
+    { empId: 'TF00789', name: 'Sneha Kapur', dept: 'Finance', desig: 'Financial Analyst', status: 'Partially Submitted', dueDate: '15 Mar 2026' },
+    { empId: 'AC00212', name: 'Arjun Mehta', dept: 'HR', desig: 'HR Executive', status: 'Proofs Pending', dueDate: '31 Mar 2026' },
+];
+
+const MOCK_TAX_LIABILITY = [
+    { empId: 'TF00123', name: 'Priya Sharma', dept: 'Engineering', desig: 'Senior Developer', annualCTC: 1800000, totalTax: 142600, monthlyTax: 11883, regime: 'New Regime' },
+    { empId: 'TF00456', name: 'Rahul Varma', dept: 'Marketing', desig: 'Marketing Manager', annualCTC: 1200000, totalTax: 78000, monthlyTax: 6500, regime: 'Old Regime' },
+    { empId: 'TF00789', name: 'Sneha Kapur', dept: 'Finance', desig: 'Financial Analyst', annualCTC: 1500000, totalTax: 112400, monthlyTax: 9367, regime: 'New Regime' },
+    { empId: 'AC00212', name: 'Arjun Mehta', dept: 'HR', desig: 'HR Executive', annualCTC: 900000, totalTax: 42900, monthlyTax: 3575, regime: 'New Regime' },
+    { empId: 'AC00345', name: 'Anita Desai', dept: 'Engineering', desig: 'Frontend Developer', annualCTC: 1100000, totalTax: 63700, monthlyTax: 5308, regime: 'Old Regime' },
+    { empId: 'SU00111', name: 'Kunal Singh', dept: 'Operations', desig: 'Operations Lead', annualCTC: 1350000, totalTax: 95200, monthlyTax: 7933, regime: 'New Regime' },
+];
+
+const MOCK_EMPLOYEES_DECL = [
+    { id: 'TF00123', name: 'Priya Sharma', department: 'Engineering', designation: 'Senior Developer' },
+    { id: 'TF00456', name: 'Rahul Varma', department: 'Marketing', designation: 'Marketing Manager' },
+    { id: 'TF00789', name: 'Sneha Kapur', department: 'Finance', designation: 'Financial Analyst' },
+    { id: 'AC00212', name: 'Arjun Mehta', department: 'HR', designation: 'HR Executive' },
+    { id: 'AC00345', name: 'Anita Desai', department: 'Engineering', designation: 'Frontend Developer' },
+    { id: 'SU00111', name: 'Kunal Singh', department: 'Operations', designation: 'Operations Lead' },
+];
+
+const LAST_APPROVED_HR_DATA = [
+    { id: 1, section: '80C', title: 'Life Insurance Premium (LIC)', amount: 25000 },
+    { id: 2, section: '80C', title: 'Public Provident Fund (PPF)', amount: 20000 },
+    { id: 3, section: '80D', title: 'Self, Spouse, Children (below 60 years)', amount: 15000 },
+    { id: 4, section: 'HRA', title: 'House Rent Allowance', amount: 180000 },
+];
+
+const HR_DECL_SECTIONS = [
+    { code: '80C', name: 'Section 80C', limit: '₹1,50,000', color: 'purple' },
+    { code: '80D', name: 'Section 80D – Medical Insurance', limit: '₹1,00,000', color: 'sky' },
+    { code: 'HRA', name: 'House Rent Allowance (HRA)', limit: 'Exemption based on Rent', color: 'orange' },
+    { code: '80CCD', name: 'Section 80CCD – NPS', limit: '₹50,000', color: 'indigo' },
+    { code: '80E', name: 'Section 80E – Education Loan', limit: 'No Max Limit', color: 'emerald' },
+    { code: '80G', name: 'Section 80G – Donations', limit: '50% / 100% of donation', color: 'amber' },
+    { code: 'OTHERS', name: 'Other Investments & Exemptions', limit: 'Various', color: 'slate' },
+];
+
+const SECTION_80C_OPTS = [
+    'Life Insurance Premium (LIC)', 'Public Provident Fund (PPF)', 'ELSS Mutual Fund',
+    'NSC (National Savings Certificate)', 'Tax Saving FD', 'Sukanya Samriddhi Yojana',
+    'Employee Provident Fund (EPF)', 'Tuition Fees', 'Home Loan Principal Repayment',
+];
+const SECTION_80D_OPTS = ['Self, Spouse, Children (below 60 years)', 'Self, Spouse & Parents (all below 60)', 'Parents above 60'];
+const SECTION_HRA_OPTS = ['House Rent Allowance'];
+const SECTION_80CCD_OPTS = ['80CCD(1B) – Additional NPS Contribution', '80CCD(2) – Employer NPS Contribution'];
+const SECTION_80E_OPTS = ['Interest on Education Loan'];
+const SECTION_80G_OPTS = ['Donations (100% Tax Exempt)', 'Donations (50% Tax Exempt)'];
+const SECTION_OTHERS_OPTS = ['Section 80U – Disability', 'Section 80EEA – Affordable Housing Interest', 'Section 80TTA – Savings Interest', 'LTA – Leave Travel Allowance'];
+
+const getSectionOpts = (code: string) => {
+    if (code === '80C') return SECTION_80C_OPTS;
+    if (code === '80D') return SECTION_80D_OPTS;
+    if (code === 'HRA') return SECTION_HRA_OPTS;
+    if (code === '80CCD') return SECTION_80CCD_OPTS;
+    if (code === '80E') return SECTION_80E_OPTS;
+    if (code === '80G') return SECTION_80G_OPTS;
+    return SECTION_OTHERS_OPTS;
+};
+
+// --- HR Declaration Form (inline, used for Add Declarations and Edit) ---
+interface HRDeclRow { id: number; section: string; title: string; amount: number; }
+
+const HRDeclarationForm: React.FC<{
+    employeeName: string;
+    employeeId: string;
+    mode: 'use_last' | 'new';
+    onBack: () => void;
+}> = ({ employeeName, employeeId, mode, onBack }) => {
+    const [rows, setRows] = useState<HRDeclRow[]>(mode === 'use_last' ? LAST_APPROVED_HR_DATA : []);
+    const [expandedSection, setExpandedSection] = useState<string | null>('80C');
+    const [addingSection, setAddingSection] = useState<string | null>(null);
+    const [newTitle, setNewTitle] = useState('');
+    const [newAmount, setNewAmount] = useState('');
+    const [isSaved, setIsSaved] = useState(false);
+
+    const totalDeclared = rows.reduce((s, r) => s + r.amount, 0);
+
+    const handleAdd = () => {
+        if (!addingSection || !newTitle || !newAmount) return;
+        setRows(prev => [...prev, { id: Date.now(), section: addingSection, title: newTitle, amount: parseInt(newAmount) || 0 }]);
+        setNewTitle(''); setNewAmount(''); setAddingSection(null);
+    };
+
+    const handleRemove = (id: number) => setRows(prev => prev.filter(r => r.id !== id));
+
+    const handleSave = () => { setIsSaved(true); setTimeout(onBack, 1200); };
+
+    const sectionColor: Record<string, string> = {
+        '80C': 'purple', '80D': 'sky', 'HRA': 'orange', '80CCD': 'indigo',
+        '80E': 'emerald', '80G': 'amber', 'OTHERS': 'slate'
+    };
+
+    const colorClasses: Record<string, { bg: string; text: string; border: string }> = {
+        purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100' },
+        sky: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-100' },
+        orange: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-100' },
+        indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-100' },
+        emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
+        amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
+        slate: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-100' },
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-slate-50 overflow-hidden animate-in fade-in duration-300">
+            {/* Header */}
+            <div className="bg-white border-b border-slate-200 px-8 py-5 shrink-0">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div>
+                            <p className="text-xs text-slate-500 font-medium mb-0.5">Tax Declaration for Employee</p>
+                            <h2 className="text-xl font-bold text-slate-800">{employeeName} <span className="text-sm font-mono text-slate-400 ml-2">({employeeId})</span></h2>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${mode === 'use_last' ? 'bg-sky-50 text-sky-700 border-sky-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
+                            {mode === 'use_last' ? 'From Last Approved' : 'New Declaration'}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase">Total Declared</p>
+                            <p className="text-base font-black text-indigo-800">₹{totalDeclared.toLocaleString('en-IN')}</p>
+                        </div>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaved}
+                            className="px-6 py-2.5 bg-sky-600 text-white font-bold text-sm rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all flex items-center gap-2 disabled:opacity-70"
+                        >
+                            {isSaved ? <><Check size={16} /> Saved!</> : <><Save size={16} /> Save Declaration</>}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sections */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-4">
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 mb-6">
+                    <Info size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                        You are adding tax declarations on behalf of <strong>{employeeName}</strong>. Ensure all declared amounts are verified. Submitted declarations will be visible to the employee.
+                    </p>
+                </div>
+
+                {HR_DECL_SECTIONS.map(section => {
+                    const sectionRows = rows.filter(r => r.section === section.code);
+                    const sectionTotal = sectionRows.reduce((s, r) => s + r.amount, 0);
+                    const isExpanded = expandedSection === section.code;
+                    const color = sectionColor[section.code] || 'slate';
+                    const cc = colorClasses[color];
+
+                    return (
+                        <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <button
+                                onClick={() => setExpandedSection(isExpanded ? null : section.code)}
+                                className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={`px-2.5 py-1 rounded-lg text-xs font-black border ${cc.bg} ${cc.text} ${cc.border}`}>{section.code}</div>
+                                    <div className="text-left">
+                                        <p className="font-bold text-slate-800 text-sm">{section.name}</p>
+                                        <p className="text-xs text-slate-400 font-medium">Limit: {section.limit}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    {sectionTotal > 0 && (
+                                        <span className="text-sm font-black text-indigo-700">₹{sectionTotal.toLocaleString('en-IN')}</span>
+                                    )}
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${sectionRows.length > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                                        {sectionRows.length} item{sectionRows.length !== 1 ? 's' : ''}
+                                    </span>
+                                    {isExpanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                                </div>
+                            </button>
+
+                            {isExpanded && (
+                                <div className="px-6 pb-5 border-t border-slate-100 animate-in slide-in-from-top-1">
+                                    {sectionRows.length > 0 && (
+                                        <div className="mt-4 space-y-2">
+                                            {sectionRows.map(row => (
+                                                <div key={row.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <span className="text-sm font-medium text-slate-700">{row.title}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-sm font-black text-slate-800">₹{row.amount.toLocaleString('en-IN')}</span>
+                                                        <button onClick={() => handleRemove(row.id)} className="p-1 text-slate-300 hover:text-rose-500 transition-colors"><X size={14} /></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {addingSection === section.code ? (
+                                        <div className="mt-4 p-4 bg-sky-50 border border-sky-100 rounded-xl space-y-3 animate-in fade-in">
+                                            <div className="relative">
+                                                <select
+                                                    value={newTitle}
+                                                    onChange={e => setNewTitle(e.target.value)}
+                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white appearance-none focus:outline-none focus:border-sky-500"
+                                                >
+                                                    <option value="">Select investment type</option>
+                                                    {getSectionOpts(section.code).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    value={newAmount}
+                                                    onChange={e => setNewAmount(e.target.value)}
+                                                    placeholder="Enter amount (₹)"
+                                                    className="w-full pl-8 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-sky-500"
+                                                />
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => { setAddingSection(null); setNewTitle(''); setNewAmount(''); }} className="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
+                                                <button onClick={handleAdd} disabled={!newTitle || !newAmount} className="px-4 py-2 text-sm text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 font-medium">Add</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setAddingSection(section.code)}
+                                            className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-sm text-slate-500 hover:border-sky-300 hover:text-sky-600 transition-colors"
+                                        >
+                                            <Plus size={16} /> Add {section.name} Investment
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 // --- Main Container ---
 
 interface TaxDeclarationsManagementProps {
@@ -1325,6 +1573,14 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
     const [searchTerm, setSearchTerm] = useState('');
     const [declarations, setDeclarations] = useState<TaxDeclaration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // HR Add Declarations flow
+    const [hrDeclView, setHrDeclView] = useState<'SELECT' | 'FORM' | null>(null);
+    const [hrDeclEmpId, setHrDeclEmpId] = useState('');
+    const [hrDeclOption, setHrDeclOption] = useState<'use_last' | 'new'>('use_last');
+    const [showPendingProofsRSP, setShowPendingProofsRSP] = useState(false);
+    const [showTaxLiabilityRSP, setShowTaxLiabilityRSP] = useState(false);
+    const [editDeclDocId, setEditDeclDocId] = useState<string | null>(null);
 
     // FIELDS configuration for Lookup Filter
     const FIELDS = [
@@ -1602,9 +1858,94 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
         }
     };
 
+    const hrDeclEmp = MOCK_EMPLOYEES_DECL.find(e => e.id === hrDeclEmpId);
+
     return (
         <div className="flex flex-col h-full bg-slate-50 overflow-hidden animate-in fade-in duration-300">
-            {modalMode === 'VIEW' && selectedDoc ? (
+            {/* HR Declaration inline flow */}
+            {hrDeclView === 'FORM' && hrDeclEmpId ? (
+                <HRDeclarationForm
+                    employeeName={hrDeclEmp?.name || ''}
+                    employeeId={hrDeclEmpId}
+                    mode={hrDeclOption}
+                    onBack={() => { setHrDeclView(null); setHrDeclEmpId(''); setEditDeclDocId(null); }}
+                />
+            ) : hrDeclView === 'SELECT' ? (
+                /* Select Employee + Option Screen */
+                <div className="flex flex-col h-full bg-slate-50 overflow-hidden animate-in fade-in duration-300">
+                    <div className="bg-white border-b border-slate-200 px-8 py-5 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => { setHrDeclView(null); setHrDeclEmpId(''); }} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                                <ArrowLeft size={20} />
+                            </button>
+                            <div>
+                                <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                                    <Users className="text-sky-600" size={22} /> Add Declarations for Employee
+                                </h2>
+                                <p className="text-xs text-slate-500 font-medium">Select an employee and choose how to add their investment declarations</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto flex items-start justify-center pt-12 px-8">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full max-w-xl p-8 space-y-6">
+                            {/* Employee Select */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Select Employee <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <select
+                                        value={hrDeclEmpId}
+                                        onChange={e => setHrDeclEmpId(e.target.value)}
+                                        className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white appearance-none focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+                                    >
+                                        <option value="">— Select Employee —</option>
+                                        {MOCK_EMPLOYEES_DECL.map(emp => (
+                                            <option key={emp.id} value={emp.id}>{emp.name} ({emp.id})</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                                {hrDeclEmpId && (
+                                    <p className="mt-1.5 text-xs text-slate-500">{MOCK_EMPLOYEES_DECL.find(e => e.id === hrDeclEmpId)?.department} — {MOCK_EMPLOYEES_DECL.find(e => e.id === hrDeclEmpId)?.designation}</p>
+                                )}
+                            </div>
+
+                            {/* Investment Option */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Declaration Option</label>
+                                <div className="space-y-3">
+                                    {([
+                                        { val: 'use_last', label: 'Use last approved request', desc: 'Pre-fill the form with the employee\'s last approved declarations' },
+                                        { val: 'new', label: 'Make a new request', desc: 'Start with a blank form for fresh declarations' },
+                                    ] as { val: 'use_last' | 'new'; label: string; desc: string }[]).map(opt => (
+                                        <label
+                                            key={opt.val}
+                                            onClick={() => setHrDeclOption(opt.val)}
+                                            className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${hrDeclOption === opt.val ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+                                        >
+                                            <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${hrDeclOption === opt.val ? 'border-sky-600' : 'border-slate-300'}`}>
+                                                {hrDeclOption === opt.val && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                            </div>
+                                            <div>
+                                                <div className={`text-sm font-bold ${hrDeclOption === opt.val ? 'text-sky-800' : 'text-slate-700'}`}>{opt.label}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{opt.desc}</div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Continue Button */}
+                            <button
+                                disabled={!hrDeclEmpId}
+                                onClick={() => setHrDeclView('FORM')}
+                                className="w-full py-3 bg-sky-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : modalMode === 'VIEW' && selectedDoc ? (
                 <ViewDeclarationDetail
                     doc={selectedDoc}
                     onClose={handleClose}
@@ -1627,19 +1968,50 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                                     <p className="text-sm text-slate-500">Manage and verify employee investment declarations</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
-                                <FileText size={18} /> Generate Form 16
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => { setHrDeclView('SELECT'); setHrDeclEmpId(''); setHrDeclOption('use_last'); }} className="flex items-center gap-2 px-6 py-2.5 bg-sky-600 text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all transform active:scale-95">
+                                    <Plus size={18} /> Add Declarations for Employee
+                                </button>
+                                <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
+                                    <FileText size={18} /> Generate Form 16
+                                </button>
+                            </div>
                         </div>
 
                         {/* Summary Cards */}
-                        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 ${userRole === 'HR_MANAGER' ? 'max-w-4xl' : ''}`}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                             {stats.map((stat, i) => (
                                 <div key={i} className={`p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between ${stat.color}`}>
                                     <span className="text-[11px] font-bold uppercase tracking-wider opacity-60 mb-1">{stat.title}</span>
                                     <span className="text-2xl font-black">{stat.value}</span>
                                 </div>
                             ))}
+                            {/* Pending Investment Proofs KPI */}
+                            <div className="p-4 rounded-2xl border border-amber-100 shadow-sm flex flex-col justify-between bg-amber-50 text-amber-700">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[11px] font-bold uppercase tracking-wider opacity-70">Pending Inv. Proofs</span>
+                                    <button onClick={() => setShowPendingProofsRSP(true)} className="p-1 hover:bg-amber-100 rounded-lg transition-colors" title="View Details">
+                                        <Eye size={14} />
+                                    </button>
+                                </div>
+                                <div>
+                                    <span className="text-2xl font-black">4</span>
+                                    <span className="text-[10px] font-bold opacity-60 ml-2">FY 2025-26</span>
+                                </div>
+                            </div>
+                            {/* Proposed Tax Liability KPI */}
+                            <div className="p-4 rounded-2xl border border-violet-100 shadow-sm flex flex-col justify-between bg-violet-50 text-violet-700">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[11px] font-bold uppercase tracking-wider opacity-70">Proposed Tax Liab.</span>
+                                    <button onClick={() => setShowTaxLiabilityRSP(true)} className="p-1 hover:bg-violet-100 rounded-lg transition-colors" title="View Details">
+                                        <Eye size={14} />
+                                    </button>
+                                </div>
+                                <div>
+                                    <span className="text-2xl font-black">₹5.35L</span>
+                                    <span className="text-[10px] font-bold opacity-60 ml-2">FY 2025-26</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1979,6 +2351,15 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-0.5">
                                                             <button onClick={(e) => { e.stopPropagation(); handleOpenView(doc?.id || ''); }} className="p-1.5 hover:bg-slate-100 hover:text-indigo-600 rounded-lg text-slate-400 transition-colors" title="View Details"><Eye size={15} /></button>
+                                                            {doc?.status === 'Pending' && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setEditDeclDocId(doc?.id || null); setHrDeclEmpId(doc?.employee_id || ''); setHrDeclOption('new'); setHrDeclView('FORM'); }}
+                                                                    className="p-1.5 hover:bg-slate-100 hover:text-sky-600 rounded-lg text-slate-400 transition-colors"
+                                                                    title="Edit Declaration"
+                                                                >
+                                                                    <Edit2 size={15} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -2030,6 +2411,115 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
             )}
 
             <Form16GenerationModal isOpen={isForm16ModalOpen} onClose={() => setIsForm16ModalOpen(false)} />
+
+            {/* Pending Investment Proofs RSP */}
+            {showPendingProofsRSP && (
+                <div className="fixed inset-0 z-[100] flex">
+                    <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={() => setShowPendingProofsRSP(false)} />
+                    <div className="w-[700px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                    <AlertTriangle className="text-amber-500" size={20} /> Pending Investment Proofs
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">FY 2025-26 — Employees with outstanding proof submissions</p>
+                            </div>
+                            <button onClick={() => setShowPendingProofsRSP(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"><X size={18} /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <div className="overflow-hidden rounded-xl border border-slate-200">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-4 py-3">Employee</th>
+                                            <th className="px-4 py-3">Department</th>
+                                            <th className="px-4 py-3">Designation</th>
+                                            <th className="px-4 py-3">Status</th>
+                                            <th className="px-4 py-3">Due Date</th>
+                                            <th className="px-4 py-3 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {MOCK_PENDING_PROOFS.map((row, i) => (
+                                            <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <div className="font-bold text-slate-800">{row.name}</div>
+                                                    <div className="text-xs text-slate-400 font-mono">{row.empId}</div>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs text-slate-600">{row.dept}</td>
+                                                <td className="px-4 py-3 text-xs text-slate-600">{row.desig}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">{row.status}</span>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs font-bold text-rose-600">{row.dueDate}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-100 rounded-lg text-xs font-bold hover:bg-sky-100 transition-colors ml-auto">
+                                                        <Bell size={12} /> Send Reminder
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Proposed Tax Liability RSP */}
+            {showTaxLiabilityRSP && (
+                <div className="fixed inset-0 z-[100] flex">
+                    <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={() => setShowTaxLiabilityRSP(false)} />
+                    <div className="w-[800px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                    <DollarSign className="text-violet-500" size={20} /> Proposed Tax Liability
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">FY 2025-26 — Employee-wise estimated tax liability</p>
+                            </div>
+                            <button onClick={() => setShowTaxLiabilityRSP(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"><X size={18} /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <div className="overflow-hidden rounded-xl border border-slate-200">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-4 py-3">Employee</th>
+                                            <th className="px-4 py-3">Department</th>
+                                            <th className="px-4 py-3">Annual CTC</th>
+                                            <th className="px-4 py-3">Total Tax</th>
+                                            <th className="px-4 py-3">Monthly Tax</th>
+                                            <th className="px-4 py-3">Regime</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {MOCK_TAX_LIABILITY.map((row, i) => (
+                                            <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <div className="font-bold text-slate-800">{row.name}</div>
+                                                    <div className="text-xs text-slate-400 font-mono">{row.empId}</div>
+                                                    <div className="text-[10px] text-slate-400">{row.desig}</div>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs text-slate-600">{row.dept}</td>
+                                                <td className="px-4 py-3 text-xs font-bold text-slate-700">₹{(row.annualCTC / 100000).toFixed(1)}L</td>
+                                                <td className="px-4 py-3 text-xs font-black text-rose-700">₹{row.totalTax.toLocaleString('en-IN')}</td>
+                                                <td className="px-4 py-3 text-xs font-bold text-slate-600">₹{row.monthlyTax.toLocaleString('en-IN')}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${row.regime === 'New Regime' ? 'bg-sky-50 text-sky-700 border-sky-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
+                                                        {row.regime}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

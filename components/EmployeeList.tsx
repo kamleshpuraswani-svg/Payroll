@@ -942,7 +942,8 @@ const AssignStructureModal: React.FC<{
                                             className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
                                         />
                                     </th>
-                                    <th className="px-6 py-3">EMPLOYEE DETAILS</th>
+                                    <th className="px-6 py-3">EMPLOYEE ID</th>
+                                    <th className="px-6 py-3">NAME</th>
                                     <th className="px-6 py-3">DEPARTMENT</th>
                                     <th className="px-6 py-3">CURRENT STRUCTURE</th>
                                     <th className="px-6 py-3">ASSIGNED STRUCTURE</th>
@@ -961,6 +962,7 @@ const AssignStructureModal: React.FC<{
                                                     className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
                                                 />
                                             </td>
+                                            <td className="px-6 py-3 font-mono text-slate-700 font-semibold">{emp?.employee_id || 'N/A'}</td>
                                             <td className="px-6 py-3">
                                                 <div className="flex items-center gap-3">
                                                     {emp?.avatar_url ? (
@@ -970,10 +972,7 @@ const AssignStructureModal: React.FC<{
                                                             <Users size={14} />
                                                         </div>
                                                     )}
-                                                    <div>
-                                                        <div className="font-bold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
-                                                        <div className="text-xs text-slate-500">{emp?.employee_id || 'N/A'}</div>
-                                                    </div>
+                                                    <div className="font-bold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-3 text-slate-600">{emp.department}</td>
@@ -1006,7 +1005,7 @@ const AssignStructureModal: React.FC<{
                                 })}
                                 {filteredEmployees.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center text-slate-400">No employees found matching filters.</td>
+                                        <td colSpan={6} className="p-8 text-center text-slate-400">No employees found matching filters.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -1674,6 +1673,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
 
+                                <th className="px-6 py-4">Employee ID</th>
                                 <th className="px-6 py-4">Name</th>
                                 <th className="px-6 py-4">Joining Date</th>
                                 <th className="px-6 py-4">Department</th>
@@ -1696,7 +1696,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={17} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={18} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading employees...</span>
@@ -1705,7 +1705,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : fetchError ? (
                                 <tr>
-                                    <td colSpan={17} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
+                                    <td colSpan={18} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <AlertTriangle size={24} />
                                             <span className="font-bold">Error loading employees</span>
@@ -1716,7 +1716,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : filteredEmployees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={17} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={18} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <Users size={24} className="text-slate-200" />
                                             <span>No employees found matching filters.</span>
@@ -1726,6 +1726,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                             ) : (filteredEmployees || []).map((emp) => (
                                 <tr key={emp?.id || Math.random()} className={`hover:bg-slate-50 transition-colors group ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-purple-50/30' : ''}`}>
 
+                                    <td className="px-6 py-4 font-mono text-slate-700 font-semibold">{emp?.employee_id || 'N/A'}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             {emp?.avatar_url ? (
@@ -1735,10 +1736,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                                     <Users size={14} />
                                                 </div>
                                             )}
-                                            <div>
-                                                <div className="font-semibold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
-                                                <div className="text-xs text-slate-400 font-mono">{emp?.employee_id || 'N/A'}</div>
-                                            </div>
+                                            <div className="font-semibold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">

@@ -54,6 +54,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [ifscCode, setIfscCode] = useState('');
    const [bankName, setBankName] = useState('');
    const [branchName, setBranchName] = useState('');
+   const [bankPayMode, setBankPayMode] = useState<'Online Transfer' | 'Cash' | 'Cheque'>('Online Transfer');
 
    const [panNumber, setPanNumber] = useState('');
    const [aadhaarNumber, setAadhaarNumber] = useState('');
@@ -63,11 +64,13 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
 
    const [ctc, setCtc] = useState<number>(0);
    const [annualGross, setAnnualGross] = useState<number>(0);
+   const [manualAnnualGross, setManualAnnualGross] = useState<number | null>(null);
    const [regime, setRegime] = useState('New Regime (2025)');
    const [bankVerified, setBankVerified] = useState(true);
    const [isSaving, setIsSaving] = useState(false);
    const [selectedStructureId, setSelectedStructureId] = useState('');
    const [effectiveFrom, setEffectiveFrom] = useState('');
+   const [salaryPayMode, setSalaryPayMode] = useState('Bank Transfer');
    const [errors, setErrors] = useState<{ effectiveFrom?: string; pranNumber?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
    const [appraisalMonth, setAppraisalMonth] = useState('');
@@ -88,6 +91,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [isLoading, setIsLoading] = useState(true);
    const [employeeRawData, setEmployeeRawData] = useState<any>(null);
 
+   const [componentOverrides, setComponentOverrides] = useState<Record<string, number>>({});
    const [additionalComponents, setAdditionalComponents] = useState<{ id: string; name: string; type: 'Earning' | 'Deduction'; calculation: string; amount: number; effectiveFrom: string; }[]>([]);
    const [showAddExtraCompModal, setShowAddExtraCompModal] = useState(false);
    const [masterSalaryComps, setMasterSalaryComps] = useState<any[]>([]);
@@ -256,9 +260,11 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
              const fetchedAnnualGross = Number(data.annual_gross) || 0;
              setCtc(fetchedCtc);
              setAnnualGross(fetchedAnnualGross);
+             if (fetchedAnnualGross > 0) setManualAnnualGross(fetchedAnnualGross);
              setRegime(data.tax_regime || 'New Regime (2025)');
              setSelectedStructureId(data.salary_structure_id || '');
              setEffectiveFrom(data.effective_date || '');
+             setSalaryPayMode(data.salary_pay_mode || 'Bank Transfer');
  
              // 2. Fetch statutory deductions from operational_config (Workaround for missing column)
              try {
@@ -520,6 +526,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       const calc = calculation || '';
       if (calc.includes('% of CTC')) return ctc * (parseFloat(calc) / 100);
       if (calc.includes('% of Basic')) return salary.basic * (parseFloat(calc) / 100);
+      if (calc.includes('% of Gross')) return salary.annualGross * (parseFloat(calc) / 100);
       if (calc.includes('Fixed ₹') || calc.includes('Flat ₹')) return parseFloat(calc.replace(/[^\d.]/g, '')) * 12;
       return 0;
    };
@@ -573,11 +580,12 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             pan_no: panNumber,
             aadhaar_no: aadhaarNumber,
             uan_no: uanNumber,
-            ctc: ctc.toString(), 
-            annual_gross: salary.annualGross.toString(),
+            ctc: ctc.toString(),
+            annual_gross: (manualAnnualGross !== null ? manualAnnualGross : salary.annualGross).toString(),
             tax_regime: regime,
             salary_structure_id: selectedStructureId || null,
             effective_date: effectiveFrom || null,
+            salary_pay_mode: salaryPayMode,
             last_updated_by: 'HR Manager'
          };
 
@@ -762,6 +770,21 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            )}
                         </div>
 
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual Gross (₹)</label>
+                           <div className="relative">
+                              <input
+                                 type="number"
+                                 value={manualAnnualGross !== null ? manualAnnualGross : Math.round(salary.annualGross)}
+                                 disabled={isReadOnly}
+                                 onChange={(e) => setManualAnnualGross(parseInt(e.target.value) || 0)}
+                                 placeholder="Auto-calculated from CTC"
+                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'text-slate-500 bg-slate-50 border-slate-200 cursor-not-allowed' : 'text-slate-800 bg-white border-slate-200 hover:border-slate-300'}`}
+                              />
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                           </div>
+                           {!isReadOnly && <p className="text-[10px] text-slate-400 mt-1">Auto-calculated: ₹{Math.round(salary.annualGross).toLocaleString('en-IN')}</p>}
+                        </div>
 
                         <div id="effective-from-field-main">
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {!isReadOnly && <span className="text-rose-500">*</span>}</label>
@@ -780,6 +803,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            </div>
                            {errors.effectiveFrom && <p className="text-[10px] text-rose-500 font-bold mt-1">{errors.effectiveFrom}</p>}
                         </div>
+
                      </div>
 
                      <div className="space-y-6">
@@ -857,24 +881,46 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         <Building size={18} className="text-slate-400" /> Bank Information
                      </h3>
                   </div>
-                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Account Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">IFSC Code {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <div className="relative">
-                           <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                  <div className="p-6 space-y-4">
+                     {/* Salary Pay Modes radio */}
+                     <div className="pb-4 border-b border-slate-100">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Salary Pay Mode {!isReadOnly && <span className="text-rose-500">*</span>}</label>
+                        <div className="flex flex-wrap gap-6">
+                           {(['Online Transfer', 'Cash', 'Cheque'] as const).map((mode) => (
+                              <label key={mode} className="flex items-center gap-2 cursor-pointer group">
+                                 <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${bankPayMode === mode ? 'border-sky-600' : 'border-slate-300 group-hover:border-sky-400'}`}
+                                    onClick={() => !isReadOnly && setBankPayMode(mode)}
+                                 >
+                                    {bankPayMode === mode && <div className="w-2.5 h-2.5 rounded-full bg-sky-600" />}
+                                 </div>
+                                 <input type="radio" className="hidden" checked={bankPayMode === mode} onChange={() => !isReadOnly && setBankPayMode(mode)} />
+                                 <span className={`text-sm font-medium ${bankPayMode === mode ? 'text-slate-900' : 'text-slate-600'}`}>{mode}</span>
+                              </label>
+                           ))}
                         </div>
                      </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Branch {!isReadOnly && <span className="text-rose-500">*</span>}</label>
-                        <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
+
+                     {/* Bank fields */}
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Account Number {!isReadOnly && bankPayMode === 'Online Transfer' && <span className="text-rose-500">*</span>}</label>
+                           <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                        </div>
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">IFSC Code {!isReadOnly && bankPayMode === 'Online Transfer' && <span className="text-rose-500">*</span>}</label>
+                           <div className="relative">
+                              <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                           </div>
+                        </div>
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Bank Name {!isReadOnly && bankPayMode === 'Online Transfer' && <span className="text-rose-500">*</span>}</label>
+                           <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
+                        </div>
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Branch {!isReadOnly && bankPayMode === 'Online Transfer' && <span className="text-rose-500">*</span>}</label>
+                           <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} disabled={isReadOnly} className="w-full px-3 py-2 border border-slate-100 bg-white rounded-lg text-sm text-slate-800 focus:outline-none" />
+                        </div>
                      </div>
                   </div>
                </div>
@@ -1009,16 +1055,32 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            <tr className="bg-slate-50/50">
                               <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Earnings</td>
                            </tr>
-                           {salary.earnings.map((comp, idx) => (
+                           {salary.earnings.map((comp, idx) => {
+                              const overrideAnnual = componentOverrides[comp.name];
+                              const displayAnnual = overrideAnnual !== undefined ? overrideAnnual : Math.round(comp.annual);
+                              const displayMonthly = Math.round(displayAnnual / 12);
+                              return (
                               <tr key={idx}>
                                  <td className="px-4 py-2.5 text-slate-700 font-medium flex items-center gap-1">
                                     {comp.name}
                                     {comp.name.toLowerCase().includes('hra') && <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 rounded border border-emerald-100">Exempt</span>}
                                  </td>
-                                 <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
-                                 <td className="px-4 py-2.5 text-right text-slate-800 font-medium">₹ {formatCurrency(Math.round(comp.annual))}</td>
+                                 <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(displayMonthly)}</td>
+                                 <td className="px-4 py-2.5 text-right text-slate-800 font-medium">
+                                    {!isReadOnly ? (
+                                       <input
+                                          type="number"
+                                          value={displayAnnual}
+                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComponentOverrides(prev => ({ ...prev, [comp.name]: parseInt(e.target.value) || 0 }))}
+                                          className="w-24 text-right px-2 py-0.5 border border-slate-200 rounded text-xs font-medium focus:outline-none focus:border-sky-500 bg-white"
+                                       />
+                                    ) : (
+                                       <>₹ {formatCurrency(displayAnnual)}</>
+                                    )}
+                                 </td>
                               </tr>
-                           ))}
+                              );
+                           })}
                            {additionalComponents.filter(c => c.type === 'Earning').map((comp) => (
                               <tr key={`extra-earn-${comp.id}`} className="bg-violet-50/40">
                                  <td className="px-4 py-2.5 text-slate-700 font-medium">

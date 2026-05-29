@@ -39,6 +39,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [pfAdminContributionBasis, setPfAdminContributionBasis] = useState<'employee' | 'employer' | 'higher'>('employee');
     const [pfChallanGrossBasis, setPfChallanGrossBasis] = useState<'rate' | 'earning'>('earning');
     const [includeEmprContri, setIncludeEmprContri] = useState(true);
+    const [includeEmprContriInPayslip, setIncludeEmprContriInPayslip] = useState(false);
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
     const [employerPensionRate, setEmployerPensionRate] = useState('8.33');
@@ -730,6 +731,15 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 </label>
                                                             </div>
                                                         )}
+
+                                                        <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
+                                                            <div onClick={() => isEditingPf && setIncludeEmprContriInPayslip(!includeEmprContriInPayslip)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContriInPayslip ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                {includeEmprContriInPayslip && <Check size={14} strokeWidth={4} />}
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's contribution in payslip</span>
+                                                            </div>
+                                                        </label>
 
                                                         <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
                                                             <div onClick={() => isEditingPf && setOverrideRate(!overrideRate)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${overrideRate ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>

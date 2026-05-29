@@ -125,6 +125,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
     const [proofCutoffMonth, setProofCutoffMonth] = useState('January');
     const [proofCutoffDay, setProofCutoffDay] = useState('22');
+    const [proofCutoffStartDay, setProofCutoffStartDay] = useState('1');
+    const [proofCutoffEndDay, setProofCutoffEndDay] = useState('22');
 
     const [selectedYear, setSelectedYear] = useState('2025-2026');
     const [availableYears] = useState(['2025-2026', '2024-2025', '2023-2024']);
@@ -309,6 +311,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     // --- Investment Declaration State ---
     const [isEditingInv, setIsEditingInv] = useState(false);
     const [invEnabled, setInvEnabled] = useState(true);
+    const [declWindowType, setDeclWindowType] = useState<'Monthly' | 'Custom'>('Monthly');
+    const [customMonths, setCustomMonths] = useState<string[]>([]);
     const [invStartDay, setInvStartDay] = useState('1');
     const [invEndDay, setInvEndDay] = useState('22');
     const [cutoffMonth, setCutoffMonth] = useState('January');
@@ -1043,7 +1047,48 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             {/* Declaration Settings Overhaul */}
                             <div className="pt-2">
                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Tax Declaration Due Date</h4>
-                                
+
+                                {/* Declaration Window Type */}
+                                <div className="mb-6">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Declaration Window Type</label>
+                                    <div className="flex items-center gap-6">
+                                        {(['Monthly', 'Custom'] as const).map(opt => (
+                                            <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                                                <div
+                                                    onClick={() => isEditingInv && setDeclWindowType(opt)}
+                                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${declWindowType === opt ? 'border-indigo-600' : 'border-slate-300 group-hover:border-indigo-400'}`}
+                                                >
+                                                    {declWindowType === opt && <div className="w-2.5 h-2.5 rounded-full bg-indigo-600" />}
+                                                </div>
+                                                <span className={`text-sm font-semibold ${declWindowType === opt ? 'text-indigo-700' : 'text-slate-600'}`}>{opt}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Custom months picker (only for Custom type) */}
+                                {declWindowType === 'Custom' && (
+                                    <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-4 animate-in slide-in-from-top-2 duration-200">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Months</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {["January","February","March","April","May","June","July","August","September","October","November","December"].map(m => {
+                                                const selected = customMonths.includes(m);
+                                                return (
+                                                    <button
+                                                        key={m}
+                                                        type="button"
+                                                        disabled={!isEditingInv}
+                                                        onClick={() => setCustomMonths(prev => selected ? prev.filter(x => x !== m) : [...prev, m])}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${selected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'} disabled:cursor-not-allowed disabled:opacity-60`}
+                                                    >
+                                                        {m.slice(0, 3)}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* Monthly Window */}
                                     <div className="space-y-6">
@@ -1051,7 +1096,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
                                                 <Clock size={16} className="text-indigo-600" />
                                             </div>
-                                            <h4 className="text-sm font-bold text-slate-800">Monthly window <span className="text-rose-500">*</span></h4>
+                                            <h4 className="text-sm font-bold text-slate-800">{declWindowType === 'Custom' ? 'Window' : 'Monthly window'} <span className="text-rose-500">*</span></h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 max-w-sm">
                                             <div className="space-y-2">
@@ -1687,9 +1732,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-6">
                                     <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Financial year cutoff date <span className="text-rose-500">*</span></h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="flex gap-3">
-                                            <div className="relative flex-1">
+                                    <div className="space-y-3">
+                                        {/* Month */}
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Month</label>
+                                            <div className="relative max-w-[200px]">
                                                 <select
                                                     disabled={!isEditingProof}
                                                     value={proofCutoffMonth}
@@ -1702,20 +1749,40 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                             </div>
-                                            <div className="relative w-24">
-                                                <select
-                                                    disabled={!isEditingProof}
-                                                    value={proofCutoffDay}
-                                                    onChange={(e) => setProofCutoffDay(e.target.value)}
-                                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 text-center shadow-sm"
-                                                >
-                                                    {Array.from({ 
-                                                        length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(proofCutoffMonth) + 1, 0).getDate() 
-                                                    }, (_, i) => i + 1).map(day => (
-                                                        <option key={day} value={day}>{day}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                        {/* Start Date + End Date */}
+                                        <div className="grid grid-cols-2 gap-3 max-w-[260px]">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Start Date</label>
+                                                <div className="relative">
+                                                    <select
+                                                        disabled={!isEditingProof}
+                                                        value={proofCutoffStartDay}
+                                                        onChange={(e) => setProofCutoffStartDay(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {Array.from({ length: new Date(2026, ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(proofCutoffMonth) + 1, 0).getDate() }, (_, i) => i + 1).map(day => (
+                                                            <option key={day} value={day}>{day}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">End Date</label>
+                                                <div className="relative">
+                                                    <select
+                                                        disabled={!isEditingProof}
+                                                        value={proofCutoffEndDay}
+                                                        onChange={(e) => setProofCutoffEndDay(e.target.value)}
+                                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                    >
+                                                        {Array.from({ length: new Date(2026, ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(proofCutoffMonth) + 1, 0).getDate() }, (_, i) => i + 1).map(day => (
+                                                            <option key={day} value={day}>{day}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

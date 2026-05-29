@@ -2868,7 +2868,7 @@ export const RunPayrollModal: React.FC<{
                   </div>
                   <div className="flex items-center gap-3">
                      <button onClick={onClose} className="px-4 py-2 border border-blue-600 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors">
-                        <X size={16} className="text-blue-600" /> Cancel
+                        <X size={16} className="text-blue-600" /> Close
                      </button>
                   </div>
                </div>

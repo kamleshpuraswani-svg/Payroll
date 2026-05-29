@@ -39,3 +39,8 @@ CREATE POLICY "Enable read access for all" ON loan_requests FOR SELECT USING (tr
 
 -- Allow all operations for HR Managers / Admins (assuming they can write)
 CREATE POLICY "Enable write access for all" ON loan_requests FOR ALL USING (true);
+
+-- ADD SALARY_PAY_MODE COLUMN TO EMPLOYEES --
+ALTER TABLE employees 
+ADD COLUMN IF NOT EXISTS salary_pay_mode TEXT DEFAULT 'Bank Transfer';
+

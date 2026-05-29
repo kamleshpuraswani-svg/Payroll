@@ -106,6 +106,175 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   const [pranNumber, setPranNumber] = useState('');
   const [isDataLoading, setIsDataLoading] = useState(false);
 
+  const [structureComponents, setStructureComponents] = useState<{ earnings: any[]; deductions: any[] }>({ earnings: [], deductions: [] });
+  const [statutoryDeductions, setStatutoryDeductions] = useState<any>({
+    providentFund: false,
+    esi: false,
+    professionalTax: false,
+    lwf: false,
+    nps: false,
+    gratuity: false,
+  });
+  const [statutorySettings, setStatutorySettings] = useState<any>(null);
+
+  const calculateEstTax = (amount: number, regimeType: 'OLD' | 'NEW') => {
+    if (!amount) return 0;
+    let taxable = amount;
+    let tax = 0;
+    if (regimeType === 'OLD') {
+      taxable = Math.max(0, amount - 200000);
+      if (taxable > 1000000) { tax += (taxable - 1000000) * 0.3; taxable = 1000000; }
+      if (taxable > 500000) { tax += (taxable - 500000) * 0.2; taxable = 500000; }
+      if (taxable > 250000) { tax += (taxable - 250000) * 0.05; }
+    } else {
+      taxable = Math.max(0, amount - 75000);
+      if (taxable > 2400000) { tax += (taxable - 2400000) * 0.3; taxable = 2400000; }
+      if (taxable > 2000000) { tax += (taxable - 2000000) * 0.25; taxable = 2000000; }
+      if (taxable > 1600000) { tax += (taxable - 1600000) * 0.20; taxable = 1600000; }
+      if (taxable > 1200000) { tax += (taxable - 1200000) * 0.15; taxable = 1200000; }
+      if (taxable > 800000) { tax += (taxable - 800000) * 0.10; taxable = 800000; }
+      if (taxable > 400000) { tax += (taxable - 400000) * 0.05; }
+    }
+    return Math.round(tax * 1.04);
+  };
+
+  const calculateSalary = (annualCtc: number) => {
+    const earnings: any[] = [];
+    const employeeDeductions: any[] = [];
+    const employerContributions: any[] = [];
+    let totalEmployerContrib = 0;
+
+    const calcComp = (comp: any, baseValues: any) => {
+      const calc = comp.calculation || '';
+      if (calc.includes('Balancing Figure')) return 0;
+      if (calc.includes('% of CTC')) return annualCtc * (parseFloat(calc) / 100);
+      if (calc.includes('% of Basic')) return baseValues.basic * (parseFloat(calc) / 100);
+      if (calc.includes('Fixed ₹')) return parseFloat(calc.replace(/[^\d.-]/g, '')) * 12;
+      return 0;
+    };
+
+    let basic = 0;
+    const basicComp = structureComponents.earnings.find(c => c.name.toLowerCase().includes('basic'));
+    if (basicComp) {
+      basic = calcComp(basicComp, {});
+    }
+
+    structureComponents.earnings.forEach(comp => {
+      if (comp.name.toLowerCase().includes('basic')) {
+        earnings.push({ name: comp.name, annual: basic, monthly: basic / 12 });
+      } else if (!comp.calculation.includes('Balancing Figure')) {
+        const val = calcComp(comp, { basic });
+        earnings.push({ name: comp.name, annual: val, monthly: val / 12 });
+      }
+    });
+
+    if (statutoryDeductions.providentFund && statutorySettings?.pf_settings) {
+      const pfSet = statutorySettings.pf_settings;
+      const rate = parseFloat(pfSet.emprRate || '12') / 100;
+      const wageLimit = parseFloat(pfSet.pfWageCeiling || '15000');
+      const pfBasis = Math.min(basic, wageLimit * 12);
+      const pfContrib = Math.min(pfBasis * rate, (parseFloat(pfSet.emprLimit || '1800') * 12));
+      employerContributions.push({ name: 'Provident Fund (Employer)', annual: pfContrib, monthly: pfContrib / 12 });
+      totalEmployerContrib += pfContrib;
+    } else if (statutoryDeductions.providentFund) {
+      const pfContrib = Math.min(basic * 0.12, 1800 * 12);
+      employerContributions.push({ name: 'Provident Fund (Employer)', annual: pfContrib, monthly: pfContrib / 12 });
+      totalEmployerContrib += pfContrib;
+    }
+
+    if (statutoryDeductions.esi && statutorySettings?.statutory_settings?.esi) {
+      const esiSet = statutorySettings.statutory_settings.esi;
+      const threshold = parseFloat(esiSet.threshold || '21000');
+      const rate = parseFloat(esiSet.employer_rate || '3.25') / 100;
+      const currentEarningsTotal = earnings.reduce((sum, e) => sum + e.annual, 0);
+      if ((currentEarningsTotal / 12) <= threshold) {
+        const esiContrib = currentEarningsTotal * rate;
+        employerContributions.push({ name: 'ESI (Employer)', annual: esiContrib, monthly: esiContrib / 12 });
+        totalEmployerContrib += esiContrib;
+      }
+    }
+
+    if (statutoryDeductions.gratuity) {
+      const gratRate = parseFloat(statutorySettings?.config_value?.gratuityProvisionRate || '4.81') / 100;
+      const gratContrib = basic * gratRate;
+      employerContributions.push({ name: 'Gratuity (Employer)', annual: gratContrib, monthly: gratContrib / 12 });
+      totalEmployerContrib += gratContrib;
+    }
+
+    if (statutoryDeductions.lwf) {
+      const lwfEmpr = 40 * 12;
+      employerContributions.push({ name: 'LWF (Employer)', annual: lwfEmpr, monthly: lwfEmpr / 12 });
+      totalEmployerContrib += lwfEmpr;
+    }
+
+    if (statutoryDeductions.nps) {
+      const npsRate = parseFloat(statutorySettings?.config_value?.npsEmprRate || '10') / 100;
+      const npsContrib = basic * npsRate;
+      employerContributions.push({ name: 'NPS (Employer)', annual: npsContrib, monthly: npsContrib / 12 });
+      totalEmployerContrib += npsContrib;
+    }
+
+    const currentEarningsTotal = earnings.reduce((sum, e) => sum + e.annual, 0);
+    const balancingComp = structureComponents.earnings.find(c => c.calculation.includes('Balancing Figure'));
+    const specialVal = Math.max(0, annualCtc - currentEarningsTotal - totalEmployerContrib);
+    
+    if (balancingComp) {
+      earnings.push({ name: balancingComp.name, annual: specialVal, monthly: specialVal / 12 });
+    }
+
+    const annualGross = earnings.reduce((sum, e) => sum + e.annual, 0);
+    const monthlyGross = annualGross / 12;
+
+    if (statutoryDeductions.providentFund) {
+      const rate = 0.12;
+      const pfEmp = Math.min(basic * rate, 1800 * 12);
+      employeeDeductions.push({ name: 'Provident Fund (Employee)', annual: pfEmp, monthly: pfEmp / 12 });
+    }
+
+    if (statutoryDeductions.esi && monthlyGross <= 21000) {
+      const rate = 0.0075;
+      const esiEmp = annualGross * rate;
+      employeeDeductions.push({ name: 'ESI (Employee)', annual: esiEmp, monthly: esiEmp / 12 });
+    }
+
+    if (statutoryDeductions.professionalTax && monthlyGross > 15000) {
+      const ptVal = 200 * 12;
+      employeeDeductions.push({ name: 'Professional Tax', annual: ptVal, monthly: ptVal / 12 });
+    }
+
+    if (statutoryDeductions.lwf) {
+      const lwfEmp = 20 * 12;
+      employeeDeductions.push({ name: 'LWF (Employee)', annual: lwfEmp, monthly: lwfEmp / 12 });
+    }
+
+    if (statutoryDeductions.nps) {
+      const npsEmpVal = basic * 0.10;
+      employeeDeductions.push({ name: 'NPS (Employee)', annual: npsEmpVal, monthly: npsEmpVal / 12 });
+    }
+
+    const regime = employeeData?.tax_regime || 'New Regime (2025)';
+    const taxAnnual = regime.includes('Old') ? calculateEstTax(annualCtc, 'OLD') : calculateEstTax(annualCtc, 'NEW');
+    if (statutoryDeductions.tds && taxAnnual > 0) {
+      employeeDeductions.push({ name: 'Income Tax (TDS)', annual: taxAnnual, monthly: taxAnnual / 12 });
+    }
+
+    return {
+      earnings,
+      employeeDeductions,
+      employerContributions,
+      annualGross,
+      monthlyGross,
+      basic,
+      special: specialVal
+    };
+  };
+
+  const getSalaryDetails = () => {
+    if (!employeeData) return null;
+    return calculateSalary(Number(employeeData.ctc) || 0);
+  };
+  const salary = getSalaryDetails();
+
   useEffect(() => {
     const fetchEmployee = async () => {
       setIsDataLoading(true);
@@ -118,7 +287,41 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
         if (!error && data) {
           setEmployeeData(data);
           
-          // Fetch appraisal month from config
+          // Fetch structure details
+          if (data.salary_structure_id) {
+            const { data: struct } = await supabase
+              .from('salary_structures')
+              .select('earnings, deductions')
+              .eq('id', data.salary_structure_id)
+              .single();
+            if (struct) {
+              setStructureComponents({
+                earnings: struct.earnings || [],
+                deductions: struct.deductions || []
+              });
+            }
+          }
+
+          // Fetch statutory settings
+          try {
+            const target = 'MindInventory';
+            const { data: settingsData } = await supabase
+              .from('operational_config')
+              .select('config_key, config_value')
+              .like('config_key', `%settings:bu:${target}`);
+            if (settingsData) {
+              const settings: any = {};
+              settingsData.forEach(item => {
+                const key = item.config_key.split(':')[0];
+                settings[key] = item.config_value;
+              });
+              setStatutorySettings(settings);
+            }
+          } catch (err) {
+            console.error('Error fetching statutory settings:', err);
+          }
+
+          // Fetch appraisal month & employee statutory config
           try {
             const { data: configData } = await supabase
               .from('operational_config')
@@ -126,11 +329,14 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
               .eq('config_key', `emp_statutory:${employeeId}`)
               .single();
             
-            if (configData?.config_value?.appraisal_month) {
-              setAppraisalMonth(configData.config_value.appraisal_month);
-            }
-            if (configData?.config_value?.pran_no) {
-              setPranNumber(configData.config_value.pran_no);
+            if (configData?.config_value) {
+              setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value }));
+              if (configData.config_value.appraisal_month) {
+                setAppraisalMonth(configData.config_value.appraisal_month);
+              }
+              if (configData.config_value.pran_no) {
+                setPranNumber(configData.config_value.pran_no);
+              }
             }
           } catch (e) {
             console.error('Error fetching appraisal month config:', e);
@@ -293,10 +499,6 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
               </div>
 
               <div className="flex gap-3 pt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold text-slate-600">
-                  <FileText size={12} className="text-slate-400" />
-                  Total Payslips: 35
-                </div>
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold text-slate-600">
                   <Clock size={12} className="text-slate-400" />
                   Last Disbursal: 30 Nov 2025
@@ -640,9 +842,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
       </div>
 
-      {/* --- OVERLAY SCREENS --- */}
-
-      {/* Annexure Modal */}
+      {/* --- OVERLAY SCREENS --- */}      {/* Annexure Modal */}
       {showAnnexureModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -651,19 +851,20 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                <div className="flex items-center gap-8">
                  <div>
                     <h3 className="font-bold text-slate-800">Salary Structure Annexure</h3>
-                    <p className="text-xs text-slate-500">{employeeData?.name || '---'} ({employeeData?.eid || '---'})</p>
                  </div>
                  
                  <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
 
                  <div className="hidden sm:flex items-center gap-8 text-[11px]">
                     <div className="flex flex-col">
-                      <span className="text-slate-400 font-bold uppercase tracking-wider">Current CTC</span>
-                      <span className="text-slate-700 font-black">{formatINR(employeeData?.ctc || 0)}</span>
+                       <span className="text-slate-400 font-bold uppercase tracking-wider">Current CTC</span>
+                       <span className="text-slate-700 font-black">{formatINR(employeeData?.ctc || 0)}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-slate-400 font-bold uppercase tracking-wider">Monthly Net</span>
-                      <span className="text-emerald-600 font-black">{formatINR(128400)}</span>
+                       <span className="text-slate-400 font-bold uppercase tracking-wider">Monthly Net</span>
+                       <span className="text-emerald-600 font-black">
+                         {formatINR(salary ? (salary.monthlyGross - salary.employeeDeductions.reduce((sum: number, d: any) => sum + d.monthly, 0)) : 128400)}
+                       </span>
                     </div>
                  </div>
                </div>
@@ -672,7 +873,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
+               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase border-b border-slate-200">
                     <tr>
@@ -684,55 +885,134 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <tbody className="divide-y divide-slate-100">
                     {/* Earnings */}
                     <tr className="bg-emerald-50/50"><td colSpan={3} className="px-4 py-2 font-bold text-emerald-800 text-xs uppercase">A. Earnings</td></tr>
-                    <tr>
-                      <td className="px-4 py-2 text-slate-700">Basic Salary</td>
-                      <td className="px-4 py-2 text-right text-slate-600">61,667</td>
-                      <td className="px-4 py-2 text-right text-slate-800 font-medium">7,40,000</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-2 text-slate-700">House Rent Allowance</td>
-                      <td className="px-4 py-2 text-right text-slate-600">30,833</td>
-                      <td className="px-4 py-2 text-right text-slate-800 font-medium">3,70,000</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-2 text-slate-700">Special Allowance</td>
-                      <td className="px-4 py-2 text-right text-slate-600">52,967</td>
-                      <td className="px-4 py-2 text-right text-slate-800 font-medium">6,35,600</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-2 text-slate-700">Leave Travel Allowance</td>
-                      <td className="px-4 py-2 text-right text-slate-600">4,167</td>
-                      <td className="px-4 py-2 text-right text-slate-800 font-medium">50,000</td>
-                    </tr>
-                    <tr className="font-bold bg-slate-50">
-                      <td className="px-4 py-2 text-slate-800">Total Gross Salary (A)</td>
-                      <td className="px-4 py-2 text-right">1,49,634</td>
-                      <td className="px-4 py-2 text-right">17,95,600</td>
-                    </tr>
+                    {structureComponents.earnings.length > 0 && salary ? (
+                      <>
+                        {salary.earnings.map((e: any) => (
+                          <tr key={e.name}>
+                            <td className="px-4 py-2 text-slate-700">{e.name}</td>
+                            <td className="px-4 py-2 text-right text-slate-600">{formatINR(e.monthly).replace('₹', '').trim()}</td>
+                            <td className="px-4 py-2 text-right text-slate-800 font-medium">{formatINR(e.annual).replace('₹', '').trim()}</td>
+                          </tr>
+                        ))}
+                        <tr className="font-bold bg-slate-50">
+                          <td className="px-4 py-2 text-slate-800">Total Gross Salary (A)</td>
+                          <td className="px-4 py-2 text-right">{formatINR(salary.monthlyGross).replace('₹', '').trim()}</td>
+                          <td className="px-4 py-2 text-right">{formatINR(salary.annualGross).replace('₹', '').trim()}</td>
+                        </tr>
+                      </>
+                    ) : (
+                      <>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Basic Salary</td>
+                          <td className="px-4 py-2 text-right text-slate-600">61,667</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">7,40,000</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">House Rent Allowance</td>
+                          <td className="px-4 py-2 text-right text-slate-600">30,833</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">3,70,000</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Special Allowance</td>
+                          <td className="px-4 py-2 text-right text-slate-600">52,967</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">6,35,600</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Leave Travel Allowance</td>
+                          <td className="px-4 py-2 text-right text-slate-600">4,167</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">50,000</td>
+                        </tr>
+                        <tr className="font-bold bg-slate-50">
+                          <td className="px-4 py-2 text-slate-800">Total Gross Salary (A)</td>
+                          <td className="px-4 py-2 text-right">1,49,634</td>
+                          <td className="px-4 py-2 text-right">17,95,600</td>
+                        </tr>
+                      </>
+                    )}
 
                     {/* Retirals */}
-                    <tr className="bg-sky-50/50"><td colSpan={3} className="px-4 py-2 font-bold text-sky-800 text-xs uppercase">B. Retirals (Employer)</td></tr>
-                    <tr>
-                      <td className="px-4 py-2 text-slate-700">Provident Fund (Employer)</td>
-                      <td className="px-4 py-2 text-right text-slate-600">1,800</td>
-                      <td className="px-4 py-2 text-right text-slate-800 font-medium">21,600</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-2 text-slate-700">Gratuity</td>
-                      <td className="px-4 py-2 text-right text-slate-600">2,733</td>
-                      <td className="px-4 py-2 text-right text-slate-800 font-medium">32,800</td>
-                    </tr>
-                    <tr className="font-bold bg-slate-50">
-                      <td className="px-4 py-2 text-slate-800">Total Retirals (B)</td>
-                      <td className="px-4 py-2 text-right">4,533</td>
-                      <td className="px-4 py-2 text-right">54,400</td>
-                    </tr>
+                    <tr className="bg-sky-50/50"><td colSpan={3} className="px-4 py-2 font-bold text-sky-800 text-xs uppercase">B. Retirals (Employer Contribution)</td></tr>
+                    {structureComponents.earnings.length > 0 && salary ? (
+                      <>
+                        {salary.employerContributions.map((e: any) => (
+                          <tr key={e.name}>
+                            <td className="px-4 py-2 text-slate-700">{e.name}</td>
+                            <td className="px-4 py-2 text-right text-slate-600">{formatINR(e.monthly).replace('₹', '').trim()}</td>
+                            <td className="px-4 py-2 text-right text-slate-800 font-medium">{formatINR(e.annual).replace('₹', '').trim()}</td>
+                          </tr>
+                        ))}
+                        <tr className="font-bold bg-slate-50">
+                          <td className="px-4 py-2 text-slate-800">Total Retirals (B)</td>
+                          <td className="px-4 py-2 text-right">{formatINR(salary.employerContributions.reduce((sum: number, c: any) => sum + c.monthly, 0)).replace('₹', '').trim()}</td>
+                          <td className="px-4 py-2 text-right">{formatINR(salary.employerContributions.reduce((sum: number, c: any) => sum + c.annual, 0)).replace('₹', '').trim()}</td>
+                        </tr>
+                      </>
+                    ) : (
+                      <>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Provident Fund (Employer)</td>
+                          <td className="px-4 py-2 text-right text-slate-600">1,800</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">21,600</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Gratuity</td>
+                          <td className="px-4 py-2 text-right text-slate-600">2,733</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">32,800</td>
+                        </tr>
+                        <tr className="font-bold bg-slate-50">
+                          <td className="px-4 py-2 text-slate-800">Total Retirals (B)</td>
+                          <td className="px-4 py-2 text-right">4,533</td>
+                          <td className="px-4 py-2 text-right">54,400</td>
+                        </tr>
+                      </>
+                    )}
+
+                    {/* Deductions (Employee Share) */}
+                    <tr className="bg-rose-50/50"><td colSpan={3} className="px-4 py-2 font-bold text-rose-800 text-xs uppercase">C. Deductions (Employee Share)</td></tr>
+                    {structureComponents.earnings.length > 0 && salary ? (
+                      <>
+                        {salary.employeeDeductions.map((e: any) => (
+                          <tr key={e.name}>
+                            <td className="px-4 py-2 text-slate-700">{e.name}</td>
+                            <td className="px-4 py-2 text-right text-slate-600">{formatINR(e.monthly).replace('₹', '').trim()}</td>
+                            <td className="px-4 py-2 text-right text-slate-800 font-medium">{formatINR(e.annual).replace('₹', '').trim()}</td>
+                          </tr>
+                        ))}
+                        <tr className="font-bold bg-slate-50">
+                          <td className="px-4 py-2 text-slate-800">Total Deductions (C)</td>
+                          <td className="px-4 py-2 text-right">{formatINR(salary.employeeDeductions.reduce((sum: number, d: any) => sum + d.monthly, 0)).replace('₹', '').trim()}</td>
+                          <td className="px-4 py-2 text-right">{formatINR(salary.employeeDeductions.reduce((sum: number, d: any) => sum + d.annual, 0)).replace('₹', '').trim()}</td>
+                        </tr>
+                      </>
+                    ) : (
+                      <>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Provident Fund (Employee)</td>
+                          <td className="px-4 py-2 text-right text-slate-600">1,800</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">21,600</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-slate-700">Professional Tax</td>
+                          <td className="px-4 py-2 text-right text-slate-600">200</td>
+                          <td className="px-4 py-2 text-right text-slate-800 font-medium">2,400</td>
+                        </tr>
+                        <tr className="font-bold bg-slate-50">
+                          <td className="px-4 py-2 text-slate-800">Total Deductions (C)</td>
+                          <td className="px-4 py-2 text-right">2,000</td>
+                          <td className="px-4 py-2 text-right">24,000</td>
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                   <tfoot className="bg-slate-800 text-white font-bold">
                     <tr>
                       <td className="px-4 py-3">Total Cost to Company (A + B)</td>
-                      <td className="px-4 py-3 text-right">1,54,167</td>
-                      <td className="px-4 py-3 text-right text-lg">18,50,000</td>
+                      <td className="px-4 py-3 text-right">
+                        {salary ? formatINR(salary.monthlyGross + salary.employerContributions.reduce((sum: number, c: any) => sum + c.monthly, 0)).replace('₹', '').trim() : '1,54,167'}
+                      </td>
+                      <td className="px-4 py-3 text-right text-lg">
+                        {salary ? formatINR(salary.annualGross + salary.employerContributions.reduce((sum: number, c: any) => sum + c.annual, 0)).replace('₹', '').trim() : '18,50,000'}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
