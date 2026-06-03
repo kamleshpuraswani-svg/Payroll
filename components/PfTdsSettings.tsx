@@ -693,7 +693,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 {includeEmprContri && <Check size={14} strokeWidth={4} />}
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's contribution in employee's salary structure</span>
+                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's contribution in employee's CTC</span>
                                                             </div>
                                                         </label>
 
@@ -704,7 +704,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                         {includeEdli && <Check size={12} strokeWidth={4} />}
                                                                     </div>
                                                                     <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                                                                        Include employer's EDLI contribution in employee's salary structure
+                                                                        Include employer's EDLI contribution in employee's CTC
                                                                         <div className="group/tip relative">
                                                                             <Info size={14} className="text-slate-300 cursor-help" />
                                                                             <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-bold">
@@ -719,7 +719,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                         {includeAdminCharges && <Check size={12} strokeWidth={4} />}
                                                                     </div>
                                                                     <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                                                                        Include admin charges in employee's salary structure
+                                                                        Include admin charges in employee's CTC
                                                                         <div className="group/tip relative">
                                                                             <Info size={14} className="text-slate-300 cursor-help" />
                                                                             <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-bold">

@@ -358,52 +358,52 @@ const PFSettings: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Checkbox Configurations */}
-                                <div className="space-y-4 pt-2">
-                                    <label className="flex items-start gap-3 cursor-pointer group">
-                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEmprContri ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                            {includeEmprContri && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={includeEmprContri} onChange={() => isEditing && setIncludeEmprContri(!includeEmprContri)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer's contribution in employee's salary structure.</span>
-                                    </label>
-
-                                    {includeEmprContri && (
-                                        <div className="ml-8 space-y-3 pl-4 border-l-2 border-slate-100">
-                                            <label className="flex items-center gap-3 cursor-pointer group">
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEdli ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                                    {includeEdli && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                                </div>
-                                                <input type="checkbox" className="hidden" checked={includeEdli} onChange={() => isEditing && setIncludeEdli(!includeEdli)} disabled={!isEditing} />
-                                                <span className="text-sm text-slate-600 flex items-center gap-2">
-                                                    Include employer's EDLI contribution in employee's salary structure.
-                                                    <div className="group relative inline-block">
-                                                        <Info size={14} className="text-slate-400 cursor-help" />
-                                                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal">
-                                                            EDLI Contribution is 0.50 %of PF Wage. Maximum Employer Contribution for EDLI is 75.
-                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                                        </div>
-                                                    </div>
-                                                </span>
-                                            </label>
-                                            <label className="flex items-center gap-3 cursor-pointer group">
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeAdminCharges ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                                    {includeAdminCharges && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                                </div>
-                                                <input type="checkbox" className="hidden" checked={includeAdminCharges} onChange={() => isEditing && setIncludeAdminCharges(!includeAdminCharges)} disabled={!isEditing} />
-                                                <span className="text-sm text-slate-600 flex items-center gap-2">
-                                                    Include admin charges in employee's salary structure.
-                                                    <div className="group relative inline-block">
-                                                        <Info size={14} className="text-slate-400 cursor-help" />
-                                                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal">
-                                                            EPF Admin Charges is 0.50% of PF Wage.
-                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                                        </div>
-                                                    </div>
-                                                </span>
-                                            </label>
-                                        </div>
-                                    )}
+                                 {/* Checkbox Configurations */}
+                                 <div className="space-y-4 pt-2">
+                                     <label className="flex items-start gap-3 cursor-pointer group">
+                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEmprContri ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                             {includeEmprContri && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                         </div>
+                                         <input type="checkbox" className="hidden" checked={includeEmprContri} onChange={() => isEditing && setIncludeEmprContri(!includeEmprContri)} disabled={!isEditing} />
+                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer's contribution in employee's CTC</span>
+                                     </label>
+ 
+                                     {includeEmprContri && (
+                                         <div className="ml-8 space-y-3 pl-4 border-l-2 border-slate-100">
+                                             <label className="flex items-center gap-3 cursor-pointer group">
+                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeEdli ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                     {includeEdli && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                                 </div>
+                                                 <input type="checkbox" className="hidden" checked={includeEdli} onChange={() => isEditing && setIncludeEdli(!includeEdli)} disabled={!isEditing} />
+                                                 <span className="text-sm text-slate-600 flex items-center gap-2">
+                                                     Include employer's EDLI contribution in employee's CTC
+                                                     <div className="group relative inline-block">
+                                                         <Info size={14} className="text-slate-400 cursor-help" />
+                                                         <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal">
+                                                             EDLI Contribution is 0.50 %of PF Wage. Maximum Employer Contribution for EDLI is 75.
+                                                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                         </div>
+                                                     </div>
+                                                 </span>
+                                             </label>
+                                             <label className="flex items-center gap-3 cursor-pointer group">
+                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${includeAdminCharges ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                     {includeAdminCharges && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                                 </div>
+                                                 <input type="checkbox" className="hidden" checked={includeAdminCharges} onChange={() => isEditing && setIncludeAdminCharges(!includeAdminCharges)} disabled={!isEditing} />
+                                                 <span className="text-sm text-slate-600 flex items-center gap-2">
+                                                     Include admin charges in employee's CTC
+                                                     <div className="group relative inline-block">
+                                                         <Info size={14} className="text-slate-400 cursor-help" />
+                                                         <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal">
+                                                             EPF Admin Charges is 0.50% of PF Wage.
+                                                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                         </div>
+                                                     </div>
+                                                 </span>
+                                             </label>
+                                         </div>
+                                     )}
 
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${overrideRate ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>

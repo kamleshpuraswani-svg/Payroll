@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { RunPayrollModal, PayrollAlertsModal, PayrollOnHoldPanel } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
+import { supabase } from '../services/supabaseClient';
 
 interface PastPayroll {
     id: string;
@@ -1150,6 +1151,23 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
     };
 
     const handleUnlockConfirm = () => {
+        // Insert audit log to database
+        const logAction = async () => {
+            const targetMonth = showUnlockModal === 'Nov 2025' ? 'November 2025' : (MOCK_HISTORY.find(p => p.id === showUnlockModal)?.month || showUnlockModal || 'Unknown Month');
+            const uuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+            const { error } = await supabase.from('audit_logs').insert({
+                id: uuid,
+                action: `Unlocked Payroll Run for ${targetMonth} (Step ${unlockStep}) - Reason: ${unlockReason}`,
+                user_name: 'HR Manager',
+                severity: 'High',
+                timestamp_label: 'Just now'
+            });
+            if (error) {
+                console.error('Error saving unlock audit log:', error);
+            }
+        };
+        logAction();
+
         if (showUnlockModal === 'Nov 2025') {
             setNovPayrollStatus('Draft');
             if (novPayrollType === 'Regular Monthly') {
