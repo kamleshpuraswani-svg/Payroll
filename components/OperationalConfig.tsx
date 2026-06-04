@@ -88,6 +88,10 @@ const OperationalConfig: React.FC = () => {
     const [isLopDropdownOpen, setIsLopDropdownOpen] = useState(false);
     const lopDropdownRef = React.useRef<HTMLDivElement>(null);
 
+    // Round Off Settings state
+    const [isRoundOffExpanded, setIsRoundOffExpanded] = useState(true);
+    const [globalRoundOff, setGlobalRoundOff] = useState<'floor' | 'ceiling' | 'nearest_full' | 'nearest_half'>('floor');
+
     const fetchPaygroups = async () => {
         try {
             const { data, error } = await supabase.from('paygroups').select('*').order('name');
@@ -272,6 +276,11 @@ const OperationalConfig: React.FC = () => {
                     setLopType(lopSettings.config_value.calculation_type || 'custom');
                     setLopDivisor(lopSettings.config_value.divisor || '30');
                 }
+
+                const roundOff = data.find(c => c.config_key === 'round_off_settings');
+                if (roundOff && roundOff.config_value) {
+                    setGlobalRoundOff(roundOff.config_value.round_off_rule || 'floor');
+                }
             }
 
             // Fetch expense settings
@@ -364,6 +373,19 @@ const OperationalConfig: React.FC = () => {
                 }, { onConflict: 'config_key' });
 
             if (lopError) throw lopError;
+
+            // Save round off settings
+            const { error: roundOffError } = await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: 'round_off_settings',
+                    config_value: {
+                        round_off_rule: globalRoundOff
+                    },
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            if (roundOffError) throw roundOffError;
 
             // Save expense settings
             const { error: expSettingsError } = await supabase
@@ -1423,6 +1445,80 @@ const OperationalConfig: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Round Off Settings Section */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsRoundOffExpanded(!isRoundOffExpanded)}
+                >
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-800">Round Off Settings</h3>
+                        <div className="group relative">
+                            <Info size={14} className="text-slate-400 cursor-help" />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
+                                Define the rounding method to be applied globally to payroll components, ESI, and Gratuity calculations.
+                            </div>
+                        </div>
+                    </div>
+                    <button className="text-slate-400">
+                        {isRoundOffExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isRoundOffExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-4xl">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold text-slate-700">Round off on</span>
+                                        <span className="text-red-500 font-bold">*</span>
+                                        <div className="group relative flex items-center">
+                                            <Info size={16} className="text-slate-400 cursor-help" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
+                                                Floor: Rounds decimals down to the nearest whole number (e.g., 3.7 → 3). Ceiling: Rounds decimals up to the nearest whole number (e.g., 3.2 → 4). Nearest Full: Rounds to the nearest whole number (e.g., 3.4 → 3, 3.5 → 4). Nearest Half: Rounds to the nearest 0.5 increment (e.g., 3.4 → 3.5, 3.2 → 3, 3.8 → 4).
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-x-8 gap-y-3 items-center">
+                                        {[
+                                            { label: 'Floor', value: 'floor' },
+                                            { label: 'Ceiling', value: 'ceiling' },
+                                            { label: 'Nearest Full', value: 'nearest_full' },
+                                            { label: 'Nearest Half', value: 'nearest_half' }
+                                        ].map((opt) => (
+                                            <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
+                                                <div className="relative flex items-center justify-center">
+                                                    <input 
+                                                        type="radio" 
+                                                        name="globalRoundOff"
+                                                        value={opt.value}
+                                                        checked={globalRoundOff === opt.value}
+                                                        onChange={() => setGlobalRoundOff(opt.value as any)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${
+                                                        globalRoundOff === opt.value 
+                                                            ? 'border-indigo-600 bg-white' 
+                                                            : 'border-slate-300 group-hover:border-slate-400 bg-white'
+                                                    }`}>
+                                                        {globalRoundOff === opt.value && (
+                                                            <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm transition-colors ${
+                                                    globalRoundOff === opt.value ? 'text-slate-900 font-medium' : 'text-slate-500 group-hover:text-slate-700'
+                                                }`}>{opt.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
                         </div>
                     </div>
                 )}

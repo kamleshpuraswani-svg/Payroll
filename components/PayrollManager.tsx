@@ -1593,7 +1593,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                             <td className="px-6 py-5 text-slate-600 font-medium text-xs">HR Manager</td>
                                             <td className="px-6 py-5 text-right pr-8">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    {novPayrollStatus === 'Locked' ? (
+                                                    {novPayrollStatus === 'Locked' || novPayrollStatus === 'Paid' ? (
                                                         <>
                                                             <button
                                                                 onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(true); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
@@ -1670,7 +1670,18 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                         <td className="px-6 py-5 text-right pr-8">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => setShowDetailsModal(payroll)}
+                                                    onClick={() => {
+                                                        if (payroll.status === 'Locked' || payroll.status === 'Paid') {
+                                                            const bus = payroll.businessUnit.split(',').map(s => s.trim());
+                                                            setWizardBU(bus);
+                                                            setWizardReadOnly(true);
+                                                            setWizardInitialStep(1);
+                                                            setUnlockedRegularMonthly(false);
+                                                            setView('WIZARD');
+                                                        } else {
+                                                            setShowDetailsModal(payroll);
+                                                        }
+                                                    }}
                                                     className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                                     title="View Details"
                                                 >

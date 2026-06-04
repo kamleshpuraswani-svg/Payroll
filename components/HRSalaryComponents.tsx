@@ -979,7 +979,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             )}
                         </div>
 
-                        {/* Round off settings */}
+                        {/* Hide as per request: Round off settings */}
+                        {false && (
                         <div>
                             <label className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
                                 <span>Round off settings <span className="text-rose-500">*</span></span>
@@ -1006,6 +1007,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 ))}
                             </div>
                         </div>
+                        )}
 
                         <div className="space-y-4">
                             <label className="flex items-start gap-2 cursor-pointer">
@@ -1750,7 +1752,8 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                     </div>
 
                     <div className="pt-2 flex flex-col gap-3">
-                        {/* Round off settings */}
+                        {/* Hide as per request: Round off settings */}
+                        {false && (
                         <div className="pb-1">
                             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                                 <span>Round off settings <span className="text-rose-500">*</span></span>
@@ -1777,6 +1780,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                 ))}
                             </div>
                         </div>
+                        )}
 
                         <label className="flex items-start gap-2 cursor-pointer group">
                             <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isProRata ? "bg-purple-600 border-purple-600" : "border-slate-300 bg-white group-hover:border-purple-400"}`}>

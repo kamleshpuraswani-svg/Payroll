@@ -727,6 +727,9 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                 </div>
 
                                 <div className="space-y-6 pt-2">
+                                            {/* Hide as per request: Round off settings */}
+                                            {false && (
+                                            <>
                                             <div className="flex items-center gap-2">
                                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round off settings <span className="text-rose-500">*</span></h4>
                                                 <div className="group relative inline-block">
@@ -740,22 +743,24 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        <div className="flex items-center gap-6 pt-2">
-                                            <label className="flex items-center gap-2 cursor-pointer group">
-                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'floor' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                                    {esiRoundOff === 'floor' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                                </div>
-                                                <input type="radio" className="hidden" name="esiRoundOff" value="floor" checked={esiRoundOff === 'floor'} onChange={() => isEditing && setEsiRoundOff('floor')} disabled={!isEditing} />
-                                                <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'floor' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Floor</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer group">
-                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'ceiling' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                                    {esiRoundOff === 'ceiling' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                                </div>
-                                                <input type="radio" className="hidden" name="esiRoundOff" value="ceiling" checked={esiRoundOff === 'ceiling'} onChange={() => isEditing && setEsiRoundOff('ceiling')} disabled={!isEditing} />
-                                                <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'ceiling' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Ceiling</span>
-                                            </label>
-                                        </div>
+                                            <div className="flex items-center gap-6 pt-2">
+                                                <label className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'floor' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                        {esiRoundOff === 'floor' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                    </div>
+                                                    <input type="radio" className="hidden" name="esiRoundOff" value="floor" checked={esiRoundOff === 'floor'} onChange={() => isEditing && setEsiRoundOff('floor')} disabled={!isEditing} />
+                                                    <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'floor' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Floor</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${esiRoundOff === 'ceiling' ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                        {esiRoundOff === 'ceiling' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                    </div>
+                                                    <input type="radio" className="hidden" name="esiRoundOff" value="ceiling" checked={esiRoundOff === 'ceiling'} onChange={() => isEditing && setEsiRoundOff('ceiling')} disabled={!isEditing} />
+                                                    <span className={`text-sm font-semibold transition-colors ${esiRoundOff === 'ceiling' ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>Ceiling</span>
+                                                </label>
+                                            </div>
+                                            </>
+                                            )}
                                     
 
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
@@ -1013,7 +1018,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                             </div>
                                         </div>
 
-                                        {/* Round Off Setting */}
+                                        {/* Hide as per request: Round Off Setting */}
+                                        {false && (
                                         <div className="space-y-4 pt-8 border-t border-slate-300">
                                             <div className="flex items-center gap-2">
                                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Round Off Setting <span className="text-rose-500">*</span></label>
@@ -1028,26 +1034,27 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                                     </div>
                                                 </div>
                                             </div>
-                                    <div className="flex items-center gap-8 pt-1">
-                                        {['Floor', 'Ceiling'].map((option) => (
-                                            <label key={option} className="flex items-center gap-2.5 cursor-pointer group">
-                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${gratuityRoundOff === option.toLowerCase() ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                                    {gratuityRoundOff === option.toLowerCase() && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                                </div>
-                                                <input 
-                                                    type="radio" 
-                                                    className="hidden" 
-                                                    name="gratuityRoundOff"
-                                                    value={option.toLowerCase()}
-                                                    checked={gratuityRoundOff === option.toLowerCase()}
-                                                    onChange={() => isEditing && setGratuityRoundOff(option.toLowerCase() as 'floor' | 'ceiling')}
-                                                    disabled={!isEditing}
-                                                />
-                                                <span className={`text-sm font-semibold transition-colors ${gratuityRoundOff === option.toLowerCase() ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{option}</span>
-                                             </label>
-                                         ))}
-                                     </div>
-                                 </div>
+                                            <div className="flex items-center gap-8 pt-1">
+                                                {['Floor', 'Ceiling'].map((option) => (
+                                                    <label key={option} className="flex items-center gap-2.5 cursor-pointer group">
+                                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${gratuityRoundOff === option.toLowerCase() ? 'border-sky-600 bg-sky-600' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                            {gratuityRoundOff === option.toLowerCase() && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                        </div>
+                                                        <input 
+                                                            type="radio" 
+                                                            className="hidden" 
+                                                            name="gratuityRoundOff"
+                                                            value={option.toLowerCase()}
+                                                            checked={gratuityRoundOff === option.toLowerCase()}
+                                                            onChange={() => isEditing && setGratuityRoundOff(option.toLowerCase() as 'floor' | 'ceiling')}
+                                                            disabled={!isEditing}
+                                                        />
+                                                        <span className={`text-sm font-semibold transition-colors ${gratuityRoundOff === option.toLowerCase() ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-600'}`}>{option}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        )}
  
                                  {/* Include Gratuity in CTC */}
                                  <div className="pt-8 border-t border-slate-300">

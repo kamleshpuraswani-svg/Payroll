@@ -139,7 +139,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       id: 'hr-approvals',
       label: 'Payroll Approval Requests',
       icon: <ClipboardCheck size={20} />,
-      viewState: ViewState.PAYROLL_APPROVAL
+      viewState: ViewState.PAYROLL_APPROVAL,
+      hidden: true
     },
     // Hidden: Documents menu item (can be restored later)
     // {
@@ -256,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
 
         <div className="p-4 space-y-6 overflow-y-auto h-[calc(100vh-4rem)] flex flex-col justify-between">
           <div className="space-y-1">
-            {menuItems.map((item) => {
+            {menuItems.filter(item => !item.hidden).map((item) => {
               const isActive = item.viewState === currentView;
               const isExpanded = expandedGroups.includes(item.id);
               const groupActive = isGroupActive(item);

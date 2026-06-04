@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//usr/local/Cellar/node/25.6.1_1/bin/**)",
+      "Bash(/usr/local/bin/node --version)"
+    ]
+  }
+}

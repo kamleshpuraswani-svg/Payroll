@@ -893,6 +893,10 @@ export const RunPayrollModal: React.FC<{
       if (!company) return null;
 
       const handleNext = async () => {
+         if (readOnly) {
+            setCurrentStep(prev => Math.min(prev + 1, 6));
+            return;
+         }
          if (currentStep === 1) {
             await initiatePayrollRun();
          }
@@ -2088,7 +2092,7 @@ export const RunPayrollModal: React.FC<{
                                              ₹{total.toLocaleString()}
                                           </td>
                                           <td className="px-4 py-3 text-right font-bold bg-emerald-50 group-hover:bg-emerald-100 transition-colors">
-                                             <span className={total >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
+                                          <span className={total >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
                                                 ₹{total.toLocaleString()}
                                              </span>
                                           </td>
@@ -2098,16 +2102,18 @@ export const RunPayrollModal: React.FC<{
                                                    const empStatus = payrollEmployees.find(e => e.id === row.id)?.payrollStatus;
                                                    return empStatus === 'On Hold' ? (
                                                       <button
-                                                         onClick={() => toggleHold(row.id)}
-                                                         className="p-1.5 rounded-lg border bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100 transition-colors"
+                                                         onClick={() => !readOnly && toggleHold(row.id)}
+                                                         disabled={readOnly}
+                                                         className="p-1.5 rounded-lg border bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                          title="Release Hold"
                                                       >
                                                          <PlayCircle size={18} />
                                                       </button>
                                                    ) : (
                                                       <button
-                                                         onClick={() => toggleHold(row.id)}
-                                                         className="p-1.5 rounded-lg border bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-colors"
+                                                         onClick={() => !readOnly && toggleHold(row.id)}
+                                                         disabled={readOnly}
+                                                         className="p-1.5 rounded-lg border bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                          title="Put on Hold"
                                                       >
                                                          <PauseCircle size={18} />
@@ -2115,22 +2121,25 @@ export const RunPayrollModal: React.FC<{
                                                    );
                                                 })()}
                                                 <button
-                                                   onClick={() => handleRowLopClick(row.id)}
-                                                   className="p-1.5 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all"
+                                                   onClick={() => !readOnly && handleRowLopClick(row.id)}
+                                                   disabled={readOnly}
+                                                   className="p-1.5 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                    title="Recover LOP for this employee"
                                                 >
                                                    <Undo size={18} />
                                                 </button>
                                                 <button
-                                                   onClick={() => toggleEdit(row.id)}
-                                                   className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                                                   onClick={() => !readOnly && toggleEdit(row.id)}
+                                                   disabled={readOnly}
+                                                   className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                                    title={row.isEditing ? "Save Changes" : "Edit Row"}
                                                 >
                                                    {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
                                                 </button>
                                                 <button
-                                                   onClick={() => { setAddCompTargetId(row.id); setShowAddCompModal(true); }}
-                                                   className="p-1.5 rounded-lg text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all"
+                                                   onClick={() => { if (!readOnly) { setAddCompTargetId(row.id); setShowAddCompModal(true); } }}
+                                                   disabled={readOnly}
+                                                   className="p-1.5 rounded-lg text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                    title="Add one-time earning or deduction"
                                                 >
                                                    <Plus size={18} />
@@ -2237,6 +2246,7 @@ export const RunPayrollModal: React.FC<{
                                           <th className="px-3 py-3">Last Working Date</th>
                                           <th className="px-3 py-3">Hold Reason</th>
                                           <th className="px-3 py-3">Hold Month</th>
+                                          <th className="px-3 py-3">Hold Amount</th>
                                           <th className="px-3 py-3">Status</th>
                                           <th className="px-3 py-3 text-center">Action</th>
                                        </tr>
@@ -2274,6 +2284,16 @@ export const RunPayrollModal: React.FC<{
                                                 {emp.holdReason || 'No reason provided'}
                                              </td>
                                              <td className="px-3 py-3 text-slate-500 font-bold uppercase text-[10px] tracking-tight whitespace-nowrap">Nov 2025</td>
+                                             <td className="px-3 py-3 text-slate-700 font-bold whitespace-nowrap">
+                                                {(() => {
+                                                   const row = adjustments.find(r => r.id === emp.id);
+                                                   if (!row) return '-';
+                                                   const customEarnings = (row.customComponents || []).filter((c: any) => c.type === 'Earning').reduce((s: number, c: any) => s + c.amount, 0);
+                                                   const customDeductions = (row.customComponents || []).filter((c: any) => c.type === 'Deduction').reduce((s: number, c: any) => s + c.amount, 0);
+                                                   const holdAmt = row.gross + row.bonus + row.arrears + row.expenseReimbursement - row.loanRecovery - row.salaryAdvanceRecovery - row.actualTds - row.lop + row.lopReversal + row.other + customEarnings - customDeductions;
+                                                   return `₹${holdAmt.toLocaleString()}`;
+                                                })()}
+                                             </td>
                                              <td className="px-3 py-3">
                                                 {emp.payrollStatus === 'On Hold' ? (
                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-100">
@@ -2315,7 +2335,7 @@ export const RunPayrollModal: React.FC<{
                                        ))}
                                        {wizardOnHoldListIds.length === 0 && (
                                           <tr>
-                                             <td colSpan={10} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                                             <td colSpan={11} className="px-5 py-12 text-center text-slate-400 font-medium italic">
                                                 No employees currently on hold for this cycle.
                                              </td>
                                           </tr>
@@ -2747,11 +2767,11 @@ export const RunPayrollModal: React.FC<{
                               <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Download size={20} /></div>
                               {bankFileDownloaded && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
                            </div>
-                           <h3 className="font-bold text-slate-800">1. Bank Disbursal</h3>
+                           <h3 className="font-bold text-slate-800">1. Bank Disbursal Sheet</h3>
                            <button
                               onClick={handleDownloadBankFile}
                               disabled={readOnly}
-                              className={`mt-auto w-full py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${bankFileDownloaded ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                              className={`mt-auto w-full py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${bankFileDownloaded ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
                            >
                               {bankFileDownloaded ? <><CheckCircle size={16} /> File Downloaded</> : <><Download size={16} /> Download File</>}
                            </button>
@@ -2759,51 +2779,44 @@ export const RunPayrollModal: React.FC<{
 
                         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
                            <div className="flex items-start justify-between mb-4">
-                              <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></div>
-                              {payslipsGenerated && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Done</span>}
+                              <div className="flex gap-2">
+                                 <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></div>
+                                 <div className="p-2 bg-sky-50 text-sky-600 rounded-lg"><Mail size={20} /></div>
+                              </div>
+                              <div className="flex gap-1.5">
+                                 {(payslipsGenerated || emailsSent) && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Sent</span>}
+                              </div>
                            </div>
-                           <h3 className="font-bold text-slate-800">2. Generate Payslips</h3>
+                           <h3 className="font-bold text-slate-800">2. Generate & Distribute Payslips</h3>
+                           <p className="text-xs text-slate-500 mt-2 mb-4">Payslip will be uploaded to Employees account in People module.</p>
 
-                           <div className="mt-auto">
+                           <div className="mt-auto space-y-3">
                               {!payslipsGenerated ? (
                                  !isGenerating ? (
-                                    <button onClick={handleGeneratePayslips} disabled={readOnly} className="w-full py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                       Generate Payslips
+                                    <button onClick={handleGeneratePayslips} disabled={readOnly} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                       Send
                                     </button>
                                  ) : (
                                     <div className="space-y-2">
                                        <div className="flex justify-between text-xs font-medium text-slate-600">
                                           <span>Generating PDFs...</span>
                                           <span>{generationProgress}%</span>
-                                       </div>
-                                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                                          <div className="bg-purple-600 h-full transition-all duration-200" style={{ width: `${generationProgress}%` }}></div>
-                                       </div>
-                                    </div>
+                                        </div>
+                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                           <div className="bg-purple-600 h-full transition-all duration-200" style={{ width: `${generationProgress}%` }}></div>
+                                        </div>
+                                     </div>
                                  )
                               ) : (
-                                 <button disabled className="w-full py-2 bg-slate-50 text-slate-400 border border-slate-200 rounded-lg text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2">
-                                    <CheckCircle size={16} /> Payslips Ready
+                                 <button
+                                    onClick={() => setEmailsSent(true)}
+                                    disabled={emailsSent || readOnly}
+                                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${emailsSent ? 'bg-slate-50 text-slate-400 border border-slate-200 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                                 >
+                                    {emailsSent ? 'Notifications Sent' : 'Send'}
                                  </button>
                               )}
                            </div>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
-                           <div className="flex items-start justify-between mb-4">
-                              <div className="p-2 bg-sky-50 text-sky-600 rounded-lg"><Mail size={20} /></div>
-                              {emailsSent && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Sent</span>}
-                           </div>
-                           <h3 className="font-bold text-slate-800">3. Distribute Payslips</h3>
-                           <p className="text-xs text-slate-500 mt-1 mb-4">Payslip will be uploaded to Employees account in People module.</p>
-
-                           <button
-                              onClick={() => setEmailsSent(true)}
-                              disabled={!payslipsGenerated || emailsSent || readOnly}
-                              className={`w-full py-2 rounded-lg text-sm font-medium transition-colors mt-auto ${(!payslipsGenerated || readOnly) ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : emailsSent ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-sky-600 text-white hover:bg-sky-700'}`}
-                           >
-                              {emailsSent ? 'Notifications Sent' : 'Send Now'}
-                           </button>
                         </div>
                      </div>
 
@@ -2894,7 +2907,7 @@ export const RunPayrollModal: React.FC<{
                               <div key={step.id} className="relative mb-6 last:mb-0 bg-white">
                                  <div
                                     className={`flex items-start gap-4 cursor-pointer group p-3 transition-colors ${isActive ? 'bg-blue-50/60 rounded-xl rounded-l-none -ml-5 pl-5 border-l-4 border-blue-600' : 'hover:bg-slate-50 rounded-xl -ml-5 pl-5 border-l-4 border-transparent'}`}
-                                    onClick={() => (isCompleted || !readOnly) && setCurrentStep(step.id)}
+                                    onClick={() => (isCompleted || !readOnly || readOnly) && setCurrentStep(step.id)}
                                  >
                                     <div className={`relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-all outline outline-4 outline-white ${isActive ? 'bg-blue-600 text-white' : isCompleted ? 'bg-white border-2 border-slate-300 text-slate-500' : 'bg-white border-2 border-slate-200 text-slate-400'}`}>
                                        {step.id}
@@ -2934,26 +2947,35 @@ export const RunPayrollModal: React.FC<{
 
                         {currentStep === 5 ? (
                            <div className="flex gap-3">
-                              {isConfirmed && !readOnly && (
+                              {readOnly ? (
                                  <button
                                     onClick={handleNext}
-                                    className="px-8 py-2.5 bg-rose-600 text-white rounded-lg font-bold text-sm hover:bg-rose-700 shadow-sm flex items-center gap-2 transition-all"
+                                    className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all"
                                  >
-                                    <AlertTriangle size={16} /> Force Lock & Approve Payroll
+                                    Next <ArrowRight size={16} />
                                  </button>
+                              ) : (
+                                 <>
+                                    {isConfirmed && !readOnly && (
+                                       <button
+                                          onClick={handleNext}
+                                          className="px-8 py-2.5 bg-rose-600 text-white rounded-lg font-bold text-sm hover:bg-rose-700 shadow-sm flex items-center gap-2 transition-all"
+                                       >
+                                          <AlertTriangle size={16} /> Force Lock & Approve Payroll
+                                       </button>
+                                    )}
+                                    <button
+                                       onClick={handleNext}
+                                       disabled={(!isConfirmed && !readOnly) || readOnly}
+                                       className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                       <Lock size={16} /> Approve & Lock Payroll
+                                    </button>
+                                 </>
                               )}
-                              <button
-                                 onClick={handleNext}
-                                 disabled={(!isConfirmed && !readOnly) || readOnly}
-                                 className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                 <Lock size={16} /> {readOnly ? 'Locked' : 'Approve & Lock Payroll'}
-                              </button>
                            </div>
                         ) : currentStep === 6 ? (
-                           <button onClick={onClose} className="px-8 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all">
-                              Finish <CheckCircle size={16} />
-                           </button>
+                           null
                         ) : (
                            <button
                               onClick={currentStep === 2 ? () => setShowStep3ConfirmDialog(true) : handleNext}

@@ -116,6 +116,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     gratuity: false,
   });
   const [statutorySettings, setStatutorySettings] = useState<any>(null);
+  const [globalRoundOff, setGlobalRoundOff] = useState<'floor' | 'ceiling' | 'nearest_full' | 'nearest_half'>('floor');
 
   const calculateEstTax = (amount: number, regimeType: 'OLD' | 'NEW') => {
     if (!amount) return 0;
@@ -144,13 +145,26 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     const employerContributions: any[] = [];
     let totalEmployerContrib = 0;
 
+    const applyRoundOff = (value: number): number => {
+      if (globalRoundOff === 'ceiling') {
+        return Math.ceil(value);
+      } else if (globalRoundOff === 'nearest_full') {
+        return Math.round(value);
+      } else if (globalRoundOff === 'nearest_half') {
+        return Math.round(value * 2) / 2;
+      } else {
+        return Math.floor(value);
+      }
+    };
+
     const calcComp = (comp: any, baseValues: any) => {
       const calc = comp.calculation || '';
-      if (calc.includes('Balancing Figure')) return 0;
-      if (calc.includes('% of CTC')) return annualCtc * (parseFloat(calc) / 100);
-      if (calc.includes('% of Basic')) return baseValues.basic * (parseFloat(calc) / 100);
-      if (calc.includes('Fixed ₹')) return parseFloat(calc.replace(/[^\d.-]/g, '')) * 12;
-      return 0;
+      let val = 0;
+      if (calc.includes('Balancing Figure')) val = 0;
+      else if (calc.includes('% of CTC')) val = annualCtc * (parseFloat(calc) / 100);
+      else if (calc.includes('% of Basic')) val = baseValues.basic * (parseFloat(calc) / 100);
+      else if (calc.includes('Fixed ₹')) val = parseFloat(calc.replace(/[^\d.-]/g, '')) * 12;
+      return applyRoundOff(val);
     };
 
     let basic = 0;
@@ -188,7 +202,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
       const rate = parseFloat(esiSet.employer_rate || '3.25') / 100;
       const currentEarningsTotal = earnings.reduce((sum, e) => sum + e.annual, 0);
       if ((currentEarningsTotal / 12) <= threshold) {
-        const esiContrib = currentEarningsTotal * rate;
+        const esiContrib = applyRoundOff(currentEarningsTotal * rate);
         employerContributions.push({ name: 'ESI (Employer)', annual: esiContrib, monthly: esiContrib / 12 });
         totalEmployerContrib += esiContrib;
       }
@@ -196,7 +210,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
     if (statutoryDeductions.gratuity) {
       const gratRate = parseFloat(statutorySettings?.config_value?.gratuityProvisionRate || '4.81') / 100;
-      const gratContrib = basic * gratRate;
+      const gratContrib = applyRoundOff(basic * gratRate);
       employerContributions.push({ name: 'Gratuity (Employer)', annual: gratContrib, monthly: gratContrib / 12 });
       totalEmployerContrib += gratContrib;
     }
@@ -233,7 +247,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
     if (statutoryDeductions.esi && monthlyGross <= 21000) {
       const rate = 0.0075;
-      const esiEmp = annualGross * rate;
+      const esiEmp = applyRoundOff(annualGross * rate);
       employeeDeductions.push({ name: 'ESI (Employee)', annual: esiEmp, monthly: esiEmp / 12 });
     }
 
@@ -316,6 +330,15 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 settings[key] = item.config_value;
               });
               setStatutorySettings(settings);
+            }
+
+            const { data: roundOffData } = await supabase
+              .from('operational_config')
+              .select('config_value')
+              .eq('config_key', 'round_off_settings')
+              .maybeSingle();
+            if (roundOffData && roundOffData.config_value) {
+              setGlobalRoundOff((roundOffData.config_value as any).round_off_rule || 'floor');
             }
           } catch (err) {
             console.error('Error fetching statutory settings:', err);
