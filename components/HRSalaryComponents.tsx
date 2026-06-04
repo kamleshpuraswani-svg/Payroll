@@ -69,6 +69,7 @@ interface SalaryComponent {
     category: 'Earnings' | 'Deductions' | 'Benefits' | 'Reimbursements';
     // Additional fields for editing context
     amountOrPercent?: string;
+    minAmount?: string;
     calcMethod?: 'Flat' | 'Percentage' | 'PercentOfCTC' | 'PercentOfGross' | 'Balancing';
     payslipName?: string;
     frequency?: 'One-time' | 'Recurring';
@@ -310,6 +311,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
         initialData?.calcMethod || 'Flat'
     );
     const [amount, setAmount] = useState(initialData?.amountOrPercent || '');
+    const [minAmount, setMinAmount] = useState(initialData?.minAmount || '');
     const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -361,8 +363,9 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             type: natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay',
             calcMethod: natureOfPay === 'Fixed' ? calcMethod : undefined,
             amountOrPercent: natureOfPay === 'Fixed' ? amount : undefined,
+            minAmount: (natureOfPay === 'Fixed' && name.toLowerCase() === 'basic salary' && (calcMethod === 'PercentOfGross' || calcMethod === 'PercentOfCTC')) ? minAmount : undefined,
             calculation: natureOfPay === 'Fixed'
-                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC` : (calcMethod === 'PercentOfGross' ? `${amount}% of Gross` : (calcMethod === 'Balancing' ? 'Balancing Component' : `${amount}% of ${selectedComponents.join(', ')}`))))
+                ? (calcMethod === 'Flat' ? `Flat ₹${amount}` : (calcMethod === 'PercentOfCTC' ? `${amount}% of CTC${(name.toLowerCase() === 'basic salary' && minAmount) ? ` (Min: ₹${minAmount})` : ''}` : (calcMethod === 'PercentOfGross' ? `${amount}% of Gross${(name.toLowerCase() === 'basic salary' && minAmount) ? ` (Min: ₹${minAmount})` : ''}` : (calcMethod === 'Balancing' ? 'Balancing Component' : `${amount}% of ${selectedComponents.join(', ')}`))))
                 : 'Variable',
             taxable: isTaxable ? taxTreatment : 'Fully Exempt',
             considerEPF: isConsiderEPF,
@@ -420,6 +423,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             addHistory('Nature of Pay', initialData.type, natureOfPay === 'Variable' ? 'Variable Pay' : 'Fixed Pay');
             addHistory('Calculation Method', initialData.calcMethod, natureOfPay === 'Fixed' ? calcMethod : 'N/A');
             addHistory('Amount / %', initialData.amountOrPercent, natureOfPay === 'Fixed' ? (amount || 'Not set') : 'N/A');
+            addHistory('Minimum Amount', initialData.minAmount, natureOfPay === 'Fixed' ? (minAmount || 'Not set') : 'N/A');
             addHistory('Taxable Earning', initialData.taxable !== 'Fully Exempt' ? 'Yes' : 'No', isTaxable ? 'Yes' : 'No');
             addHistory('Tax Treatment', initialData.taxable || 'N/A', isTaxable ? taxTreatment : 'Fully Exempt');
             addHistory('Tax Computation', initialData.taxComputation, isTaxable ? taxComputation : 'N/A');
@@ -763,13 +767,42 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                         </div>
                         {calcMethod !== 'Balancing' && (
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} <span className="text-rose-500">*</span></label>
-                                <div className="relative max-w-[200px]">
-                                    <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
-                                    <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
-                                        {calcMethod === 'Flat' ? '₹' : '%'}
+                                {name.toLowerCase() === 'basic salary' && (calcMethod === 'PercentOfGross' || calcMethod === 'PercentOfCTC') ? (
+                                    <div className="space-y-2">
+                                        <div className="flex items-end gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-2">Enter Percentage <span className="text-rose-500">*</span></label>
+                                                <div className="relative max-w-[200px]">
+                                                    <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter Percentage" className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                                                    <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                                        %
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pb-3 text-xs font-bold text-slate-400">OR</div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-2">Minimum Amount <span className="text-rose-500">*</span></label>
+                                                <div className="relative max-w-[200px]">
+                                                    <input type="text" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} placeholder="Enter Minimum Amount" className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                                                    <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                                        ₹
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-slate-450 mt-1 font-medium">Amount which ever is higher will be applicable.</p>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-2">{calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} <span className="text-rose-500">*</span></label>
+                                        <div className="relative max-w-[200px]">
+                                            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={calcMethod === 'Flat' ? 'Enter Amount (Annual)' : 'Enter Percentage'} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                                            <div className="absolute right-0 top-0 h-full px-3 bg-slate-100 border-l border-slate-200 rounded-r-lg flex items-center text-slate-500 font-medium text-sm">
+                                                {calcMethod === 'Flat' ? '₹' : '%'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -2288,6 +2321,7 @@ const HRSalaryComponents: React.FC = () => {
                 status: item.status,
                 category: item.category,
                 amountOrPercent: item.amount_or_percent,
+                minAmount: item.min_amount,
                 calcMethod: item.calc_method,
                 payslipName: item.payslip_name,
                 frequency: item.frequency,
@@ -2572,6 +2606,7 @@ const HRSalaryComponents: React.FC = () => {
             status: data.status ?? true,
             category: activeTab as any,
             amount_or_percent: data.amountOrPercent,
+            min_amount: data.minAmount,
             calc_method: data.calcMethod,
             payslip_name: data.payslipName,
             frequency: data.frequency,

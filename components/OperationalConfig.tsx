@@ -897,7 +897,9 @@ const OperationalConfig: React.FC = () => {
                     <div className="p-6 border-t border-slate-100 bg-white">
                         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h4 className="font-bold text-slate-800 text-lg">Format Configuration</h4>
+                                <h4 className="font-bold text-slate-800 text-lg">
+                                    Payslip Format Configuration <span className="text-red-500">*</span>
+                                </h4>
                                 <p className="text-sm text-slate-500 mt-1">Configure the default naming format for payslip PDFs.</p>
                             </div>
                             
@@ -995,17 +997,6 @@ const OperationalConfig: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    {/* Reset Action */}
-                                    {isNamingEditing && (
-                                        <div className="flex justify-start">
-                                            <button
-                                                onClick={resetNamingToDefault}
-                                                className="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline uppercase tracking-wider"
-                                            >
-                                                Reset to Default Pattern
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -1044,7 +1035,7 @@ const OperationalConfig: React.FC = () => {
                                         <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
                                             <Users size={16} />
                                         </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Daily Configuration Rate</h4>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Daily Configuration Rate <span className="text-red-500">*</span></h4>
                                     </div>
 
                                     <div className="flex flex-wrap gap-6 mb-4">
@@ -1157,7 +1148,7 @@ const OperationalConfig: React.FC = () => {
                                         <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
                                             <Calculator size={16} />
                                         </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor</h4>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor <span className="text-red-500">*</span></h4>
                                     </div>
 
                                     <div className="max-w-xs">
@@ -1256,7 +1247,7 @@ const OperationalConfig: React.FC = () => {
                                         <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
                                             <Users size={16} />
                                         </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Daily Configuration Rate</h4>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Daily Configuration Rate <span className="text-red-500">*</span></h4>
                                     </div>
 
                                     <div className="flex flex-wrap gap-6 mb-4">
@@ -1369,7 +1360,7 @@ const OperationalConfig: React.FC = () => {
                                         <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
                                             <Calculator size={16} />
                                         </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor</h4>
+                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor <span className="text-red-500">*</span></h4>
                                     </div>
 
                                     <div className="max-w-xs">
