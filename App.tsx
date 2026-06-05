@@ -98,6 +98,7 @@ const App: React.FC = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingClaimId, setEditingClaimId] = useState<string | undefined>(undefined);
+  const [isNewClaimRedirect, setIsNewClaimRedirect] = useState<boolean>(false);
 
   // Fetch initial data from Supabase
   useEffect(() => {
@@ -252,8 +253,9 @@ const App: React.FC = () => {
                   <ExpenseManagement 
                     userRole={userRole}
                     onChangeView={setCurrentView} 
-                    onEditClaim={(id) => {
+                    onEditClaim={(id, isRedirect) => {
                       setEditingClaimId(id);
+                      setIsNewClaimRedirect(!!isRedirect);
                       setCurrentView(ViewState.HR_ADD_EXPENSE);
                     }}
                   />
@@ -261,9 +263,11 @@ const App: React.FC = () => {
                 {currentView === ViewState.HR_ADD_EXPENSE && (
                   <AddExpenseScreen
                     editId={editingClaimId}
+                    isNewClaimRedirect={isNewClaimRedirect}
                     hideDateRange={true}
                     onClose={() => {
                       setEditingClaimId(undefined);
+                      setIsNewClaimRedirect(false);
                       setCurrentView(ViewState.HR_EXPENSES);
                     }}
                     employees={employees
@@ -283,6 +287,7 @@ const App: React.FC = () => {
                     ]}
                     onSuccess={(msg) => {
                       setEditingClaimId(undefined);
+                      setIsNewClaimRedirect(false);
                       setCurrentView(ViewState.HR_EXPENSES);
                     }}
                   />

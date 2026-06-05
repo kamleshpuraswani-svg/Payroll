@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, X, Calendar, CheckCircle, Clock, AlertCircle, Filter, ChevronDown } from 'lucide-react';
 import { Dashboard } from './reimbursements/Dashboard';
 import { AddExpenseScreen } from './AddExpenseScreen';
+import { AddExpensePanel } from './ExpenseManagement';
 import { ReimbursementCategory, ClaimStatus, WalletMetric, BudgetCategory } from '../types';
 import { supabase } from '../services/supabaseClient';
 
@@ -345,6 +346,8 @@ export const ReimbursementModule: React.FC = () => {
     const [view, setView] = useState<'DASHBOARD' | 'WIZARD' | 'LOANS'>('DASHBOARD');
     const [editingClaim, setEditingClaim] = useState<ClaimReport | null>(null);
     const [isReadOnly, setIsReadOnly] = useState(false);
+    const [showAddExpensePanel, setShowAddExpensePanel] = useState(false);
+    const [isNewClaimRedirect, setIsNewClaimRedirect] = useState(false);
 
     // Persistence logic
     const [claims, setClaims] = useState<ClaimReport[]>(FALLBACK_CLAIMS);
@@ -479,7 +482,7 @@ export const ReimbursementModule: React.FC = () => {
                     budgets={budgets}
                     claims={claims}
                     loans={loans}
-                    onNewClaim={() => { setEditingClaim(null); setIsReadOnly(false); setView('WIZARD'); }}
+                    onNewClaim={() => { setShowAddExpensePanel(true); }}
                     onEditClaim={(c: any) => { setEditingClaim(c); setIsReadOnly(false); setView('WIZARD'); }}
                     onViewClaim={(c: any) => { setEditingClaim(c); setIsReadOnly(true); setView('WIZARD'); }}
                     onViewLoans={() => setView('LOANS')}
@@ -491,9 +494,37 @@ export const ReimbursementModule: React.FC = () => {
                     employees={EMPLOYEE_SELF}
                     categories={EXPENSE_CATEGORIES}
                     editId={editingClaim?.id}
+                    isNewClaimRedirect={isNewClaimRedirect}
                     hideTopFields={true}
-                    onClose={() => { setView('DASHBOARD'); setEditingClaim(null); }}
-                    onSuccess={() => { fetchClaims(); setView('DASHBOARD'); setEditingClaim(null); }}
+                    onClose={() => { 
+                        setView('DASHBOARD'); 
+                        setEditingClaim(null); 
+                        setIsNewClaimRedirect(false); 
+                    }}
+                    onSuccess={() => { 
+                        fetchClaims(); 
+                        setView('DASHBOARD'); 
+                        setEditingClaim(null); 
+                        setIsNewClaimRedirect(false); 
+                    }}
+                />
+            )}
+
+            {showAddExpensePanel && (
+                <AddExpensePanel
+                    onClose={() => setShowAddExpensePanel(false)}
+                    onSuccess={(msg, createdId) => {
+                        fetchClaims();
+                        if (createdId) {
+                            setEditingClaim({ id: createdId } as any);
+                            setIsReadOnly(false);
+                            setIsNewClaimRedirect(true);
+                            setView('WIZARD');
+                        }
+                    }}
+                    employees={EMPLOYEE_SELF}
+                    categories={EXPENSE_CATEGORIES}
+                    hideEmployeeSelect={true}
                 />
             )}
         </div>

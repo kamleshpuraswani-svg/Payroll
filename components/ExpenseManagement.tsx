@@ -33,6 +33,8 @@ import {
     Plus,
     ChevronRight as ChevronRightIcon,
     AlertCircle as AlertIcon,
+    Briefcase,
+    Upload,
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { ViewState } from '../types';
@@ -524,10 +526,276 @@ const DownloadClaimModal: React.FC<{
 };
 
 
+export const AddExpensePanel: React.FC<{
+    onClose: () => void;
+    onSuccess: (message: string, createdId?: string) => void;
+    employees: any[];
+    categories: any[];
+    hideEmployeeSelect?: boolean;
+}> = ({ onClose, onSuccess, employees, categories, hideEmployeeSelect = false }) => {
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<any>(null);
+    const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+    const [merchant, setMerchant] = useState('');
+    const [project, setProject] = useState('');
+    const [amount, setAmount] = useState('');
+    const [reason, setReason] = useState('');
+    const [receipt, setReceipt] = useState<File | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (employees.length === 1) {
+            setSelectedEmployeeId(employees[0].id);
+        }
+    }, [employees]);
+
+    const handleSubmit = async () => {
+        if (!selectedEmployeeId || !amount || !reason || !merchant || !selectedCategory) return;
+        
+        setIsSubmitting(true);
+        try {
+            const employee = employees.find(e => e.id === selectedEmployeeId);
+            const employeeName = employee?.name || 'Employee';
+            const totalAmount = parseFloat(amount);
+
+            // Generate claim ID
+            const generatedId = `EXP-${Date.now()}`;
+            
+            // Items list: contains one item matching the fields
+            const items = [{
+                id: Date.now(),
+                merchant,
+                project,
+                amount: totalAmount,
+                reason,
+                receiptName: receipt ? receipt.name : null,
+                category: selectedCategory?.name || '',
+                expenseDate: expenseDate
+            }];
+
+            const { error } = await supabase
+                .from('reimbursement_claims')
+                .insert([{
+                    id: generatedId,
+                    employee_id: selectedEmployeeId,
+                    category: selectedCategory?.name || '',
+                    total_amount: totalAmount,
+                    status: 'pending',
+                    submitted_at: new Date().toISOString(),
+                    items: items,
+                    title: `Claim by ${employeeName}`
+                }]);
+
+            if (error) throw error;
+            onSuccess('Claim submitted successfully', generatedId);
+            onClose();
+        } catch (error: any) {
+            console.error('Error submitting expense:', error);
+            alert('Failed to submit expense: ' + (error.message || 'Unknown error'));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <>
+            {/* Backdrop */}
+            <div className="fixed inset-0 z-[115] bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-300" onClick={onClose} />
+            
+            {/* Panel */}
+            <div className="fixed inset-y-0 right-0 w-[440px] z-[120] bg-white border-l border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                {/* Header */}
+                <div className="h-20 px-8 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg">
+                            {hideEmployeeSelect ? 'Add New Claim' : 'Add Expense for Employee'}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Enter details to submit a new claim</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-all border border-slate-100">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {/* Form */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-white">
+                    {/* Employee Selection */}
+                    {!hideEmployeeSelect && (
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Employee <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <select
+                                    value={selectedEmployeeId}
+                                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold appearance-none cursor-pointer"
+                                >
+                                    <option value="">Choose an employee...</option>
+                                    {employees.map(emp => (
+                                        <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Expense Category */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense Category <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <select
+                                value={selectedCategory?.id || ""}
+                                onChange={(e) => {
+                                    const catId = e.target.value;
+                                    const cat = categories.find(c => String(c.id) === catId);
+                                    setSelectedCategory(cat || null);
+                                }}
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold appearance-none cursor-pointer"
+                            >
+                                <option value="">Select category...</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                    </div>
+
+                    {/* Expense Date */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense Date <span className="text-rose-500">*</span></label>
+                        <div className="relative group">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                            <input
+                                type="date"
+                                value={expenseDate}
+                                onChange={(e) => setExpenseDate(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Merchant / Payee */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Merchant / Payee <span className="text-rose-500">*</span></label>
+                        <div className="relative group">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                            <input
+                                type="text"
+                                placeholder="e.g. Uber, Amazon, etc."
+                                value={merchant}
+                                onChange={(e) => setMerchant(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Project / Client */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Project / Client</label>
+                        <div className="relative group">
+                            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-500 transition-colors" size={16} />
+                            <input
+                                type="text"
+                                placeholder="e.g. Project X, Client Y"
+                                value={project}
+                                onChange={(e) => setProject(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Amount <span className="text-rose-500">*</span></label>
+                        <div className="relative group">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</div>
+                            <input
+                                type="number"
+                                placeholder="0.00"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                className={`w-full pl-8 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-bold text-slate-700 ${selectedCategory?.receipt_threshold && parseFloat(amount) > selectedCategory.receipt_threshold ? 'bg-amber-50/30 border-amber-200' : 'bg-slate-50 border-slate-100'}`}
+                            />
+                        </div>
+                        {selectedCategory?.receipt_threshold > 0 && parseFloat(amount) > selectedCategory.receipt_threshold && (
+                            <p className="text-[10px] text-amber-600 mt-1.5 font-bold flex items-center gap-1">
+                                <FileText size={12} /> Please upload a receipt/bill for expenses over ₹{selectedCategory.receipt_threshold.toLocaleString()}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Reason / Description */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Reason / Description <span className="text-rose-500">*</span></label>
+                        <textarea
+                            rows={3}
+                            placeholder="Business purpose of this expense..."
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-500/10 focus:border-purple-500 transition-all resize-none font-bold"
+                        />
+                    </div>
+
+                    {/* Bill / Receipt */}
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                            Bill / Receipt{selectedCategory?.receipt_threshold > 0 && parseFloat(amount) > selectedCategory.receipt_threshold && <span className="text-rose-500"> *</span>}
+                        </label>
+                        <div className="relative group">
+                            <input
+                                type="file"
+                                id="panel-receipt-upload"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files ? e.target.files[0] : null;
+                                    setReceipt(file);
+                                }}
+                            />
+                            <label
+                                htmlFor="panel-receipt-upload"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-purple-400 hover:text-purple-500 hover:bg-white transition-all cursor-pointer uppercase tracking-widest"
+                            >
+                                {receipt ? (
+                                    <>
+                                        <Paperclip size={14} /> {receipt.name.length > 20 ? receipt.name.substring(0, 17) + '...' : receipt.name}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload size={14} /> Upload Receipt
+                                    </>
+                                )}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center gap-3 shrink-0">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !selectedEmployeeId || !amount || !reason || !merchant || !selectedCategory}
+                        className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+};
+
+
 // --- Main Container ---
 const ExpenseManagement: React.FC<{ 
     onChangeView: (view: ViewState) => void,
-    onEditClaim?: (id: string) => void,
+    onEditClaim?: (id: string, isRedirect?: boolean) => void,
     userRole?: string
 }> = ({ onChangeView, onEditClaim, userRole = 'HR_MANAGER' }) => {
     const [employees, setEmployees] = useState<any[]>([]);
@@ -539,6 +807,7 @@ const ExpenseManagement: React.FC<{
     const [viewClaim, setViewClaim] = useState<ExpenseClaim | null>(null);
     const [approveClaim, setApproveClaim] = useState<ExpenseClaim | null>(null);
     const [downloadClaim, setDownloadClaim] = useState<ExpenseClaim | null>(null);
+    const [showAddExpensePanel, setShowAddExpensePanel] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -550,7 +819,7 @@ const ExpenseManagement: React.FC<{
             // Fetch employees (all, to ensure past/transitionary claims match)
             const { data: empData } = await supabase
                 .from('employees')
-                .select('id, name, eid, avatar_url, department, company_name')
+                .select('id, name, eid, avatar_url, department, company_name, status')
                 .order('name');
             if (empData) setEmployees(empData);
 
@@ -1119,7 +1388,13 @@ const ExpenseManagement: React.FC<{
                                     )}
                                 </div>
                                 <button
-                                    onClick={() => onChangeView(ViewState.HR_ADD_EXPENSE)}
+                                    onClick={() => {
+                                        if (userRole === 'HR_MANAGER') {
+                                            setShowAddExpensePanel(true);
+                                        } else {
+                                            onChangeView(ViewState.HR_ADD_EXPENSE);
+                                        }
+                                    }}
                                     className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all transform active:scale-95 shrink-0 ml-auto flex items-center justify-center"
                                 >
                                     Add Expense for Employee
@@ -1148,7 +1423,13 @@ const ExpenseManagement: React.FC<{
                                         Status <ChevronDown size={14} />
                                     </button>
                                     <button
-                                        onClick={() => onChangeView(ViewState.HR_ADD_EXPENSE)}
+                                        onClick={() => {
+                                            if (userRole === 'HR_MANAGER') {
+                                                setShowAddExpensePanel(true);
+                                            } else {
+                                                onChangeView(ViewState.HR_ADD_EXPENSE);
+                                            }
+                                        }}
                                         className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 font-bold flex items-center gap-2 shadow-md shadow-purple-100 transition-all ml-auto"
                                     >
                                         Add Expense for Employee
@@ -1350,7 +1631,28 @@ const ExpenseManagement: React.FC<{
                 />
             )}
 
-            {/* Add Expense Screen removed - now controlled via App routing */}
+            {/* Add Expense Panel for HR Manager */}
+            {showAddExpensePanel && (
+                <AddExpensePanel
+                    onClose={() => setShowAddExpensePanel(false)}
+                    onSuccess={(msg, createdId) => {
+                        setShowSuccessToast({ message: msg, type: 'success' });
+                        setTimeout(() => setShowSuccessToast(null), 3000);
+                        fetchData();
+                        if (createdId && onEditClaim) {
+                            onEditClaim(createdId, true);
+                        }
+                    }}
+                    employees={employees
+                      .filter(e => e.status === 'Active')
+                      .map(e => ({ 
+                        ...e, 
+                        name: e.name || `${e.first_name || ''} ${e.last_name || ''}`.trim() || 'No Name', 
+                        eid: e.eid || e.employee_id || 'N/A' 
+                      }))}
+                    categories={categories}
+                />
+            )}
 
         </div>
     );

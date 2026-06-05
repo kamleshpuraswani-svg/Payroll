@@ -45,9 +45,10 @@ export interface AddExpenseScreenProps {
     editId?: string;
     hideTopFields?: boolean;
     hideDateRange?: boolean;
+    isNewClaimRedirect?: boolean;
 }
 
-export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId, hideTopFields = false, hideDateRange = false }) => {
+export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onSuccess, employees, categories, editId, hideTopFields = false, hideDateRange = false, isNewClaimRedirect = false }) => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [expenseItems, setExpenseItems] = useState<any[]>([]);
@@ -279,7 +280,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     .eq('id', editId);
 
                 if (error) throw error;
-                if (onSuccess) onSuccess('Claim updated successfully');
+                if (onSuccess) onSuccess(isNewClaimRedirect ? 'Claim submitted successfully' : 'Claim updated successfully');
             }
             onClose();
         } catch (error: any) {
@@ -298,7 +299,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors border border-slate-200">
                         <ArrowLeft size={18} />
                     </button>
-                    <h3 className="font-bold text-slate-800 text-xl">{editId ? 'Edit Claim' : 'Add New Claim'}</h3>
+                    <h3 className="font-bold text-slate-800 text-xl">{editId && !isNewClaimRedirect ? 'Edit Claim' : 'Add New Claim'}</h3>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
@@ -312,7 +313,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                         disabled={isSubmitting || (!hideTopFields && !selectedEmployeeId) || expenseItems.length === 0}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
                     >
-                        {!(editId && claimStatus.toLowerCase() === 'pending') && <Send size={16} />} {isSubmitting ? 'Submitting...' : (editId ? 'Update' : 'Submit')}
+                        {!(editId && claimStatus.toLowerCase() === 'pending') && <Send size={16} />} {isSubmitting ? 'Submitting...' : (editId && !isNewClaimRedirect ? 'Update' : 'Submit')}
                     </button>
                 </div>
             </div>
@@ -614,6 +615,26 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
 
                         {/* RSP Form */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                            {/* Employee (Locked) */}
+                            {!hideTopFields && (
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Employee</label>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedEmployeeId}
+                                            disabled={true}
+                                            className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed font-bold appearance-none"
+                                        >
+                                            <option value="">Choose an employee...</option>
+                                            {employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name} ({emp.eid})</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Expense Category */}
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Expense Category <span className="text-rose-500">*</span></label>
@@ -772,7 +793,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ onClose, onS
                                 disabled={!amount || !reason || !merchant || !selectedCategory}
                                 className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                                {editingItemId !== null ? 'Update' : 'Add'}
+                                {editingItemId !== null ? 'Update' : 'Submit'}
                             </button>
                         </div>
                     </div>
