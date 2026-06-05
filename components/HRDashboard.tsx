@@ -732,6 +732,10 @@ const HRDashboard: React.FC = () => {
     const [isPendingPanelOpen, setIsPendingPanelOpen] = useState(false);
     const [activePendingFilter, setActivePendingFilter] = useState<'All' | 'On Hold' | 'Draft'>('All');
 
+    // Payroll KPIs State
+    const [payrollKpiTimeRange, setPayrollKpiTimeRange] = useState('This Month');
+    const [isPayrollKpiFilterPopoverOpen, setIsPayrollKpiFilterPopoverOpen] = useState(false);
+
     // Mock Company for RunPayrollModal
     const currentCompany: Company = {
         id: 'TF-1024',
@@ -756,6 +760,77 @@ const HRDashboard: React.FC = () => {
     const filteredPendingEmployees = activePendingFilter === 'All' 
         ? pendingEmployees 
         : pendingEmployees.filter(emp => emp.status === activePendingFilter);
+
+    const getPayrollKpiData = useMemo(() => {
+        let eligible = '450';
+        let processed = '400';
+        let pending = '50';
+        let cost = '₹ 1.85 Cr';
+        let payable = '₹ 1.42 Cr';
+        let nextCycle = '30 Nov';
+
+        switch (payrollKpiTimeRange) {
+            case 'Last Month':
+                eligible = '448';
+                processed = '448';
+                pending = '0';
+                cost = '₹ 1.81 Cr';
+                payable = '₹ 1.39 Cr';
+                nextCycle = '31 Oct';
+                break;
+            case 'This Quarter':
+                eligible = '452';
+                processed = '400';
+                pending = '52';
+                cost = '₹ 5.49 Cr';
+                payable = '₹ 4.23 Cr';
+                nextCycle = '30 Nov';
+                break;
+            case 'Last Quarter':
+                eligible = '435';
+                processed = '435';
+                pending = '0';
+                cost = '₹ 5.31 Cr';
+                payable = '₹ 4.08 Cr';
+                nextCycle = '30 Sep';
+                break;
+            case 'This Year':
+                eligible = '452';
+                processed = '400';
+                pending = '52';
+                cost = '₹ 14.22 Cr';
+                payable = '₹ 10.95 Cr';
+                nextCycle = '30 Nov';
+                break;
+            case 'Last Year':
+                eligible = '410';
+                processed = '410';
+                pending = '0';
+                cost = '₹ 18.25 Cr';
+                payable = '₹ 14.05 Cr';
+                nextCycle = '31 Mar';
+                break;
+            case 'Custom':
+                eligible = '440';
+                processed = '430';
+                pending = '10';
+                cost = '₹ 1.80 Cr';
+                payable = '₹ 1.38 Cr';
+                nextCycle = '31 Dec';
+                break;
+            default:
+                break;
+        }
+
+        return [
+            { label: 'Total Eligible', val: eligible, sub: '', icon: <Users size={16} />, color: 'bg-blue-50/70 text-blue-700' },
+            { label: 'Processed', val: processed, sub: '', icon: <CheckCircle size={16} />, color: 'bg-emerald-50/70 text-emerald-700' },
+            { label: 'Pending/Hold', val: pending, sub: 'On Hold', icon: <Clock size={16} />, color: 'bg-amber-50/70 text-amber-700', showEye: true, onAction: () => setIsPendingPanelOpen(true) },
+            { label: 'Total Payroll Cost', val: cost, sub: 'Gross Salary', icon: <DollarSign size={16} />, color: 'bg-purple-50/70 text-purple-700' },
+            { label: 'Net Payable', val: payable, sub: '', icon: <Briefcase size={16} />, color: 'bg-indigo-50/70 text-indigo-700' },
+            { label: 'Next Payroll Cycle', val: nextCycle, sub: '', icon: <Calendar size={16} />, color: 'bg-rose-50/70 text-rose-700' },
+        ];
+    }, [payrollKpiTimeRange]);
 
     // Function to get data based on range
     const getGraphData = useMemo(() => {
@@ -945,38 +1020,114 @@ const HRDashboard: React.FC = () => {
                     <FileText className="text-purple-600" size={20} /> Payroll & Analytics Overview
                 </h2>
 
-                {/* 1. Payroll KPIs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                    {[
-                        { label: 'Total Eligible', val: '450', sub: 'Current Month', icon: <Users size={16} />, color: 'bg-blue-50 text-blue-700' },
-                        { label: 'Processed', val: '400', sub: 'Current Month', icon: <CheckCircle size={16} />, color: 'bg-emerald-50 text-emerald-700' },
-                        { label: 'Pending', val: '50', sub: 'On Hold', icon: <Clock size={16} />, color: 'bg-amber-50 text-amber-700', showEye: true, onAction: () => setIsPendingPanelOpen(true) },
-                        { label: 'Total Payroll Cost', val: '₹ 1.85 Cr', sub: 'Gross Salary', icon: <DollarSign size={16} />, color: 'bg-purple-50 text-purple-700' },
-                        { label: 'Net Payable', val: '₹ 1.42 Cr', sub: 'After Deductions', icon: <Briefcase size={16} />, color: 'bg-indigo-50 text-indigo-700' },
-                        { label: 'Next Pay Cycle', val: '30 Nov', sub: 'Upcoming', icon: <Calendar size={16} />, color: 'bg-rose-50 text-rose-700' },
-                    ].map((kpi, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-semibold text-slate-500 uppercase">{kpi.label}</span>
-                                <div className={`p-1.5 rounded-lg flex items-center gap-2 ${kpi.color}`}>
-                                    {kpi.icon}
-                                    {kpi.showEye && (
-                                        <button
-                                            onClick={kpi.onAction}
-                                            className="hover:opacity-70 transition-opacity cursor-pointer"
-                                            title="View details"
-                                        >
-                                            <Eye size={16} />
-                                        </button>
-                                    )}
-                                </div>
+                {/* 1. Payroll KPIs Section */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+                    {/* Header & Filters */}
+                    <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                                <FileText size={20} />
                             </div>
                             <div>
-                                <div className="text-xl font-bold text-slate-800">{kpi.val}</div>
-                                <div className="text-xs text-slate-400 mt-0.5">{kpi.sub}</div>
+                                <h3 className="font-bold text-slate-800 text-lg">Payroll Overview</h3>
+                                <p className="text-xs text-slate-500">Summary of payroll metrics and costs</p>
                             </div>
                         </div>
-                    ))}
+
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+                            {/* Filter Popover */}
+                            <div className="relative w-full sm:w-auto">
+                                <button
+                                    onClick={() => setIsPayrollKpiFilterPopoverOpen(!isPayrollKpiFilterPopoverOpen)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm w-full sm:w-auto justify-between sm:justify-start"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Filter size={16} className="text-purple-600" />
+                                        <span>{payrollKpiTimeRange}</span>
+                                    </div>
+                                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isPayrollKpiFilterPopoverOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isPayrollKpiFilterPopoverOpen && (
+                                    <>
+                                        {/* Overlay to close popover */}
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setIsPayrollKpiFilterPopoverOpen(false)}
+                                        ></div>
+
+                                        <div className="absolute right-0 mt-2 p-4 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 w-[320px] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                                            <p className="text-xs font-bold text-slate-400 uppercase mb-3">Date Range</p>
+
+                                            <div className="grid grid-cols-3 gap-2 mb-4">
+                                                {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
+                                                    <button
+                                                        key={label}
+                                                        onClick={() => {
+                                                            setPayrollKpiTimeRange(label);
+                                                            setIsPayrollKpiFilterPopoverOpen(false);
+                                                        }}
+                                                        className={`px-2 py-2 text-[11px] font-bold rounded-lg transition-all border ${payrollKpiTimeRange === label
+                                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                                                            }`}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <div className="pt-3 border-t border-slate-100">
+                                                <div className="relative">
+                                                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                    <input
+                                                        type="month"
+                                                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                                                        placeholder="Custom Month"
+                                                        onChange={(e) => {
+                                                            if (e.target.value) {
+                                                                setPayrollKpiTimeRange('Custom');
+                                                                setIsPayrollKpiFilterPopoverOpen(false);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <p className="absolute left-9 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                                                        {payrollKpiTimeRange === 'Custom' ? 'Selected' : 'Custom Month'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                        {getPayrollKpiData.map((kpi, idx) => (
+                            <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase">{kpi.label}</span>
+                                    <div className={`p-1.5 rounded-lg flex items-center gap-2 ${kpi.color}`}>
+                                        {kpi.icon}
+                                        {kpi.showEye && (
+                                            <button
+                                                onClick={kpi.onAction}
+                                                className="hover:opacity-70 transition-opacity cursor-pointer"
+                                                title="View details"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-xl font-bold text-slate-800">{kpi.val}</div>
+                                    {kpi.sub && <div className="text-xs text-slate-400 mt-0.5">{kpi.sub}</div>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* TDS Analytics Section */}

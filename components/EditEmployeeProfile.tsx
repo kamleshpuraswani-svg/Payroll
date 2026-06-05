@@ -22,7 +22,8 @@ import {
    Calendar,
    Clock,
    Info,
-   Plus
+   Plus,
+   Pencil
 } from 'lucide-react';
 
 const EFFECTIVE_MONTHS = (() => {
@@ -87,12 +88,16 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [structureComponents, setStructureComponents] = useState<{ earnings: any[], deductions: any[] }>({ earnings: [], deductions: [] });
     const [statutorySettings, setStatutorySettings] = useState<any>(null);
     const [globalRoundOff, setGlobalRoundOff] = useState<'floor' | 'ceiling' | 'nearest_full' | 'nearest_half'>('floor');
+    const [salaryInputBasis, setSalaryInputBasis] = useState<'CTC' | 'Gross'>('CTC');
 
    const [salaryStructures, setSalaryStructures] = useState<{ id: string, name: string, departments?: string[], designations?: string[], employees?: string[] }[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [employeeRawData, setEmployeeRawData] = useState<any>(null);
 
    const [componentOverrides, setComponentOverrides] = useState<Record<string, number>>({});
+   const [isSalaryStructureEditable, setIsSalaryStructureEditable] = useState(false);
+   const [salaryStructure, setSalaryStructure] = useState<any>(null);
+   const [hasInitializedSalaryStructure, setHasInitializedSalaryStructure] = useState(false);
    const [additionalComponents, setAdditionalComponents] = useState<{ id: string; name: string; type: 'Earning' | 'Deduction'; calculation: string; amount: number; effectiveFrom: string; }[]>([]);
    const [showAddExtraCompModal, setShowAddExtraCompModal] = useState(false);
    const [masterSalaryComps, setMasterSalaryComps] = useState<any[]>([]);
@@ -123,6 +128,14 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          setStructureComponents({ earnings: [], deductions: [] });
       }
    }, [selectedStructureId]);
+
+   useEffect(() => {
+      if (structureComponents.earnings.length > 0 && !hasInitializedSalaryStructure && ctc > 0) {
+         const initialSalary = calculateSalary(ctc);
+         setSalaryStructure(initialSalary);
+         setHasInitializedSalaryStructure(true);
+      }
+   }, [structureComponents, ctc, hasInitializedSalaryStructure]);
 
    const fetchStatutorySettings = async () => {
       try {
@@ -298,6 +311,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    if (configData.config_value.pran_no) {
                       setPranNumber(configData.config_value.pran_no);
                    }
+                   if (configData.config_value.salary_input_basis) {
+                      setSalaryInputBasis(configData.config_value.salary_input_basis);
+                   }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
                 }
@@ -374,7 +390,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    };
 
    // Dynamic Salary Calculation
-    const calculateSalary = (annualCtc: number) => {
+    function calculateSalary(annualCtc: number) {
        // Removed early return !annualCtc to allow dynamic preview of structure rows
 
       const earnings: any[] = [];
@@ -542,23 +558,47 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          basic,
          special: specialVal
       };
-   };
+   }
    const salary = calculateSalary(ctc);
+   const activeSalary = salaryStructure || salary;
+
+   const findCtcForGross = (targetGross: number): number => {
+      if (!targetGross || targetGross <= 0) return 0;
+      let low = targetGross;
+      let high = targetGross * 2;
+      let tolerance = 0.5;
+      let iterations = 0;
+      
+      while (low < high && iterations < 100) {
+         let mid = (low + high) / 2;
+         let computed = calculateSalary(mid);
+         if (Math.abs(computed.annualGross - targetGross) < tolerance) {
+            return Math.round(mid);
+         }
+         if (computed.annualGross > targetGross) {
+            high = mid;
+         } else {
+            low = mid;
+         }
+         iterations++;
+      }
+      return Math.round((low + high) / 2);
+   };
 
    const calcExtraCompAmount = (calculation: string): number => {
       const calc = calculation || '';
       if (calc.includes('% of CTC')) return ctc * (parseFloat(calc) / 100);
-      if (calc.includes('% of Basic')) return salary.basic * (parseFloat(calc) / 100);
-      if (calc.includes('% of Gross')) return salary.annualGross * (parseFloat(calc) / 100);
+      if (calc.includes('% of Basic')) return activeSalary.basic * (parseFloat(calc) / 100);
+      if (calc.includes('% of Gross')) return activeSalary.annualGross * (parseFloat(calc) / 100);
       if (calc.includes('Fixed ₹') || calc.includes('Flat ₹')) return parseFloat(calc.replace(/[^\d.]/g, '')) * 12;
       return 0;
    };
 
-   const totalDeductionsAnnual = salary.employeeDeductions.reduce((sum, d) => sum + d.annual, 0);
-   const totalDeductionsMonthly = salary.employeeDeductions.reduce((sum, d) => sum + d.monthly, 0);
+   const totalDeductionsAnnual = activeSalary.employeeDeductions.reduce((sum, d) => sum + d.annual, 0);
+   const totalDeductionsMonthly = activeSalary.employeeDeductions.reduce((sum, d) => sum + d.monthly, 0);
    const additionalEarningsMonthly = additionalComponents.filter(c => c.type === 'Earning').reduce((sum, c) => sum + c.amount / 12, 0);
    const additionalDeductionsMonthly = additionalComponents.filter(c => c.type === 'Deduction').reduce((sum, c) => sum + c.amount / 12, 0);
-   const monthlyTakeHome = salary.monthlyGross + additionalEarningsMonthly - totalDeductionsMonthly - additionalDeductionsMonthly;
+   const monthlyTakeHome = activeSalary.monthlyGross + additionalEarningsMonthly - totalDeductionsMonthly - additionalDeductionsMonthly;
 
    const handleSave = async () => {
       // Check if critical fields changed
@@ -604,7 +644,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             aadhaar_no: aadhaarNumber,
             uan_no: uanNumber,
             ctc: ctc.toString(),
-            annual_gross: (manualAnnualGross !== null ? manualAnnualGross : salary.annualGross).toString(),
+            annual_gross: (manualAnnualGross !== null ? manualAnnualGross : activeSalary.annualGross).toString(),
             tax_regime: regime,
             salary_structure_id: selectedStructureId || null,
             effective_date: effectiveFrom || null,
@@ -629,7 +669,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   arrears_payout_month: arrearsPayoutDate,
                   appraisal_month: appraisalMonth,
                   pf_no: pfNumber,
-                  pran_no: pranNumber
+                  pran_no: pranNumber,
+                  salary_input_basis: salaryInputBasis
                },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
@@ -793,20 +834,32 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            )}
                         </div>
 
-                        <div>
+                        <div className="hidden">
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual Gross (₹)</label>
                            <div className="relative">
                               <input
                                  type="number"
-                                 value={manualAnnualGross !== null ? manualAnnualGross : Math.round(salary.annualGross)}
-                                 disabled={isReadOnly}
-                                 onChange={(e) => setManualAnnualGross(parseInt(e.target.value) || 0)}
+                                 value={manualAnnualGross !== null ? manualAnnualGross : Math.round(activeSalary.annualGross)}
+                                 disabled={isReadOnly || salaryInputBasis === 'CTC'}
+                                 onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 0;
+                                    setManualAnnualGross(val);
+                                    if (salaryInputBasis === 'Gross') {
+                                       const computedCtc = findCtcForGross(val);
+                                       setCtc(computedCtc);
+                                    }
+                                 }}
                                  placeholder="Auto-calculated from CTC"
-                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'text-slate-500 bg-slate-50 border-slate-200 cursor-not-allowed' : 'text-slate-800 bg-white border-slate-200 hover:border-slate-300'}`}
+                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${
+                                    isReadOnly || salaryInputBasis === 'CTC'
+                                       ? 'bg-slate-50 text-slate-500 border-slate-200 cursor-not-allowed'
+                                       : 'text-slate-800 bg-white border-slate-200 hover:border-slate-300'
+                                 }`}
                               />
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
                            </div>
-                           {!isReadOnly && <p className="text-[10px] text-slate-400 mt-1">Auto-calculated: ₹{Math.round(salary.annualGross).toLocaleString('en-IN')}</p>}
+                           {salaryInputBasis === 'CTC' && !isReadOnly && <p className="text-[10px] text-slate-400 mt-1">Auto-calculated: ₹{Math.round(activeSalary.annualGross).toLocaleString('en-IN')}</p>}
+                           {salaryInputBasis === 'Gross' && !isReadOnly && <p className="text-[10px] text-slate-400 mt-1">Auto-calculated CTC: ₹{ctc.toLocaleString('en-IN')}</p>}
                         </div>
 
                         <div id="effective-from-field-main">
@@ -830,15 +883,72 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      </div>
 
                      <div className="space-y-6">
+                        <div className="hidden">
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Enter salary as</label>
+                           <div className="flex items-center gap-6 mt-2">
+                              {['CTC', 'Gross'].map((opt) => (
+                                 <label key={opt} className={`flex items-center gap-2 cursor-pointer group ${isReadOnly ? 'pointer-events-none opacity-60' : ''}`}>
+                                    <div className="relative flex items-center justify-center">
+                                       <input
+                                          type="radio"
+                                          name="salaryInputBasis"
+                                          value={opt}
+                                          disabled={isReadOnly}
+                                          checked={salaryInputBasis === opt}
+                                          onChange={() => {
+                                             if (!isReadOnly) {
+                                                setSalaryInputBasis(opt as 'CTC' | 'Gross');
+                                                if (opt === 'Gross') {
+                                                   const currentGross = manualAnnualGross !== null ? manualAnnualGross : Math.round(salary.annualGross);
+                                                   setManualAnnualGross(currentGross);
+                                                   const computedCtc = findCtcForGross(currentGross);
+                                                   setCtc(computedCtc);
+                                                } else {
+                                                   setManualAnnualGross(null);
+                                                }
+                                             }
+                                          }}
+                                          className="sr-only"
+                                       />
+                                       <div className={`w-4 h-4 rounded-full border transition-all flex items-center justify-center ${
+                                          salaryInputBasis === opt
+                                             ? 'border-indigo-600 bg-white'
+                                             : 'border-slate-300 group-hover:border-slate-400 bg-white'
+                                       }`}>
+                                          {salaryInputBasis === opt && (
+                                             <div className="w-2 h-2 bg-indigo-600 rounded-full" />
+                                          )}
+                                       </div>
+                                    </div>
+                                    <span className={`text-sm transition-colors ${
+                                       salaryInputBasis === opt ? 'text-slate-900 font-medium' : 'text-slate-500 group-hover:text-slate-700'
+                                    }`}>{opt}</span>
+                                 </label>
+                              ))}
+                           </div>
+                           <p className="text-[10px] text-slate-400 mt-2 italic">
+                              {salaryInputBasis === 'CTC'
+                                 ? 'Gross will be auto-calculated after deducting employer statutory costs'
+                                 : 'CTC will be auto-calculated by adding employer statutory costs'}
+                           </p>
+                        </div>
+
                         <div>
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹) {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
                               <input
                                  type="number"
                                  value={ctc || ''}
-                                 disabled={isReadOnly}
-                                 onChange={(e) => setCtc(parseInt(e.target.value) || 0)}
-                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`}
+                                 disabled={isReadOnly || salaryInputBasis === 'Gross'}
+                                 onChange={(e) => {
+                                    setCtc(parseInt(e.target.value) || 0);
+                                    setManualAnnualGross(null);
+                                 }}
+                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${
+                                    isReadOnly || salaryInputBasis === 'Gross'
+                                       ? 'bg-slate-50 text-slate-500 border-slate-200 cursor-not-allowed'
+                                       : 'text-slate-800 bg-white border-slate-200 hover:border-slate-300'
+                                 }`}
                               />
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
                            </div>
@@ -1063,6 +1173,27 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <h3 className="font-bold flex items-center gap-2">
                         <Calculator size={18} className="text-emerald-400" /> Salary Structure
                      </h3>
+                     {!isReadOnly && (
+                        <div className="flex items-center gap-2">
+                           <button
+                              onClick={() => {
+                                 const result = calculateSalary(ctc);
+                                 setSalaryStructure(result);
+                                 setComponentOverrides({});
+                              }}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition-all shadow-sm"
+                           >
+                              Calculate
+                           </button>
+                           <button
+                              onClick={() => setIsSalaryStructureEditable(!isSalaryStructureEditable)}
+                              className={`p-1.5 rounded hover:bg-slate-700 transition-colors ${isSalaryStructureEditable ? 'text-emerald-400' : 'text-slate-300'}`}
+                              title="Edit Component Values"
+                           >
+                              <Pencil size={14} />
+                           </button>
+                        </div>
+                     )}
                   </div>
 
                   <div className="overflow-x-auto">
@@ -1078,7 +1209,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            <tr className="bg-slate-50/50">
                               <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Earnings</td>
                            </tr>
-                           {salary.earnings.map((comp, idx) => {
+                           {activeSalary.earnings.map((comp, idx) => {
                               const overrideAnnual = componentOverrides[comp.name];
                               const displayAnnual = overrideAnnual !== undefined ? overrideAnnual : Math.round(comp.annual);
                               const displayMonthly = Math.round(displayAnnual / 12);
@@ -1090,7 +1221,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                  </td>
                                  <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(displayMonthly)}</td>
                                  <td className="px-4 py-2.5 text-right text-slate-800 font-medium">
-                                    {!isReadOnly ? (
+                                    {!isReadOnly && isSalaryStructureEditable ? (
                                        <input
                                           type="number"
                                           value={displayAnnual}
@@ -1126,12 +1257,12 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               </tr>
                            ))}
 
-                           {(salary.employeeDeductions.length > 0 || additionalComponents.some(c => c.type === 'Deduction')) && (
+                           {(activeSalary.employeeDeductions.length > 0 || additionalComponents.some(c => c.type === 'Deduction')) && (
                               <>
                                  <tr className="bg-slate-50/50">
                                     <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Deductions (Employee Share)</td>
                                  </tr>
-                                 {salary.employeeDeductions.map((comp, idx) => (
+                                 {activeSalary.employeeDeductions.map((comp, idx) => (
                                     <tr key={`emp-ded-${idx}`}>
                                        <td className="px-4 py-2.5 text-slate-700">{comp.name}</td>
                                        <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
@@ -1162,12 +1293,12 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               </>
                            )}
 
-                           {salary.employerContributions.length > 0 && (
+                           {activeSalary.employerContributions.length > 0 && (
                               <>
                                  <tr className="bg-slate-50/50">
                                     <td className="px-4 py-2.5 text-slate-500 text-xs italic font-semibold" colSpan={3}>Employer Contributions</td>
                                  </tr>
-                                 {salary.employerContributions.map((comp, idx) => (
+                                 {activeSalary.employerContributions.map((comp, idx) => (
                                     <tr key={`empr-cont-${idx}`}>
                                        <td className="px-4 py-2.5 text-slate-700">{comp.name}</td>
                                        <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(Math.round(comp.monthly))}</td>
@@ -1191,7 +1322,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            <tr>
                               <td className="px-4 py-2.5 font-bold text-slate-300">Total gross</td>
                               <td className="px-4 py-2.5 text-right opacity-40 text-xs">-</td>
-                              <td className="px-4 py-2.5 text-right font-bold text-slate-100">₹ {formatCurrency(Math.round(salary.annualGross))}</td>
+                              <td className="px-4 py-2.5 text-right font-bold text-slate-100">₹ {formatCurrency(Math.round(activeSalary.annualGross))}</td>
                            </tr>
                            <tr className="bg-slate-900 border-t border-slate-700">
                               <td className="px-4 py-3 font-bold text-emerald-400">Monthly take-home</td>

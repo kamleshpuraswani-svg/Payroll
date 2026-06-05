@@ -149,6 +149,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                 setLwfProcessSettlement(config.lwfProcessSettlement ?? false);
                 setLwfProvisionEmployerCtc(config.lwfProvisionEmployerCtc ?? false);
                 setLwfProvisionCtc(config.lwfProvisionCtc ?? false);
+                setLwfEmployeeContribution(config.lwfEmployeeContribution ?? '0');
+                setLwfEmployerContribution(config.lwfEmployerContribution ?? '0');
                 setPtState(config.ptState ?? 'Karnataka');
                 setPtNumber(config.ptNumber ?? '');
                 setEnableNps(config.enableNps ?? true);
@@ -244,6 +246,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                 setLwfProcessSettlement(false);
                 setLwfProvisionEmployerCtc(false);
                 setLwfProvisionCtc(false);
+                setLwfEmployeeContribution('0');
+                setLwfEmployerContribution('0');
                 setPtState('Karnataka');
                 setPtNumber('');
                 setEnableNps(true);
@@ -340,6 +344,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
     const [lwfProcessSettlement, setLwfProcessSettlement] = useState(false);
     const [lwfProvisionEmployerCtc, setLwfProvisionEmployerCtc] = useState(false);
     const [lwfProvisionCtc, setLwfProvisionCtc] = useState(false);
+    const [lwfEmployeeContribution, setLwfEmployeeContribution] = useState('0');
+    const [lwfEmployerContribution, setLwfEmployerContribution] = useState('0');
 
     // PT State
     const [ptState, setPtState] = useState('Karnataka');
@@ -399,6 +405,7 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
             nominationMandatory, nominationChangeRule, nomineeCountType, maxNominees, noNominationRule,
             enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
             lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
+            lwfEmployeeContribution, lwfEmployerContribution,
             ptState, ptNumber,
             ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
             enableNps, npsRegistrationId, npsDeductionCycle, npsContributionBase: [...npsContributionBase], npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
@@ -421,6 +428,7 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                 gratuityProrationIncompleteYear, gratuityWaiveMinServiceDeathDisablement, gratuityPaymentReminder,
                 enableLwf, lwfState, lwfEstablishmentId, lwfRegistrationDate,
                 lwfProcessBasis, lwfProcessBasisType, lwfProcessArrear, lwfProcessSettlement, lwfProvisionEmployerCtc, lwfProvisionCtc,
+                lwfEmployeeContribution, lwfEmployerContribution,
                 ptState, ptNumber,
                 ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
                 enableNps, npsRegistrationId, npsDeductionCycle, npsContributionBase, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
@@ -507,6 +515,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
             setLwfProcessSettlement(backupState.lwfProcessSettlement);
             setLwfProvisionEmployerCtc(backupState.lwfProvisionEmployerCtc);
             setLwfProvisionCtc(backupState.lwfProvisionCtc);
+            setLwfEmployeeContribution(backupState.lwfEmployeeContribution ?? '0');
+            setLwfEmployerContribution(backupState.lwfEmployerContribution ?? '0');
             setPtState(backupState.ptState);
             setPtNumber(backupState.ptNumber);
             setPtProcessArrear(backupState.ptProcessArrear);
@@ -1235,6 +1245,80 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                         value={lwfRegistrationDate}
                                         onChange={(e) => setLwfRegistrationDate(e.target.value)}
                                         disabled={!isEditing}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div className="max-w-xs">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Employee's Contribution</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="1000"
+                                        step="0.01"
+                                        value={lwfEmployeeContribution}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '') {
+                                                setLwfEmployeeContribution('');
+                                                return;
+                                            }
+                                            let num = parseFloat(val);
+                                            if (isNaN(num)) return;
+                                            if (num < 0) num = 0;
+                                            if (num > 1000) num = 1000;
+                                            const dotIndex = val.indexOf('.');
+                                            if (dotIndex !== -1 && val.length - dotIndex - 1 > 2) {
+                                                setLwfEmployeeContribution(num.toFixed(2));
+                                            } else {
+                                                setLwfEmployeeContribution(val);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            if (lwfEmployeeContribution === '') {
+                                                setLwfEmployeeContribution('0');
+                                            } else {
+                                                setLwfEmployeeContribution(parseFloat(lwfEmployeeContribution).toString());
+                                            }
+                                        }}
+                                        disabled={!isEditing}
+                                        placeholder="Enter contribution"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div className="max-w-xs">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Employer's Contribution</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="1000"
+                                        step="0.01"
+                                        value={lwfEmployerContribution}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '') {
+                                                setLwfEmployerContribution('');
+                                                return;
+                                            }
+                                            let num = parseFloat(val);
+                                            if (isNaN(num)) return;
+                                            if (num < 0) num = 0;
+                                            if (num > 1000) num = 1000;
+                                            const dotIndex = val.indexOf('.');
+                                            if (dotIndex !== -1 && val.length - dotIndex - 1 > 2) {
+                                                setLwfEmployerContribution(num.toFixed(2));
+                                            } else {
+                                                setLwfEmployerContribution(val);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            if (lwfEmployerContribution === '') {
+                                                setLwfEmployerContribution('0');
+                                            } else {
+                                                setLwfEmployerContribution(parseFloat(lwfEmployerContribution).toString());
+                                            }
+                                        }}
+                                        disabled={!isEditing}
+                                        placeholder="Enter contribution"
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
                                     />
                                 </div>
