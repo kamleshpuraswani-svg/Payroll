@@ -175,6 +175,14 @@ const App: React.FC = () => {
     if (match) {
       setUserRole(match.role);
       setCurrentView(match.view);
+    } else if (/^\/hr\/employees\/[^/]+\/(edit|salary-history)$/.test(path)) {
+      // Dynamic: /hr/employees/:id/edit or /hr/employees/:id/salary-history
+      setUserRole('HR_MANAGER');
+      setCurrentView(ViewState.HR_EMPLOYEES);
+    } else if (/^\/hr\/salary-components\/(add|[^/]+\/edit)$/.test(path)) {
+      // Dynamic: /hr/salary-components/add or /hr/salary-components/:id/edit
+      setUserRole('HR_MANAGER');
+      setCurrentView(ViewState.HR_SALARY_COMPONENTS);
     }
   }, []);
 
