@@ -187,10 +187,15 @@ const App: React.FC = () => {
   }, []);
 
   // Update URL when view changes
+  // Do NOT overwrite sub-path URLs (e.g. /hr/employees/:id/edit) when parent view is active
   useEffect(() => {
     const url = VIEW_TO_URL[currentView];
-    if (url && window.location.pathname !== url) {
-      window.history.pushState({}, '', url);
+    if (url) {
+      const currentPath = window.location.pathname;
+      const alreadyOnSubPath = currentPath !== url && currentPath.startsWith(url + '/');
+      if (!alreadyOnSubPath && currentPath !== url) {
+        window.history.pushState({}, '', url);
+      }
     }
   }, [currentView, userRole]);
 
