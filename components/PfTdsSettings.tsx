@@ -43,6 +43,8 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeEdliCtc, setIncludeEdliCtc] = useState(false);
     const [includeEdliPayslip, setIncludeEdliPayslip] = useState(false);
+    const [includeEdliAdminCtc, setIncludeEdliAdminCtc] = useState(false);
+    const [includeEdliAdminPayslip, setIncludeEdliAdminPayslip] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
     const [employerPensionRate, setEmployerPensionRate] = useState('8.33');
     const [overrideRate, setOverrideRate] = useState(false);
@@ -152,6 +154,8 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setIncludeEdli(config.includeEdli ?? false);
                 setIncludeEdliCtc(config.includeEdliCtc ?? false);
                 setIncludeEdliPayslip(config.includeEdliPayslip ?? false);
+                setIncludeEdliAdminCtc(config.includeEdliAdminCtc ?? false);
+                setIncludeEdliAdminPayslip(config.includeEdliAdminPayslip ?? false);
                 setIncludeAdminCharges(config.includeAdminCharges ?? false);
                 setEmployerPensionRate(config.employerPensionRate ?? '8.33');
                 setOverrideRate(config.overrideRate ?? false);
@@ -187,7 +191,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const handleEditPf = () => {
         setBackupPf({ 
-                includeEmprContri, includeEdli, includeEdliCtc, includeEdliPayslip, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
+                includeEmprContri, includeEdli, includeEdliCtc, includeEdliPayslip, includeEdliAdminCtc, includeEdliAdminPayslip, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
                 considerComponents, belowLimitComponents: [...belowLimitComponents],
                 pfContributionBasis, pfWageCeiling,
                 emprPfContributionBasis, emprPfWageCeiling,
@@ -203,7 +207,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             try {
                 const configValue = { 
                     enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
-                    includeEmprContri, includeEdli, includeEdliCtc, includeEdliPayslip, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
+                    includeEmprContri, includeEdli, includeEdliCtc, includeEdliPayslip, includeEdliAdminCtc, includeEdliAdminPayslip, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
                     considerComponents, belowLimitComponents,
                     pfContributionBasis, pfWageCeiling,
                     emprPfContributionBasis, emprPfWageCeiling,
@@ -220,7 +224,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     
         const handleCancelPf = () => {
             if (backupPf) {
-                setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeEdliCtc(backupPf.includeEdliCtc || false); setIncludeEdliPayslip(backupPf.includeEdliPayslip || false); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setPensionWageLimit(backupPf.pensionWageLimit || '15000'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
+                setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeEdliCtc(backupPf.includeEdliCtc || false); setIncludeEdliPayslip(backupPf.includeEdliPayslip || false); setIncludeEdliAdminCtc(backupPf.includeEdliAdminCtc || false); setIncludeEdliAdminPayslip(backupPf.includeEdliAdminPayslip || false); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setPensionWageLimit(backupPf.pensionWageLimit || '15000'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
                 setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
                 setEmprPfContributionBasis(backupPf.emprPfContributionBasis || 'limit'); setEmprPfWageCeiling(backupPf.emprPfWageCeiling || '15000');
                 setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
@@ -837,6 +841,35 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                         {includeEdliPayslip && <Check size={14} strokeWidth={4} />}
                                                                     </div>
                                                                     <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's EDLI contribution in payslip</span>
+                                                                </label>
+                                                            </div>
+                                                        )}
+
+                                                        <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
+                                                            <div 
+                                                                onClick={() => {
+                                                                    if (isEditingPf) {
+                                                                        const nextVal = !includeEdliAdminCtc;
+                                                                        setIncludeEdliAdminCtc(nextVal);
+                                                                        if (!nextVal) {
+                                                                            setIncludeEdliAdminPayslip(false);
+                                                                        }
+                                                                    }
+                                                                }} 
+                                                                className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEdliAdminCtc ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}
+                                                            >
+                                                                {includeEdliAdminCtc && <Check size={14} strokeWidth={4} />}
+                                                            </div>
+                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include EDLI Admin charges in employee's CTC</span>
+                                                        </label>
+
+                                                        {includeEdliAdminCtc && (
+                                                            <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
+                                                                <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
+                                                                    <div onClick={() => isEditingPf && setIncludeEdliAdminPayslip(!includeEdliAdminPayslip)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEdliAdminPayslip ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                        {includeEdliAdminPayslip && <Check size={14} strokeWidth={4} />}
+                                                                    </div>
+                                                                    <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include EDLI Admin charges in payslip</span>
                                                                 </label>
                                                             </div>
                                                         )}
