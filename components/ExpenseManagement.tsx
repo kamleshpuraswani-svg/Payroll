@@ -93,7 +93,7 @@ const ViewClaimPanel: React.FC<{
             <div className="fixed inset-0 z-[115] bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-300" onClick={onClose} />
             
             {/* Panel */}
-            <div className="fixed inset-y-0 right-0 w-[540px] z-[120] bg-white border-l border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="fixed inset-y-0 right-0 w-[880px] z-[120] bg-white border-l border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                 {/* Header */}
                 <div className="h-20 px-8 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
                     <div>
@@ -141,10 +141,6 @@ const ViewClaimPanel: React.FC<{
                                     <span className="text-sm font-black text-emerald-700">₹{claim.approvedAmount.toLocaleString('en-IN')}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between items-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Submission Date</span>
-                                <span className="text-sm font-bold text-slate-800">{claim.submittedDate}</span>
-                            </div>
                         </div>
                     </div>
 
@@ -196,28 +192,32 @@ const ViewClaimPanel: React.FC<{
                     <div className="space-y-4 pt-4 border-t border-slate-100">
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expense Items List</h4>
                         <div className="bg-slate-50/50 rounded-2xl border border-slate-100 overflow-hidden">
-                            <table className="w-full text-left text-xs border-collapse font-bold">
-                                <thead className="bg-white border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <table className="w-full text-left text-[11px] border-collapse font-bold">
+                                <thead className="bg-white border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wide">
                                     <tr>
-                                        <th className="px-4 py-3">Expense Date</th>
-                                        <th className="px-4 py-3">Category</th>
-                                        <th className="px-4 py-3">Reason</th>
-                                        <th className="px-4 py-3 text-right">Amount</th>
+                                        <th className="px-2 py-2 whitespace-nowrap">Expense Date</th>
+                                        <th className="px-2 py-2 whitespace-nowrap">Category</th>
+                                        <th className="px-2 py-2 whitespace-nowrap">Reason</th>
+                                        <th className="px-2 py-2 whitespace-nowrap text-right">Amount</th>
+                                        <th className="px-2 py-2 whitespace-nowrap">Merchant / Payee</th>
+                                        <th className="px-2 py-2 whitespace-nowrap">Project / Client</th>
+                                        <th className="px-2 py-2 whitespace-nowrap">Reason / Description</th>
+                                        <th className="px-2 py-2 whitespace-nowrap text-center">Bill / Receipt</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {(claim.items || []).map((item: any, i: number) => (
                                         <tr key={i} className="hover:bg-white transition-colors">
-                                            <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                                            <td className="px-2 py-2 text-slate-500 whitespace-nowrap">
                                                 {item.expenseDate ? new Date(item.expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}
                                             </td>
-                                            <td className="px-4 py-4">
+                                            <td className="px-2 py-2">
                                                 <span className="text-slate-800 line-clamp-1">{item.category}</span>
                                             </td>
-                                            <td className="px-4 py-4">
-                                                <span className="text-slate-600 text-xs line-clamp-2">{item.reason || item.description || '—'}</span>
+                                            <td className="px-2 py-2">
+                                                <span className="text-slate-600 line-clamp-1">{item.reason || item.description || '—'}</span>
                                             </td>
-                                            <td className="px-4 py-3 text-right">
+                                            <td className="px-2 py-2 text-right">
                                                 <div className="flex flex-col items-end">
                                                     {(claim.status === 'Partially Approved' || (item.approvedAmount !== undefined && item.approvedAmount < (item.amount || 0))) ? (
                                                         <>
@@ -229,11 +229,31 @@ const ViewClaimPanel: React.FC<{
                                                     )}
                                                 </div>
                                             </td>
+                                            <td className="px-2 py-2 whitespace-nowrap font-bold text-slate-800">
+                                                {item.merchant || item.merchantPayee || '—'}
+                                            </td>
+                                            <td className="px-2 py-2">
+                                                <span className="text-slate-600 line-clamp-1">{item.project || item.projectClient || item.client || '—'}</span>
+                                            </td>
+                                            <td className="px-2 py-2">
+                                                <span className="text-slate-600 line-clamp-1">{item.reason || item.description || '—'}</span>
+                                            </td>
+                                            <td className="px-2 py-2 text-center">
+                                                {(item.receipt || item.bill || item.receiptUrl) ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wide border border-emerald-100">
+                                                        <FileText size={10} /> Attached
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wide">
+                                                        None
+                                                    </span>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                     {(!claim.items || claim.items.length === 0) && (
                                         <tr>
-                                            <td colSpan={4} className="px-4 py-6 text-center text-slate-300 italic font-medium">No individual items recorded</td>
+                                            <td colSpan={8} className="px-4 py-6 text-center text-slate-300 italic font-medium">No individual items recorded</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -243,7 +263,7 @@ const ViewClaimPanel: React.FC<{
                 </div>
 
                 <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0">
-                    <button onClick={onClose} className="px-8 py-3 bg-blue-600 border border-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-blue-500/25">
+                    <button onClick={onClose} className="px-8 py-3 bg-blue-600 border border-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-blue-500/25">
                         Close
                     </button>
                 </div>

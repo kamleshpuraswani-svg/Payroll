@@ -316,7 +316,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     // Configurations
-    const [isTaxable, setIsTaxable] = useState(initialData?.taxable && initialData.taxable !== 'Fully Exempt' ? true : false);
+    const [isTaxable, setIsTaxable] = useState(true);
     const [taxTreatment, setTaxTreatment] = useState(() => {
         if (initialData?.taxable === 'Fully Exempt') return 'Fully Taxable';
         return initialData?.taxable || 'Fully Taxable';
@@ -834,27 +834,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
                         {/* Taxable */}
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-2">Taxable earning <span className="text-rose-500">*</span></label>
-                                <div className="flex gap-6">
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={isTaxable} onChange={() => setIsTaxable(true)} />
-                                        <span className="text-sm text-slate-700 font-medium">Yes</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors {!isTaxable ? 'border-purple-600' : 'border-slate-300'}`}>
-                                            {!isTaxable && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                        </div>
-                                        <input type="radio" className="hidden" checked={!isTaxable} onChange={() => setIsTaxable(false)} />
-                                        <span className="text-sm text-slate-700 font-medium">No</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {isTaxable && (
+                            <div className="space-y-3">
                                 <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                                     <div className="w-1/2">
                                         <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
@@ -872,6 +852,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                             >
                                                 <option value="Fully Taxable">Fully Taxable</option>
                                                 <option value="Partially Exempt">Partially Exempt</option>
+                                                <option value="Non Taxable">Non Taxable</option>
                                             </select>
                                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
@@ -995,7 +976,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         )}
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                         {/* Hide as per request: Round off settings */}
@@ -1207,9 +1188,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
     const [deductionTiming, setDeductionTiming] = useState<'Pre-tax' | 'Post-tax'>(initialData?.deductionTiming || 'Post-tax');
     const [roundOffSetting, setRoundOffSetting] = useState<'Floor' | 'Ceiling'>(initialData?.roundOffSetting || 'Ceiling');
     // Taxable earning fields
-    const [isTaxableEarning, setIsTaxableEarning] = useState(
-        initialData?.taxable !== undefined && initialData.taxable !== 'Tax Deductible' ? true : false
-    );
+    const [isTaxableEarning, setIsTaxableEarning] = useState(true);
     const [taxTreatment, setTaxTreatment] = useState(initialData?.taxable && initialData.taxable !== 'Tax Deductible' ? initialData.taxable : 'Fully Taxable');
     const [taxComputation, setTaxComputation] = useState<'Proportionally' | 'Pay month'>(initialData?.taxComputation || 'Proportionally');
     const [incomeTaxSection, setIncomeTaxSection] = useState(initialData?.incomeTaxSection || '');
@@ -1619,55 +1598,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
 
 
 
-                    {isTaxableEarning && (
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Timing <span className="text-rose-500">*</span></label>
-                        <div className="flex gap-6">
-                            {(['Pre-tax', 'Post-tax'] as const).map(timing => (
-                                <label key={timing} className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deductionTiming === timing ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {deductionTiming === timing && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input
-                                        type="radio"
-                                        className="hidden"
-                                        checked={deductionTiming === timing}
-                                        onChange={() => setDeductionTiming(timing)}
-                                    />
-                                    <span className="text-sm text-slate-700 font-medium">{timing === 'Pre-tax' ? 'Pre-tax deduction' : 'Post-tax deduction'}</span>
-                                </label>
-                            ))}
-                        </div>
-                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                            Pre-tax — deducted before income tax calculation, reducing taxable income (e.g. PF, NPS). <br />
-                            Post-tax — deducted after income tax calculation (e.g. loan recovery, salary advance).
-                        </p>
-                    </div>
-                    )}
-
-                    {/* Taxable deduction */}
+                    {/* Taxable deduction fields - always visible */}
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Taxable deduction <span className="text-rose-500">*</span></label>
-                            <div className="flex gap-6">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isTaxableEarning ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {isTaxableEarning && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={isTaxableEarning} onChange={() => setIsTaxableEarning(true)} />
-                                    <span className="text-sm text-slate-700 font-medium">Yes</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${!isTaxableEarning ? 'border-purple-600' : 'border-slate-300'}`}>
-                                        {!isTaxableEarning && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                    </div>
-                                    <input type="radio" className="hidden" checked={!isTaxableEarning} onChange={() => setIsTaxableEarning(false)} />
-                                    <span className="text-sm text-slate-700 font-medium">No</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        {isTaxableEarning && (
+                        <div className="space-y-3">
                             <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="w-1/2">
                                     <label className="block text-xs font-bold text-slate-500 mb-1.5">Tax Treatment <span className="text-rose-500">*</span></label>
@@ -1679,17 +1612,18 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                         >
                                             <option value="Fully Taxable">Fully Taxable</option>
                                             <option value="Partially Exempt">Partially Exempt</option>
-                                            <option value="Fully Exempt">Fully Exempt</option>
+                                            <option value="Non Taxable">Non Taxable</option>
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
                                     <p className="text-xs text-slate-500 mt-1.5">
                                         {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
                                         {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
-                                        {taxTreatment === 'Fully Exempt' && "Entire amount is exempt from income tax."}
+                                        {taxTreatment === 'Non Taxable' && "Entire amount is exempt from income tax."}
                                     </p>
                                 </div>
 
+                                {taxTreatment !== 'Non Taxable' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                     {taxTreatment === 'Partially Exempt' && (
                                         <div>
@@ -1720,7 +1654,9 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                     </div>
 
                                     <div className="relative">
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">
+                                            Income tax section {taxTreatment === 'Partially Exempt' && <span className="text-rose-500">*</span>}
+                                        </label>
                                         <div
                                             onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
@@ -1766,7 +1702,35 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                         </div>
                                     )}
                                 </div>
+                                )}
                             </div>
+                        </div>
+
+                        {/* Deduction Timing - hidden when Non Taxable */}
+                        {taxTreatment !== 'Non Taxable' && (
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Deduction Timing <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-6">
+                                {(['Pre-tax', 'Post-tax'] as const).map(timing => (
+                                    <label key={timing} className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${deductionTiming === timing ? 'border-purple-600' : 'border-slate-300'}`}>
+                                            {deductionTiming === timing && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                                        </div>
+                                        <input
+                                            type="radio"
+                                            className="hidden"
+                                            checked={deductionTiming === timing}
+                                            onChange={() => setDeductionTiming(timing)}
+                                        />
+                                        <span className="text-sm text-slate-700 font-medium">{timing === 'Pre-tax' ? 'Pre-tax deduction' : 'Post-tax deduction'}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                                Pre-tax — deducted before income tax calculation, reducing taxable income (e.g. PF, NPS). <br />
+                                Post-tax — deducted after income tax calculation (e.g. loan recovery, salary advance).
+                            </p>
+                        </div>
                         )}
                     </div>
 

@@ -612,7 +612,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          return;
       }
 
-      if (userRole === 'HR_MANAGER') {
+      if (userRole === 'HR_MANAGER' && statutoryDeductions.nps) {
          if (!pranNumber || pranNumber.length !== 12 || !/^\d{12}$/.test(pranNumber)) {
             setErrors(prev => ({ ...prev, pranNumber: 'PRAN Number must be exactly 12 digits.' }));
             const errorField = document.getElementById('pran-number-field');
