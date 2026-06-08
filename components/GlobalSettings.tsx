@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
    Building2,
    Calendar,
@@ -36,13 +36,42 @@ import FnFSettlementTemplate from './FnFSettlementTemplate';
 import ExpenseSettings from './ExpenseSettings';
 import PayrollPaygroup from './PayrollPaygroup';
 import PfTdsSettings from './PfTdsSettings';
+import { ViewState } from '../types';
 
 interface GlobalSettingsProps {
    userRole?: string;
+   currentView?: ViewState;
+   onChangeView?: (view: ViewState) => void;
 }
 
-const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
-   const [activeModule, setActiveModule] = useState('organization');
+const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole, currentView, onChangeView }) => {
+   const [activeModule, setActiveModule] = useState(() => {
+      const path = window.location.pathname;
+      if (path.startsWith('/hr/salary-components')) {
+         return 'components';
+      }
+      return 'organization';
+   });
+
+   useEffect(() => {
+      if (currentView === ViewState.HR_SALARY_COMPONENTS) {
+         setActiveModule('components');
+      } else if (currentView === ViewState.SETTINGS) {
+         setActiveModule('organization');
+      }
+   }, [currentView]);
+
+   useEffect(() => {
+      if (activeModule === 'components') {
+         if (currentView !== ViewState.HR_SALARY_COMPONENTS && onChangeView) {
+            onChangeView(ViewState.HR_SALARY_COMPONENTS);
+         }
+      } else {
+         if (currentView !== ViewState.SETTINGS && onChangeView) {
+            onChangeView(ViewState.SETTINGS);
+         }
+      }
+   }, [activeModule, currentView, onChangeView]);
 
    const menuItems = [
       // ...(userRole === 'HR_MANAGER' ? [{ id: 'paygroup', label: 'Payroll Paygroup', icon: Landmark }] : []),

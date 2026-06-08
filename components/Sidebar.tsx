@@ -226,7 +226,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
 
   const isGroupActive = (item: MenuItem): boolean => {
     if (item.subItems) {
-      return item.subItems.some(sub => sub.viewState === currentView);
+      return item.subItems.some(sub => sub.viewState === currentView || (sub.viewState === ViewState.SETTINGS && currentView === ViewState.HR_SALARY_COMPONENTS));
     }
     return false;
   };
@@ -258,7 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         <div className="p-4 space-y-6 overflow-y-auto h-[calc(100vh-4rem)] flex flex-col justify-between">
           <div className="space-y-1">
             {menuItems.filter(item => !item.hidden).map((item) => {
-              const isActive = item.viewState === currentView;
+              const isActive = item.viewState === currentView || (item.viewState === ViewState.SETTINGS && currentView === ViewState.HR_SALARY_COMPONENTS);
               const isExpanded = expandedGroups.includes(item.id);
               const groupActive = isGroupActive(item);
 
@@ -290,7 +290,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                   {item.subItems && isExpanded && (
                     <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 space-y-1">
                       {item.subItems.filter(subItem => !subItem.hidden).map((subItem) => {
-                        const isSubActive = subItem.viewState === currentView;
+                        const isSubActive = subItem.viewState === currentView || (subItem.viewState === ViewState.SETTINGS && currentView === ViewState.HR_SALARY_COMPONENTS);
                         const subGroupActive = isGroupActive(subItem);
                         const isSubExpanded = expandedGroups.includes(subItem.id);
 
