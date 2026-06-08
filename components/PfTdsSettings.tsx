@@ -828,18 +828,33 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         </label>
 
                                                         <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
-                                                            <div onClick={() => isEditingPf && setIncludePfAdminChargesInCtc(!includePfAdminChargesInCtc)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includePfAdminChargesInCtc ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                            <div 
+                                                                onClick={() => {
+                                                                    if (isEditingPf) {
+                                                                        const nextVal = !includePfAdminChargesInCtc;
+                                                                        setIncludePfAdminChargesInCtc(nextVal);
+                                                                        if (!nextVal) {
+                                                                            setIncludePfAdminChargesInPayslip(false);
+                                                                        }
+                                                                    }
+                                                                }} 
+                                                                className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includePfAdminChargesInCtc ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}
+                                                            >
                                                                 {includePfAdminChargesInCtc && <Check size={14} strokeWidth={4} />}
                                                             </div>
                                                             <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include PF Admin charges in employee's CTC</span>
                                                         </label>
 
-                                                        <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
-                                                            <div onClick={() => isEditingPf && setIncludePfAdminChargesInPayslip(!includePfAdminChargesInPayslip)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includePfAdminChargesInPayslip ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
-                                                                {includePfAdminChargesInPayslip && <Check size={14} strokeWidth={4} />}
+                                                        {includePfAdminChargesInCtc && (
+                                                            <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
+                                                                <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
+                                                                    <div onClick={() => isEditingPf && setIncludePfAdminChargesInPayslip(!includePfAdminChargesInPayslip)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includePfAdminChargesInPayslip ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                        {includePfAdminChargesInPayslip && <Check size={14} strokeWidth={4} />}
+                                                                    </div>
+                                                                    <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include PF Admin charges in payslip</span>
+                                                                </label>
                                                             </div>
-                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include PF Admin charges in payslip</span>
-                                                        </label>
+                                                        )}
 
                                                         <div className="space-y-4 pt-2">
                                                             <label className="flex items-start gap-4 cursor-pointer group/item">
