@@ -100,21 +100,89 @@ const App: React.FC = () => {
   const [editingClaimId, setEditingClaimId] = useState<string | undefined>(undefined);
   const [isNewClaimRedirect, setIsNewClaimRedirect] = useState<boolean>(false);
 
+  // URL <-> ViewState mapping
+  const URL_TO_VIEW: Record<string, { view: ViewState; role: UserRole }> = {
+    '/hr/dashboard':           { view: ViewState.HR_DASHBOARD,          role: 'HR_MANAGER' },
+    '/hr/employees':           { view: ViewState.HR_EMPLOYEES,          role: 'HR_MANAGER' },
+    '/hr/tax-declarations':    { view: ViewState.TAX_DECLARATIONS,      role: 'HR_MANAGER' },
+    '/hr/payroll-runs':        { view: ViewState.HR_PAYROLL_RUN,        role: 'HR_MANAGER' },
+    '/hr/payroll-approval':    { view: ViewState.PAYROLL_APPROVAL,      role: 'HR_MANAGER' },
+    '/hr/documents':           { view: ViewState.HR_DOCUMENTS,          role: 'HR_MANAGER' },
+    '/hr/expenses':            { view: ViewState.HR_EXPENSES,           role: 'HR_MANAGER' },
+    '/hr/expenses/add':        { view: ViewState.HR_ADD_EXPENSE,        role: 'HR_MANAGER' },
+    '/hr/expenses/settings':   { view: ViewState.HR_EXPENSES_CONFIG,    role: 'HR_MANAGER' },
+    '/hr/loans':               { view: ViewState.LOANS_ADVANCES,        role: 'HR_MANAGER' },
+    '/hr/settings/statutory':  { view: ViewState.SETTINGS,             role: 'HR_MANAGER' },
+    '/hr/settings/operational':{ view: ViewState.HR_OPERATIONAL_CONFIG, role: 'HR_MANAGER' },
+    '/hr/payroll-reports':     { view: ViewState.HR_PAYROLL_REPORTS,    role: 'HR_MANAGER' },
+    '/hr/salary-components':   { view: ViewState.HR_SALARY_COMPONENTS,  role: 'HR_MANAGER' },
+    '/employee/overview':      { view: ViewState.EMP_OVERVIEW,          role: 'EMPLOYEE' },
+    '/employee/tax-planning':  { view: ViewState.EMP_TAX_PLANNING,      role: 'EMPLOYEE' },
+    '/employee/salary-slips':  { view: ViewState.EMP_SALARY_BREAKDOWN,  role: 'EMPLOYEE' },
+    '/employee/reimbursements':{ view: ViewState.EMP_REIMBURSEMENTS,    role: 'EMPLOYEE' },
+    '/employee/tax-documents': { view: ViewState.EMP_TAX_DOCUMENTS,     role: 'EMPLOYEE' },
+    '/employee/loans':         { view: ViewState.EMP_LOANS_ADVANCES,    role: 'EMPLOYEE' },
+    '/employee/payslips':      { view: ViewState.EMP_PAYSLIPS,          role: 'EMPLOYEE' },
+    '/admin/dashboard':        { view: ViewState.DASHBOARD,             role: 'SUPER_ADMIN' },
+    '/admin/payroll':          { view: ViewState.PAYROLL,               role: 'SUPER_ADMIN' },
+    '/admin/tax':              { view: ViewState.TAX,                   role: 'SUPER_ADMIN' },
+    '/admin/salary':           { view: ViewState.SALARY,                role: 'SUPER_ADMIN' },
+    '/admin/template-setup':   { view: ViewState.TEMPLATE_SETUP,        role: 'SUPER_ADMIN' },
+    '/admin/customers':        { view: ViewState.CUSTOMERS,             role: 'SUPER_ADMIN' },
+    '/admin/support':          { view: ViewState.SUPPORT_TICKETS,       role: 'SUPER_ADMIN' },
+    '/admin/schedulers':       { view: ViewState.SCHEDULERS,            role: 'SUPER_ADMIN' },
+    '/admin/portal-data':      { view: ViewState.PORTAL_DATA,          role: 'SUPER_ADMIN' },
+  };
+
+  const VIEW_TO_URL: Partial<Record<ViewState, string>> = {
+    [ViewState.HR_DASHBOARD]:          '/hr/dashboard',
+    [ViewState.HR_EMPLOYEES]:          '/hr/employees',
+    [ViewState.TAX_DECLARATIONS]:      '/hr/tax-declarations',
+    [ViewState.HR_PAYROLL_RUN]:        '/hr/payroll-runs',
+    [ViewState.PAYROLL_APPROVAL]:      '/hr/payroll-approval',
+    [ViewState.HR_DOCUMENTS]:          '/hr/documents',
+    [ViewState.HR_EXPENSES]:           '/hr/expenses',
+    [ViewState.HR_ADD_EXPENSE]:        '/hr/expenses/add',
+    [ViewState.HR_EXPENSES_CONFIG]:    '/hr/expenses/settings',
+    [ViewState.LOANS_ADVANCES]:        '/hr/loans',
+    [ViewState.SETTINGS]:              '/hr/settings/statutory',
+    [ViewState.HR_OPERATIONAL_CONFIG]: '/hr/settings/operational',
+    [ViewState.HR_PAYROLL_REPORTS]:    '/hr/payroll-reports',
+    [ViewState.HR_SALARY_COMPONENTS]:  '/hr/salary-components',
+    [ViewState.EMP_OVERVIEW]:          '/employee/overview',
+    [ViewState.EMP_PAYROLL_CORNER]:    '/employee/overview',
+    [ViewState.EMP_TAX_PLANNING]:      '/employee/tax-planning',
+    [ViewState.EMP_SALARY_BREAKDOWN]:  '/employee/salary-slips',
+    [ViewState.EMP_REIMBURSEMENTS]:    '/employee/reimbursements',
+    [ViewState.EMP_TAX_DOCUMENTS]:     '/employee/tax-documents',
+    [ViewState.EMP_LOANS_ADVANCES]:    '/employee/loans',
+    [ViewState.EMP_PAYSLIPS]:          '/employee/payslips',
+    [ViewState.DASHBOARD]:             '/admin/dashboard',
+    [ViewState.PAYROLL]:               '/admin/payroll',
+    [ViewState.TAX]:                   '/admin/tax',
+    [ViewState.SALARY]:                '/admin/salary',
+    [ViewState.TEMPLATE_SETUP]:        '/admin/template-setup',
+    [ViewState.CUSTOMERS]:             '/admin/customers',
+    [ViewState.SUPPORT_TICKETS]:       '/admin/support',
+    [ViewState.SCHEDULERS]:            '/admin/schedulers',
+    [ViewState.PORTAL_DATA]:           '/admin/portal-data',
+  };
+
   // Sync currentView from URL on first load
   useEffect(() => {
     const path = window.location.pathname;
-    if (path === '/hr/dashboard') {
-      setUserRole('HR_MANAGER');
-      setCurrentView(ViewState.HR_DASHBOARD);
+    const match = URL_TO_VIEW[path];
+    if (match) {
+      setUserRole(match.role);
+      setCurrentView(match.view);
     }
   }, []);
 
-  // Update URL when HR Dashboard is active
+  // Update URL when view changes
   useEffect(() => {
-    if (userRole === 'HR_MANAGER' && currentView === ViewState.HR_DASHBOARD) {
-      if (window.location.pathname !== '/hr/dashboard') {
-        window.history.pushState({}, '', '/hr/dashboard');
-      }
+    const url = VIEW_TO_URL[currentView];
+    if (url && window.location.pathname !== url) {
+      window.history.pushState({}, '', url);
     }
   }, [currentView, userRole]);
 
