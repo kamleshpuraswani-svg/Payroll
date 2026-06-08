@@ -55,11 +55,15 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole, currentView, 
 
    useEffect(() => {
       if (currentView === ViewState.HR_SALARY_COMPONENTS) {
-         setActiveModule('components');
+         if (activeModule !== 'components') {
+            setActiveModule('components');
+         }
       } else if (currentView === ViewState.SETTINGS) {
-         setActiveModule('organization');
+         if (activeModule === 'components') {
+            setActiveModule('organization');
+         }
       }
-   }, [currentView]);
+   }, [currentView, activeModule]);
 
    useEffect(() => {
       if (activeModule === 'components') {
