@@ -765,7 +765,18 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                     {/* Additional Configurations */}
                                                     <div className="space-y-6 pt-4">
                                                         <label className="flex items-start gap-4 cursor-pointer group/item">
-                                                            <div onClick={() => isEditingPf && setIncludeEmprContri(!includeEmprContri)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                            <div 
+                                                                onClick={() => {
+                                                                    if (isEditingPf) {
+                                                                        const nextVal = !includeEmprContri;
+                                                                        setIncludeEmprContri(nextVal);
+                                                                        if (!nextVal) {
+                                                                            setIncludeEmprContriInPayslip(false);
+                                                                        }
+                                                                    }
+                                                                }} 
+                                                                className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContri ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}
+                                                            >
                                                                 {includeEmprContri && <Check size={14} strokeWidth={4} />}
                                                             </div>
                                                             <div className="space-y-1">
@@ -790,17 +801,16 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                         </div>
                                                                     </span>
                                                                 </label>
+                                                                <label className="flex items-center gap-3 cursor-pointer group/sub">
+                                                                    <div onClick={() => isEditingPf && setIncludeEmprContriInPayslip(!includeEmprContriInPayslip)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeEmprContriInPayslip ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
+                                                                        {includeEmprContriInPayslip && <Check size={12} strokeWidth={4} />}
+                                                                    </div>
+                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                                                                        Include employer's contribution in payslip
+                                                                    </span>
+                                                                </label>
                                                             </div>
                                                         )}
-
-                                                        <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
-                                                            <div onClick={() => isEditingPf && setIncludeEmprContriInPayslip(!includeEmprContriInPayslip)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEmprContriInPayslip ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
-                                                                {includeEmprContriInPayslip && <Check size={14} strokeWidth={4} />}
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's contribution in payslip</span>
-                                                            </div>
-                                                        </label>
 
                                                         <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
                                                             <div 
