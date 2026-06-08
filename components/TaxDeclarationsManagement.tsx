@@ -67,7 +67,7 @@ interface EditModalProps extends ModalProps {
 }
 
 interface ApproveModalProps extends ModalProps {
-    onDecide: (id: string, decision: 'Approved' | 'Rejected' | 'Partially Approved', amount?: number, note?: string) => void;
+    onDecide: (id: string, decision: 'Approved' | 'Rejected' | 'Partially Approved', amount?: number, note?: string, breakdown?: { label: string; amount: number; approved_amount?: number }[]) => void;
     initialDecision?: 'Approved' | 'Partially Approved' | 'Rejected';
 }
 
@@ -745,7 +745,24 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
     }, [itemApprovals, doc.breakdown, decision]);
 
     const handleSubmit = () => {
-        onDecide(doc.id, decision, approvedAmount, reason);
+        let updatedBreakdown = doc.breakdown;
+        if (decision === 'Partially Approved' && doc.breakdown) {
+            updatedBreakdown = doc.breakdown.map((item, idx) => ({
+                ...item,
+                approved_amount: itemApprovals[idx] !== undefined ? itemApprovals[idx] : item.amount
+            }));
+        } else if (decision === 'Approved' && doc.breakdown) {
+            updatedBreakdown = doc.breakdown.map(item => ({
+                ...item,
+                approved_amount: item.amount
+            }));
+        } else if (decision === 'Rejected' && doc.breakdown) {
+            updatedBreakdown = doc.breakdown.map(item => ({
+                ...item,
+                approved_amount: 0
+            }));
+        }
+        onDecide(doc.id, decision, approvedAmount, reason, updatedBreakdown);
         onClose();
     };
 
@@ -915,8 +932,8 @@ const ApproveDeclarationModal: React.FC<ApproveModalProps> = ({ doc, onClose, on
                     <button
                         onClick={handleSubmit}
                         className={`px-8 py-2.5 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center gap-2 ${
-                            decision === 'Approved' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100' :
-                            decision === 'Partially Approved' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100' :
+                            decision === 'Approved' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-100' :
+                            decision === 'Partially Approved' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-100' :
                             'bg-rose-500 hover:bg-rose-600 shadow-rose-100'
                         }`}
                     >
@@ -1127,18 +1144,32 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                                 </div>
 
                                 <div className="flex items-center gap-2 ml-2 border-l border-slate-200 pl-4">
+                                    {['Approved', 'Partially Approved'].includes(parentStatus) && (
+                                        <button
+                                            onClick={onEdit}
+                                            className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors bg-white border border-slate-200 shadow-sm mr-1 flex items-center justify-center animate-in zoom-in duration-200"
+                                            title="Edit Declaration"
+                                        >
+                                            <Edit2 size={14} />
+                                        </button>
+                                    )}
                                     <button
                                         onClick={onClose}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all shadow-sm"
+                                        className={['Approved', 'Partially Approved', 'Rejected'].includes(parentStatus)
+                                            ? "px-4 py-2 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-1.5"
+                                            : "px-4 py-2 bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all shadow-sm"
+                                        }
                                     >
-                                        Cancel
+                                        {['Approved', 'Partially Approved', 'Rejected'].includes(parentStatus) ? 'Close' : 'Cancel'}
                                     </button>
-                                    <button
-                                        onClick={onClose}
-                                        className="px-4 py-2 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-1.5"
-                                    >
-                                        <CheckCircle size={14} /> Submit
-                                    </button>
+                                    {(!['Approved', 'Partially Approved', 'Rejected'].includes(parentStatus) || parentStatus === 'Partially Approved') && (
+                                        <button
+                                            onClick={onClose}
+                                            className="px-4 py-2 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-1.5"
+                                        >
+                                            <CheckCircle size={14} /> Submit
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                     </div>
@@ -1191,7 +1222,7 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                     {/* Main Content Area */}
                     <div className="flex-1 overflow-y-auto p-8 space-y-8">
                         {/* Declaration Summary */}
-                        <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-6 border-b border-slate-100 pb-8`}>
+                        <div className={`grid grid-cols-2 ${doc?.status === 'Approved' || doc?.status === 'Partially Approved' || doc?.status === 'Pending' ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-6 border-b border-slate-100 pb-8`}>
                             <div>
                                 <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Declaration Type</p>
                                 <p className="font-bold text-purple-700 text-base">{doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? 'Confirmed Investment' : 'Proposed Investment'}</p>
@@ -1243,10 +1274,6 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                             )}
                         </div>
                     )}
-                    <div>
-                        <p className="text-[11px] text-slate-400 font-bold uppercase mb-2">Submitted Date</p>
-                        <p className="font-bold text-slate-700 text-base flex items-center gap-1.5"><Calendar size={14} /> {doc?.submitted_date || 'N/A'}</p>
-                    </div>
                 </div>
 
                 {/* Breakdown Table */}
@@ -1257,19 +1284,40 @@ const ViewDeclarationDetail: React.FC<ViewModalProps> = ({ doc, onClose, onEdit,
                             <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                 <tr>
                                     <th className="px-6 py-4 border-b border-slate-200">Sub-Item / Category</th>
-                                    <th className="px-6 py-4 border-b border-slate-200 text-right">Amount</th>
+                                    {doc?.status === 'Partially Approved' ? (
+                                        <>
+                                            <th className="px-6 py-4 border-b border-slate-200 text-right">Declared Amount</th>
+                                            <th className="px-6 py-4 border-b border-slate-200 text-right text-emerald-700">Approved Amount</th>
+                                        </>
+                                    ) : (
+                                        <th className="px-6 py-4 border-b border-slate-200 text-right">Amount</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {(doc?.breakdown || []).map((item, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 text-slate-700 font-medium">{item?.label || 'N/A'}</td>
-                                        <td className="px-6 py-4 text-right font-bold text-slate-900">₹{(item?.amount || 0).toLocaleString('en-IN')}</td>
+                                        {doc?.status === 'Partially Approved' ? (
+                                            <>
+                                                <td className="px-6 py-4 text-right font-bold text-slate-500">₹{(item?.amount || 0).toLocaleString('en-IN')}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-emerald-600">₹{(item?.approved_amount !== undefined ? item.approved_amount : item?.amount || 0).toLocaleString('en-IN')}</td>
+                                            </>
+                                        ) : (
+                                            <td className="px-6 py-4 text-right font-bold text-slate-900">₹{(item?.amount || 0).toLocaleString('en-IN')}</td>
+                                        )}
                                     </tr>
                                 ))}
                                 <tr className="bg-slate-50/50 font-black text-lg">
                                     <td className="px-6 py-4 text-slate-800">Total</td>
-                                    <td className="px-6 py-4 text-right text-indigo-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</td>
+                                    {doc?.status === 'Partially Approved' ? (
+                                        <>
+                                            <td className="px-6 py-4 text-right text-slate-500">₹{(doc?.amount || 0).toLocaleString('en-IN')}</td>
+                                            <td className="px-6 py-4 text-right text-emerald-700">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</td>
+                                        </>
+                                    ) : (
+                                        <td className="px-6 py-4 text-right text-indigo-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</td>
+                                    )}
                                 </tr>
                             </tbody>
                         </table>
@@ -1814,15 +1862,20 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
         { title: 'Rejected', value: '56', color: 'bg-rose-50 text-rose-700' },
     ];
 
-    const handleUpdateStatus = async (id: string, status: string, approvedAmount?: number, remarks?: string) => {
+    const handleUpdateStatus = async (id: string, status: string, approvedAmount?: number, remarks?: string, breakdown?: any[]) => {
+        const updateFields: any = {
+            status,
+            approved_amount: approvedAmount,
+            remarks,
+            last_modified_by: 'HR Manager'
+        };
+        if (breakdown !== undefined) {
+            updateFields.breakdown = breakdown;
+        }
+
         const { error } = await supabase
             .from('tax_declarations')
-            .update({
-                status,
-                approved_amount: approvedAmount,
-                remarks,
-                last_modified_by: 'HR Manager'
-            })
+            .update(updateFields)
             .eq('id', id);
 
         if (!error) {
@@ -1832,6 +1885,7 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                     status: status as any,
                     approved_amount: approvedAmount !== undefined ? approvedAmount : doc.approved_amount,
                     remarks: remarks !== undefined ? remarks : doc.remarks,
+                    breakdown: breakdown !== undefined ? breakdown : doc.breakdown,
                     last_modified_by: 'HR Manager'
                 } : doc
             ));
@@ -2398,7 +2452,7 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                     doc={selectedDoc}
                     initialDecision={initialDecision}
                     onClose={() => setModalMode('VIEW')}
-                    onDecide={(id, decision, amount, note) => handleUpdateStatus(id, decision, amount, note)}
+                    onDecide={(id, decision, amount, note, breakdown) => handleUpdateStatus(id, decision, amount, note, breakdown)}
                 />
             )}
 

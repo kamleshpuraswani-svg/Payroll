@@ -528,7 +528,7 @@ const DownloadClaimModal: React.FC<{
 
 export const AddExpensePanel: React.FC<{
     onClose: () => void;
-    onSuccess: (message: string, createdId?: string) => void;
+    onSuccess: (message: string, createdId?: string, shouldRedirect?: boolean) => void;
     employees: any[];
     categories: any[];
     hideEmployeeSelect?: boolean;
@@ -542,6 +542,7 @@ export const AddExpensePanel: React.FC<{
     const [reason, setReason] = useState('');
     const [receipt, setReceipt] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submittingType, setSubmittingType] = useState<'submit' | 'addMore' | null>(null);
 
     useEffect(() => {
         if (employees.length === 1) {
@@ -549,10 +550,11 @@ export const AddExpensePanel: React.FC<{
         }
     }, [employees]);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (shouldRedirect: boolean = false) => {
         if (!selectedEmployeeId || !amount || !reason || !merchant || !selectedCategory) return;
         
         setIsSubmitting(true);
+        setSubmittingType(shouldRedirect ? 'addMore' : 'submit');
         try {
             const employee = employees.find(e => e.id === selectedEmployeeId);
             const employeeName = employee?.name || 'Employee';
@@ -587,13 +589,14 @@ export const AddExpensePanel: React.FC<{
                 }]);
 
             if (error) throw error;
-            onSuccess('Claim submitted successfully', generatedId);
+            onSuccess('Claim submitted successfully', generatedId, shouldRedirect);
             onClose();
         } catch (error: any) {
             console.error('Error submitting expense:', error);
             alert('Failed to submit expense: ' + (error.message || 'Unknown error'));
         } finally {
             setIsSubmitting(false);
+            setSubmittingType(null);
         }
     };
 
@@ -771,19 +774,26 @@ export const AddExpensePanel: React.FC<{
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center gap-3 shrink-0">
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
+                        className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all"
                     >
                         Cancel
                     </button>
                     <button
-                        onClick={handleSubmit}
+                        onClick={() => handleSubmit(false)}
                         disabled={isSubmitting || !selectedEmployeeId || !amount || !reason || !merchant || !selectedCategory}
-                        className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Submitting...' : 'Submit'}
+                        {submittingType === 'submit' ? 'Submitting...' : 'Submit'}
+                    </button>
+                    <button
+                        onClick={() => handleSubmit(true)}
+                        disabled={isSubmitting || !selectedEmployeeId || !amount || !reason || !merchant || !selectedCategory}
+                        className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all disabled:opacity-50"
+                    >
+                        {submittingType === 'addMore' ? 'Submitting...' : 'Submit & Add More'}
                     </button>
                 </div>
             </div>
@@ -1635,11 +1645,11 @@ const ExpenseManagement: React.FC<{
             {showAddExpensePanel && (
                 <AddExpensePanel
                     onClose={() => setShowAddExpensePanel(false)}
-                    onSuccess={(msg, createdId) => {
+                    onSuccess={(msg, createdId, shouldRedirect) => {
                         setShowSuccessToast({ message: msg, type: 'success' });
                         setTimeout(() => setShowSuccessToast(null), 3000);
                         fetchData();
-                        if (createdId && onEditClaim) {
+                        if (shouldRedirect && createdId && onEditClaim) {
                             onEditClaim(createdId, true);
                         }
                     }}

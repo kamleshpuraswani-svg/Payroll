@@ -165,7 +165,7 @@ export interface TaxDeclaration {
   last_modified_at?: string;
   ctc: string;
   regime: 'Old' | 'New';
-  breakdown: { label: string; amount: number }[];
+  breakdown: { label: string; amount: number; approved_amount?: number }[];
 }
 
 export enum AppStep {

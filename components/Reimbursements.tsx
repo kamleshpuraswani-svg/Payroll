@@ -513,9 +513,9 @@ export const ReimbursementModule: React.FC = () => {
             {showAddExpensePanel && (
                 <AddExpensePanel
                     onClose={() => setShowAddExpensePanel(false)}
-                    onSuccess={(msg, createdId) => {
+                    onSuccess={(msg, createdId, shouldRedirect) => {
                         fetchClaims();
-                        if (createdId) {
+                        if (shouldRedirect && createdId) {
                             setEditingClaim({ id: createdId } as any);
                             setIsReadOnly(false);
                             setIsNewClaimRedirect(true);

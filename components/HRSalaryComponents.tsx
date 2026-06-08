@@ -317,7 +317,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
     // Configurations
     const [isTaxable, setIsTaxable] = useState(initialData?.taxable && initialData.taxable !== 'Fully Exempt' ? true : false);
-    const [taxTreatment, setTaxTreatment] = useState(initialData?.taxable || 'Fully Taxable');
+    const [taxTreatment, setTaxTreatment] = useState(() => {
+        if (initialData?.taxable === 'Fully Exempt') return 'Fully Taxable';
+        return initialData?.taxable || 'Fully Taxable';
+    });
     const [taxPreference, setTaxPreference] = useState('Subsequent');
     const [isProRata, setIsProRata] = useState(true);
     const [isConsiderEPF, setIsConsiderEPF] = useState(initialData?.considerEPF ?? true);
@@ -352,6 +355,10 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
         }
         if (!localSelectedTarget) {
             setError('Business Unit or Paygroup is mandatory');
+            return;
+        }
+        if (isTaxable && taxTreatment === 'Partially Exempt' && !incomeTaxSection) {
+            setError('Income tax section is mandatory');
             return;
         }
         setError(null);
@@ -854,19 +861,23 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         <div className="relative">
                                             <select
                                                 value={taxTreatment}
-                                                onChange={(e) => setTaxTreatment(e.target.value)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setTaxTreatment(val);
+                                                    if (val === 'Partially Exempt' && incomeTaxSection === 'NULL') {
+                                                        setIncomeTaxSection('');
+                                                    }
+                                                }}
                                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none bg-white"
                                             >
                                                 <option value="Fully Taxable">Fully Taxable</option>
                                                 <option value="Partially Exempt">Partially Exempt</option>
-                                                <option value="Fully Exempt">Fully Exempt</option>
                                             </select>
                                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                         <p className="text-xs text-slate-500 mt-1.5">
                                             {taxTreatment === 'Fully Taxable' && "Entire amount is added to taxable income."}
-                                            {taxTreatment === 'Partially Exempt' && "Entire amount is exempt from income tax."}
-                                            {taxTreatment === 'Fully Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
+                                            {taxTreatment === 'Partially Exempt' && "Only a part of the amount is exempt; the rest is taxable."}
                                         </p>
                                     </div>
                                     {/* Tax Deduction Preference for Variable Pay */}
@@ -919,7 +930,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                                 {['Proportionally', 'Pay month'].map((option) => (
                                                     <label key={option} className="flex items-center gap-2 cursor-pointer group">
                                                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${taxComputation === option ? 'border-purple-600' : 'border-slate-300'}`}>
-                                                            {taxComputation === option && <div className="w-2 h-2 rounded-full bg-purple-600" />}
+                                                            {taxComputation === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                                         </div>
                                                         <input type="radio" className="hidden" checked={taxComputation === option} onChange={() => setTaxComputation(option as any)} />
                                                         <span className="text-sm text-slate-700 font-medium">{option}</span>
@@ -929,19 +940,23 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         </div>
 
                                         <div className="relative">
-                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Income tax section</label>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">
+                                                Income tax section {taxTreatment === 'Partially Exempt' && <span className="text-rose-500">*</span>}
+                                            </label>
                                             <div
                                                 onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium"
+                                                className={`w-full px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium ${error === 'Income tax section is mandatory' ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-purple-500/20 focus:border-purple-500'}`}
                                             >
                                                 <span>{incomeTaxSection || 'Select Section'}</span>
                                                 <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
                                             </div>
+                                            {error === 'Income tax section is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
                                             {isSectionDropdownOpen && (
                                                 <>
                                                     <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
                                                     <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
                                                         {[
+                                                            ...(taxTreatment === 'Fully Taxable' ? ['NULL'] : []),
                                                             "Section_10(14)(i)",
                                                             "Section_10(14)(ii)",
                                                             "Section_10(5)",
@@ -950,7 +965,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                                         ].map(section => (
                                                             <div
                                                                 key={section}
-                                                                onClick={() => { setIncomeTaxSection(section); setIsSectionDropdownOpen(false); }}
+                                                                onClick={() => {
+                                                                    setIncomeTaxSection(section);
+                                                                    setIsSectionDropdownOpen(false);
+                                                                    setError(null);
+                                                                }}
                                                                 className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
                                                             >
                                                                 {section}
