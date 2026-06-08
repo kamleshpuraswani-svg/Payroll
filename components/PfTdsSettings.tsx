@@ -42,6 +42,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [includeEmprContriInPayslip, setIncludeEmprContriInPayslip] = useState(false);
     const [includeEdli, setIncludeEdli] = useState(false);
     const [includeEdliCtc, setIncludeEdliCtc] = useState(false);
+    const [includeEdliPayslip, setIncludeEdliPayslip] = useState(false);
     const [includeAdminCharges, setIncludeAdminCharges] = useState(false);
     const [employerPensionRate, setEmployerPensionRate] = useState('8.33');
     const [overrideRate, setOverrideRate] = useState(false);
@@ -150,6 +151,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setIncludeEmprContri(config.includeEmprContri ?? true);
                 setIncludeEdli(config.includeEdli ?? false);
                 setIncludeEdliCtc(config.includeEdliCtc ?? false);
+                setIncludeEdliPayslip(config.includeEdliPayslip ?? false);
                 setIncludeAdminCharges(config.includeAdminCharges ?? false);
                 setEmployerPensionRate(config.employerPensionRate ?? '8.33');
                 setOverrideRate(config.overrideRate ?? false);
@@ -185,7 +187,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const handleEditPf = () => {
         setBackupPf({ 
-                includeEmprContri, includeEdli, includeEdliCtc, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
+                includeEmprContri, includeEdli, includeEdliCtc, includeEdliPayslip, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
                 considerComponents, belowLimitComponents: [...belowLimitComponents],
                 pfContributionBasis, pfWageCeiling,
                 emprPfContributionBasis, emprPfWageCeiling,
@@ -201,7 +203,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             try {
                 const configValue = { 
                     enablePf, pfNumber, establishmentName, epfJoiningDate, empRate, emprRate, empLimit, emprLimit, 
-                    includeEmprContri, includeEdli, includeEdliCtc, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
+                    includeEmprContri, includeEdli, includeEdliCtc, includeEdliPayslip, includeAdminCharges, employerPensionRate, pensionWageLimit, overrideRate, prorateRestricted, 
                     considerComponents, belowLimitComponents,
                     pfContributionBasis, pfWageCeiling,
                     emprPfContributionBasis, emprPfWageCeiling,
@@ -218,7 +220,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     
         const handleCancelPf = () => {
             if (backupPf) {
-                setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeEdliCtc(backupPf.includeEdliCtc || false); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setPensionWageLimit(backupPf.pensionWageLimit || '15000'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
+                setEnablePf(backupPf.enablePf); setPfNumber(backupPf.pfNumber); setEstablishmentName(backupPf.establishmentName); setEpfJoiningDate(backupPf.epfJoiningDate); setEmpRate(backupPf.empRate); setEmprRate(backupPf.emprRate); setEmpLimit(backupPf.empLimit); setEmprLimit(backupPf.emprLimit);            setIncludeEmprContri(backupPf.includeEmprContri); setIncludeEdli(backupPf.includeEdli); setIncludeEdliCtc(backupPf.includeEdliCtc || false); setIncludeEdliPayslip(backupPf.includeEdliPayslip || false); setIncludeAdminCharges(backupPf.includeAdminCharges); setEmployerPensionRate(backupPf.employerPensionRate || '8.33'); setPensionWageLimit(backupPf.pensionWageLimit || '15000'); setOverrideRate(backupPf.overrideRate); setProrateRestricted(backupPf.prorateRestricted); setConsiderComponents(backupPf.considerComponents); setBelowLimitComponents(backupPf.belowLimitComponents);
                 setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
                 setEmprPfContributionBasis(backupPf.emprPfContributionBasis || 'limit'); setEmprPfWageCeiling(backupPf.emprPfWageCeiling || '15000');
                 setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
@@ -774,21 +776,6 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         {includeEmprContri && (
                                                             <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
                                                                 <label className="flex items-center gap-3 cursor-pointer group/sub">
-                                                                    <div onClick={() => isEditingPf && setIncludeEdli(!includeEdli)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeEdli ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
-                                                                        {includeEdli && <Check size={12} strokeWidth={4} />}
-                                                                    </div>
-                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                                                                        Include employer's EDLI contribution in employee's CTC
-                                                                        <div className="group/tip relative">
-                                                                            <Info size={14} className="text-slate-300 cursor-help" />
-                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-bold">
-                                                                                EDLI Contribution is 0.50 % of PF Wage. Max Employer Contribution is 75.
-                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </span>
-                                                                </label>
-                                                                <label className="flex items-center gap-3 cursor-pointer group/sub">
                                                                     <div onClick={() => isEditingPf && setIncludeAdminCharges(!includeAdminCharges)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeAdminCharges ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
                                                                         {includeAdminCharges && <Check size={12} strokeWidth={4} />}
                                                                     </div>
@@ -816,11 +803,33 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         </label>
 
                                                         <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
-                                                            <div onClick={() => isEditingPf && setIncludeEdliCtc(!includeEdliCtc)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEdliCtc ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                            <div 
+                                                                onClick={() => {
+                                                                    if (isEditingPf) {
+                                                                        const nextVal = !includeEdliCtc;
+                                                                        setIncludeEdliCtc(nextVal);
+                                                                        if (!nextVal) {
+                                                                            setIncludeEdliPayslip(false);
+                                                                        }
+                                                                    }
+                                                                }} 
+                                                                className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEdliCtc ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}
+                                                            >
                                                                 {includeEdliCtc && <Check size={14} strokeWidth={4} />}
                                                             </div>
                                                             <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's EDLI contribution in employee's CTC</span>
                                                         </label>
+
+                                                        {includeEdliCtc && (
+                                                            <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
+                                                                <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
+                                                                    <div onClick={() => isEditingPf && setIncludeEdliPayslip(!includeEdliPayslip)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${includeEdliPayslip ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                        {includeEdliPayslip && <Check size={14} strokeWidth={4} />}
+                                                                    </div>
+                                                                    <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Include employer's EDLI contribution in payslip</span>
+                                                                </label>
+                                                            </div>
+                                                        )}
 
                                                         <label className="flex items-start gap-4 cursor-pointer group/item pt-2">
                                                             <div onClick={() => isEditingPf && setOverrideRate(!overrideRate)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${overrideRate ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
@@ -1010,7 +1019,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 <span className="text-xs font-bold text-slate-500">EPF Share (3.67%)</span>
                                                                 <span className="text-sm font-black text-slate-800">₹ 1,150</span>
                                                             </div>
-                                                            {includeEdli && (
+                                                            {includeEdliCtc && (
                                                                 <div className="flex justify-between items-center text-[10px] text-indigo-500 font-bold">
                                                                     <span>EDLI (0.50%)</span>
                                                                     <span>₹ 75</span>
@@ -1025,7 +1034,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         </div>
                                                         <div className="pt-4 border-t-2 border-dashed border-slate-100 flex justify-between items-end">
                                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total Remittance</span>
-                                                            <span className="text-2xl font-black text-sky-600 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdli ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
+                                                            <span className="text-2xl font-black text-sky-600 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdliCtc ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
                                                         </div>
                                                     </div>
                                                     <div className="p-4 bg-slate-50 border-t border-slate-100">
