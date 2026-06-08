@@ -791,21 +791,6 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         {includeEmprContri && (
                                                             <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
                                                                 <label className="flex items-center gap-3 cursor-pointer group/sub">
-                                                                    <div onClick={() => isEditingPf && setIncludeAdminCharges(!includeAdminCharges)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeAdminCharges ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
-                                                                        {includeAdminCharges && <Check size={12} strokeWidth={4} />}
-                                                                    </div>
-                                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                                                                        Include admin charges in employee's CTC
-                                                                        <div className="group/tip relative">
-                                                                            <Info size={14} className="text-slate-300 cursor-help" />
-                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-xl z-50 text-center font-bold">
-                                                                                EPF Admin Charges is 0.50% of PF Wage.
-                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </span>
-                                                                </label>
-                                                                <label className="flex items-center gap-3 cursor-pointer group/sub">
                                                                     <div onClick={() => isEditingPf && setIncludeEmprContriInPayslip(!includeEmprContriInPayslip)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${includeEmprContriInPayslip ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover/sub:border-indigo-400'}`}>
                                                                         {includeEmprContriInPayslip && <Check size={12} strokeWidth={4} />}
                                                                     </div>
@@ -1068,7 +1053,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                     <span>₹ 75</span>
                                                                 </div>
                                                             )}
-                                                            {includeAdminCharges && (
+                                                            {includePfAdminChargesInCtc && (
                                                                 <div className="flex justify-between items-center text-[10px] text-indigo-500 font-bold">
                                                                     <span>Admin Charges</span>
                                                                     <span>₹ 100</span>
@@ -1077,7 +1062,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         </div>
                                                         <div className="pt-4 border-t-2 border-dashed border-slate-100 flex justify-between items-end">
                                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total Remittance</span>
-                                                            <span className="text-2xl font-black text-sky-600 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdliCtc ? 75 : 0) + (includeAdminCharges ? 100 : 0)}</span>
+                                                            <span className="text-2xl font-black text-sky-600 tracking-tighter leading-none">₹ {2400 + 1250 + 1150 + (includeEdliCtc ? 75 : 0) + (includePfAdminChargesInCtc ? 100 : 0)}</span>
                                                         </div>
                                                     </div>
                                                     <div className="p-4 bg-slate-50 border-t border-slate-100">
