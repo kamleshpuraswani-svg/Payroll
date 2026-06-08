@@ -2414,23 +2414,6 @@ const HRSalaryComponents: React.FC = () => {
         }
     }, [components, editingComponent]);
 
-    // Sync URL when add/edit form opens or closes
-    useEffect(() => {
-        if (isAdding && editingComponent) {
-            const url = `/hr/salary-components/${editingComponent.id}/edit`;
-            if (window.location.pathname !== url) {
-                window.history.pushState({}, '', url);
-            }
-        } else if (isAdding && !editingComponent) {
-            if (window.location.pathname !== '/hr/salary-components/add') {
-                window.history.pushState({}, '', '/hr/salary-components/add');
-            }
-        } else {
-            if (window.location.pathname !== '/hr/salary-components') {
-                window.history.pushState({}, '', '/hr/salary-components');
-            }
-        }
-    }, [isAdding, editingComponent]);
 
     // Lookup Filter state
     const [completedFilters, setCompletedFilters] = useState<any[]>([]);
