@@ -100,6 +100,24 @@ const App: React.FC = () => {
   const [editingClaimId, setEditingClaimId] = useState<string | undefined>(undefined);
   const [isNewClaimRedirect, setIsNewClaimRedirect] = useState<boolean>(false);
 
+  // Sync currentView from URL on first load
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/hr/dashboard') {
+      setUserRole('HR_MANAGER');
+      setCurrentView(ViewState.HR_DASHBOARD);
+    }
+  }, []);
+
+  // Update URL when HR Dashboard is active
+  useEffect(() => {
+    if (userRole === 'HR_MANAGER' && currentView === ViewState.HR_DASHBOARD) {
+      if (window.location.pathname !== '/hr/dashboard') {
+        window.history.pushState({}, '', '/hr/dashboard');
+      }
+    }
+  }, [currentView, userRole]);
+
   // Fetch initial data from Supabase
   useEffect(() => {
     const fetchData = async () => {
