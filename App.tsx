@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 // auth-verified: 25 Feb 2026
 import { Users, MessageSquare, Calendar, Database, AlertTriangle, PieChart } from 'lucide-react';
 import Sidebar from './components/Sidebar';
@@ -87,6 +87,74 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     }
 }
 
+// Module-level constants — defined outside component to avoid recreation on every render
+const URL_TO_VIEW: Record<string, { view: ViewState; role: UserRole }> = {
+  '/hr/dashboard':            { view: ViewState.HR_DASHBOARD,          role: 'HR_MANAGER' },
+  '/hr/employees':            { view: ViewState.HR_EMPLOYEES,          role: 'HR_MANAGER' },
+  '/hr/tax-declarations':     { view: ViewState.TAX_DECLARATIONS,      role: 'HR_MANAGER' },
+  '/hr/payroll-runs':         { view: ViewState.HR_PAYROLL_RUN,        role: 'HR_MANAGER' },
+  '/hr/payroll-approval':     { view: ViewState.PAYROLL_APPROVAL,      role: 'HR_MANAGER' },
+  '/hr/documents':            { view: ViewState.HR_DOCUMENTS,          role: 'HR_MANAGER' },
+  '/hr/expenses':             { view: ViewState.HR_EXPENSES,           role: 'HR_MANAGER' },
+  '/hr/expenses/add':         { view: ViewState.HR_ADD_EXPENSE,        role: 'HR_MANAGER' },
+  '/hr/expenses/settings':    { view: ViewState.HR_EXPENSES_CONFIG,    role: 'HR_MANAGER' },
+  '/hr/loans':                { view: ViewState.LOANS_ADVANCES,        role: 'HR_MANAGER' },
+  '/hr/settings/statutory':   { view: ViewState.SETTINGS,             role: 'HR_MANAGER' },
+  '/hr/settings/operational': { view: ViewState.HR_OPERATIONAL_CONFIG, role: 'HR_MANAGER' },
+  '/hr/payroll-reports':      { view: ViewState.HR_PAYROLL_REPORTS,    role: 'HR_MANAGER' },
+  '/hr/salary-components':    { view: ViewState.HR_SALARY_COMPONENTS,  role: 'HR_MANAGER' },
+  '/employee/overview':       { view: ViewState.EMP_OVERVIEW,          role: 'EMPLOYEE' },
+  '/employee/tax-planning':   { view: ViewState.EMP_TAX_PLANNING,      role: 'EMPLOYEE' },
+  '/employee/salary-slips':   { view: ViewState.EMP_SALARY_BREAKDOWN,  role: 'EMPLOYEE' },
+  '/employee/reimbursements': { view: ViewState.EMP_REIMBURSEMENTS,    role: 'EMPLOYEE' },
+  '/employee/tax-documents':  { view: ViewState.EMP_TAX_DOCUMENTS,     role: 'EMPLOYEE' },
+  '/employee/loans':          { view: ViewState.EMP_LOANS_ADVANCES,    role: 'EMPLOYEE' },
+  '/employee/payslips':       { view: ViewState.EMP_PAYSLIPS,          role: 'EMPLOYEE' },
+  '/admin/dashboard':         { view: ViewState.DASHBOARD,             role: 'SUPER_ADMIN' },
+  '/admin/payroll':           { view: ViewState.PAYROLL,               role: 'SUPER_ADMIN' },
+  '/admin/tax':               { view: ViewState.TAX,                   role: 'SUPER_ADMIN' },
+  '/admin/salary':            { view: ViewState.SALARY,                role: 'SUPER_ADMIN' },
+  '/admin/template-setup':    { view: ViewState.TEMPLATE_SETUP,        role: 'SUPER_ADMIN' },
+  '/admin/customers':         { view: ViewState.CUSTOMERS,             role: 'SUPER_ADMIN' },
+  '/admin/support':           { view: ViewState.SUPPORT_TICKETS,       role: 'SUPER_ADMIN' },
+  '/admin/schedulers':        { view: ViewState.SCHEDULERS,            role: 'SUPER_ADMIN' },
+  '/admin/portal-data':       { view: ViewState.PORTAL_DATA,           role: 'SUPER_ADMIN' },
+};
+
+const VIEW_TO_URL: Partial<Record<ViewState, string>> = {
+  [ViewState.HR_DASHBOARD]:          '/hr/dashboard',
+  [ViewState.HR_EMPLOYEES]:          '/hr/employees',
+  [ViewState.TAX_DECLARATIONS]:      '/hr/tax-declarations',
+  [ViewState.HR_PAYROLL_RUN]:        '/hr/payroll-runs',
+  [ViewState.PAYROLL_APPROVAL]:      '/hr/payroll-approval',
+  [ViewState.HR_DOCUMENTS]:          '/hr/documents',
+  [ViewState.HR_EXPENSES]:           '/hr/expenses',
+  [ViewState.HR_ADD_EXPENSE]:        '/hr/expenses/add',
+  [ViewState.HR_EXPENSES_CONFIG]:    '/hr/expenses/settings',
+  [ViewState.LOANS_ADVANCES]:        '/hr/loans',
+  [ViewState.SETTINGS]:              '/hr/settings/statutory',
+  [ViewState.HR_OPERATIONAL_CONFIG]: '/hr/settings/operational',
+  [ViewState.HR_PAYROLL_REPORTS]:    '/hr/payroll-reports',
+  [ViewState.HR_SALARY_COMPONENTS]:  '/hr/salary-components',
+  [ViewState.EMP_OVERVIEW]:          '/employee/overview',
+  [ViewState.EMP_PAYROLL_CORNER]:    '/employee/overview',
+  [ViewState.EMP_TAX_PLANNING]:      '/employee/tax-planning',
+  [ViewState.EMP_SALARY_BREAKDOWN]:  '/employee/salary-slips',
+  [ViewState.EMP_REIMBURSEMENTS]:    '/employee/reimbursements',
+  [ViewState.EMP_TAX_DOCUMENTS]:     '/employee/tax-documents',
+  [ViewState.EMP_LOANS_ADVANCES]:    '/employee/loans',
+  [ViewState.EMP_PAYSLIPS]:          '/employee/payslips',
+  [ViewState.DASHBOARD]:             '/admin/dashboard',
+  [ViewState.PAYROLL]:               '/admin/payroll',
+  [ViewState.TAX]:                   '/admin/tax',
+  [ViewState.SALARY]:                '/admin/salary',
+  [ViewState.TEMPLATE_SETUP]:        '/admin/template-setup',
+  [ViewState.CUSTOMERS]:             '/admin/customers',
+  [ViewState.SUPPORT_TICKETS]:       '/admin/support',
+  [ViewState.SCHEDULERS]:            '/admin/schedulers',
+  [ViewState.PORTAL_DATA]:           '/admin/portal-data',
+};
+
 const App: React.FC = () => {
   // Super Admin role temporarily hidden - defaulting to HR_MANAGER
   const [userRole, setUserRole] = useState<UserRole>('HR_MANAGER');
@@ -100,73 +168,8 @@ const App: React.FC = () => {
   const [editingClaimId, setEditingClaimId] = useState<string | undefined>(undefined);
   const [isNewClaimRedirect, setIsNewClaimRedirect] = useState<boolean>(false);
 
-  // URL <-> ViewState mapping
-  const URL_TO_VIEW: Record<string, { view: ViewState; role: UserRole }> = {
-    '/hr/dashboard':           { view: ViewState.HR_DASHBOARD,          role: 'HR_MANAGER' },
-    '/hr/employees':           { view: ViewState.HR_EMPLOYEES,          role: 'HR_MANAGER' },
-    '/hr/tax-declarations':    { view: ViewState.TAX_DECLARATIONS,      role: 'HR_MANAGER' },
-    '/hr/payroll-runs':        { view: ViewState.HR_PAYROLL_RUN,        role: 'HR_MANAGER' },
-    '/hr/payroll-approval':    { view: ViewState.PAYROLL_APPROVAL,      role: 'HR_MANAGER' },
-    '/hr/documents':           { view: ViewState.HR_DOCUMENTS,          role: 'HR_MANAGER' },
-    '/hr/expenses':            { view: ViewState.HR_EXPENSES,           role: 'HR_MANAGER' },
-    '/hr/expenses/add':        { view: ViewState.HR_ADD_EXPENSE,        role: 'HR_MANAGER' },
-    '/hr/expenses/settings':   { view: ViewState.HR_EXPENSES_CONFIG,    role: 'HR_MANAGER' },
-    '/hr/loans':               { view: ViewState.LOANS_ADVANCES,        role: 'HR_MANAGER' },
-    '/hr/settings/statutory':  { view: ViewState.SETTINGS,             role: 'HR_MANAGER' },
-    '/hr/settings/operational':{ view: ViewState.HR_OPERATIONAL_CONFIG, role: 'HR_MANAGER' },
-    '/hr/payroll-reports':     { view: ViewState.HR_PAYROLL_REPORTS,    role: 'HR_MANAGER' },
-    '/hr/salary-components':   { view: ViewState.HR_SALARY_COMPONENTS,  role: 'HR_MANAGER' },
-    '/employee/overview':      { view: ViewState.EMP_OVERVIEW,          role: 'EMPLOYEE' },
-    '/employee/tax-planning':  { view: ViewState.EMP_TAX_PLANNING,      role: 'EMPLOYEE' },
-    '/employee/salary-slips':  { view: ViewState.EMP_SALARY_BREAKDOWN,  role: 'EMPLOYEE' },
-    '/employee/reimbursements':{ view: ViewState.EMP_REIMBURSEMENTS,    role: 'EMPLOYEE' },
-    '/employee/tax-documents': { view: ViewState.EMP_TAX_DOCUMENTS,     role: 'EMPLOYEE' },
-    '/employee/loans':         { view: ViewState.EMP_LOANS_ADVANCES,    role: 'EMPLOYEE' },
-    '/employee/payslips':      { view: ViewState.EMP_PAYSLIPS,          role: 'EMPLOYEE' },
-    '/admin/dashboard':        { view: ViewState.DASHBOARD,             role: 'SUPER_ADMIN' },
-    '/admin/payroll':          { view: ViewState.PAYROLL,               role: 'SUPER_ADMIN' },
-    '/admin/tax':              { view: ViewState.TAX,                   role: 'SUPER_ADMIN' },
-    '/admin/salary':           { view: ViewState.SALARY,                role: 'SUPER_ADMIN' },
-    '/admin/template-setup':   { view: ViewState.TEMPLATE_SETUP,        role: 'SUPER_ADMIN' },
-    '/admin/customers':        { view: ViewState.CUSTOMERS,             role: 'SUPER_ADMIN' },
-    '/admin/support':          { view: ViewState.SUPPORT_TICKETS,       role: 'SUPER_ADMIN' },
-    '/admin/schedulers':       { view: ViewState.SCHEDULERS,            role: 'SUPER_ADMIN' },
-    '/admin/portal-data':      { view: ViewState.PORTAL_DATA,          role: 'SUPER_ADMIN' },
-  };
-
-  const VIEW_TO_URL: Partial<Record<ViewState, string>> = {
-    [ViewState.HR_DASHBOARD]:          '/hr/dashboard',
-    [ViewState.HR_EMPLOYEES]:          '/hr/employees',
-    [ViewState.TAX_DECLARATIONS]:      '/hr/tax-declarations',
-    [ViewState.HR_PAYROLL_RUN]:        '/hr/payroll-runs',
-    [ViewState.PAYROLL_APPROVAL]:      '/hr/payroll-approval',
-    [ViewState.HR_DOCUMENTS]:          '/hr/documents',
-    [ViewState.HR_EXPENSES]:           '/hr/expenses',
-    [ViewState.HR_ADD_EXPENSE]:        '/hr/expenses/add',
-    [ViewState.HR_EXPENSES_CONFIG]:    '/hr/expenses/settings',
-    [ViewState.LOANS_ADVANCES]:        '/hr/loans',
-    [ViewState.SETTINGS]:              '/hr/settings/statutory',
-    [ViewState.HR_OPERATIONAL_CONFIG]: '/hr/settings/operational',
-    [ViewState.HR_PAYROLL_REPORTS]:    '/hr/payroll-reports',
-    [ViewState.HR_SALARY_COMPONENTS]:  '/hr/salary-components',
-    [ViewState.EMP_OVERVIEW]:          '/employee/overview',
-    [ViewState.EMP_PAYROLL_CORNER]:    '/employee/overview',
-    [ViewState.EMP_TAX_PLANNING]:      '/employee/tax-planning',
-    [ViewState.EMP_SALARY_BREAKDOWN]:  '/employee/salary-slips',
-    [ViewState.EMP_REIMBURSEMENTS]:    '/employee/reimbursements',
-    [ViewState.EMP_TAX_DOCUMENTS]:     '/employee/tax-documents',
-    [ViewState.EMP_LOANS_ADVANCES]:    '/employee/loans',
-    [ViewState.EMP_PAYSLIPS]:          '/employee/payslips',
-    [ViewState.DASHBOARD]:             '/admin/dashboard',
-    [ViewState.PAYROLL]:               '/admin/payroll',
-    [ViewState.TAX]:                   '/admin/tax',
-    [ViewState.SALARY]:                '/admin/salary',
-    [ViewState.TEMPLATE_SETUP]:        '/admin/template-setup',
-    [ViewState.CUSTOMERS]:             '/admin/customers',
-    [ViewState.SUPPORT_TICKETS]:       '/admin/support',
-    [ViewState.SCHEDULERS]:            '/admin/schedulers',
-    [ViewState.PORTAL_DATA]:           '/admin/portal-data',
-  };
+  // Prevents URL update effect from firing on initial mount before URL sync is done
+  const urlSyncDone = useRef(false);
 
   // Sync currentView from URL on first load
   useEffect(() => {
@@ -176,24 +179,28 @@ const App: React.FC = () => {
       setUserRole(match.role);
       setCurrentView(match.view);
     } else if (/^\/hr\/employees\/[^/]+\/(edit|salary-history)$/.test(path)) {
-      // Dynamic: /hr/employees/:id/edit or /hr/employees/:id/salary-history
       setUserRole('HR_MANAGER');
       setCurrentView(ViewState.HR_EMPLOYEES);
     } else if (/^\/hr\/salary-components\/(add|[^/]+\/edit)$/.test(path)) {
-      // Dynamic: /hr/salary-components/add or /hr/salary-components/:id/edit
       setUserRole('HR_MANAGER');
       setCurrentView(ViewState.HR_SALARY_COMPONENTS);
+    } else {
+      // No known route — push URL for current default view
+      const defaultUrl = VIEW_TO_URL[ViewState.HR_DASHBOARD];
+      if (defaultUrl && path !== defaultUrl) {
+        window.history.pushState({}, '', defaultUrl);
+      }
     }
+    urlSyncDone.current = true;
   }, []);
 
-  // Update URL when view changes
-  // Do NOT overwrite sub-path URLs (e.g. /hr/employees/:id/edit) when parent view is active
+  // Update URL when view changes — skips initial mount to avoid overwriting dynamic URLs
   useEffect(() => {
+    if (!urlSyncDone.current) return;
     const url = VIEW_TO_URL[currentView];
     if (url) {
       const currentPath = window.location.pathname;
-      const alreadyOnSubPath = currentPath !== url && currentPath.startsWith(url + '/');
-      if (!alreadyOnSubPath && currentPath !== url) {
+      if (currentPath !== url && !currentPath.startsWith(url + '/')) {
         window.history.pushState({}, '', url);
       }
     }
