@@ -2391,29 +2391,8 @@ const HRSalaryComponents: React.FC = () => {
         fetchPaygroups();
     }, []);
 
-    const [isAdding, setIsAdding] = useState(() => {
-        const path = window.location.pathname;
-        return path === '/hr/salary-components/add' || /^\/hr\/salary-components\/[^/]+\/edit$/.test(path);
-    });
+    const [isAdding, setIsAdding] = useState(false);
     const [editingComponent, setEditingComponent] = useState<SalaryComponent | null>(null);
-
-    // Sync editing component from URL once components are loaded
-    useEffect(() => {
-        const path = window.location.pathname;
-        const editMatch = path.match(/^\/hr\/salary-components\/([^/]+)\/edit$/);
-        if (editMatch && components.length > 0) {
-            const id = editMatch[1];
-            const found = components.find(c => c.id === id);
-            if (found && (!editingComponent || editingComponent.id !== id)) {
-                setEditingComponent(found);
-                setIsAdding(true);
-                if (found.category === 'Earnings' || found.category === 'Deductions' || found.category === 'Reimbursements') {
-                    setActiveTab(found.category as any);
-                }
-            }
-        }
-    }, [components, editingComponent]);
-
 
     // Lookup Filter state
     const [completedFilters, setCompletedFilters] = useState<any[]>([]);
