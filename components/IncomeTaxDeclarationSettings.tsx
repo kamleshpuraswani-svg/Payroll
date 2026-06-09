@@ -599,7 +599,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const handleSaveProof = async () => {
         const num = parseInt(maxProofDeclRequestsAllowed, 10);
         if (isNaN(num) || num < 1 || num > 100) {
-            alert('Maximum number of declaration requests allowed in a year must be between 1 and 100.');
+            alert('Maximum number of approved declaration requests allowed in a year must be between 1 and 100.');
             return;
         }
 
@@ -2001,7 +2001,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                             <div className="mt-6 pl-1">
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider" style={{ whiteSpace: 'nowrap' }}>
-                                    Maximum number of declaration requests allowed in a year
+                                    Maximum number of approved declaration requests allowed in a year
                                 </label>
                                 <input
                                     type="text"
