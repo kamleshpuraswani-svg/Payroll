@@ -25,7 +25,8 @@ import {
     Share2,
     Plus,
     Check,
-    AlertTriangle
+    AlertTriangle,
+    Upload
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -1639,6 +1640,12 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                             >
                                 <Filter size={16} /> Filter
                             </button>
+                            <button 
+                                onClick={() => alert('Import clicked')}
+                                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px] transition-colors"
+                            >
+                                <Upload size={16} /> Import
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -1656,6 +1663,12 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                             </div>
                             <button className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium flex items-center gap-2 shadow-sm">
                                 <Filter size={16} /> Filter
+                            </button>
+                            <button 
+                                onClick={() => alert('Import clicked')}
+                                className="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
+                            >
+                                <Upload size={16} /> Import
                             </button>
                         </div>
 
