@@ -266,6 +266,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setAllowSwitch(config.allowSwitch ?? true);
                 setSwitchLockDate(config.switchLockDate ? new Date(config.switchLockDate) : new Date(2025, 11, 31));
+                setMaxDeclRequestsAllowed(config.maxDeclRequestsAllowed ?? '3');
                 setNotifyRelease(config.notifyRelease ?? true);
                 setEmailReminder(config.emailReminder ?? false);
                 setNotifyLock(config.notifyLock ?? true);
@@ -391,6 +392,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
     const [allowSwitch, setAllowSwitch] = useState(true);
     const [switchLockDate, setSwitchLockDate] = useState(new Date(2025, 11, 31));
+    const [maxDeclRequestsAllowed, setMaxDeclRequestsAllowed] = useState('3');
 
     // Alerts State
     const [notifyRelease, setNotifyRelease] = useState(true);
@@ -464,7 +466,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             maxTdsCap,
             lateJoinerMonth,
             lateJoinerDay,
-            lockDeclarationsAfterCutoff
+            lockDeclarationsAfterCutoff,
+            maxDeclRequestsAllowed
         });
         setIsEditingInv(true);
     };
@@ -499,12 +502,19 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
             setLateJoinerMonth(invBackup.lateJoinerMonth || 'February');
             setLateJoinerDay(invBackup.lateJoinerDay || '22');
             setLockDeclarationsAfterCutoff(invBackup.lockDeclarationsAfterCutoff ?? true);
+            setMaxDeclRequestsAllowed(invBackup.maxDeclRequestsAllowed ?? '3');
         }
         setIsEditingInv(false);
         setSelectedInvApprover("");
     };
 
     const handleSaveInv = async () => {
+        const num = parseInt(maxDeclRequestsAllowed, 10);
+        if (isNaN(num) || num < 1 || num > 100) {
+            alert('Maximum number of declaration requests allowed in a year must be between 1 and 100.');
+            return;
+        }
+
         try {
             const configValue = {
                 invEnabled, invStartDay, invEndDay, cutoffMonth, cutoffDay, invDeadlineFrom, invDeadlineTo, gracePeriodEnabled, gracePeriodDate, declarationFrequency, 
@@ -517,7 +527,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 proofApprovers, mandateComments, npsIncludeInCtc, npsWageCeiling,
                 lateJoinerMonth, lateJoinerDay,
                 proofCutoffMonth, proofCutoffDay,
-                lockDeclarationsAfterCutoff, proofGracePeriodDays, rejectionReasonMandatory, proofVerificationMonth, proofVerificationDay
+                lockDeclarationsAfterCutoff, proofGracePeriodDays, rejectionReasonMandatory, proofVerificationMonth, proofVerificationDay,
+                maxDeclRequestsAllowed
             };
 
             const { error } = await supabase
@@ -1372,6 +1383,47 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             </label>
                                         ))}
                                     </div>
+                                </div>
+
+                                <div className="mt-6 pl-1">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider" style={{ whiteSpace: 'nowrap' }}>
+                                        Maximum number of declaration requests allowed in a year
+                                    </label>
+                                    <input
+                                        type="text"
+                                        disabled={!isEditingInv}
+                                        value={maxDeclRequestsAllowed}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const cleanVal = val.replace(/\D/g, '');
+                                            if (cleanVal === '') {
+                                                setMaxDeclRequestsAllowed('');
+                                                return;
+                                            }
+                                            const num = parseInt(cleanVal, 10);
+                                            if (num >= 1 && num <= 100) {
+                                                setMaxDeclRequestsAllowed(cleanVal);
+                                            } else if (num > 100) {
+                                                setMaxDeclRequestsAllowed('100');
+                                            } else if (num < 1) {
+                                                setMaxDeclRequestsAllowed(cleanVal);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            if (maxDeclRequestsAllowed === '') {
+                                                setMaxDeclRequestsAllowed('1');
+                                                return;
+                                            }
+                                            const num = parseInt(maxDeclRequestsAllowed, 10);
+                                            if (isNaN(num) || num < 1) {
+                                                setMaxDeclRequestsAllowed('1');
+                                            } else if (num > 100) {
+                                                setMaxDeclRequestsAllowed('100');
+                                            }
+                                        }}
+                                        placeholder="Enter limit (1 - 100)"
+                                        className="w-32 h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
+                                    />
                                 </div>
 
                                 <div className="mt-6 pl-1" style={{ display: 'none' }}>
