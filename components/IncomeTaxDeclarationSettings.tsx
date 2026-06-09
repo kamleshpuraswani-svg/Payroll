@@ -1422,7 +1422,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             }
                                         }}
                                         placeholder="Enter limit (1 - 100)"
-                                        className="w-32 h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
+                                        className="w-64 h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
                                     />
                                 </div>
 
