@@ -383,7 +383,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             roundOffSetting: roundOffSetting,
             taxComputation: isTaxable ? taxComputation : undefined,
             incomeTaxSection: isTaxable ? incomeTaxSection : undefined,
-            sectionMaxLimit: (isTaxable && taxTreatment === 'Fully Taxable') ? sectionMaxLimit : undefined,
+            sectionMaxLimit: (isTaxable && taxTreatment === 'Partially Exempt') ? sectionMaxLimit : undefined,
             nonTaxableLimit: (isTaxable && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined,
             includeInCTC,
             includeInGross,
@@ -962,7 +962,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                             )}
                                         </div>
 
-                                        {taxTreatment === 'Fully Taxable' && (
+                                        {taxTreatment === 'Partially Exempt' && (
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
                                                 <input
@@ -1263,7 +1263,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
             taxable: isTaxableEarning ? taxTreatment as SalaryComponent['taxable'] : 'Tax Deductible',
             taxComputation: isTaxableEarning ? taxComputation : undefined,
             incomeTaxSection: isTaxableEarning ? (isCreatingSection ? customTaxSection : incomeTaxSection) : undefined,
-            sectionMaxLimit: (isTaxableEarning && taxTreatment === 'Fully Taxable') ? sectionMaxLimit : undefined,
+            sectionMaxLimit: (isTaxableEarning && taxTreatment === 'Partially Exempt') ? sectionMaxLimit : undefined,
             nonTaxableLimit: (isTaxableEarning && taxTreatment === 'Partially Exempt') ? nonTaxableLimit : undefined,
         };
 
@@ -1689,7 +1689,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                         )}
                                     </div>
 
-                                    {taxTreatment === 'Fully Taxable' && (
+                                    {taxTreatment === 'Partially Exempt' && (
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
                                             <input

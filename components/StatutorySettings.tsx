@@ -781,26 +781,28 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer's contribution in employee's CTC</span>
                                     </label>
 
-                                    <label className="flex items-start gap-3 cursor-pointer group pt-2">
-                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiProvisionInCtc ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                            {esiProvisionInCtc && <Check size={14} className="text-white stroke-[3]" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={esiProvisionInCtc} onChange={() => isEditing && setEsiProvisionInCtc(!esiProvisionInCtc)} disabled={!isEditing} />
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
-                                                    {userRole === 'HR_MANAGER' ? 'Include employer ESI in payslip' : 'Do you want to provision employer ESI in CTC?'}
-                                                </span>
-                                                <div className="group relative inline-block">
-                                                    <Info size={14} className="text-slate-400 cursor-help" />
-                                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-left leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                        When enabled, the employer's ESI contribution (3.25% of gross salary) is included as part of the employee's CTC package. This ensures the total cost-to-company reflects the actual expense borne by the employer.
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                    {includeEmprContriEsi && (
+                                        <label className="flex items-start gap-3 cursor-pointer group pt-2 ml-8 animate-in fade-in slide-in-from-top-2">
+                                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiProvisionInCtc ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                {esiProvisionInCtc && <Check size={14} className="text-white stroke-[3]" />}
+                                            </div>
+                                            <input type="checkbox" className="hidden" checked={esiProvisionInCtc} onChange={() => isEditing && setEsiProvisionInCtc(!esiProvisionInCtc)} disabled={!isEditing} />
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
+                                                        {userRole === 'HR_MANAGER' ? 'Include employer ESI in payslip' : 'Do you want to provision employer ESI in CTC?'}
+                                                    </span>
+                                                    <div className="group relative inline-block">
+                                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-left leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                            When enabled, the employer's ESI contribution (3.25% of gross salary) is included as part of the employee's CTC package. This ensures the total cost-to-company reflects the actual expense borne by the employer.
+                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </label>
+                                        </label>
+                                    )}
 
                                     <label className="flex items-start gap-3 cursor-pointer group pt-2">
                                         <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${esiNegativeArrearImpact ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
@@ -1081,8 +1083,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                          />
                                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include Gratuity in employee's CTC</span>
                                      </label>
-                                     {userRole === 'HR_MANAGER' && (
-                                         <div className="mt-4">
+                                     {includeInCtcGratuity && userRole === 'HR_MANAGER' && (
+                                         <div className="mt-4 ml-8 animate-in fade-in slide-in-from-top-2">
                                              <label className="flex items-center gap-3 cursor-pointer group w-fit">
                                                  <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${includeGratuityInPayslip ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
                                                      {includeGratuityInPayslip && <Check size={14} className="text-white stroke-[3]" />}
@@ -1377,15 +1379,17 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include LWF employer contribution in employee's CTC</span>
                                     </label>
 
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProvisionCtc ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
-                                            {lwfProvisionCtc && <Check size={14} className="text-white stroke-[3]" />}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={lwfProvisionCtc} onChange={() => isEditing && setLwfProvisionCtc(!lwfProvisionCtc)} disabled={!isEditing} />
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
-                                            {userRole === 'HR_MANAGER' ? "Include LWF Employer's contribution in payslip" : 'Include LWF contribution in CTC'}
-                                        </span>
-                                    </label>
+                                    {lwfProvisionEmployerCtc && (
+                                        <label className="flex items-center gap-3 cursor-pointer group ml-8 animate-in fade-in slide-in-from-top-2">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${lwfProvisionCtc ? 'bg-sky-600 border-sky-600 shadow-sm shadow-sky-200' : 'bg-white border-slate-300 group-hover:border-slate-400'}`}>
+                                                {lwfProvisionCtc && <Check size={14} className="text-white stroke-[3]" />}
+                                            </div>
+                                            <input type="checkbox" className="hidden" checked={lwfProvisionCtc} onChange={() => isEditing && setLwfProvisionCtc(!lwfProvisionCtc)} disabled={!isEditing} />
+                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
+                                                {userRole === 'HR_MANAGER' ? "Include LWF Employer's contribution in payslip" : 'Include LWF contribution in CTC'}
+                                            </span>
+                                        </label>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -1722,8 +1726,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                         <input type="checkbox" className="hidden" checked={npsIncludeInCtc} onChange={() => isEditing && setNpsIncludeInCtc(!npsIncludeInCtc)} disabled={!isEditing} />
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer contribution in employee's CTC</span>
                                     </label>
-                                    {userRole === 'HR_MANAGER' && (
-                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                    {npsIncludeInCtc && userRole === 'HR_MANAGER' && (
+                                        <label className="flex items-center gap-3 cursor-pointer group ml-8 animate-in fade-in slide-in-from-top-2">
                                             <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${npsIncludeEmployerInPayslip ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
                                                 {npsIncludeEmployerInPayslip && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                             </div>

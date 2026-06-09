@@ -61,6 +61,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [aadhaarNumber, setAadhaarNumber] = useState('');
    const [uanNumber, setUanNumber] = useState('');
    const [pfNumber, setPfNumber] = useState('');
+   const [esiNumber, setEsiNumber] = useState('');
    const [pranNumber, setPranNumber] = useState('');
 
    const [ctc, setCtc] = useState<number>(0);
@@ -305,12 +306,15 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    if (configData.config_value.appraisal_month) {
                       setAppraisalMonth(configData.config_value.appraisal_month);
                    }
-                   if (configData.config_value.pf_no) {
-                      setPfNumber(configData.config_value.pf_no);
-                   }
-                   if (configData.config_value.pran_no) {
-                      setPranNumber(configData.config_value.pran_no);
-                   }
+                    if (configData.config_value.pf_no) {
+                       setPfNumber(configData.config_value.pf_no);
+                    }
+                    if (configData.config_value.esi_no) {
+                       setEsiNumber(configData.config_value.esi_no);
+                    }
+                    if (configData.config_value.pran_no) {
+                       setPranNumber(configData.config_value.pran_no);
+                    }
                    if (configData.config_value.salary_input_basis) {
                       setSalaryInputBasis(configData.config_value.salary_input_basis);
                    }
@@ -669,6 +673,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   arrears_payout_month: arrearsPayoutDate,
                   appraisal_month: appraisalMonth,
                   pf_no: pfNumber,
+                  esi_no: esiNumber,
                   pran_no: pranNumber,
                   salary_input_basis: salaryInputBasis
                },
@@ -1092,6 +1097,23 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">UAN Number {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                         <input type="text" value={uanNumber} onChange={(e) => setUanNumber(e.target.value)} disabled={isReadOnly} className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} />
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">ESI Number</label>
+                        <input 
+                           type="text" 
+                           value={esiNumber} 
+                           onChange={(e) => {
+                              const val = e.target.value;
+                              const cleanVal = val.replace(/\D/g, '');
+                              if (cleanVal.length <= 10) {
+                                 setEsiNumber(cleanVal);
+                              }
+                           }} 
+                           disabled={isReadOnly} 
+                           placeholder="Enter ESI Number" 
+                           className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${isReadOnly ? 'bg-slate-50' : ''}`} 
+                        />
                      </div>
                      <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tax Regime {!isReadOnly && <span className="text-rose-500">*</span>}</label>
