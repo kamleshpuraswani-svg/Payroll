@@ -12,6 +12,34 @@ const BUSINESS_UNITS = [
     "CollabCRM"
 ];
 
+const FALLBACK_EMPLOYEES = [
+    "Amit Verma",
+    "Rajesh Kumar",
+    "Sunita Gupta",
+    "Kavita Sharma",
+    "Vikram Singh",
+    "Anjali Mehta"
+];
+
+const FALLBACK_DESIGNATIONS = [
+    "Software Engineer",
+    "Senior Software Engineer",
+    "Tech Lead",
+    "Product Manager",
+    "Designer",
+    "Senior Designer",
+    "Accountant",
+    "Finance Manager",
+    "HR Associate",
+    "HR Manager",
+    "Sales Lead",
+    "Sales Executive",
+    "QA Analyst",
+    "Business Analyst",
+    "Operations Manager",
+    "Director"
+];
+
 const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     // Selection State
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
@@ -73,6 +101,8 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [respName, setRespName] = useState('Rajesh Kumar');
     const [respDesg, setRespDesg] = useState('Finance Manager');
     const [respEmail, setRespEmail] = useState('rajesh.k@techflow.com');
+    const [employeesList, setEmployeesList] = useState<string[]>([]);
+    const [designationsList, setDesignationsList] = useState<string[]>([]);
 
     // Backup states
     const [backupPf, setBackupPf] = useState<any>(null);
@@ -105,10 +135,32 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         }
     };
 
+    const fetchEmployeesAndDesignations = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('employees')
+                .select('name, designation')
+                .eq('status', 'Active');
+            if (error) throw error;
+            if (data) {
+                const sortedEmps = data
+                    .map((e: any) => e.name)
+                    .filter(Boolean)
+                    .sort();
+                const sortedDesigs = Array.from(new Set(data.map((e: any) => e.designation).filter(Boolean))).sort() as string[];
+                setEmployeesList(sortedEmps);
+                setDesignationsList(sortedDesigs);
+            }
+        } catch (err) {
+            console.error('Error fetching employees and designations for PF/TDS settings:', err);
+        }
+    };
+
     useEffect(() => {
         fetchPaygroups();
         fetchSettings();
         fetchEarningComponents();
+        fetchEmployeesAndDesignations();
     }, [selectedTarget]);
 
     useEffect(() => {
@@ -1119,20 +1171,10 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
                                     {enableTds && (
                                         <div className="space-y-10 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="grid grid-cols-1 gap-10">
                                                 <div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN (Tax Deduction Account Number) <span className="text-rose-500">*</span></label>
-                                                    <input type="text" value={tan} onChange={e => setTan(e.target.value)} disabled={!isEditingTds} className="w-full md:w-64 px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:normal-case disabled:opacity-70" placeholder="e.g., DELA12345B" />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Default Tax Regime <span className="text-rose-500">*</span></label>
-                                                    <div className="relative w-full md:w-64">
-                                                        <select value={defaultRegime} onChange={e => setDefaultRegime(e.target.value)} disabled={true} className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-indigo-500/20 transition-all opacity-70 ring-offset-2 ring-offset-white ring-1 ring-slate-100 cursor-not-allowed">
-                                                            <option>New Regime</option>
-                                                            <option>Old Regime</option>
-                                                        </select>
-                                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                    </div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN Number <span className="text-rose-500">*</span></label>
+                                                    <input type="text" value={tan} onChange={e => setTan(e.target.value)} disabled={!isEditingTds} className="w-full md:w-80 px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:normal-case disabled:opacity-70" placeholder="e.g., DELA12345B" />
                                                 </div>
                                             </div>
 
@@ -1141,21 +1183,43 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                     <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                                                         <User size={18} strokeWidth={2.5} />
                                                     </div>
-                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person (TRACES) <span className="text-rose-500">*</span></h4>
+                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person <span className="text-rose-500">*</span></h4>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-4">
                                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Full Name <span className="text-rose-500">*</span></label>
                                                         <div className="relative group">
-                                                            <input type="text" value={respName} onChange={e => setRespName(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="e.g. Rajesh Kumar" />
+                                                            <select
+                                                                value={respName}
+                                                                onChange={e => setRespName(e.target.value)}
+                                                                disabled={!isEditingTds}
+                                                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                            >
+                                                                <option value="">Select Employee...</option>
+                                                                {(employeesList.length > 0 ? employeesList : FALLBACK_EMPLOYEES).map(emp => (
+                                                                    <option key={emp} value={emp}>{emp}</option>
+                                                                ))}
+                                                            </select>
                                                             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
+                                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                                         </div>
                                                     </div>
                                                     <div className="space-y-4">
                                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Designation <span className="text-rose-500">*</span></label>
                                                         <div className="relative group">
-                                                            <input type="text" value={respDesg} onChange={e => setRespDesg(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="e.g. Finance Head" />
+                                                            <select
+                                                                value={respDesg}
+                                                                onChange={e => setRespDesg(e.target.value)}
+                                                                disabled={!isEditingTds}
+                                                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                            >
+                                                                <option value="">Select Designation...</option>
+                                                                {(designationsList.length > 0 ? designationsList : FALLBACK_DESIGNATIONS).map(desg => (
+                                                                    <option key={desg} value={desg}>{desg}</option>
+                                                                ))}
+                                                            </select>
                                                             <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
+                                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                                         </div>
                                                     </div>
                                                     <div className="space-y-4">

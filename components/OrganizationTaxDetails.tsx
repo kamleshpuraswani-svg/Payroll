@@ -354,7 +354,7 @@ const OrganizationTaxDetails: React.FC = () => {
                                         <input type="text" value={tanNumber} onChange={e => setTanNumber(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">GSTIN <span className="text-rose-500">*</span></label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">GST Number <span className="text-rose-500">*</span></label>
                                         <input type="text" value={gstin} onChange={e => setGstin(e.target.value)} disabled={!isEditing} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-700 uppercase focus:outline-none focus:border-sky-500" />
                                     </div>
                                 </div>

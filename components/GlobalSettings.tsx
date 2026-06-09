@@ -31,6 +31,7 @@ import StatutorySettings from './StatutorySettings';
 import StatutoryBonusSettings from './StatutoryBonusSettings';
 import IncomeTaxDeclarationSettings from './IncomeTaxDeclarationSettings';
 import TDSSettings from './TDSSettings';
+import ChallanSettings from './ChallanSettings';
 import LoanAdvancesTypes from './LoanAdvancesTypes';
 import FnFSettlementTemplate from './FnFSettlementTemplate';
 import ExpenseSettings from './ExpenseSettings';
@@ -58,6 +59,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'pf-tds', label: 'PF & TDS Settings', icon: Landmark },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
+      { id: 'challan', label: 'Challan', icon: FileText },
       ...(userRole === 'HR_MANAGER' ? [] : [
          { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
          { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
@@ -85,6 +87,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          case 'tds-settings': return <TDSSettings />;
          case 'statutory-bonus': return <StatutoryBonusSettings />;
          case 'it-declaration': return <IncomeTaxDeclarationSettings />;
+         case 'challan': return <ChallanSettings />;
          default: return <div className="p-8">Select a module</div>;
       }
    };
