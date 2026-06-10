@@ -100,8 +100,14 @@ const MODULES_TREE: ModuleRow[] = [
   { id: 'payroll-emp-comp', name: 'Employees Compensation', isParent: false, parentId: 'payroll-runs-parent', hasAddEdit: true },
   { id: 'payroll-tax-decl', name: 'Tax Declarations', isParent: false, parentId: 'payroll-runs-parent', hasAddEdit: true },
   { id: 'payroll-runs-child', name: 'Payroll Runs', isParent: false, parentId: 'payroll-runs-parent', hasAddEdit: true },
-  { id: 'salary-structures', name: 'Salary Structures', isParent: false, parentId: 'payroll', hasAddEdit: true },
-  { id: 'payroll-config', name: 'Operational Config', isParent: false, parentId: 'payroll', hasAddEdit: false }
+  
+  { id: 'payroll-configuration-parent', name: 'Configuration', isParent: true, parentId: 'payroll', hasAddEdit: false },
+  { id: 'salary-structures', name: 'Configuration', isParent: false, parentId: 'payroll-configuration-parent', hasAddEdit: true },
+  { id: 'payroll-config', name: 'Operational Config', isParent: false, parentId: 'payroll-configuration-parent', hasAddEdit: false },
+  
+  { id: 'payroll-expenses-loans-parent', name: 'Expenses & Loans', isParent: true, parentId: 'payroll', hasAddEdit: false },
+  { id: 'hr-expenses', name: 'Expense Management', isParent: false, parentId: 'payroll-expenses-loans-parent', hasAddEdit: true },
+  { id: 'hr-loans', name: 'Loans & Advances', isParent: false, parentId: 'payroll-expenses-loans-parent', hasAddEdit: true }
 ];
 
 type SortField = 'name' | 'status' | 'employeesCount' | 'lastModifiedBy' | 'createdBy';
@@ -131,7 +137,7 @@ const RolesPermissions: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'permissions' | 'employees'>('permissions');
   
   // Accordion Expand/Collapse
-  const [expandedParents, setExpandedParents] = useState<string[]>(['people', 'payroll-corner', 'payroll-runs-parent', 'payroll']);
+  const [expandedParents, setExpandedParents] = useState<string[]>(['people', 'payroll-corner', 'payroll-runs-parent', 'payroll', 'payroll-configuration-parent', 'payroll-expenses-loans-parent']);
 
   // Role Switching Dropdown State
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -234,7 +240,43 @@ const RolesPermissions: React.FC = () => {
         }
 
         if (matrixData && matrixData.config_value) {
-          setRolePermissions(matrixData.config_value as Record<string, Record<string, PermissionRowSettings>>);
+          const dbMatrix = matrixData.config_value as Record<string, Record<string, PermissionRowSettings>>;
+          
+          // Ensure every role in dbMatrix has all modules from MODULES_TREE
+          const updatedMatrix = { ...dbMatrix };
+          Object.keys(updatedMatrix).forEach(roleId => {
+            const rolePerms = { ...updatedMatrix[roleId] };
+            let hasChanges = false;
+            
+            MODULES_TREE.forEach(mod => {
+              if (!rolePerms[mod.id]) {
+                hasChanges = true;
+                if (roleId === '2') { // HR Manager
+                  rolePerms[mod.id] = {
+                    status: true,
+                    viewScope: 'Global',
+                    add: mod.hasAddEdit,
+                    edit: mod.hasAddEdit,
+                    delete: mod.hasAddEdit
+                  };
+                } else { // Employee or others
+                  rolePerms[mod.id] = {
+                    status: false,
+                    viewScope: null,
+                    add: false,
+                    edit: false,
+                    delete: false
+                  };
+                }
+              }
+            });
+            
+            if (hasChanges) {
+              updatedMatrix[roleId] = rolePerms;
+            }
+          });
+          
+          setRolePermissions(updatedMatrix);
         } else {
           // If not found in DB, seed default permissions map to DB
           const initialMap: Record<string, Record<string, PermissionRowSettings>> = {};
@@ -476,18 +518,21 @@ const RolesPermissions: React.FC = () => {
 
     if (!selectedParentId) return MODULES_TREE;
 
-    // Filter to show parent module and all its children/descendants
+    // Helper to check if a module is a descendant of the target parent
+    const isDescendantOf = (modId: string, targetId: string): boolean => {
+      const mod = MODULES_TREE.find(m => m.id === modId);
+      let currentParentId = mod?.parentId;
+      while (currentParentId) {
+        if (currentParentId === targetId) return true;
+        const parentMod = MODULES_TREE.find(m => m.id === currentParentId);
+        currentParentId = parentMod?.parentId;
+      }
+      return false;
+    };
+
     return MODULES_TREE.filter(mod => {
       if (mod.id === selectedParentId) return true;
-      if (mod.parentId === selectedParentId) return true;
-      if (selectedParentId === 'people') {
-        // Return true for everything EXCEPT payroll and its children
-        return mod.id !== 'payroll' && mod.parentId !== 'payroll';
-      }
-      if (selectedParentId === 'employees' && mod.parentId === 'employees') return true;
-      if (selectedParentId === 'emp-detail' && mod.parentId === 'emp-detail') return true;
-      if (selectedParentId === 'payroll' && mod.parentId === 'payroll') return true;
-      return false;
+      return isDescendantOf(mod.id, selectedParentId);
     });
   }, [selectedParentFilter]);
 
@@ -852,13 +897,17 @@ const RolesPermissions: React.FC = () => {
 
                     const mPerm = currentPerms[mod.id] || { status: false, viewScope: null, add: false, edit: false, delete: false };
                     
-                    // Determine if child is disabled because parent is toggled off
+                    // Determine if child is disabled because parent or any ancestor is toggled off
                     let isParentOff = false;
-                    if (mod.parentId && mod.parentId !== 'people') {
-                      const parentPerm = currentPerms[mod.parentId];
+                    let currentParentId = mod.parentId;
+                    while (currentParentId && currentParentId !== 'people') {
+                      const parentPerm = currentPerms[currentParentId];
                       if (parentPerm && !parentPerm.status) {
                         isParentOff = true;
+                        break;
                       }
+                      const parentMod = MODULES_TREE.find(m => m.id === currentParentId);
+                      currentParentId = parentMod?.parentId;
                     }
 
                     // Tree branch depth styles

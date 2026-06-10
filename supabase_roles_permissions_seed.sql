@@ -56,8 +56,17 @@ VALUES (
         "emp-loans-advances": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Default"},
         "payroll": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
         "pay-schedule": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-runs-parent": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-dash": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-emp-comp": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-tax-decl": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-runs-child": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-configuration-parent": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
         "salary-structures": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
-        "payroll-config": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null}
+        "payroll-config": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "payroll-expenses-loans-parent": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "hr-expenses": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null},
+        "hr-loans": {"add": false, "edit": false, "status": false, "delete": false, "viewScope": null}
       },
       "2": {
         "people": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
@@ -78,8 +87,17 @@ VALUES (
         "emp-loans-advances": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
         "payroll": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
         "pay-schedule": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
+        "payroll-runs-parent": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
+        "payroll-dash": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
+        "payroll-emp-comp": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
+        "payroll-tax-decl": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
+        "payroll-runs-child": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
+        "payroll-configuration-parent": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
         "salary-structures": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
-        "payroll-config": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"}
+        "payroll-config": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
+        "payroll-expenses-loans-parent": {"add": false, "edit": false, "status": true, "delete": false, "viewScope": "Global"},
+        "hr-expenses": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"},
+        "hr-loans": {"add": true, "edit": true, "status": true, "delete": true, "viewScope": "Global"}
       }
     }'::jsonb
 )

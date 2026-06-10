@@ -572,7 +572,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
         const newErrors: any = {};
         if (!structureName.trim()) newErrors.name = 'Structure Name is required';
         if (earnings.length === 0) newErrors.earnings = 'At least one earning component is required';
-        if (deductions.length === 0) newErrors.deductions = 'At least one deduction component is required';
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -694,10 +693,6 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     };
 
     const confirmDelete = (id: string) => {
-        if (id.startsWith('mock-')) {
-            alert('Default structures cannot be deleted.');
-            return;
-        }
         setDeleteConfirmation({ isOpen: true, id });
     };
 
@@ -706,31 +701,53 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
 
         const id = deleteConfirmation.id;
         
-        // Real-time check for assigned employees in the database to prevent FK constraint errors
-        const { count, error: countError } = await supabase
-            .from('employees')
-            .select('*', { count: 'exact', head: true })
-            .eq('salary_structure_id', id);
+        if (!id.startsWith('mock-')) {
+            // Real-time check for assigned employees in the database to prevent FK constraint errors
+            const { count, error: countError } = await supabase
+                .from('employees')
+                .select('*', { count: 'exact', head: true })
+                .eq('salary_structure_id', id);
 
-        if (count && count > 0) {
-            alert(`Cannot delete this structure because it is currently assigned to ${count} employee(s). Please unassign these employees before deleting the structure.`);
-            setDeleteConfirmation({ isOpen: false, id: null });
-            return;
+            if (count && count > 0) {
+                alert(`Cannot delete this structure because it is currently assigned to ${count} employee(s). Please unassign these employees before deleting the structure.`);
+                setDeleteConfirmation({ isOpen: false, id: null });
+                return;
+            }
         }
 
         try {
-            const { error } = await supabase.from('salary_structures').delete().eq('id', id);
-            
-            if (error) {
-                console.error("Error deleting structure:", error);
-                alert(`Failed to delete structure: ${error.message}`);
+            if (id.startsWith('mock-')) {
+                const mockObj = allFilteredStructures.find(s => s.id === id);
+                if (mockObj) {
+                    const payload = {
+                        name: mockObj.name,
+                        description: mockObj.description || '',
+                        departments: mockObj.departments || [],
+                        designations: mockObj.designations || [],
+                        status: 'Archived',
+                        earnings: mockObj.earnings || [],
+                        deductions: mockObj.deductions || [],
+                        benefits: mockObj.benefits || [],
+                        reimbursements: mockObj.reimbursements || [],
+                        target_id: mockObj.targetId || null,
+                        target_type: mockObj.targetType || null
+                    };
+                    const { error } = await supabase.from('salary_structures').insert([payload]);
+                    if (error) throw error;
+                }
             } else {
-                await fetchStructures();
-                alert('Salary structure deleted successfully.');
+                const { error } = await supabase
+                    .from('salary_structures')
+                    .update({ status: 'Archived' })
+                    .eq('id', id);
+                if (error) throw error;
             }
+            
+            await fetchStructures();
+            alert('Salary structure deleted successfully.');
         } catch (err: any) {
-            console.error("Unexpected error deleting structure:", err);
-            alert(`An unexpected error occurred: ${err.message}`);
+            console.error("Error deleting structure:", err);
+            alert(`Failed to delete structure: ${err.message}`);
         } finally {
             setDeleteConfirmation({ isOpen: false, id: null });
         }
@@ -740,7 +757,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
     const desgInfo = "If no designation is selected, it will be assigned to all the designations.";
 
     const allFilteredStructures = React.useMemo(() => {
-        let allS = [...structures];
+        let allS = structures.filter(s => s.status !== 'Archived');
         if (selectedTarget !== 'all') {
             const [targetTypeRaw, targetId] = selectedTarget.split(':');
             const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
@@ -765,9 +782,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 targetId: targetId 
             }));
             
-            allS = [...defaultsForTarget, ...savedForTarget];
+            const activeSavedForTarget = savedForTarget.filter(s => s.status !== 'Archived');
+            allS = [...defaultsForTarget, ...activeSavedForTarget];
         } else {
-            allS = structures.filter(s => !s.targetId);
+            allS = allS.filter(s => !s.targetId);
         }
 
         if (!searchQuery) return allS;
