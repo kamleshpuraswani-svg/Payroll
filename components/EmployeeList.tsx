@@ -1902,6 +1902,11 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Success and failure state for step 3 Results screen
+    const [successCount, setSuccessCount] = useState(0);
+    const [failureCount, setFailureCount] = useState(0);
+    const [failedRecords, setFailedRecords] = useState<any[]>([]);
+
     useEffect(() => {
         if (!isOpen) {
             setStep(1);
@@ -1910,6 +1915,9 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             setIsUploading(false);
             setUploadProgress(0);
             setIsSaving(false);
+            setSuccessCount(0);
+            setFailureCount(0);
+            setFailedRecords([]);
         }
     }, [isOpen]);
 
@@ -2033,6 +2041,14 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
         }
     };
 
+    const handleDownloadFailedRecords = () => {
+        if (failedRecords.length === 0) return;
+        const ws = XLSX.utils.json_to_sheet(failedRecords);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Failed Records");
+        XLSX.writeFile(wb, "employees_import_failed_records.xlsx");
+    };
+
     const handleImport = async () => {
         setIsSaving(true);
         try {
@@ -2064,23 +2080,40 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 });
             }
 
-            // 4. Map rows
+            // 4. Map rows and validate
             const employeesToUpsert: any[] = [];
             const configsToUpsert: any[] = [];
+            const failures: any[] = [];
 
             parsedData.forEach(row => {
+                const errors: string[] = [];
+                
                 const eid = String(getExcelValue(row, "Employee Code", "eid")).trim();
-                if (!eid) return; // skip rows with no employee code
+                const name = String(getExcelValue(row, "Employee Name", "name")).trim();
+                const department = String(getExcelValue(row, "Department")).trim();
+                const designation = String(getExcelValue(row, "Designation")).trim();
+                const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
+                const effectiveFrom = getExcelValue(row, "Effective From", "join_date");
+
+                if (!eid) errors.push("Employee Code is required");
+                if (!name) errors.push("Employee Name is required");
+                if (!department) errors.push("Department is required");
+                if (!designation) errors.push("Designation is required");
+                if (ctcVal <= 0) errors.push("Annual CTC must be greater than 0");
+                if (!effectiveFrom) errors.push("Effective From date is required");
+
+                if (errors.length > 0) {
+                    failures.push({
+                        ...row,
+                        "Error Reason": errors.join(", ")
+                    });
+                    return; // skip this row for import
+                }
 
                 const employeeId = eidToIdMap[eid] || (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
-                const name = String(getExcelValue(row, "Employee Name", "name")).trim() || "N/A";
-                const department = String(getExcelValue(row, "Department")).trim() || "N/A";
-                const designation = String(getExcelValue(row, "Designation")).trim() || "N/A";
                 const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim() || "CollabCRM";
                 const status = mapStatus(getExcelValue(row, "Status"));
-                
-                const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
-                const effectiveFrom = formatDate(getExcelValue(row, "Effective From", "join_date"));
+                const formattedDate = formatDate(effectiveFrom);
                 
                 const isPf = String(getExcelValue(row, "Provident Fund Applicable?")).toLowerCase().trim() === "yes";
                 const isEsi = String(getExcelValue(row, "ESI Applicable?")).toLowerCase().trim() === "yes";
@@ -2118,10 +2151,10 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                     designation,
                     location: businessUnit,
                     ctc: String(ctcVal),
-                    join_date: effectiveFrom,
+                    join_date: formattedDate,
                     status,
                     salary_structure_id: structureId,
-                    effective_date: effectiveFrom,
+                    effective_date: formattedDate,
                     tax_regime: taxRegime,
                     pan_no: panNumber,
                     aadhaar_no: aadhaarNumber,
@@ -2148,18 +2181,18 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 });
             });
 
-            if (employeesToUpsert.length === 0) {
-                alert("No valid employee records could be parsed from the file.");
-                setIsSaving(false);
-                return;
+            setSuccessCount(employeesToUpsert.length);
+            setFailureCount(failures.length);
+            setFailedRecords(failures);
+
+            if (employeesToUpsert.length > 0) {
+                // Upsert into Supabase
+                const { error: empError } = await supabase.from('employees').upsert(employeesToUpsert, { onConflict: 'eid' });
+                if (empError) throw empError;
+
+                const { error: configError } = await supabase.from('operational_config').upsert(configsToUpsert, { onConflict: 'config_key' });
+                if (configError) throw configError;
             }
-
-            // 5. Upsert into Supabase
-            const { error: empError } = await supabase.from('employees').upsert(employeesToUpsert, { onConflict: 'eid' });
-            if (empError) throw empError;
-
-            const { error: configError } = await supabase.from('operational_config').upsert(configsToUpsert, { onConflict: 'config_key' });
-            if (configError) throw configError;
 
             // 6. Refetch and advance step
             if (onImportSuccess) onImportSuccess();
@@ -2228,10 +2261,10 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                         {/* Step 3: Results */}
                         <div className="flex flex-col items-center relative">
                             <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 3 ? 'border-indigo-600' : 'border-slate-300'
+                                step === 3 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
                             }`}>
                                 {step === 3 ? (
-                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
+                                    <Check size={16} strokeWidth={3} />
                                 ) : null}
                             </div>
                             <span className={`text-xs mt-2 transition-all ${step === 3 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
@@ -2332,13 +2365,13 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                 </div>
                             ) : (
                                 <div className="space-y-6 text-center animate-in fade-in">
-                                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                                    <div className="w-16 h-16 bg-violet-50 text-violet-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
                                         <Check size={28} strokeWidth={3} />
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-slate-800">File Processed Successfully!</h4>
-                                        <p className="text-sm text-slate-500 mt-2">File name: <span className="font-semibold text-slate-700">{file?.name}</span></p>
-                                        <p className="text-xs text-slate-400 mt-1">({file ? Math.round(file.size / 1024) : 0} KB • Ready for DB integration)</p>
+                                        <p className="text-sm text-slate-500 mt-2">File name: <span className="font-semibold text-slate-700 font-mono">{file?.name}</span></p>
+                                        <p className="text-xs text-slate-400 mt-1">({file ? (file.size >= 1024 ? `${Math.round(file.size / 1024)} KB` : `${file.size} Bytes`) : '0 KB'} • Ready for DB integration)</p>
                                     </div>
                                 </div>
                             )}
@@ -2346,14 +2379,62 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                     )}
 
                     {step === 3 && (
-                        <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center animate-in fade-in duration-200">
-                            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
-                                <CheckCircle size={32} strokeWidth={3} />
+                        <div className="w-full space-y-6 animate-in fade-in duration-300">
+                            {/* Alert Banner */}
+                            {failureCount > 0 ? (
+                                <div className="w-full bg-amber-50/50 border border-amber-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                    <div className="p-1 bg-amber-100 rounded-full text-amber-600 shrink-0">
+                                        <Info size={18} />
+                                    </div>
+                                    <div className="text-sm font-semibold text-amber-800">
+                                        Some records failed to import. Please review and correct them.
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="w-full bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                    <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0">
+                                        <CheckCircle size={18} />
+                                    </div>
+                                    <div className="text-sm font-semibold text-emerald-800">
+                                        All records imported successfully!
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Success Card */}
+                                <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-sm">
+                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/50 shrink-0">
+                                        <Check size={28} strokeWidth={3} />
+                                    </div>
+                                    <div className="text-sm font-bold text-slate-700 leading-tight">
+                                        {successCount} record(s) imported successfully.
+                                    </div>
+                                </div>
+
+                                {/* Failure Card */}
+                                <div className="border border-slate-200 bg-white rounded-xl p-6 flex flex-col justify-center gap-3 shadow-sm min-h-[110px]">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 border border-rose-100/50 shrink-0">
+                                            <X size={28} strokeWidth={3} />
+                                        </div>
+                                        <div className="text-sm font-bold text-slate-700 leading-tight">
+                                            {failureCount} record(s) failed to import.
+                                        </div>
+                                    </div>
+                                    {failureCount > 0 && (
+                                        <div className="pl-21">
+                                            <button
+                                                onClick={handleDownloadFailedRecords}
+                                                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-xs transition-all flex items-center gap-2 mt-1 cursor-pointer"
+                                            >
+                                                <Download size={14} /> Download Failed Records
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <h2 className="text-xl font-bold text-slate-800 mb-2">Import Complete!</h2>
-                            <p className="text-sm text-slate-500 max-w-md leading-relaxed">
-                                Successfully verified, created, and finalized <span className="font-bold text-slate-800">{parsedData.length} employee record{parsedData.length !== 1 ? 's' : ''}</span> in the database.
-                            </p>
                         </div>
                     )}
                 </div>
@@ -2384,14 +2465,14 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                 <button
                                     onClick={handleBack}
                                     disabled={isSaving}
-                                    className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm disabled:opacity-50 animate-in fade-in"
+                                    className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition-all text-sm disabled:opacity-50 animate-in fade-in"
                                 >
                                     Back
                                 </button>
                                 <button
                                     onClick={handleImport}
                                     disabled={isUploading || isSaving}
-                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-sm shadow-md disabled:opacity-50 animate-in fade-in"
+                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all text-sm shadow-md disabled:opacity-50 animate-in fade-in"
                                 >
                                     {isSaving ? 'Importing...' : 'Finish & Import'}
                                 </button>
@@ -2401,9 +2482,9 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                         {step === 3 && (
                             <button
                                 onClick={onClose}
-                                className="px-8 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all text-sm shadow-sm animate-in fade-in"
+                                className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all text-sm shadow-md animate-in fade-in"
                             >
-                                Close
+                                Done
                             </button>
                         )}
                     </div>
