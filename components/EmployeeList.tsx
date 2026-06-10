@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import {
     Search,
     Filter,
@@ -1923,22 +1924,19 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
 
     if (!isOpen) return null;
 
-    const handleDownloadSample = () => {
+    const handleDownloadSample = async () => {
         const headers = [
             "Employee Code",
             "Employee Name",
-            "Department",
-            "Designation",
             "Business Unit",
-            "Status",
             "Salary Structure",
             "Annual CTC (₹)",
             "Effective From",
-            "Provident Fund Applicable?",
-            "ESI Applicable?",
-            "Gratuity Applicable?",
-            "Labour Welfare Fund Applicable?",
-            "National Pension System Applicable?",
+            "Provident Fund",
+            "ESI",
+            "Gratuity",
+            "Labour Welfare Fund",
+            "National Pension System",
             "PAN Number",
             "Aadhaar Number",
             "PF Number",
@@ -1952,10 +1950,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             [
                 "CO-059",
                 "Sachin Tendulkar",
-                "Engineering",
-                "Cloud Architect",
                 "CollabCRM",
-                "Active",
                 "Executive Structure",
                 1800000,
                 "2026-06-01",
@@ -1974,15 +1969,80 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             ]
         ];
 
-        // Create worksheet
-        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-        
-        // Create workbook
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Employees Compensation");
-        
-        // Save and trigger file download
-        XLSX.writeFile(wb, "employees_compensation_sample.xlsx");
+        // Create workbook & worksheet using ExcelJS
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Employees Compensation");
+
+        // Define columns
+        worksheet.columns = headers.map(header => ({
+            header,
+            key: header,
+            width: header.length + 5
+        }));
+
+        // Add rows
+        rows.forEach(row => {
+            worksheet.addRow(row);
+        });
+
+        // Set mandatory columns and style them (red text, bold)
+        const mandatoryHeaders = [
+            "Employee Code",
+            "Employee Name",
+            "Business Unit",
+            "Salary Structure",
+            "Annual CTC (₹)",
+            "Effective From",
+            "Provident Fund",
+            "ESI",
+            "Gratuity",
+            "Labour Welfare Fund",
+            "National Pension System",
+            "PAN Number",
+            "Tax Regime"
+        ];
+
+        // Format headers row
+        const firstRow = worksheet.getRow(1);
+        headers.forEach((header, index) => {
+            const cell = firstRow.getCell(index + 1);
+            if (mandatoryHeaders.includes(header)) {
+                cell.font = {
+                    name: 'Segoe UI',
+                    size: 11,
+                    bold: true,
+                    color: { argb: 'FFFF0000' } // Red color
+                };
+            } else {
+                cell.font = {
+                    name: 'Segoe UI',
+                    size: 11,
+                    bold: true
+                };
+            }
+        });
+
+        // Add dropdown to Tax Regime column (col 18) for rows 2 to 100
+        for (let rowNum = 2; rowNum <= 100; rowNum++) {
+            const cell = worksheet.getCell(rowNum, 18);
+            cell.dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Old Regime,New Regime"']
+            };
+        }
+
+        // Generate buffer and trigger file download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "employees_compensation_sample.xlsx";
+        anchor.click();
+        window.URL.revokeObjectURL(url);
     };
 
     const handleUploadClick = () => {
@@ -2090,17 +2150,34 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 
                 const eid = String(getExcelValue(row, "Employee Code", "eid")).trim();
                 const name = String(getExcelValue(row, "Employee Name", "name")).trim();
-                const department = String(getExcelValue(row, "Department")).trim();
-                const designation = String(getExcelValue(row, "Designation")).trim();
+                const department = String(getExcelValue(row, "Department")).trim() || "N/A";
+                const designation = String(getExcelValue(row, "Designation")).trim() || "N/A";
                 const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
                 const effectiveFrom = getExcelValue(row, "Effective From", "join_date");
+                
+                const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
+                const structureName = String(getExcelValue(row, "Salary Structure")).trim();
+                const isPfStr = String(getExcelValue(row, "Provident Fund", "Provident Fund Applicable?")).trim();
+                const isEsiStr = String(getExcelValue(row, "ESI", "ESI Applicable?")).trim();
+                const isGratuityStr = String(getExcelValue(row, "Gratuity", "Gratuity Applicable?")).trim();
+                const isLwfStr = String(getExcelValue(row, "Labour Welfare Fund", "Labour Welfare Fund Applicable?")).trim();
+                const isNpsStr = String(getExcelValue(row, "National Pension System", "National Pension System Applicable?")).trim();
+                const panNumber = String(getExcelValue(row, "PAN Number", "pan_no")).trim();
+                const taxRegime = String(getExcelValue(row, "Tax Regime", "regime")).trim();
 
                 if (!eid) errors.push("Employee Code is required");
                 if (!name) errors.push("Employee Name is required");
-                if (!department) errors.push("Department is required");
-                if (!designation) errors.push("Designation is required");
+                if (!businessUnit) errors.push("Business Unit is required");
+                if (!structureName) errors.push("Salary Structure is required");
                 if (ctcVal <= 0) errors.push("Annual CTC must be greater than 0");
                 if (!effectiveFrom) errors.push("Effective From date is required");
+                if (!isPfStr) errors.push("Provident Fund option is required (Yes/No)");
+                if (!isEsiStr) errors.push("ESI option is required (Yes/No)");
+                if (!isGratuityStr) errors.push("Gratuity option is required (Yes/No)");
+                if (!isLwfStr) errors.push("Labour Welfare Fund option is required (Yes/No)");
+                if (!isNpsStr) errors.push("National Pension System option is required (Yes/No)");
+                if (!panNumber) errors.push("PAN Number is required");
+                if (!taxRegime) errors.push("Tax Regime is required");
 
                 if (errors.length > 0) {
                     failures.push({
@@ -2111,26 +2188,22 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 }
 
                 const employeeId = eidToIdMap[eid] || (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
-                const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim() || "CollabCRM";
                 const status = mapStatus(getExcelValue(row, "Status"));
                 const formattedDate = formatDate(effectiveFrom);
                 
-                const isPf = String(getExcelValue(row, "Provident Fund Applicable?")).toLowerCase().trim() === "yes";
-                const isEsi = String(getExcelValue(row, "ESI Applicable?")).toLowerCase().trim() === "yes";
-                const isGratuity = String(getExcelValue(row, "Gratuity Applicable?")).toLowerCase().trim() === "yes";
-                const isLwf = String(getExcelValue(row, "Labour Welfare Fund Applicable?")).toLowerCase().trim() === "yes";
-                const isNps = String(getExcelValue(row, "National Pension System Applicable?")).toLowerCase().trim() === "yes";
+                const isPf = isPfStr.toLowerCase() === "yes";
+                const isEsi = isEsiStr.toLowerCase() === "yes";
+                const isGratuity = isGratuityStr.toLowerCase() === "yes";
+                const isLwf = isLwfStr.toLowerCase() === "yes";
+                const isNps = isNpsStr.toLowerCase() === "yes";
 
-                const panNumber = String(getExcelValue(row, "PAN Number", "pan_no")).trim();
                 const aadhaarNumber = String(getExcelValue(row, "Aadhaar Number", "aadhaar_no")).trim();
                 const pfNumber = String(getExcelValue(row, "PF Number", "pf_no")).trim();
                 const uanNumber = String(getExcelValue(row, "UAN Number", "uan_no")).trim();
                 const esiNumber = String(getExcelValue(row, "ESI Number", "esi_no")).trim();
                 const pranNumber = String(getExcelValue(row, "PRAN Number", "pran_no")).trim();
-                const taxRegime = String(getExcelValue(row, "Tax Regime", "regime")).trim() || "New Regime";
 
-                const structureName = String(getExcelValue(row, "Salary Structure")).trim().toLowerCase();
-                const structureId = structuresMap[structureName] || null;
+                const structureId = structuresMap[structureName.toLowerCase()] || null;
 
                 const statutoryDeductions = {
                     providentFund: isPf,

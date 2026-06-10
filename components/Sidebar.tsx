@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Sliders,
   ShieldAlert,
+  Shield,
   Wallet,
   ClipboardCheck,
   Calculator,
@@ -163,6 +164,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       label: 'Payroll Reports',
       icon: <PieChart size={20} />,
       viewState: ViewState.HR_PAYROLL_REPORTS
+    },
+    {
+      id: 'hr-roles-permissions',
+      label: 'Roles & Permissions',
+      icon: <Shield size={20} />,
+      viewState: ViewState.HR_ROLES_PERMISSIONS
     }
   ];
 
