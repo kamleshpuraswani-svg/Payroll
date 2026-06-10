@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
     Search,
     Filter,
@@ -1305,9 +1306,9 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
         fetchEmployees();
     }, []);
 
-    // Selection & Modal States
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -1636,13 +1637,13 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                             </div>
                             <button 
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px]"
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px]"
                             >
                                 <Filter size={16} /> Filter
                             </button>
                             <button 
-                                onClick={() => alert('Import clicked')}
-                                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px] transition-colors"
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px] transition-colors"
                             >
                                 <Upload size={16} /> Import
                             </button>
@@ -1665,7 +1666,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 <Filter size={16} /> Filter
                             </button>
                             <button 
-                                onClick={() => alert('Import clicked')}
+                                onClick={() => setIsImportModalOpen(true)}
                                 className="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
                             >
                                 <Upload size={16} /> Import
@@ -1823,6 +1824,379 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                 preSelectedIds={selectedEmployeeIds}
                 employees={employees}
             />
+
+            <ImportEmployeesModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onImportSuccess={fetchEmployees}
+            />
+        </div>
+    );
+};
+
+// ==========================================
+// IMPORT EMPLOYEES MODAL COMPONENT
+// ==========================================
+interface ImportEmployeesModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onImportSuccess?: () => void;
+}
+
+const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
+    const [step, setStep] = useState(1);
+    const [file, setFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setStep(1);
+            setFile(null);
+            setIsUploading(false);
+            setUploadProgress(0);
+            setIsSaving(false);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleDownloadSample = () => {
+        const headers = [
+            "Employee Code",
+            "Employee Name",
+            "Department",
+            "Designation",
+            "Business Unit",
+            "Status",
+            "Salary Structure",
+            "Annual CTC (₹)",
+            "Effective From",
+            "Provident Fund Applicable?",
+            "ESI Applicable?",
+            "Gratuity Applicable?",
+            "Labour Welfare Fund Applicable?",
+            "National Pension System Applicable?",
+            "PAN Number",
+            "Aadhaar Number",
+            "PF Number",
+            "UAN Number",
+            "ESI Number",
+            "PRAN Number",
+            "Tax Regime"
+        ];
+        
+        const rows = [
+            [
+                "CO-059",
+                "Sachin Tendulkar",
+                "Engineering",
+                "Cloud Architect",
+                "CollabCRM",
+                "Active",
+                "Executive Structure",
+                1800000,
+                "2026-06-01",
+                "Yes",
+                "No",
+                "Yes",
+                "Yes",
+                "No",
+                "ABCDE1234F",
+                "123456789012",
+                "MH/BAN/1234567/123",
+                "100987654321",
+                "3112345678",
+                "110098765432",
+                "New Regime"
+            ]
+        ];
+
+        // Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Employees Compensation");
+        
+        // Save and trigger file download
+        XLSX.writeFile(wb, "employees_compensation_sample.xlsx");
+    };
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+        }
+    };
+
+    const handleNext = () => {
+        if (step === 1) {
+            if (!file) {
+                alert("Please upload an Excel file to proceed.");
+                return;
+            }
+            setStep(2);
+            setIsUploading(true);
+            setUploadProgress(0);
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress >= 100) {
+                    setUploadProgress(100);
+                    setIsUploading(false);
+                    clearInterval(interval);
+                } else {
+                    setUploadProgress(progress);
+                }
+            }, 120);
+        }
+    };
+
+    const handleBack = () => {
+        if (step > 1) {
+            setStep(prev => prev - 1);
+        }
+    };
+
+    const handleImport = async () => {
+        setIsSaving(true);
+        try {
+            // Simulation database save latency
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (onImportSuccess) onImportSuccess();
+            setStep(3);
+        } catch (err) {
+            console.error(err);
+            alert("Error importing records.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+                
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h3 className="text-lg font-bold text-slate-800">Import Employees Compensation</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Stepper */}
+                <div className="border-b border-slate-100 py-4 bg-white select-none">
+                    <div className="flex items-center justify-center max-w-xl mx-auto px-4">
+                        {/* Step 1: Prepare */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 1 ? 'border-indigo-600' : 'border-indigo-600 bg-indigo-600 text-white'
+                            }`}>
+                                {step === 1 ? (
+                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
+                                ) : (
+                                    <Check size={16} strokeWidth={3} />
+                                )}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 1 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
+                                Prepare
+                            </span>
+                        </div>
+
+                        {/* Line 1 */}
+                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+
+                        {/* Step 2: Upload */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 2 ? 'border-indigo-600' : step > 2 ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300'
+                            }`}>
+                                {step === 2 ? (
+                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
+                                ) : step > 2 ? (
+                                    <Check size={16} strokeWidth={3} />
+                                ) : null}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 2 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
+                                Upload
+                            </span>
+                        </div>
+
+                        {/* Line 2 */}
+                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+
+                        {/* Step 3: Results */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 3 ? 'border-indigo-600' : 'border-slate-300'
+                            }`}>
+                                {step === 3 ? (
+                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
+                                ) : null}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 3 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
+                                Results
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-8 flex-grow relative min-h-[280px] bg-white">
+                    {step === 1 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                            {/* Left Side */}
+                            <div className="space-y-6 flex flex-col justify-center pr-0 md:pr-8">
+                                <div className="text-sm text-slate-600">
+                                    Download a{' '}
+                                    <span 
+                                        onClick={handleDownloadSample} 
+                                        className="text-indigo-600 hover:underline cursor-pointer font-semibold"
+                                    >
+                                        Sample File
+                                    </span>.
+                                </div>
+                                
+                                <div>
+                                    <button
+                                        onClick={handleUploadClick}
+                                        className="w-full py-4 text-center border border-indigo-200 bg-indigo-50/20 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                        Upload Excel File <span className="text-rose-500">*</span>
+                                    </button>
+                                    <input 
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept=".csv,.xlsx,.xls"
+                                    />
+                                    {file && (
+                                        <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 animate-in fade-in">
+                                            <Check className="text-emerald-600" size={14} strokeWidth={3} />
+                                            Selected: <span className="font-semibold text-slate-700">{file.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Dotted Vertical Divider */}
+                            <div className="hidden md:block absolute left-1/2 top-8 bottom-8 border-l border-dashed border-slate-200" />
+
+                            {/* Right Side */}
+                            <div className="space-y-4 pl-0 md:pl-10 flex flex-col justify-center">
+                                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Instructions:</h4>
+                                <ul className="space-y-3 text-xs text-slate-500 font-medium leading-relaxed pl-4 list-disc">
+                                    <li>Do not change the column names provided in the sample Excel template.</li>
+                                    <li>Columns indicated in red color are mandatory fields.</li>
+                                    <li>Ensure to follow correct data types for each column.</li>
+                                    <li>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="flex flex-col items-center justify-center h-full min-h-[200px] animate-in fade-in duration-200">
+                            {isUploading ? (
+                                <div className="w-full max-w-md space-y-6">
+                                    <div className="flex justify-between items-center text-sm font-bold text-slate-700">
+                                        <span>Uploading & Processing File...</span>
+                                        <span>{uploadProgress}%</span>
+                                    </div>
+                                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-indigo-600 transition-all duration-150"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 text-center">Validating file columns, layout and data rows...</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 text-center">
+                                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                                        <Check size={28} strokeWidth={3} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-slate-800">File Processed Successfully!</h4>
+                                        <p className="text-sm text-slate-500 mt-2">File name: <span className="font-semibold text-slate-700">{file?.name}</span></p>
+                                        <p className="text-xs text-slate-400 mt-1">({file ? Math.round(file.size / 1024) : 0} KB • Ready for DB integration)</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center animate-in fade-in duration-200">
+                            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+                                <CheckCircle size={32} strokeWidth={3} />
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-800 mb-2">Import Complete!</h2>
+                            <p className="text-sm text-slate-500 max-w-md leading-relaxed">
+                                Successfully verified, created, and finalized <span className="font-bold text-slate-800">5 new employee records</span> in the database.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                    {step === 1 && (
+                        <>
+                            <button
+                                onClick={onClose}
+                                className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleNext}
+                                disabled={!file}
+                                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </>
+                    )}
+
+                    {step === 2 && (
+                        <>
+                            <button
+                                onClick={handleBack}
+                                disabled={isSaving}
+                                className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm disabled:opacity-50"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={handleImport}
+                                disabled={isUploading || isSaving}
+                                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-sm shadow-md disabled:opacity-50"
+                            >
+                                {isSaving ? 'Importing...' : 'Finish & Import'}
+                            </button>
+                        </>
+                    )}
+
+                    {step === 3 && (
+                        <button
+                            onClick={onClose}
+                            className="px-8 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all text-sm shadow-sm"
+                        >
+                            Close
+                        </button>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
