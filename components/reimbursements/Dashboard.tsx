@@ -149,23 +149,6 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
           </div>
         </div>
 
-        {/* Budget Progress Bars - Compact Layout */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5">Category Utilization</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {budgets.map((b: BudgetCategory, i: number) => (
-              <div key={b.category} className="space-y-2 group">
-                <div className="flex justify-between items-end">
-                  <span className="text-xs font-black text-slate-700 capitalize">{b.category.toLowerCase()}</span>
-                  <span className="text-xs font-black text-slate-900">₹{b.utilized.toLocaleString()} <span className="text-[10px] text-slate-400 font-bold">/ ₹{b.limit.toLocaleString()}</span></span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-1000 group-hover:brightness-110" style={{ width: `${(b.utilized / b.limit) * 100}%`, backgroundColor: COLORS[i % COLORS.length] }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* History Table */}

@@ -112,6 +112,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [showSplitupModal, setShowSplitupModal] = useState(false);
     const [showBelowLimitModal, setShowBelowLimitModal] = useState(false);
     const [allEarningComponents, setAllEarningComponents] = useState<string[]>(['Basic Salary', 'HRA', 'Dearness Allowances (DA)']);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const fetchEarningComponents = async () => {
         try {
@@ -722,6 +723,9 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                     className="w-full md:w-80 px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 disabled:bg-slate-50 shadow-sm"
                                                                     placeholder="15000"
                                                                 />
+                                                                <p className="text-[11px] text-slate-400 font-bold mt-1.5 block">
+                                                                    Statutory Pension Wage Limit cannot exceed ₹15,000 under current EPFO mandates.
+                                                                </p>
                                                             </div>
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
@@ -798,6 +802,9 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                         />
                                                                         <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
                                                                     </div>
+                                                                    <p className="text-[11px] text-slate-400 font-bold mt-1.5 block">
+                                                                        EDLI Admin charges are waived under current statutory mandates and must remain 0.
+                                                                    </p>
                                                                 </div>
 
                                                                 <div className="space-y-2">
@@ -813,6 +820,9 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                             placeholder="0"
                                                                         />
                                                                     </div>
+                                                                    <p className="text-[11px] text-slate-400 font-bold mt-1.5 block">
+                                                                        Monthly EDLI Admin charges are waived under current statutory mandates and must remain 0.
+                                                                    </p>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1297,6 +1307,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             onClick={() => {
                                 setBelowLimitComponents([...initialBelowLimitComponents]);
                                 setShowBelowLimitModal(false);
+                                setIsDropdownOpen(false);
                             }}
                         />
                         {/* Panel */}
@@ -1304,7 +1315,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             {/* Header */}
                             <div className="px-6 py-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-sky-50 text-sky-600 rounded-xl border border-sky-100/50">
+                                    <div className="p-2.5 bg-sky-50 text-sky-600 rounded-lg border border-sky-100/50">
                                         <Calculator size={20} strokeWidth={2.5} />
                                     </div>
                                     <div>
@@ -1316,6 +1327,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                     onClick={() => {
                                         setBelowLimitComponents([...initialBelowLimitComponents]);
                                         setShowBelowLimitModal(false);
+                                        setIsDropdownOpen(false);
                                     }} 
                                     className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-all border border-slate-100/50"
                                 >
@@ -1327,26 +1339,47 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                                 <div className="space-y-3">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculate PF contribution on</h4>
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {allEarningComponents.map(comp => {
-                                            const isSelected = belowLimitComponents.includes(comp);
-                                            return (
-                                                <label 
-                                                    key={comp} 
-                                                    onClick={() => toggleBelowLimitComponent(comp)} 
-                                                    className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-blue-50/10 border-blue-500 shadow-sm shadow-blue-50' : 'bg-white border-slate-200 hover:border-slate-300'}`}
-                                                >
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300'}`}>
-                                                        {isSelected && <Check size={10} strokeWidth={4} />}
-                                                    </div>
-                                                    <span className={`text-xs font-bold ${isSelected ? 'text-blue-900' : 'text-slate-600'}`}>{comp}</span>
-                                                </label>
-                                            );
-                                        })}
+                                    <div className="relative">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                            className="w-full flex justify-between items-center px-5 py-3.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-800 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all text-left shadow-sm cursor-pointer"
+                                        >
+                                            <span className="truncate pr-2">
+                                                {belowLimitComponents.length === 0 
+                                                    ? 'Select components' 
+                                                    : belowLimitComponents.join(', ')}
+                                            </span>
+                                            <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        
+                                        {isDropdownOpen && (
+                                            <>
+                                                {/* Click-outside backdrop to close */}
+                                                <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
+                                                <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-2 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100">
+                                                    {allEarningComponents.map(comp => {
+                                                        const isSelected = belowLimitComponents.includes(comp);
+                                                        return (
+                                                            <div 
+                                                                key={comp}
+                                                                onClick={() => toggleBelowLimitComponent(comp)}
+                                                                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                            >
+                                                                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300'}`}>
+                                                                    {isSelected && <Check size={10} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className={`text-xs font-bold ${isSelected ? 'text-blue-900' : 'text-slate-600'}`}>{comp}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-100 flex gap-3">
+                                <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100 flex gap-3">
                                     <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                                     <p className="text-[11px] text-amber-900 leading-relaxed font-bold">
                                         When actual wage calculation is active, contribution is computed on the combined total of selected components with no statutory cap applied.
@@ -1365,7 +1398,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Employee Share</h4>
                                                 <span className="px-1.5 py-0.5 bg-blue-50 text-blue-500 rounded text-[9px] font-black">12%</span>
                                             </div>
-                                            <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-lg transition-all duration-300">
+                                            <div className="p-4 bg-slate-50/50 rounded-lg border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-lg transition-all duration-300">
                                                 <div>
                                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">EPF</span>
                                                     <span className="text-[9px] font-bold text-slate-400 italic">12% of PF wages</span>
@@ -1379,14 +1412,14 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded text-[9px] font-black">12%</span>
                                             </div>
                                             <div className="space-y-2">
-                                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all duration-300">
+                                                <div className="p-4 bg-slate-50/50 rounded-lg border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all duration-300">
                                                     <div>
                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">EPS</span>
                                                         <span className="text-[9px] font-bold text-slate-400 italic">8.33% · capped at ₹15,000</span>
                                                     </div>
                                                     <span className="text-base font-black text-emerald-600">₹ 1,000</span>
                                                 </div>
-                                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all duration-300">
+                                                <div className="p-4 bg-slate-50/50 rounded-lg border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all duration-300">
                                                     <div>
                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">EPF</span>
                                                         <span className="text-[9px] font-bold text-slate-400 italic">3.67% (balancing)</span>
@@ -1401,7 +1434,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
                             {/* Summary Bar - Fixed at Bottom */}
                             <div className="px-6 pb-4 shrink-0">
-                                <div className="bg-slate-900 rounded-2xl p-5 text-white flex flex-col justify-between items-center gap-4 shadow-xl">
+                                <div className="bg-slate-900 rounded-lg p-5 text-white flex flex-col justify-between items-center gap-4 shadow-xl">
                                     <div className="flex items-center gap-3">
                                         <Shield size={18} className="text-sky-400" />
                                         <p className="text-xs font-bold text-white">Total monthly PF deposit</p>
@@ -1431,6 +1464,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                     onClick={() => {
                                         setBelowLimitComponents([...initialBelowLimitComponents]);
                                         setShowBelowLimitModal(false);
+                                        setIsDropdownOpen(false);
                                     }}
                                     className="px-5 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-semibold text-xs transition-colors"
                                 >
@@ -1443,6 +1477,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                             await handleSavePf();
                                         }
                                         setShowBelowLimitModal(false);
+                                        setIsDropdownOpen(false);
                                     }} 
                                     className="px-5 py-2 bg-blue-600 text-white rounded-lg font-black text-xs shadow-md hover:bg-blue-700 transition-all active:scale-95 uppercase tracking-widest"
                                 >

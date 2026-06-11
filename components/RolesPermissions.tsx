@@ -89,7 +89,7 @@ const MODULES_TREE: ModuleRow[] = [
   { id: 'payroll-corner', name: 'Payroll Corner', isParent: true, parentId: 'people', hasAddEdit: false },
   { id: 'emp-overview', name: 'Overview', isParent: false, parentId: 'payroll-corner', hasAddEdit: false },
   { id: 'emp-tax-planning', name: 'Tax Planning', isParent: false, parentId: 'payroll-corner', hasAddEdit: true },
-  { id: 'emp-payslips', name: 'Salary Slips', isParent: false, parentId: 'payroll-corner', hasAddEdit: false },
+  { id: 'emp-payslips', name: 'Salary Slips', isParent: false, parentId: 'payroll-corner', hasAddEdit: true },
   { id: 'emp-reimbursements', name: 'Reimbursements', isParent: false, parentId: 'payroll-corner', hasAddEdit: true },
   { id: 'emp-tax-documents', name: 'Tax Documents', isParent: false, parentId: 'payroll-corner', hasAddEdit: true },
   { id: 'emp-loans-advances', name: 'Loans & Advances', isParent: false, parentId: 'payroll-corner', hasAddEdit: true },
@@ -103,7 +103,7 @@ const MODULES_TREE: ModuleRow[] = [
   
   { id: 'payroll-configuration-parent', name: 'Configuration', isParent: true, parentId: 'payroll', hasAddEdit: false },
   { id: 'salary-structures', name: 'Configuration', isParent: false, parentId: 'payroll-configuration-parent', hasAddEdit: true },
-  { id: 'payroll-config', name: 'Operational Config', isParent: false, parentId: 'payroll-configuration-parent', hasAddEdit: false },
+  { id: 'payroll-config', name: 'Operational Config', isParent: false, parentId: 'payroll-configuration-parent', hasAddEdit: true },
   
   { id: 'payroll-expenses-loans-parent', name: 'Expenses & Loans', isParent: true, parentId: 'payroll', hasAddEdit: false },
   { id: 'hr-expenses', name: 'Expense Management', isParent: false, parentId: 'payroll-expenses-loans-parent', hasAddEdit: true },
