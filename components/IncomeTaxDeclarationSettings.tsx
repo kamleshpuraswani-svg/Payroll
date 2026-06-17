@@ -187,26 +187,36 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 const defaultLimits = [
                     { id: '1', section: '80C', limit: '1,50,000', description: 'Investments under section 80C', regime: 'Old' },
                     { id: '1a', section: '80C', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
-                    { id: '1b', section: '80C', limit: '150000', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
-                    { id: '1c', section: '80C', limit: '150000', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
-                    { id: '1d', section: '80C', limit: '150000', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
-                    { id: '1e', section: '80C', limit: '150000', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
-                    { id: '1f', section: '80C', limit: '150000', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
+                    { id: '1b', section: '80C', limit: '--', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
+                    { id: '1c', section: '80C', limit: '--', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
+                    { id: '1d', section: '80C', limit: '--', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
+                    { id: '1e', section: '80C', limit: '--', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
+                    { id: '1f', section: '80C', limit: '--', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
                     { id: '1g', section: '80C', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
-                    { id: '1h', section: '80C', limit: '150000', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
+                    { id: '1h', section: '80C', limit: '--', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
                     { id: '1i', section: '80C', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
                     { id: '1j', section: '80C', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
                     { id: '1k', section: '80C', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
-                    { id: '2', section: '80CCC', limit: '1,50,000', description: 'Pension fund contributions', regime: 'Old' },
-                    { id: '3', section: '80CCD(1)', limit: '1,50,000', description: 'Employee NPS contribution', regime: 'Old' },
-                    { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution (over 80C limit)', regime: 'Old' },
-                    { id: '5', section: '80CCD(2)', limit: '10% of salary', description: 'Employer NPS contribution', regime: 'Old' },
-                    { id: '6', section: '80D', limit: '25,000', description: 'Medical insurance — Self & Family', regime: 'Old' },
-                    { id: '7', section: '80D', limit: '25,000', description: 'Medical insurance — Parents', regime: 'Old' },
+                    { id: '1l', section: '80C', displaySection: '80CCC', limit: '--', description: 'Pension Fund Contribution', regime: 'Old', isSubSection: true },
+                    { id: '1m', section: '80C', displaySection: '80CCD (1)', limit: '10% of salary', description: 'Employee NPS Contribution (Up to 10% of basic + DA)', regime: 'Old', isSubSection: true },
+                    { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution - Additional contribution beyond the 80C limit', regime: 'Old' },
+                    { id: '5', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'Old' },
+                    { id: '6', section: '80D', limit: '25,000', description: 'Self, Spouse, Children (below 60 years)', regime: 'Old' },
+                    { id: '6a', section: '80D', limit: '50,000', description: 'Self, Spouse, Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6b', section: '80D', limit: '75,000', description: 'Self, Spouse, Children (below 60 years) & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6c', section: '80D', limit: '1,00,000', description: 'Self, Spouse, Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6d', section: '80D', limit: '25,000', description: 'Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6e', section: '80D', limit: '50,000', description: 'Members of HUF (Above 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6f', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children', regime: 'Old', isSubSection: true },
+                    { id: '6g', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6h', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children (below 60 years) & Parents (above 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6i', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6j', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
+                    { id: '6k', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (above 60 years)', regime: 'Old', isSubSection: true },
                     { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
-                    { id: '9', section: '80DDB', limit: '40,000', description: 'Treatment of specified diseases', regime: 'Old' },
+                    { id: '9', section: '80DDB', limit: '40,000 / (₹1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
                     { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
-                    { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤35L)', regime: 'Old' },
+                    { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤50L)', regime: 'Old' },
                     { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
                     { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
                     { id: '14', section: '80GG', limit: 'Min of: ₹5,000/month, 25% of income, rent–10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
@@ -219,7 +229,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
                     { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
                     { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
-                    { id: '24', section: '80CCD(2)', limit: '14% of salary (govt); 10% (others)', description: 'Employer NPS contribution', regime: 'New' },
+                    { id: '24', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'New' },
                     { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
                     { id: '26', section: '10(13A)', limit: 'Not available', description: 'HRA', regime: 'New' },
                     { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
@@ -250,7 +260,28 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 let mergedLimits = [
                     ...baseLoaded,
                     ...defaultLimits.filter(def => !baseLoaded.some((l: any) => l.id === def.id))
-                ];
+                ].filter(l => l.id !== '2' && l.id !== '3' && l.id !== '7')
+                 .map(l => {
+                     if (l.id === '4') {
+                         return { ...l, description: 'Additional NPS contribution - Additional contribution beyond the 80C limit' };
+                     }
+                     if (l.id === '5' || l.id === '24') {
+                         return { ...l, limit: '14% of salary (Govt.) / 10% (Others)' };
+                     }
+                     if (l.id === '6') {
+                         return { ...l, description: 'Self, Spouse, Children (below 60 years)' };
+                     }
+                     if (l.id === '9') {
+                         return { ...l, limit: '40,000 / (₹1,00,000 for senior citizens)' };
+                     }
+                     if (l.id === '11') {
+                         return { ...l, description: 'Interest on home loan (first-time buyer, loan ≤50L)' };
+                     }
+                     if (l.section === '80C' && l.isSubSection && l.displaySection !== '80CCD (1)' && l.displaySection !== '80CCD(1)') {
+                         return { ...l, limit: '--' };
+                     }
+                     return l;
+                 });
 
                 // Ensure 80C subsections are placed immediately after the main 80C entry
                 const main80CIndex = mergedLimits.findIndex(l => l.id === '1');
@@ -260,6 +291,15 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     // Re-evaluate main80CIndex after filtering just in case it shifted (though it shouldn't have)
                     const newMain80CIndex = mergedLimits.findIndex(l => l.id === '1');
                     mergedLimits.splice(newMain80CIndex + 1, 0, ...subSections);
+                }
+
+                // Ensure 80D subsections are placed immediately after the main 80D entry
+                const main80DIndex = mergedLimits.findIndex(l => l.id === '6');
+                if (main80DIndex !== -1) {
+                    const subSections = mergedLimits.filter(l => l.id.startsWith('6') && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.id.startsWith('6') && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection));
+                    const newMain80DIndex = mergedLimits.findIndex(l => l.id === '6');
+                    mergedLimits.splice(newMain80DIndex + 1, 0, ...subSections);
                 }
 
                 setLimits(mergedLimits);
@@ -330,26 +370,36 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [limits, setLimits] = useState([
         { id: '1', section: '80C', limit: '1,50,000', description: 'Investments under section 80C', regime: 'Old' },
         { id: '1a', section: '80C', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
-        { id: '1b', section: '80C', limit: '150000', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
-        { id: '1c', section: '80C', limit: '150000', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
-        { id: '1d', section: '80C', limit: '150000', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
-        { id: '1e', section: '80C', limit: '150000', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
-        { id: '1f', section: '80C', limit: '150000', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
+        { id: '1b', section: '80C', limit: '--', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
+        { id: '1c', section: '80C', limit: '--', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
+        { id: '1d', section: '80C', limit: '--', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
+        { id: '1e', section: '80C', limit: '--', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
+        { id: '1f', section: '80C', limit: '--', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
         { id: '1g', section: '80C', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
-        { id: '1h', section: '80C', limit: '150000', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
+        { id: '1h', section: '80C', limit: '--', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
         { id: '1i', section: '80C', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
         { id: '1j', section: '80C', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
         { id: '1k', section: '80C', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
-        { id: '2', section: '80CCC', limit: '1,50,000', description: 'Pension fund contributions', regime: 'Old' },
-        { id: '3', section: '80CCD(1)', limit: '1,50,000', description: 'Employee NPS contribution', regime: 'Old' },
-        { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution (over 80C limit)', regime: 'Old' },
-        { id: '5', section: '80CCD(2)', limit: '10% of salary', description: 'Employer NPS contribution', regime: 'Old' },
-        { id: '6', section: '80D', limit: '25,000', description: 'Medical insurance — Self & Family', regime: 'Old' },
-        { id: '7', section: '80D', limit: '25,000', description: 'Medical insurance — Parents', regime: 'Old' },
+        { id: '1l', section: '80C', displaySection: '80CCC', limit: '--', description: 'Pension Fund Contribution', regime: 'Old', isSubSection: true },
+        { id: '1m', section: '80C', displaySection: '80CCD (1)', limit: '10% of salary', description: 'Employee NPS Contribution (Up to 10% of basic + DA)', regime: 'Old', isSubSection: true },
+        { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution - Additional contribution beyond the 80C limit', regime: 'Old' },
+        { id: '5', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'Old' },
+        { id: '6', section: '80D', limit: '25,000', description: 'Self, Spouse, Children (below 60 years)', regime: 'Old' },
+        { id: '6a', section: '80D', limit: '50,000', description: 'Self, Spouse, Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6b', section: '80D', limit: '75,000', description: 'Self, Spouse, Children (below 60 years) & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6c', section: '80D', limit: '1,00,000', description: 'Self, Spouse, Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6d', section: '80D', limit: '25,000', description: 'Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6e', section: '80D', limit: '50,000', description: 'Members of HUF (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6f', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children', regime: 'Old', isSubSection: true },
+        { id: '6g', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6h', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children (below 60 years) & Parents (above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6i', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6j', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6k', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (above 60 years)', regime: 'Old', isSubSection: true },
         { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
-        { id: '9', section: '80DDB', limit: '40,000', description: 'Treatment of specified diseases', regime: 'Old' },
+        { id: '9', section: '80DDB', limit: '40,000 / (₹1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
         { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
-        { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤35L)', regime: 'Old' },
+        { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤50L)', regime: 'Old' },
         { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
         { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
         { id: '14', section: '80GG', limit: 'Min of: ₹5,000/month, 25% of income, rent–10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
@@ -362,7 +412,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
         { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
         { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
-        { id: '24', section: '80CCD(2)', limit: '14% of salary (govt); 10% (others)', description: 'Employer NPS contribution', regime: 'New' },
+        { id: '24', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'New' },
         { id: '25', section: '80CCH', limit: 'Full amount', description: 'Agniveer Corpus Fund contribution', regime: 'New' },
         { id: '26', section: '10(13A)', limit: 'Not available', description: 'HRA', regime: 'New' },
         { id: '27', section: '24(b)', limit: 'Not available', description: 'Home loan interest', regime: 'New' },
@@ -448,6 +498,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [proofVerificationDay, setProofVerificationDay] = useState('31');
 
     const [isLimitsExpanded, setIsLimitsExpanded] = useState(true);
+    const [is80CExpanded, setIs80CExpanded] = useState(false);
+    const [is80DExpanded, setIs80DExpanded] = useState(false);
 
     // Backup states for cancel functionality
     const [invBackup, setInvBackup] = useState<any>(null);
@@ -1682,24 +1734,58 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             if ((l.regime || 'Old') !== limitViewRegime) return false;
                                             if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
                                             return true;
+                                        }).filter(l => {
+                                            if (l.section === '80C' && l.isSubSection) {
+                                                return isEditingInv || is80CExpanded;
+                                            }
+                                            if (l.section === '80D' && l.isSubSection) {
+                                                return isEditingInv || is80DExpanded;
+                                            }
+                                            return true;
                                         }).map((limit, idx) => {
                                             const actualIdx = limits.findIndex(l => l.id === limit.id);
+                                            const hasSubsections = (limit.section === '80C' || limit.section === '80D') && !limit.isSubSection && limits.some(l => 
+                                                l.section === limit.section && 
+                                                l.isSubSection && 
+                                                (l.regime || 'Old') === limitViewRegime && 
+                                                (limitViewRegime === 'Old' ? (l.ageGroup || 'individual') === oldRegimeAgeGroup : true)
+                                            );
                                             return (
-                                                <tr key={limit.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <tr 
+                                                    key={limit.id} 
+                                                    onClick={() => {
+                                                        if (!isEditingInv && hasSubsections) {
+                                                            if (limit.section === '80C') {
+                                                                setIs80CExpanded(!is80CExpanded);
+                                                            } else if (limit.section === '80D') {
+                                                                setIs80DExpanded(!is80DExpanded);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={`hover:bg-slate-50/50 transition-colors group ${hasSubsections && !isEditingInv ? 'cursor-pointer select-none' : ''}`}
+                                                >
                                                     <td className="px-6 py-4 font-bold text-slate-700">
-                                                        {!(limit as any).isSubSection && (isEditingInv ? (
-                                                            <input 
-                                                                type="text" 
-                                                                value={limit.section} 
-                                                                onChange={(e) => {
-                                                                    const newLimits = [...limits];
-                                                                    newLimits[actualIdx].section = e.target.value;
-                                                                    setLimits(newLimits);
-                                                                }}
-                                                                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
-                                                                placeholder="e.g. 80C"
-                                                            />
-                                                        ) : <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>)}
+                                                        {!(limit as any).isSubSection ? (
+                                                            isEditingInv ? (
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={limit.section} 
+                                                                    onChange={(e) => {
+                                                                        const newLimits = [...limits];
+                                                                        newLimits[actualIdx].section = e.target.value;
+                                                                        setLimits(newLimits);
+                                                                    }}
+                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
+                                                                    placeholder="e.g. 80C"
+                                                                />
+                                                            ) : (
+                                                                <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>
+                                                            )
+                                                        ) : (
+                                                            (limit as any).displaySection ? (
+                                                                <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{(limit as any).displaySection}</span>
+                                                            ) : null
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 text-slate-500 text-xs font-medium">
                                                         <div className={`relative flex items-center w-full ${(limit as any).isSubSection ? 'pl-6 before:absolute before:left-0 before:w-3 before:h-[1px] before:bg-slate-300' : ''}`}>
@@ -1734,7 +1820,19 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                     placeholder="0"
                                                                 />
                                                             </div>
-                                                        ) : <span className="text-indigo-600">₹{limit.limit}</span>}
+                                                        ) : (
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-indigo-600 font-black">
+                                                                    {limit.limit === '--' || limit.section === '80E' ? limit.limit : `₹${limit.limit}`}
+                                                                </span>
+                                                                {hasSubsections && (
+                                                                    <ChevronDown 
+                                                                        size={16} 
+                                                                        className={`text-slate-400 transition-all duration-200 ${(limit.section === '80C' ? is80CExpanded : is80DExpanded) ? 'rotate-180 text-indigo-600' : ''}`} 
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     {isEditingInv && (
                                                         <td className="px-6 py-4 text-center">

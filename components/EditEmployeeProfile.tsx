@@ -73,7 +73,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [selectedStructureId, setSelectedStructureId] = useState('');
    const [effectiveFrom, setEffectiveFrom] = useState('');
    const [salaryPayMode, setSalaryPayMode] = useState('Bank Transfer');
-   const [errors, setErrors] = useState<{ effectiveFrom?: string; pranNumber?: string }>({});
+   const [errors, setErrors] = useState<{ effectiveFrom?: string; pranNumber?: string; vpfAmount?: string; vpfPercentage?: string; vpfEffectiveFrom?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
    const [appraisalMonth, setAppraisalMonth] = useState('');
    const [statutoryDeductions, setStatutoryDeductions] = useState({
@@ -83,8 +83,13 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       gratuity: false,
       lwf: false,
       tds: false,
-      nps: false
+      nps: false,
+      vpf: false
    });
+
+   const [vpfAmount, setVpfAmount] = useState('');
+   const [vpfPercentage, setVpfPercentage] = useState('');
+   const [vpfEffectiveFrom, setVpfEffectiveFrom] = useState('');
 
    const [structureComponents, setStructureComponents] = useState<{ earnings: any[], deductions: any[] }>({ earnings: [], deductions: [] });
     const [statutorySettings, setStatutorySettings] = useState<any>(null);
@@ -315,9 +320,18 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                     if (configData.config_value.pran_no) {
                        setPranNumber(configData.config_value.pran_no);
                     }
-                   if (configData.config_value.salary_input_basis) {
-                      setSalaryInputBasis(configData.config_value.salary_input_basis);
-                   }
+                    if (configData.config_value.salary_input_basis) {
+                       setSalaryInputBasis(configData.config_value.salary_input_basis);
+                    }
+                     if (configData.config_value.vpfAmount) {
+                        setVpfAmount(configData.config_value.vpfAmount);
+                     }
+                     if (configData.config_value.vpfPercentage) {
+                        setVpfPercentage(configData.config_value.vpfPercentage);
+                     }
+                     if (configData.config_value.vpfEffectiveFrom) {
+                        setVpfEffectiveFrom(configData.config_value.vpfEffectiveFrom);
+                     }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
                 }
@@ -350,8 +364,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
           setIsLoading(false);
        }
     };
-
-   // Helper to calculate estimated TDS for demo purposes
 
    // Helper to calculate estimated TDS for demo purposes
    const calculateEstTax = (amount: number, regimeType: 'OLD' | 'NEW') => {
@@ -395,8 +407,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
 
    // Dynamic Salary Calculation
     function calculateSalary(annualCtc: number) {
-       // Removed early return !annualCtc to allow dynamic preview of structure rows
-
       const earnings: any[] = [];
       const employeeDeductions: any[] = [];
       const employerContributions: any[] = [];
@@ -542,6 +552,21 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
          employeeDeductions.push({ name: 'NPS (Employee)', annual: npsEmpVal, monthly: npsEmpVal / 12 });
       }
 
+      // VPF Employee
+      if (statutoryDeductions.vpf) {
+         let vpfEmpAnnual = 0;
+         if (vpfAmount) {
+            const amt = parseFloat(vpfAmount) || 0;
+            vpfEmpAnnual = amt * 12;
+         } else if (vpfPercentage) {
+            const pct = parseFloat(vpfPercentage) || 0;
+            vpfEmpAnnual = basic * (pct / 100);
+         }
+         if (vpfEmpAnnual > 0) {
+            employeeDeductions.push({ name: 'Voluntary Provident Fund (VPF)', annual: vpfEmpAnnual, monthly: vpfEmpAnnual / 12 });
+         }
+      }
+
       // TDS / Income Tax
       const taxAnnual = regime.includes('Old') ? calculateEstTax(annualCtc, 'OLD') : calculateEstTax(annualCtc, 'NEW');
       if (statutoryDeductions.tds && taxAnnual > 0) {
@@ -605,25 +630,59 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const monthlyTakeHome = activeSalary.monthlyGross + additionalEarningsMonthly - totalDeductionsMonthly - additionalDeductionsMonthly;
 
    const handleSave = async () => {
-      // Check if critical fields changed
-      const hasChanged = ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId;
+       const hasChanged = ctc !== initialValues.current.ctc || selectedStructureId !== initialValues.current.structureId;
+       const validationErrors: any = {};
 
-      if (hasChanged && !effectiveFrom) {
-         setErrors({ effectiveFrom: 'Effective From is mandatory when salary details are changed' });
-         // Scroll to error
-         const errorField = document.getElementById('effective-from-field-main');
-         errorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-         return;
-      }
+       if (hasChanged && !effectiveFrom) {
+          validationErrors.effectiveFrom = 'Effective From is mandatory when salary details are changed';
+       }
 
-      if (userRole === 'HR_MANAGER' && statutoryDeductions.nps) {
-         if (!pranNumber || pranNumber.length !== 12 || !/^\d{12}$/.test(pranNumber)) {
-            setErrors(prev => ({ ...prev, pranNumber: 'PRAN Number must be exactly 12 digits.' }));
-            const errorField = document.getElementById('pran-number-field');
-            errorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-         }
-      }
+       if (userRole === 'HR_MANAGER' && statutoryDeductions.nps) {
+          if (!pranNumber || pranNumber.length !== 12 || !/^\d{12}$/.test(pranNumber)) {
+             validationErrors.pranNumber = 'PRAN Number must be exactly 12 digits.';
+          }
+       }
+
+       if (statutoryDeductions.vpf) {
+          if (!vpfAmount && !vpfPercentage) {
+             validationErrors.vpfAmount = 'Either Fixed Amount or Percentage is required.';
+             validationErrors.vpfPercentage = 'Either Fixed Amount or Percentage is required.';
+          } else if (vpfAmount) {
+             const amt = parseInt(vpfAmount, 10);
+             if (isNaN(amt) || amt < 1 || amt > 999999) {
+                validationErrors.vpfAmount = 'Fixed Amount must be between 1 and 999999.';
+             }
+          } else if (vpfPercentage) {
+             const pct = parseInt(vpfPercentage, 10);
+             if (isNaN(pct) || pct < 1 || pct > 99) {
+                validationErrors.vpfPercentage = 'Percentage must be between 1 and 99.';
+             }
+          }
+          if (!vpfEffectiveFrom) {
+             validationErrors.vpfEffectiveFrom = 'Effective From month is required.';
+          } else {
+             const d = new Date();
+             const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+             if (vpfEffectiveFrom < currentMonthStr) {
+                validationErrors.vpfEffectiveFrom = 'Effective From cannot be a past month.';
+             }
+          }
+       }
+
+       if (Object.keys(validationErrors).length > 0) {
+          setErrors(validationErrors);
+          
+          if (validationErrors.effectiveFrom) {
+             document.getElementById('effective-from-field-main')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (validationErrors.pranNumber) {
+             document.getElementById('pran-number-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (validationErrors.vpfAmount || validationErrors.vpfPercentage || validationErrors.vpfEffectiveFrom) {
+             document.getElementById('vpf-effective-from-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return;
+       }
+
+       setErrors({});
 
       setIsSaving(true);
       try {
@@ -675,7 +734,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   pf_no: pfNumber,
                   esi_no: esiNumber,
                   pran_no: pranNumber,
-                  salary_input_basis: salaryInputBasis
+                  salary_input_basis: salaryInputBasis,
+                  vpfAmount,
+                  vpfPercentage,
+                  vpfEffectiveFrom
                },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
@@ -839,34 +901,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            )}
                         </div>
 
-                        <div className="hidden">
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual Gross (₹)</label>
-                           <div className="relative">
-                              <input
-                                 type="number"
-                                 value={manualAnnualGross !== null ? manualAnnualGross : Math.round(activeSalary.annualGross)}
-                                 disabled={isReadOnly || salaryInputBasis === 'CTC'}
-                                 onChange={(e) => {
-                                    const val = parseInt(e.target.value) || 0;
-                                    setManualAnnualGross(val);
-                                    if (salaryInputBasis === 'Gross') {
-                                       const computedCtc = findCtcForGross(val);
-                                       setCtc(computedCtc);
-                                    }
-                                 }}
-                                 placeholder="Auto-calculated from CTC"
-                                 className={`w-full pl-8 pr-4 py-2 text-sm font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${
-                                    isReadOnly || salaryInputBasis === 'CTC'
-                                       ? 'bg-slate-50 text-slate-500 border-slate-200 cursor-not-allowed'
-                                       : 'text-slate-800 bg-white border-slate-200 hover:border-slate-300'
-                                 }`}
-                              />
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                           </div>
-                           {salaryInputBasis === 'CTC' && !isReadOnly && <p className="text-[10px] text-slate-400 mt-1">Auto-calculated: ₹{Math.round(activeSalary.annualGross).toLocaleString('en-IN')}</p>}
-                           {salaryInputBasis === 'Gross' && !isReadOnly && <p className="text-[10px] text-slate-400 mt-1">Auto-calculated CTC: ₹{ctc.toLocaleString('en-IN')}</p>}
-                        </div>
-
                         <div id="effective-from-field-main">
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Effective From {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
@@ -888,56 +922,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      </div>
 
                      <div className="space-y-6">
-                        <div className="hidden">
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Enter salary as</label>
-                           <div className="flex items-center gap-6 mt-2">
-                              {['CTC', 'Gross'].map((opt) => (
-                                 <label key={opt} className={`flex items-center gap-2 cursor-pointer group ${isReadOnly ? 'pointer-events-none opacity-60' : ''}`}>
-                                    <div className="relative flex items-center justify-center">
-                                       <input
-                                          type="radio"
-                                          name="salaryInputBasis"
-                                          value={opt}
-                                          disabled={isReadOnly}
-                                          checked={salaryInputBasis === opt}
-                                          onChange={() => {
-                                             if (!isReadOnly) {
-                                                setSalaryInputBasis(opt as 'CTC' | 'Gross');
-                                                if (opt === 'Gross') {
-                                                   const currentGross = manualAnnualGross !== null ? manualAnnualGross : Math.round(salary.annualGross);
-                                                   setManualAnnualGross(currentGross);
-                                                   const computedCtc = findCtcForGross(currentGross);
-                                                   setCtc(computedCtc);
-                                                } else {
-                                                   setManualAnnualGross(null);
-                                                }
-                                             }
-                                          }}
-                                          className="sr-only"
-                                       />
-                                       <div className={`w-4 h-4 rounded-full border transition-all flex items-center justify-center ${
-                                          salaryInputBasis === opt
-                                             ? 'border-indigo-600 bg-white'
-                                             : 'border-slate-300 group-hover:border-slate-400 bg-white'
-                                       }`}>
-                                          {salaryInputBasis === opt && (
-                                             <div className="w-2 h-2 bg-indigo-600 rounded-full" />
-                                          )}
-                                       </div>
-                                    </div>
-                                    <span className={`text-sm transition-colors ${
-                                       salaryInputBasis === opt ? 'text-slate-900 font-medium' : 'text-slate-500 group-hover:text-slate-700'
-                                    }`}>{opt}</span>
-                                 </label>
-                              ))}
-                           </div>
-                           <p className="text-[10px] text-slate-400 mt-2 italic">
-                              {salaryInputBasis === 'CTC'
-                                 ? 'Gross will be auto-calculated after deducting employer statutory costs'
-                                 : 'CTC will be auto-calculated by adding employer statutory costs'}
-                           </p>
-                        </div>
-
                         <div>
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Annual CTC (₹) {!isReadOnly && <span className="text-rose-500">*</span>}</label>
                            <div className="relative">
@@ -990,7 +974,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            { id: 'gratuity', label: 'Gratuity' },
                            { id: 'lwf', label: 'LWF' },
                            { id: 'tds', label: 'TDS/Income Tax' },
-                           { id: 'nps', label: 'NPS' }
+                           { id: 'nps', label: 'NPS' },
+                           { id: 'vpf', label: 'Voluntary Provident Fund (VPF)' }
                         ].filter(comp => !(userRole === 'HR_MANAGER' && comp.id === 'tds')).map((comp) => (
                            <label key={comp.id} className="flex items-center gap-2.5 cursor-pointer group">
                               <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'bg-sky-600 border-sky-600 shadow-sm' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}>
@@ -1001,7 +986,23 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                  className="hidden" 
                                  checked={statutoryDeductions[comp.id as keyof typeof statutoryDeductions]} 
                                  disabled={isReadOnly}
-                                 onChange={() => !isReadOnly && setStatutoryDeductions(prev => ({ ...prev, [comp.id]: !prev[comp.id as keyof typeof statutoryDeductions] }))} 
+                                 onChange={() => {
+                                    if (!isReadOnly) {
+                                       setStatutoryDeductions(prev => {
+                                          const nextVal = !prev[comp.id as keyof typeof statutoryDeductions];
+                                          if (comp.id === 'vpf' && !nextVal) {
+                                             setVpfAmount('');
+                                             setVpfPercentage('');
+                                             setVpfEffectiveFrom('');
+                                             setErrors(prevErr => {
+                                                const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
+                                                return rest;
+                                             });
+                                          }
+                                          return { ...prev, [comp.id]: nextVal };
+                                       });
+                                    }
+                                 }} 
                               />
                               <span className={`text-sm font-medium transition-colors ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-800'}`}>
                                  {comp.label}
@@ -1009,6 +1010,70 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            </label>
                         ))}
                      </div>
+
+                     {statutoryDeductions.vpf && (
+                         <div className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
+                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">Voluntary Provident Fund (VPF) Configuration</h4>
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-3xl">
+                               <div className="w-full md:w-[30%]">
+                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Fixed Amount (Monthly)</label>
+                                  <div className="relative">
+                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                     <input 
+                                        type="text" 
+                                        value={vpfAmount} 
+                                        onChange={e => {
+                                           const val = e.target.value.replace(/[^0-9]/g, '');
+                                           setVpfAmount(val);
+                                           if (val) setVpfPercentage('');
+                                        }} 
+                                        disabled={isReadOnly}
+                                        placeholder="Enter fixed amount"
+                                        className={`w-full pl-9 pr-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none ${errors.vpfAmount ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                     />
+                                  </div>
+                                  {errors.vpfAmount && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfAmount}</p>}
+                               </div>
+                               <div className="flex items-center justify-center font-black text-slate-400 text-xs px-2 pt-2 md:pt-4">
+                                  OR
+                               </div>
+                               <div className="w-full md:w-[30%]">
+                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Percentage (%)</label>
+                                  <div className="relative">
+                                     <input 
+                                        type="text" 
+                                        value={vpfPercentage} 
+                                        onChange={e => {
+                                           const val = e.target.value.replace(/[^0-9]/g, '');
+                                           setVpfPercentage(val);
+                                           if (val) setVpfAmount('');
+                                        }} 
+                                        disabled={isReadOnly}
+                                        placeholder="Enter percentage"
+                                        className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none pr-8 ${errors.vpfPercentage ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                     />
+                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</span>
+                                  </div>
+                                  {errors.vpfPercentage && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfPercentage}</p>}
+                               </div>
+
+                               <div className="w-full md:w-[35%] md:ml-auto" id="vpf-effective-from-field">
+                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Effective From <span className="text-rose-500">*</span></label>
+                                  <div className="relative">
+                                     <input 
+                                        type="month" 
+                                        value={vpfEffectiveFrom} 
+                                        onChange={e => setVpfEffectiveFrom(e.target.value)} 
+                                        disabled={isReadOnly}
+                                        min={(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })()}
+                                        className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none ${errors.vpfEffectiveFrom ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                     />
+                                  </div>
+                                  {errors.vpfEffectiveFrom && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfEffectiveFrom}</p>}
+                               </div>
+                            </div>
+                         </div>
+                      )}
                   </div>
                </div>
 

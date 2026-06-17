@@ -84,6 +84,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [edliRate, setEdliRate] = useState('0.5');
     const [edliAdminRate, setEdliAdminRate] = useState('0');
     const [minMonthlyEdliAdmin, setMinMonthlyEdliAdmin] = useState('0');
+    const [edliWageLimit, setEdliWageLimit] = useState('15000');
     const [includeNoPfInChallan, setIncludeNoPfInChallan] = useState(false);
     const [includePfAdminChargesInCtc, setIncludePfAdminChargesInCtc] = useState(false);
     const [includePfAdminChargesInPayslip, setIncludePfAdminChargesInPayslip] = useState(false);
@@ -220,6 +221,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setEdliRate(config.edliRate ?? '0.5');
                 setEdliAdminRate(config.edliAdminRate ?? '0');
                 setMinMonthlyEdliAdmin(config.minMonthlyEdliAdmin ?? '0');
+                setEdliWageLimit(config.edliWageLimit ?? '15000');
                 setIncludeNoPfInChallan(config.includeNoPfInChallan ?? false);
                 setIncludePfAdminChargesInCtc(config.includePfAdminChargesInCtc ?? false);
                 setIncludePfAdminChargesInPayslip(config.includePfAdminChargesInPayslip ?? false);
@@ -249,7 +251,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 pfContributionBasis, pfWageCeiling,
                 emprPfContributionBasis, emprPfWageCeiling,
                 pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis,
-                pfAdminRate, minMonthlyPfAdmin, edliRate, edliAdminRate, minMonthlyEdliAdmin,
+                pfAdminRate, minMonthlyPfAdmin, edliRate, edliAdminRate, minMonthlyEdliAdmin, edliWageLimit,
                 includeNoPfInChallan, includePfAdminChargesInCtc, includePfAdminChargesInPayslip,
                 isVpfApplicable, vpfCalculationBasis, considerPfPerquisite, pfPerquisiteRate, pfPerquisiteLimit
             });
@@ -265,7 +267,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     pfContributionBasis, pfWageCeiling,
                     emprPfContributionBasis, emprPfWageCeiling,
                     pfAdminBasis, pfAdminContributionBasis, pfChallanGrossBasis,
-                    pfAdminRate, minMonthlyPfAdmin, edliRate, edliAdminRate, minMonthlyEdliAdmin,
+                    pfAdminRate, minMonthlyPfAdmin, edliRate, edliAdminRate, minMonthlyEdliAdmin, edliWageLimit,
                     includeNoPfInChallan, includePfAdminChargesInCtc, includePfAdminChargesInPayslip,
                     isVpfApplicable, vpfCalculationBasis, considerPfPerquisite, pfPerquisiteRate, pfPerquisiteLimit
                 };
@@ -281,7 +283,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setPfContributionBasis(backupPf.pfContributionBasis); setPfWageCeiling(backupPf.pfWageCeiling);
                 setEmprPfContributionBasis(backupPf.emprPfContributionBasis || 'limit'); setEmprPfWageCeiling(backupPf.emprPfWageCeiling || '15000');
                 setPfAdminBasis(backupPf.pfAdminBasis); setPfAdminContributionBasis(backupPf.pfAdminContributionBasis); setPfChallanGrossBasis(backupPf.pfChallanGrossBasis);
-                setPfAdminRate(backupPf.pfAdminRate || '0.5'); setMinMonthlyPfAdmin(backupPf.minMonthlyPfAdmin || '500'); setEdliRate(backupPf.edliRate || '0.5'); setEdliAdminRate(backupPf.edliAdminRate || '0'); setMinMonthlyEdliAdmin(backupPf.minMonthlyEdliAdmin || '0');
+                setPfAdminRate(backupPf.pfAdminRate || '0.5'); setMinMonthlyPfAdmin(backupPf.minMonthlyPfAdmin || '500'); setEdliRate(backupPf.edliRate || '0.5'); setEdliAdminRate(backupPf.edliAdminRate || '0'); setMinMonthlyEdliAdmin(backupPf.minMonthlyEdliAdmin || '0'); setEdliWageLimit(backupPf.edliWageLimit || '15000');
                 setIncludeNoPfInChallan(backupPf.includeNoPfInChallan || false);
                 setIncludePfAdminChargesInCtc(backupPf.includePfAdminChargesInCtc || false);
                 setIncludePfAdminChargesInPayslip(backupPf.includePfAdminChargesInPayslip || false);
@@ -611,34 +613,94 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             <div className="h-px flex-1 bg-slate-200 ml-4"></div>
                                                         </div>
 
-                                                        <div className="flex justify-between items-center">
-                                                            <div className="flex items-center gap-2">
-                                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                                                                    {userRole === 'HR_MANAGER' ? 'Employer Contribution Rate (%)' : 'Employer Contribution Rate'} <span className="text-rose-500">*</span>
-                                                                </h4>
+                                                        {userRole !== 'HR_MANAGER' && (
+                                                            <div className="flex justify-between items-center">
+                                                                <div className="flex items-center gap-2">
+                                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                                                                        Employer Contribution Rate <span className="text-rose-500">*</span>
+                                                                    </h4>
+                                                                </div>
+                                                                <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup</button>
                                                             </div>
-                                                            <button onClick={() => setShowSplitupModal(true)} className="text-xs font-black text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">View Splitup</button>
-                                                        </div>
+                                                        )}
                                                         <div className="space-y-4">
-                                                            <div className={`relative w-full ${userRole === 'HR_MANAGER' ? 'md:w-64' : 'md:w-80'}`}>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={emprRate} 
-                                                                    onChange={e => {
-                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                                                        setEmprRate(val);
-                                                                        if (emprPfContributionBasis === 'limit' && emprPfWageCeiling) {
-                                                                            const ceiling = parseFloat(emprPfWageCeiling) || 0;
-                                                                            const rate = parseFloat(val) || 0;
-                                                                            setEmprLimit(Math.round((ceiling * rate) / 100).toString());
-                                                                        }
-                                                                    }} 
-                                                                    disabled={!isEditingPf} 
-                                                                    className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-1 ring-slate-100 placeholder:text-slate-300" 
-                                                                    placeholder="12"
-                                                                />
-                                                                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
-                                                            </div>
+                                                            {userRole === 'HR_MANAGER' ? (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
+                                                                    {/* Employees' Pension Scheme (EPS) (Account 10) */}
+                                                                    <div>
+                                                                        <div className="flex justify-between items-center mb-2.5">
+                                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                                                                                Employees' Pension Scheme (EPS) (Account 10) <span className="text-rose-500">*</span>
+                                                                            </label>
+                                                                        </div>
+                                                                        <div className="relative w-full">
+                                                                            <input 
+                                                                                type="text" 
+                                                                                value={emprRate} 
+                                                                                onChange={e => {
+                                                                                    const val = e.target.value;
+                                                                                    if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                                        setEmprRate(val);
+                                                                                        if (emprPfContributionBasis === 'limit' && emprPfWageCeiling) {
+                                                                                            const ceiling = parseFloat(emprPfWageCeiling) || 0;
+                                                                                            const rate = parseFloat(val) || 0;
+                                                                                            setEmprLimit(Math.round((ceiling * rate) / 100).toString());
+                                                                                        }
+                                                                                    }
+                                                                                }} 
+                                                                                disabled={!isEditingPf} 
+                                                                                className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-1 ring-slate-100 placeholder:text-slate-300" 
+                                                                                placeholder="8.33"
+                                                                            />
+                                                                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Employees' Provident Fund (EPF) (Account 1) */}
+                                                                    <div>
+                                                                        <div className="flex justify-between items-center mb-2.5">
+                                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                                                                                Employees' Provident Fund (EPF) (Account 1)
+                                                                            </label>
+                                                                            <div className="h-4"></div>
+                                                                        </div>
+                                                                        <div className="relative w-full">
+                                                                            <input 
+                                                                                type="text" 
+                                                                                value={(() => {
+                                                                                    const emp = parseFloat(empRate) || 0;
+                                                                                    const empr = parseFloat(emprRate) || 0;
+                                                                                    const val = emp - empr;
+                                                                                    return (Math.round(val * 100) / 100).toString();
+                                                                                })()} 
+                                                                                disabled={true} 
+                                                                                className="w-full px-5 py-3.5 bg-slate-100 border-none rounded-2xl text-sm font-bold text-slate-500 transition-all cursor-not-allowed" 
+                                                                            />
+                                                                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className={`relative w-full md:w-80`}>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={emprRate} 
+                                                                        onChange={e => {
+                                                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                            setEmprRate(val);
+                                                                            if (emprPfContributionBasis === 'limit' && emprPfWageCeiling) {
+                                                                                const ceiling = parseFloat(emprPfWageCeiling) || 0;
+                                                                                const rate = parseFloat(val) || 0;
+                                                                                setEmprLimit(Math.round((ceiling * rate) / 100).toString());
+                                                                            }
+                                                                        }} 
+                                                                        disabled={!isEditingPf} 
+                                                                        className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-70 transition-all ring-1 ring-slate-100 placeholder:text-slate-300" 
+                                                                        placeholder="12"
+                                                                    />
+                                                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</div>
+                                                                </div>
+                                                            )}
 
                                                             <div className="space-y-4 pt-2">
                                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculate Employer PF contribution based on: <span className="text-rose-500">*</span></h4>
@@ -824,6 +886,21 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                         Monthly EDLI Admin charges are waived under current statutory mandates and must remain 0.
                                                                     </p>
                                                                 </div>
+
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2.5">EDLI Wage Limit (₹) <span className="text-rose-500">*</span></label>
+                                                                    <div className="flex items-center bg-white border border-slate-200 rounded-2xl overflow-hidden px-5 py-3.5 shadow-sm">
+                                                                        <span className="text-slate-400 font-bold text-sm mr-2">₹</span>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={edliWageLimit} 
+                                                                            onChange={e => setEdliWageLimit(e.target.value.replace(/[^0-9]/g, ''))} 
+                                                                            disabled={!isEditingPf} 
+                                                                            className="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-800 focus:outline-none disabled:opacity-70 disabled:bg-slate-50" 
+                                                                            placeholder="15000"
+                                                                        />
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -964,6 +1041,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             </div>
                                                         )}
 
+                                                        {false && (
                                                         <div className="space-y-4 pt-2">
                                                             <label className="flex items-start gap-4 cursor-pointer group/item">
                                                                 <div onClick={() => isEditingPf && setIsVpfApplicable(!isVpfApplicable)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${isVpfApplicable ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
@@ -992,6 +1070,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 </div>
                                                             )}
                                                         </div>
+                                                        )}
 
                                                         <div className="space-y-4 pt-2">
                                                             <label className="flex items-start gap-4 cursor-pointer group/item">

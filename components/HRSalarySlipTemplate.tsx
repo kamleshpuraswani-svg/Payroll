@@ -343,16 +343,7 @@ const HeaderConfigModal: React.FC<{
                                 </div>
                             </label>
                         </div>
-                        
-                        <div className="w-1/2">
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Decimal Places</label>
-                            <input 
-                                type="number"
-                                value={settings.decimalPlaces || '2'}
-                                onChange={(e) => onSettingsChange({...settings, decimalPlaces: e.target.value})}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                            />
-                        </div>
+
                     </div>
                 </div>
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
@@ -1231,7 +1222,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className={`w-full py-2 border border-dashed border-emerald-200 rounded text-xs font-medium text-emerald-600 hover:bg-emerald-50 mt-2 ${slipType === 'F&F Settlement Slip' ? 'flex items-center justify-center gap-2' : 'hidden'}`}>
+                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className="hidden">
                                                         <Plus size={14} /> Add Earning Component
                                                     </button>
                                                 )}
@@ -1252,7 +1243,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                     </div>
                                                 ))}
                                                 {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className={`w-full py-2 border border-dashed border-rose-200 rounded text-xs font-medium text-rose-600 hover:bg-rose-50 mt-2 ${slipType === 'F&F Settlement Slip' ? 'flex items-center justify-center gap-2' : 'hidden'}`}>
+                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className="hidden">
                                                         <Plus size={14} /> Add Deduction Component
                                                     </button>
                                                 )}

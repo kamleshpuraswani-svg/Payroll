@@ -1103,6 +1103,14 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <span className="text-sm font-bold text-slate-700">Consider for Gratuity</span>
                             </label>
 
+                            <label className="flex items-start gap-2 cursor-not-allowed opacity-50">
+                                <div className="mt-0.5 w-5 h-5 rounded border flex items-center justify-center border-slate-200 bg-slate-100">
+                                    {/* Default state is disabled */}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={false} disabled />
+                                <span className="text-sm font-bold text-slate-700">Consider for NPS</span>
+                            </label>
+
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderPT ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {isConsiderPT && <Check size={14} className="text-white" />}

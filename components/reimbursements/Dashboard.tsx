@@ -209,8 +209,6 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
             <thead className="bg-white border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
               <tr>
                 <th className="px-6 py-5">Category</th>
-                <th className="px-6 py-5">Description/Reason</th>
-                <th className="px-6 py-5">Merchant/Payee</th>
                 <th className="px-6 py-5 text-right">Amount</th>
                 <th className="px-6 py-5">Created By</th>
                 <th className="px-6 py-5">Last Modified By</th>
@@ -240,10 +238,6 @@ export const Dashboard = ({ wallet, budgets, claims, loans, onNewClaim, onEditCl
                     <td className="px-6 py-5">
                       <span className="text-[10px] font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded uppercase">{claim.category}</span>
                     </td>
-                    <td className="px-6 py-5 max-w-[200px]">
-                      <p className="text-sm font-bold text-slate-900 truncate" title={description}>{description}</p>
-                    </td>
-                    <td className="px-6 py-5 text-xs font-medium text-slate-600">{merchant}</td>
                     <td className="px-6 py-5 text-right font-black text-slate-900">₹{claim.items.reduce((s: number, i: any) => s + i.amount, 0).toLocaleString()}</td>
                     <td className="px-6 py-5">
                       <p className="text-xs font-bold text-slate-700">Priya Sharma</p>

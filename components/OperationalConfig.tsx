@@ -1480,7 +1480,7 @@ const OperationalConfig: React.FC = () => {
                                         <div className="group relative flex items-center">
                                             <Info size={16} className="text-slate-400 cursor-help" />
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed font-normal normal-case">
-                                                Floor: Rounds decimals down to the nearest whole number (e.g., 3.7 → 3). Ceiling: Rounds decimals up to the nearest whole number (e.g., 3.2 → 4). Nearest Full: Rounds to the nearest whole number (e.g., 3.4 → 3, 3.5 → 4). Nearest Half: Rounds to the nearest 0.5 increment (e.g., 3.4 → 3.5, 3.2 → 3, 3.8 → 4).
+                                                Floor: Rounds decimals down to the nearest whole number (e.g., 3.7 → 3). Ceiling: Rounds decimals up to the nearest whole number (e.g., 3.2 → 4). Nearest Full: Rounds to the nearest whole number (e.g., 3.4 → 3, 3.5 → 4).
                                             </div>
                                         </div>
                                     </div>
@@ -1489,8 +1489,7 @@ const OperationalConfig: React.FC = () => {
                                         {[
                                             { label: 'Floor', value: 'floor' },
                                             { label: 'Ceiling', value: 'ceiling' },
-                                            { label: 'Nearest Full', value: 'nearest_full' },
-                                            { label: 'Nearest Half', value: 'nearest_half' }
+                                            { label: 'Nearest Full', value: 'nearest_full' }
                                         ].map((opt) => (
                                             <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
                                                 <div className="relative flex items-center justify-center">

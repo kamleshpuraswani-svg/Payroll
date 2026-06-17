@@ -251,13 +251,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       {/* Sidebar Container */}
       <aside
         className={`
-          fixed top-0 left-0 z-30 h-full w-64 bg-white border-r border-slate-200 shadow-sm transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 z-30 h-full w-64 bg-blue-600 border-r border-blue-700 shadow-lg transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:h-screen lg:shrink-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+        <div className="h-16 flex items-center px-6 border-b border-blue-500/30">
+          <span className="text-xs font-bold text-blue-100 tracking-wider uppercase">
             {userRole === 'SUPER_ADMIN' ? 'Super Admin Panel' : userRole === 'HR_MANAGER' ? 'HR Portal' : 'Employee Portal'}
           </span>
         </div>
@@ -276,18 +276,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                     className={`
                       w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                       ${isActive || (groupActive && !isExpanded)
-                        ? 'bg-sky-50 text-sky-700'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                        ? 'bg-white text-blue-600 font-bold'
+                        : 'text-blue-100 hover:bg-white/10 hover:text-white'}
                     `}
                   >
                     <div className="flex items-center space-x-3">
-                      <span className={(isActive || groupActive) ? 'text-sky-600' : 'text-slate-400'}>
+                      <span className={(isActive || groupActive) ? 'text-blue-600' : 'text-blue-200'}>
                         {item.icon}
                       </span>
                       <span>{item.label}</span>
                     </div>
                     {item.subItems && (
-                      <span className="text-slate-400">
+                      <span className={(isActive || groupActive) ? 'text-blue-500' : 'text-blue-200'}>
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                       </span>
                     )}
@@ -295,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
 
                   {/* Sub-menu Items */}
                   {item.subItems && isExpanded && (
-                    <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 space-y-1">
+                    <div className="mt-1 ml-4 pl-4 border-l-2 border-blue-500/30 space-y-1">
                       {item.subItems.filter(subItem => !subItem.hidden).map((subItem) => {
                         const isSubActive = subItem.viewState === currentView || (subItem.viewState === ViewState.SETTINGS && currentView === ViewState.HR_SALARY_COMPONENTS);
                         const subGroupActive = isGroupActive(subItem);
@@ -308,16 +308,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                               className={`
                                 w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                                 ${isSubActive || (subGroupActive && !isSubExpanded)
-                                  ? 'bg-sky-50 text-sky-700'
-                                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
+                                  ? 'bg-white text-blue-600 font-bold'
+                                  : 'text-blue-100 hover:bg-white/10 hover:text-white'}
                               `}
                             >
                               <div className="flex items-center space-x-3">
-                                {isSubActive && <Circle size={6} fill="currentColor" className="text-sky-600" />}
+                                {isSubActive && <Circle size={6} fill="currentColor" className="text-blue-600" />}
                                 <span className={isSubActive ? '' : 'pl-4'}>{subItem.label}</span>
                               </div>
                               {subItem.subItems && (
-                                <span className="text-slate-400">
+                                <span className={(isSubActive || subGroupActive) ? 'text-blue-500' : 'text-blue-200'}>
                                   {isSubExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                 </span>
                               )}
@@ -333,11 +333,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                                     className={`
                                       w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                                       ${nestedItem.viewState === currentView
-                                        ? 'bg-sky-50 text-sky-700'
-                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
+                                        ? 'bg-white text-blue-600 font-bold'
+                                        : 'text-blue-100 hover:bg-white/10 hover:text-white'}
                                     `}
                                   >
-                                    {nestedItem.viewState === currentView && <Circle size={6} fill="currentColor" className="text-sky-600" />}
+                                    {nestedItem.viewState === currentView && <Circle size={6} fill="currentColor" className="text-blue-600" />}
                                     <span className={nestedItem.viewState === currentView ? '' : 'pl-8'}>{nestedItem.label}</span>
                                   </button>
                                 ))}
