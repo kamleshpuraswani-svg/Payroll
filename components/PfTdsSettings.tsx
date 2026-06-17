@@ -1041,16 +1041,15 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             </div>
                                                         )}
 
-                                                        {false && (
                                                         <div className="space-y-4 pt-2">
                                                             <label className="flex items-start gap-4 cursor-pointer group/item">
                                                                 <div onClick={() => isEditingPf && setIsVpfApplicable(!isVpfApplicable)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${isVpfApplicable ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
                                                                     {isVpfApplicable && <Check size={14} strokeWidth={4} />}
                                                                 </div>
-                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Is voluntary provident fund applicable ?</span>
+                                                                <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Is Voluntary Provident Fund (VPF) applicable?</span>
                                                             </label>
 
-                                                            {isVpfApplicable && (
+                                                            {false && isVpfApplicable && (
                                                                 <div className="ml-10 space-y-4 pt-2 animate-in slide-in-from-left-4 duration-300">
                                                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculate VPF on:</h4>
                                                                     <div className="flex flex-col sm:flex-row gap-6">
@@ -1070,7 +1069,6 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        )}
 
                                                         <div className="space-y-4 pt-2">
                                                             <label className="flex items-start gap-4 cursor-pointer group/item">

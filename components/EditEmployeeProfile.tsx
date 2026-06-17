@@ -969,14 +969,21 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-y-4 gap-x-6">
                         {[
                            { id: 'providentFund', label: 'Provident Fund' },
-                           { id: 'esi', label: 'ESI' },
+                     { id: 'esi', label: 'ESI' },
                            { id: 'professionalTax', label: 'Professional Tax' },
                            { id: 'gratuity', label: 'Gratuity' },
                            { id: 'lwf', label: 'LWF' },
                            { id: 'tds', label: 'TDS/Income Tax' },
                            { id: 'nps', label: 'NPS' },
                            { id: 'vpf', label: 'Voluntary Provident Fund (VPF)' }
-                        ].filter(comp => !(userRole === 'HR_MANAGER' && comp.id === 'tds')).map((comp) => (
+                        ].filter(comp => {
+                            if (userRole === 'HR_MANAGER' && comp.id === 'tds') return false;
+                            if (comp.id === 'vpf') {
+                               const pfSettings = statutorySettings?.pf_settings;
+                               return (pfSettings?.enablePf ?? true) && !!pfSettings?.isVpfApplicable;
+                            }
+                            return true;
+                         }).map((comp) => (
                            <label key={comp.id} className="flex items-center gap-2.5 cursor-pointer group">
                               <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'bg-sky-600 border-sky-600 shadow-sm' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}>
                                  {statutoryDeductions[comp.id as keyof typeof statutoryDeductions] && <CheckCircle size={14} className="text-white" />}
@@ -1004,14 +1011,14 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                     }
                                  }} 
                               />
-                              <span className={`text-sm font-medium transition-colors ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-800'}`}>
+                              <span className={`text-sm font-medium ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-800'}`}>
                                  {comp.label}
                               </span>
                            </label>
                         ))}
                      </div>
 
-                     {statutoryDeductions.vpf && (
+                     {((statutorySettings?.pf_settings?.enablePf ?? true) && !!statutorySettings?.pf_settings?.isVpfApplicable) && statutoryDeductions.vpf && (
                          <div className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
                             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">Voluntary Provident Fund (VPF) Configuration</h4>
                             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-3xl">
