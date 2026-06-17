@@ -658,15 +658,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                 validationErrors.vpfPercentage = 'Percentage must be between 1 and 99.';
              }
           }
-          if (!vpfEffectiveFrom) {
-             validationErrors.vpfEffectiveFrom = 'Effective From month is required.';
-          } else {
-             const d = new Date();
-             const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-             if (vpfEffectiveFrom < currentMonthStr) {
-                validationErrors.vpfEffectiveFrom = 'Effective From cannot be a past month.';
-             }
-          }
        }
 
        if (Object.keys(validationErrors).length > 0) {
@@ -676,8 +667,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
              document.getElementById('effective-from-field-main')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           } else if (validationErrors.pranNumber) {
              document.getElementById('pran-number-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (validationErrors.vpfAmount || validationErrors.vpfPercentage || validationErrors.vpfEffectiveFrom) {
-             document.getElementById('vpf-effective-from-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (validationErrors.vpfAmount || validationErrors.vpfPercentage) {
+             document.getElementById('vpf-config-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           return;
        }
@@ -1019,7 +1010,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      </div>
 
                      {((statutorySettings?.pf_settings?.enablePf ?? true) && !!statutorySettings?.pf_settings?.isVpfApplicable) && statutoryDeductions.vpf && (
-                         <div className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
+                         <div id="vpf-config-container" className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
                             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">Voluntary Provident Fund (VPF) Configuration</h4>
                             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-3xl">
                                <div className="w-full md:w-[30%]">
@@ -1062,21 +1053,6 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</span>
                                   </div>
                                   {errors.vpfPercentage && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfPercentage}</p>}
-                               </div>
-
-                               <div className="w-full md:w-[35%] md:ml-auto" id="vpf-effective-from-field">
-                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Effective From <span className="text-rose-500">*</span></label>
-                                  <div className="relative">
-                                     <input 
-                                        type="month" 
-                                        value={vpfEffectiveFrom} 
-                                        onChange={e => setVpfEffectiveFrom(e.target.value)} 
-                                        disabled={isReadOnly}
-                                        min={(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })()}
-                                        className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none ${errors.vpfEffectiveFrom ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
-                                     />
-                                  </div>
-                                  {errors.vpfEffectiveFrom && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfEffectiveFrom}</p>}
                                </div>
                             </div>
                          </div>

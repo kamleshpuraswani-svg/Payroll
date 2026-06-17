@@ -216,17 +216,22 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
                     { id: '9', section: '80DDB', limit: '40,000 / (₹1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
                     { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
-                    { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤50L)', regime: 'Old' },
-                    { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
-                    { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
-                    { id: '14', section: '80GG', limit: 'Min of: ₹5,000/month, 25% of income, rent–10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
+                    { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan (Stamp duty value ≤ ₹45L).', regime: 'Old' },
+                    { id: '13', section: '80G', limit: '--', description: 'Donations', regime: 'Old' },
+                    { id: '13a', section: '80G', limit: '100% deduction, no limit', description: 'PM Relief Fund / National Defence Fund', regime: 'Old', isSubSection: true },
+                    { id: '13b', section: '80G', limit: '50% deduction, subject to 10% of gross income', description: 'Approved charitable trusts', regime: 'Old', isSubSection: true },
+                    { id: '13c', section: '80G', limit: '100% deduction under 80GGC', description: 'Political parties', regime: 'Old', isSubSection: true },
+                    { id: '14', section: '80GG', limit: 'Least of: ₹5,000/month, 25% of income, or rent minus 10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
                     { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
-                    { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (non-senior)', regime: 'Old' },
-                    { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (senior citizens)', regime: 'Old' },
-                    { id: '18', section: '80U', limit: '75,000 / 1,25,000', description: 'Self disability deduction', regime: 'Old' },
+                    { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (For individuals below 60 years)', regime: 'Old' },
+                    { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (Only for senior citizens (60+). Replaces 80TTA.)', regime: 'Old' },
+                    { id: '18', section: '80U', limit: '75,000 (₹1,25,000 for severe disability 80%+)', description: 'Self disability deduction', regime: 'Old' },
                     { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
-                    { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 40/50% of salary, rent–10% salary', description: 'HRA exemption', regime: 'Old' },
-                    { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
+                    { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic', description: 'HRA exemption', regime: 'Old' },
+                    { id: '21', section: '10(14)', limit: '--', description: 'Special Allowances', regime: 'Old' },
+                    { id: '21a', section: '10(14)', limit: 'Actual travel cost for 2 journeys in 4-year block', description: 'Leave travel allowance (LTA)', regime: 'Old', isSubSection: true },
+                    { id: '21b', section: '10(14)', limit: '100/month per child (max 2 children)', description: 'Children education allowance', regime: 'Old', isSubSection: true },
+                    { id: '21c', section: '10(14)', limit: '300/month per child (max 2 children)', description: 'Hostel allowance', regime: 'Old', isSubSection: true },
                     { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
                     { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
                     { id: '24', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'New' },
@@ -277,6 +282,30 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                      if (l.id === '11') {
                          return { ...l, description: 'Interest on home loan (first-time buyer, loan ≤50L)' };
                      }
+                     if (l.id === '12') {
+                         return { ...l, description: 'Interest on affordable housing home loan (Stamp duty value ≤ ₹45L).' };
+                     }
+                     if (l.id === '13') {
+                         return { ...l, description: 'Donations', limit: '--' };
+                     }
+                     if (l.id === '14') {
+                         return { ...l, limit: 'Least of: ₹5,000/month, 25% of income, or rent minus 10% of income' };
+                     }
+                     if (l.id === '16') {
+                         return { ...l, description: 'Interest on savings account (For individuals below 60 years)' };
+                     }
+                     if (l.id === '17') {
+                         return { ...l, description: 'Interest on deposits (Only for senior citizens (60+). Replaces 80TTA.)' };
+                     }
+                     if (l.id === '18') {
+                         return { ...l, limit: '75,000 (₹1,25,000 for severe disability 80%+)' };
+                     }
+                     if (l.id === '20') {
+                         return { ...l, limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic' };
+                     }
+                     if (l.id === '21') {
+                         return { ...l, description: 'Special Allowances', limit: '--' };
+                     }
                      if (l.section === '80C' && l.isSubSection && l.displaySection !== '80CCD (1)' && l.displaySection !== '80CCD(1)') {
                          return { ...l, limit: '--' };
                      }
@@ -286,8 +315,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 // Ensure 80C subsections are placed immediately after the main 80C entry
                 const main80CIndex = mergedLimits.findIndex(l => l.id === '1');
                 if (main80CIndex !== -1) {
-                    const subSections = mergedLimits.filter(l => l.id.startsWith('1') && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection);
-                    mergedLimits = mergedLimits.filter(l => !(l.id.startsWith('1') && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection));
+                    const subSections = mergedLimits.filter(l => l.section === '80C' && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === '80C' && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection));
                     // Re-evaluate main80CIndex after filtering just in case it shifted (though it shouldn't have)
                     const newMain80CIndex = mergedLimits.findIndex(l => l.id === '1');
                     mergedLimits.splice(newMain80CIndex + 1, 0, ...subSections);
@@ -296,10 +325,28 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 // Ensure 80D subsections are placed immediately after the main 80D entry
                 const main80DIndex = mergedLimits.findIndex(l => l.id === '6');
                 if (main80DIndex !== -1) {
-                    const subSections = mergedLimits.filter(l => l.id.startsWith('6') && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection);
-                    mergedLimits = mergedLimits.filter(l => !(l.id.startsWith('6') && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection));
+                    const subSections = mergedLimits.filter(l => l.section === '80D' && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === '80D' && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection));
                     const newMain80DIndex = mergedLimits.findIndex(l => l.id === '6');
                     mergedLimits.splice(newMain80DIndex + 1, 0, ...subSections);
+                }
+
+                // Ensure 80G subsections are placed immediately after the main 80G entry
+                const main80GIndex = mergedLimits.findIndex(l => l.id === '13');
+                if (main80GIndex !== -1) {
+                    const subSections = mergedLimits.filter(l => l.section === '80G' && l.id !== '13' && l.regime === 'Old' && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === '80G' && l.id !== '13' && l.regime === 'Old' && (l as any).isSubSection));
+                    const newMain80GIndex = mergedLimits.findIndex(l => l.id === '13');
+                    mergedLimits.splice(newMain80GIndex + 1, 0, ...subSections);
+                }
+
+                // Ensure 10(14) subsections are placed immediately after the main 10(14) entry
+                const main1014Index = mergedLimits.findIndex(l => l.id === '21');
+                if (main1014Index !== -1) {
+                    const subSections = mergedLimits.filter(l => l.section === '10(14)' && l.id !== '21' && l.regime === 'Old' && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === '10(14)' && l.id !== '21' && l.regime === 'Old' && (l as any).isSubSection));
+                    const newMain1014Index = mergedLimits.findIndex(l => l.id === '21');
+                    mergedLimits.splice(newMain1014Index + 1, 0, ...subSections);
                 }
 
                 setLimits(mergedLimits);
@@ -400,16 +447,22 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         { id: '9', section: '80DDB', limit: '40,000 / (₹1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
         { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
         { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤50L)', regime: 'Old' },
-        { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old' },
-        { id: '13', section: '80G', limit: '50% or 100% of donation', description: 'Donations to approved funds', regime: 'Old' },
-        { id: '14', section: '80GG', limit: 'Min of: ₹5,000/month, 25% of income, rent–10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
+        { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan (Stamp duty value ≤ ₹45L).', regime: 'Old' },
+        { id: '13', section: '80G', limit: '--', description: 'Donations', regime: 'Old' },
+        { id: '13a', section: '80G', limit: '100% deduction, no limit', description: 'PM Relief Fund / National Defence Fund', regime: 'Old', isSubSection: true },
+        { id: '13b', section: '80G', limit: '50% deduction, subject to 10% of gross income', description: 'Approved charitable trusts', regime: 'Old', isSubSection: true },
+        { id: '13c', section: '80G', limit: '100% deduction under 80GGC', description: 'Political parties', regime: 'Old', isSubSection: true },
+        { id: '14', section: '80GG', limit: 'Least of: ₹5,000/month, 25% of income, or rent minus 10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
         { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
-        { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (non-senior)', regime: 'Old' },
-        { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (senior citizens)', regime: 'Old' },
-        { id: '18', section: '80U', limit: '75,000 / 1,25,000', description: 'Self disability deduction', regime: 'Old' },
+        { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (For individuals below 60 years)', regime: 'Old' },
+        { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (Only for senior citizens (60+). Replaces 80TTA.)', regime: 'Old' },
+        { id: '18', section: '80U', limit: '75,000 (₹1,25,000 for severe disability 80%+)', description: 'Self disability deduction', regime: 'Old' },
         { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
-        { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 40/50% of salary, rent–10% salary', description: 'HRA exemption', regime: 'Old' },
-        { id: '21', section: '10(14)', limit: 'As per rules', description: 'LTA, conveyance, children education allowance', regime: 'Old' },
+        { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic', description: 'HRA exemption', regime: 'Old' },
+        { id: '21', section: '10(14)', limit: '--', description: 'Special Allowances', regime: 'Old' },
+        { id: '21a', section: '10(14)', limit: 'Actual travel cost for 2 journeys in 4-year block', description: 'Leave travel allowance (LTA)', regime: 'Old', isSubSection: true },
+        { id: '21b', section: '10(14)', limit: '100/month per child (max 2 children)', description: 'Children education allowance', regime: 'Old', isSubSection: true },
+        { id: '21c', section: '10(14)', limit: '300/month per child (max 2 children)', description: 'Hostel allowance', regime: 'Old', isSubSection: true },
         { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
         { id: '23', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'New' },
         { id: '24', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'New' },
@@ -500,6 +553,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [isLimitsExpanded, setIsLimitsExpanded] = useState(true);
     const [is80CExpanded, setIs80CExpanded] = useState(false);
     const [is80DExpanded, setIs80DExpanded] = useState(false);
+    const [is80GExpanded, setIs80GExpanded] = useState(false);
+    const [is1014Expanded, setIs1014Expanded] = useState(false);
 
     // Backup states for cancel functionality
     const [invBackup, setInvBackup] = useState<any>(null);
@@ -1741,10 +1796,16 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             if (l.section === '80D' && l.isSubSection) {
                                                 return isEditingInv || is80DExpanded;
                                             }
+                                            if (l.section === '80G' && l.isSubSection) {
+                                                return isEditingInv || is80GExpanded;
+                                            }
+                                            if (l.section === '10(14)' && l.isSubSection) {
+                                                return isEditingInv || is1014Expanded;
+                                            }
                                             return true;
                                         }).map((limit, idx) => {
                                             const actualIdx = limits.findIndex(l => l.id === limit.id);
-                                            const hasSubsections = (limit.section === '80C' || limit.section === '80D') && !limit.isSubSection && limits.some(l => 
+                                            const hasSubsections = (limit.section === '80C' || limit.section === '80D' || limit.section === '80G' || limit.section === '10(14)') && !limit.isSubSection && limits.some(l => 
                                                 l.section === limit.section && 
                                                 l.isSubSection && 
                                                 (l.regime || 'Old') === limitViewRegime && 
@@ -1759,6 +1820,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                 setIs80CExpanded(!is80CExpanded);
                                                             } else if (limit.section === '80D') {
                                                                 setIs80DExpanded(!is80DExpanded);
+                                                            } else if (limit.section === '80G') {
+                                                                setIs80GExpanded(!is80GExpanded);
+                                                            } else if (limit.section === '10(14)') {
+                                                                setIs1014Expanded(!is1014Expanded);
                                                             }
                                                         }
                                                     }}
@@ -1823,12 +1888,12 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         ) : (
                                                             <div className="flex items-center justify-between">
                                                                 <span className="text-indigo-600 font-black">
-                                                                    {limit.limit === '--' || limit.section === '80E' ? limit.limit : `₹${limit.limit}`}
+                                                                    {limit.limit === '--' || limit.section === '80E' || /^[A-Za-z]/.test(limit.limit) ? limit.limit : `₹${limit.limit}`}
                                                                 </span>
                                                                 {hasSubsections && (
                                                                     <ChevronDown 
                                                                         size={16} 
-                                                                        className={`text-slate-400 transition-all duration-200 ${(limit.section === '80C' ? is80CExpanded : is80DExpanded) ? 'rotate-180 text-indigo-600' : ''}`} 
+                                                                        className={`text-slate-400 transition-all duration-200 ${(limit.section === '80C' ? is80CExpanded : limit.section === '80D' ? is80DExpanded : limit.section === '80G' ? is80GExpanded : is1014Expanded) ? 'rotate-180 text-indigo-600' : ''}`} 
                                                                     />
                                                                 )}
                                                             </div>
