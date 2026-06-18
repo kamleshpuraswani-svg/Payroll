@@ -4050,19 +4050,6 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOp
                               />
                            </div>
 
-                           <div className="flex items-center gap-2">
-                              <input
-                                 type="checkbox"
-                                 id="sendOnboardingEmails"
-                                 checked={sendOnboardingEmails}
-                                 onChange={(e) => setSendOnboardingEmails(e.target.checked)}
-                                 className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <label htmlFor="sendOnboardingEmails" className="text-xs font-bold text-slate-700 select-none cursor-pointer">
-                                 Send onboarding emails to all employees
-                              </label>
-                           </div>
-
                            {file && (
                               <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 animate-in fade-in">
                                  <Check className="text-emerald-600" size={14} strokeWidth={3} />
