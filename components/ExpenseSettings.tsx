@@ -415,7 +415,7 @@ const ExpenseSettings: React.FC = () => {
                                 setNewMonthlyLimit('');
                                 setNewReceiptThreshold('');
                             }}
-                            className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all shadow-sm"
+                            className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 font-bold text-sm transition-all shadow-sm"
                         >
                             {expenseActiveTab === 'HISTORY' ? 'Back' : 'Cancel'}
                         </button>
@@ -425,7 +425,7 @@ const ExpenseSettings: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => setExpenseActiveTab('HISTORY')}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all shadow-sm flex items-center gap-2"
+                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 font-bold text-sm transition-all shadow-sm flex items-center gap-2"
                                     >
                                         <Clock size={16} /> Audit History
                                     </button>
@@ -433,7 +433,7 @@ const ExpenseSettings: React.FC = () => {
                                  <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {isSaving ? 'Saving...' : 'Submit'}
                                 </button>
@@ -583,7 +583,7 @@ const ExpenseSettings: React.FC = () => {
                         ) : (
                             <div className="space-y-6">
                                 {/* Section 1: Basic Details */}
-                                <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 relative overflow-hidden">
+                                <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm space-y-6 relative overflow-hidden">
                                     <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                                         <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">1</span> 
                                         Expense Category & Settings
@@ -600,7 +600,7 @@ const ExpenseSettings: React.FC = () => {
                                                     name="category_name"
                                                     defaultValue={editingExpense?.name || ""}
                                                     placeholder="e.g. Travel & Conveyance"
-                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                     required
                                                 />
                                             </div>
@@ -616,7 +616,7 @@ const ExpenseSettings: React.FC = () => {
                                                     type="date"
                                                     name="effectiveFrom"
                                                     defaultValue={editingExpense?.effective_from || ""}
-                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer"
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer"
                                                 />
                                             </div>
                                         </div>
@@ -624,7 +624,7 @@ const ExpenseSettings: React.FC = () => {
                                 </div>
 
                                 {/* Section 2: Target Configuration */}
-                                <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                                <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm space-y-6">
                                     <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-4">
                                         <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">2</span> 
                                         Target Limits & Defaults
@@ -633,7 +633,7 @@ const ExpenseSettings: React.FC = () => {
                                     {/* Entity Search & Selection */}
                                     <div className="space-y-5 pt-2">
                                         {/* Unified card: Applicable Target + conditional fields */}
-                                        <div className="p-5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-4">
+                                        <div className="p-5 bg-slate-50/70 border border-slate-200 rounded-lg space-y-4">
                                             {/* Applicable Target Dropdown — 50% width */}
                                             <div className="space-y-1.5 w-1/2">
                                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
@@ -649,7 +649,7 @@ const ExpenseSettings: React.FC = () => {
                                                             setNewMonthlyLimit('');
                                                             setNewReceiptThreshold('');
                                                         }}
-                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
                                                     >
                                                         <option value="">Select target type...</option>
                                                         <option value="dept">Department</option>
@@ -673,7 +673,7 @@ const ExpenseSettings: React.FC = () => {
                                                             <select
                                                                 value={newEntityValue}
                                                                 onChange={(e) => setNewEntityValue(e.target.value)}
-                                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
                                                             >
                                                                 <option value="">Select {applicableTarget === 'dept' ? 'department' : 'designation'}...</option>
                                                                 {(applicableTarget === 'dept' ? availableDepartments : availableDesignations).map((item: string) => (
@@ -696,7 +696,7 @@ const ExpenseSettings: React.FC = () => {
                                                             step="1"
                                                             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
                                                             placeholder="e.g. 5000"
-                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                         />
                                                     </div>
 
@@ -713,7 +713,7 @@ const ExpenseSettings: React.FC = () => {
                                                             step="1"
                                                             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
                                                             placeholder="e.g. 1000"
-                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                         />
                                                     </div>
                                                 </div>
@@ -725,7 +725,7 @@ const ExpenseSettings: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleAddEntity}
-                                                className="flex items-center gap-2 px-5 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-lg font-bold text-sm hover:bg-blue-50 transition-all shadow-sm"
+                                                className="flex items-center gap-2 px-5 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-md font-bold text-sm hover:bg-blue-50 transition-all shadow-sm"
                                             >
                                                 <Plus size={15} /> Add
                                             </button>
@@ -734,12 +734,12 @@ const ExpenseSettings: React.FC = () => {
                                         {/* Selected Entities — rendered as cards matching the input layout */}
                                         <div className="space-y-4">
                                             {selectedEntities.map((entity, index) => (
-                                                <div key={`${entity.type}-${entity.id}`} className="p-5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-4 group">
+                                                <div key={`${entity.type}-${entity.id}`} className="p-5 bg-slate-50/70 border border-slate-200 rounded-lg space-y-4 group">
                                                     {/* Row 1: Applicable Target (read-only) + delete */}
                                                     <div className="flex items-end justify-between">
                                                         <div className="space-y-1.5 w-1/2">
                                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
-                                                            <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800">
+                                                            <div className="px-4 py-3 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800">
                                                                 {entity.type === 'dept' ? 'Department' : 'Designation'}
                                                             </div>
                                                         </div>
@@ -757,7 +757,7 @@ const ExpenseSettings: React.FC = () => {
                                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                                                                 {entity.type === 'dept' ? 'Department' : 'Designation'} <span className="text-rose-500">*</span>
                                                             </label>
-                                                            <div className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800">
+                                                            <div className="px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800">
                                                                 {entity.name}
                                                             </div>
                                                         </div>
@@ -770,7 +770,7 @@ const ExpenseSettings: React.FC = () => {
                                                                 min="1"
                                                                 step="1"
                                                                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                                 placeholder="0"
                                                             />
                                                         </div>
@@ -783,7 +783,7 @@ const ExpenseSettings: React.FC = () => {
                                                                 min="0"
                                                                 step="1"
                                                                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                                 placeholder="0"
                                                             />
                                                         </div>
@@ -801,7 +801,7 @@ const ExpenseSettings: React.FC = () => {
                                 </div>
 
                                 {/* Section 3: Status */}
-                                <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                                <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
                                             <ShieldCheck size={20} />
@@ -859,11 +859,11 @@ const ExpenseSettings: React.FC = () => {
                                             type="text"
                                             defaultValue={editingCategory?.name || ''}
                                             placeholder="e.g. Travel, Meals"
-                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-700 focus:outline-none focus:border-sky-500 transition-all"
                                             required
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-lg">
                                         <div className="space-y-0.5">
                                             <label className="text-sm font-bold text-slate-700">Status</label>
                                         </div>
@@ -885,14 +885,14 @@ const ExpenseSettings: React.FC = () => {
                                             setIsAddingCategory(false);
                                             setEditingCategory(null);
                                         }}
-                                        className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-bold text-sm transition-all"
+                                        className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 font-bold text-sm transition-all"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSaving}
-                                        className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
+                                        className="flex-1 px-4 py-2.5 bg-sky-600 text-white rounded-md hover:bg-sky-700 font-bold text-sm transition-all shadow-lg shadow-sky-100 disabled:opacity-50"
                                     >
                                         {isSaving ? 'Saving...' : 'Submit'}
                                     </button>

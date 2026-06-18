@@ -667,7 +667,7 @@ const LoanAdvancesTypes: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-1">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Business Unit</label>
-                                    <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700">
+                                    <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-700">
                                         {(() => {
                                             const [type, id] = selectedTarget.split(':');
                                             if (type === 'bu') return id;
@@ -680,7 +680,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 <div className="md:col-span-2">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Request Type <span className="text-rose-500">*</span></label>
                                     <div className="flex flex-wrap gap-4">
-                                        <label className={`flex items-center gap-3 px-4 py-3 border rounded-xl transition-all ${currentLoan.name === 'Salary Advance' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'} ${currentLoan.id ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                        <label className={`flex items-center gap-3 px-4 py-3 border rounded-md transition-all ${currentLoan.name === 'Salary Advance' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'} ${currentLoan.id ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${currentLoan.name === 'Salary Advance' ? 'border-purple-600' : 'border-slate-300'}`}>
                                                 {currentLoan.name === 'Salary Advance' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                             </div>
@@ -702,7 +702,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                             <span className={`text-sm font-bold ${currentLoan.name === 'Salary Advance' ? 'text-purple-900' : 'text-slate-600'}`}>Salary Advance</span>
                                         </label>
  
-                                        <label className={`flex items-center gap-3 px-4 py-3 border rounded-xl transition-all ${currentLoan.name === 'Loan' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'} ${currentLoan.id ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                        <label className={`flex items-center gap-3 px-4 py-3 border rounded-md transition-all ${currentLoan.name === 'Loan' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'} ${currentLoan.id ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${currentLoan.name === 'Loan' ? 'border-purple-600' : 'border-slate-300'}`}>
                                                 {currentLoan.name === 'Loan' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                             </div>
@@ -722,7 +722,7 @@ const LoanAdvancesTypes: React.FC = () => {
 
                                         {/* Handle existing custom names if editing */}
                                         {currentLoan.name && currentLoan.name !== 'Salary Advance' && currentLoan.name !== 'Loan' && (
-                                            <label className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all bg-purple-50 border-purple-500 ring-1 ring-purple-500`}>
+                                            <label className={`flex items-center gap-3 px-4 py-3 border rounded-md cursor-pointer transition-all bg-purple-50 border-purple-500 ring-1 ring-purple-500`}>
                                                 <div className="w-5 h-5 rounded-full border border-purple-600 flex items-center justify-center">
                                                     <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />
                                                 </div>
@@ -741,7 +741,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
                                             Interest Rate {currentLoan.name === 'Loan' && <span className="text-rose-500">*</span>}
                                         </label>
-                                        <div className={`flex border rounded-lg overflow-hidden transition-all w-fit ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
+                                        <div className={`flex border rounded-md overflow-hidden transition-all w-fit ${errors.interestRate ? 'border-rose-500' : 'border-slate-200 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'}`}>
                                             <input
                                                 type="number"
                                                 value={currentLoan.interestRate}
@@ -771,7 +771,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 const label = type === 'flat' ? 'Flat Rate' : 'Reducing Rate';
                                                 const isSelected = interestCalcType === type;
                                                 return (
-                                                    <label key={type} className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'}`}>
+                                                    <label key={type} className={`flex items-center gap-2 px-4 py-2.5 border rounded-md cursor-pointer transition-all ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500' : 'bg-white border-slate-200 hover:border-purple-200'}`}>
                                                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
                                                             {isSelected && <div className="w-2 h-2 rounded-full bg-purple-600" />}
                                                         </div>
@@ -807,7 +807,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                 setCurrentLoan({ ...currentLoan, maxTenure: val });
                                                 if (errors.maxTenure) setErrors({ ...errors, maxTenure: undefined });
                                             }}
-                                            className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${errors.maxTenure ? 'border-rose-500' : 'border-slate-200'}`}
+                                            className={`w-full px-3 py-2.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${errors.maxTenure ? 'border-rose-500' : 'border-slate-200'}`}
                                         />
                                         {currentLoan.name === 'Salary Advance' && <p className="text-[10px] text-slate-400 mt-1">Max 6 months.</p>}
                                         {currentLoan.name === 'Loan' && <p className="text-[10px] text-slate-400 mt-1">Max 48 months.</p>}
@@ -823,7 +823,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                             <select
                                                 value={currentLoan.repaymentMonth}
                                                 onChange={e => setCurrentLoan({ ...currentLoan, repaymentMonth: e.target.value })}
-                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none"
                                             >
                                                 {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
                                             </select>
@@ -833,7 +833,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                 )}
 
                                 {/* Max Amount Limit - Enhanced Section */}
-                                <div className="md:col-span-2 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                <div className="md:col-span-2 bg-slate-50 p-5 rounded-lg border border-slate-200">
                                         <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-3">
                                             Max Amount Limit <span className="text-rose-500">*</span>
                                             <div className="relative group/info">
@@ -896,7 +896,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                         if (errors.maxAmount) setErrors({ ...errors, maxAmount: undefined });
                                                     }}
                                                     placeholder="e.g. 5,00,000"
-                                                    className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm"
+                                                    className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-md text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm"
                                                 />
                                             </div>
                                         ) : (
@@ -908,7 +908,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                             setMultiFactor(e.target.value);
                                                             setCurrentLoan({ ...currentLoan, maxAmount: `${e.target.value} months ${multiBasis}` });
                                                         }}
-                                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
+                                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
                                                     >
                                                         {[1, 2, 3, 4, 5, 6, 12].map(n => <option key={n} value={n}>{n}x</option>)}
                                                     </select>
@@ -921,13 +921,12 @@ const LoanAdvancesTypes: React.FC = () => {
                                                             setMultiBasis(e.target.value);
                                                             setCurrentLoan({ ...currentLoan, maxAmount: `${multiFactor} months ${e.target.value}` });
                                                         }}
-                                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
+                                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none shadow-sm cursor-pointer"
                                                     >
                                                         {currentLoan.name === 'Salary Advance' ? (
                                                             <option>Net Salary</option>
                                                         ) : (
                                                             <>
-                                                                <option>Basic Salary</option>
                                                                 <option>Gross Salary</option>
                                                                 <option>Net Salary</option>
                                                             </>
@@ -939,7 +938,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                         )}
                                         {errors.maxAmount && <p className="text-xs text-rose-500 mt-2 flex items-center gap-1"><AlertTriangle size={10} /> {errors.maxAmount}</p>}
 
-                                        <div className="mt-3 flex items-center gap-2 p-2 bg-slate-100 rounded-lg w-fit border border-slate-200">
+                                        <div className="mt-3 flex items-center gap-2 p-2 bg-slate-100 rounded-md w-fit border border-slate-200">
                                             <Info size={14} className="text-purple-500" />
                                             <span className="text-xs text-slate-500">Preview: <span className="font-bold text-slate-700">{amountType === 'Fixed' ? `Max Limit: ₹ ${fixedVal || '0'}` : `Max Limit: ${multiFactor} months ${multiBasis}`}</span></span>
                                         </div>
@@ -950,7 +949,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                     <textarea
                                         value={currentLoan.description}
                                         onChange={e => setCurrentLoan({ ...currentLoan, description: e.target.value })}
-                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none h-20"
+                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none h-20"
                                         placeholder="Brief description of the loan purpose..."
                                     />
                                 </div>
@@ -958,13 +957,13 @@ const LoanAdvancesTypes: React.FC = () => {
                                 {/* Approval Flow Section — hidden, managed via Operational Config > Loans & Advances Approval Hierarchy */}
                                 <div className="md:col-span-2 hidden">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Approval Flow</label>
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                                         <div className="flex gap-3 mb-4">
                                             <div className="relative flex-1">
                                                 <select
                                                     value={selectedApprover}
                                                     onChange={(e) => setSelectedApprover(e.target.value)}
-                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white"
+                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white"
                                                 >
                                                     <option value="">Select Employee to Add...</option>
                                                     {EMPLOYEES_LIST.map(emp => (
@@ -976,7 +975,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                             <button
                                                 onClick={handleAddApprover}
                                                 disabled={!selectedApprover}
-                                                className="px-4 py-2.5 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                                className="px-4 py-2.5 bg-purple-600 text-white rounded-md text-sm font-bold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                                             >
                                                 <Plus size={16} /> Add
                                             </button>
@@ -986,7 +985,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                         <div className="space-y-2">
                                             {currentLoan.approvers && currentLoan.approvers.length > 0 ? (
                                                 currentLoan.approvers.map((approver, index) => (
-                                                    <div key={index} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg group hover:border-purple-200 transition-colors shadow-sm">
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-md group hover:border-purple-200 transition-colors shadow-sm">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">
                                                                 {index + 1}
@@ -1018,7 +1017,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="text-center py-6 text-slate-400 text-xs italic bg-white rounded-lg border border-dashed border-slate-200">
+                                                <div className="text-center py-6 text-slate-400 text-xs italic bg-white rounded-md border border-dashed border-slate-200">
                                                     No approvers added. Requests will be auto-approved or routed to admin.
                                                 </div>
                                             )}
@@ -1069,8 +1068,8 @@ const LoanAdvancesTypes: React.FC = () => {
                         </div>
 
                         <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                            <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                            <button onClick={handleSave} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm shadow-sm transition-colors">Save</button>
+                            <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
+                            <button onClick={handleSave} className="px-6 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold text-sm shadow-sm transition-colors">Save</button>
                         </div>
                     </div>
                 )}

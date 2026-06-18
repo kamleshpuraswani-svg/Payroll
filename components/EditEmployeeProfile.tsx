@@ -87,9 +87,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       vpf: false
    });
 
-   const [vpfAmount, setVpfAmount] = useState('');
-   const [vpfPercentage, setVpfPercentage] = useState('');
-   const [vpfEffectiveFrom, setVpfEffectiveFrom] = useState('');
+    const [vpfAmount, setVpfAmount] = useState('');
+    const [vpfPercentage, setVpfPercentage] = useState('');
+    const [vpfType, setVpfType] = useState<'amount' | 'percentage'>('amount');
+    const [vpfEffectiveFrom, setVpfEffectiveFrom] = useState('');
 
    const [structureComponents, setStructureComponents] = useState<{ earnings: any[], deductions: any[] }>({ earnings: [], deductions: [] });
     const [statutorySettings, setStatutorySettings] = useState<any>(null);
@@ -323,12 +324,14 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                     if (configData.config_value.salary_input_basis) {
                        setSalaryInputBasis(configData.config_value.salary_input_basis);
                     }
-                     if (configData.config_value.vpfAmount) {
-                        setVpfAmount(configData.config_value.vpfAmount);
-                     }
-                     if (configData.config_value.vpfPercentage) {
-                        setVpfPercentage(configData.config_value.vpfPercentage);
-                     }
+                      if (configData.config_value.vpfAmount) {
+                         setVpfAmount(configData.config_value.vpfAmount);
+                         setVpfType('amount');
+                      }
+                      if (configData.config_value.vpfPercentage) {
+                         setVpfPercentage(configData.config_value.vpfPercentage);
+                         setVpfType('percentage');
+                      }
                      if (configData.config_value.vpfEffectiveFrom) {
                         setVpfEffectiveFrom(configData.config_value.vpfEffectiveFrom);
                      }
@@ -643,22 +646,27 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
           }
        }
 
-       if (statutoryDeductions.vpf) {
-          if (!vpfAmount && !vpfPercentage) {
-             validationErrors.vpfAmount = 'Either Fixed Amount or Percentage is required.';
-             validationErrors.vpfPercentage = 'Either Fixed Amount or Percentage is required.';
-          } else if (vpfAmount) {
-             const amt = parseInt(vpfAmount, 10);
-             if (isNaN(amt) || amt < 1 || amt > 999999) {
-                validationErrors.vpfAmount = 'Fixed Amount must be between 1 and 999999.';
-             }
-          } else if (vpfPercentage) {
-             const pct = parseInt(vpfPercentage, 10);
-             if (isNaN(pct) || pct < 1 || pct > 99) {
-                validationErrors.vpfPercentage = 'Percentage must be between 1 and 99.';
-             }
-          }
-       }
+        if (statutoryDeductions.vpf) {
+           if (vpfType === 'amount') {
+              if (!vpfAmount) {
+                 validationErrors.vpfAmount = 'Fixed Amount is required.';
+              } else {
+                 const amt = parseInt(vpfAmount, 10);
+                 if (isNaN(amt) || amt < 1 || amt > 999999) {
+                    validationErrors.vpfAmount = 'Fixed Amount must be between 1 and 999999.';
+                 }
+              }
+           } else {
+              if (!vpfPercentage) {
+                 validationErrors.vpfPercentage = 'Percentage is required.';
+              } else {
+                 const pct = parseInt(vpfPercentage, 10);
+                 if (isNaN(pct) || pct < 1 || pct > 99) {
+                    validationErrors.vpfPercentage = 'Percentage must be between 1 and 99.';
+                 }
+              }
+           }
+        }
 
        if (Object.keys(validationErrors).length > 0) {
           setErrors(validationErrors);
@@ -989,14 +997,15 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                        setStatutoryDeductions(prev => {
                                           const nextVal = !prev[comp.id as keyof typeof statutoryDeductions];
                                           if (comp.id === 'vpf' && !nextVal) {
-                                             setVpfAmount('');
-                                             setVpfPercentage('');
-                                             setVpfEffectiveFrom('');
-                                             setErrors(prevErr => {
-                                                const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
-                                                return rest;
-                                             });
-                                          }
+                                              setVpfAmount('');
+                                              setVpfPercentage('');
+                                              setVpfEffectiveFrom('');
+                                              setVpfType('amount');
+                                              setErrors(prevErr => {
+                                                 const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
+                                                 return rest;
+                                              });
+                                           }          
                                           return { ...prev, [comp.id]: nextVal };
                                        });
                                     }
@@ -1012,48 +1021,86 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      {((statutorySettings?.pf_settings?.enablePf ?? true) && !!statutorySettings?.pf_settings?.isVpfApplicable) && statutoryDeductions.vpf && (
                          <div id="vpf-config-container" className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
                             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">Voluntary Provident Fund (VPF) Configuration</h4>
+                            
+                            <div className="flex gap-6 mb-4">
+                               <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                  <input
+                                     type="radio"
+                                     name="vpfType"
+                                     checked={vpfType === 'amount'}
+                                     onChange={() => {
+                                        setVpfType('amount');
+                                        setVpfPercentage('');
+                                        setErrors(prev => {
+                                           const { vpfPercentage: _p, ...rest } = prev;
+                                           return rest;
+                                        });
+                                     }}
+                                     disabled={isReadOnly}
+                                     className="w-4 h-4 text-sky-600 border-slate-300 focus:ring-sky-500"
+                                  />
+                                  <span className="text-sm font-semibold text-slate-700">Fixed amount (monthly)</span>
+                               </label>
+                               <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                  <input
+                                     type="radio"
+                                     name="vpfType"
+                                     checked={vpfType === 'percentage'}
+                                     onChange={() => {
+                                        setVpfType('percentage');
+                                        setVpfAmount('');
+                                        setErrors(prev => {
+                                           const { vpfAmount: _a, ...rest } = prev;
+                                           return rest;
+                                        });
+                                     }}
+                                     disabled={isReadOnly}
+                                     className="w-4 h-4 text-sky-600 border-slate-300 focus:ring-sky-500"
+                                  />
+                                  <span className="text-sm font-semibold text-slate-700">Percentage (%)</span>
+                               </label>
+                            </div>
+
                             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-3xl">
-                               <div className="w-full md:w-[30%]">
-                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Fixed Amount (Monthly)</label>
-                                  <div className="relative">
-                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                     <input 
-                                        type="text" 
-                                        value={vpfAmount} 
-                                        onChange={e => {
-                                           const val = e.target.value.replace(/[^0-9]/g, '');
-                                           setVpfAmount(val);
-                                           if (val) setVpfPercentage('');
-                                        }} 
-                                        disabled={isReadOnly}
-                                        placeholder="Enter fixed amount"
-                                        className={`w-full pl-9 pr-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none ${errors.vpfAmount ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
-                                     />
+                               {vpfType === 'amount' ? (
+                                  <div className="w-full md:w-[35%]">
+                                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Fixed Amount (Monthly)</label>
+                                     <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                        <input 
+                                           type="text" 
+                                           value={vpfAmount} 
+                                           onChange={e => {
+                                              const val = e.target.value.replace(/[^0-9]/g, '');
+                                              setVpfAmount(val);
+                                           }} 
+                                           disabled={isReadOnly}
+                                           placeholder="Enter fixed amount"
+                                           className={`w-full pl-9 pr-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none ${errors.vpfAmount ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                        />
+                                     </div>
+                                     {errors.vpfAmount && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfAmount}</p>}
                                   </div>
-                                  {errors.vpfAmount && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfAmount}</p>}
-                               </div>
-                               <div className="flex items-center justify-center font-black text-slate-400 text-xs px-2 pt-2 md:pt-4">
-                                  OR
-                               </div>
-                               <div className="w-full md:w-[30%]">
-                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Percentage (%)</label>
-                                  <div className="relative">
-                                     <input 
-                                        type="text" 
-                                        value={vpfPercentage} 
-                                        onChange={e => {
-                                           const val = e.target.value.replace(/[^0-9]/g, '');
-                                           setVpfPercentage(val);
-                                           if (val) setVpfAmount('');
-                                        }} 
-                                        disabled={isReadOnly}
-                                        placeholder="Enter percentage"
-                                        className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none pr-8 ${errors.vpfPercentage ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
-                                     />
-                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</span>
+                               ) : (
+                                  <div className="w-full md:w-[35%]">
+                                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Percentage (%)</label>
+                                     <div className="relative">
+                                        <input 
+                                           type="text" 
+                                           value={vpfPercentage} 
+                                           onChange={e => {
+                                              const val = e.target.value.replace(/[^0-9]/g, '');
+                                              setVpfPercentage(val);
+                                           }} 
+                                           disabled={isReadOnly}
+                                           placeholder="Enter percentage"
+                                           className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none pr-8 ${errors.vpfPercentage ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</span>
+                                     </div>
+                                     {errors.vpfPercentage && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfPercentage}</p>}
                                   </div>
-                                  {errors.vpfPercentage && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.vpfPercentage}</p>}
-                               </div>
+                               )}
                             </div>
                          </div>
                       )}
