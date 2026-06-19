@@ -1926,11 +1926,32 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
 
     const handleDownloadSample = async () => {
         const headers = [
+            "Sr. No.",
             "Employee Code",
             "Employee Name",
             "Business Unit",
             "Salary Structure",
             "Annual CTC (₹)",
+            "Basic Salary",
+            "Child Education Allowance",
+            "Child hostel allowance",
+            "Conveyance Allowance",
+            "Dearness Allowance (DA)",
+            "House Rent Allowance (HRA)",
+            "Meal Allowance",
+            "Medical Allowance",
+            "Professional Allowance",
+            "Statutory Bonus",
+            "Provident Fund (Employee)",
+            "ESI (Employee)",
+            "Gratuity",
+            "Provident Fund (Employer)",
+            "ESI (Employer)",
+            "NPS",
+            "Labour Welfare Fund (Employee)",
+            "Labour Welfare Fund (Employer)",
+            "Voluntary Provident Fund",
+            "Professional Tax",
             "Effective From",
             "Provident Fund",
             "ESI",
@@ -1948,11 +1969,32 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
         
         const rows = [
             [
+                1,
                 "CO-059",
                 "Sachin Tendulkar",
                 "CollabCRM",
                 "Executive Structure",
                 1800000,
+                720000, // Basic Salary
+                2400,   // Child Education Allowance
+                4800,   // Child hostel allowance
+                19200,  // Conveyance Allowance
+                0,      // Dearness Allowance (DA)
+                288000, // House Rent Allowance (HRA)
+                0,      // Meal Allowance
+                0,      // Medical Allowance
+                0,      // Professional Allowance
+                0,      // Statutory Bonus
+                21600,  // Provident Fund (Employee)
+                0,      // ESI (Employee)
+                34600,  // Gratuity
+                21600,  // Provident Fund (Employer)
+                0,      // ESI (Employer)
+                0,      // NPS
+                120,    // Labour Welfare Fund (Employee)
+                240,    // Labour Welfare Fund (Employer)
+                0,      // Voluntary Provident Fund
+                2500,   // Professional Tax
                 "2026-06-01",
                 "Yes",
                 "No",
@@ -1972,6 +2014,9 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
         // Create workbook & worksheet using ExcelJS
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Employees Compensation");
+        const instructionsWorksheet = workbook.addWorksheet("Instructions");
+        instructionsWorksheet.addRow(["Instructions:"]);
+        instructionsWorksheet.addRow(["Please refer to subsequent prompts for detailed instructions."]);
 
         // Define columns
         worksheet.columns = headers.map(header => ({
@@ -2022,9 +2067,9 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             }
         });
 
-        // Add dropdown to Tax Regime column (col 18) for rows 2 to 100
+        // Add dropdown to Tax Regime column (col 39) for rows 2 to 100
         for (let rowNum = 2; rowNum <= 100; rowNum++) {
-            const cell = worksheet.getCell(rowNum, 18);
+            const cell = worksheet.getCell(rowNum, 39);
             cell.dataValidation = {
                 type: 'list',
                 allowBlank: true,

@@ -45,7 +45,10 @@ interface EditEmployeeProfileProps {
 }
 
 const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, onBack, onViewHistory, isReadOnly = false, userRole }) => {
-   const [fullName, setFullName] = useState('Loading...');
+   const [firstName, setFirstName] = useState('Loading...');
+   const [lastName, setLastName] = useState('');
+   const fullName = `${firstName} ${lastName}`.trim();
+   const [employeeCode, setEmployeeCode] = useState('Loading...');
    const [designation, setDesignation] = useState('');
    const [department, setDepartment] = useState('Engineering');
    const [joiningDate, setJoiningDate] = useState('');
@@ -271,7 +274,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
  
           if (error) throw error;
           if (data) {
-             setFullName(data.name || '');
+             const nameParts = (data.name || '').trim().split(/\s+/);
+             setFirstName(nameParts[0] || '');
+             setLastName(nameParts.slice(1).join(' ') || '');
+             setEmployeeCode(data.eid || '');
              setDesignation(data.designation || '');
              setDepartment(data.department || 'Engineering');
              setJoiningDate(data.join_date || '');
@@ -829,23 +835,27 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         <User size={18} className="text-slate-400" /> Employee Details
                      </h3>
                   </div>
-                  <div className="p-6 flex flex-col sm:flex-row gap-6">
+                  <div className="p-6 flex flex-col gap-6">
                      {/* Photo Upload */}
-                     <div className="flex flex-col items-center gap-3">
+                     <div className="flex flex-col items-start gap-3">
                         <div className="relative group">
                            <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
                               <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profile" className="w-full h-full object-cover grayscale opacity-80" />
                            </div>
                         </div>
-                        <span className="text-xs font-medium text-slate-400">TF00912</span>
+                        <span className="text-xs font-medium text-slate-400">{employeeCode}</span>
                      </div>
- 
+
                      {/* Fields */}
-                     <div className="flex-1 space-y-6">
+                     <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           <div className="sm:col-span-2">
-                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Full Name</label>
-                              <input type="text" value={fullName} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
+                           <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">First Name</label>
+                              <input type="text" value={firstName} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
+                           </div>
+                           <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Last Name</label>
+                              <input type="text" value={lastName} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                            <div>
                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Designation</label>
@@ -860,8 +870,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                               <input type="text" value={joiningDate} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                            <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Work Location</label>
-                              <input type="text" value={location} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Employee Code</label>
+                              <input type="text" value={employeeCode} disabled className="w-full px-3 py-2 border border-slate-100 rounded-lg text-sm text-slate-500 bg-slate-50/50 focus:outline-none" />
                            </div>
                         </div>
                      </div>

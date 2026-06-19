@@ -43,6 +43,8 @@ import {
 import { RunPayrollModal, PayrollAlertsModal, PayrollOnHoldPanel } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
 import { supabase } from '../services/supabaseClient';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 interface PastPayroll {
     id: string;
@@ -52,6 +54,7 @@ interface PastPayroll {
     employeeCount: number;
     grossAmount: string;
     totalDeductions: string;
+    holdAmount?: string;
     netPay: string;
     status: 'Paid' | 'Locked' | 'Draft' | 'Failed';
     createdBy: string;
@@ -60,11 +63,11 @@ interface PastPayroll {
 }
 
 const MOCK_HISTORY: PastPayroll[] = [
-    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.40 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
-    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.38 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
-    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', totalDeductions: '₹ 42.00 L', netPay: '₹ 1.36 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
-    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', totalDeductions: '₹ 41.00 L', netPay: '₹ 1.34 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
-    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', totalDeductions: '₹ 40.00 L', netPay: '₹ 1.32 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-102', month: 'October 2025', businessUnit: 'Mindinventory', processedDate: '31 Oct 2025', employeeCount: 448, grossAmount: '₹ 1.82 Cr', totalDeductions: '₹ 42.00 L', holdAmount: '₹ 1.20 L', netPay: '₹ 1.40 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-101', month: 'September 2025', businessUnit: '300 Minds', processedDate: '30 Sep 2025', employeeCount: 445, grossAmount: '₹ 1.80 Cr', totalDeductions: '₹ 42.00 L', holdAmount: '₹ 0.00', netPay: '₹ 1.38 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-100', month: 'August 2025', businessUnit: 'CollabCRM', processedDate: '31 Aug 2025', employeeCount: 440, grossAmount: '₹ 1.78 Cr', totalDeductions: '₹ 42.00 L', holdAmount: '₹ 80,000', netPay: '₹ 1.36 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-099', month: 'July 2025', businessUnit: 'Dots & Boxes', processedDate: '31 Jul 2025', employeeCount: 435, grossAmount: '₹ 1.75 Cr', totalDeductions: '₹ 41.00 L', holdAmount: '₹ 0.00', netPay: '₹ 1.34 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
+    { id: 'PR-098', month: 'June 2025', businessUnit: 'Mindinventory', processedDate: '30 Jun 2025', employeeCount: 432, grossAmount: '₹ 1.72 Cr', totalDeductions: '₹ 40.00 L', holdAmount: '₹ 1.50 L', netPay: '₹ 1.32 Cr', status: 'Paid', createdBy: 'Admin', lastModifiedBy: 'HR Manager', payrollType: 'Regular Monthly' },
 ];
 
 const MOCK_24Q_HISTORY = [
@@ -953,6 +956,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
     const [showOnHoldPanel, setShowOnHoldPanel] = useState(false);
     const [showForm24QModal, setShowForm24QModal] = useState(false);
     const [showForm16Modal, setShowForm16Modal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [unlockedPayrolls, setUnlockedPayrolls] = useState<string[]>([]);
     const [wizardBU, setWizardBU] = useState<string[]>([]);
     const [novPayrollStatus, setNovPayrollStatus] = useState<'Draft' | 'Locked' | 'Paid'>('Draft');
@@ -1012,6 +1016,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             employeeCount: 452,
             grossAmount: '₹ 1.85 Cr',
             totalDeductions: '₹ 43.00 L',
+            holdAmount: '₹ 1.50 L',
             netPay: '₹ 1.42 Cr',
             status: novPayrollStatus,
             createdBy: 'Admin',
@@ -1323,8 +1328,14 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                         <h2 className="text-lg font-bold text-slate-800">Payroll History</h2>
                         <div className="flex gap-2">
                             <button
+                                onClick={() => setShowImportModal(true)}
+                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-sm font-bold hover:bg-slate-50 shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+                            >
+                                <Upload size={16} /> Import
+                            </button>
+                            <button
                                 onClick={() => setShowForm16Modal(true)}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-2"
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-2 cursor-pointer"
                             >
                                 <FileText size={16} /> Distribute Form 16
                             </button>
@@ -1551,6 +1562,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                 <th className="px-6 py-4">Employees</th>
                                 <th className="px-6 py-4">Total Gross</th>
                                 <th className="px-6 py-4">Total Deductions</th>
+                                <th className="px-6 py-4">Total Hold Amount</th>
                                 <th className="px-6 py-4">Net Payout</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Created By</th>
@@ -1568,9 +1580,6 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                                     <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold shadow-sm">N</div>
                                                     <div>
                                                         <div className="font-black text-slate-800">November 2025</div>
-                                                        <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
-                                                            {novPayrollStatus === 'Locked' ? 'Locked' : 'In Progress'}
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -1583,6 +1592,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                             <td className="px-6 py-5 font-bold text-slate-600">452</td>
                                             <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
                                             <td className="px-6 py-5 font-bold text-rose-600">₹ 43.00 L</td>
+                                            <td className="px-6 py-5 font-bold text-amber-600">₹ 1.50 L</td>
                                             <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
                                             <td className="px-6 py-5">
                                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(novPayrollStatus)}`}>
@@ -1659,6 +1669,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                         <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
                                         <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
                                         <td className="px-6 py-5 text-rose-600 font-bold">{payroll.totalDeductions}</td>
+                                        <td className="px-6 py-5 text-amber-600 font-bold">{payroll.holdAmount || '₹ 0.00'}</td>
                                         <td className="px-6 py-5 text-slate-800 font-black">{payroll.netPay}</td>
                                         <td className="px-6 py-5">
                                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(payroll.status)}`}>
@@ -1761,6 +1772,12 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             {showForm16Modal && (
                 <DistributeForm16Modal onClose={() => setShowForm16Modal(false)} />
             )}
+
+            {/* Import Employees Modal */}
+            <ImportEmployeesRunsModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+            />
 
             {/* Unlock Confirmation */}
             {showUnlockModal && (
@@ -1997,6 +2014,609 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 </div>
             )}
 
+        </div>
+    );
+};
+
+interface ImportEmployeesRunsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onImportSuccess?: () => void;
+}
+
+const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
+    const [step, setStep] = useState(1);
+    const [file, setFile] = useState<File | null>(null);
+    const [parsedData, setParsedData] = useState<any[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [sendOnboarding, setSendOnboarding] = useState(false);
+
+    // Success and failure state for step 3 Results screen
+    const [successCount, setSuccessCount] = useState(0);
+    const [failureCount, setFailureCount] = useState(0);
+    const [failedRecords, setFailedRecords] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setStep(1);
+            setFile(null);
+            setParsedData([]);
+            setIsUploading(false);
+            setIsSaving(false);
+            setSuccessCount(0);
+            setFailureCount(0);
+            setFailedRecords([]);
+            setSendOnboarding(false);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleDownloadSample = async () => {
+        const headers = [
+            "Sr. No.",
+            "Employee Code",
+            "Employee Name",
+            "Business Unit",
+            "Salary Structure",
+            "Annual CTC (₹)",
+            "Basic Salary",
+            "Child Education Allowance",
+            "Child hostel allowance",
+            "Conveyance Allowance",
+            "Dearness Allowance (DA)",
+            "House Rent Allowance (HRA)",
+            "Meal Allowance",
+            "Medical Allowance",
+            "Professional Allowance",
+            "Statutory Bonus",
+            "Provident Fund (Employee)",
+            "ESI (Employee)",
+            "Gratuity",
+            "Provident Fund (Employer)",
+            "ESI (Employer)",
+            "NPS",
+            "Labour Welfare Fund (Employee)",
+            "Labour Welfare Fund (Employer)",
+            "Voluntary Provident Fund",
+            "Professional Tax",
+            "Effective From",
+            "Provident Fund",
+            "ESI",
+            "Gratuity",
+            "Labour Welfare Fund",
+            "National Pension System",
+            "PAN Number",
+            "Aadhaar Number",
+            "PF Number",
+            "UAN Number",
+            "ESI Number",
+            "PRAN Number",
+            "Tax Regime"
+        ];
+        
+        const rows = [
+            [
+                1,
+                "CO-059",
+                "Sachin Tendulkar",
+                "CollabCRM",
+                "Executive Structure",
+                1800000,
+                720000, // Basic Salary
+                2400,   // Child Education Allowance
+                4800,   // Child hostel allowance
+                19200,  // Conveyance Allowance
+                0,      // Dearness Allowance (DA)
+                288000, // House Rent Allowance (HRA)
+                0,      // Meal Allowance
+                0,      // Medical Allowance
+                0,      // Professional Allowance
+                0,      // Statutory Bonus
+                21600,  // Provident Fund (Employee)
+                0,      // ESI (Employee)
+                34600,  // Gratuity
+                21600,  // Provident Fund (Employer)
+                0,      // ESI (Employer)
+                0,      // NPS
+                120,    // Labour Welfare Fund (Employee)
+                240,    // Labour Welfare Fund (Employer)
+                0,      // Voluntary Provident Fund
+                2500,   // Professional Tax
+                "2026-06-01",
+                "Yes",
+                "No",
+                "Yes",
+                "Yes",
+                "No",
+                "ABCDE1234F",
+                "123456789012",
+                "MH/BAN/1234567/123",
+                "100987654321",
+                "3112345678",
+                "110098765432",
+                "New Regime"
+            ]
+        ];
+
+        // Create workbook & worksheet using ExcelJS
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Employees Compensation");
+        const instructionsWorksheet = workbook.addWorksheet("Instructions");
+        instructionsWorksheet.addRow(["Instructions:"]);
+        instructionsWorksheet.addRow(["Please refer to subsequent prompts for detailed instructions."]);
+
+        // Define columns
+        worksheet.columns = headers.map(header => ({
+            header,
+            key: header,
+            width: header.length + 5
+        }));
+
+        // Add rows
+        rows.forEach(row => {
+            worksheet.addRow(row);
+        });
+
+        // Set mandatory columns and style them (red text, bold)
+        const mandatoryHeaders = [
+            "Employee Code",
+            "Employee Name",
+            "Business Unit",
+            "Salary Structure",
+            "Annual CTC (₹)",
+            "Effective From",
+            "Provident Fund",
+            "ESI",
+            "Gratuity",
+            "Labour Welfare Fund",
+            "National Pension System",
+            "PAN Number",
+            "Tax Regime"
+        ];
+
+        // Format headers row
+        const firstRow = worksheet.getRow(1);
+        headers.forEach((header, index) => {
+            const cell = firstRow.getCell(index + 1);
+            if (mandatoryHeaders.includes(header)) {
+                cell.font = {
+                    name: 'Segoe UI',
+                    size: 11,
+                    bold: true,
+                    color: { argb: 'FFFF0000' } // Red color
+                };
+            } else {
+                cell.font = {
+                    name: 'Segoe UI',
+                    size: 11,
+                    bold: true
+                };
+            }
+        });
+
+        // Add dropdown to Tax Regime column (col 39) for rows 2 to 100
+        for (let rowNum = 2; rowNum <= 100; rowNum++) {
+            const cell = worksheet.getCell(rowNum, 39);
+            cell.dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Old Regime,New Regime"']
+            };
+        }
+
+        // Generate buffer and trigger file download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "employees_compensation_sample.xlsx";
+        anchor.click();
+        window.URL.revokeObjectURL(url);
+    };
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    setParsedData(jsonData);
+                } catch (err) {
+                    console.error("Error reading file:", err);
+                }
+            };
+            reader.readAsArrayBuffer(selectedFile);
+        }
+    };
+
+    const handleNext = () => {
+        if (!file) {
+            alert("Please select a file first.");
+            return;
+        }
+        setStep(2);
+        setIsUploading(true);
+        setTimeout(() => {
+            setIsUploading(false);
+        }, 1500);
+    };
+
+    const handleBack = () => {
+        setStep(prev => prev - 1);
+    };
+
+    const handleImport = async () => {
+        setIsSaving(true);
+        try {
+            if (parsedData.length === 0) {
+                alert("No employee data found in the uploaded file.");
+                setIsSaving(false);
+                return;
+            }
+
+            // 1. Fetch active structures
+            const { data: structures } = await supabase.from('salary_structures').select('id, name');
+            const structuresMap: Record<string, string> = {};
+            if (structures) {
+                structures.forEach(s => {
+                    structuresMap[s.name.toLowerCase().trim()] = s.id;
+                });
+            }
+
+            // 2. Fetch default company name
+            const { data: companies } = await supabase.from('companies').select('name').limit(1);
+            const companyName = companies?.[0]?.name || 'TechFlow Systems';
+
+            // 3. Fetch existing employees to resolve IDs by EID
+            const { data: existingEmps } = await supabase.from('employees').select('id, eid');
+            const eidToIdMap: Record<string, string> = {};
+            if (existingEmps) {
+                existingEmps.forEach(e => {
+                    eidToIdMap[e.eid] = e.id;
+                });
+            }
+
+            // Helpers for parsing values
+            const getExcelValue = (row: any, ...keys: string[]) => {
+                for (const key of keys) {
+                    if (row[key] !== undefined && row[key] !== null) return row[key];
+                    const lowerKey = key.toLowerCase().trim();
+                    const foundKey = Object.keys(row).find(
+                        k => k.toLowerCase().trim() === lowerKey
+                    );
+                    if (foundKey !== undefined && row[foundKey] !== null) return row[foundKey];
+                }
+                return '';
+            };
+
+            const cleanNumber = (val: any): number => {
+                if (typeof val === 'number') return val;
+                if (!val) return 0;
+                const cleaned = String(val).replace(/[^0-9.]/g, '');
+                return parseFloat(cleaned) || 0;
+            };
+
+            const formatDate = (val: any): string => {
+                if (!val) return new Date().toISOString().split('T')[0];
+                if (val instanceof Date) return val.toISOString().split('T')[0];
+                if (typeof val === 'number') {
+                    const date = new Date((val - 25569) * 86400 * 1000);
+                    return date.toISOString().split('T')[0];
+                }
+                const str = String(val).trim();
+                if (str.match(/^\d{4}-\d{2}-\d{2}$/)) return str;
+                const parsed = Date.parse(str);
+                if (!isNaN(parsed)) return new Date(parsed).toISOString().split('T')[0];
+                return str;
+            };
+
+            const mapStatus = (val: any): string => {
+                const str = String(val || '').trim();
+                const valid = ['Active', 'New Joinee', 'On Notice', 'Relieved'];
+                const matched = valid.find(v => v.toLowerCase() === str.toLowerCase());
+                return matched || 'Active';
+            };
+
+            // 4. Map rows and validate
+            const employeesToUpsert: any[] = [];
+            const configsToUpsert: any[] = [];
+            const failures: any[] = [];
+
+            parsedData.forEach(row => {
+                const errors: string[] = [];
+                
+                const eid = String(getExcelValue(row, "Employee Code", "eid")).trim();
+                const name = String(getExcelValue(row, "Employee Name", "name")).trim();
+                const department = String(getExcelValue(row, "Department")).trim() || "N/A";
+                const designation = String(getExcelValue(row, "Designation")).trim() || "N/A";
+                const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
+                const effectiveFrom = getExcelValue(row, "Effective From", "join_date");
+                
+                const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
+                const structureName = String(getExcelValue(row, "Salary Structure")).trim();
+                const isPfStr = String(getExcelValue(row, "Provident Fund", "Provident Fund Applicable?")).trim();
+                const isEsiStr = String(getExcelValue(row, "ESI", "ESI Applicable?")).trim();
+                const isGratuityStr = String(getExcelValue(row, "Gratuity", "Gratuity Applicable?")).trim();
+                const isLwfStr = String(getExcelValue(row, "Labour Welfare Fund", "Labour Welfare Fund Applicable?")).trim();
+                const isNpsStr = String(getExcelValue(row, "National Pension System", "National Pension System Applicable?")).trim();
+                const panNumber = String(getExcelValue(row, "PAN Number", "pan_no")).trim();
+                const taxRegime = String(getExcelValue(row, "Tax Regime", "regime")).trim();
+
+                if (!eid) errors.push("Employee Code is required");
+                if (!name) errors.push("Employee Name is required");
+                if (!businessUnit) errors.push("Business Unit is required");
+                if (!structureName) errors.push("Salary Structure is required");
+                if (ctcVal <= 0) errors.push("Annual CTC must be greater than 0");
+                if (!effectiveFrom) errors.push("Effective From date is required");
+                if (!isPfStr) errors.push("Provident Fund option is required (Yes/No)");
+                if (!isEsiStr) errors.push("ESI option is required (Yes/No)");
+                if (!isGratuityStr) errors.push("Gratuity option is required (Yes/No)");
+                if (!isLwfStr) errors.push("Labour Welfare Fund option is required (Yes/No)");
+                if (!isNpsStr) errors.push("National Pension System option is required (Yes/No)");
+                if (!panNumber) errors.push("PAN Number is required");
+                if (!taxRegime) errors.push("Tax Regime is required");
+
+                if (errors.length > 0) {
+                    failures.push({
+                        ...row,
+                        "Error Reason": errors.join(", ")
+                    });
+                    return;
+                }
+
+                const employeeId = eidToIdMap[eid] || (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
+                const status = mapStatus(getExcelValue(row, "Status"));
+                const formattedDate = formatDate(effectiveFrom);
+                
+                const isPf = isPfStr.toLowerCase() === "yes";
+                const isEsi = isEsiStr.toLowerCase() === "yes";
+                const isGratuity = isGratuityStr.toLowerCase() === "yes";
+                const isLwf = isLwfStr.toLowerCase() === "yes";
+                const isNps = isNpsStr.toLowerCase() === "yes";
+
+                const aadhaarNumber = String(getExcelValue(row, "Aadhaar Number", "aadhaar_no")).trim();
+                const pfNumber = String(getExcelValue(row, "PF Number", "pf_no")).trim();
+                const uanNumber = String(getExcelValue(row, "UAN Number", "uan_no")).trim();
+                const esiNumber = String(getExcelValue(row, "ESI Number", "esi_no")).trim();
+                const pranNumber = String(getExcelValue(row, "PRAN Number", "pran_no")).trim();
+
+                const structureId = structuresMap[structureName.toLowerCase()] || null;
+
+                const statutoryDeductions = {
+                    providentFund: isPf,
+                    esi: isEsi,
+                    professionalTax: true,
+                    gratuity: isGratuity,
+                    lwf: isLwf,
+                    tds: true,
+                    nps: isNps
+                };
+
+                employeesToUpsert.push({
+                    id: employeeId,
+                    name,
+                    eid,
+                    company_name: companyName,
+                    department,
+                    designation,
+                    location: businessUnit,
+                    ctc: String(ctcVal),
+                    join_date: formattedDate,
+                    status,
+                    salary_structure_id: structureId,
+                    effective_date: formattedDate,
+                    tax_regime: taxRegime,
+                    pan_no: panNumber,
+                    aadhaar_no: aadhaarNumber,
+                    uan_no: uanNumber,
+                    business_unit: businessUnit,
+                    annual_gross: ctcVal,
+                    payroll_status: 'Eligible',
+                    created_by: 'HR Manager',
+                    last_updated_by: 'HR Manager'
+                });
+
+                configsToUpsert.push({
+                    config_key: `emp_statutory:${employeeId}`,
+                    config_value: {
+                        ...statutoryDeductions,
+                        pf_no: pfNumber,
+                        esi_no: esiNumber,
+                        pran_no: pranNumber,
+                        arrears_payout_month: null,
+                        appraisal_month: null,
+                        salary_input_basis: "Gross CTC"
+                    },
+                    updated_at: new Date().toISOString()
+                });
+            });
+
+            setSuccessCount(employeesToUpsert.length);
+            setFailureCount(failures.length);
+            setFailedRecords(failures);
+
+            if (employeesToUpsert.length > 0) {
+                const { error: empError } = await supabase.from('employees').upsert(employeesToUpsert, { onConflict: 'eid' });
+                if (empError) throw empError;
+
+                const { error: configError } = await supabase.from('operational_config').upsert(configsToUpsert, { onConflict: 'config_key' });
+                if (configError) throw configError;
+            }
+
+            if (onImportSuccess) onImportSuccess();
+            setStep(3);
+        } catch (err: any) {
+            console.error('Import process failed:', err);
+            alert(`Error importing records: ${err.message || err}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-slate-800">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h3 className="text-lg font-bold text-slate-800">Import Payroll - Import historical data</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Stepper */}
+                <div className="border-b border-slate-100 py-4 bg-white select-none">
+                    <div className="flex items-center justify-center max-w-xl mx-auto px-4">
+                        {/* Step 1 */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 1 ? 'border-indigo-600' : 'border-indigo-600 text-indigo-600'
+                            }`}>
+                                {step === 1 ? <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" /> : <Check size={16} strokeWidth={3} />}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 1 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>Prepare</span>
+                        </div>
+                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+                        {/* Step 2 */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 2 ? 'border-indigo-600' : step > 2 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
+                            }`}>
+                                {step === 2 ? <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" /> : step > 2 ? <Check size={16} strokeWidth={3} /> : null}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 2 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>Upload</span>
+                        </div>
+                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+                        {/* Step 3 */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 3 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
+                            }`}>
+                                {step === 3 ? <Check size={16} strokeWidth={3} /> : null}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 3 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>Results</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-8 flex-grow relative min-h-[280px] bg-white">
+                    {step === 1 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                            {/* Left Side */}
+                            <div className="space-y-6 flex flex-col justify-center pr-0 md:pr-8">
+                                <div className="text-sm text-slate-600">
+                                    Download a <span onClick={handleDownloadSample} className="text-indigo-600 hover:underline cursor-pointer font-semibold">Sample File</span>.
+                                </div>
+                                <div>
+                                    <button onClick={handleUploadClick} className="w-full py-4 text-center border border-indigo-200 bg-indigo-50/20 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                        Upload Excel File <span className="text-rose-500">*</span>
+                                    </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv,.xlsx,.xls" />
+                                    {file && (
+                                        <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 animate-in fade-in">
+                                            <Check className="text-emerald-600" size={14} strokeWidth={3} /> Selected: <span className="font-semibold text-slate-700 font-mono">{file.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="hidden md:block absolute left-1/2 top-8 bottom-8 border-l border-dashed border-slate-200" />
+                            {/* Right Side */}
+                            <div className="space-y-4 pl-0 md:pl-10 flex flex-col justify-center">
+                                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Instructions:</h4>
+                                <ul className="space-y-3 text-xs text-slate-500 font-medium leading-relaxed pl-4 list-disc">
+                                    <li>Do not change the column names provided in the sample Excel template.</li>
+                                    <li>Columns indicated in red color are mandatory fields.</li>
+                                    <li>Ensure to follow correct data types for each column.</li>
+                                    <li>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                    {step === 2 && (
+                        <div className="flex flex-col items-center justify-center h-full min-h-[220px] animate-in fade-in duration-200">
+                            {isUploading ? (
+                                <div className="w-full space-y-8 p-4 animate-in fade-in duration-350">
+                                    <div className="w-full bg-blue-50/50 border border-blue-200 rounded-xl p-4 flex items-start gap-3.5 shadow-sm">
+                                        <div className="p-1 bg-blue-100 rounded-full text-blue-600 shrink-0 mt-0.5"><Info size={18} /></div>
+                                        <div className="text-sm text-blue-800 leading-relaxed font-medium">
+                                            We're currently uploading your file <span className="font-bold font-mono">'{file?.name}'</span>.<br />
+                                            <span className="text-blue-600 font-normal mt-0.5 block">Please be patient while we fully process your data.</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-center items-center py-12">
+                                        <div className="relative w-16 h-16 animate-spin">
+                                            {[...Array(12)].map((_, i) => (
+                                                <div key={i} className="absolute w-2.5 h-2.5 bg-purple-500 rounded-full" style={{ top: `${50 + 40 * Math.sin((i * 2 * Math.PI) / 12)}%`, left: `${50 + 40 * Math.cos((i * 2 * Math.PI) / 12)}%`, transform: 'translate(-50%, -50%)', opacity: 0.15 + (i * 0.85) / 11 }} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 text-center animate-in fade-in">
+                                    <div className="w-16 h-16 bg-violet-50 text-violet-500 rounded-full flex items-center justify-center mx-auto"><Check size={28} strokeWidth={3} /></div>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-slate-800">File Processed Successfully!</h4>
+                                        <p className="text-sm text-slate-500 mt-2 font-mono">{file?.name}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {step === 3 && (
+                        <div className="w-full space-y-6 animate-in fade-in">
+                            <div className="w-full bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0"><CheckCircle size={18} /></div>
+                                <div className="text-sm font-semibold text-emerald-800">All records imported successfully!</div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-sm">
+                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shrink-0"><Check size={28} strokeWidth={3} /></div>
+                                    <div className="text-sm font-bold text-slate-700">{successCount} record(s) imported successfully.</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                {!isUploading && (
+                    <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 bg-white">
+                        {step === 1 && (
+                            <>
+                                <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm cursor-pointer">Cancel</button>
+                                <button onClick={handleNext} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm cursor-pointer">Next</button>
+                            </>
+                        )}
+                        {step === 2 && (
+                            <>
+                                <button onClick={handleBack} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm cursor-pointer">Back</button>
+                                <button onClick={handleImport} disabled={isSaving} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm disabled:opacity-50 cursor-pointer">{isSaving ? 'Saving...' : 'Import'}</button>
+                            </>
+                        )}
+                        {step === 3 && (
+                            <button onClick={onClose} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm cursor-pointer">Done</button>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

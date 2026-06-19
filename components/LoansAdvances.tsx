@@ -1062,7 +1062,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                 <select
                                     value={selectedEmployeeId}
                                     onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="">-- Choose Employee --</option>
                                     {MOCK_EMPLOYEES.map(emp => (
@@ -1081,7 +1081,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">REQUEST TYPE <span className="text-rose-500">*</span></label>
                             <div className="flex gap-4">
                                 <label
-                                    className={`flex items-center gap-4 px-6 py-4 border-2 rounded-2xl cursor-pointer transition-all min-w-[200px] ${loanType === 'Salary Advance' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100 hover:border-slate-200'}`}
+                                    className={`flex items-center gap-4 px-6 py-4 border-2 rounded-md cursor-pointer transition-all min-w-[200px] ${loanType === 'Salary Advance' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100 hover:border-slate-200'}`}
                                     onClick={() => setLoanType('Salary Advance')}
                                 >
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${loanType === 'Salary Advance' ? 'border-purple-600' : 'border-slate-300'}`}>
@@ -1091,7 +1091,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                 </label>
 
                                 <label
-                                    className={`flex items-center gap-4 px-6 py-4 border-2 rounded-2xl cursor-pointer transition-all min-w-[200px] ${loanType === 'Loan' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100 hover:border-slate-200'}`}
+                                    className={`flex items-center gap-4 px-6 py-4 border-2 rounded-md cursor-pointer transition-all min-w-[200px] ${loanType === 'Loan' ? 'border-purple-600 bg-purple-50/30' : 'border-slate-100 hover:border-slate-200'}`}
                                     onClick={() => setLoanType('Loan')}
                                 >
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${loanType === 'Loan' ? 'border-purple-600' : 'border-slate-300'}`}>
@@ -1111,7 +1111,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                     type="text"
                                     value={requestedAmount}
                                     onChange={(e) => setRequestedAmount(e.target.value)}
-                                    className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                    className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
                                     placeholder="e.g. 50,000"
                                 />
                             </div>
@@ -1125,7 +1125,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                     value={interestRate}
                                     onChange={(e) => setInterestRate(e.target.value)}
                                     readOnly={userRole === 'EMPLOYEE'}
-                                    className={`w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold ${userRole === 'EMPLOYEE' ? 'bg-slate-50/50 cursor-not-allowed opacity-70' : 'bg-white'}`}
+                                    className={`w-full px-4 py-3 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold ${userRole === 'EMPLOYEE' ? 'bg-slate-50/50 cursor-not-allowed opacity-70' : 'bg-white'}`}
                                     placeholder="e.g. 12"
                                 />
                                 <p className="mt-1.5 text-[10px] text-slate-400 font-medium">Set 0 for interest-free advances.</p>
@@ -1138,7 +1138,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                     type="text"
                                     value={maxTenure}
                                     onChange={(e) => setMaxTenure(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold"
                                     placeholder="e.g. 12"
                                 />
                                 <p className="mt-1.5 text-[10px] text-slate-400 font-medium">
@@ -1154,7 +1154,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                         return (
                                             <label
                                                 key={type}
-                                                className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl cursor-pointer transition-all text-sm font-bold ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 text-purple-900' : 'bg-white border-slate-200 hover:border-purple-200 text-slate-600'} ${userRole === 'EMPLOYEE' ? 'cursor-not-allowed opacity-70' : ''}`}
+                                                className={`flex items-center gap-2 px-3 py-2.5 border rounded-md cursor-pointer transition-all text-sm font-bold ${isSelected ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 text-purple-900' : 'bg-white border-slate-200 hover:border-purple-200 text-slate-600'} ${userRole === 'EMPLOYEE' ? 'cursor-not-allowed opacity-70' : ''}`}
                                             >
                                                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-600' : 'border-slate-300'}`}>
                                                     {isSelected && <div className="w-2 h-2 rounded-full bg-purple-600" />}
@@ -1188,7 +1188,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                             <select
                                                 value={repaymentMonth}
                                                 onChange={(e) => setRepaymentMonth(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
                                             >
                                                 <option>February 2026</option>
                                                 <option>March 2026</option>
@@ -1229,7 +1229,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                                     <select
                                         value={repaymentMonth}
                                         onChange={(e) => setRepaymentMonth(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer font-bold"
                                     >
                                         <option>February 2026</option>
                                         <option>March 2026</option>
@@ -1253,7 +1253,7 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all min-h-[100px] resize-none"
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all min-h-[100px] resize-none"
                                 placeholder="Brief reason for the loan request..."
                             />
                         </div>
@@ -1291,13 +1291,13 @@ const CreateLoanModal: React.FC<{ userRole: UserRole; currentEmployeeId?: string
                 <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3 sticky bottom-0 z-10 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
                     <button
                         onClick={onClose}
-                        className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all border shadow-sm"
+                        className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-bold hover:bg-slate-50 transition-all border shadow-sm"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-8 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all transform active:scale-95"
+                        className="px-8 py-3 bg-blue-600 text-white rounded-md text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all transform active:scale-95"
                     >
                         Submit
                     </button>
@@ -1891,7 +1891,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                 </div>
                                 <button
                                     onClick={() => setIsNewRequestOpen(true)}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2 shrink-0"
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-md font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2 shrink-0"
                                 >
                                     New Request
                                 </button>
@@ -1948,7 +1948,7 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
 
                                 <button
                                     onClick={() => setIsNewRequestOpen(true)}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2"
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-md font-bold text-sm hover:bg-blue-700 shadow-sm transition-all ml-2"
                                 >
                                     New Request
                                 </button>
