@@ -2488,41 +2488,41 @@ export const RunPayrollModal: React.FC<{
                return (
                   <div className="w-full space-y-6 pb-20">
                      {/* KPI Summary - 3 Cards */}
-                     <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-3">
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-2">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Gross</p>
                            <p className="text-base font-bold text-slate-800 truncate">₹ 82.08 L</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Deductions</p>
                            <p className="text-base font-bold text-rose-600 truncate">₹ 9.85 L</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-emerald-700 uppercase mb-1 leading-tight">Net Payout</p>
                            <p className="text-base font-bold text-emerald-800 truncate">₹ 72.23 L</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
                            <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimb.</p>
                            <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.expenseReimb)}</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
                            <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan & Salary Advance Recovery</p>
                            <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery + summary.salaryAdvance)}</p>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">TDS Deductions</p>
                            <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.tds)}</p>
                         </div>
 
-                        <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100 shadow-sm transition-all hover:shadow-md">
+                        <div className="bg-amber-50/50 p-2 rounded-xl border border-amber-100 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold uppercase mb-1 leading-tight text-amber-700">On-hold</p>
                            <p className="text-base font-bold truncate text-amber-800">
                               ₹{formatLakh(onHoldTotalNetPayout)}
