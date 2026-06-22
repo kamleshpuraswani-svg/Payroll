@@ -669,6 +669,10 @@ export const RunPayrollModal: React.FC<{
       const [adjPage, setAdjPage] = useState(1);
       const adjRowsPerPage = 8;
 
+      // Review pagination (step 4)
+      const [revPage, setRevPage] = useState(1);
+      const revRowsPerPage = 5;
+
       const [exitEmployees, setExitEmployees] = useState([
          { id: 'E100', name: 'Siddharth Jain', department: 'Engineering', designation: 'Senior Lead', lwd: '15/11/2025', isOnHold: false },
          { id: 'E105', name: 'Tanvi Shah', department: 'Marketing', designation: 'Content Strategist', lwd: '28/11/2025', isOnHold: false },
@@ -1500,6 +1504,13 @@ export const RunPayrollModal: React.FC<{
          { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', gross: 131666, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 5000, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 8500, actualTds: 8500 },
          { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', gross: 176666, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 2000, salaryAdvanceRecovery: 1000, proposedTds: 16200, actualTds: 16200 },
          { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', gross: 158333, lopReversal: 0, bonus: 5000, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 14000, actualTds: 14000 },
+         { id: 6, name: 'Kavita Rao', role: 'HR Specialist', gross: 120000, lopReversal: 0, bonus: 0, expenseReimbursement: 2000, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 9500, actualTds: 9500 },
+         { id: 7, name: 'Sanjay Patel', role: 'Tech Lead', gross: 220000, lopReversal: 0, bonus: 15000, expenseReimbursement: 0, arrears: 0, loanRecovery: 3000, salaryAdvanceRecovery: 0, proposedTds: 22000, actualTds: 22000 },
+         { id: 8, name: 'Amit Mishra', role: 'QA Engineer', gross: 95000, lopReversal: 0, bonus: 0, expenseReimbursement: 1500, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 6000, actualTds: 6000 },
+         { id: 9, name: 'Sneha Reddy', role: 'UX Designer', gross: 110000, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 8000, actualTds: 8000 },
+         { id: 10, name: 'Rahul Verma', role: 'Analyst', gross: 85000, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 2000, loanRecovery: 1000, salaryAdvanceRecovery: 0, proposedTds: 5000, actualTds: 5000 },
+         { id: 11, name: 'Pooja Hegde', role: 'Operations', gross: 75000, lopReversal: 0, bonus: 0, expenseReimbursement: 3000, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 4500, actualTds: 4500 },
+         { id: 12, name: 'Manoj Tiwari', role: 'Office Admin', gross: 45000, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 2000, actualTds: 2000 }
       ];
 
       const renderStepContent = () => {
@@ -2485,10 +2496,16 @@ export const RunPayrollModal: React.FC<{
                );
 
             case 4: // REVIEW
+               const paginatedPreviewEmployees = previewEmployees.slice(
+                  (revPage - 1) * revRowsPerPage,
+                  revPage * revRowsPerPage
+               );
+               const totalPages = Math.ceil(previewEmployees.length / revRowsPerPage);
+
                return (
-                  <div className="w-full space-y-6 pb-20">
+                  <div className="w-full flex-1 flex flex-col min-h-0 space-y-4">
                      {/* KPI Summary - 3 Cards */}
-                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-2">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-2 shrink-0">
                         <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Gross</p>
                            <p className="text-base font-bold text-slate-800 truncate">₹ 82.08 L</p>
@@ -2530,8 +2547,8 @@ export const RunPayrollModal: React.FC<{
                         </div>
                      </div>
 
-                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex-1 flex flex-col min-h-0">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><FileText size={16} /> Final Register Preview</h3>
                            <div className="flex gap-2">
                               <button onClick={handleExport} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 flex items-center gap-2 transition-colors">
@@ -2539,9 +2556,9 @@ export const RunPayrollModal: React.FC<{
                               </button>
                            </div>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-auto flex-1 min-h-0">
                            <table className="w-full text-xs text-left min-w-[1400px]">
-                              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider sticky top-0 z-10">
                                  <tr>
                                     <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 w-[250px]">Employee Name</th>
                                     <th className="px-4 py-4 text-right">Gross</th>
@@ -2558,8 +2575,8 @@ export const RunPayrollModal: React.FC<{
                                     <th className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/50">Net Pay</th>
                                  </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                 {previewEmployees.map((emp) => {
+                              <tbody className="divide-y divide-slate-100 bg-white">
+                                 {paginatedPreviewEmployees.map((emp) => {
                                     // Net Pay = Gross + LOP Reversal + Bonus + Reimb + Arrears + Custom - Loan - Advance - TDS
                                     const customImpact = (emp.customComponents || []).reduce((acc: number, c: any) =>
                                        acc + (c.type === 'Earning' ? c.amount : -c.amount), 0
@@ -2606,6 +2623,41 @@ export const RunPayrollModal: React.FC<{
                            </table>
                         </div>
 
+                        {/* Pagination Controls */}
+                        {previewEmployees.length > revRowsPerPage && (
+                           <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between shrink-0">
+                              <div className="text-xs text-slate-500">
+                                 Showing <span className="font-bold text-slate-700">{((revPage - 1) * revRowsPerPage) + 1}</span> to <span className="font-bold text-slate-700">{Math.min(revPage * revRowsPerPage, previewEmployees.length)}</span> of <span className="font-bold text-slate-700">{previewEmployees.length}</span> employees
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <button
+                                    onClick={() => setRevPage(prev => Math.max(1, prev - 1))}
+                                    disabled={revPage === 1}
+                                    className={`p-2 rounded-lg border transition-all ${revPage === 1 ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
+                                 >
+                                    <ChevronLeft size={16} />
+                                 </button>
+                                 <div className="flex items-center gap-1">
+                                    {Array.from({ length: totalPages }).map((_, i) => (
+                                       <button
+                                          key={i}
+                                          onClick={() => setRevPage(i + 1)}
+                                          className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${revPage === i + 1 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50'}`}
+                                       >
+                                          {i + 1}
+                                       </button>
+                                    ))}
+                                 </div>
+                                 <button
+                                    onClick={() => setRevPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={revPage === totalPages}
+                                    className={`p-2 rounded-lg border transition-all ${revPage === totalPages ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
+                                 >
+                                    <ChevronRight size={16} />
+                                 </button>
+                              </div>
+                           </div>
+                        )}
                      </div>
                   </div>
                );
@@ -2928,10 +2980,10 @@ export const RunPayrollModal: React.FC<{
 
                   {/* Right Content Area */}
                   <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 overflow-hidden relative">
-                     <div className="flex-1 overflow-y-auto p-8">
-                        <div className="w-full">
+                     <div className={`flex-1 p-8 ${currentStep === 4 ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}`}>
+                        <div className={`w-full ${currentStep === 4 ? 'flex-1 flex flex-col min-h-0' : ''}`}>
                            {/* Dynamic Header based on step */}
-                           <div className="mb-8 pl-4">
+                           <div className="mb-6 pl-4 shrink-0">
                               <h2 className="text-2xl font-bold text-slate-800">{stepTitles[currentStep]}</h2>
                               <p className="text-slate-500 mt-1">{stepSubtitles[currentStep]}</p>
                            </div>
