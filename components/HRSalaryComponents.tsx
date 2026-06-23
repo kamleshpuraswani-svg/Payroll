@@ -333,6 +333,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [isConsiderPT, setIsConsiderPT] = useState(initialData?.considerPT ?? false);
     const [isConsiderLWF, setIsConsiderLWF] = useState(initialData?.considerLWF ?? false);
     const [isConsiderLeaveEncashment, setIsConsiderLeaveEncashment] = useState(initialData?.considerLeaveEncashment ?? false);
+    const [isConsiderNPS, setIsConsiderNPS] = useState(initialData?.considerNPS ?? false);
     const [showInPayslip, setShowInPayslip] = useState(true);
     const [isShowOnSalaryRegister, setIsShowOnSalaryRegister] = useState(initialData?.showOnSalaryRegister ?? false);
     const [isShowRateOnSalarySlip, setIsShowRateOnSalarySlip] = useState(initialData?.showRateOnSalarySlip ?? false);
@@ -392,6 +393,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             considerPT: isConsiderPT,
             considerLWF: isConsiderLWF,
             considerLeaveEncashment: isConsiderLeaveEncashment,
+            considerNPS: isConsiderNPS,
             showOnSalaryRegister: isShowOnSalaryRegister,
             showRateOnSalarySlip: isShowRateOnSalarySlip
         };
@@ -442,6 +444,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
             addHistory('Consider PT', yn(initialData.considerPT), yn(isConsiderPT));
             addHistory('Consider LWF', yn(initialData.considerLWF), yn(isConsiderLWF));
             addHistory('Consider Leave Enc.', yn(initialData.considerLeaveEncashment), yn(isConsiderLeaveEncashment));
+            addHistory('Consider NPS', yn(initialData.considerNPS), yn(isConsiderNPS));
             addHistory('Include in CTC', yn(initialData.includeInCTC), yn(includeInCTC));
             addHistory('Include in Gross', yn(initialData.includeInGross), yn(includeInGross));
             addHistory('Include in Payout', yn(initialData.includeInPayout), yn(includeInPayout));
@@ -528,6 +531,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                                 'Consider PT': yn(isConsiderPT),
                                                 'Consider LWF': yn(isConsiderLWF),
                                                 'Consider Leave Enc.': yn(isConsiderLeaveEncashment),
+                                                'Consider NPS': yn(isConsiderNPS),
                                                 'Include in CTC': yn(includeInCTC),
                                                 'Include in Gross': yn(includeInGross),
                                                 'Include in Payout': yn(includeInPayout),
@@ -1103,11 +1107,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <span className="text-sm font-bold text-slate-700">Consider for Gratuity</span>
                             </label>
 
-                            <label className="flex items-start gap-2 cursor-not-allowed opacity-50">
-                                <div className="mt-0.5 w-5 h-5 rounded border flex items-center justify-center border-slate-200 bg-slate-100">
-                                    {/* Default state is disabled */}
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderNPS ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
+                                    {isConsiderNPS && <Check size={14} className="text-white" />}
                                 </div>
-                                <input type="checkbox" className="hidden" checked={false} disabled />
+                                <input type="checkbox" className="hidden" checked={isConsiderNPS} onChange={() => setIsConsiderNPS(!isConsiderNPS)} />
                                 <span className="text-sm font-bold text-slate-700">Consider for NPS</span>
                             </label>
 
@@ -2341,6 +2345,7 @@ const HRSalaryComponents: React.FC = () => {
                 considerPT: item.consider_pt,
                 considerLWF: item.consider_lwf,
                 considerLeaveEncashment: item.consider_leave_encashment,
+                considerNPS: item.consider_nps,
                 showOnSalaryRegister: item.show_on_salary_register,
                 showRateOnSalarySlip: item.show_rate_on_salary_slip,
                 history: item.history || []
@@ -2622,6 +2627,7 @@ const HRSalaryComponents: React.FC = () => {
             consider_pt: data.considerPT,
             consider_lwf: data.considerLWF,
             consider_leave_encashment: data.considerLeaveEncashment,
+            consider_nps: data.considerNPS,
             show_on_salary_register: data.showOnSalaryRegister,
             show_rate_on_salary_slip: data.showRateOnSalarySlip,
             last_updated_by: 'Admin'
