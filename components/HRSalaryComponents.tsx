@@ -1128,14 +1128,6 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                             </label>
 
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderLeaveEncashment ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                    {isConsiderLeaveEncashment && <Check size={14} className="text-white" />}
-                                </div>
-                                <input type="checkbox" className="hidden" checked={isConsiderLeaveEncashment} onChange={() => setIsConsiderLeaveEncashment(!isConsiderLeaveEncashment)} />
-                                <span className="text-sm font-bold text-slate-700">Consider for Leave encashment</span>
-                            </label>
-
-                            <label className="flex items-center gap-2 cursor-pointer">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {showInPayslip && <Check size={14} className="text-white" />}
                                 </div>
