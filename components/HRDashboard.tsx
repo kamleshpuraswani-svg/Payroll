@@ -717,6 +717,10 @@ const HRDashboard: React.FC = () => {
     const [payrollTimeRange, setPayrollTimeRange] = useState('This Year');
     const [isPayrollFilterPopoverOpen, setIsPayrollFilterPopoverOpen] = useState(false);
 
+    // Contribution Summary State
+    const [contributionTimeRange, setContributionTimeRange] = useState('This Year');
+    const [isContributionFilterPopoverOpen, setIsContributionFilterPopoverOpen] = useState(false);
+
     // Full Report Modal State
     const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
  
@@ -1686,48 +1690,6 @@ const HRDashboard: React.FC = () => {
                 {/* 3. Detailed Info Cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    {/* Current Payroll Cycle Details */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <Activity size={16} className="text-sky-600" /> Current Cycle Details
-                            </h3>
-                            <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded uppercase">In Progress</span>
-                        </div>
-                        <div className="p-6 grid grid-cols-2 gap-y-4 gap-x-8">
-                            <div>
-                                <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Payroll Month</p>
-                                <p className="text-sm font-bold text-slate-700">November 2025</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Processing Date</p>
-                                <p className="text-sm font-bold text-slate-700">Pending</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Approved By</p>
-                                <p className="text-sm font-medium text-slate-600">-</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Disbursement Status</p>
-                                <p className="text-sm font-medium text-slate-600 flex items-center gap-1">
-                                    <span className="w-2 h-2 bg-slate-300 rounded-full"></span> Not Initiated
-                                </p>
-                            </div>
-                            <div
-                                onClick={() => setIsPayslipModalOpen(true)}
-                                className="col-span-2 pt-2 border-t border-slate-100 cursor-pointer group"
-                            >
-                                <div className="flex justify-between items-center">
-                                    <p className="text-xs text-slate-500 group-hover:text-indigo-600 transition-colors">Payslips Sent</p>
-                                    <p className="text-xs font-bold text-slate-700">0 / 450</p>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                                    <div className="bg-emerald-500 h-1.5 rounded-full w-0 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Employee Level Details */}
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
@@ -1764,17 +1726,71 @@ const HRDashboard: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* 4. Compliance & Summary */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                     {/* PF / ESI Summary */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-slate-800">Contribution Summary (Nov)</h3>
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                <PieChart size={16} className="text-blue-600" /> Contribution Summary
+                            </h3>
+                            {/* Filter */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsContributionFilterPopoverOpen(!isContributionFilterPopoverOpen)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm"
+                                >
+                                    <Filter size={14} className="text-indigo-600" />
+                                    <span>{contributionTimeRange}</span>
+                                    <ChevronDown size={12} className={`text-slate-400 transition-transform ${isContributionFilterPopoverOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isContributionFilterPopoverOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setIsContributionFilterPopoverOpen(false)}
+                                        ></div>
+                                        <div className="absolute right-0 mt-2 p-4 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 w-[300px] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                                            <p className="text-xs font-bold text-slate-400 uppercase mb-3">Date Range</p>
+                                            <div className="grid grid-cols-3 gap-2 mb-4">
+                                                {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
+                                                    <button
+                                                        key={label}
+                                                        onClick={() => {
+                                                            setContributionTimeRange(label);
+                                                            setIsContributionFilterPopoverOpen(false);
+                                                        }}
+                                                        className={`px-2 py-2 text-[10px] font-bold rounded-lg transition-all border ${contributionTimeRange === label
+                                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                                                            }`}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="pt-3 border-t border-slate-100">
+                                                <div className="relative">
+                                                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                    <input
+                                                        type="month"
+                                                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                                                        placeholder="Custom Month"
+                                                        onChange={(e) => {
+                                                            if (e.target.value) {
+                                                                setContributionTimeRange('Custom');
+                                                                setIsContributionFilterPopoverOpen(false);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                        <div className="space-y-3">
+                        <div className="p-6 space-y-3">
                             <div className="flex justify-between items-center p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-1 h-8 bg-blue-500 rounded-full"></div>
@@ -1801,7 +1817,6 @@ const HRDashboard: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
 
                 </div>
 

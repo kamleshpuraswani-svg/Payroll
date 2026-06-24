@@ -992,45 +992,72 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                return (pfSettings?.enablePf ?? true) && !!pfSettings?.isVpfApplicable;
                             }
                             return true;
-                         }).map((comp) => (
-                           <label key={comp.id} className="flex items-center gap-2.5 cursor-pointer group">
-                              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'bg-sky-600 border-sky-600 shadow-sm' : 'border-slate-300 bg-white group-hover:border-sky-400'}`}>
-                                 {statutoryDeductions[comp.id as keyof typeof statutoryDeductions] && <CheckCircle size={14} className="text-white" />}
-                              </div>
-                              <input 
-                                 type="checkbox" 
-                                 className="hidden" 
-                                 checked={statutoryDeductions[comp.id as keyof typeof statutoryDeductions]} 
-                                 disabled={isReadOnly}
-                                 onChange={() => {
-                                    if (!isReadOnly) {
-                                       setStatutoryDeductions(prev => {
-                                          const nextVal = !prev[comp.id as keyof typeof statutoryDeductions];
-                                          if (comp.id === 'vpf' && !nextVal) {
-                                              setVpfAmount('');
-                                              setVpfPercentage('');
-                                              setVpfEffectiveFrom('');
-                                              setVpfType('amount');
-                                              setErrors(prevErr => {
-                                                 const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
-                                                 return rest;
-                                              });
-                                           }          
-                                          return { ...prev, [comp.id]: nextVal };
-                                       });
-                                    }
-                                 }} 
-                              />
-                              <span className={`text-sm font-medium ${statutoryDeductions[comp.id as keyof typeof statutoryDeductions] ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-800'}`}>
-                                 {comp.label}
-                              </span>
-                           </label>
-                        ))}
+                         }).map((comp) => {
+                             const isDisabled = isReadOnly || (comp.id === 'vpf' && !statutoryDeductions.providentFund);
+                             return (
+                               <label key={comp.id} className={`flex items-start gap-2.5 group ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                                  <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all duration-200 ${
+                                     statutoryDeductions[comp.id as keyof typeof statutoryDeductions] 
+                                        ? 'bg-sky-600 border-sky-600 shadow-sm' 
+                                        : isDisabled
+                                           ? 'border-slate-200 bg-slate-50'
+                                           : 'border-slate-300 bg-white group-hover:border-sky-400'
+                                  }`}>
+                                     {statutoryDeductions[comp.id as keyof typeof statutoryDeductions] && <CheckCircle size={14} className="text-white" />}
+                                  </div>
+                                  <input 
+                                     type="checkbox" 
+                                     className="hidden" 
+                                     checked={statutoryDeductions[comp.id as keyof typeof statutoryDeductions]} 
+                                     disabled={isDisabled}
+                                     onChange={() => {
+                                        if (!isDisabled) {
+                                           setStatutoryDeductions(prev => {
+                                              const nextVal = !prev[comp.id as keyof typeof statutoryDeductions];
+                                              if (comp.id === 'providentFund' && !nextVal) {
+                                                  // Clear VPF state if PF is unchecked
+                                                  setVpfAmount('');
+                                                  setVpfPercentage('');
+                                                  setVpfEffectiveFrom('');
+                                                  setVpfType('amount');
+                                                  setErrors(prevErr => {
+                                                     const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
+                                                     return rest;
+                                                  });
+                                                  return { ...prev, providentFund: false, vpf: false };
+                                              }
+                                              if (comp.id === 'vpf' && !nextVal) {
+                                                  setVpfAmount('');
+                                                  setVpfPercentage('');
+                                                  setVpfEffectiveFrom('');
+                                                  setVpfType('amount');
+                                                  setErrors(prevErr => {
+                                                     const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
+                                                     return rest;
+                                                  });
+                                               }          
+                                              return { ...prev, [comp.id]: nextVal };
+                                           });
+                                        }
+                                     }} 
+                                  />
+                                  <span className={`text-sm font-medium ${
+                                     statutoryDeductions[comp.id as keyof typeof statutoryDeductions] 
+                                        ? 'text-slate-900' 
+                                        : isDisabled
+                                           ? 'text-slate-400'
+                                           : 'text-slate-600 group-hover:text-slate-800'
+                                  }`}>
+                                     {comp.label}
+                                  </span>
+                               </label>
+                             );
+                          })}
                      </div>
 
                      {((statutorySettings?.pf_settings?.enablePf ?? true) && !!statutorySettings?.pf_settings?.isVpfApplicable) && statutoryDeductions.vpf && (
                          <div id="vpf-config-container" className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
-                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">Voluntary Provident Fund (VPF) Configuration</h4>
+                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">Voluntary Provident Fund (VPF) Configuration <span className="text-rose-500">*</span></h4>
                             
                             <div className="flex gap-6 mb-4">
                                <label className="flex items-center gap-2.5 cursor-pointer select-none">
