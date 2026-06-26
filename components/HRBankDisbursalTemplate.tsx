@@ -25,6 +25,7 @@ const BUSINESS_UNITS = [
     "CollabCRM"
 ];
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 // --- Types ---
 
@@ -60,6 +61,8 @@ interface BankTemplate {
     isActive: boolean;
     columns: BankColumn[];
     settings: BankTemplateSettings;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // --- Mock Data ---
@@ -103,6 +106,8 @@ const MOCK_BANK_TEMPLATES: BankTemplate[] = [
         createdBy: 'HR Manager',
         lastModified: '03 Dec 2025',
         lastModifiedBy: 'HR Manager',
+        createdAt: '2025-12-03T10:00:00Z',
+        updatedAt: '2025-12-03T10:00:00Z',
         columns: DEFAULT_COLUMNS,
         settings: {
             fileType: 'Excel',
@@ -220,7 +225,9 @@ const HRBankDisbursalTemplate: React.FC = () => {
                     lastModified: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
                     lastModifiedBy: item.last_updated_by || 'HR Manager',
                     columns: item.content.columns,
-                    settings: item.settings
+                    settings: item.settings,
+                    createdAt: item.created_at,
+                    updatedAt: item.updated_at
                 }));
                 setTemplates(formattedTemplates);
             } else {
@@ -493,12 +500,11 @@ const HRBankDisbursalTemplate: React.FC = () => {
                             ) : templates.map(t => (
                                 <tr key={t.id} onClick={() => handleView(t)} className="hover:bg-slate-50 cursor-pointer group">
                                     <td className="px-6 py-4 font-medium text-slate-800">{t.name}</td>
-                                    <td className="px-6 py-4">{t.createdBy}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-slate-700 font-medium">{t.lastModified}</span>
-                                            <span className="text-[10px] text-slate-400">by {t.lastModifiedBy}</span>
-                                        </div>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(t.createdBy, t.createdAt)}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(t.lastModifiedBy, t.updatedAt)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end items-center gap-4">

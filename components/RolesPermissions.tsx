@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 import { 
   Home, 
   Search, 
@@ -717,16 +718,12 @@ const RolesPermissions: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-slate-400 font-semibold text-xs uppercase tracking-wider mb-1">Created by</span>
-              <span className="text-slate-700 font-semibold">{selectedRoleForPermissions.createdBy}</span>
-              <span className="text-xs text-slate-400">{selectedRoleForPermissions.createdAt}</span>
+              {formatAuditUser(selectedRoleForPermissions.createdBy, selectedRoleForPermissions.createdAt)}
             </div>
             <div className="flex flex-col">
               <span className="text-slate-400 font-semibold text-xs uppercase tracking-wider mb-1">Last Modified by</span>
               {selectedRoleForPermissions.lastModifiedBy ? (
-                <>
-                  <span className="text-slate-700 font-semibold">{selectedRoleForPermissions.lastModifiedBy}</span>
-                  <span className="text-xs text-slate-400">{selectedRoleForPermissions.lastModifiedAt}</span>
-                </>
+                formatAuditUser(selectedRoleForPermissions.lastModifiedBy, selectedRoleForPermissions.lastModifiedAt)
               ) : (
                 <span className="text-slate-400 font-semibold">-</span>
               )}
@@ -1175,21 +1172,11 @@ const RolesPermissions: React.FC = () => {
                     <td className="px-6 py-4 text-slate-500 max-w-[200px] truncate" title={role.remarks}>
                       {role.remarks}
                     </td>
-                    <td className="px-6 py-4">
-                      {role.lastModifiedBy ? (
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-700">{role.lastModifiedBy}</span>
-                          <span className="text-xs text-slate-400">{role.lastModifiedAt}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
+                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                      {role.lastModifiedBy ? formatAuditUser(role.lastModifiedBy, role.lastModifiedAt) : <span className="text-slate-400">-</span>}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-slate-700">{role.createdBy}</span>
-                        <span className="text-xs text-slate-400">{role.createdAt}</span>
-                      </div>
+                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                      {formatAuditUser(role.createdBy, role.createdAt)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">

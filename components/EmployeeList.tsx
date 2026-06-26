@@ -33,6 +33,7 @@ import {
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 interface SalaryHistoryRow {
     id: string;
@@ -1804,8 +1805,12 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-4 text-xs font-medium text-slate-500">{emp?.created_by || 'HR Manager'}</td>
-                                    <td className="px-6 py-4 text-xs font-medium text-slate-500">{emp?.last_modified_by || 'HR Manager'}</td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(emp?.created_by || 'HR Manager', emp?.created_at)}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(emp?.last_modified_by || 'HR Manager', emp?.updated_at)}
+                                    </td>
                                     <td className={`sticky right-0 border-l border-slate-200/80 px-4 py-4 text-right transition-colors z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-[#faf8fd] group-hover:bg-[#f5f0fb]' : 'bg-white group-hover:bg-slate-50'}`}>
                                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => onView(emp?.id || '')} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors" title="View Profile"><Eye size={16} /></button>

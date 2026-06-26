@@ -1,0 +1,308 @@
+Screen,Section,Field Name,Field Type,Description / Impact,Rules & Validation,Formula / Calculation,Required
+Config - Organization Tax Details,Company Information,Business Unit,Dropdown,"Select karein Business Unit jiske liye config save ho (MindInventory / 300 Minds / CollabCRM). Har BU ka alag config hota hai.",Required. Change karte hi neeche ke fields us BU ka data load karte hain.,,Yes
+Config - Organization Tax Details,Company Information,Registered Company Name,Text Input,"Salary Slip aur F&F Settlement Slip pe Company ka naam yahi se aata hai.",Required. Plain text., ,Yes
+Config - Organization Tax Details,Company Information,Company Address,Text Input,"Salary Slip aur F&F Settlement Slip pe Company ka address yahi se aata hai.",Required. Plain text.,,Yes
+Config - Organization Tax Details,Statutory Identifiers,PAN Number,Text Input (Monospace),"Company ka Permanent Account Number. TDS filing aur Form 24Q me use hota hai.",Required. Auto UPPERCASE. Format: AAAAA9999A (10 chars).,,Yes
+Config - Organization Tax Details,Statutory Identifiers,TAN Number,Text Input (Monospace),"Tax Deduction Account Number. TDS challan aur Form 24Q filing ke liye mandatory hai.",Required. Auto UPPERCASE. Format: AAAA99999A (10 chars).,,Yes
+Config - Organization Tax Details,Statutory Identifiers,GST Number,Text Input (Monospace),"Company ka GST Identification Number.",Required. Auto UPPERCASE. Format: 15 alphanumeric chars (e.g. 29ABCDE1234F1Z5).,,Yes
+Config - Organization Tax Details,Statutory Identifiers,TDS Circle / AO Code,4 Text Inputs,"Income Tax Assessing Officer ka code. TDS return filing me use hota hai.",Required. 4 parts: AAA / AA / 000 / 00 format.,,Yes
+Config - Organization Tax Details,Statutory Identifiers,Tax Payment Frequency,Dropdown,"TDS payment govt ko kitni baar karte hain — Monthly ya Quarterly.",Required. Options: Monthly / Quarterly.,,Yes
+Config - Organization Tax Details,Company's Bank Information,Bank Name,Dropdown,"Company ka bank jahan se salary disbursement hoga.",Required. Indian banks list se select karna hoga.,,Yes
+Config - Organization Tax Details,Company's Bank Information,Account Number,Text Input,"Company ka bank account number for salary transfer.",Required. Only numeric — special characters allowed nahi.,,Yes
+Config - Organization Tax Details,Company's Bank Information,Account Name,Text Input,"Bank account holder ka naam.",Required.,,Yes
+Config - Organization Tax Details,Company's Bank Information,IFSC Code,Text Input (Monospace),"Bank branch ka IFSC code. Enter karte hi Branch auto-populate ho jaati hai.",Required. Auto UPPERCASE. Format: AAAA0999999 (11 chars).,Branch auto-fill: IFSC ke pehle 4 chars se bank detect hoti hai (SBIN→SBI etc.),Yes
+Config - Organization Tax Details,Company's Bank Information,Branch,Text Input (Read-only),"IFSC Code se auto-populate hoti hai — manually edit nahi ho sakti.",Read-only. IFSC Code se driven.,IFSC prefix se auto-detect: SBIN→State Bank of India / HDFC→HDFC Bank / ICIC→ICICI Bank,No
+Config - Organization Tax Details,Tax Deductor Details,Deductor's Type,Radio,"Salary se TDS kaatne wala person Employee hai ya Non-Employee.",Required. Options: Employee / Non-Employee. Non-Employee select karne se extra fields dikhte hain.,,Yes
+Config - Organization Tax Details,Tax Deductor Details,Deductor's Name,Dropdown,"TDS deduct karne wale person ka naam (employees list se).",Required.,,Yes
+Config - Organization Tax Details,Tax Deductor Details,Deductor's Father's Name,Text Input,"Non-Employee deductor ke liye required hai.",Conditional — sirf Non-Employee type me dikhta hai.,,Conditional
+Config - Organization Tax Details,Tax Deductor Details,Deductor's Designation,Text Input,"Non-Employee deductor ka designation.",Conditional — sirf Non-Employee type me dikhta hai.,,Conditional
+,,,,,,,,
+Config - Pay Schedule,Pay Schedule,Business Unit,Dropdown,"Kaunse BU ke liye schedule bana rahe hain — MindInventory / 300 Minds / CollabCRM.",Required. HR Manager ke liye disabled (automatically uska BU set rehta hai).,,Yes
+Config - Pay Schedule,Pay Schedule,Frequency,Radio (Hidden in UI),"Salary kitni baar di jaayegi — Weekly / Semi-Monthly / Monthly. Ek baar set hone ke baad change nahi ho sakti.",Required. Options: Weekly / Semi-Monthly / Monthly. Existing schedule me lock ho jaata hai.,,Yes
+Config - Pay Schedule,Weekly Settings,Weekly Pay Day,Radio,"Agar frequency Weekly hai toh kaun se din salary milegi.",Conditional — sirf Weekly frequency me dikhta hai. Required. Options: Mon / Tue / Wed / Thu / Fri / Sat / Sun.,,Conditional
+Config - Pay Schedule,Semi-Monthly Settings,1st Period Pay Day,Radio + Dropdown,"1 se 15 tarikh ka pay kab milega — 15th ya custom day.",Conditional — sirf Semi-Monthly me dikhta hai. Default: 15th.,Salary processed date: selected day of every month.,Conditional
+Config - Pay Schedule,Semi-Monthly Settings,2nd Period Pay Day,Radio + Dropdown,"16 se month-end ka pay kab milega — same month ka day ya following month.",Conditional — sirf Semi-Monthly me. Default: 31st of same month.,Custom: user-selected day of same/following month.,Conditional
+Config - Pay Schedule,Monthly Settings,Monthly Salary Processing Date,Dropdown + Radio,"Kaunsi tarikh ko salary process hogi aur kaunse mahine mein (same ya following).",Conditional — sirf Monthly me. Range: 1–31. Auto-adjusts to month's max days.,"Pay date description: e.g. '7th of same month' / '7th of following month'. firstPayDate = new Date(year, monthIdx + (following ? 1 : 0), day)",Conditional
+Config - Pay Schedule,Monthly Settings,Attendance Period End Day,Dropdown,"Attendance count karne ka last date — attendance cycle define karta hai.",Required for Monthly. Range: 1–31.,Start day auto-calculate: (End day % 31) + 1 of previous month. Display: e.g. '26 May – 25 Jun 2026',Yes (Monthly)
+Config - Pay Schedule,Monthly Settings,Payroll Period,Start+End Dropdown,"Payroll period start aur end date — kis period ki salary release ho rahi hai.",Required for Monthly. Start: 1–31; End: 1–31.,Display: e.g. '01 Jun – 30 Jun 2026',Yes (Monthly)
+Config - Pay Schedule,Common Fields,Calculation Base,Radio,"Salary calculation mein total kaunse days consider karein — actual days ya organization working days.",Required. Options: 'Actual days in a month' / 'Organisation working days'.,,Yes
+Config - Pay Schedule,Common Fields,Exclude Week-offs,Checkbox,"Working days calculation mein Sundays / weekly offs count nahi hoge.",Conditional — sirf 'Organisation working days' mode mein visible.,,Conditional
+Config - Pay Schedule,Common Fields,Exclude Holidays,Checkbox,"Working days calculation mein declared holidays count nahi hoge.",Conditional — sirf 'Organisation working days' mode mein visible.,,Conditional
+Config - Pay Schedule,Common Fields,First Payroll Month,Dropdown,"Payroll processing kab se start hoga.",Required. Next 12 months mein se select kar sakte hain.,,Yes
+Config - Pay Schedule,Common Fields,First Pay Date,Date Picker / Dropdown,"Pehli salary kab di jaayegi.",Required. Monthly ke liye auto-calculate hota hai from processing date + month.,,Yes
+Config - Pay Schedule,Common Fields,Effective Month (HR Manager only),Dropdown,"Kaunse month se naya configuration apply hoga.",Mandatory sirf HR Manager role ke liye. Next 24 months options. Bina iske save nahi hoga.,,HR Only
+,,,,,,,,
+Config - PF Settings,Header,Business Unit,Dropdown,"Kaunse BU ke PF settings configure ho rahi hain.",Required.,,Yes
+Config - PF Settings,Provident Fund,Enable PF,Toggle,"PF deduction aur contribution enable/disable karo. Off karne pe PF-related fields chhup jaate hain.",On/Off.,,Yes
+Config - PF Settings,Basic Details,EPF Number / Establishment ID,Text Input,"Company ka EPFO registration number. PF challans aur returns mein use hota hai.",Format: AA/AAA/1234567/000.,,Yes
+Config - PF Settings,Basic Details,Establishment Name,Text Input,"EPFO ke saath registered company name.",Text.,,Yes
+Config - PF Settings,Basic Details,Joining Date under EPF,Date Picker,"Company EPF mein kab se registered hai.",Date format: YYYY-MM-DD.,,Yes
+Config - PF Settings,Basic Details,Deduction Cycle,Text (Read-only),"PF deduction hamesha monthly hoti hai — change nahi ho sakti.",Fixed value: 'Monthly'. Read-only.,,No
+Config - PF Settings,Employee Contribution,Employee Contribution Rate,Dropdown (Locked),"Employee ka EPF contribution rate — fixed at 12%.",Always 12% of Actual PF Wage. Field disabled — change nahi ho sakta.,Employee EPF = 12% of PF Wage,No
+Config - PF Settings,Employee Contribution,Employee PF Monthly Limit (INR),Text Input,"Employee ke PF contribution ka maximum cap per month. Zero ya blank = no cap.",Numeric. Default: ₹1800.,"If limit > 0: Deduction = Min(12% of PF Wage, limit). No cap = actual 12%.",No
+Config - PF Settings,Employer Contribution,Employer Contribution Rate,Dropdown,"Employer 12% full PF wage par calculate kare ya ₹15000 ceiling tak restricted PF wage par.",Options: '12% of Actual PF Wage' / '12% of Restricted PF Wage'.,"Actual: 12% of full Basic+DA. Restricted: 12% of min(Basic+DA, 15000). EPS split: EPS=8.33% (max ₹1250), EPF=3.67%",Yes
+Config - PF Settings,Employer Contribution,Employer PF Monthly Limit (INR),Text Input,"Employer contribution ka max monthly cap.",Numeric. Default: ₹1800.,,No
+Config - PF Settings,Employer Contribution,Include Employer Contribution in CTC,Checkbox,"Employer ka PF share employee ke CTC mein count hoga.",On karne se sub-options aate hain (EDLI aur Admin Charges).,,No
+Config - PF Settings,Employer Contribution,Include EDLI Contribution in CTC,Checkbox,"Employer ka EDLI share CTC mein add ho.",Parent 'Include Employer in CTC' ON hone par hi visible.,EDLI = 0.50% of PF Wage (Max ₹75/month),Conditional
+Config - PF Settings,Employer Contribution,Include Admin Charges in CTC,Checkbox,"EPF admin charges CTC mein include ho.",Parent 'Include Employer in CTC' ON hone par hi visible.,EPF Admin = 0.50% of PF Wage,Conditional
+Config - PF Settings,Employer Contribution,Override PF Rate at Employee Level,Checkbox,"Individual employee ke liye alag PF rate set karne ki permission deta hai.",On karne se employee-level override active ho jaata hai.,,No
+Config - PF Settings,LOP Configuration,Pro-rate Restricted PF Wage,Checkbox,"LOP (Loss of Pay) lagne par PF wage bhi working days ke proportion mein ghate.",On karne se partial month ka PF correctly calculate hota hai.,PF Wage (LOP) = (PF Wage / Total Days) × Days Worked,No
+Config - PF Settings,LOP Configuration,Consider all applicable components if PF wage < ₹15000 after LOP,Checkbox,"Agar LOP ke baad PF wage ₹15000 se kam ho toh actual salary components se PF calculate hoga (structure amount nahi).",On karne se actual monthly earnings se PF base decide hota hai.,,No
+Config - PF Settings,LOP Configuration,Components for PF Below ₹15000 (Modal),Multi-Checkbox,"Kaunse components add karke PF wage decide ho — Basic / HRA / DA.",Modal popup se select. Options: Basic Salary / HRA / Dearness Allowances (DA). Default: Basic+DA.,Selected components ka sum = PF Wage when below ₹15000,No
+,,,,,,,,
+Config - TDS Settings,Header,Business Unit,Dropdown,"Kaunse BU ki TDS settings hain.",Required.,,Yes
+Config - TDS Settings,Toggle,Enable TDS on Salaries,Toggle,"Salary se TDS auto-deduct aur Form 24Q filing ke liye enable karo.",On/Off. Off karne pe baaki fields disappear.,,Yes
+Config - TDS Settings,TDS Config,TAN (Tax Deduction Account Number),Text Input (Monospace),"Company ka TAN — Form 24Q filing ke liye mandatory.",Required. Auto UPPERCASE. Format: AAAA99999A.,,Yes
+Config - TDS Settings,TDS Config,Default Tax Regime,Dropdown,"Employees ke liye default income tax slab regime — New ya Old.",Options: 'New Regime' / 'Old Regime'. Employee individually change kar sakta hai Tax Planning mein.,,Yes
+Config - TDS Settings,Responsible Person,Full Name,Text Input,"TRACES portal par responsible person ka naam — TDS return filings mein appear hoga.",Text.,,Yes
+Config - TDS Settings,Responsible Person,Designation,Text Input,"Responsible person ka designation.",Text.,,Yes
+Config - TDS Settings,Responsible Person,Email Address,Text Input (Email),"Responsible person ki email — TRACES notifications yahin aayenge.",Valid email format required.,,Yes
+,,,,,,,,
+Config - Statutory Settings,ESI,Enable ESI,Toggle,"ESI deduction enable/disable karo. 20+ employees wali company ko mandatory hai.",On/Off.,,Yes
+Config - Statutory Settings,ESI,ESI Number,Text Input,"Company ka ESIC registration number.",Format: 00-00-000000-000-0000.,,Yes
+Config - Statutory Settings,ESI,ESI Establishment Name,Text Input,"ESIC-registered company name.",Text.,,Yes
+Config - Statutory Settings,ESI,ESI Coverage Date,Date Picker,"Company ESIC mein kab se covered hai.",Date.,,Yes
+Config - Statutory Settings,ESI,Employee ESI Rate,Display,"Employee ka ESI contribution rate — government fixed hai.",Fixed: 0.75%. Read-only.,Employee ESI = 0.75% of Gross Salary (if Gross ≤ ₹21000/month),No
+Config - Statutory Settings,ESI,Employer ESI Rate,Display,"Employer ka ESI contribution rate — government fixed hai.",Fixed: 3.25%. Read-only.,Employer ESI = 3.25% of Gross Salary,No
+Config - Statutory Settings,ESI,ESI Max Monthly Salary,Display,"Employees jinka gross ₹21000 se upar hai unka ESI nahi katega.",Fixed: ₹21000. Read-only.,,No
+Config - Statutory Settings,ESI,Include Employer ESI in CTC,Checkbox,"Employer ESI share employee ke CTC mein add ho.",On/Off.,,No
+Config - Statutory Settings,ESI,ESI Mapped Components,Multi-select,"Kaunse salary components ESI calculation mein include honge.",Default: Basic / DA / HRA / Conveyance.,,No
+Config - Statutory Settings,ESI,Allow ESI Override,Checkbox,"Individual employee ke liye ESI rules override karne ki permission.",On/Off.,,No
+Config - Statutory Settings,ESI,ESI Round Off,Radio,"ESI amount ko floor (neeche) ya ceiling (upar) round karo.",Options: Floor / Ceiling.,,No
+Config - Statutory Settings,ESI,Process ESI on Arrear,Checkbox,"Arrear amount pe ESI bhi calculate ho.",On/Off.,,No
+Config - Statutory Settings,ESI,Process ESI on Overtime,Checkbox,"Overtime pay pe ESI bhi calculate ho.",On/Off.,,No
+Config - Statutory Settings,ESI,ESI Provision in CTC,Checkbox,"ESI provision CTC mein count ho.",On/Off.,,No
+Config - Statutory Settings,Gratuity,Enable Gratuity,Toggle,"Gratuity calculation enable/disable karo.",On/Off.,,Yes
+Config - Statutory Settings,Gratuity,Include in CTC,Checkbox,"Gratuity CTC mein count ho.",On/Off.,,No
+Config - Statutory Settings,Gratuity,Include in Payslip,Checkbox,"Monthly payslip mein gratuity line item dikhao.",On/Off.,,No
+Config - Statutory Settings,Gratuity,Eligible Employees,Radio,"Kaunse employees ko gratuity milegi — sab ko ya specific criteria.",Options: All employees / Permanent only / By Department. Additional multi-select for departments.,,Yes
+Config - Statutory Settings,Gratuity,Gratuity Calculation Components,Multi-select,"Gratuity amount kaunse components par calculate hoga.",Default: Basic Salary + DA.,"Gratuity = (Basic+DA) × 15/26 × Years of Service. Max statutory limit: ₹20 Lakh.",Yes
+Config - Statutory Settings,Gratuity,Minimum Service Period,Radio,"Kitne saal baad gratuity milegi.",Options: Standard (5 years) / Custom years.,"Standard: 5 completed years. Death/disablement: no minimum.",Yes
+Config - Statutory Settings,Gratuity,Years Calculation Mode,Radio,"Service years kaise count karein — completed years ya proportional.",Options: Completed years / Proportional.,"Proportional: if 4 yrs 8+ months → round to 5 years",Yes
+Config - Statutory Settings,Gratuity,Max Gratuity Amount,Radio + Input,"Statutory ya custom maximum limit.",Options: Statutory (₹20L) / Custom amount.,,Yes
+Config - Statutory Settings,Gratuity,LWP Limit Days,Text Input,"Kitne din LWP allow ho gratuity service period mein.",Numeric.,,No
+Config - Statutory Settings,LWF,Enable LWF,Toggle,"Labour Welfare Fund enable karo.",On/Off.,,Yes
+Config - Statutory Settings,LWF,State,Dropdown,"Kaunse state ka LWF applicable hai. Rates state-wise alag hain.",Indian states list.,,Yes
+Config - Statutory Settings,LWF,Establishment ID,Text Input,"LWF registration number.",Text.,,No
+Config - Statutory Settings,LWF,Registration Date,Date Picker,"LWF registration kab hua.",Date.,,No
+Config - Statutory Settings,LWF,Process LWF on Arrear,Checkbox,"Arrear pe bhi LWF deduct ho.",On/Off.,,No
+Config - Statutory Settings,LWF,Process LWF on Settlement,Checkbox,"FnF settlement mein LWF deduct ho.",On/Off.,,No
+Config - Statutory Settings,LWF,Include Employer LWF in CTC,Checkbox,"Employer ka LWF share CTC mein count ho.",On/Off.,,No
+,,,,,,,,
+Config - Salary Components,Header,Business Unit,Dropdown,"Kaunse BU ke components manage ho rahe hain.",Required.,,Yes
+Config - Salary Components,Earnings Tab,Component Name,Text Input / Dropdown,"Salary component ka naam — earning ka label.",Required. Unique hona chahiye per BU.,,Yes
+Config - Salary Components,Earnings Tab,Name in Payslip,Text Input,"Salary slip mein yahi naam dikhega — short rakho.",Required. Agar blank rakha toh Component Name hi print hota hai.,,Yes
+Config - Salary Components,Earnings Tab,Effective Date (Month),Dropdown,"Kaunse month se yeh component active ho — future ya current.",Required for HR Manager. Next 24 months options (April 2026 onwards).,,HR Only
+Config - Salary Components,Earnings Tab,Calculation Method,Radio/Toggle,"Earning amount kaise calculate hoga.",Options: Flat (fixed ₹) / Percentage (% of something) / Percent of CTC / Percent of Gross / Balancing.,,Yes
+Config - Salary Components,Earnings Tab,Amount / Percentage Value,Text Input,"Flat ya percentage value enter karo.",Required. Flat → ₹ amount; Percentage → % value (e.g. 50 means 50%).,,Yes
+Config - Salary Components,Earnings Tab,Percentage Of (Base),Multi-select,"Percentage method mein — kaunse components ka percentage nikalna hai.",Required if method is Percentage. E.g. 50% of Basic Salary.,"Amount = (Selected components total) × (Value/100)",Conditional
+Config - Salary Components,Earnings Tab,Consider for EPF,Toggle,"Yeh component EPF (PF) calculation mein count hoga.",On/Off. Off karne se PF wage se yeh component bahar.,,No
+Config - Salary Components,Earnings Tab,Consider for ESI,Toggle,"Yeh component ESI calculation mein count hoga.",On/Off. Off karne se ESI wage se yeh component bahar.,,No
+Config - Salary Components,Earnings Tab,Consider for Gratuity,Toggle,"Yeh component gratuity base mein count hoga.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Include in CTC,Toggle,"Yeh component employee ke CTC calculation mein add hoga.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Include in Gross,Toggle,"Yeh component Gross Salary mein add hoga.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Is Pro-Rata,Toggle,"Agar employee month ke beech join/leave kare toh yeh component proportionally calculate ho.",On/Off.,"Pro-rata = (Monthly Amount / Total Days) × Days Worked",No
+Config - Salary Components,Earnings Tab,Prorate on DOJ/DOL,Toggle,"Joining date ya leaving date par pro-rata calculation karo.",Requires Pro-Rata to be ON.,,Conditional
+Config - Salary Components,Earnings Tab,Include in First Salary,Toggle,"Sirf pehle month ki salary mein yeh component pay karo.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Include Arrears,Toggle,"Agar component ki value change ho toh arrear calculate karo.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Show in Payslip,Toggle,"Yeh component payslip mein print ho.",Default: On.,,No
+Config - Salary Components,Earnings Tab,Consider for Professional Tax,Toggle,"Yeh component Professional Tax calculation mein count ho.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Consider for LWF,Toggle,"Yeh component LWF calculation mein count ho.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Consider for Leave Encashment,Toggle,"Yeh component leave encashment calculation mein count ho.",On/Off.,,No
+Config - Salary Components,Earnings Tab,Status,Toggle,"Component active hai ya inactive.",Active = shown in salary structures. Inactive = hidden but data preserved.,,Yes
+Config - Salary Components,Deductions Tab,Deduction Type,Radio,"Yeh deduction statutory (govt mandated) hai ya non-statutory.",Options: Statutory / Non-Statutory.,,Yes
+Config - Salary Components,Deductions Tab,Deduction Timing,Radio,"Deduction tax se pehle ho ya baad mein.",Options: Pre-tax / Post-tax. Pre-tax = taxable income ghata; Post-tax = nahi.,,Yes
+Config - Salary Components,Deductions Tab,Round Off Setting,Radio,"Amount round off kaise karna hai.",Options: Floor (neeche) / Ceiling (upar).,,No
+Config - Salary Components,Deductions Tab,Tax Computation,Radio,"TDS agar mid-year change ho toh kaise handle karo.",Options: Proportionally / Pay month.,,No
+Config - Salary Components,Deductions Tab,Income Tax Section,Text Input,"Deduction kaunse income tax section ke under hai (e.g. 80C).",Text. E.g. 80C / 80D / 24B.,,No
+Config - Salary Components,Deductions Tab,Section Max Limit (₹),Text Input,"Is section mein maximum deduction kitni allowed hai.",Numeric. E.g. 80C → ₹1,50,000.,,No
+Config - Salary Components,Deductions Tab,Non-Taxable Limit (₹),Text Input,"Kitne tak yeh deduction tax-exempt hai.",Numeric.,,No
+Config - Salary Components,Reimbursements Tab,Max Reimbursement Amount,Text Input,"Maximum reimbursement limit per month.",Numeric. ₹ amount.,,Yes
+,,,,,,,,
+Config - Salary Structure,Header,Business Unit,Dropdown,"Kaunse BU ki structure hai.",Required. HR Manager ke liye read-only.,,Yes
+Config - Salary Structure,Header,Structure Name,Text Input,"Structure ka naam — e.g. 'Senior Developer Structure'.",Required. Unique per BU.,,Yes
+Config - Salary Structure,Header,Effective Month,Dropdown,"Kaunse month se yeh structure apply hogi.",Required. Next 24 months.,,Yes
+Config - Salary Structure,Header,Description,Textarea,"Structure ka short description.",Optional.,,No
+Config - Salary Structure,Assignment Rules,Target Department(s),Multi-select,"Is structure ko kaunse departments ko assign karo — department-wise rule.",Optional. Multiple select allowed.,,No
+Config - Salary Structure,Assignment Rules,Target Designation(s),Multi-select,"Is structure ko kaunse designations ko assign karo.",Optional. Multiple select allowed.,,No
+Config - Salary Structure,Assignment Rules,Target Employee(s),Multi-select,"Specific employees ko is structure se assign karo.",Optional. Employee-level assignment sabse specific hota hai — department/designation ke baad apply hota hai.,,No
+Config - Salary Structure,Earnings,Earnings Components List,Drag-drop Table,"Kaunse earning components is structure mein honge — order set karo.",Minimum 1 component required. Drag-drop se order change ho sakta hai.,,Yes
+Config - Salary Structure,Deductions,Deductions Components List,Drag-drop Table,"Kaunse deduction components is structure mein honge.",At least 1 required.,,Yes
+Config - Salary Structure,Reimbursements,Reimbursements Components List,Drag-drop Table,"Kaunse reimbursement components is structure mein honge.",Optional.,,No
+,,,,,,,,
+Config - Loan & Advance Types,Header,Business Unit,Dropdown,"Kaunse BU ke loan types configure ho rahe hain.",Required.,,Yes
+Config - Loan & Advance Types,Loan Type Form,Loan/Advance Name,Text Input,"Loan type ka naam — e.g. 'Personal Loan' / 'Festival Advance'.",Required. Unique.,,Yes
+Config - Loan & Advance Types,Loan Type Form,Interest Rate (%),Number Input,"Annual interest rate. 0 = interest-free advance.",Required. 0 to 100.,"Monthly interest = (Outstanding balance × Rate%) / 12",Yes
+Config - Loan & Advance Types,Loan Type Form,Max Amount,Text Input + Toggle,"Maximum loan amount — fixed ₹ amount ya salary-based.",Required. Can be fixed (e.g. '5,00,000') or formula-based (e.g. '2 months gross salary').,,Yes
+Config - Loan & Advance Types,Loan Type Form,Max Tenure (Months),Number Input,"Maximum repayment duration in months.",Required. Numeric.,"Monthly Installment = (Principal + Total Interest) / Tenure",Yes
+Config - Loan & Advance Types,Loan Type Form,Repayment Start Month,Dropdown,"Loan lene ke baad pehli EMI kaunse month se kategi.",Optional. Month name.,,No
+Config - Loan & Advance Types,Loan Type Form,Description,Textarea,"Loan type ka brief description.",Optional.,,No
+Config - Loan & Advance Types,Loan Type Form,Approvers,Multi-select,"Is loan request ko approve karne wale employees.",Optional. Multiple approvers select kar sakte hain.,,No
+Config - Loan & Advance Types,Eligibility Rules,Eligibility After Joining Duration,Toggle + Input,"Kab se employee eligible hai — probation complete ke baad ya X days baad.",Optional. Options: After Probation / After X days.,,No
+Config - Loan & Advance Types,Eligibility Rules,Eligibility Salary Range,Toggle + Range Inputs,"Minimum aur maximum salary ke beech wale employees eligible hain.",Optional. Min and Max ₹ values.,,No
+Config - Loan & Advance Types,Eligibility Rules,Eligible Employee Statuses,Multi-Checkbox,"Probation / Confirmed / Notice Period / Intern — kaun apply kar sakta hai.",Optional. Multiple select.,,No
+Config - Loan & Advance Types,Loan Type Form,Status,Toggle,"Loan type active hai ya nahi. Inactive hone par naye applications nahi aa sakte.",Active/Inactive.,,Yes
+,,,,,,,,
+Config - Roles & Permissions,Roles List,Role Name,Display,"Role ka naam — Employee / HR Manager.",System-defined. Add nahi kar sakte filhaal.,,No
+Config - Roles & Permissions,Roles List,Status,Display + Toggle,"Role active hai ya inactive.",Active/Inactive.,,Yes
+Config - Roles & Permissions,Roles List,Employees Count,Display,"Is role se kitne employees assigned hain.",Read-only count.,,No
+Config - Roles & Permissions,Roles List,Remarks,Display,"Role ka description — kya access hai.",Optional text.,,No
+Config - Roles & Permissions,Permissions Editor,Module / Sub-Module,Tree Structure Display,"Kaunsa module/screen hai — hierarchy mein.",Read-only structure. People > Employees / Payroll > Payroll Runs / Configuration etc.,,No
+Config - Roles & Permissions,Permissions Editor,Status (Enable/Disable),Toggle per row,"Yeh module is role ko dikhega ya nahi.",On/Off. Parent OFF karne se saare children bhi OFF ho jaate hain.,,No
+Config - Roles & Permissions,Permissions Editor,View Scope,Dropdown per row,"Sirf apna data dekhe (Default) ya sab ka data (Global).",Options: Default / Global. Sirf applicable modules pe dikhta hai.,,No
+Config - Roles & Permissions,Permissions Editor,Add Permission,Checkbox per row,"Is role mein add karne ki permission hai.",Sirf applicable modules mein. '-' icon = not applicable.,,No
+Config - Roles & Permissions,Permissions Editor,Edit Permission,Checkbox per row,"Is role mein edit karne ki permission hai.",Sirf applicable modules mein.,,No
+Config - Roles & Permissions,Permissions Editor,Delete Permission,Checkbox per row,"Is role mein delete karne ki permission hai.",Sirf applicable modules mein.,,No
+,,,,,,,,
+Config - Payroll Paygroup,Paygroup Form,Paygroup Name,Text Input,"Pay group ka naam — employees ko group karne ke liye.",Required. Unique.,,Yes
+Config - Payroll Paygroup,Paygroup Form,Business Unit,Dropdown,"Kaunse BU se yeh paygroup belong karta hai.",Required.,,Yes
+Config - Payroll Paygroup,Paygroup Form,Description,Textarea,"Paygroup ka short description.",Optional.,,No
+Config - Payroll Paygroup,Paygroup Form,Status,Toggle,"Paygroup active hai ya nahi.",Active/Inactive.,,Yes
+,,,,,,,,
+Payroll Manager,Payroll Runs,Select Month,Dropdown,"Kaunse month ka payroll run/view karna hai.",Required. Current month default.,,Yes
+Payroll Manager,Payroll Runs,Business Unit Filter,Dropdown,"Kaunse BU ka payroll dekh rahe hain.",Required.,,Yes
+Payroll Manager,Payroll Runs,Run Payroll Button,Action Button,"Is month ka payroll run karo — salary calculate ho jaati hai saare employees ki.",Sirf ek baar run honi chahiye. Already processed employees green mark hote hain.,,Yes
+Payroll Manager,Payroll Runs,Employee Name,Display,"Employee ka naam payroll table mein.",Read-only.,,No
+Payroll Manager,Payroll Runs,Employee ID,Display,"Employee ka unique ID.",Read-only.,,No
+Payroll Manager,Payroll Runs,Department,Display,"Employee ka department.",Read-only.,,No
+Payroll Manager,Payroll Runs,Gross Salary,Display,"Employee ki total gross salary for this month.",Read-only.,Gross = Sum of all Earnings components (where Include in Gross = ON),No
+Payroll Manager,Payroll Runs,Total Deductions,Display,"Is month ki total deductions — PF + TDS + LOP + etc.",Read-only.,Total Deductions = EPF + TDS + PT + LWF + Other deductions,No
+Payroll Manager,Payroll Runs,Net Salary,Display,"Employee ko actually kitna milega — hand in hand salary.",Read-only.,Net = Gross − Total Deductions,No
+Payroll Manager,Payroll Runs,Status,Display,"Payroll run hua hai ya nahi — Processed / Pending.",Read-only badge.,,No
+Payroll Manager,Payroll Runs,LOP Days,Number Input,"Is month employee ke kitne days unpaid leave (LOP) rahe.",0 ya positive number.,LOP Deduction = (Monthly Salary / Total Working Days) × LOP Days,No
+Payroll Manager,Tax Declarations,Employee,Display,"Kaun sa employee hai.",Read-only.,,No
+Payroll Manager,Tax Declarations,Declared Amount,Display/Input,"Employee ne kitni tax savings declare ki hai.",Numeric ₹ amount.,,No
+Payroll Manager,Tax Declarations,Approved Amount,Display,"HR ne kitna approve kiya hai.",Read-only. Can be less than declared.,,No
+Payroll Manager,Tax Declarations,TDS Impact,Display,"In declarations se TDS mein kitni kami aayi.",Read-only calculated value.,TDS Impact = Tax on Income − Tax on (Income − Approved Declarations),No
+,,,,,,,,
+Loans & Advances (HR View),Loan Application List,Employee Name,Display,"Kaunse employee ne loan apply kiya.",Read-only.,,No
+Loans & Advances (HR View),Loan Application List,Loan Type,Display,"Kaunsa loan type apply kiya — Personal / Festival / Salary Advance etc.",Read-only.,,No
+Loans & Advances (HR View),Loan Application List,Loan Amount,Display,"Kitni raqam ki request hai.",Read-only ₹ amount.,,No
+Loans & Advances (HR View),Loan Application List,Applied Date,Display,"Kab loan apply kiya.",Read-only date.,,No
+Loans & Advances (HR View),Loan Application List,Status,Display + Action,"Application ka status — Pending / Approved / Rejected / Active / Closed.",Read-only. Approve/Reject buttons sirf HR ko visible.,,No
+Loans & Advances (HR View),Loan Application List,EMI Amount,Display,"Monthly kitni EMI salary se kategi.",Read-only.,EMI = (Loan Amount + Total Interest) / Tenure Months,No
+Loans & Advances (HR View),Loan Application List,Outstanding Balance,Display,"Abhi bhi kitna repayment baaki hai.",Read-only.,Outstanding = Principal − Paid so far,No
+Loans & Advances (HR View),Loan Application List,Tenure (Months),Display,"Kitne months mein loan repay hoga.",Read-only.,,No
+Loans & Advances (HR View),New Loan Form,Loan Type,Dropdown,"Kaunsa loan type hai — configured types mein se.",Required.,,Yes
+Loans & Advances (HR View),New Loan Form,Loan Amount,Number Input,"Loan ki requested amount.",Required. Must be ≤ Max Amount configured for that loan type.,,Yes
+Loans & Advances (HR View),New Loan Form,Tenure (Months),Number Input,"Repayment period in months.",Required. Must be ≤ Max Tenure configured.,,Yes
+Loans & Advances (HR View),New Loan Form,Repayment Start Month,Dropdown,"Pehli EMI kab se katni chahiye.",Required.,,Yes
+Loans & Advances (HR View),New Loan Form,Interest Rate (%),Display,"Auto-fill from loan type config. Employee change nahi kar sakta.",Read-only.,Monthly Interest = (Outstanding × Rate%) / 12,No
+Loans & Advances (HR View),New Loan Form,Remarks,Textarea,"Additional notes for the loan application.",Optional.,,No
+,,,,,,,,
+Employee List,Filters,Search,Text Input,"Employee naam ya ID se search karo.",Partial match allowed.,,No
+Employee List,Filters,Business Unit Filter,Dropdown,"Sirf us BU ke employees dikhe.",Optional.,,No
+Employee List,Filters,Department Filter,Dropdown,"Sirf us department ke employees dikhe.",Optional.,,No
+Employee List,Filters,Status Filter,Dropdown,"Active / Inactive / All employees.",Optional.,,No
+Employee List,Table,Employee ID,Display,"Unique employee ID — system-generated ya manual.",Read-only.,,No
+Employee List,Table,Employee Name,Display + Link,"Employee ka poora naam — click karne se profile khulti hai.",Read-only.,,No
+Employee List,Table,Department,Display,"Employee ka current department.",Read-only.,,No
+Employee List,Table,Designation,Display,"Employee ki current designation.",Read-only.,,No
+Employee List,Table,Business Unit,Display,"Kaunse BU mein employee hai.",Read-only.,,No
+Employee List,Table,Date of Joining,Display,"Joining date.",Read-only.,,No
+Employee List,Table,Status,Badge,"Active / Inactive badge.",Read-only.,,No
+Employee List,Table,Actions,Buttons,"Edit profile / View profile / Deactivate actions.",Role-based visibility.,,No
+,,,,,,,,
+Edit Employee Profile,Personal Information,First Name,Text Input,"Employee ka pehla naam.",Required.,,Yes
+Edit Employee Profile,Personal Information,Last Name,Text Input,"Employee ka last naam.",Required.,,Yes
+Edit Employee Profile,Personal Information,Date of Birth,Date Picker,"Employee ki date of birth — tax calculation aur age-related rules ke liye.",Required.,,Yes
+Edit Employee Profile,Personal Information,Gender,Dropdown,"Male / Female / Other.",Required. Options: Male / Female / Other.,,Yes
+Edit Employee Profile,Personal Information,Personal Email,Text Input (Email),"Employee ki personal email.",Valid email format. Different from official email.,,No
+Edit Employee Profile,Personal Information,Mobile Number,Text Input,"Employee ka personal mobile number.",10-digit numeric.,,No
+Edit Employee Profile,Personal Information,Blood Group,Dropdown,"Emergency use ke liye.",Optional.,,No
+Edit Employee Profile,Personal Information,Marital Status,Dropdown,"Married / Single — tax calculation mein HRA exemption ke liye relevant.",Options: Single / Married / Divorced / Widowed.,,No
+Edit Employee Profile,Role Information,Employee ID,Text Input (Read-only),"Unique employee identifier — payroll mein reference ke liye.",System-generated or set at time of creation. Read-only.,,No
+Edit Employee Profile,Role Information,Department,Dropdown,"Employee ka department — salary structure assignment ke liye relevant.",Required.,,Yes
+Edit Employee Profile,Role Information,Designation,Dropdown,"Employee ki designation — structure assignment ke liye.",Required.,,Yes
+Edit Employee Profile,Role Information,Business Unit,Dropdown,"Kaunse BU mein employee hai — payroll run ke liye BU filter ka base.",Required.,,Yes
+Edit Employee Profile,Role Information,Date of Joining,Date Picker,"Joining date — pro-rata calculation / gratuity eligibility / PF joining date ka base.",Required.,Pro-rata first month: (Monthly Salary / Total Days) × (Total Days − DOJ Day + 1),Yes
+Edit Employee Profile,Role Information,Employee Status,Dropdown,"Active / Inactive / Probation / Notice Period.",Required.,,Yes
+Edit Employee Profile,Role Information,Role (Portal Access),Dropdown,"Employee / HR Manager — system mein kya access milega.",Required.,,Yes
+Edit Employee Profile,Contact Information,Personal Address,Text Input,"Employee ka home address.",Optional.,,No
+Edit Employee Profile,Contact Information,City / State / Pincode,Text Inputs,"Location details.",Optional.,,No
+Edit Employee Profile,Bank Details,Bank Name,Dropdown,"Employee ka salary account bank.",Required for salary disbursement.,,Yes
+Edit Employee Profile,Bank Details,Account Number,Text Input,"Employee ka salary bank account number.",Required. Numeric only.,,Yes
+Edit Employee Profile,Bank Details,IFSC Code,Text Input,"Bank branch ka IFSC.",Required. Auto UPPERCASE. 11 chars.,,Yes
+Edit Employee Profile,Bank Details,Account Holder Name,Text Input,"Account mein naam.",Required.,,Yes
+Edit Employee Profile,Salary Configuration,Salary Structure,Dropdown,"Employee ko kaunsi salary structure assign hai — earnings/deductions is se decide hongi.",Required.,,Yes
+Edit Employee Profile,Salary Configuration,CTC (Annual),Number Input,"Employee ka annual Cost to Company.",Required. Numeric ₹.,,Yes
+,,,,,,,,
+Payroll Reports,Report Filters,Business Unit,Dropdown,"Kaunse BU ki report chahiye.",Required.,,Yes
+Payroll Reports,Report Filters,Month & Year,Dropdown,"Kaunse month ki report chahiye.",Required.,,Yes
+Payroll Reports,Report Filters,Report Type,Dropdown/Tabs,"Salary Register / Bank Disbursal / PF Report / ESI Report / PT Report / TDS Summary etc.",Required.,,Yes
+Payroll Reports,Report Filters,Department Filter,Dropdown,"Department-wise filter.",Optional.,,No
+Payroll Reports,Report Table,Employee ID,Display,"Employee ka ID.",Read-only.,,No
+Payroll Reports,Report Table,Employee Name,Display,"Employee ka naam.",Read-only.,,No
+Payroll Reports,Report Table,Gross Salary,Display,"Total gross earnings.",Read-only.,Sum of all earning components (Include in Gross = ON),No
+Payroll Reports,Report Table,All Earning Components,Dynamic Columns,"Har earning component ka separate column.",Read-only.,,No
+Payroll Reports,Report Table,All Deduction Components,Dynamic Columns,"Har deduction component ka separate column.",Read-only.,,No
+Payroll Reports,Report Table,Net Salary,Display,"Employee ka net take-home.",Read-only.,Net = Gross − Total Deductions,No
+Payroll Reports,Actions,Download Excel,Button,"Puri report Excel file mein download karo.",Generates .xlsx file with all columns.,,No
+Payroll Reports,Actions,Download PDF,Button,"Report PDF mein download karo.",Generates formatted PDF.,,No
+,,,,,,,,
+Salary Slips,Filters,Employee,Dropdown + Search,"Kaunse employee ki salary slip chahiye.",Required.,,Yes
+Salary Slips,Filters,Month & Year,Dropdown,"Kaunse month ki slip chahiye.",Required.,,Yes
+Salary Slips,Salary Slip View,Employee Details,Display,"Name / ID / Department / Designation / Bank Account.",Read-only. From employee profile.,,No
+Salary Slips,Salary Slip View,Pay Period,Display,"Kaunse dates ke liye yeh slip hai.",Read-only. From payroll settings.,,No
+Salary Slips,Salary Slip View,Days Worked / LOP Days,Display,"Actual kitne din kaam kiya aur kitne LOP rahe.",Read-only.,Days Worked = Total Days − LOP Days,No
+Salary Slips,Salary Slip View,Earnings Table,Display,"Har earning component aur uska amount.",Read-only. Components from salary structure.,,No
+Salary Slips,Salary Slip View,Gross Earnings,Display,"Total earnings ka sum.",Read-only.,Gross = Sum of all Earnings (Include in Gross = ON),No
+Salary Slips,Salary Slip View,Deductions Table,Display,"Har deduction component aur uska amount — EPF / TDS / PT etc.",Read-only.,,No
+Salary Slips,Salary Slip View,Total Deductions,Display,"Sab deductions ka sum.",Read-only.,Total Deductions = EPF + ESI + PT + LWF + TDS + Other,No
+Salary Slips,Salary Slip View,Net Pay,Display,"Employee ko actually milne wali raqam.",Read-only.,Net Pay = Gross Earnings − Total Deductions,No
+Salary Slips,Salary Slip View,Employer Contributions,Display,"Employer EPF + ESI share — informational only.",Read-only. Shown if enabled in settings.,,No
+Salary Slips,Actions,Download PDF,Button,"Salary slip PDF mein download karo.",Formatted payslip with company letterhead.,,No
+Salary Slips,Actions,Email to Employee,Button,"Salary slip employee ki email pe bhejo.",Employee profile ki email use hoti hai.,,No
+,,,,,,,,
+Bank Disbursal Template,Header,Business Unit,Display,"Kaunse BU ka disbursal statement.",Read-only. From payroll run.,,No
+Bank Disbursal Template,Header,Month & Year,Display,"Kaunse month ka disbursal.",Read-only.,,No
+Bank Disbursal Template,Disbursal Table,Employee Name,Display,"Employee ka naam.",Read-only.,,No
+Bank Disbursal Template,Disbursal Table,Employee ID,Display,"Employee ka ID.",Read-only.,,No
+Bank Disbursal Template,Disbursal Table,Bank Name,Display,"Employee ka salary bank.",Read-only. From employee profile.,,No
+Bank Disbursal Template,Disbursal Table,Account Number,Display,"Employee ka account number.",Read-only.,,No
+Bank Disbursal Template,Disbursal Table,IFSC Code,Display,"Branch code.",Read-only.,,No
+Bank Disbursal Template,Disbursal Table,Net Salary,Display,"Transfer karne ki raqam.",Read-only.,Net = Gross − Deductions,No
+Bank Disbursal Template,Actions,Download Excel,Button,"Bank upload ke liye Excel format mein download.",NEFT/RTGS format compatible.,,No
+Bank Disbursal Template,Actions,Download PDF,Button,"PDF format mein download karo.",Formatted statement.,,No
+,,,,,,,,
+FnF Settlement Template,Header,Employee Name,Display,"FnF kaunse employee ka hai.",Read-only. From exit management.,,No
+FnF Settlement Template,Header,Last Working Day,Display,"Employee ka last day of employment.",Read-only. From exit module.,,No
+FnF Settlement Template,Header,FnF Processing Date,Display,"Kab FnF calculate hua.",Read-only.,,No
+FnF Settlement Template,Salary Components,Last Month Salary,Display,"Last partial/full month ki salary.",Read-only.,Pro-rated salary: (Monthly ÷ Total Days) × Days Worked in last month,No
+FnF Settlement Template,Salary Components,Leave Encashment,Display,"Balance leaves ka encashment.",Read-only.,"Encashment = (Basic + DA) / 26 × Eligible Leave Balance",No
+FnF Settlement Template,Salary Components,Gratuity,Display,"Eligible hone par gratuity amount.",Read-only.,"Gratuity = (Basic+DA) × 15/26 × Completed Years of Service",No
+FnF Settlement Template,Salary Components,Bonus / Incentive,Display,"Pending bonus if any.",Read-only.,,No
+FnF Settlement Template,Deductions,TDS on FnF,Display,"FnF amount par applicable TDS.",Read-only. Calculated on total FnF payout.,,No
+FnF Settlement Template,Deductions,Loan Recovery,Display,"Pending loan amount — agar active loan hai toh FnF se recover hoga.",Read-only.,Outstanding Loan Balance directly deducted,No
+FnF Settlement Template,Deductions,Notice Period Recovery,Display,"Agar employee notice period complete nahi kiya toh recovery.",Read-only.,Recovery = (Monthly Salary ÷ 30) × Shortfall Days,No
+FnF Settlement Template,Summary,Total Payable,Display,"Employee ko milne wali final amount.",Read-only.,Total = Last Salary + Leave Encashment + Gratuity + Bonus − Deductions,No
+FnF Settlement Template,Actions,Generate FnF Letter,Button,"Official FnF letter generate karo.",PDF with company letterhead and stamp.,,No
+FnF Settlement Template,Actions,Download Excel,Button,"FnF breakdown Excel mein.",Formatted report.,,No
+,,,,,,,,
+Tax Configuration (Employee View),Income Details,Annual CTC,Display,"Employee ka yearly CTC.",Read-only. From salary structure.,,No
+Tax Configuration (Employee View),Income Details,Projected Annual Gross,Display,"Pura saal projected gross salary.",Read-only.,Projected = Monthly Gross × Remaining months + Paid months,No
+Tax Configuration (Employee View),Tax Regime,Tax Regime Selection,Dropdown,"New Regime ya Old Regime — employee choose kar sakta hai.",Options: New Regime / Old Regime. Default from TDS settings. Employee override kar sakta hai.,,Yes
+Tax Configuration (Employee View),Deductions (Old Regime only),80C Investments,Number Input,"PPF / LIC / ELSS / EPF voluntary — max ₹1.5 Lakh allowed.",Conditional — sirf Old Regime mein. Max: ₹1,50,000.,,Conditional
+Tax Configuration (Employee View),Deductions (Old Regime only),80D Medical Insurance,Number Input,"Medical insurance premium — employee + family.",Conditional. Max: ₹25,000 (self+family) + ₹25,000 (parents).,,Conditional
+Tax Configuration (Employee View),Deductions (Old Regime only),80G Donations,Number Input,"Charitable donations exempt under 80G.",Conditional. As per eligible donation amounts.,,Conditional
+Tax Configuration (Employee View),Deductions (Old Regime only),24B Home Loan Interest,Number Input,"Home loan interest — max ₹2 Lakh.",Conditional. Max: ₹2,00,000.,,Conditional
+Tax Configuration (Employee View),Deductions (Old Regime only),HRA Exemption,Display,"HRA tax exemption calculated.",Auto-calculated.,"HRA Exempt = Min(Actual HRA, 50%/40% of Basic, Actual Rent − 10% of Basic)",No
+Tax Configuration (Employee View),Deductions (Old Regime only),Standard Deduction,Display,"Fixed ₹75,000 standard deduction (Budget 2024).",Auto-applied. ₹75,000 fixed.,Standard Deduction = ₹75,000 (Old Regime),No
+Tax Configuration (Employee View),Tax Calculation,Taxable Income,Display,"Income after all deductions.",Read-only.,Taxable Income = Gross Annual − All applicable deductions,No
+Tax Configuration (Employee View),Tax Calculation,Income Tax (Before Cess),Display,"Tax as per slabs.",Read-only.,"New Regime slabs: 0–3L=0%, 3–7L=5%, 7–10L=10%, 10–12L=15%, 12–15L=20%, 15L+=30%",No
+Tax Configuration (Employee View),Tax Calculation,Cess (4%),Display,"Education + Health Cess on income tax.",Read-only.,Cess = Income Tax × 4%,No
+Tax Configuration (Employee View),Tax Calculation,Total Annual Tax,Display,"Total tax liability for the year.",Read-only.,Total Tax = Income Tax + Cess,No
+Tax Configuration (Employee View),Tax Calculation,Monthly TDS,Display,"Har month salary se kati jane wali TDS amount.",Read-only.,Monthly TDS = Total Annual Tax / 12 (adjusted for arrears),No
+,,,,,,,,
+Expense Management (HR View),Expense List,Employee,Display,"Kaunse employee ka expense claim hai.",Read-only.,,No
+Expense Management (HR View),Expense List,Expense Category,Display,"Category — Travel / Meal / Medical etc.",Read-only.,,No
+Expense Management (HR View),Expense List,Amount Claimed,Display,"Kitna claim kiya.",Read-only ₹.,,No
+Expense Management (HR View),Expense List,Amount Approved,Input,"HR kitna approve kar raha hai.",Editable. Cannot exceed claimed amount.,,No
+Expense Management (HR View),Expense List,Date Submitted,Display,"Kab submit hua.",Read-only.,,No
+Expense Management (HR View),Expense List,Status,Display + Action,"Pending / Approved / Rejected.",HR Approve/Reject kar sakta hai.,,No
+Expense Management (HR View),Expense List,Attachments,Display/Download,"Bill receipts employee ne attach kiye.",View/download option.,,No
+Expense Management (HR View),New Expense (Employee),Category,Dropdown,"Expense ka type — Travel / Meal / Medical / Communication / Other.",Required.,,Yes
+Expense Management (HR View),New Expense (Employee),Amount,Number Input,"Claim karne ka amount.",Required. Numeric ₹.,,Yes
+Expense Management (HR View),New Expense (Employee),Date of Expense,Date Picker,"Kab expense hua.",Required. Cannot be future date.,,Yes
+Expense Management (HR View),New Expense (Employee),Description,Textarea,"Expense ka brief reason.",Required.,,Yes
+Expense Management (HR View),New Expense (Employee),Receipt Attachment,File Upload,"Bill ya receipt upload karo — proof ke liye.",Optional but recommended. Supported: JPG / PNG / PDF.,,No

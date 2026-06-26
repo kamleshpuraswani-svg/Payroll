@@ -28,6 +28,7 @@ const BUSINESS_UNITS = [
     "CollabCRM"
 ];
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 // --- Types ---
 
@@ -80,6 +81,8 @@ interface FnFTemplate {
     };
     settings: FnFTemplateSettings;
     headerConfig: FnFHeaderConfig;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // --- Mock Data ---
@@ -90,7 +93,9 @@ const MOCK_FNF_TEMPLATES: FnFTemplate[] = [
         name: 'Standard F&F Settlement',
         status: 'Draft',
         createdBy: 'Super Admin',
-        lastUpdatedBy: '03 Dec 2025',
+        lastUpdatedBy: 'Super Admin',
+        createdAt: '2025-12-03T10:00:00Z',
+        updatedAt: '2025-12-03T10:00:00Z',
         isActive: false,
         headerConfig: {
             logoPosition: 'Left',
@@ -388,10 +393,12 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                     status: item.is_active ? 'Active' : (item.status === 'Draft' ? 'Draft' : 'Inactive'),
                     isActive: item.is_active,
                     createdBy: item.created_by || 'Admin',
-                    lastUpdatedBy: new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    lastUpdatedBy: item.last_updated_by || 'Admin',
                     sections: item.content.sections,
                     settings: item.settings,
-                    headerConfig: item.content.headerConfig
+                    headerConfig: item.content.headerConfig,
+                    createdAt: item.created_at,
+                    updatedAt: item.updated_at
                 }));
                 setTemplates(formattedTemplates);
             } else {
@@ -893,8 +900,12 @@ const FnFSettlementTemplate: React.FC<FnFSettlementTemplateProps> = ({ userRole 
                                             {t.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-500 font-medium">{t.createdBy}</td>
-                                    <td className="px-6 py-4">{t.lastUpdatedBy}</td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(t.createdBy, t.createdAt)}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(t.lastUpdatedBy, t.updatedAt)}
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end items-center gap-3">
                                             <div

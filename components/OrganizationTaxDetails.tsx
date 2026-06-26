@@ -480,7 +480,8 @@ const OrganizationTaxDetails: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Tax Deductor Details */}
+                    {/* Tax Deductor Details - Hidden per user request */}
+                    {/*
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                         <div 
                             className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
@@ -559,6 +560,7 @@ const OrganizationTaxDetails: React.FC = () => {
                             </div>
                         )}
                     </div>
+                    */}
                 </div>
             )}
         </div>

@@ -76,7 +76,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [selectedStructureId, setSelectedStructureId] = useState('');
    const [effectiveFrom, setEffectiveFrom] = useState('');
    const [salaryPayMode, setSalaryPayMode] = useState('Bank Transfer');
-   const [errors, setErrors] = useState<{ effectiveFrom?: string; pranNumber?: string; vpfAmount?: string; vpfPercentage?: string; vpfEffectiveFrom?: string }>({});
+   const [errors, setErrors] = useState<{ effectiveFrom?: string; pranNumber?: string; vpfAmount?: string; vpfPercentage?: string; vpfEffectiveFrom?: string; npsAmount?: string; npsPercentage?: string }>({});
    const [arrearsPayoutDate, setArrearsPayoutDate] = useState('');
    const [appraisalMonth, setAppraisalMonth] = useState('');
    const [statutoryDeductions, setStatutoryDeductions] = useState({
@@ -94,6 +94,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
     const [vpfPercentage, setVpfPercentage] = useState('');
     const [vpfType, setVpfType] = useState<'amount' | 'percentage'>('amount');
     const [vpfEffectiveFrom, setVpfEffectiveFrom] = useState('');
+
+    const [npsAmount, setNpsAmount] = useState('');
+    const [npsPercentage, setNpsPercentage] = useState('');
+    const [npsType, setNpsType] = useState<'amount' | 'percentage'>('amount');
 
    const [structureComponents, setStructureComponents] = useState<{ earnings: any[], deductions: any[] }>({ earnings: [], deductions: [] });
     const [statutorySettings, setStatutorySettings] = useState<any>(null);
@@ -311,7 +315,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    .single();
  
                 if (!configError && configData?.config_value) {
-                   setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value }));
+                   setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value, lwf: false }));
                    if (configData.config_value.arrears_payout_month) {
                       setArrearsPayoutDate(configData.config_value.arrears_payout_month);
                    }
@@ -341,6 +345,21 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      if (configData.config_value.vpfEffectiveFrom) {
                         setVpfEffectiveFrom(configData.config_value.vpfEffectiveFrom);
                      }
+                     if (configData.config_value.npsType) {
+                        setNpsType(configData.config_value.npsType);
+                     } else {
+                        if (configData.config_value.npsAmount) {
+                           setNpsType('amount');
+                        } else if (configData.config_value.npsPercentage) {
+                           setNpsType('percentage');
+                        }
+                     }
+                     if (configData.config_value.npsAmount) {
+                        setNpsAmount(configData.config_value.npsAmount);
+                     }
+                     if (configData.config_value.npsPercentage) {
+                        setNpsPercentage(configData.config_value.npsPercentage);
+                     }
                 } else if (!data.statutory_deductions) {
                    // Fallback to default state if no config and no legacy column data
                 }
@@ -354,7 +373,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                    const savedDeductions = typeof data.statutory_deductions === 'string' 
                       ? JSON.parse(data.statutory_deductions) 
                       : data.statutory_deductions;
-                   setStatutoryDeductions(prev => ({ ...prev, ...savedDeductions }));
+                   setStatutoryDeductions(prev => ({ ...prev, ...savedDeductions, lwf: false }));
                 } catch (e) {
                    console.error('Error parsing statutory deductions:', e);
                 }
@@ -557,7 +576,16 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
 
       // NPS Employee
       if (statutoryDeductions.nps) {
-         const npsEmpVal = basic * 0.10;
+         let npsEmpVal = 0;
+         if (npsType === 'amount') {
+            const amt = parseFloat(npsAmount) || 0;
+            npsEmpVal = amt * 12;
+         } else if (npsType === 'percentage') {
+            const pct = parseFloat(npsPercentage) || 0;
+            npsEmpVal = basic * (pct / 100);
+         } else {
+            npsEmpVal = basic * 0.10;
+         }
          employeeDeductions.push({ name: 'NPS (Employee)', annual: npsEmpVal, monthly: npsEmpVal / 12 });
       }
 
@@ -674,6 +702,28 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
            }
         }
 
+        if (statutoryDeductions.nps) {
+           if (npsType === 'amount') {
+              if (!npsAmount) {
+                 validationErrors.npsAmount = 'Fixed Amount is required.';
+              } else {
+                 const amt = parseInt(npsAmount, 10);
+                 if (isNaN(amt) || amt < 1 || amt > 999999) {
+                    validationErrors.npsAmount = 'Fixed Amount must be between 1 and 999999.';
+                 }
+              }
+           } else {
+              if (!npsPercentage) {
+                 validationErrors.npsPercentage = 'Percentage is required.';
+              } else {
+                 const pct = parseInt(npsPercentage, 10);
+                 if (isNaN(pct) || pct < 1 || pct > 99) {
+                    validationErrors.npsPercentage = 'Percentage must be between 1 and 99.';
+                 }
+              }
+           }
+        }
+
        if (Object.keys(validationErrors).length > 0) {
           setErrors(validationErrors);
           
@@ -683,6 +733,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
              document.getElementById('pran-number-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           } else if (validationErrors.vpfAmount || validationErrors.vpfPercentage) {
              document.getElementById('vpf-config-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (validationErrors.npsAmount || validationErrors.npsPercentage) {
+             document.getElementById('nps-config-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           return;
        }
@@ -734,6 +786,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                config_key: `emp_statutory:${employeeId}`,
                config_value: { 
                   ...statutoryDeductions, 
+                  lwf: false,
                   arrears_payout_month: arrearsPayoutDate,
                   appraisal_month: appraisalMonth,
                   pf_no: pfNumber,
@@ -742,7 +795,10 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   salary_input_basis: salaryInputBasis,
                   vpfAmount,
                   vpfPercentage,
-                  vpfEffectiveFrom
+                  vpfEffectiveFrom,
+                  npsType,
+                  npsAmount,
+                  npsPercentage
                },
                updated_at: new Date().toISOString()
             }, { onConflict: 'config_key' });
@@ -978,10 +1034,9 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-y-4 gap-x-6">
                         {[
                            { id: 'providentFund', label: 'Provident Fund' },
-                     { id: 'esi', label: 'ESI' },
+                           { id: 'esi', label: 'ESI' },
                            { id: 'professionalTax', label: 'Professional Tax' },
                            { id: 'gratuity', label: 'Gratuity' },
-                           { id: 'lwf', label: 'LWF' },
                            { id: 'tds', label: 'TDS/Income Tax' },
                            { id: 'nps', label: 'NPS' },
                            { id: 'vpf', label: 'Voluntary Provident Fund (VPF)' }
@@ -1035,7 +1090,16 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                                      const { vpfAmount: _a, vpfPercentage: _p, vpfEffectiveFrom: _e, ...rest } = prevErr;
                                                      return rest;
                                                   });
-                                               }          
+                                               }
+                                               if (comp.id === 'nps' && !nextVal) {
+                                                   setNpsAmount('');
+                                                   setNpsPercentage('');
+                                                   setNpsType('amount');
+                                                   setErrors(prevErr => {
+                                                      const { npsAmount: _a, npsPercentage: _p, ...rest } = prevErr;
+                                                      return rest;
+                                                   });
+                                               }
                                               return { ...prev, [comp.id]: nextVal };
                                            });
                                         }
@@ -1141,6 +1205,93 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                             </div>
                          </div>
                       )}
+
+                      {statutoryDeductions.nps && (
+                          <div id="nps-config-container" className="mt-6 pt-6 border-t border-slate-200/60 animate-in slide-in-from-top-4 duration-300 space-y-4">
+                             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4">National Pension System (NPS) Configuration <span className="text-rose-500">*</span></h4>
+                             
+                             <div className="flex gap-6 mb-4">
+                                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                   <input
+                                      type="radio"
+                                      name="npsType"
+                                      checked={npsType === 'amount'}
+                                      onChange={() => {
+                                         setNpsType('amount');
+                                         setNpsPercentage('');
+                                         setErrors(prev => {
+                                            const { npsPercentage: _p, ...rest } = prev;
+                                            return rest;
+                                         });
+                                      }}
+                                      disabled={isReadOnly}
+                                      className="w-4 h-4 text-sky-600 border-slate-300 focus:ring-sky-500"
+                                   />
+                                   <span className="text-sm font-semibold text-slate-700">Fixed amount (monthly)</span>
+                                </label>
+                                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                   <input
+                                      type="radio"
+                                      name="npsType"
+                                      checked={npsType === 'percentage'}
+                                      onChange={() => {
+                                         setNpsType('percentage');
+                                         setNpsAmount('');
+                                         setErrors(prev => {
+                                            const { npsAmount: _a, ...rest } = prev;
+                                            return rest;
+                                         });
+                                      }}
+                                      disabled={isReadOnly}
+                                      className="w-4 h-4 text-sky-600 border-slate-300 focus:ring-sky-500"
+                                   />
+                                   <span className="text-sm font-semibold text-slate-700">Percentage (%)</span>
+                                </label>
+                             </div>
+
+                             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-3xl">
+                                {npsType === 'amount' ? (
+                                   <div className="w-full md:w-[35%]">
+                                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Fixed Amount (Monthly)</label>
+                                      <div className="relative">
+                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                                         <input 
+                                            type="text" 
+                                            value={npsAmount} 
+                                            onChange={e => {
+                                               const val = e.target.value.replace(/[^0-9]/g, '');
+                                               setNpsAmount(val);
+                                            }} 
+                                            disabled={isReadOnly}
+                                            placeholder="Enter fixed amount"
+                                            className={`w-full pl-9 pr-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none ${errors.npsAmount ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                         />
+                                      </div>
+                                      {errors.npsAmount && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.npsAmount}</p>}
+                                   </div>
+                                ) : (
+                                   <div className="w-full md:w-[35%]">
+                                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Percentage (%)</label>
+                                      <div className="relative">
+                                         <input 
+                                            type="text" 
+                                            value={npsPercentage} 
+                                            onChange={e => {
+                                               const val = e.target.value.replace(/[^0-9]/g, '');
+                                               setNpsPercentage(val);
+                                            }} 
+                                            disabled={isReadOnly}
+                                            placeholder="Enter percentage"
+                                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all outline-none pr-8 ${errors.npsPercentage ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-200'}`}
+                                         />
+                                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</span>
+                                      </div>
+                                      {errors.npsPercentage && <p className="text-rose-500 text-[10px] mt-1 font-medium">{errors.npsPercentage}</p>}
+                                   </div>
+                                )}
+                             </div>
+                          </div>
+                       )}
                   </div>
                </div>
 

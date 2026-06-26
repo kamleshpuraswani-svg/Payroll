@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 import {
   ArrowLeft,
   Download,
@@ -262,7 +263,16 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     }
 
     if (statutoryDeductions.nps) {
-      const npsEmpVal = basic * 0.10;
+      let npsEmpVal = 0;
+      if (statutoryDeductions.npsType === 'amount') {
+        const amt = parseFloat(statutoryDeductions.npsAmount) || 0;
+        npsEmpVal = amt * 12;
+      } else if (statutoryDeductions.npsType === 'percentage') {
+        const pct = parseFloat(statutoryDeductions.npsPercentage) || 0;
+        npsEmpVal = basic * (pct / 100);
+      } else {
+        npsEmpVal = basic * 0.10;
+      }
       employeeDeductions.push({ name: 'NPS (Employee)', annual: npsEmpVal, monthly: npsEmpVal / 12 });
     }
 
@@ -353,7 +363,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
               .single();
             
             if (configData?.config_value) {
-              setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value }));
+              setStatutoryDeductions(prev => ({ ...prev, ...configData.config_value, lwf: false }));
               if (configData.config_value.appraisal_month) {
                 setAppraisalMonth(configData.config_value.appraisal_month);
               }
@@ -672,8 +682,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                               </td>
                               <td className="px-6 py-5 text-slate-500">{row.date}</td>
                               <td className="px-6 py-5 font-mono text-xs text-slate-400">{row.bankAcc}</td>
-                              <td className="px-6 py-5 text-slate-500 font-medium">{row.createdBy}</td>
-                              <td className="px-6 py-5 text-slate-500 font-medium">{row.lastModifiedBy}</td>
+                              <td className="px-6 py-5 text-xs text-slate-500 whitespace-pre-line">
+                                {formatAuditUser(row.createdBy, row.date)}
+                              </td>
+                              <td className="px-6 py-5 text-xs text-slate-500 whitespace-pre-line">
+                                {formatAuditUser(row.lastModifiedBy, row.date)}
+                              </td>
                               <td className="px-6 py-5 text-right">
                                 <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                   <button

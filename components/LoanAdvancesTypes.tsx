@@ -20,6 +20,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 interface LoanType {
     id: string;
@@ -42,12 +43,14 @@ interface LoanType {
     eligibilitySalaryMin?: string;
     eligibilitySalaryMax?: string;
     eligibilityStatuses?: string[]; // New: ['Probation', 'Confirmed', 'Notice Period', 'Intern']
+    createdBy?: string;
+    updatedBy?: string;
 }
 
 const MOCK_LOAN_TYPES: LoanType[] = [
-    { id: '1', name: 'Personal Loan', interestRate: 10.5, maxAmount: '5,00,000', maxTenure: 24, status: true, description: 'Standard personal loan for employees.', approvers: ['Rajesh Kumar (Finance Head)', 'Sunita Gupta (Director)'] },
-    { id: '2', name: 'Festival Advance', interestRate: 0, maxAmount: '20,000', maxTenure: 6, status: true, description: 'Special advance for festival expenses.', approvers: ['Amit Verma (Manager)'] },
-    { id: '3', name: 'Salary Advance', interestRate: 0, maxAmount: '2 months gross salary', maxTenure: 3, status: true, description: 'Advance against upcoming salary.', approvers: ['Kavita Sharma (HR)'] },
+    { id: '1', name: 'Personal Loan', interestRate: 10.5, maxAmount: '5,00,000', maxTenure: 24, status: true, description: 'Standard personal loan for employees.', approvers: ['Rajesh Kumar (Finance Head)', 'Sunita Gupta (Director)'], createdBy: 'HR Manager', updatedBy: 'HR Manager', createdAt: '2026-06-03T10:00:00Z', updatedAt: '2026-06-03T10:00:00Z' },
+    { id: '2', name: 'Festival Advance', interestRate: 0, maxAmount: '20,000', maxTenure: 6, status: true, description: 'Special advance for festival expenses.', approvers: ['Amit Verma (Manager)'], createdBy: 'HR Manager', updatedBy: 'HR Manager', createdAt: '2026-06-03T10:00:00Z', updatedAt: '2026-06-03T10:00:00Z' },
+    { id: '3', name: 'Salary Advance', interestRate: 0, maxAmount: '2 months gross salary', maxTenure: 3, status: true, description: 'Advance against upcoming salary.', approvers: ['Kavita Sharma (HR)'], createdBy: 'HR Manager', updatedBy: 'HR Manager', createdAt: '2026-06-03T10:00:00Z', updatedAt: '2026-06-03T10:00:00Z' },
     { id: '4', name: 'Medical Advance', interestRate: 0, maxAmount: '2,00,000', maxTenure: 12, status: true, description: 'For medical emergencies.' },
     { id: '5', name: 'Education Loan Assistance', interestRate: 6, maxAmount: '3,00,000', maxTenure: 36, status: true, description: "For employee or children's education." },
     { id: '6', name: 'Vehicle Advance', interestRate: 8, maxAmount: '4,00,000', maxTenure: 48, status: false, description: 'For two-wheeler/four-wheeler purchase.' },
@@ -104,6 +107,8 @@ const LoanAdvancesTypes: React.FC = () => {
                 repaymentMonth: item.repayment_month || '',
                 createdAt: item.created_at,
                 updatedAt: item.updated_at,
+                createdBy: item.created_by || 'HR Manager',
+                updatedBy: item.last_updated_by || 'HR Manager',
                 targetId: item.target_id,
                 targetType: item.target_type,
                 eligibilityStatuses: item.eligibility_statuses || []
@@ -571,13 +576,11 @@ const LoanAdvancesTypes: React.FC = () => {
                                                                 {item.maxTenure ? `${item.maxTenure} Months` : '--'}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className="text-slate-600">{item.createdBy}</span>
-                                                            {item.createdAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                                                        <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                                            {formatAuditUser(item.createdBy || 'HR Manager', item.createdAt)}
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className="text-slate-600">{item.updatedBy}</span>
-                                                            {item.updatedAt && <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                                                        <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                                            {formatAuditUser(item.updatedBy || 'HR Manager', item.updatedAt)}
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <div className="flex items-center justify-end gap-3 transition-opacity">

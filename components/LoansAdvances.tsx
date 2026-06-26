@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 import {
     Search,
     Filter,
@@ -69,6 +70,10 @@ interface LoanRequest {
     repaymentSchedule?: RepaymentScheduleItem[];
     reason: string;
     repaymentMonth?: string;
+    createdBy?: string;
+    lastModifiedBy?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // --- Mock Data ---
@@ -1466,7 +1471,11 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                      disbursedDate: item.disbursed_date,
                      repaymentSchedule: item.repayment_schedule,
                      reason: item.reason,
-                     repaymentMonth: item.repayment_month
+                     repaymentMonth: item.repayment_month,
+                     createdBy: item.created_by || 'HR Manager',
+                     lastModifiedBy: item.last_updated_by || 'HR Manager',
+                     createdAt: item.created_at,
+                     updatedAt: item.updated_at
                  };
              });
          }
@@ -2020,13 +2029,11 @@ const LoansAdvances: React.FC<LoansAdvancesProps> = ({ userRole, currentEmployee
                                         <td className="px-6 py-4 text-right font-bold text-slate-800">
                                             {loan.remainingBalance !== undefined ? `₹${loan.remainingBalance.toLocaleString()}` : '—'}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-slate-600">HR Manager</span>
-                                            {loan.requestDate && <p className="text-[10px] text-slate-400 mt-0.5">{loan.requestDate}</p>}
+                                        <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                            {formatAuditUser(loan.createdBy || 'HR Manager', loan.createdAt || loan.requestDate)}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-slate-600">HR Manager</span>
-                                            {loan.requestDate && <p className="text-[10px] text-slate-400 mt-0.5">{loan.requestDate}</p>}
+                                        <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                            {formatAuditUser(loan.lastModifiedBy || 'HR Manager', loan.updatedAt || loan.requestDate)}
                                         </td>
                                         <td className="px-4 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">

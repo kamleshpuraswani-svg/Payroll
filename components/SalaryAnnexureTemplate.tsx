@@ -17,6 +17,7 @@ import {
     Briefcase
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 // --- Types ---
 
@@ -62,6 +63,8 @@ interface AnnexureTemplate {
     };
     settings: AnnexureTemplateSettings;
     headerConfig: HeaderConfig;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // --- Mock Data ---
@@ -75,6 +78,8 @@ const MOCK_ANNEXURE_TEMPLATES: AnnexureTemplate[] = [
         lastModified: '03 Dec 2025',
         lastUpdatedBy: 'Admin',
         createdBy: 'Admin',
+        createdAt: '2025-12-03T10:00:00Z',
+        updatedAt: '2025-12-03T10:00:00Z',
         headerConfig: {
             logoPosition: 'Left',
             showLogo: true,
@@ -303,7 +308,9 @@ const SalaryAnnexureTemplate: React.FC = () => {
                     lastUpdatedBy: item.last_updated_by || 'Admin',
                     sections: item.content.sections,
                     settings: item.settings,
-                    headerConfig: item.content.headerConfig
+                    headerConfig: item.content.headerConfig,
+                    createdAt: item.created_at,
+                    updatedAt: item.updated_at
                 }));
                 setTemplates(formattedTemplates);
             } else {
@@ -505,12 +512,11 @@ const SalaryAnnexureTemplate: React.FC = () => {
                                             {t.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600">{t.createdBy}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span>{t.lastModified}</span>
-                                            <span className="text-[10px] text-slate-400">by {t.lastUpdatedBy}</span>
-                                        </div>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(t.createdBy, t.createdAt)}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                        {formatAuditUser(t.lastUpdatedBy, t.updatedAt)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end items-center gap-4">

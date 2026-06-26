@@ -23,9 +23,13 @@ import {
     ChevronDown as ChevronDownIcon,
     Clock,
     ArrowLeft,
-    Filter
+    Filter,
+    Upload
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 interface ComponentChangeHistory {
     id: string;
@@ -79,6 +83,8 @@ interface SalaryComponent {
     considerGratuity?: boolean;
     lastModified?: string;
     created?: string;
+    createdAt?: string;
+    updatedAt?: string;
     effectiveDate?: string;
     deductionType?: 'Statutory' | 'Non-Statutory';
     showInPayslip?: boolean;
@@ -314,6 +320,28 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
     const [minAmount, setMinAmount] = useState(initialData?.minAmount || '');
     const [selectedComponents, setSelectedComponents] = useState<string[]>(['CTC']);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const [earningsList, setEarningsList] = useState<string[]>(['CTC', 'Basic', 'Gross']);
+
+    useEffect(() => {
+        const fetchActiveEarnings = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('salary_components')
+                    .select('name')
+                    .eq('category', 'Earnings')
+                    .eq('status', true);
+                if (!error && data) {
+                    const names = data.map(item => item.name);
+                    const combined = Array.from(new Set(['CTC', 'Basic', 'Gross', ...names]));
+                    setEarningsList(combined);
+                }
+            } catch (err) {
+                console.error('Error fetching active earnings:', err);
+            }
+        };
+        fetchActiveEarnings();
+    }, []);
 
     // Configurations
     const [isTaxable, setIsTaxable] = useState(true);
@@ -753,7 +781,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
                                             <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto hidden-scrollbar animate-in slide-in-from-top-2">
-                                                {['CTC', 'Basic', 'Gross'].map(comp => (
+                                                {earningsList.map(comp => (
                                                     <label key={comp} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer">
                                                         <input
                                                             type="checkbox"
@@ -1048,6 +1076,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 </div>
                             </label>
 
+                            {/* Hidden per user request */}
+                            {false && (
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInFirstSalary ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {includeInFirstSalary && <Check size={14} className="text-white" />}
@@ -1064,6 +1094,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                     </div>
                                 </div>
                             </label>
+                            )}
 
                             {/* Pro Rata moved here */}
                             <label className="flex items-start gap-2 cursor-pointer">
@@ -1123,6 +1154,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <span className="text-sm font-bold text-slate-700">Consider for Professional tax</span>
                             </label>
 
+                            {/* Hidden per user request */}
+                            {false && (
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderLWF ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {isConsiderLWF && <Check size={14} className="text-white" />}
@@ -1130,6 +1163,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <input type="checkbox" className="hidden" checked={isConsiderLWF} onChange={() => setIsConsiderLWF(!isConsiderLWF)} />
                                 <span className="text-sm font-bold text-slate-700">Consider for Labour Welfare Fund</span>
                             </label>
+                            )}
 
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInPayslip ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
@@ -2323,6 +2357,8 @@ const HRSalaryComponents: React.FC = () => {
                 showInPayslip: item.show_in_payslip,
                 created: item.created_by,
                 lastModified: item.last_updated_by,
+                createdAt: item.created_at,
+                updatedAt: item.updated_at,
                 isSystem: item.is_system,
                 targetId: item.target_id,
                 targetType: item.target_type,
@@ -2362,6 +2398,7 @@ const HRSalaryComponents: React.FC = () => {
 
     const [isAdding, setIsAdding] = useState(false);
     const [editingComponent, setEditingComponent] = useState<SalaryComponent | null>(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     // Lookup Filter state
     const [completedFilters, setCompletedFilters] = useState<any[]>([]);
@@ -2870,6 +2907,14 @@ const HRSalaryComponents: React.FC = () => {
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
 
+                            {(activeTab === 'Earnings' || activeTab === 'Deductions') && (
+                                <button
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-sm font-bold hover:bg-slate-50 shadow-sm transition-all cursor-pointer"
+                                >
+                                    <Upload size={16} /> Import
+                                </button>
+                            )}
                             <button
                                 onClick={() => setIsAdding(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
@@ -2958,19 +3003,10 @@ const HRSalaryComponents: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 font-medium text-slate-700">{item.taxable !== 'Fully Exempt' ? 'Yes' : 'No'}</td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
-                                                        {item.lastModified ? (
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span className="font-medium text-slate-700">{item.lastModified}</span>
-                                                                <span className="text-slate-400">{item.effectiveDate || ''}</span>
-                                                            </div>
-                                                        ) : '-'}
+                                                        {formatAuditUser(item.lastModified, item.updatedAt)}
                                                     </td>
                                                     <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
-                                                        {item.created ? (
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span className="font-medium text-slate-700">{item.created}</span>
-                                                            </div>
-                                                        ) : '-'}
+                                                        {formatAuditUser(item.created, item.createdAt)}
                                                     </td>
                                                 </>
                                             ) : (
@@ -2997,8 +3033,12 @@ const HRSalaryComponents: React.FC = () => {
                                                             <td className="px-6 py-4 font-medium text-slate-700">{item.deductionTiming || '-'}</td>
                                                         </>
                                                     )}
-                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.lastModified || '-'}</td>
-                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">{item.created || '-'}</td>
+                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                                        {formatAuditUser(item.lastModified, item.updatedAt)}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
+                                                        {formatAuditUser(item.created, item.createdAt)}
+                                                    </td>
                                                 </>
                                             )}
 
@@ -3132,6 +3172,890 @@ const HRSalaryComponents: React.FC = () => {
                 isDanger={false}
             />
 
+            <ImportComponentsModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onImportSuccess={fetchComponents}
+                category={activeTab as 'Earnings' | 'Deductions'}
+            />
+
+        </div>
+    );
+};
+
+// ==========================================
+// IMPORT COMPONENTS MODAL COMPONENT
+// ==========================================
+interface ImportComponentsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onImportSuccess?: () => void;
+    category: 'Earnings' | 'Deductions';
+}
+
+const ImportComponentsModal: React.FC<ImportComponentsModalProps> = ({ isOpen, onClose, onImportSuccess, category }) => {
+    const [step, setStep] = useState(1);
+    const [file, setFile] = useState<File | null>(null);
+    const [parsedData, setParsedData] = useState<any[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Success and failure state for step 3 Results screen
+    const [successCount, setSuccessCount] = useState(0);
+    const [failureCount, setFailureCount] = useState(0);
+    const [failedRecords, setFailedRecords] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setStep(1);
+            setFile(null);
+            setParsedData([]);
+            setIsUploading(false);
+            setUploadProgress(0);
+            setIsSaving(false);
+            setSuccessCount(0);
+            setFailureCount(0);
+            setFailedRecords([]);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleDownloadSample = async () => {
+        const headers = [
+            "Sr. No.",
+            "Component Name",
+            "Name in Payslip",
+            "Effective Month",
+            "Nature of Pay",
+            "Calculation Method",
+            "Enter Amount (Annual)",
+            "Enter Percentage",
+            "Select Components",
+            "Enter Percentage",
+            "Tax Treatment",
+            "Tax Computation",
+            "Income Tax Section",
+            "Non-Taxable Limit",
+            "Show in Payslip",
+            "Show on Salary Register",
+            "Show rate on Salary Slip",
+            "Calculate on Pro-rata basis",
+            "Include in CTC",
+            "Include in Gross",
+            "Include for EPF Contribution",
+            "Include for ESI Contribution",
+            "Include for Gratuity",
+            "Include for Professional Tax",
+            "Include for NPS",
+            "Status"
+        ];
+        
+        const rows = [
+            [
+                1,
+                "Basic Salary",
+                "Basic",
+                "April 2026",
+                "Fixed",
+                "Flat Amount",
+                600000,
+                "",
+                "",
+                "",
+                "Fully Taxable",
+                "Proportionally",
+                "NULL",
+                "",
+                "Yes",
+                "Yes",
+                "No",
+                "Yes",
+                "Yes",
+                "Yes",
+                "Yes",
+                "No",
+                "Yes",
+                "Yes",
+                "No",
+                "Active"
+            ],
+            [
+                2,
+                "House Rent Allowance",
+                "HRA",
+                "April 2026",
+                "Fixed",
+                "Percentage of Component",
+                "",
+                "",
+                "Basic Salary",
+                50,
+                "Partially Exempt",
+                "Proportionally",
+                "Section_10(13)(a)",
+                0,
+                "Yes",
+                "Yes",
+                "Yes",
+                "Yes",
+                "Yes",
+                "Yes",
+                "No",
+                "No",
+                "No",
+                "No",
+                "No",
+                "Active"
+            ]
+        ];
+
+        // Create workbook & worksheet using ExcelJS
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Salary Components");
+        const instructionsWorksheet = workbook.addWorksheet("Instructions");
+        instructionsWorksheet.addRow(["Instructions:"]);
+        instructionsWorksheet.addRow(["Please refer to subsequent prompts for detailed instructions."]);
+
+        const columnKeys = [
+            "sr_no",
+            "component_name",
+            "name_in_payslip",
+            "effective_month",
+            "nature_of_pay",
+            "calculation_method",
+            "enter_amount_annual",
+            "enter_percentage_1",
+            "select_components",
+            "enter_percentage_2",
+            "tax_treatment",
+            "tax_computation",
+            "income_tax_section",
+            "non_taxable_limit",
+            "show_in_payslip",
+            "show_on_salary_register",
+            "show_rate_on_salary_slip",
+            "is_pro_rata",
+            "include_in_ctc",
+            "include_in_gross",
+            "consider_epf",
+            "consider_esi",
+            "consider_gratuity",
+            "consider_pt",
+            "consider_nps",
+            "status"
+        ];
+
+        // Define columns
+        worksheet.columns = headers.map((header, index) => ({
+            header,
+            key: columnKeys[index],
+            width: header.length + 5
+        }));
+
+        // Add rows
+        rows.forEach(row => {
+            worksheet.addRow(row);
+        });
+
+        // Set mandatory columns and style them (red text, bold)
+        const mandatoryHeaders = [
+            "Component Name",
+            "Name in Payslip",
+            "Effective Month",
+            "Nature of Pay",
+            "Calculation Method",
+            "Tax Treatment",
+            "Tax Computation"
+        ];
+
+        // Format headers row
+        const firstRow = worksheet.getRow(1);
+        headers.forEach((header, index) => {
+            const cell = firstRow.getCell(index + 1);
+            if (mandatoryHeaders.includes(header)) {
+                cell.font = {
+                    name: 'Segoe UI',
+                    size: 11,
+                    bold: true,
+                    color: { argb: 'FFFF0000' } // Red color
+                };
+            } else {
+                cell.font = {
+                    name: 'Segoe UI',
+                    size: 11,
+                    bold: true
+                };
+            }
+        });
+
+        const validationMonths = EFFECTIVE_MONTHS.slice(0, 12).join(',');
+
+        // Add dropdowns
+        for (let rowNum = 2; rowNum <= 100; rowNum++) {
+            // Effective Month
+            worksheet.getCell(rowNum, 4).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${validationMonths}"`]
+            };
+            // Nature of Pay
+            worksheet.getCell(rowNum, 5).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Fixed,Variable"']
+            };
+            // Calculation Method
+            worksheet.getCell(rowNum, 6).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Flat Amount,Balancing Component,Percentage of CTC,Percentage of Gross,Percentage of Component"']
+            };
+            // Tax Treatment
+            worksheet.getCell(rowNum, 11).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Fully Taxable,Partially Exempt,Non Taxable"']
+            };
+            // Tax Computation
+            worksheet.getCell(rowNum, 12).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Proportionally,Pay Month"']
+            };
+            // Income Tax Section
+            worksheet.getCell(rowNum, 13).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"NULL,Section_10(14)(i),Section_10(14)(ii),Section_10(5),Section_17(2)(Viii),Section_10(13)(a)"']
+            };
+            // Non-Taxable Limit
+            worksheet.getCell(rowNum, 14).dataValidation = {
+                type: 'decimal',
+                operator: 'greaterThanOrEqual',
+                formulae: ['0'],
+                allowBlank: true,
+                showErrorMessage: true,
+                error: 'Please enter a valid number (greater than or equal to 0)',
+                errorTitle: 'Invalid Number'
+            };
+            // Show / Include Yes/No Columns (15 to 25)
+            for (let col = 15; col <= 25; col++) {
+                worksheet.getCell(rowNum, col).dataValidation = {
+                    type: 'list',
+                    allowBlank: true,
+                    formulae: ['"Yes,No"']
+                };
+            }
+            // Status
+            worksheet.getCell(rowNum, 26).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Active,Inactive"']
+            };
+        }
+
+        // Generate buffer and trigger file download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "salary_components_sample.xlsx";
+        anchor.click();
+        window.URL.revokeObjectURL(url);
+    };
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    setParsedData(jsonData);
+                } catch (err) {
+                    console.error("Error reading file:", err);
+                }
+            };
+            reader.readAsArrayBuffer(selectedFile);
+        }
+    };
+
+    const handleNext = () => {
+        if (step === 1) {
+            if (!file) {
+                alert("Please upload an Excel file to proceed.");
+                return;
+            }
+            setStep(2);
+            setIsUploading(true);
+            setUploadProgress(0);
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress >= 100) {
+                    setUploadProgress(100);
+                    setIsUploading(false);
+                    clearInterval(interval);
+                } else {
+                    setUploadProgress(progress);
+                }
+            }, 150);
+        }
+    };
+
+    const handleBack = () => {
+        if (step > 1) {
+            setStep(prev => prev - 1);
+        }
+    };
+
+    const handleDownloadFailedRecords = () => {
+        if (failedRecords.length === 0) return;
+        const ws = XLSX.utils.json_to_sheet(failedRecords);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Failed Records");
+        XLSX.writeFile(wb, "components_import_failed_records.xlsx");
+    };
+
+    const handleImport = async () => {
+        setIsSaving(true);
+        try {
+            if (parsedData.length === 0) {
+                alert("No salary components data found in the uploaded file.");
+                setIsSaving(false);
+                return;
+            }
+
+            const componentsToUpsert: any[] = [];
+            const failures: any[] = [];
+
+            const getExcelVal = (row: any, ...keys: string[]): any => {
+                for (const key of keys) {
+                    if (row[key] !== undefined && row[key] !== null) return row[key];
+                    const lowerKey = key.toLowerCase().trim();
+                    const foundKey = Object.keys(row).find(
+                        k => k.toLowerCase().trim() === lowerKey
+                    );
+                    if (foundKey !== undefined && row[foundKey] !== null) return row[foundKey];
+                }
+                return '';
+            };
+
+            const cleanNum = (val: any): number => {
+                if (typeof val === 'number') return val;
+                if (!val) return 0;
+                const cleaned = String(val).replace(/[^0-9.]/g, '');
+                return parseFloat(cleaned) || 0;
+            };
+
+            const getBoolExcelVal = (row: any, ...keys: string[]): boolean => {
+                const val = String(getExcelVal(row, ...keys)).trim().toLowerCase();
+                return val === 'yes';
+            };
+
+            parsedData.forEach((row, i) => {
+                const errors: string[] = [];
+                
+                const name = String(getExcelVal(row, "Component Name", "name")).trim();
+                const payslipName = String(getExcelVal(row, "Name in Payslip", "payslip_name")).trim();
+                
+                // Effective Month validation
+                const effectiveMonthVal = String(getExcelVal(row, "Effective Month", "effective_month")).trim();
+                const effectiveDate = toISOEffectiveDate(effectiveMonthVal);
+                
+                // Nature of Pay validation
+                const natureOfPayStr = String(getExcelVal(row, "Nature of Pay", "nature_of_pay")).trim();
+                let dbType = '';
+                
+                // Calculation Method validation
+                const calcMethodStr = String(getExcelVal(row, "Calculation Method", "calculation_method")).trim();
+                let dbCalcMethod = '';
+                
+                // Amount / Percent parsing
+                const enterAmountAnnual = cleanNum(getExcelVal(row, "Enter Amount (Annual)", "enter_amount_annual"));
+                
+                // Find all keys in row that match "Enter Percentage" case-insensitively
+                const enterPercentageKeys = Object.keys(row).filter(k => k.toLowerCase().trim().startsWith("enter percentage"));
+                // Sort keys to correctly separate first occurrence (column 8) and second occurrence (column 10)
+                enterPercentageKeys.sort((a, b) => {
+                    const aHasSuffix = a.includes('_');
+                    const bHasSuffix = b.includes('_');
+                    if (aHasSuffix && !bHasSuffix) return 1;
+                    if (!aHasSuffix && bHasSuffix) return -1;
+                    return a.localeCompare(b);
+                });
+                
+                const firstEnterPercentage = enterPercentageKeys[0] ? cleanNum(row[enterPercentageKeys[0]]) : 0;
+                const secondEnterPercentage = enterPercentageKeys[1] ? cleanNum(row[enterPercentageKeys[1]]) : 0;
+                
+                const selectComponentsStr = String(getExcelVal(row, "Select Components", "select_components")).trim();
+                
+                // Tax Treatment & Tax Computation
+                const taxTreatmentStr = String(getExcelVal(row, "Tax Treatment", "tax_treatment")).trim();
+                let dbTaxable = '';
+                
+                const taxComputationStr = String(getExcelVal(row, "Tax Computation", "tax_computation")).trim();
+                let dbTaxComputation = '';
+                
+                // New Columns Parsing & Validation
+                const incomeTaxSectionVal = String(getExcelVal(row, "Income Tax Section", "income_tax_section")).trim() || null;
+                
+                const nonTaxableLimitVal = getExcelVal(row, "Non-Taxable Limit", "non_taxable_limit");
+                let parsedNonTaxableLimit: string | null = null;
+                if (nonTaxableLimitVal !== undefined && nonTaxableLimitVal !== null && String(nonTaxableLimitVal).trim() !== '') {
+                    const cleaned = String(nonTaxableLimitVal).replace(/[^0-9.]/g, '');
+                    if (isNaN(Number(cleaned))) {
+                        errors.push("Non-Taxable Limit must be a number");
+                    } else {
+                        parsedNonTaxableLimit = cleaned;
+                    }
+                }
+                
+                const showInPayslipVal = getBoolExcelVal(row, "Show in Payslip", "show_in_payslip");
+                const showOnSalaryRegisterVal = getBoolExcelVal(row, "Show on Salary Register", "show_on_salary_register");
+                const showRateOnSalarySlipVal = getBoolExcelVal(row, "Show rate on Salary Slip", "show_rate_on_salary_slip");
+                const isProRataVal = getBoolExcelVal(row, "Calculate on Pro-rata basis", "calculate_on_pro_rata_basis", "is_pro_rata");
+                const includeInCtcVal = getBoolExcelVal(row, "Include in CTC", "include_in_ctc");
+                const includeInGrossVal = getBoolExcelVal(row, "Include in Gross", "include_in_gross");
+                const considerEpfVal = getBoolExcelVal(row, "Include for EPF Contribution", "include_for_epf_contribution", "consider_epf");
+                const considerEsiVal = getBoolExcelVal(row, "Include for ESI Contribution", "include_for_esi_contribution", "consider_esi");
+                const considerGratuityVal = getBoolExcelVal(row, "Include for Gratuity", "include_for_gratuity", "consider_gratuity");
+                const considerPtVal = getBoolExcelVal(row, "Include for Professional Tax", "include_for_professional_tax", "consider_pt");
+                const considerNpsVal = getBoolExcelVal(row, "Include for NPS", "include_for_nps", "consider_nps");
+                
+                const statusStr = String(getExcelVal(row, "Status", "status")).trim().toLowerCase();
+                const isComponentActive = statusStr === 'inactive' ? false : true;
+
+                // 1. Mandatory Validations
+                if (!name) errors.push("Component Name is required");
+                if (!payslipName) errors.push("Name in Payslip is required");
+                
+                if (!effectiveMonthVal) {
+                    errors.push("Effective Month is required");
+                } else if (!effectiveDate) {
+                    errors.push("Effective Month must be in format 'Month Year' (e.g. April 2026)");
+                }
+                
+                if (!natureOfPayStr) {
+                    errors.push("Nature of Pay is required");
+                } else if (natureOfPayStr === "Fixed") {
+                    dbType = 'Fixed Pay';
+                } else if (natureOfPayStr === "Variable") {
+                    dbType = 'Variable Pay';
+                } else {
+                    errors.push("Nature of Pay must be 'Fixed' or 'Variable'");
+                }
+                
+                if (!calcMethodStr) {
+                    errors.push("Calculation Method is required");
+                } else if (calcMethodStr === "Flat Amount") {
+                    dbCalcMethod = 'Flat';
+                } else if (calcMethodStr === "Balancing Component") {
+                    dbCalcMethod = 'Balancing';
+                } else if (calcMethodStr === "Percentage of CTC") {
+                    dbCalcMethod = 'PercentOfCTC';
+                } else if (calcMethodStr === "Percentage of Gross") {
+                    dbCalcMethod = 'PercentOfGross';
+                } else if (calcMethodStr === "Percentage of Component") {
+                    dbCalcMethod = 'Percentage';
+                } else {
+                    errors.push("Calculation Method must be one of: Flat Amount, Balancing Component, Percentage of CTC, Percentage of Gross, Percentage of Component");
+                }
+                
+                // 2. Amount / Percentage logic depending on method
+                let amountOrPercentVal = '0';
+                let dbCalculation = '';
+                
+                if (dbCalcMethod === 'Flat') {
+                    if (enterAmountAnnual <= 0) {
+                        errors.push("Enter Amount (Annual) must be greater than 0 for Flat Amount calculation method");
+                    }
+                    amountOrPercentVal = String(enterAmountAnnual);
+                    dbCalculation = `Flat ₹${enterAmountAnnual}`;
+                } else if (dbCalcMethod === 'Balancing') {
+                    amountOrPercentVal = '0';
+                    dbCalculation = 'Balancing Component';
+                } else if (dbCalcMethod === 'PercentOfCTC') {
+                    if (firstEnterPercentage <= 0) {
+                        errors.push("Enter Percentage (first column) must be greater than 0 for Percentage of CTC calculation method");
+                    }
+                    amountOrPercentVal = String(firstEnterPercentage);
+                    dbCalculation = `${firstEnterPercentage}% of CTC`;
+                } else if (dbCalcMethod === 'PercentOfGross') {
+                    if (firstEnterPercentage <= 0) {
+                        errors.push("Enter Percentage (first column) must be greater than 0 for Percentage of Gross calculation method");
+                    }
+                    amountOrPercentVal = String(firstEnterPercentage);
+                    dbCalculation = `${firstEnterPercentage}% of Gross`;
+                } else if (dbCalcMethod === 'Percentage') {
+                    if (!selectComponentsStr) {
+                        errors.push("Select Components is required for Percentage of Component calculation method");
+                    }
+                    if (secondEnterPercentage <= 0) {
+                        errors.push("Enter Percentage (second column) must be greater than 0 for Percentage of Component calculation method");
+                    }
+                    amountOrPercentVal = String(secondEnterPercentage);
+                    dbCalculation = `${secondEnterPercentage}% of ${selectComponentsStr}`;
+                }
+                
+                // 3. Tax Treatment & Tax Computation
+                if (!taxTreatmentStr) {
+                    errors.push("Tax Treatment is required");
+                } else if (taxTreatmentStr === "Fully Taxable") {
+                    dbTaxable = 'Fully Taxable';
+                } else if (taxTreatmentStr === "Partially Exempt") {
+                    dbTaxable = 'Partially Exempt';
+                } else if (taxTreatmentStr === "Non Taxable") {
+                    dbTaxable = category === 'Earnings' ? 'Fully Exempt' : 'Tax Deductible';
+                } else {
+                    errors.push("Tax Treatment must be one of: Fully Taxable, Partially Exempt, Non Taxable");
+                }
+                
+                if (!taxComputationStr) {
+                    errors.push("Tax Computation is required");
+                } else if (taxComputationStr === "Proportionally") {
+                    dbTaxComputation = 'Proportionally';
+                } else if (taxComputationStr === "Pay Month") {
+                    dbTaxComputation = 'Pay month';
+                } else {
+                    errors.push("Tax Computation must be 'Proportionally' or 'Pay Month'");
+                }
+                
+                if (errors.length > 0) {
+                    failures.push({
+                        ...row,
+                        "Component Name": name || `Row ${i + 1}`,
+                        "Error Reason": errors.join(", ")
+                    });
+                    return;
+                }
+
+                componentsToUpsert.push({
+                    name,
+                    payslip_name: payslipName,
+                    type: dbType,
+                    category: category,
+                    calc_method: dbCalcMethod,
+                    amount_or_percent: amountOrPercentVal,
+                    calculation: dbCalculation,
+                    taxable: dbTaxable,
+                    tax_computation: dbTaxComputation,
+                    effective_date: effectiveDate,
+                    income_tax_section: incomeTaxSectionVal,
+                    non_taxable_limit: parsedNonTaxableLimit,
+                    show_in_payslip: showInPayslipVal,
+                    show_on_salary_register: showOnSalaryRegisterVal,
+                    show_rate_on_salary_slip: showRateOnSalarySlipVal,
+                    is_pro_rata: isProRataVal,
+                    include_in_ctc: includeInCtcVal,
+                    include_in_gross: includeInGrossVal,
+                    consider_epf: considerEpfVal,
+                    consider_esi: considerEsiVal,
+                    consider_gratuity: considerGratuityVal,
+                    consider_pt: considerPtVal,
+                    consider_nps: considerNpsVal,
+                    status: isComponentActive,
+                    created_by: 'Admin',
+                    last_updated_by: 'Admin'
+                });
+            });
+
+            setSuccessCount(componentsToUpsert.length);
+            setFailureCount(failures.length);
+            setFailedRecords(failures);
+
+            if (componentsToUpsert.length > 0) {
+                const { error } = await supabase.from('salary_components').insert(componentsToUpsert);
+                if (error) throw error;
+            }
+
+            if (onImportSuccess) onImportSuccess();
+            setStep(3);
+        } catch (err: any) {
+            console.error('Import process failed:', err);
+            alert(`Error importing records: ${err.message || err}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
+                
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h3 className="text-lg font-bold text-slate-800 font-sans">Import Salary Components</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Stepper */}
+                <div className="border-b border-slate-100 py-4 bg-white select-none">
+                    <div className="flex items-center justify-center max-w-xl mx-auto px-4">
+                        {/* Step 1: Prepare */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 1 ? 'border-indigo-600' : 'border-indigo-600 text-indigo-600'
+                            }`}>
+                                {step === 1 ? (
+                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
+                                ) : (
+                                    <Check size={16} strokeWidth={3} />
+                                )}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 1 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
+                                Prepare
+                            </span>
+                        </div>
+
+                        {/* Line 1 */}
+                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+
+                        {/* Step 2: Upload */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 2 ? 'border-indigo-600' : step > 2 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
+                            }`}>
+                                {step === 2 ? (
+                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
+                                ) : step > 2 ? (
+                                    <Check size={16} strokeWidth={3} />
+                                ) : null}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 2 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
+                                Upload
+                            </span>
+                        </div>
+
+                        {/* Line 2 */}
+                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+
+                        {/* Step 3: Results */}
+                        <div className="flex flex-col items-center relative">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
+                                step === 3 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
+                            }`}>
+                                {step === 3 ? (
+                                    <Check size={16} strokeWidth={3} />
+                                ) : null}
+                            </div>
+                            <span className={`text-xs mt-2 transition-all ${step === 3 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
+                                Results
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-8 flex-grow relative min-h-[280px] bg-white">
+                    {step === 1 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full font-sans">
+                            {/* Left Side */}
+                            <div className="space-y-6 flex flex-col justify-center pr-0 md:pr-8">
+                                <div className="text-sm text-slate-600">
+                                    Download a{' '}
+                                    <span 
+                                        onClick={handleDownloadSample} 
+                                        className="text-indigo-600 hover:underline cursor-pointer font-semibold"
+                                    >
+                                        Sample File
+                                    </span>
+                                    .
+                                </div>
+                                <div>
+                                    <button
+                                        onClick={handleUploadClick}
+                                        className="w-full py-4 text-center border border-indigo-200 bg-indigo-50/20 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50/55 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                        Upload Excel File <span className="text-rose-500">*</span>
+                                    </button>
+                                    <input 
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept=".xlsx,.xls"
+                                    />
+                                    {file && (
+                                        <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 animate-in fade-in">
+                                            <Check className="text-emerald-600" size={14} strokeWidth={3} />
+                                            Selected: <span className="font-semibold text-slate-700">{file.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Right Side (Instructions) */}
+                            <div className="bg-slate-50/50 rounded-xl p-6 border border-slate-100 flex flex-col justify-center space-y-4">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Instructions:</h4>
+                                <ul className="space-y-2 text-xs text-slate-600">
+                                    <li className="flex items-start gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                                        <span>Do not change the column names provided in the sample Excel template.</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                                        <span>Columns indicated in red color are mandatory fields.</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                                        <span>Ensure to follow correct data types for each column.</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                                        <span>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="flex flex-col items-center justify-center py-10 space-y-4 font-sans">
+                            {isUploading ? (
+                                <>
+                                    <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                    <p className="text-sm font-semibold text-slate-700">Uploading and processing file...</p>
+                                    <div className="w-64 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                        <div className="bg-indigo-600 h-full transition-all duration-150" style={{ width: `${uploadProgress}%` }} />
+                                    </div>
+                                    <p className="text-xs text-slate-400">{uploadProgress}%</p>
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="h-16 w-16 text-emerald-500 animate-bounce" />
+                                    <p className="text-sm font-semibold text-slate-700">File processed successfully!</p>
+                                    <p className="text-xs text-slate-400">{parsedData.length} records ready to import.</p>
+                                    <button 
+                                        onClick={handleImport}
+                                        disabled={isSaving}
+                                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isSaving ? "Saving..." : "Start Import"}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="space-y-6 font-sans">
+                            <div className="flex items-center gap-4 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
+                                <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">
+                                    <Check size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-bold text-slate-800">Import Complete</h4>
+                                    <p className="text-xs text-slate-400 mt-0.5">We processed {parsedData.length} records from your file.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl border border-emerald-100 bg-emerald-50/20 text-center">
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Successfully Imported</p>
+                                    <p className="text-2xl font-bold text-emerald-700 mt-1">{successCount} Rows</p>
+                                </div>
+                                <div className="p-4 rounded-xl border border-rose-100 bg-rose-50/20 text-center">
+                                    <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Failed / Skipped</p>
+                                    <p className="text-2xl font-bold text-rose-700 mt-1">{failureCount} Rows</p>
+                                </div>
+                            </div>
+
+                            {failedRecords.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Failed Records Details:</h5>
+                                        <button 
+                                            onClick={handleDownloadFailedRecords}
+                                            className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1.5"
+                                        >
+                                            <Download size={14} /> Download Failed Records Excel
+                                        </button>
+                                    </div>
+                                    <div className="border border-slate-100 rounded-xl overflow-hidden max-h-[160px] overflow-y-auto">
+                                        <table className="w-full text-left text-xs text-slate-500">
+                                            <thead className="bg-slate-50 font-semibold text-slate-600 border-b border-slate-100 sticky top-0">
+                                                <tr>
+                                                    <th className="px-4 py-2">Row No.</th>
+                                                    <th className="px-4 py-2">Details</th>
+                                                    <th className="px-4 py-2 text-rose-600">Error Reason</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 bg-white">
+                                                {failedRecords.map((rec, i) => (
+                                                    <tr key={i}>
+                                                        <td className="px-4 py-2 font-medium">{rec["Sr. No."] || (i + 1)}</td>
+                                                        <td className="px-4 py-2">{rec["Component Name"] || "N/A"}</td>
+                                                        <td className="px-4 py-2 text-rose-600 font-medium">{rec["Error Reason"]}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-slate-100 flex justify-between bg-slate-50/50 font-sans">
+                    {step > 1 && step < 3 ? (
+                        <button 
+                            onClick={handleBack}
+                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all"
+                        >
+                            Back
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                    
+                    {step === 1 ? (
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={onClose}
+                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleNext}
+                                disabled={!file}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    ) : step === 3 ? (
+                        <button 
+                            onClick={onClose}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all"
+                        >
+                            Close
+                        </button>
+                    ) : null}
+                </div>
+            </div>
         </div>
     );
 };

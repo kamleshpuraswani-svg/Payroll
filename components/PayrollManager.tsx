@@ -1590,10 +1590,10 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                                 <div className="text-sm font-medium text-slate-600">{novPayrollType}</div>
                                             </td>
                                             <td className="px-6 py-5 font-bold text-slate-600">452</td>
-                                            <td className="px-6 py-5 font-bold text-slate-800">₹ 1.85 Cr</td>
-                                            <td className="px-6 py-5 font-bold text-rose-600">₹ 43.00 L</td>
-                                            <td className="px-6 py-5 font-bold text-amber-600">₹ 1.50 L</td>
-                                            <td className="px-6 py-5 font-bold text-emerald-700">₹ 1.42 Cr</td>
+                                            <td className="px-6 py-5 font-bold text-slate-800 whitespace-nowrap">₹ 1.85 Cr</td>
+                                            <td className="px-6 py-5 font-bold text-rose-600 whitespace-nowrap">₹ 43.00 L</td>
+                                            <td className="px-6 py-5 font-bold text-amber-600 whitespace-nowrap">₹ 1.50 L</td>
+                                            <td className="px-6 py-5 font-bold text-emerald-700 whitespace-nowrap">₹ 1.42 Cr</td>
                                             <td className="px-6 py-5">
                                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(novPayrollStatus)}`}>
                                                     {novPayrollStatus}
@@ -1667,10 +1667,10 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                             <div className="text-sm font-medium text-slate-600">{payroll.payrollType || 'Regular Monthly'}</div>
                                         </td>
                                         <td className="px-6 py-5 text-slate-600 font-medium">{payroll.employeeCount}</td>
-                                        <td className="px-6 py-5 text-slate-800 font-bold">{payroll.grossAmount}</td>
-                                        <td className="px-6 py-5 text-rose-600 font-bold">{payroll.totalDeductions}</td>
-                                        <td className="px-6 py-5 text-amber-600 font-bold">{payroll.holdAmount || '₹ 0.00'}</td>
-                                        <td className="px-6 py-5 text-slate-800 font-black">{payroll.netPay}</td>
+                                        <td className="px-6 py-5 text-slate-800 font-bold whitespace-nowrap">{payroll.grossAmount}</td>
+                                        <td className="px-6 py-5 text-rose-600 font-bold whitespace-nowrap">{payroll.totalDeductions}</td>
+                                        <td className="px-6 py-5 text-amber-600 font-bold whitespace-nowrap">{payroll.holdAmount || '₹ 0.00'}</td>
+                                        <td className="px-6 py-5 text-slate-800 font-black whitespace-nowrap">{payroll.netPay}</td>
                                         <td className="px-6 py-5">
                                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(payroll.status)}`}>
                                                 {payroll.status}

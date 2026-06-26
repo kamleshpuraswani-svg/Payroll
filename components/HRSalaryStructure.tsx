@@ -25,6 +25,7 @@ import {
     Power
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { formatAuditUser } from './auditUtils';
 
 // --- Types ---
 
@@ -33,7 +34,8 @@ interface SalaryComponent {
     name: string;
     calculation: string;
     type: 'Fixed' | 'Variable';
-    taxStatus: 'Taxable' | 'Exempt' | 'Tax Deductible';
+    taxStatus?: 'Taxable' | 'Exempt';
+    idComponent?: string;
 }
 
 interface Structure {
@@ -49,6 +51,7 @@ interface Structure {
     createdAt?: string;
     lastModifiedBy?: string;
     lastModified: string;
+    updatedAt?: string;
     effectiveFrom?: string;
     earnings: SalaryComponent[];
     deductions: SalaryComponent[];
@@ -436,6 +439,7 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                 createdAt: d.created_at || '',
                 lastModifiedBy: d.last_modified_by || d.updated_by || '',
                 lastModified: d.last_modified ? new Date(d.last_modified).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (d.updated_at ? new Date(d.updated_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''),
+                updatedAt: d.updated_at || '',
                 targetId: d.target_id,
                 targetType: d.target_type
             }));
@@ -1248,20 +1252,10 @@ const HRSalaryStructure: React.FC<SalaryStructureProps> = ({ embedded, initialVi
                                     </td>
                                     <td className="px-6 py-4">{item.employeeCount}</td>
                                     <td className="px-6 py-4">
-                                        {item.createdBy ? (
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-xs font-semibold text-slate-700">{item.createdBy}</span>
-                                                {item.createdAt && <span className="text-[10px] text-slate-400">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>}
-                                            </div>
-                                        ) : <span className="text-xs text-slate-400">System</span>}
+                                        {formatAuditUser(item.createdBy || 'System', item.createdAt)}
                                     </td>
                                     <td className="px-6 py-4">
-                                        {item.lastModified ? (
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-xs font-semibold text-slate-700">{item.lastModifiedBy || item.lastModified}</span>
-                                                <span className="text-[10px] text-slate-400">{item.lastModified}</span>
-                                            </div>
-                                        ) : <span className="text-xs text-slate-400">—</span>}
+                                        {formatAuditUser(item.lastModifiedBy || (item.lastModified ? 'Admin' : undefined), item.updatedAt)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-4">
