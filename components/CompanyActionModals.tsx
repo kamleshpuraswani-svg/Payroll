@@ -283,7 +283,8 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
          status: 'On Hold',
          lwd: '2026-03-31',
          reason: 'Full & Final Settlement Pending',
-         holdSince: 'March 2026'
+         holdSince: 'March 2026',
+         holdAmount: 85000
       },
       {
          id: 'AC04122',
@@ -293,7 +294,8 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
          status: 'On Hold',
          lwd: '-',
          reason: 'Bank Verification Needed',
-         holdSince: 'April 2026'
+         holdSince: 'April 2026',
+         holdAmount: 62000
       },
       {
          id: 'SU00344',
@@ -303,7 +305,8 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
          status: 'On Hold',
          lwd: '2026-04-10',
          reason: 'Resignation - LWD Adjustment',
-         holdSince: 'April 2026'
+         holdSince: 'April 2026',
+         holdAmount: 74500
       },
    ];
 
@@ -314,7 +317,7 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
             if (e.target === e.currentTarget) onClose();
          }}
       >
-         <div className="bg-white w-full max-w-2xl h-full shadow-2xl animate-in slide-in-from-right duration-500 overflow-hidden flex flex-col">
+         <div className="bg-white w-full max-w-6xl h-full shadow-2xl animate-in slide-in-from-right duration-500 overflow-hidden flex flex-col">
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
                <div className="flex items-center gap-2">
                   <div className="p-2.5 bg-slate-50 text-slate-600 rounded-xl shadow-sm"><PauseCircle size={20} /></div>
@@ -329,53 +332,67 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
-               <div className="space-y-4">
-                  {onHoldEmployees.map(emp => (
-                     <div key={emp.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-slate-300 transition-all">
-                        <div className="flex justify-between items-start mb-4">
-                           <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-sm">
-                                 {emp.name.split(' ').map(n => n[0]).join('')}
-                              </div>
-                              <div>
-                                 <h4 className="font-bold text-slate-800">{emp.name}</h4>
-                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{emp.id}</p>
-                              </div>
-                           </div>
-                           <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
-                              {emp.status}
-                           </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                           <div>
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Department</p>
-                              <p className="text-sm font-bold text-slate-700">{emp.dept}</p>
-                           </div>
-                           <div>
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Designation</p>
-                              <p className="text-sm font-bold text-slate-700">{emp.designation}</p>
-                           </div>
-                           <div>
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Last Working Day (LWD)</p>
-                              <p className="text-sm font-bold text-slate-700">{emp.lwd}</p>
-                           </div>
-                           <div>
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                 {userRole === 'HR_MANAGER' ? 'Hold Month' : 'Hold Since'}
-                              </p>
-                              <p className="text-sm font-bold text-slate-700">{emp.holdSince}</p>
-                           </div>
-                           <div className="col-span-2 p-3 bg-rose-50/50 border border-rose-100/50 rounded-xl">
-                              <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Hold Reason</p>
-                              <p className="text-sm font-bold text-slate-700 leading-relaxed">{emp.reason}</p>
-                           </div>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-
-               {onHoldEmployees.length === 0 && (
+               {onHoldEmployees.length > 0 ? (
+                  <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                     <table className="w-full text-left border-collapse text-sm">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0 z-10">
+                           <tr>
+                              <th className="px-4 py-3.5">Employee Name</th>
+                              <th className="px-4 py-3.5">Employee Code</th>
+                              <th className="px-4 py-3.5">Department</th>
+                              <th className="px-4 py-3.5">Designation</th>
+                              <th className="px-4 py-3.5">Last Working Day</th>
+                              <th className="px-4 py-3.5">{userRole === 'HR_MANAGER' ? 'Hold Month' : 'Hold Since'}</th>
+                              <th className="px-4 py-3.5 text-right">Hold Amount</th>
+                              <th className="px-4 py-3.5">Hold Reason</th>
+                              <th className="px-4 py-3.5 text-center">Status</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                           {onHoldEmployees.map(emp => (
+                              <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                                 <td className="px-4 py-4">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0 border border-indigo-100">
+                                          {emp.name.split(' ').map(n => n[0]).join('')}
+                                       </div>
+                                       <span className="font-bold text-slate-800 text-sm whitespace-nowrap">{emp.name}</span>
+                                    </div>
+                                 </td>
+                                 <td className="px-4 py-4 text-xs font-mono font-bold text-slate-500 whitespace-nowrap">
+                                    {emp.id}
+                                 </td>
+                                 <td className="px-4 py-4 text-xs font-bold text-slate-700 whitespace-nowrap">
+                                    {emp.dept}
+                                 </td>
+                                 <td className="px-4 py-4 text-xs font-medium text-slate-600 whitespace-nowrap">
+                                    {emp.designation}
+                                 </td>
+                                 <td className="px-4 py-4 text-xs font-bold text-slate-600 whitespace-nowrap">
+                                    {emp.lwd}
+                                 </td>
+                                 <td className="px-4 py-4 text-xs font-bold text-slate-600 whitespace-nowrap">
+                                    {emp.holdSince}
+                                 </td>
+                                 <td className="px-4 py-4 text-xs font-black text-emerald-700 text-right whitespace-nowrap">
+                                    ₹{emp.holdAmount.toLocaleString('en-IN')}
+                                 </td>
+                                 <td className="px-4 py-4">
+                                    <div className="inline-block px-2.5 py-1 bg-rose-50 border border-rose-100/80 rounded-lg text-xs font-bold text-rose-700">
+                                       {emp.reason}
+                                    </div>
+                                 </td>
+                                 <td className="px-4 py-4 text-center whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-full text-[10px] font-black uppercase tracking-wider shadow-xs">
+                                       {emp.status}
+                                    </span>
+                                 </td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+               ) : (
                   <div className="flex flex-col items-center justify-center py-20 text-center">
                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-4">
                         <Check size={32} />
@@ -386,18 +403,18 @@ export const PayrollOnHoldPanel: React.FC<{ isOpen: boolean; onClose: () => void
                )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-white shrink-0">
-               <button
-                  onClick={onClose}
-                  className={`w-full py-3.5 text-white text-sm font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2 group ${
-                     userRole === 'HR_MANAGER'
-                        ? 'bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-100'
-                        : 'bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-200'
-                  }`}
-               >
-                  Close <X size={16} className="text-slate-500 group-hover:rotate-90 transition-transform" />
-               </button>
-            </div>
+            <div className="p-4 px-6 border-t border-slate-100 bg-white shrink-0 flex justify-end">
+                <button
+                   onClick={onClose}
+                   className={`px-6 py-2.5 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 group ${
+                      userRole === 'HR_MANAGER'
+                         ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100'
+                         : 'bg-slate-900 hover:bg-slate-800 shadow-md shadow-slate-200'
+                   }`}
+                >
+                   Close <X size={15} className="text-white/80 group-hover:rotate-90 transition-transform" />
+                </button>
+             </div>
          </div>
       </div>
    );

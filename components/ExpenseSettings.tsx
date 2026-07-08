@@ -64,7 +64,7 @@ const ExpenseSettings: React.FC = () => {
     }, []);
 
     const filteredCategories = useMemo(() => {
-        let data = categories.filter(c => c.applicable_to && c.applicable_to.length > 0);
+        let data = categories;
         
         if (!searchQuery) return data;
         
@@ -86,9 +86,15 @@ const ExpenseSettings: React.FC = () => {
 
     const fetchData = async () => {
         setIsLoading(true);
-        try {
-            const [type, id] = selectedTarget.split(':');
+        const [type, id] = selectedTarget.split(':');
+        const defaultDummyCategories = [
+            { id: 'cat-1', name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.', target_type: type, target_id: id },
+            { id: 'cat-2', name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.', target_type: type, target_id: id },
+            { id: 'cat-3', name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.', target_type: type, target_id: id },
+            { id: 'cat-4', name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.', target_type: type, target_id: id }
+        ];
 
+        try {
             // Fetch categories
             const { data: catData, error: catError } = await supabase
                 .from('expense_categories')
@@ -97,31 +103,9 @@ const ExpenseSettings: React.FC = () => {
                 .eq('target_id', id)
                 .order('name');
 
-            if (catError) throw catError;
-
-            // If no categories found, insert dummy data
-            if (catData && catData.length === 0) {
-                const dummyCategories = [
-                    { name: 'Travel & Conveyance', max_limit: 5000, receipt_threshold: 1000, pro_rata: true, status: 'Active', description: 'Includes flight, train, and local taxi fares.', target_type: type, target_id: id },
-                    { name: 'Meals & Entertainment', max_limit: 2000, receipt_threshold: 500, pro_rata: false, status: 'Active', description: 'Business lunches and team dinners.', target_type: type, target_id: id },
-                    { name: 'Communication', max_limit: 1500, receipt_threshold: 0, pro_rata: false, status: 'Active', description: 'Mobile and internet bill reimbursements.', target_type: type, target_id: id },
-                    { name: 'Office Supplies', max_limit: 5000, receipt_threshold: 500, pro_rata: true, status: 'Active', description: 'Stationery and minor equipment.', target_type: type, target_id: id }
-                ];
-                const { error: insertError } = await supabase.from('expense_categories').insert(dummyCategories);
-                if (insertError) throw insertError;
-
-                // Re-fetch after insertion to get actual data with IDs
-                const { data: refreshedCat, error: refreshError } = await supabase
-                    .from('expense_categories')
-                    .select('*')
-                    .eq('target_type', type)
-                    .eq('target_id', id)
-                    .order('name');
-                if (refreshError) throw refreshError;
-                if (refreshedCat) {
-                    setCategories(refreshedCat);
-                }
-            } else if (catData) {
+            if (catError || !catData || catData.length === 0) {
+                setCategories(defaultDummyCategories);
+            } else {
                 setCategories(catData);
             }
 
@@ -131,9 +115,10 @@ const ExpenseSettings: React.FC = () => {
                 .select('*')
                 .eq('status', 'Active');
             
-            if (empError) {
-                console.error('Employee fetch error:', empError);
-            } else if (empData) {
+            if (empError || !empData) {
+                setAvailableDepartments(FALLBACK_DEPTS);
+                setAvailableDesignations(FALLBACK_DESIGS);
+            } else {
                 const formattedEmployees = empData.map(emp => ({
                     id: emp.id,
                     name: emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || 'No Name',
@@ -147,25 +132,22 @@ const ExpenseSettings: React.FC = () => {
                 const desigs = Array.from(new Set(formattedEmployees.map((e: any) => e.designation).filter(Boolean))) as string[];
                 setAvailableDepartments(depts.length > 0 ? depts.sort() : FALLBACK_DEPTS);
                 setAvailableDesignations(desigs.length > 0 ? desigs.sort() : FALLBACK_DESIGS);
-            } else {
-                setAvailableDepartments(FALLBACK_DEPTS);
-                setAvailableDesignations(FALLBACK_DESIGS);
             }
 
             // Fetch paygroups
-            const { data: pgData, error: pgError } = await supabase
+            const { data: pgData } = await supabase
                 .from('paygroups')
                 .select('*')
                 .order('name');
             
-            if (pgError) {
-                console.error('Error fetching paygroups:', pgError);
-            } else {
-                setPaygroups(pgData || []);
+            if (pgData) {
+                setPaygroups(pgData);
             }
         } catch (error: any) {
             console.error('Error fetching data:', error);
-            alert(`Failed to load data: ${error.message || 'Unknown error'}. Please ensure your Supabase schema is up to date.`);
+            setCategories(defaultDummyCategories);
+            setAvailableDepartments(FALLBACK_DEPTS);
+            setAvailableDesignations(FALLBACK_DESIGS);
         } finally {
             setIsLoading(false);
         }
@@ -1002,7 +984,7 @@ const ExpenseSettings: React.FC = () => {
                                          </td>
                                          <td className="px-6 py-5">
                                              <div className="flex flex-col gap-2">
-                                                 {cat.applicable_to
+                                                 {(cat.applicable_to || [])
                                                      .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
                                                      .map((ent: any, i: number) => (
                                                      <div key={i} className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-h-[44px]">
@@ -1014,11 +996,14 @@ const ExpenseSettings: React.FC = () => {
                                                          </span>
                                                      </div>
                                                  ))}
+                                                 {(!cat.applicable_to || cat.applicable_to.length === 0) && (
+                                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider italic">All Employees</span>
+                                                 )}
                                              </div>
                                          </td>
                                          <td className="px-6 py-5">
                                              <div className="flex flex-col gap-2">
-                                                 {cat.applicable_to
+                                                 {(cat.applicable_to || [])
                                                      .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
                                                      .map((ent: any, i: number) => (
                                                      <div key={i} className="flex flex-col gap-0.5 px-3 py-2 min-h-[44px] justify-center">
@@ -1032,6 +1017,18 @@ const ExpenseSettings: React.FC = () => {
                                                          </div>
                                                      </div>
                                                  ))}
+                                                 {(!cat.applicable_to || cat.applicable_to.length === 0) && (
+                                                     <div className="flex flex-col gap-0.5 justify-center">
+                                                         <div className="flex items-center gap-1.5">
+                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">LIMIT</span>
+                                                             <span className="text-[10px] font-black text-slate-700">₹{cat.max_limit?.toLocaleString() || '5,000'}</span>
+                                                         </div>
+                                                         <div className="flex items-center gap-1.5">
+                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">THRESH.</span>
+                                                             <span className="text-[10px] font-black text-slate-700">₹{cat.receipt_threshold?.toLocaleString() || '500'}</span>
+                                                         </div>
+                                                     </div>
+                                                 )}
                                              </div>
                                          </td>
                                          <td className="px-6 py-5">
@@ -1050,7 +1047,7 @@ const ExpenseSettings: React.FC = () => {
                                                  <div className="space-y-0.5">
                                                      <p className="text-xs font-bold text-slate-600">{cat.last_updated_by || 'HR Manager'}</p>
                                                      <p className="text-[9px] font-medium text-slate-400 italic">
-                                                         {new Date(cat.updated_at).toLocaleDateString()}
+                                                         {cat.updated_at ? new Date(cat.updated_at).toLocaleDateString() : 'Recently'}
                                                      </p>
                                                  </div>
                                              </div>

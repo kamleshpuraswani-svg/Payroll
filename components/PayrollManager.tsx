@@ -1239,21 +1239,21 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
 
             {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Cycle</p>
                     <p className="text-xl font-bold text-slate-800">Nov 2025</p>
                     <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-orange-600">
                         <Clock size={14} /> Pending
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Payout (YTD)</p>
                     <p className="text-xl font-bold text-slate-800">₹ 16.52 Cr</p>
                     <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-emerald-600">
                         <CheckCircle size={14} /> 10 Cycles Paid
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg. Monthly Cost</p>
                     <p className="text-xl font-bold text-slate-800">₹ 1.80 Cr</p>
                     <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-500">
@@ -1262,7 +1262,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 </div>
 
                 {/* Critical Payroll Issues Card */}
-                <div className="bg-white p-5 rounded-2xl border border-rose-200 bg-rose-50/30 shadow-sm relative group">
+                <div className="bg-white p-5 rounded-lg border border-rose-200 bg-rose-50/30 shadow-sm relative group">
                     <div className="flex justify-between items-start mb-1">
                         <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Critical Payroll Issues</p>
                         <button
@@ -1280,7 +1280,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 </div>
 
                 {/* Payroll On-hold Card */}
-                <div className="bg-white p-5 rounded-2xl border border-amber-200 bg-amber-50/30 shadow-sm relative group">
+                <div className="bg-white p-5 rounded-lg border border-amber-200 bg-amber-50/30 shadow-sm relative group">
                     <div className="flex justify-between items-start mb-1">
                         <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Payroll On-hold</p>
                         <button
@@ -1300,7 +1300,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 </div>
 
                 {/* Form 24Q TDS Return Card */}
-                <div className="bg-white p-5 rounded-2xl border border-blue-200 bg-blue-50/30 shadow-sm relative group">
+                <div className="bg-white p-5 rounded-lg border border-blue-200 bg-blue-50/30 shadow-sm relative group">
                     <div className="flex justify-between items-start mb-1">
                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Form 24Q TDS Return</p>
                         <button
@@ -1319,7 +1319,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             </div>
 
             {/* Main Content Area */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
 
                 {/* Toolbar */}
                 {/* Toolbar */}
@@ -2057,93 +2057,79 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
     const handleDownloadSample = async () => {
         const headers = [
             "Sr. No.",
-            "Employee Code",
-            "Employee Name",
+            "Payroll Type",
+            "Payroll Month",
             "Business Unit",
-            "Salary Structure",
-            "Annual CTC (₹)",
+            "Employee Name",
+            "Employee Code",
+            "Designation",
+            "Department",
+            "Status",
+            "Absent (Days)",
+            "Present (Days)",
+            "Paid Leaves (Days)",
+            "Unpaid Leaves (Days)",
+            "LOP Days",
+            "Payable Days",
             "Basic Salary",
-            "Child Education Allowance",
-            "Child hostel allowance",
+            "HRA",
             "Conveyance Allowance",
-            "Dearness Allowance (DA)",
-            "House Rent Allowance (HRA)",
-            "Meal Allowance",
             "Medical Allowance",
-            "Professional Allowance",
             "Statutory Bonus",
-            "Provident Fund (Employee)",
-            "ESI (Employee)",
-            "Gratuity",
+            "Professional Allowance",
+            "PF Admin Charges (Employer)",
+            "EDLI Admin Charges (Employer)",
+            "EDLI Charges (Employer)",
             "Provident Fund (Employer)",
-            "ESI (Employer)",
-            "NPS",
-            "Labour Welfare Fund (Employee)",
-            "Labour Welfare Fund (Employer)",
-            "Voluntary Provident Fund",
+            "Gratuity (Employer)",
+            "Provident Fund (Employee)",
             "Professional Tax",
-            "Effective From",
-            "Provident Fund",
-            "ESI",
-            "Gratuity",
-            "Labour Welfare Fund",
-            "National Pension System",
-            "PAN Number",
-            "Aadhaar Number",
-            "PF Number",
-            "UAN Number",
-            "ESI Number",
-            "PRAN Number",
-            "Tax Regime"
+            "TDS",
+            "Total Gross",
+            "Total Deductions (Employee)",
+            "Net Pay"
         ];
         
         const rows = [
             [
-                1,
-                "CO-059",
-                "Sachin Tendulkar",
-                "CollabCRM",
-                "Executive Structure",
-                1800000,
-                720000, // Basic Salary
-                2400,   // Child Education Allowance
-                4800,   // Child hostel allowance
-                19200,  // Conveyance Allowance
-                0,      // Dearness Allowance (DA)
-                288000, // House Rent Allowance (HRA)
-                0,      // Meal Allowance
-                0,      // Medical Allowance
-                0,      // Professional Allowance
-                0,      // Statutory Bonus
-                21600,  // Provident Fund (Employee)
-                0,      // ESI (Employee)
-                34600,  // Gratuity
-                21600,  // Provident Fund (Employer)
-                0,      // ESI (Employer)
-                0,      // NPS
-                120,    // Labour Welfare Fund (Employee)
-                240,    // Labour Welfare Fund (Employer)
-                0,      // Voluntary Provident Fund
-                2500,   // Professional Tax
-                "2026-06-01",
-                "Yes",
-                "No",
-                "Yes",
-                "Yes",
-                "No",
-                "ABCDE1234F",
-                "123456789012",
-                "MH/BAN/1234567/123",
-                "100987654321",
-                "3112345678",
-                "110098765432",
-                "New Regime"
+                1,                        // Sr. No.
+                "Regular",                // Payroll Type
+                "2026-06",                // Payroll Month
+                "CollabCRM",              // Business Unit
+                "Sachin Tendulkar",       // Employee Name
+                "CO-059",                 // Employee Code
+                "Executive",              // Designation
+                "Engineering",            // Department
+                "Active",                 // Status
+                0,                        // Absent (Days)
+                30,                       // Present (Days)
+                0,                        // Paid Leaves (Days)
+                0,                        // Unpaid Leaves (Days)
+                0,                        // LOP Days
+                30,                       // Payable Days
+                60000,                    // Basic Salary
+                24000,                    // HRA
+                1600,                     // Conveyance Allowance
+                1250,                     // Medical Allowance
+                3000,                     // Statutory Bonus
+                5000,                     // Professional Allowance
+                375,                      // PF Admin Charges (Employer)
+                0,                        // EDLI Admin Charges (Employer)
+                375,                      // EDLI Charges (Employer)
+                9000,                     // Provident Fund (Employer)
+                2886,                     // Gratuity (Employer)
+                9000,                     // Provident Fund (Employee)
+                200,                      // Professional Tax
+                4500,                     // TDS
+                94850,                    // Total Gross
+                13700,                    // Total Deductions (Employee)
+                81150                     // Net Pay
             ]
         ];
 
         // Create workbook & worksheet using ExcelJS
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Employees Compensation");
+        const worksheet = workbook.addWorksheet("Payroll History");
         const instructionsWorksheet = workbook.addWorksheet("Instructions");
         instructionsWorksheet.addRow(["Instructions:"]);
         instructionsWorksheet.addRow(["Please refer to subsequent prompts for detailed instructions."]);
@@ -2165,16 +2151,7 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
             "Employee Code",
             "Employee Name",
             "Business Unit",
-            "Salary Structure",
-            "Annual CTC (₹)",
-            "Effective From",
-            "Provident Fund",
-            "ESI",
-            "Gratuity",
-            "Labour Welfare Fund",
-            "National Pension System",
-            "PAN Number",
-            "Tax Regime"
+            "Payroll Month"
         ];
 
         // Format headers row
@@ -2197,14 +2174,17 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
             }
         });
 
-        // Add dropdown to Tax Regime column (col 39) for rows 2 to 100
+        // Add date validation to Payroll Month column (col 3) for rows 2 to 100
         for (let rowNum = 2; rowNum <= 100; rowNum++) {
-            const cell = worksheet.getCell(rowNum, 39);
+            const cell = worksheet.getCell(rowNum, 3);
             cell.dataValidation = {
-                type: 'list',
+                type: 'date',
                 allowBlank: true,
-                formulae: ['"Old Regime,New Regime"']
+                showInputMessage: true,
+                promptTitle: 'Payroll Month Format',
+                prompt: 'Please select/enter a valid month & year (YYYY-MM)'
             };
+            cell.numFmt = 'yyyy-mm';
         }
 
         // Generate buffer and trigger file download
@@ -2215,7 +2195,7 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
         const url = window.URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = "employees_compensation_sample.xlsx";
+        anchor.download = "Payroll_history.xlsx";
         anchor.click();
         window.URL.revokeObjectURL(url);
     };
@@ -2342,29 +2322,68 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
             parsedData.forEach(row => {
                 const errors: string[] = [];
                 
+                const isPayrollHistoryTemplate = getExcelValue(row, "Payroll Month") !== '';
+
                 const eid = String(getExcelValue(row, "Employee Code", "eid")).trim();
                 const name = String(getExcelValue(row, "Employee Name", "name")).trim();
                 const department = String(getExcelValue(row, "Department")).trim() || "N/A";
                 const designation = String(getExcelValue(row, "Designation")).trim() || "N/A";
-                const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
-                const effectiveFrom = getExcelValue(row, "Effective From", "join_date");
                 
-                const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
-                const structureName = String(getExcelValue(row, "Salary Structure")).trim();
-                const isPfStr = String(getExcelValue(row, "Provident Fund", "Provident Fund Applicable?")).trim();
-                const isEsiStr = String(getExcelValue(row, "ESI", "ESI Applicable?")).trim();
-                const isGratuityStr = String(getExcelValue(row, "Gratuity", "Gratuity Applicable?")).trim();
-                const isLwfStr = String(getExcelValue(row, "Labour Welfare Fund", "Labour Welfare Fund Applicable?")).trim();
-                const isNpsStr = String(getExcelValue(row, "National Pension System", "National Pension System Applicable?")).trim();
-                const panNumber = String(getExcelValue(row, "PAN Number", "pan_no")).trim();
-                const taxRegime = String(getExcelValue(row, "Tax Regime", "regime")).trim();
+                let ctcVal: number;
+                let effectiveFrom: any;
+                let businessUnit: string;
+                let structureName: string;
+                let isPfStr: string;
+                let isEsiStr: string;
+                let isGratuityStr: string;
+                let isLwfStr: string;
+                let isNpsStr: string;
+                let panNumber: string;
+                let taxRegime: string;
+
+                if (isPayrollHistoryTemplate) {
+                    const payrollMonth = getExcelValue(row, "Payroll Month");
+                    ctcVal = cleanNumber(getExcelValue(row, "Total Gross")) * 12 || 1200000;
+                    
+                    if (payrollMonth instanceof Date) {
+                        effectiveFrom = payrollMonth.toISOString().split('T')[0];
+                    } else if (typeof payrollMonth === 'number') {
+                        const d = new Date((payrollMonth - 25569) * 86400 * 1000);
+                        effectiveFrom = d.toISOString().split('T')[0];
+                    } else {
+                        const pmStr = String(payrollMonth).trim();
+                        effectiveFrom = pmStr.match(/^\d{4}-\d{2}$/) ? `${pmStr}-01` : formatDate(pmStr);
+                    }
+                    
+                    businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
+                    structureName = "Standard IT Structure 2025";
+                    isPfStr = cleanNumber(getExcelValue(row, "Provident Fund (Employee)")) > 0 ? "Yes" : "No";
+                    isEsiStr = "No";
+                    isGratuityStr = "No";
+                    isLwfStr = "No";
+                    isNpsStr = "No";
+                    panNumber = "PANPLACEHOLDER";
+                    taxRegime = "New Regime";
+                } else {
+                    ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
+                    effectiveFrom = getExcelValue(row, "Effective From", "join_date");
+                    businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
+                    structureName = String(getExcelValue(row, "Salary Structure")).trim();
+                    isPfStr = String(getExcelValue(row, "Provident Fund", "Provident Fund Applicable?")).trim();
+                    isEsiStr = String(getExcelValue(row, "ESI", "ESI Applicable?")).trim();
+                    isGratuityStr = String(getExcelValue(row, "Gratuity", "Gratuity Applicable?")).trim();
+                    isLwfStr = String(getExcelValue(row, "Labour Welfare Fund", "Labour Welfare Fund Applicable?")).trim();
+                    isNpsStr = String(getExcelValue(row, "National Pension System", "National Pension System Applicable?")).trim();
+                    panNumber = String(getExcelValue(row, "PAN Number", "pan_no")).trim();
+                    taxRegime = String(getExcelValue(row, "Tax Regime", "regime")).trim();
+                }
 
                 if (!eid) errors.push("Employee Code is required");
                 if (!name) errors.push("Employee Name is required");
                 if (!businessUnit) errors.push("Business Unit is required");
                 if (!structureName) errors.push("Salary Structure is required");
                 if (ctcVal <= 0) errors.push("Annual CTC must be greater than 0");
-                if (!effectiveFrom) errors.push("Effective From date is required");
+                if (!effectiveFrom) errors.push("Effective From date or Payroll Month is required");
                 if (!isPfStr) errors.push("Provident Fund option is required (Yes/No)");
                 if (!isEsiStr) errors.push("ESI option is required (Yes/No)");
                 if (!isGratuityStr) errors.push("Gratuity option is required (Yes/No)");

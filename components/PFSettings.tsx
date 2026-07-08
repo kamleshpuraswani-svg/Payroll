@@ -415,43 +415,45 @@ const PFSettings: React.FC = () => {
                                 </div>
 
                                 {/* LOP Configuration */}
-                                <div className="pt-8 border-t border-slate-100 space-y-6">
-                                    <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
-                                        <AlertCircle size={16} className="text-sky-600" />
-                                        PF Configuration when LOP Applied
-                                    </div>
-
-                                    <label className="flex items-start gap-3 cursor-pointer group">
-                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${prorateRestricted ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                            {prorateRestricted && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                {false && (
+                                    <div className="pt-8 border-t border-slate-100 space-y-6">
+                                        <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                                            <AlertCircle size={16} className="text-sky-600" />
+                                            PF Configuration when LOP Applied
                                         </div>
-                                        <input type="checkbox" className="hidden" checked={prorateRestricted} onChange={() => isEditing && setProrateRestricted(!prorateRestricted)} disabled={!isEditing} />
-                                        <div>
-                                            <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
-                                                Pro-rate Restricted PF Wage
-                                                <div className="group/tip relative inline-block">
-                                                    <Info size={14} className="text-slate-400 cursor-help" />
-                                                    <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-[110] text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
-                                                        Restricted PF Wage allows you to limit the EPF contribution to 15,000 even if the employees' PF Wage is greater than that.
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${prorateRestricted ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                {prorateRestricted && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                            </div>
+                                            <input type="checkbox" className="hidden" checked={prorateRestricted} onChange={() => isEditing && setProrateRestricted(!prorateRestricted)} disabled={!isEditing} />
+                                            <div>
+                                                <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">
+                                                    Pro-rate Restricted PF Wage
+                                                    <div className="group/tip relative inline-block">
+                                                        <Info size={14} className="text-slate-400 cursor-help" />
+                                                        <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-[110] text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                            Restricted PF Wage allows you to limit the EPF contribution to 15,000 even if the employees' PF Wage is greater than that.
+                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </span>
-                                            <span className="block text-sm text-slate-500 mt-1">PF contribution will be pro-rated based on the number of days worked by the employee.</span>
-                                        </div>
-                                    </label>
+                                                </span>
+                                                <span className="block text-sm text-slate-500 mt-1">PF contribution will be pro-rated based on the number of days worked by the employee.</span>
+                                            </div>
+                                        </label>
 
-                                    <label className="flex items-start gap-3 cursor-pointer group">
-                                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${considerComponents ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                            {considerComponents && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={considerComponents} onChange={() => isEditing && setConsiderComponents(!considerComponents)} disabled={!isEditing} />
-                                        <div>
-                                            <span className="block text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Consider all applicable salary components if PF wage is less than ₹15,000 after Loss of Pay</span>
-                                            <span className="block text-sm text-slate-500 mt-1">PF wage will be computed using the salary earned in that month rather than the structure amount.</span>
-                                        </div>
-                                    </label>
-                                </div>
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${considerComponents ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                                {considerComponents && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                            </div>
+                                            <input type="checkbox" className="hidden" checked={considerComponents} onChange={() => isEditing && setConsiderComponents(!considerComponents)} disabled={!isEditing} />
+                                            <div>
+                                                <span className="block text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Consider all applicable salary components if PF wage is less than ₹15,000 after Loss of Pay</span>
+                                                <span className="block text-sm text-slate-500 mt-1">PF wage will be computed using the salary earned in that month rather than the structure amount.</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

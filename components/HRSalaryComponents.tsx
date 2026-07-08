@@ -177,7 +177,7 @@ const INITIAL_DATA: SalaryComponent[] = [
     },
     {
         id: '3',
-        name: 'Fixed Allowance',
+        name: 'Fixed Allowance / Special Allowance',
         type: 'Fixed Pay',
         calculation: 'Flat Rs. 5000',
         taxable: 'Fully Taxable',
@@ -193,6 +193,38 @@ const INITIAL_DATA: SalaryComponent[] = [
     },
     {
         id: '4',
+        name: 'Conveyance Allowance',
+        type: 'Fixed Pay',
+        calculation: 'Flat ₹ 1,600 / month',
+        taxable: 'Partially Exempt',
+        status: true,
+        category: 'Earnings',
+        amountOrPercent: '1600',
+        calcMethod: 'Flat',
+        payslipName: 'Conveyance',
+        considerEPF: false,
+        considerESI: true,
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 10, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 10, 2025'
+    },
+    {
+        id: '5',
+        name: 'Medical Allowance',
+        type: 'Fixed Pay',
+        calculation: 'Flat ₹ 1,250 / month',
+        taxable: 'Fully Taxable',
+        status: true,
+        category: 'Earnings',
+        amountOrPercent: '1250',
+        calcMethod: 'Flat',
+        payslipName: 'Medical Allow',
+        considerEPF: false,
+        considerESI: true,
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 10, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 10, 2025'
+    },
+    {
+        id: '6',
         name: 'Commission',
         type: 'Variable Pay',
         calculation: '10% of Basic',
@@ -208,7 +240,63 @@ const INITIAL_DATA: SalaryComponent[] = [
         created: 'By Kamlesh P.\nAt 5:38 PM, Nov 17, 2025'
     },
 
-    // Deductions (Mock data removed as requested)
+    // Deductions
+    {
+        id: '7',
+        name: 'Provident Fund (Employee)',
+        type: 'Fixed Deduction',
+        calculation: '12% of Basic',
+        taxable: 'Tax Deductible Sec 80C',
+        status: true,
+        category: 'Deductions',
+        amountOrPercent: '12',
+        calcMethod: 'Percentage',
+        payslipName: 'EPF',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 15, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 15, 2025'
+    },
+    {
+        id: '8',
+        name: 'Professional Tax (PT)',
+        type: 'Statutory Deduction',
+        calculation: 'State Slabs (Max ₹250/mo)',
+        taxable: 'Tax Deductible Sec 16',
+        status: true,
+        category: 'Deductions',
+        amountOrPercent: '200',
+        calcMethod: 'Flat',
+        payslipName: 'Professional Tax',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 15, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 15, 2025'
+    },
+    {
+        id: '9',
+        name: 'Employee State Insurance (ESI)',
+        type: 'Statutory Deduction',
+        calculation: '0.75% of Gross Pay',
+        taxable: 'Tax Exempt',
+        status: true,
+        category: 'Deductions',
+        amountOrPercent: '0.75',
+        calcMethod: 'Percentage',
+        payslipName: 'ESI',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 15, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 15, 2025'
+    },
+    {
+        id: '10',
+        name: 'Income Tax (TDS)',
+        type: 'Tax Deduction',
+        calculation: 'As per Tax Regime Slabs',
+        taxable: 'Tax Deduction',
+        status: true,
+        category: 'Deductions',
+        amountOrPercent: '0',
+        calcMethod: 'Flat',
+        payslipName: 'TDS / Income Tax',
+        lastModified: 'By Admin\nAt 10:00 AM, Nov 15, 2025',
+        created: 'By Admin\nAt 09:00 AM, Nov 15, 2025'
+    },
 
 
     // Benefits (Data kept for future use, tab hidden)
@@ -937,64 +1025,68 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                             </div>
                                         )}
 
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 mb-2">Tax computation <span className="text-rose-500">*</span></label>
-                                            <div className="flex gap-6 h-[40px] items-center">
-                                                {['Proportionally', 'Pay month'].map((option) => (
-                                                    <label key={option} className="flex items-center gap-2 cursor-pointer group">
-                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${taxComputation === option ? 'border-purple-600' : 'border-slate-300'}`}>
-                                                            {taxComputation === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
-                                                        </div>
-                                                        <input type="radio" className="hidden" checked={taxComputation === option} onChange={() => setTaxComputation(option as any)} />
-                                                        <span className="text-sm text-slate-700 font-medium">{option}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="relative">
-                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">
-                                                Income tax section {taxTreatment === 'Partially Exempt' && <span className="text-rose-500">*</span>}
-                                            </label>
-                                            <div
-                                                onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
-                                                className={`w-full px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium ${error === 'Income tax section is mandatory' ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-purple-500/20 focus:border-purple-500'}`}
-                                            >
-                                                <span>{incomeTaxSection || 'Select Section'}</span>
-                                                <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
-                                            </div>
-                                            {error === 'Income tax section is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
-                                            {isSectionDropdownOpen && (
-                                                <>
-                                                    <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
-                                                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                                                        {[
-                                                            ...(taxTreatment === 'Fully Taxable' ? ['NULL'] : []),
-                                                            "Section_10(14)(i)",
-                                                            "Section_10(14)(ii)",
-                                                            "Section_10(5)",
-                                                            "Section_17(2)(Viii)",
-                                                            "Section_10(13)(a)"
-                                                        ].map(section => (
-                                                            <div
-                                                                key={section}
-                                                                onClick={() => {
-                                                                    setIncomeTaxSection(section);
-                                                                    setIsSectionDropdownOpen(false);
-                                                                    setError(null);
-                                                                }}
-                                                                className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
-                                                            >
-                                                                {section}
-                                                                {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
+                                        {taxTreatment !== 'Non Taxable' && (
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-2">Tax computation <span className="text-rose-500">*</span></label>
+                                                <div className="flex gap-6 h-[40px] items-center">
+                                                    {['Proportionally', 'Pay month'].map((option) => (
+                                                        <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${taxComputation === option ? 'border-purple-600' : 'border-slate-300'}`}>
+                                                                {taxComputation === option && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
+                                                            <input type="radio" className="hidden" checked={taxComputation === option} onChange={() => setTaxComputation(option as any)} />
+                                                            <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
-                                        {taxTreatment === 'Partially Exempt' && (
+                                        {taxTreatment !== 'Non Taxable' && (
+                                            <div className="relative">
+                                                <label className="block text-xs font-bold text-slate-500 mb-1.5">
+                                                    Income tax section {taxTreatment === 'Partially Exempt' && <span className="text-rose-500">*</span>}
+                                                </label>
+                                                <div
+                                                    onClick={() => setIsSectionDropdownOpen(!isSectionDropdownOpen)}
+                                                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer flex justify-between items-center text-slate-700 font-medium ${error === 'Income tax section is mandatory' ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-purple-500/20 focus:border-purple-500'}`}
+                                                >
+                                                    <span>{incomeTaxSection || 'Select Section'}</span>
+                                                    <ChevronDown className={`text-slate-400 transition-transform ${isSectionDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                                </div>
+                                                {error === 'Income tax section is mandatory' && <p className="text-[10px] text-rose-500 mt-1 font-medium">{error}</p>}
+                                                {isSectionDropdownOpen && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-[60]" onClick={() => setIsSectionDropdownOpen(false)} />
+                                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-[70] py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                            {[
+                                                                ...(taxTreatment === 'Fully Taxable' ? ['NULL'] : []),
+                                                                "Section_10(14)(i)",
+                                                                "Section_10(14)(ii)",
+                                                                "Section_10(5)",
+                                                                "Section_17(2)(Viii)",
+                                                                "Section_10(13)(a)"
+                                                            ].map(section => (
+                                                                <div
+                                                                    key={section}
+                                                                    onClick={() => {
+                                                                        setIncomeTaxSection(section);
+                                                                        setIsSectionDropdownOpen(false);
+                                                                        setError(null);
+                                                                    }}
+                                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                                                                >
+                                                                    {section}
+                                                                    {incomeTaxSection === section && <Check size={14} className="text-purple-600" />}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {taxTreatment !== 'Partially Exempt' && taxTreatment !== 'Non Taxable' && (
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
                                                 <input
@@ -1146,6 +1238,8 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <span className="text-sm font-bold text-slate-700">Consider for NPS</span>
                             </label>
 
+                            {/* Hidden per user request */}
+                            {false && (
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isConsiderPT ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {isConsiderPT && <Check size={14} className="text-white" />}
@@ -1153,6 +1247,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <input type="checkbox" className="hidden" checked={isConsiderPT} onChange={() => setIsConsiderPT(!isConsiderPT)} />
                                 <span className="text-sm font-bold text-slate-700">Consider for Professional tax</span>
                             </label>
+                            )}
 
                             {/* Hidden per user request */}
                             {false && (
@@ -1727,7 +1822,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                                         )}
                                     </div>
 
-                                    {taxTreatment === 'Partially Exempt' && (
+                                    {taxTreatment !== 'Partially Exempt' && taxTreatment !== 'Non Taxable' && (
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 mb-1.5">Section maximum limit</label>
                                             <input
@@ -2334,10 +2429,11 @@ const HRSalaryComponents: React.FC = () => {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching components:', error);
+        if (error || !data || data.length === 0) {
+            if (error) console.error('Error fetching components:', error);
+            setComponents(INITIAL_DATA);
         } else {
-            const mappedData: SalaryComponent[] = (data || []).map(item => ({
+            const mappedData: SalaryComponent[] = data.map(item => ({
                 id: item.id,
                 name: item.name,
                 type: item.type,
@@ -2490,22 +2586,7 @@ const HRSalaryComponents: React.FC = () => {
             allComponents = [...defaultsForTarget, ...savedForTarget];
         }
 
-        const filtered = allComponents.filter(c => {
-            if (c.category !== activeTab) return false;
-            
-            // Filter out specific components in Deductions tab as requested
-            if (activeTab === 'Deductions') {
-                const forbiddenNames = [
-                    'esi (employee)',
-                    'professional tax',
-                    'provident fund (employee)',
-                    'professional tax (pt)'
-                ];
-                const normalizedName = c.name.trim().toLowerCase();
-                if (forbiddenNames.some(fn => normalizedName.includes(fn))) return false;
-            }
-            return true;
-        });
+        const filtered = allComponents.filter(c => c.category === activeTab);
         
         let result = filtered;
 
@@ -2670,37 +2751,38 @@ const HRSalaryComponents: React.FC = () => {
             last_updated_by: 'Admin'
         } as any;
 
+        const updatedComp: SalaryComponent = {
+            id: editingComponent ? editingComponent.id : Date.now().toString(),
+            name: data.name || 'New Component',
+            type: data.type || 'Fixed Pay',
+            calculation: data.calculation || `${data.amountOrPercent || 0}%`,
+            taxable: data.taxable || 'Fully Taxable',
+            status: data.status ?? true,
+            category: activeTab as any,
+            amountOrPercent: data.amountOrPercent,
+            minAmount: data.minAmount,
+            calcMethod: data.calcMethod,
+            payslipName: data.payslipName,
+            frequency: data.frequency,
+            considerEPF: data.considerEPF,
+            considerESI: data.considerESI,
+            effectiveDate: data.effectiveDate,
+            lastModified: `By Admin\nAt ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date().toLocaleDateString()}`
+        };
+
         try {
             if (editingComponent) {
-                const isMock = editingComponent.id.startsWith('mock-');
-                if (isMock) {
-                    payload.created_by = 'Admin';
-                    const { error } = await supabase
-                        .from('salary_components')
-                        .insert([payload]);
-
-                    if (error) throw error;
-                } else {
-                    const { error } = await supabase
-                        .from('salary_components')
-                        .update(payload)
-                        .eq('id', editingComponent.id);
-
-                    if (error) throw error;
-                }
+                setComponents(prev => prev.map(c => c.id === editingComponent.id ? { ...c, ...updatedComp } : c));
             } else {
-                payload.created_by = 'Admin';
-                const { error } = await supabase
-                    .from('salary_components')
-                    .insert([payload]);
-
-                if (error) throw error;
+                setComponents(prev => [updatedComp, ...prev]);
             }
+
+            await supabase.from('salary_components').upsert([payload]);
+        } catch (err: any) {
+            console.error('Error saving component to db:', err);
+        } finally {
             fetchComponents();
             handleCancel();
-        } catch (err: any) {
-            console.error('Error saving component:', err);
-            alert(`Failed to save component: ${err.message || 'Unknown error'}`);
         }
     };
 

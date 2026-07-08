@@ -526,14 +526,14 @@ const OperationalConfig: React.FC = () => {
                     <button
                         onClick={() => fetchConfig()}
                         disabled={isSaving || isLoading}
-                        className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-100 transition-all active:scale-95 disabled:opacity-50"
+                        className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-100 transition-all active:scale-95 disabled:opacity-50"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSaveConfig}
                         disabled={isSaving || isLoading}
-                        className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-sky-100 active:scale-95"
+                        className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-sky-100 active:scale-95"
                     >
                         {isSaving ? (
                             <Loader2 size={18} className="animate-spin" />
@@ -1273,8 +1273,8 @@ const OperationalConfig: React.FC = () => {
                                     </div>
 
                                     <div className="flex flex-wrap gap-6 mb-4">
-                                        {['Gross Salary', 'Net Pay', 'Select Component'].map((opt) => {
-                                            const value = opt === 'Select Component' ? 'custom' : opt === 'Gross Salary' ? 'gross' : 'net';
+                                        {['Gross Salary', 'Select Component'].map((opt) => {
+                                            const value = opt === 'Select Component' ? 'custom' : 'gross';
                                             return (
                                                 <label key={opt} className="flex items-center gap-2 cursor-pointer group">
                                                     <div className="relative flex items-center justify-center">
@@ -1376,29 +1376,8 @@ const OperationalConfig: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Divisor Selection */}
-                                <div className="space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                                            <Calculator size={16} />
-                                        </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor <span className="text-red-500">*</span></h4>
-                                    </div>
-
-                                    <div className="max-w-xs">
-                                        <input 
-                                            type="text" 
-                                            value={lopDivisor} 
-                                            onChange={(e) => setLopDivisor(e.target.value.replace(/[^0-9]/g, ''))}
-                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
-                                            placeholder="e.g. 30"
-                                        />
-                                        <p className="text-[10px] text-slate-400 font-medium mt-2 italic">Enter the number of days used as divisor for LOP daily rate calculation.</p>
-                                    </div>
-                                </div>
-
                                 {/* Formula Preview */}
-                                <div className="self-start lg:mt-14 w-full max-w-sm">
+                                <div className="self-start lg:mt-6 w-full max-w-sm">
                                     <div className="p-4 bg-slate-50/50 border border-slate-200 rounded-xl shadow-sm">
                                         <div className="mb-3">
                                             <div className="flex items-center gap-2 mb-1">
@@ -1407,15 +1386,15 @@ const OperationalConfig: React.FC = () => {
                                             </div>
                                             <div className="font-mono text-[15px] text-indigo-700 pl-4 py-1 tracking-tight">
                                                 {(() => {
-                                                    if (lopType === 'gross') return `Gross Salary / ${lopDivisor || '0'}`;
-                                                    if (lopType === 'net') return `Net Pay / ${lopDivisor || '0'}`;
+                                                    const divVal = lopDivisor || '30';
+                                                    if (lopType === 'gross') return `Gross Salary / ${divVal}`;
                                                     const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => lopComponents.includes(opt));
-                                                    if (active.length === 0) return `(None Selected) / ${lopDivisor || '0'}`;
+                                                    if (active.length === 0) return `(None Selected) / ${divVal}`;
                                                     const labels = active.map(a => {
                                                         if (a === "Dearness Allowance (DA)") return "DA";
                                                         return a.replace(" Salary", "").replace(" Allowance", "");
                                                     });
-                                                    return `(${labels.join(" + ")}) / ${lopDivisor || '0'}`;
+                                                    return `(${labels.join(" + ")}) / ${divVal}`;
                                                 })()}
                                             </div>
                                         </div>
@@ -1434,10 +1413,6 @@ const OperationalConfig: React.FC = () => {
                                     </div>
 
                                     <div className="mt-4 space-y-2">
-                                        <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
-                                            <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
-                                            <span>The divisor is typically 30 (calendar days) or the actual days in the month for LOP calculations.</span>
-                                        </p>
                                         <p className="text-[11px] text-slate-500 flex gap-1.5 items-start leading-relaxed">
                                             <Info size={14} className="shrink-0 mt-0.5 text-slate-400" />
                                             <span>"LOP Days" = number of unpaid leave days in the payroll period.</span>

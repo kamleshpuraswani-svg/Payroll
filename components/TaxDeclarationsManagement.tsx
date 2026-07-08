@@ -2371,7 +2371,9 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                                                         <div className="font-black text-slate-700">₹{(doc?.amount || 0).toLocaleString('en-IN')}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="font-black text-emerald-700">₹{(doc?.approved_amount || 0).toLocaleString('en-IN')}</div>
+                                                        <div className="font-black text-emerald-700">
+                                                            ₹{((doc?.status === 'Approved' || doc?.status === 'Partially Approved' ? (doc?.approved_amount !== undefined && doc?.approved_amount !== null ? doc.approved_amount : doc?.amount) : doc?.amount) || 0).toLocaleString('en-IN')}
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {(() => {

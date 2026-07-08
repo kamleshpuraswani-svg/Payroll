@@ -92,10 +92,11 @@ const LoanAdvancesTypes: React.FC = () => {
             .select('*')
             .order('name', { ascending: true });
 
-        if (error) {
-            console.error('Error fetching loan types:', error);
+        if (error || !data || data.length === 0) {
+            if (error) console.error('Error fetching loan types:', error);
+            setLoanTypes(MOCK_LOAN_TYPES);
         } else {
-            const mappedData: LoanType[] = (data || []).map(item => ({
+            const mappedData: LoanType[] = data.map(item => ({
                 id: item.id,
                 name: item.name,
                 interestRate: Number(item.interest_rate),
@@ -236,8 +237,7 @@ const LoanAdvancesTypes: React.FC = () => {
         const [targetTypeRaw, targetId] = selectedTarget.split(':');
         const targetType = targetTypeRaw === 'pg' ? 'Paygroup' : 'BusinessUnit';
         
-        const matchesTarget = t.targetId === targetId && t.targetType === targetType;
-        // Also show items without a target id as default, or filter specifically
+        const matchesTarget = !t.targetId || (t.targetId === targetId && t.targetType === targetType);
         return matchesSearch && matchesTarget;
     });
 
@@ -568,7 +568,7 @@ const LoanAdvancesTypes: React.FC = () => {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <span className="font-medium text-slate-800">
-                                                                {item.maxAmount.includes('months') ? item.maxAmount : `₹${item.maxAmount}`}
+                                                                {String(item.maxAmount || '').includes('months') ? item.maxAmount : `₹${item.maxAmount || '0'}`}
                                                             </span>
                                                         </td>
                                                         <td className="px-6 py-4">

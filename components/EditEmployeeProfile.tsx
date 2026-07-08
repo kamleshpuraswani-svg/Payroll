@@ -468,17 +468,25 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       const basicComp = structureComponents.earnings.find(c => c.name.toLowerCase().includes('basic'));
       if (basicComp) {
          basic = calcComp(basicComp, {});
+      } else {
+         basic = applyRoundOff(annualCtc * 0.5); // Default 50% of CTC
       }
 
       // 2. Pre-calculate fixed and formula-based Earnings
-      structureComponents.earnings.forEach(comp => {
-         if (comp.name.toLowerCase().includes('basic')) {
-            earnings.push({ name: comp.name, annual: basic, monthly: basic / 12 });
-         } else if (!comp.calculation.includes('Balancing Figure')) {
-            const val = calcComp(comp, { basic });
-            earnings.push({ name: comp.name, annual: val, monthly: val / 12 });
-         }
-      });
+      if (structureComponents.earnings.length > 0) {
+         structureComponents.earnings.forEach(comp => {
+            if (comp.name.toLowerCase().includes('basic')) {
+               earnings.push({ name: comp.name, annual: basic, monthly: basic / 12 });
+            } else if (!comp.calculation.includes('Balancing Figure')) {
+               const val = calcComp(comp, { basic });
+               earnings.push({ name: comp.name, annual: val, monthly: val / 12 });
+            }
+         });
+      } else {
+         const hra = applyRoundOff(basic * 0.5); // Default 50% of Basic
+         earnings.push({ name: 'Basic', annual: basic, monthly: basic / 12 });
+         earnings.push({ name: 'House Rent Allowance', annual: hra, monthly: hra / 12 });
+      }
 
       // 3. Calculate Employer Contributions (Part of CTC)
       
@@ -541,6 +549,8 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
       
       if (balancingComp) {
          earnings.push({ name: balancingComp.name, annual: specialVal, monthly: specialVal / 12 });
+      } else {
+         earnings.push({ name: 'Special Allowance', annual: specialVal, monthly: specialVal / 12 });
       }
 
       const annualGross = earnings.reduce((sum, e) => sum + e.annual, 0);
@@ -995,8 +1005,11 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                  value={ctc || ''}
                                  disabled={isReadOnly || salaryInputBasis === 'Gross'}
                                  onChange={(e) => {
-                                    setCtc(parseInt(e.target.value) || 0);
+                                    const val = parseInt(e.target.value) || 0;
+                                    setCtc(val);
                                     setManualAnnualGross(null);
+                                    setSalaryStructure(null);
+                                    setComponentOverrides({});
                                  }}
                                  className={`w-full pl-8 pr-4 py-2 text-sm font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 ${
                                     isReadOnly || salaryInputBasis === 'Gross'
@@ -1041,7 +1054,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                            { id: 'nps', label: 'NPS' },
                            { id: 'vpf', label: 'Voluntary Provident Fund (VPF)' }
                         ].filter(comp => {
-                            if (userRole === 'HR_MANAGER' && comp.id === 'tds') return false;
+                            if (userRole === 'HR_MANAGER' && (comp.id === 'tds' || comp.id === 'professionalTax')) return false;
                             if (comp.id === 'vpf') {
                                const pfSettings = statutorySettings?.pf_settings;
                                return (pfSettings?.enablePf ?? true) && !!pfSettings?.isVpfApplicable;
@@ -1526,7 +1539,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                                  </td>
                                  <td className="px-4 py-2.5 text-right text-slate-600">₹ {formatCurrency(displayMonthly)}</td>
                                  <td className="px-4 py-2.5 text-right text-slate-800 font-medium">
-                                    {!isReadOnly && isSalaryStructureEditable ? (
+                                    {!isReadOnly && isSalaryStructureEditable && comp.name.toLowerCase() !== 'special allowance' ? (
                                        <input
                                           type="number"
                                           value={displayAnnual}

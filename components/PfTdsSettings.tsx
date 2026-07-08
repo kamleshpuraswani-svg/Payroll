@@ -1093,48 +1093,50 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                     </div>
 
                                                     {/* LOP Configuration Section */}
-                                                    <div className="pt-10 border-t border-slate-300 space-y-6">
-                                                        <div className="flex items-center gap-2.5 text-slate-800 font-black text-[10px] uppercase tracking-[0.2em]">
-                                                            <AlertCircle size={16} className="text-sky-600" />
-                                                            PF Configuration when LOP Applied
-                                                        </div>
+                                                    {false && (
+                                                        <div className="pt-10 border-t border-slate-300 space-y-6">
+                                                            <div className="flex items-center gap-2.5 text-slate-800 font-black text-[10px] uppercase tracking-[0.2em]">
+                                                                <AlertCircle size={16} className="text-sky-600" />
+                                                                PF Configuration when LOP Applied
+                                                            </div>
 
-                                                        <div className="space-y-6">
-                                                            <label className="flex items-start gap-4 cursor-pointer group/item">
-                                                                <div onClick={() => isEditingPf && setProrateRestricted(!prorateRestricted)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${prorateRestricted ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
-                                                                    {prorateRestricted && <Check size={14} strokeWidth={4} />}
-                                                                </div>
-                                                                <div className="space-y-1">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Pro-rate Restricted PF Wage</span>
-                                                                        <div className="group/tip relative">
-                                                                            <Info size={14} className="text-slate-300 cursor-help" />
-                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-xl z-50 text-center font-bold">
-                                                                                PF contribution will be pro-rated based on the number of days worked by the employee.
-                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                            <div className="space-y-6">
+                                                                <label className="flex items-start gap-4 cursor-pointer group/item">
+                                                                    <div onClick={() => isEditingPf && setProrateRestricted(!prorateRestricted)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${prorateRestricted ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                        {prorateRestricted && <Check size={14} strokeWidth={4} />}
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Pro-rate Restricted PF Wage</span>
+                                                                            <div className="group/tip relative">
+                                                                                <Info size={14} className="text-slate-300 cursor-help" />
+                                                                                <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-xl z-50 text-center font-bold">
+                                                                                    PF contribution will be pro-rated based on the number of days worked by the employee.
+                                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            </label>
+                                                                </label>
 
-                                                            <label className="flex items-start gap-4 cursor-pointer group/item">
-                                                                <div onClick={() => isEditingPf && setConsiderComponents(!considerComponents)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${considerComponents ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
-                                                                    {considerComponents && <Check size={14} strokeWidth={4} />}
-                                                                </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight block">Consider all applicable salary components if PF wage is less than ₹15,000 after Loss of Pay</span>
-                                                                        <div className="group/tip relative">
-                                                                            <Info size={14} className="text-slate-300 cursor-help" />
-                                                                            <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-xl z-50 text-center font-bold">
-                                                                                PF wage will be computed using the salary earned in that month rather than the structure amount.
-                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                <label className="flex items-start gap-4 cursor-pointer group/item">
+                                                                    <div onClick={() => isEditingPf && setConsiderComponents(!considerComponents)} className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${considerComponents ? 'bg-sky-500 border-sky-500 text-white shadow-lg shadow-sky-100' : 'border-slate-300 bg-white group-hover/item:border-sky-400'}`}>
+                                                                        {considerComponents && <Check size={14} strokeWidth={4} />}
+                                                                    </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight block">Consider all applicable salary components if PF wage is less than ₹15,000 after Loss of Pay</span>
+                                                                            <div className="group/tip relative">
+                                                                                <Info size={14} className="text-slate-300 cursor-help" />
+                                                                                <div className="invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-xl z-50 text-center font-bold">
+                                                                                    PF wage will be computed using the salary earned in that month rather than the structure amount.
+                                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                            </label>
+                                                                </label>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
 

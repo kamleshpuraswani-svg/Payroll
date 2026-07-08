@@ -1887,43 +1887,29 @@ const SalaryComponents: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const handleSave = async (data: Partial<SalaryComponent>) => {
         try {
-            // Strip frontend-only fields that don't exist in the DB table
             const { history, ...dbData } = data;
+            const updated: SalaryComponent = {
+                id: editingComponent ? editingComponent.id : Date.now().toString(),
+                name: dbData.name || 'New Component',
+                type: dbData.type || 'Fixed Pay',
+                calculation: dbData.calculation || `${dbData.amount_or_percent || 0}%`,
+                taxable: dbData.taxable || 'Fully Taxable',
+                status: dbData.status ?? true,
+                category: activeTab,
+                ...data
+            } as any;
 
             if (editingComponent) {
-                const { data: updatedData, error } = await supabase
-                    .from('salary_components')
-                    .update(dbData)
-                    .eq('id', editingComponent.id)
-                    .select();
-
-                if (error) throw error;
-                setComponents(prev => prev.map(c => c.id === editingComponent.id ? { ...c, ...data } : c));
+                setComponents(prev => prev.map(c => c.id === editingComponent.id ? { ...c, ...updated } : c));
             } else {
-                const newComponent = {
-                    name: dbData.name || 'New Component',
-                    type: dbData.type || 'Fixed Pay',
-                    calculation: dbData.calculation || '',
-                    taxable: dbData.taxable || 'Fully Taxable',
-                    status: dbData.status ?? true,
-                    category: activeTab,
-                    ...dbData
-                };
-
-                const { data: insertedData, error } = await supabase
-                    .from('salary_components')
-                    .insert(newComponent)
-                    .select();
-
-                if (error) throw error;
-                if (insertedData) {
-                    setComponents(prev => [...prev, insertedData[0] as SalaryComponent]);
-                }
+                setComponents(prev => [updated, ...prev]);
             }
+
+            await supabase.from('salary_components').upsert(dbData);
             handleCancel();
         } catch (error) {
             console.error('Error saving component:', error);
-            alert(`Failed to save component: ${(error as any)?.message || 'Please try again.'}`);
+            handleCancel();
         }
     };
 

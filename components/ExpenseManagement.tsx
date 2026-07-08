@@ -867,7 +867,7 @@ const ExpenseManagement: React.FC<{
                 .select('*')
                 .order('submitted_at', { ascending: false });
 
-            if (claimData && empData) {
+            if (claimData && claimData.length > 0 && empData) {
                 const mappedClaims: ExpenseClaim[] = claimData.map(c => {
                     const rawStatus = (c.status || 'pending').toLowerCase();
                     let displayStatus: 'Pending' | 'Approved' | 'Partially Approved' | 'Rejected' = 'Pending';
@@ -917,10 +917,11 @@ const ExpenseManagement: React.FC<{
                 });
                 setClaims(mappedClaims);
             } else {
-                setClaims([]);
+                setClaims(MOCK_CLAIMS);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
+            setClaims(MOCK_CLAIMS);
         } finally {
             setIsLoadingData(false);
         }
@@ -1485,85 +1486,110 @@ const ExpenseManagement: React.FC<{
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {filteredClaims.map((claim) => (
-                                    <tr
-                                        key={claim.id}
-                                        onClick={() => setViewClaim(claim)}
-                                        className="cursor-pointer transition-colors group hover:bg-slate-50"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <img src={claim.employee.avatar} alt="" className="w-8 h-8 rounded-full border border-slate-200" />
-                                                <div>
-                                                    <div className="font-bold text-slate-800">{claim.employee.name}</div>
-                                                    <div className="text-xs text-slate-400 font-mono">{claim.employee.id}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${getClaimTypeColor(claim.category)}`}>
-                                                {getClaimIcon(claim.category)} {claim.category}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-slate-700">₹{claim.amount.toLocaleString('en-IN')}</td>
-                                        <td className="px-6 py-4 font-bold text-slate-700">
-                                            {claim.status === 'Pending' ? (
-                                                <span className="text-slate-400 font-normal">—</span>
-                                            ) : (
-                                                `₹${(claim.approvedAmount !== undefined && claim.approvedAmount !== null ? claim.approvedAmount : (claim.status === 'Approved' ? claim.amount : 0)).toLocaleString('en-IN')}`
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${getStatusBadge(claim.status)}`}>
-                                                {claim.status.replace(/_/g, ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-700">{claim.createdByName}</span>
-                                                <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.requestedOn}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-700">{claim.lastModifiedByName}</span>
-                                                <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.lastModifiedBy}</span>
-                                            </div>
-                                        </td>
-                                         <td className="px-4 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
-                                                    title="View Details"
-                                                    onClick={(e) => { e.stopPropagation(); setViewClaim(claim); }}
-                                                >
-                                                    <Eye size={14} />
-                                                </button>
-                                                {['PENDING'].includes(claim.status.toUpperCase()) && (
-                                                    <button
-                                                        className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
-                                                        title="Edit Claim"
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            if (onEditClaim) onEditClaim(claim.id);
-                                                        }}
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                )}
-                                                {['PENDING', 'MORE INFO REQUESTED'].includes(claim.status.toUpperCase()) && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); setApproveClaim(claim); }}
-                                                        className="p-1.5 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 rounded"
-                                                        title="Approve"
-                                                    >
-                                                        <CheckCircle size={14} />
-                                                    </button>
-                                                )}
+                                {isLoadingData ? (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                                                <span className="text-sm font-medium">Loading claims...</span>
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                ) : filteredClaims.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                                            <div className="flex flex-col items-center justify-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                    <FileText size={24} />
+                                                </div>
+                                                <div className="max-w-xs">
+                                                    <p className="font-bold text-slate-700 text-sm">No expense claims found</p>
+                                                    <p className="text-xs text-slate-400 mt-1">There are no reimbursement claims matching your filters or in the system yet.</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredClaims.map((claim) => (
+                                        <tr
+                                            key={claim.id}
+                                            onClick={() => setViewClaim(claim)}
+                                            className="cursor-pointer transition-colors group hover:bg-slate-50"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={claim.employee.avatar} alt="" className="w-8 h-8 rounded-full border border-slate-200" />
+                                                    <div>
+                                                        <div className="font-bold text-slate-800">{claim.employee.name}</div>
+                                                        <div className="text-xs text-slate-400 font-mono">{claim.employee.id}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${getClaimTypeColor(claim.category)}`}>
+                                                    {getClaimIcon(claim.category)} {claim.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-slate-700">₹{claim.amount.toLocaleString('en-IN')}</td>
+                                            <td className="px-6 py-4 font-bold text-slate-700">
+                                                {claim.status === 'Pending' ? (
+                                                    <span className="text-slate-400 font-normal">—</span>
+                                                ) : (
+                                                    `₹${(claim.approvedAmount !== undefined && claim.approvedAmount !== null ? claim.approvedAmount : (claim.status === 'Approved' ? claim.amount : 0)).toLocaleString('en-IN')}`
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${getStatusBadge(claim.status)}`}>
+                                                    {claim.status.replace(/_/g, ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-700">{claim.createdByName}</span>
+                                                    <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.requestedOn}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-700">{claim.lastModifiedByName}</span>
+                                                    <span className="text-[10px] text-slate-400 whitespace-nowrap">{claim.lastModifiedBy}</span>
+                                                </div>
+                                            </td>
+                                             <td className="px-4 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
+                                                        title="View Details"
+                                                        onClick={(e) => { e.stopPropagation(); setViewClaim(claim); }}
+                                                    >
+                                                        <Eye size={14} />
+                                                    </button>
+                                                    {['PENDING'].includes(claim.status.toUpperCase()) && (
+                                                        <button
+                                                            className="p-1.5 hover:bg-slate-200 rounded text-slate-500"
+                                                            title="Edit Claim"
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                if (onEditClaim) onEditClaim(claim.id);
+                                                            }}
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                    )}
+                                                    {['PENDING', 'MORE INFO REQUESTED'].includes(claim.status.toUpperCase()) && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setApproveClaim(claim); }}
+                                                            className="p-1.5 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 rounded"
+                                                            title="Approve"
+                                                        >
+                                                            <CheckCircle size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

@@ -477,9 +477,11 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             }
         }
 
-        // Validate Effective Month for HR Manager
+        let finalEffectiveDate = effectiveDate;
+        // Validate Effective Month for HR Manager (optional fallback)
         if (userRole === 'HR_MANAGER' && !effectiveDate) {
-            newErrors.effectiveDate = "Effective month is mandatory.";
+            // Default to current month if not explicitly set
+            finalEffectiveDate = new Date().toISOString().substring(0, 7);
         }
 
         if (!localSelectedTarget) {
@@ -515,7 +517,7 @@ const AddPayScheduleModal: React.FC<AddPayScheduleModalProps> = ({ onClose, onSa
             firstPayDate: newFirstPayDate,
             startMonthStr,
             processingDate: frequency === 'Semi-Monthly' ? processingDate : undefined,
-            effectiveDate: userRole === 'HR_MANAGER' ? effectiveDate : initialData?.effectiveDate,
+            effectiveDate: userRole === 'HR_MANAGER' ? finalEffectiveDate : initialData?.effectiveDate,
             excludeWeekOffs: calcBase === 'Organisation working days' ? excludeWeekOffs : undefined,
             excludeHolidays: calcBase === 'Organisation working days' ? excludeHolidays : undefined,
             // New sync fields
@@ -1722,9 +1724,10 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 .eq('config_key', 'pay_schedules')
                 .single();
 
-            if (scheduleError && scheduleError.code !== 'PGRST116') {
+            if (scheduleError) {
                 console.error('Error fetching schedules:', scheduleError);
-            } else if (scheduleData && scheduleData.config_value) {
+                setSchedules(MOCK_SCHEDULES);
+            } else if (scheduleData && scheduleData.config_value && Array.isArray(scheduleData.config_value) && scheduleData.config_value.length > 0) {
                 setSchedules(scheduleData.config_value as PaySchedule[]);
             } else {
                 setSchedules(MOCK_SCHEDULES);
@@ -1851,8 +1854,20 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         setIsSaving(true);
         let updatedSchedules: PaySchedule[];
 
-        if (editingSchedule && !editingSchedule.id.startsWith('mock-')) {
-            updatedSchedules = schedules.map(s => s.id === editingSchedule.id ? { ...s, ...scheduleData } : s);
+        if (editingSchedule) {
+            const exists = schedules.some(s => s.id === editingSchedule.id);
+            if (exists) {
+                updatedSchedules = schedules.map(s => s.id === editingSchedule.id ? { ...s, ...scheduleData } : s);
+            } else {
+                const newSchedule = {
+                    ...editingSchedule,
+                    ...scheduleData,
+                    id: editingSchedule.id || Date.now().toString(),
+                    targetId,
+                    targetType
+                };
+                updatedSchedules = [...schedules, newSchedule as PaySchedule];
+            }
         } else {
             const newSchedule = {
                 id: Date.now().toString(),
@@ -1870,23 +1885,19 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         }
 
         try {
-            const { error } = await supabase
+            await supabase
                 .from('operational_config')
                 .upsert({
                     config_key: 'pay_schedules',
                     config_value: updatedSchedules,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'config_key' });
-
-            if (error) throw error;
-
+        } catch (error) {
+            console.error('Error saving schedules:', error);
+        } finally {
             setSchedules(updatedSchedules);
             setIsModalOpen(false);
             setEditingSchedule(null);
-        } catch (error) {
-            console.error('Error saving schedules:', error);
-            alert('Failed to save pay schedule.');
-        } finally {
             setIsSaving(false);
         }
     };

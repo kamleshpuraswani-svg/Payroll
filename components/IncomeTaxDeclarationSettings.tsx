@@ -1140,7 +1140,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 </div>
                 
                 {/* 1. Investment Declaration Section */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <div>
                             <div className="flex items-center gap-3 mb-1">
@@ -1201,7 +1201,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                                 {/* Custom months picker (only for Custom type) */}
                                 {declWindowType === 'Custom' && (
-                                    <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-4 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-lg space-y-4 animate-in slide-in-from-top-2 duration-200">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Months</label>
                                         <div className="flex flex-wrap gap-2">
                                             {["January","February","March","April","May","June","July","August","September","October","November","December"].map(m => {
@@ -1239,7 +1239,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         disabled={!isEditingInv}
                                                         value={invStartDay}
                                                         onChange={(e) => setInvStartDay(e.target.value)}
-                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
                                                     >
                                                         {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                                                             <option key={day} value={day}>{day}</option>
@@ -1255,7 +1255,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         disabled={!isEditingInv}
                                                         value={invEndDay}
                                                         onChange={(e) => setInvEndDay(e.target.value)}
-                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
                                                     >
                                                         {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                                                             <option key={day} value={day}>{day}</option>
@@ -1282,7 +1282,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         disabled={!isEditingInv}
                                                         value={cutoffMonth}
                                                         onChange={(e) => setCutoffMonth(e.target.value)}
-                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
                                                     >
                                                         {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
                                                             <option key={m} value={m}>{m}</option>
@@ -1298,7 +1298,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         disabled={!isEditingInv}
                                                         value={cutoffDay}
                                                         onChange={(e) => setCutoffDay(e.target.value)}
-                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
+                                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all appearance-none disabled:bg-slate-50 disabled:text-slate-400 shadow-sm"
                                                     >
                                                         {Array.from({ 
                                                             length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(cutoffMonth) + 1, 0).getDate() 
@@ -1314,8 +1314,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </div>
 
                                 {/* Dynamic info text box */}
-                                <div className="mt-8 p-4 bg-amber-50/50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                <div className="mt-8 p-4 bg-amber-50/50 border border-amber-100 rounded-lg flex gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                                         <Info size={20} className="text-amber-600" />
                                     </div>
                                     <div>
@@ -1341,7 +1341,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 value={defaultRegime}
                                                 onChange={(e) => setDefaultRegime(e.target.value)}
                                                 disabled={!isEditingInv}
-                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-600"
+                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-600"
                                             >
                                                 <option>New Regime</option>
                                                 <option>Old Regime</option>
@@ -1378,14 +1378,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
                                     <div className="flex gap-4 mb-4">
                                         <div className="relative flex-1">
                                             <select 
                                                 value={selectedInvApprover}
                                                 onChange={(e) => setSelectedInvApprover(e.target.value)}
                                                 disabled={!isEditingInv}
-                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
                                             >
                                                 <option value="">Select Employee to Add...</option>
                                                 {EMPLOYEES_LIST.map(emp => (
@@ -1397,7 +1397,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         <button 
                                             onClick={() => addApprover(invApprovers, setInvApprovers, selectedInvApprover, setSelectedInvApprover)}
                                             disabled={!isEditingInv || !selectedInvApprover}
-                                            className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                            className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                                         >
                                             <Plus size={18} /> Add
                                         </button>
@@ -1405,7 +1405,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                                     <div className="space-y-2">
                                         {invApprovers.length > 0 ? invApprovers.map((approver, index) => (
-                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl group hover:border-indigo-200 transition-colors shadow-sm">
+                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg group hover:border-indigo-200 transition-colors shadow-sm">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black">
                                                         {index + 1}
@@ -1440,7 +1440,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 </div>
                                             </div>
                                         )) : (
-                                            <div className="text-center py-6 text-slate-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
+                                            <div className="text-center py-6 text-slate-400 text-xs italic bg-white rounded-lg border border-dashed border-slate-200">
                                                 No approvers added for Investment Declaration.
                                             </div>
                                         )}
@@ -1482,7 +1482,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         ))}
                                     </div>
 
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
                                         {months.map(m => (
                                             <label key={m} className={`flex items-center gap-2 group ${isEditingInv ? 'cursor-pointer' : 'cursor-default'}`}>
                                                 <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedTdsMonths.includes(m) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-indigo-400'}`}>
@@ -1544,7 +1544,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             }
                                         }}
                                         placeholder="Enter limit (1 - 100)"
-                                        className="w-64 h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
+                                        className="w-64 h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
                                     />
                                 </div>
 
@@ -1709,7 +1709,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 </div>
 
                 {/* 2. Income Tax Deductions Limit Section */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/30">
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-3">
@@ -1719,7 +1719,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <h3 className="text-lg font-bold text-slate-800 tracking-tight">Income Tax Deductions Limit</h3>
                             </div>
                             
-                            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
                                 <button 
                                     onClick={() => setLimitViewRegime('Old')}
                                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${limitViewRegime === 'Old' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -1737,7 +1737,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => setIsLimitsExpanded(!isLimitsExpanded)}
-                                className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-600"
+                                className="p-2 hover:bg-slate-100 rounded-lg transition-all text-slate-400 hover:text-slate-600"
                             >
                                 {isLimitsExpanded ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
                             </button>
@@ -1748,7 +1748,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                         {/* Age group sub-tabs — only for Old Regime */}
                         {limitViewRegime === 'Old' && (
-                            <div className="mb-5 flex items-center gap-1 bg-slate-100/80 border border-slate-200 rounded-2xl p-1 w-fit shadow-sm">
+                            <div className="mb-5 flex items-center gap-1 bg-slate-100/80 border border-slate-200 rounded-lg p-1 w-fit shadow-sm">
                                 {([
                                     { key: 'individual', label: 'Individuals (Below 60 years)' },
                                     { key: 'senior',     label: 'Senior Citizens (60\u201380 years)' },
@@ -1757,7 +1757,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <button
                                         key={tab.key}
                                         onClick={() => setOldRegimeAgeGroup(tab.key)}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
                                             oldRegimeAgeGroup === tab.key
                                                 ? 'bg-white text-violet-600 shadow-sm border border-slate-200'
                                                 : 'text-slate-500 hover:text-slate-700'
@@ -1769,7 +1769,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                             <table className="w-full text-left text-sm border-collapse">
                                         <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
                                     <tr>
@@ -1840,7 +1840,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                         newLimits[actualIdx].section = e.target.value;
                                                                         setLimits(newLimits);
                                                                     }}
-                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
+                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
                                                                     placeholder="e.g. 80C"
                                                                 />
                                                             ) : (
@@ -1863,7 +1863,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                         newLimits[actualIdx].description = e.target.value;
                                                                         setLimits(newLimits);
                                                                     }}
-                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all bg-white"
                                                                     placeholder="Section description..."
                                                                 />
                                                             ) : limit.description}
@@ -1881,7 +1881,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                         newLimits[actualIdx].limit = e.target.value;
                                                                         setLimits(newLimits);
                                                                     }}
-                                                                    className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                    className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all bg-white"
                                                                     placeholder="0"
                                                                 />
                                                             </div>
@@ -1927,7 +1927,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 </div>
 
                 {/* 3. Proof of Investment Section */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <div>
                             <div className="flex items-center gap-3 mb-1">
@@ -1971,7 +1971,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                     disabled={!isEditingProof}
                                                     value={proofCutoffMonth}
                                                     onChange={(e) => setProofCutoffMonth(e.target.value)}
-                                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
                                                 >
                                                     {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
                                                         <option key={m} value={m}>{m}</option>
@@ -1989,7 +1989,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         disabled={!isEditingProof}
                                                         value={proofCutoffStartDay}
                                                         onChange={(e) => setProofCutoffStartDay(e.target.value)}
-                                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
                                                     >
                                                         {Array.from({ length: new Date(2026, ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(proofCutoffMonth) + 1, 0).getDate() }, (_, i) => i + 1).map(day => (
                                                             <option key={day} value={day}>{day}</option>
@@ -2005,7 +2005,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         disabled={!isEditingProof}
                                                         value={proofCutoffEndDay}
                                                         onChange={(e) => setProofCutoffEndDay(e.target.value)}
-                                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
                                                     >
                                                         {Array.from({ length: new Date(2026, ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(proofCutoffMonth) + 1, 0).getDate() }, (_, i) => i + 1).map(day => (
                                                             <option key={day} value={day}>{day}</option>
@@ -2025,7 +2025,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 disabled={!isEditingProof}
                                                 value={proofGracePeriodDays}
                                                 onChange={(e) => setProofGracePeriodDays(e.target.value)}
-                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
                                                 placeholder="e.g. 5"
                                             />
                                         </div>
@@ -2042,8 +2042,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </p>
                                     </div>
 
-                                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 animate-in fade-in slide-in-from-top-2 w-full">
-                                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg flex gap-4 animate-in fade-in slide-in-from-top-2 w-full">
+                                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                                             <AlertTriangle size={20} className="text-amber-600" />
                                         </div>
                                         <p className="text-sm font-medium text-amber-900/80 leading-relaxed self-center">
@@ -2059,7 +2059,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 disabled={!isEditingProof}
                                                 value={proofVerificationMonth}
                                                 onChange={(e) => setProofVerificationMonth(e.target.value)}
-                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
+                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
                                             >
                                                 {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
                                                     <option key={m} value={m}>{m}</option>
@@ -2072,7 +2072,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 disabled={!isEditingProof}
                                                 value={proofVerificationDay}
                                                 onChange={(e) => setProofVerificationDay(e.target.value)}
-                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 text-center shadow-sm"
+                                                className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 text-center shadow-sm"
                                             >
                                                 {Array.from({ 
                                                     length: new Date(2026, ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(proofVerificationMonth) + 1, 0).getDate() 
@@ -2092,14 +2092,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">POI Approval Hierarchy <span className="text-rose-500">*</span></h4>
                                     <Info size={12} className="text-slate-400" />
                                 </div>
-                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
                                     <div className="flex gap-4 mb-4">
                                         <div className="relative flex-1">
                                             <select 
                                                 value={selectedProofApprover}
                                                 onChange={(e) => setSelectedProofApprover(e.target.value)}
                                                 disabled={!isEditingProof}
-                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 appearance-none focus:outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
                                             >
                                                 <option value="">Select Employee to Add...</option>
                                                 {EMPLOYEES_LIST.map(emp => (
@@ -2111,7 +2111,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         <button 
                                             onClick={() => addApprover(proofApprovers, setProofApprovers, selectedProofApprover, setSelectedProofApprover)}
                                             disabled={!isEditingProof || !selectedProofApprover}
-                                            className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                            className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                                         >
                                             <Plus size={18} /> Add
                                         </button>
@@ -2119,7 +2119,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                                     <div className="space-y-2">
                                         {proofApprovers.length > 0 ? proofApprovers.map((approver, index) => (
-                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl group hover:border-indigo-200 transition-colors shadow-sm">
+                                            <div key={approver} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg group hover:border-indigo-200 transition-colors shadow-sm">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black">
                                                         {index + 1}
@@ -2154,7 +2154,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 </div>
                                             </div>
                                         )) : (
-                                            <div className="text-center py-6 text-slate-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
+                                            <div className="text-center py-6 text-slate-400 text-xs italic bg-white rounded-lg border border-dashed border-slate-200">
                                                 No approvers added for Proof of Investment.
                                             </div>
                                         )}
@@ -2199,7 +2199,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         }
                                     }}
                                     placeholder="Enter limit (1 - 100)"
-                                    className="w-64 h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
+                                    className="w-64 h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-slate-50 disabled:text-slate-400 shadow-sm font-mono"
                                 />
                             </div>
 

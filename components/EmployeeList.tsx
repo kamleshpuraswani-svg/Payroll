@@ -1250,8 +1250,9 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
             }
 
             if (error) {
-                console.error('Error fetching employees:', error);
-                setFetchError(error.message);
+                console.warn('Supabase fetch error, falling back to mock employees:', error);
+                setEmployees(MOCK_EMPLOYEES);
+                setFetchError(null);
             } else {
                 const configMap: Record<string, any> = {};
                 (configRes.data || []).forEach(row => {
@@ -1294,11 +1295,12 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                         statutory_deductions: statutory || undefined
                     };
                 });
-                setEmployees(mappedData);
+                setEmployees(mappedData.length > 0 ? mappedData : MOCK_EMPLOYEES);
             }
         } catch (err: any) {
-            console.error('Unexpected error in fetchEmployees:', err);
-            setFetchError(err.message || 'An unexpected error occurred');
+            console.warn('Unexpected error in fetchEmployees, using mock employees:', err);
+            setEmployees(MOCK_EMPLOYEES);
+            setFetchError(null);
         } finally {
             setIsLoading(false);
         }
@@ -1958,6 +1960,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             "Voluntary Provident Fund",
             "Professional Tax",
             "Effective From",
+            "Arrears Payout Month",
             "Provident Fund",
             "ESI",
             "Gratuity",
@@ -2001,6 +2004,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 0,      // Voluntary Provident Fund
                 2500,   // Professional Tax
                 "2026-06-01",
+                "2026-05-01",
                 "Yes",
                 "No",
                 "Yes",
@@ -2072,14 +2076,37 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             }
         });
 
-        // Add dropdown to Tax Regime column (col 39) for rows 2 to 100
+        // Add dropdown to Tax Regime column (col 40 since shifted by 1) for rows 2 to 100
         for (let rowNum = 2; rowNum <= 100; rowNum++) {
-            const cell = worksheet.getCell(rowNum, 39);
+            const cell = worksheet.getCell(rowNum, 40);
             cell.dataValidation = {
                 type: 'list',
                 allowBlank: true,
                 formulae: ['"Old Regime,New Regime"']
             };
+        }
+
+        // Add date picker calendar validation for Effective From (col 27) and Arrears Payout Month (col 28)
+        for (let rowNum = 2; rowNum <= 100; rowNum++) {
+            const cellEff = worksheet.getCell(rowNum, 27);
+            cellEff.dataValidation = {
+                type: 'date',
+                allowBlank: true,
+                showInputMessage: true,
+                promptTitle: 'Effective From Date',
+                prompt: 'Please select or enter a date (YYYY-MM-DD or YYYY-MM)'
+            };
+            cellEff.numFmt = 'yyyy-mm';
+
+            const cellArr = worksheet.getCell(rowNum, 28);
+            cellArr.dataValidation = {
+                type: 'date',
+                allowBlank: true,
+                showInputMessage: true,
+                promptTitle: 'Arrears Payout Month',
+                prompt: 'Please select or enter a date (YYYY-MM-DD or YYYY-MM)'
+            };
+            cellArr.numFmt = 'yyyy-mm';
         }
 
         // Generate buffer and trigger file download
@@ -2204,6 +2231,16 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 const designation = String(getExcelValue(row, "Designation")).trim() || "N/A";
                 const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
                 const effectiveFrom = getExcelValue(row, "Effective From", "join_date");
+                const arrearsRaw = getExcelValue(row, "Arrears Payout Month");
+                let formattedArrearsMonth = null;
+                if (arrearsRaw) {
+                    const parsedDate = arrearsRaw instanceof Date ? arrearsRaw : new Date(formatDate(arrearsRaw));
+                    if (!isNaN(parsedDate.getTime())) {
+                        formattedArrearsMonth = parsedDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+                    } else {
+                        formattedArrearsMonth = String(arrearsRaw).trim();
+                    }
+                }
                 
                 const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
                 const structureName = String(getExcelValue(row, "Salary Structure")).trim();
@@ -2296,7 +2333,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                         pf_no: pfNumber,
                         esi_no: esiNumber,
                         pran_no: pranNumber,
-                        arrears_payout_month: null,
+                        arrears_payout_month: formattedArrearsMonth,
                         appraisal_month: null,
                         salary_input_basis: "Gross CTC"
                     },

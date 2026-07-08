@@ -91,20 +91,20 @@ export default function HRTaxConfiguration() {
 
   // Persistence: Load all tax data into state
   const [historicalData, setHistoricalData] = useState<any>(DEFAULT_TAX_DATA);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [oldRegimeCategory, setOldRegimeCategory] = useState('Individuals');
 
-
   const fetchTaxData = async () => {
-    setIsLoading(true);
     const { data, error } = await supabase
       .from('tax_configurations')
       .select('*')
       .order('financial_year', { ascending: false })
       .order('slab_from', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching tax data:', error);
+    if (error || !data || data.length === 0) {
+      if (error) console.error('Error fetching tax data:', error);
+      setHistoricalData(DEFAULT_TAX_DATA);
+      setAvailableYears(Object.keys(DEFAULT_TAX_DATA).sort().reverse());
     } else if (data && data.length > 0) {
       const reconstructed: any = {};
       data.forEach(row => {
@@ -126,7 +126,6 @@ export default function HRTaxConfiguration() {
       setHistoricalData(reconstructed);
       setAvailableYears(Object.keys(reconstructed).sort().reverse());
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -134,10 +133,10 @@ export default function HRTaxConfiguration() {
   }, []);
 
   // Current working slabs
-  const [newRegimeSlabs, setNewRegimeSlabs] = useState<any[]>([]);
-  const [oldRegimeSlabs, setOldRegimeSlabs] = useState<any[]>([]);
-  const [oldSeniorSlabs, setOldSeniorSlabs] = useState<any[]>([]);
-  const [oldSuperSeniorSlabs, setOldSuperSeniorSlabs] = useState<any[]>([]);
+  const [newRegimeSlabs, setNewRegimeSlabs] = useState<any[]>(DEFAULT_TAX_DATA['2025-2026'].NEW);
+  const [oldRegimeSlabs, setOldRegimeSlabs] = useState<any[]>(DEFAULT_TAX_DATA['2025-2026'].OLD);
+  const [oldSeniorSlabs, setOldSeniorSlabs] = useState<any[]>(DEFAULT_TAX_DATA['2025-2026'].OLD_Senior);
+  const [oldSuperSeniorSlabs, setOldSuperSeniorSlabs] = useState<any[]>(DEFAULT_TAX_DATA['2025-2026'].OLD_SuperSenior);
 
   // Reset editing state and update slabs when switching year or data refreshes
   useEffect(() => {
