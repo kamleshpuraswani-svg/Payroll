@@ -806,6 +806,20 @@ export const TaxPlanning: React.FC = () => {
       setView('DASHBOARD');
    };
 
+   const onSaveAsDraftClick = async () => {
+      setIsSubmitting(true);
+      try {
+         await saveData('DRAFT');
+         setDeclarationStatus('DRAFT');
+         setIsEditMode(false);
+         setView('DASHBOARD');
+      } catch (error) {
+         console.error("Failed to save draft:", error);
+      } finally {
+         setIsSubmitting(false);
+      }
+   };
+
    const onSubmitClick = () => {
       setShowConfirmModal(true);
    };
@@ -829,7 +843,7 @@ export const TaxPlanning: React.FC = () => {
    const sections = [
       { code: 'PREV_EMPLOYMENT', name: 'Previous Employment Income', description: 'Declare income and tax details from your previous workplace within this FY.', limit: 'Gross Total Income', availableInNew: true },
       { code: 'HRA', name: 'House Rent Allowance (HRA)', description: 'Rent paid for accommodation (Section 10(13A))', limit: 'Exemption based on Rent Paid', availableInNew: false },
-      { code: 'HOME_LOAN', name: 'Home Loan Interest (Section 24)', description: 'Interest deduction on self-occupied home loan.', limit: '₹ 2,00,000', availableInNew: false },
+      { code: 'HOME_LOAN', name: 'Home Loan Interest (Section 24B)', description: 'Interest deduction on self-occupied home loan.', limit: '₹ 2,00,000', availableInNew: false },
       { code: 'LET_OUT', name: 'Income from Let Out Property', description: 'Rental Income & Interest Deduction for rented properties.', limit: 'Loss setoff up to ₹ 2,00,000', availableInNew: false },
       { code: 'OTHER_INCOME', name: 'Other Sources of Income', description: 'Declare income from other sources including savings interest.', limit: 'Taxable Income', availableInNew: true },
       { code: '80C', name: 'Section 80C', description: 'Declare investments such as LIC premium, mutual funds and PPF under this section. The maximum tax saving limit is ₹ 1,50,000.', limit: '₹ 1,50,000', availableInNew: false },
@@ -968,7 +982,131 @@ export const TaxPlanning: React.FC = () => {
                            } else if (declarationStatus === 'SUBMITTED' && hasSubmitted) {
                               setIsEditMode(false);
                               setView('PLANNING');
-                           } else {
+                           } else if (section.code === 'OTHER_INCOME') {
+                  return (
+                     <div key={section.code} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
+                        {/* Section Header */}
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center group">
+                           <div>
+                              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{section.name}</h3>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{section.description}</p>
+                           </div>
+                           
+                           <div className="flex items-center gap-8">
+                              <div className="text-right pr-6 border-r border-slate-200">
+                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Declared Amount</p>
+                                 <p className="text-sm font-bold text-slate-700">₹ {declarations.filter(d => d.section === 'OTHER_INCOME').reduce((sum, d) => sum + (d.amount || 0), 0).toLocaleString()}</p>
+                              </div>
+                              <div className="text-right pr-6 border-r border-slate-200">
+                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Approved Amount</p>
+                                 <p className="text-sm font-bold text-emerald-600">₹ {declarations.filter(d => d.section === 'OTHER_INCOME').reduce((sum, d) => sum + (d.approvedAmount || 0), 0).toLocaleString()}</p>
+                              </div>
+
+                              {!isReadOnly && (
+                                 <button 
+                                    onClick={() => addNewRow('OTHER_INCOME')}
+                                    className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
+                                 >
+                                    <Plus size={16} />
+                                 </button>
+                              )}
+                           </div>
+                        </div>
+
+                        {/* Section Rows */}
+                        <div className="divide-y divide-slate-100">
+                           {declarations.filter(d => d.section === 'OTHER_INCOME').map((row) => (
+                              <div key={row.id} className="p-6 space-y-4 animate-in slide-in-from-left-2">
+                                 <div className="flex flex-col md:flex-row gap-6 items-start">
+                                    <div className="flex-1">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Investment Description</label>
+                                       <input
+                                          type="text"
+                                          placeholder="Investment Description (e.g. Savings Interest)"
+                                          value={row.title}
+                                          disabled={isReadOnly || isRowLocked(row)}
+                                          onChange={(e) => setDeclarations(declarations.map(d => d.id === row.id ? { ...d, title: e.target.value } : d))}
+                                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 transition-all disabled:opacity-70"
+                                       />
+                                    </div>
+
+                                    <div className="w-full md:w-48">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Amount</label>
+                                       <div className="relative">
+                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
+                                          <input
+                                             type="number"
+                                             placeholder="0"
+                                             value={row.amount || ''}
+                                             disabled={isReadOnly || isRowLocked(row)}
+                                             onChange={(e) => handleAmountChange(row.id, e.target.value)}
+                                             className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all text-right disabled:opacity-70"
+                                          />
+                                       </div>
+                                    </div>
+
+                                    <div className="flex-1 min-w-[200px]">
+                                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proofs</label>
+                                       <div className="flex flex-wrap gap-2 items-center min-h-[42px] px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                                          {row.files.length > 0 ? (
+                                             <div className="flex flex-wrap gap-2">
+                                                {row.files.map((file, fIdx) => (
+                                                   <div key={fIdx} className="bg-white border border-slate-100 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
+                                                      <Paperclip size={10} className="text-blue-500" />
+                                                      <span className="text-[10px] font-medium text-slate-600 truncate max-w-[80px]">{file}</span>
+                                                      {!(isReadOnly || isRowLocked(row)) && (
+                                                         <button onClick={() => deleteFile(row.id, file)} className="text-slate-300 hover:text-rose-500">
+                                                            <X size={10} />
+                                                         </button>
+                                                      )}
+                                                   </div>
+                                                ))}
+                                                {!(isReadOnly || isRowLocked(row)) && (
+                                                   <button
+                                                      onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
+                                                      className="w-7 h-7 bg-blue-50 text-blue-600 rounded-md flex items-center justify-center hover:bg-blue-100 transition-colors"
+                                                      title="Add Proof"
+                                                   >
+                                                      <Plus size={14} />
+                                                   </button>
+                                                )}
+                                             </div>
+                                          ) : (
+                                             !(isReadOnly || isRowLocked(row)) && (
+                                                <button
+                                                   onClick={() => { setActiveUploadId(row.id); fileInputRef.current?.click(); }}
+                                                   className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
+                                                >
+                                                   <Upload size={12} /> Upload Proof
+                                                </button>
+                                             )
+                                          )}
+                                       </div>
+                                    </div>
+
+                                    <div className="pt-7">
+                                       {!(isReadOnly || isRowLocked(row)) && (
+                                          <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+                                             <Trash2 size={18} />
+                                          </button>
+                                       )}
+                                    </div>
+                                 </div>
+                              </div>
+                           ))}
+
+                           {declarations.filter(d => d.section === 'OTHER_INCOME').length === 0 && (
+                              <div className="p-12 text-center">
+                                 <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Plus size={20} className="text-slate-300" />
+                                 </div>
+                                 <p className="text-xs text-slate-400 font-medium tracking-tight">No other sources of income declared yet. Click '+' to add one.</p>
+                              </div>
+                           )}
+                        </div>
+                     </div>
+                  );
+               } else {
                               setStartPlanningOption(hasLastApproved ? 'use_last' : 'new');
                               setShowStartPlanningDialog(true);
                            }
@@ -2142,69 +2280,93 @@ export const TaxPlanning: React.FC = () => {
    const renderPlanning = () => {
       return (
          <div className="space-y-6 animate-fade-in-up">
-            {/* Planning Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-               <div className="flex items-center gap-4">
-                  <button
-                     onClick={() => {
-                        setView('DASHBOARD');
-                        setSelectedHistoryYear(null);
-                        setShowPastDeclarations(false);
-                     }}
-                     className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
-                  >
-                     <ArrowLeft size={20} />
-                  </button>
-                  <div>
-                     <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold text-slate-800">
-                           {selectedHistoryYear ? `Declaration Details - ${selectedHistoryYear.year}` : 'Tax Planning'}
-                        </h1>
-                        {!isEditMode && (
-                           <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
-                              (selectedHistoryYear?.status === 'Approved' || (declarationStatus === 'SUBMITTED' && !selectedHistoryYear))
-                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                 : 'bg-amber-50 text-amber-600 border-amber-100'
-                           }`}>
-                              {selectedHistoryYear ? selectedHistoryYear.status : (declarationStatus === 'SUBMITTED' ? 'Submitted' : 'Submitted')}
-                           </span>
-                        )}
-                     </div>
-                     <p className="text-sm text-slate-500 font-medium">
-                        {selectedHistoryYear ? '' : 'Select your regime and declare investments'}
-                     </p>
-                  </div>
-               </div>
-
-               <div className="flex items-center gap-3">
-                  {/* Regime Switcher / Display */}
-                  <div className="flex items-center gap-2">
-                     {/* Edit Button next to Regime selection */}
-                     {isReadOnly && !isDeadlinePassed && (!selectedHistoryYear || (selectedHistoryYear?.year === 'FY 2025-26' && !selectedHistoryYear?.hideEdit)) && (
-                        <button
-                           onClick={() => {
-                              setIsEditMode(true);
-                              if (declarationStatus === 'SUBMITTED' && !selectedHistoryYear) {
-                                 setDeclarationStatus('DRAFT');
-                              }
-                              setSelectedHistoryYear(null);
-                           }}
-                           className="p-2 bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 rounded-lg transition-all shadow-sm group"
-                           title="Edit Declaration"
-                        >
-                           <Edit2 size={18} className="group-hover:scale-110 transition-transform" />
-                        </button>
-                     )}
-
-                      <div className={`px-4 py-2 rounded-lg text-xs font-bold shadow-sm border flex items-center gap-2 ${planningRegime === 'OLD' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                         <div className={`w-2 h-2 rounded-full ${planningRegime === 'OLD' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
-                         {planningRegime === 'OLD' ? 'OLD REGIME' : 'NEW REGIME'}
+             {/* Planning Header */}
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <div className="flex items-center gap-4">
+                   <button
+                      onClick={() => {
+                         setView('DASHBOARD');
+                         setSelectedHistoryYear(null);
+                         setShowPastDeclarations(false);
+                      }}
+                      className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                   >
+                      <ArrowLeft size={20} />
+                   </button>
+                   <div>
+                      <div className="flex items-center gap-3">
+                         <h1 className="text-2xl font-bold text-slate-800">
+                            {selectedHistoryYear ? `Declaration Details - ${selectedHistoryYear.year}` : 'Tax Planning'}
+                         </h1>
+                         <div className={`px-3 py-1 rounded-lg text-[10px] uppercase font-bold shadow-sm border flex items-center gap-2 ${planningRegime === 'OLD' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${planningRegime === 'OLD' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                            {planningRegime === 'OLD' ? 'OLD REGIME' : 'NEW REGIME'}
+                         </div>
+                         {!isEditMode && (
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                               (selectedHistoryYear?.status === 'Approved' || (declarationStatus === 'SUBMITTED' && !selectedHistoryYear))
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                  : 'bg-amber-50 text-amber-600 border-amber-100'
+                            }`}>
+                               {selectedHistoryYear ? selectedHistoryYear.status : (declarationStatus === 'SUBMITTED' ? 'Submitted' : 'Submitted')}
+                            </span>
+                         )}
                       </div>
-                     
-                  </div>
-               </div>
-            </div>
+                      <p className="text-sm text-slate-500 font-medium">
+                         {selectedHistoryYear ? '' : 'Select your regime and declare investments'}
+                      </p>
+                   </div>
+                </div>
 
+                <div className="flex items-center gap-3">
+                   {isReadOnly ? (
+                      /* View Mode: Show Edit Button */
+                      !isDeadlinePassed && (!selectedHistoryYear || (selectedHistoryYear?.year === 'FY 2025-26' && !selectedHistoryYear?.hideEdit)) && (
+                         <button
+                            onClick={() => {
+                               setIsEditMode(true);
+                               if (declarationStatus === 'SUBMITTED' && !selectedHistoryYear) {
+                                  setDeclarationStatus('DRAFT');
+                               }
+                               setSelectedHistoryYear(null);
+                            }}
+                            className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 group"
+                            title="Edit Declaration"
+                         >
+                            <Edit2 size={14} className="group-hover:scale-110 transition-transform" /> Edit Declaration
+                         </button>
+                      )
+                   ) : (
+                      /* Edit Mode: Show Cancel, Save as Draft, and Submit Buttons */
+                      <div className="flex items-center gap-2">
+                         <button
+                            onClick={() => {
+                               setView('DASHBOARD');
+                               setSelectedHistoryYear(null);
+                               setShowPastDeclarations(false);
+                               setIsEditMode(false);
+                            }}
+                            className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg text-xs font-bold transition-all"
+                         >
+                            Cancel
+                         </button>
+                         <button
+                            onClick={onSaveAsDraftClick}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                         >
+                            Save as Draft
+                         </button>
+                         <button
+                            onClick={onSubmitClick}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm shadow-blue-500/10"
+                         >
+                            Submit
+                         </button>
+                      </div>
+                   )}
+                </div>
+             </div>
+             
             {/* Sticky Calculation Bar */}
             <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-4">
                <div className="flex items-center gap-6 divide-x divide-slate-200">
@@ -3125,7 +3287,7 @@ export const TaxPlanning: React.FC = () => {
                                           className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 text-right disabled:bg-slate-50"
                                        />
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mt-1 italic">This will be automatically included in the Section 24</p>
+                                    <p className="text-[10px] text-slate-400 mt-1 italic">This will be automatically included in the Section 24B</p>
                                  </div>
 
                                  {/* Lender Name */}
@@ -3489,19 +3651,6 @@ export const TaxPlanning: React.FC = () => {
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-1 italic">Allowed as deduction under Section 16(iii)</p>
                                  </div>
-                                 {/* Form 12B */}
-                                 <div className="col-span-12">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Form 12B Reference</label>
-                                    <input
-                                       type="text"
-                                       placeholder="Form 12B reference number (if available)"
-                                       value={prevEmploymentDetails.form12B}
-                                       disabled={isPrevEmploymentSaved || isReadOnly}
-                                       onChange={(e) => setPrevEmploymentDetails({ ...prevEmploymentDetails, form12B: e.target.value })}
-                                       className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 disabled:bg-slate-50"
-                                    />
-                                    <p className="text-[10px] text-slate-400 mt-1 italic">Form 12B is submitted to your new employer declaring income from previous employment</p>
-                                 </div>
                               </div>
                            </div>
                         )}
@@ -3635,41 +3784,6 @@ export const TaxPlanning: React.FC = () => {
                   );
                 }
             })}
-
-            {/* Action Buttons */}
-            <div className="pt-8 flex flex-col items-center gap-6">
-               {isReadOnly ? null : (
-                  <>
-                     <div className="max-w-4xl px-6 py-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 animate-in fade-in slide-in-from-bottom-2">
-                        <label className="flex items-start gap-4 cursor-pointer group">
-                           <div className="pt-1">
-                              <input 
-                                 type="checkbox" 
-                                 checked={isConfirmed}
-                                 onChange={(e) => setIsConfirmed(e.target.checked)}
-                                 className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 transition-all cursor-pointer"
-                              />
-                           </div>
-                           <span className="text-xs font-medium text-slate-600 leading-relaxed group-hover:text-slate-900 transition-colors select-none">
-                              I hereby confirm that I will be investing / contributing the following amounts for the purpose of rebate / deduction to be considered in calculating my income tax for the current Financial Year. I further undertake that wherever eligible investments are made in the name of spouse / children / dependent parents, the same have been / will be made out of my income and claim thereof has / shall not be made by anybody else.
-                           </span>
-                        </label>
-                     </div>
-                     <div className="flex items-center gap-4">
-                        <button
-                           onClick={onSubmitClick}
-                           disabled={!isConfirmed}
-                           className={`px-10 py-3.5 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${isConfirmed ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20' : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'}`}
-                        >
-                           <Send size={18} /> Submit Declarations
-                        </button>
-                     </div>
-                     <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
-                        <Shield size={14} /> All data is securely encrypted and stored as per company policy
-                     </p>
-                  </>
-               )}
-            </div>
 
             {/* Confirmation Modal */}
             {showConfirmModal && (
