@@ -28,7 +28,9 @@ import {
     Plus,
     Check,
     AlertTriangle,
-    Upload
+    Upload,
+    UploadCloud,
+    FileSpreadsheet
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -1901,16 +1903,21 @@ const mapStatus = (val: any): string => {
     return matched || 'Active';
 };
 
+const mapRegime = (val: any): 'Old Regime' | 'New Regime' => {
+    const str = String(val || '').trim().toLowerCase();
+    if (str.includes('new')) return 'New Regime';
+    return 'Old Regime';
+};
+
 const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
     const [step, setStep] = useState(1);
     const [file, setFile] = useState<File | null>(null);
     const [parsedData, setParsedData] = useState<any[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [importMethod, setImportMethod] = useState<'sample' | 'another'>('sample');
 
-    // Success and failure state for step 3 Results screen
+    // Success and failure state for step 2 Results screen
     const [successCount, setSuccessCount] = useState(0);
     const [failureCount, setFailureCount] = useState(0);
     const [failedRecords, setFailedRecords] = useState<any[]>([]);
@@ -1920,12 +1927,11 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             setStep(1);
             setFile(null);
             setParsedData([]);
-            setIsUploading(false);
-            setUploadProgress(0);
             setIsSaving(false);
             setSuccessCount(0);
             setFailureCount(0);
             setFailedRecords([]);
+            setImportMethod('sample');
         }
     }, [isOpen]);
 
@@ -1940,39 +1946,52 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             "Salary Structure",
             "Annual CTC (₹)",
             "Basic Salary",
+            "Dearness Allowance (DA)",
+            "Conveyance Allowance",
             "Child Education Allowance",
             "Child hostel allowance",
-            "Conveyance Allowance",
-            "Dearness Allowance (DA)",
             "House Rent Allowance (HRA)",
             "Meal Allowance",
             "Medical Allowance",
             "Professional Allowance",
             "Statutory Bonus",
-            "Provident Fund (Employee)",
+            "PF (Employee)",
             "ESI (Employee)",
-            "Gratuity",
-            "Provident Fund (Employer)",
+            "Gratuity (Employer)",
+            "PF (Employer)",
             "ESI (Employer)",
-            "NPS",
-            "Labour Welfare Fund (Employee)",
-            "Labour Welfare Fund (Employer)",
-            "Voluntary Provident Fund",
+            "NPS (Employer)",
+            "LWF (Employee)",
+            "LWF (Employer)",
+            "Voluntary Provident Fund (Employee)",
             "Professional Tax",
             "Effective From",
             "Arrears Payout Month",
-            "Provident Fund",
-            "ESI",
-            "Gratuity",
-            "Labour Welfare Fund",
-            "National Pension System",
+            "PF Applicable",
+            "ESI Applicable",
+            "Gratuity Applicable",
+            "NPS Applicable",
+            "Fixed Amount (Monthly)",
+            "Percentage (%)",
+            "VPF Applicable",
+            "Fixed Amount (Monthly)",
+            "Percentage (%)",
             "PAN Number",
             "Aadhaar Number",
             "PF Number",
             "UAN Number",
             "ESI Number",
             "PRAN Number",
-            "Tax Regime"
+            "Tax Regime",
+            "Total Gross (Annual)",
+            "Total CTC (Annual)",
+            "Total Net Pay (Annual)",
+            "Salary Pay Mode",
+            "Account Number",
+            "IFSC Code",
+            "Bank Name",
+            "Branch",
+            "Appraisal Month"
         ];
         
         const rows = [
@@ -1984,54 +2003,64 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 "Executive Structure",
                 1800000,
                 720000, // Basic Salary
-                2400,   // Child Education Allowance
-                4800,   // Child hostel allowance
-                19200,  // Conveyance Allowance
-                0,      // Dearness Allowance (DA)
+                0, // Dearness Allowance (DA)
+                19200, // Conveyance Allowance
+                2400, // Child Education Allowance
+                4800, // Child hostel allowance
                 288000, // House Rent Allowance (HRA)
-                0,      // Meal Allowance
-                0,      // Medical Allowance
-                0,      // Professional Allowance
-                0,      // Statutory Bonus
-                21600,  // Provident Fund (Employee)
-                0,      // ESI (Employee)
-                34600,  // Gratuity
-                21600,  // Provident Fund (Employer)
-                0,      // ESI (Employer)
-                0,      // NPS
-                120,    // Labour Welfare Fund (Employee)
-                240,    // Labour Welfare Fund (Employer)
-                0,      // Voluntary Provident Fund
-                2500,   // Professional Tax
+                0, // Meal Allowance
+                0, // Medical Allowance
+                0, // Professional Allowance
+                0, // Statutory Bonus
+                21600, // PF (Employee)
+                0, // ESI (Employee)
+                34600, // Gratuity (Employer)
+                21600, // PF (Employer)
+                0, // ESI (Employer)
+                0, // NPS (Employer)
+                120, // LWF (Employee)
+                240, // LWF (Employer)
+                0, // Voluntary Provident Fund (Employee)
+                2500, // Professional Tax
                 "2026-06-01",
                 "2026-05-01",
-                "Yes",
-                "No",
-                "Yes",
-                "Yes",
-                "No",
-                "ABCDE1234F",
-                "123456789012",
-                "MH/BAN/1234567/123",
-                "100987654321",
-                "3112345678",
-                "110098765432",
-                "New Regime"
+                "Yes", // PF Applicable
+                "No", // ESI Applicable
+                "Yes", // Gratuity Applicable
+                "Yes", // NPS Applicable
+                0, // Fixed Amount (Monthly) for NPS
+                10, // Percentage (%) for NPS
+                "No", // VPF Applicable
+                0, // Fixed Amount (Monthly) for VPF
+                0, // Percentage (%) for VPF
+                "ABCDE1234F", // PAN
+                "123456789012", // Aadhaar
+                "MH/BAN/1234567/123", // PF No
+                "100987654321", // UAN No
+                "3112345678", // ESI No
+                "110098765432", // PRAN No
+                "New Regime", // Tax Regime
+                1620000, // Total Gross (Annual)
+                1800000, // Total CTC (Annual)
+                1500000, // Total Net Pay (Annual)
+                "Online Transfer", // Salary Pay Mode
+                "1234567890", // Account Number
+                "HDFC0000123", // IFSC Code
+                "HDFC Bank", // Bank Name
+                "Koramangala", // Branch
+                "April" // Appraisal Month
             ]
         ];
 
         // Create workbook & worksheet using ExcelJS
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Employees Compensation");
-        const instructionsWorksheet = workbook.addWorksheet("Instructions");
-        instructionsWorksheet.addRow(["Instructions:"]);
-        instructionsWorksheet.addRow(["Please refer to subsequent prompts for detailed instructions."]);
 
         // Define columns
         worksheet.columns = headers.map(header => ({
             header,
             key: header,
-            width: header.length + 5
+            width: 20
         }));
 
         // Add rows
@@ -2047,75 +2076,138 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             "Salary Structure",
             "Annual CTC (₹)",
             "Effective From",
-            "Provident Fund",
-            "ESI",
-            "Gratuity",
-            "Labour Welfare Fund",
-            "National Pension System",
+            "Arrears Payout Month",
             "PAN Number",
-            "Tax Regime"
+            "Aadhaar Number",
+            "Tax Regime",
+            "Total Gross (Annual)",
+            "Total CTC (Annual)",
+            "Total Net Pay (Annual)",
+            "Salary Pay Mode",
+            "Account Number",
+            "IFSC Code",
+            "Bank Name",
+            "Branch",
+            "Appraisal Month"
         ];
 
-        // Format headers row
-        const firstRow = worksheet.getRow(1);
-        headers.forEach((header, index) => {
-            const cell = firstRow.getCell(index + 1);
-            if (mandatoryHeaders.includes(header)) {
+        // Apply styles to header row
+        const headerRow = worksheet.getRow(1);
+        headerRow.eachCell((cell, colNumber) => {
+            const headerText = cell.value as string;
+            
+            // Standard formatting
+            cell.font = {
+                name: 'Segoe UI',
+                size: 11,
+                bold: true,
+                color: { argb: 'FF333333' }
+            };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF5F5F5' }
+            };
+
+            // Custom formatting for mandatory headers by text or column number (1-based index)
+            const isMandatory = mandatoryHeaders.includes(headerText) || 
+                               colNumber === 33 || // Fixed Amount (Monthly) for NPS
+                               colNumber === 34 || // Percentage (%) for NPS
+                               colNumber === 36 || // Fixed Amount (Monthly) for VPF
+                               colNumber === 37;   // Percentage (%) for VPF
+
+            if (isMandatory) {
                 cell.font = {
                     name: 'Segoe UI',
                     size: 11,
                     bold: true,
-                    color: { argb: 'FFFF0000' } // Red color
-                };
-            } else {
-                cell.font = {
-                    name: 'Segoe UI',
-                    size: 11,
-                    bold: true
+                    color: { argb: 'FFFF0000' } // Red Color for mandatory
                 };
             }
         });
 
-        // Add dropdown to Tax Regime column (col 40 since shifted by 1) for rows 2 to 100
-        for (let rowNum = 2; rowNum <= 100; rowNum++) {
-            const cell = worksheet.getCell(rowNum, 40);
-            cell.dataValidation = {
+        // Force Excel to open calendar date picker for "Effective From" and "Arrears Payout Month"
+        const effectiveFromColIndex = 27;
+        const arrearsPayoutColIndex = 28;
+
+        // Apply number format to cells to force date input representation
+        for (let rowIdx = 2; rowIdx <= 100; rowIdx++) {
+            const effFromCell = worksheet.getCell(rowIdx, effectiveFromColIndex);
+            effFromCell.numFmt = 'yyyy-mm';
+        }
+
+        // Add date validation to column 27 & 28
+        worksheet.dataValidations.add('AA2:AA100', {
+            type: 'date',
+            operator: 'greaterThanOrEqual',
+            formulae: [new Date(1900, 0, 1)],
+            showErrorMessage: true,
+            errorTitle: 'Invalid Date Format',
+            error: 'Please select or enter a valid date in YYYY-MM format.',
+            prompt: 'Please enter or select a date (YYYY-MM)'
+        });
+
+        worksheet.dataValidations.add('AB2:AB100', {
+            type: 'date',
+            operator: 'greaterThanOrEqual',
+            formulae: [new Date(1900, 0, 1)],
+            showErrorMessage: true,
+            errorTitle: 'Invalid Date Format',
+            error: 'Please select or enter a valid date in YYYY-MM format.',
+            prompt: 'Please enter or select a date (YYYY-MM)'
+        });
+
+        // Add Dropdowns for Yes/No columns and Pay Mode/Regime
+        for (let rowIdx = 2; rowIdx <= 100; rowIdx++) {
+            // PF Applicable (Col 29)
+            worksheet.getCell(rowIdx, 29).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Yes,No"']
+            };
+            // ESI Applicable (Col 30)
+            worksheet.getCell(rowIdx, 30).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Yes,No"']
+            };
+            // Gratuity Applicable (Col 31)
+            worksheet.getCell(rowIdx, 31).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Yes,No"']
+            };
+            // NPS Applicable (Col 32)
+            worksheet.getCell(rowIdx, 32).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Yes,No"']
+            };
+            // VPF Applicable (Col 35)
+            worksheet.getCell(rowIdx, 35).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Yes,No"']
+            };
+            // Salary Pay Mode (Col 48)
+            worksheet.getCell(rowIdx, 48).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Online Transfer,Cash,Cheque"']
+            };
+            // Tax Regime (Col 44)
+            worksheet.getCell(rowIdx, 44).dataValidation = {
                 type: 'list',
                 allowBlank: true,
                 formulae: ['"Old Regime,New Regime"']
             };
         }
 
-        // Add date picker calendar validation for Effective From (col 27) and Arrears Payout Month (col 28)
-        for (let rowNum = 2; rowNum <= 100; rowNum++) {
-            const cellEff = worksheet.getCell(rowNum, 27);
-            cellEff.dataValidation = {
-                type: 'date',
-                allowBlank: true,
-                showInputMessage: true,
-                promptTitle: 'Effective From Date',
-                prompt: 'Please select or enter a date (YYYY-MM-DD or YYYY-MM)'
-            };
-            cellEff.numFmt = 'yyyy-mm';
-
-            const cellArr = worksheet.getCell(rowNum, 28);
-            cellArr.dataValidation = {
-                type: 'date',
-                allowBlank: true,
-                showInputMessage: true,
-                promptTitle: 'Arrears Payout Month',
-                prompt: 'Please select or enter a date (YYYY-MM-DD or YYYY-MM)'
-            };
-            cellArr.numFmt = 'yyyy-mm';
-        }
-
-        // Generate buffer and trigger file download
+        // Write to buffer and trigger download
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        });
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = window.URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
+        const anchor = document.createElement('a');
         anchor.href = url;
         anchor.download = "employees_compensation_sample.xlsx";
         anchor.click();
@@ -2126,56 +2218,34 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
         fileInputRef.current?.click();
     };
 
+    const handleFileProcess = (selectedFile: File) => {
+        setFile(selectedFile);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+                // Skip header row and filter out empty spacer rows
+                const dataRows = rawRows.slice(1).filter(r => r && r[1] && String(r[1]).trim() !== '');
+                setParsedData(dataRows);
+            } catch (err) {
+                console.error("Error reading file:", err);
+            }
+        };
+        reader.readAsArrayBuffer(selectedFile);
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const selectedFile = e.target.files[0];
-            setFile(selectedFile);
-            
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const data = new Uint8Array(event.target?.result as ArrayBuffer);
-                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(sheet);
-                    setParsedData(jsonData);
-                } catch (err) {
-                    console.error("Error reading file:", err);
-                }
-            };
-            reader.readAsArrayBuffer(selectedFile);
+            handleFileProcess(e.target.files[0]);
         }
     };
 
-    const handleNext = () => {
-        if (step === 1) {
-            if (!file) {
-                alert("Please upload an Excel file to proceed.");
-                return;
-            }
-            setStep(2);
-            setIsUploading(true);
-            setUploadProgress(0);
-            
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 10;
-                if (progress >= 100) {
-                    setUploadProgress(100);
-                    setIsUploading(false);
-                    clearInterval(interval);
-                } else {
-                    setUploadProgress(progress);
-                }
-            }, 150);
-        }
-    };
-
-    const handleBack = () => {
-        if (step > 1) {
-            setStep(prev => prev - 1);
-        }
+    const handleFileDrop = (droppedFile: File) => {
+        handleFileProcess(droppedFile);
     };
 
     const handleDownloadFailedRecords = () => {
@@ -2187,154 +2257,189 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
     };
 
     const handleImport = async () => {
+        if (parsedData.length === 0) {
+            alert("No employee data found in the uploaded file.");
+            return;
+        }
+
         setIsSaving(true);
         try {
-            if (parsedData.length === 0) {
-                alert("No employee data found in the uploaded file.");
-                setIsSaving(false);
-                return;
-            }
+            // Fetch all structures to resolve structure ID
+            const { data: structures, error: sError } = await supabase
+                .from('salary_structures')
+                .select('id, name');
 
-            // 1. Fetch active structures
-            const { data: structures } = await supabase.from('salary_structures').select('id, name');
-            const structuresMap: Record<string, string> = {};
-            if (structures) {
-                structures.forEach(s => {
-                    structuresMap[s.name.toLowerCase().trim()] = s.id;
-                });
-            }
+            if (sError) throw sError;
 
-            // 2. Fetch default company name
-            const { data: companies } = await supabase.from('companies').select('name').limit(1);
-            const companyName = companies?.[0]?.name || 'TechFlow Systems';
+            // Map structure names to IDs
+            const structuresMap = new Map<string, string>();
+            structures?.forEach(s => {
+                structuresMap.set(s.name.toLowerCase().trim(), s.id);
+            });
 
-            // 3. Fetch existing employees to resolve IDs by EID
+            // Fetch existing employees to resolve ID update by EID
             const { data: existingEmps } = await supabase.from('employees').select('id, eid');
-            const eidToIdMap: Record<string, string> = {};
-            if (existingEmps) {
-                existingEmps.forEach(e => {
-                    eidToIdMap[e.eid] = e.id;
-                });
-            }
+            const eidToIdMap = new Map<string, string>();
+            existingEmps?.forEach(e => {
+                eidToIdMap.set(e.eid, e.id);
+            });
 
-            // 4. Map rows and validate
             const employeesToUpsert: any[] = [];
             const configsToUpsert: any[] = [];
             const failures: any[] = [];
 
-            parsedData.forEach(row => {
+            parsedData.forEach((row: any[], index: number) => {
                 const errors: string[] = [];
+
+                // Index-based columns matching our 53-columns layout
+                const rawEid = row[1];
+                const rawName = row[2];
+                const rawBu = row[3];
+                const rawStructureName = row[4];
+                const rawCtc = row[5];
+                const rawEffectiveFrom = row[26];
+                const rawArrearsPayout = row[27];
                 
-                const eid = String(getExcelValue(row, "Employee Code", "eid")).trim();
-                const name = String(getExcelValue(row, "Employee Name", "name")).trim();
-                const department = String(getExcelValue(row, "Department")).trim() || "N/A";
-                const designation = String(getExcelValue(row, "Designation")).trim() || "N/A";
-                const ctcVal = cleanNumber(getExcelValue(row, "Annual CTC (₹)", "ctc"));
-                const effectiveFrom = getExcelValue(row, "Effective From", "join_date");
-                const arrearsRaw = getExcelValue(row, "Arrears Payout Month");
-                let formattedArrearsMonth = null;
-                if (arrearsRaw) {
-                    const parsedDate = arrearsRaw instanceof Date ? arrearsRaw : new Date(formatDate(arrearsRaw));
+                const pfCheck = row[28]?.toString().trim().toLowerCase() === 'yes';
+                const esiCheck = row[29]?.toString().trim().toLowerCase() === 'yes';
+                const gratuityCheck = row[30]?.toString().trim().toLowerCase() === 'yes';
+                const npsCheck = row[31]?.toString().trim().toLowerCase() === 'yes';
+                
+                const npsAmount = cleanNumber(row[32]);
+                const npsPercentage = cleanNumber(row[33]);
+                
+                const vpfCheck = row[34]?.toString().trim().toLowerCase() === 'yes';
+                const vpfAmount = cleanNumber(row[35]);
+                const vpfPercentage = cleanNumber(row[36]);
+
+                const pan = row[37]?.toString().trim() || null;
+                const aadhaar = row[38]?.toString().trim() || null;
+                const pfNo = row[39]?.toString().trim() || null;
+                const uan = row[40]?.toString().trim() || null;
+                const esiNo = row[41]?.toString().trim() || null;
+                const pranNo = row[42]?.toString().trim() || null;
+                const regime = mapRegime(row[43]?.toString());
+
+                // Additional parsed columns:
+                const totalGross = row[44] !== undefined && row[44] !== null ? Number(row[44]) : null;
+                const payMode = row[47]?.toString().trim() || "Online Transfer";
+                const bankAcc = row[48]?.toString().trim() || "";
+                const bankIfsc = row[49]?.toString().trim() || "";
+                const bankName = row[50]?.toString().trim() || "";
+                const bankBranch = row[51]?.toString().trim() || "";
+                const appraisalMonth = row[52]?.toString().trim() || null;
+
+                if (!rawEid) errors.push("Missing 'Employee Code'");
+                if (!rawName) errors.push("Missing 'Employee Name'");
+                if (!rawBu) errors.push("Missing 'Business Unit'");
+                if (!rawStructureName) errors.push("Missing 'Salary Structure'");
+                if (rawCtc === undefined || isNaN(Number(rawCtc))) errors.push("Invalid 'Annual CTC'");
+                if (!rawEffectiveFrom) errors.push("Missing 'Effective From'");
+                if (!pan) errors.push("Missing 'PAN Number'");
+                if (!aadhaar) errors.push("Missing 'Aadhaar Number'");
+                if (!row[43]) errors.push("Missing 'Tax Regime'");
+
+                if (totalGross === null || isNaN(totalGross)) errors.push("Missing 'Total Gross (Annual)'");
+                if (row[45] === undefined || row[45] === null || isNaN(Number(row[45]))) errors.push("Missing 'Total CTC (Annual)'");
+                if (row[46] === undefined || row[46] === null || isNaN(Number(row[46]))) errors.push("Missing 'Total Net Pay (Annual)'");
+                if (!payMode) errors.push("Missing 'Salary Pay Mode'");
+                if (!bankAcc) errors.push("Missing 'Account Number'");
+                if (!bankIfsc) errors.push("Missing 'IFSC Code'");
+                if (!bankName) errors.push("Missing 'Bank Name'");
+                if (!bankBranch) errors.push("Missing 'Branch'");
+                if (!appraisalMonth) errors.push("Missing 'Appraisal Month'");
+
+                if (npsCheck) {
+                    if (row[32] === undefined || row[32] === null || String(row[32]).trim() === '') errors.push("NPS Fixed Amount is required when NPS is applicable");
+                    if (row[33] === undefined || row[33] === null || String(row[33]).trim() === '') errors.push("NPS Percentage is required when NPS is applicable");
+                }
+                if (vpfCheck) {
+                    if (row[35] === undefined || row[35] === null || String(row[35]).trim() === '') errors.push("VPF Fixed Amount is required when VPF is applicable");
+                    if (row[36] === undefined || row[36] === null || String(row[36]).trim() === '') errors.push("VPF Percentage is required when VPF is applicable");
+                }
+
+                // Resolve Salary Structure ID
+                const matchedStructureId = rawStructureName ? structuresMap.get(rawStructureName.toLowerCase().trim()) : null;
+                if (rawStructureName && !matchedStructureId) {
+                    errors.push(`Salary Structure '${rawStructureName}' not found`);
+                }
+
+                // Format Dates
+                let effectiveDateStr = '';
+                if (rawEffectiveFrom) {
+                    const parsedDate = new Date(rawEffectiveFrom);
                     if (!isNaN(parsedDate.getTime())) {
-                        formattedArrearsMonth = parsedDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+                        effectiveDateStr = parsedDate.toISOString().substring(0, 10);
                     } else {
-                        formattedArrearsMonth = String(arrearsRaw).trim();
+                        errors.push("Invalid 'Effective From' date format");
                     }
                 }
-                
-                const businessUnit = String(getExcelValue(row, "Business Unit", "location")).trim();
-                const structureName = String(getExcelValue(row, "Salary Structure")).trim();
-                const isPfStr = String(getExcelValue(row, "Provident Fund", "Provident Fund Applicable?")).trim();
-                const isEsiStr = String(getExcelValue(row, "ESI", "ESI Applicable?")).trim();
-                const isGratuityStr = String(getExcelValue(row, "Gratuity", "Gratuity Applicable?")).trim();
-                const isLwfStr = String(getExcelValue(row, "Labour Welfare Fund", "Labour Welfare Fund Applicable?")).trim();
-                const isNpsStr = String(getExcelValue(row, "National Pension System", "National Pension System Applicable?")).trim();
-                const panNumber = String(getExcelValue(row, "PAN Number", "pan_no")).trim();
-                const taxRegime = String(getExcelValue(row, "Tax Regime", "regime")).trim();
 
-                if (!eid) errors.push("Employee Code is required");
-                if (!name) errors.push("Employee Name is required");
-                if (!businessUnit) errors.push("Business Unit is required");
-                if (!structureName) errors.push("Salary Structure is required");
-                if (ctcVal <= 0) errors.push("Annual CTC must be greater than 0");
-                if (!effectiveFrom) errors.push("Effective From date is required");
-                if (!isPfStr) errors.push("Provident Fund option is required (Yes/No)");
-                if (!isEsiStr) errors.push("ESI option is required (Yes/No)");
-                if (!isGratuityStr) errors.push("Gratuity option is required (Yes/No)");
-                if (!isLwfStr) errors.push("Labour Welfare Fund option is required (Yes/No)");
-                if (!isNpsStr) errors.push("National Pension System option is required (Yes/No)");
-                if (!panNumber) errors.push("PAN Number is required");
-                if (!taxRegime) errors.push("Tax Regime is required");
+                let arrearsPayoutStr = '';
+                if (rawArrearsPayout) {
+                    const parsedArrears = new Date(rawArrearsPayout);
+                    if (!isNaN(parsedArrears.getTime())) {
+                        arrearsPayoutStr = parsedArrears.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+                    } else {
+                        arrearsPayoutStr = String(rawArrearsPayout).trim();
+                    }
+                }
 
                 if (errors.length > 0) {
                     failures.push({
                         ...row,
-                        "Error Reason": errors.join(", ")
+                        "Error Reason": errors.join("; ")
                     });
-                    return; // skip this row for import
+                    return;
                 }
 
-                const employeeId = eidToIdMap[eid] || (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
-                const status = mapStatus(getExcelValue(row, "Status"));
-                const formattedDate = formatDate(effectiveFrom);
-                
-                const isPf = isPfStr.toLowerCase() === "yes";
-                const isEsi = isEsiStr.toLowerCase() === "yes";
-                const isGratuity = isGratuityStr.toLowerCase() === "yes";
-                const isLwf = isLwfStr.toLowerCase() === "yes";
-                const isNps = isNpsStr.toLowerCase() === "yes";
-
-                const aadhaarNumber = String(getExcelValue(row, "Aadhaar Number", "aadhaar_no")).trim();
-                const pfNumber = String(getExcelValue(row, "PF Number", "pf_no")).trim();
-                const uanNumber = String(getExcelValue(row, "UAN Number", "uan_no")).trim();
-                const esiNumber = String(getExcelValue(row, "ESI Number", "esi_no")).trim();
-                const pranNumber = String(getExcelValue(row, "PRAN Number", "pran_no")).trim();
-
-                const structureId = structuresMap[structureName.toLowerCase()] || null;
-
-                const statutoryDeductions = {
-                    providentFund: isPf,
-                    esi: isEsi,
-                    professionalTax: true,
-                    gratuity: isGratuity,
-                    lwf: isLwf,
-                    tds: true,
-                    nps: isNps
-                };
+                const ctcVal = Number(rawCtc) || 0;
+                const employeeId = eidToIdMap.get(rawEid.toString().trim()) || (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
 
                 employeesToUpsert.push({
                     id: employeeId,
-                    name,
-                    eid,
-                    company_name: companyName,
-                    department,
-                    designation,
-                    location: businessUnit,
-                    ctc: String(ctcVal),
-                    join_date: formattedDate,
-                    status,
-                    salary_structure_id: structureId,
-                    effective_date: formattedDate,
-                    tax_regime: taxRegime,
-                    pan_no: panNumber,
-                    aadhaar_no: aadhaarNumber,
-                    uan_no: uanNumber,
-                    business_unit: businessUnit,
-                    annual_gross: ctcVal,
-                    payroll_status: 'Eligible',
-                    created_by: 'HR Manager',
-                    last_updated_by: 'HR Manager'
+                    eid: rawEid.toString().trim(),
+                    name: rawName.toString().trim(),
+                    department: "Engineering",
+                    designation: "Software Engineer",
+                    join_date: effectiveDateStr || new Date().toISOString().substring(0, 10),
+                    location: "Bangalore",
+                    ctc: ctcVal,
+                    annual_gross: totalGross || ctcVal,
+                    tax_regime: regime,
+                    salary_structure_id: matchedStructureId,
+                    effective_date: effectiveDateStr,
+                    salary_pay_mode: payMode,
+                    bank_account_no: bankAcc,
+                    bank_ifsc: bankIfsc,
+                    bank_name: bankName,
+                    bank_branch: bankBranch,
+                    pan_no: pan,
+                    aadhaar_no: aadhaar,
+                    uan_no: uan,
+                    business_unit: rawBu.toString().trim()
                 });
 
                 configsToUpsert.push({
-                    config_key: `emp_statutory:${employeeId}`,
+                    config_key: `emp_statutory:${rawEid.toString().trim()}`,
                     config_value: {
-                        ...statutoryDeductions,
-                        pf_no: pfNumber,
-                        esi_no: esiNumber,
-                        pran_no: pranNumber,
-                        arrears_payout_month: formattedArrearsMonth,
-                        appraisal_month: null,
+                        providentFund: pfCheck,
+                        esi: esiCheck,
+                        gratuity: gratuityCheck,
+                        professionalTax: true,
+                        lwf: true,
+                        tds: true,
+                        nps: npsCheck,
+                        vpf: vpfCheck,
+                        arrears_payout_month: arrearsPayoutStr,
+                        appraisal_month: appraisalMonth,
+                        pf_no: pfNo,
+                        esi_no: esiNo,
+                        pran_no: pranNo,
+                        vpfAmount,
+                        vpfPercentage,
+                        npsAmount,
+                        npsPercentage,
                         salary_input_basis: "Gross CTC"
                     },
                     updated_at: new Date().toISOString()
@@ -2346,7 +2451,6 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             setFailedRecords(failures);
 
             if (employeesToUpsert.length > 0) {
-                // Upsert into Supabase
                 const { error: empError } = await supabase.from('employees').upsert(employeesToUpsert, { onConflict: 'eid' });
                 if (empError) throw empError;
 
@@ -2354,9 +2458,8 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 if (configError) throw configError;
             }
 
-            // 6. Refetch and advance step
             if (onImportSuccess) onImportSuccess();
-            setStep(3);
+            setStep(importMethod === 'sample' ? 2 : 4); // If another system, go to results step 4
         } catch (err: any) {
             console.error('Import process failed:', err);
             alert(`Error importing records: ${err.message || err}`);
@@ -2365,284 +2468,420 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
         }
     };
 
+    const showStep2UI = step === 2 || isSaving || (importMethod === 'another' && step >= 2);
+
+    const stepperSteps = importMethod === 'sample' 
+        ? [
+            { id: 1, label: 'Upload File' },
+            { id: 2, label: 'Import Results' }
+          ]
+        : [
+            { id: 1, label: 'Upload File' },
+            { id: 2, label: 'Import Options' },
+            { id: 3, label: 'Review Mapping' },
+            { id: 4, label: 'Import Results' }
+          ];
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-md shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
                 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="text-lg font-bold text-slate-800">Import Employees Compensation</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={20} />
-                    </button>
+                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-white relative">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
+                            <Upload size={20} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-800">Import Employees Compensation</h3>
+                                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">
+                                    Step {showStep2UI ? (importMethod === 'sample' ? '2 of 2' : '4 of 4') : `${step} of ${importMethod === 'sample' ? '2' : '4'}`}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                {showStep2UI 
+                                    ? 'Review the results of your import and download any failed records.' 
+                                    : 'Select your import method and upload a spreadsheet to get started.'}
+                            </p>
+                        </div>
+                    </div>
+                    {!isSaving && (
+                        <button onClick={onClose} className="p-1.5 hover:bg-slate-50 rounded-md text-slate-400 hover:text-slate-600 transition-colors border border-slate-100">
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Stepper */}
-                <div className="border-b border-slate-100 py-4 bg-white select-none">
-                    <div className="flex items-center justify-center max-w-xl mx-auto px-4">
-                        {/* Step 1: Prepare */}
-                        <div className="flex flex-col items-center relative">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 1 ? 'border-indigo-600' : 'border-indigo-600 text-indigo-600'
-                            }`}>
-                                {step === 1 ? (
-                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
-                                ) : (
-                                    <Check size={16} strokeWidth={3} />
-                                )}
-                            </div>
-                            <span className={`text-xs mt-2 transition-all ${step === 1 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
-                                Prepare
-                            </span>
+                <div className="border-b border-slate-100 py-5 bg-white select-none">
+                    <div className="flex items-center justify-between max-w-2xl mx-auto px-4 relative">
+                        {/* Connecting Line */}
+                        <div className="absolute left-8 right-8 top-3 h-[2px] bg-slate-100 -translate-y-1/2 -z-0">
+                            <div 
+                                className="h-full bg-[#444CE7] transition-all duration-300"
+                                style={{ 
+                                    width: importMethod === 'sample'
+                                        ? (showStep2UI ? '100%' : '0%')
+                                        : (step === 1 && !isSaving ? '0%' : step === 2 ? '33.3%' : step === 3 ? '66.6%' : '100%')
+                                }}
+                            />
                         </div>
 
-                        {/* Line 1 */}
-                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-
-                        {/* Step 2: Upload */}
-                        <div className="flex flex-col items-center relative">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 2 ? 'border-indigo-600' : step > 2 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
-                            }`}>
-                                {step === 2 ? (
-                                    <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" />
-                                ) : step > 2 ? (
-                                    <Check size={16} strokeWidth={3} />
-                                ) : null}
-                            </div>
-                            <span className={`text-xs mt-2 transition-all ${step === 2 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
-                                Upload
-                            </span>
-                        </div>
-
-                        {/* Line 2 */}
-                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-
-                        {/* Step 3: Results */}
-                        <div className="flex flex-col items-center relative">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 3 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
-                            }`}>
-                                {step === 3 ? (
-                                    <Check size={16} strokeWidth={3} />
-                                ) : null}
-                            </div>
-                            <span className={`text-xs mt-2 transition-all ${step === 3 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>
-                                Results
-                            </span>
-                        </div>
+                        {stepperSteps.map((s) => {
+                            const isCompleted = step > s.id;
+                            const isActive = step === s.id;
+                            const showActive = isActive || (isSaving && s.id === (importMethod === 'sample' ? 2 : 4));
+                            const showDone = isCompleted && (!isSaving || s.id < (importMethod === 'sample' ? 2 : 4));
+                            return (
+                                <div key={s.id} className="flex flex-col items-center relative z-10">
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white transition-all duration-300 ${
+                                        showActive || showDone ? 'border-[#444CE7] text-[#444CE7]' : 'border-slate-200 text-slate-400'
+                                    }`}>
+                                        {showDone ? (
+                                            <Check size={12} strokeWidth={3} className="text-[#444CE7]" />
+                                        ) : (
+                                            <div className={`w-2.5 h-2.5 bg-[#444CE7] rounded-full transition-all duration-300 ${showActive ? 'opacity-100' : 'opacity-0 scale-50'}`} />
+                                        )}
+                                    </div>
+                                    <span className={`text-[11px] mt-2 font-bold transition-all duration-300 ${showActive ? 'text-[#444CE7]' : 'text-slate-400'}`}>
+                                        {s.label}
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* Body */}
-                <div className="p-8 flex-grow relative min-h-[280px] bg-white">
-                    {step === 1 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-                            {/* Left Side */}
-                            <div className="space-y-6 flex flex-col justify-center pr-0 md:pr-8">
-                                <div className="text-sm text-slate-600">
-                                    Download a{' '}
-                                    <span 
-                                        onClick={handleDownloadSample} 
-                                        className="text-indigo-600 hover:underline cursor-pointer font-semibold"
-                                    >
-                                        Sample File
-                                    </span>.
-                                </div>
-                                
-                                <div>
-                                    <button
-                                        onClick={handleUploadClick}
-                                        className="w-full py-4 text-center border border-indigo-200 bg-indigo-50/20 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                                    >
-                                        Upload Excel File <span className="text-rose-500">*</span>
-                                    </button>
-                                    <input 
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        accept=".csv,.xlsx,.xls"
-                                    />
-                                    {file && (
-                                        <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 animate-in fade-in">
-                                            <Check className="text-emerald-600" size={14} strokeWidth={3} />
-                                            Selected: <span className="font-semibold text-slate-700">{file.name}</span>
-                                        </div>
-                                    )}
-                                </div>
+                <div className="p-8 flex-grow overflow-y-auto min-h-[350px] bg-slate-50/20 flex flex-col justify-center">
+                    {isSaving ? (
+                        /* Processing / Saving loading state matching reference image */
+                        <div className="flex flex-col items-center justify-center h-full min-h-[250px] animate-in fade-in duration-200 space-y-4">
+                            {/* Circular loader with document icon */}
+                            <div className="relative w-16 h-16 flex items-center justify-center">
+                                {/* Outer circle */}
+                                <div className="absolute inset-0 rounded-full border-[3px] border-slate-100" />
+                                {/* Spinning arc */}
+                                <div className="absolute inset-0 rounded-full border-[3px] border-t-[#444CE7] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                                {/* Document icon */}
+                                <UploadCloud size={20} className="text-[#444CE7]" />
                             </div>
 
-                            {/* Dotted Vertical Divider */}
-                            <div className="hidden md:block absolute left-1/2 top-8 bottom-8 border-l border-dashed border-slate-200" />
+                            {/* Status message */}
+                            <div className="text-center space-y-1.5">
+                                <h4 className="text-sm font-bold text-slate-800">Processing your import...</h4>
+                                <p className="text-xs text-slate-400 font-semibold">This may take a moment. Please do not close this window.</p>
+                            </div>
 
-                            {/* Right Side */}
-                            <div className="space-y-4 pl-0 md:pl-10 flex flex-col justify-center">
-                                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Instructions:</h4>
-                                <ul className="space-y-3 text-xs text-slate-500 font-medium leading-relaxed pl-4 list-disc">
-                                    <li>Do not change the column names provided in the sample Excel template.</li>
-                                    <li>Columns indicated in red color are mandatory fields.</li>
-                                    <li>Ensure to follow correct data types for each column.</li>
-                                    <li>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</li>
-                                </ul>
+                            {/* Bouncing dots loading indicator */}
+                            <div className="flex gap-1.5 justify-center pt-2">
+                                <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce" />
                             </div>
                         </div>
-                    )}
+                    ) : (
+                        <>
+                            {step === 1 && (
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+                                    {/* Left Side */}
+                                    <div className="lg:col-span-7 space-y-6">
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Import Method</h4>
+                                            <div className="space-y-3">
+                                                {/* Option 1: Sample Template (Selected) */}
+                                                <div 
+                                                    onClick={() => setImportMethod('sample')}
+                                                    className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
+                                                        importMethod === 'sample' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <h5 className="text-sm font-bold text-slate-800">Use the sample template</h5>
+                                                        <p className="text-xs text-slate-400 font-medium mt-0.5">Download our pre-formatted file, fill it in, and upload.</p>
+                                                    </div>
+                                                    {importMethod === 'sample' && (
+                                                        <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
+                                                            <Check size={12} strokeWidth={3} />
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                    {step === 2 && (
-                        <div className="flex flex-col items-center justify-center h-full min-h-[220px] animate-in fade-in duration-200">
-                            {isUploading ? (
-                                <div className="w-full space-y-8 p-4 animate-in fade-in duration-350">
+                                                {/* Option 2: Another System (Unselected) */}
+                                                <div 
+                                                    onClick={() => setImportMethod('another')}
+                                                    className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
+                                                        importMethod === 'another' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <h5 className="text-sm font-bold text-slate-800">Use a file from another system</h5>
+                                                        <p className="text-xs text-slate-400 font-medium mt-0.5">Upload any spreadsheet and map columns to CRM fields.</p>
+                                                    </div>
+                                                    {importMethod === 'another' && (
+                                                        <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
+                                                            <Check size={12} strokeWidth={3} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Drag & Drop Box */}
+                                        <div 
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                                    handleFileDrop(e.dataTransfer.files[0]);
+                                                }
+                                            }}
+                                            className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center text-center transition-all ${
+                                                file 
+                                                    ? 'border-emerald-300 bg-emerald-50/5 gap-4' 
+                                                    : 'border-indigo-200 bg-indigo-50/5 gap-3 hover:bg-indigo-50/10'
+                                            }`}
+                                        >
+                                            {file ? (
+                                                <div className="flex flex-col items-center gap-4 animate-in fade-in duration-200 w-full">
+                                                    {/* File Doc Icon */}
+                                                    <div className="w-14 h-14 bg-emerald-100/60 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-200/50">
+                                                        <FileSpreadsheet size={24} />
+                                                    </div>
+                                                    
+                                                    {/* Filename and check */}
+                                                    <div className="flex items-center justify-center gap-2 max-w-full">
+                                                        <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+                                                        <span className="text-sm font-bold text-slate-800 truncate px-1 max-w-[280px]" title={file.name}>
+                                                            {file.name}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* File Size and status */}
+                                                    <p className="text-xs text-slate-400 font-semibold tracking-wide">
+                                                        {(file.size / 1024).toFixed(1)} KB · Ready to import
+                                                    </p>
+
+                                                    {/* Remove Button */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFile(null);
+                                                            setParsedData([]);
+                                                            if (fileInputRef.current) {
+                                                                fileInputRef.current.value = "";
+                                                            }
+                                                        }}
+                                                        className="px-4 py-2 border border-rose-200 bg-rose-50/40 hover:bg-rose-50/70 text-rose-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer mt-1"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                        Remove file
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="w-12 h-12 bg-indigo-50 rounded-md flex items-center justify-center text-[#444CE7] shadow-sm border border-indigo-100">
+                                                        <UploadCloud size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-700">Drag & drop your file here</p>
+                                                        <p className="text-xs text-slate-400 mt-1 font-medium">or click the button below to browse from your computer</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={handleUploadClick}
+                                                        className="px-6 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-md font-bold text-xs shadow-md transition-all cursor-pointer mt-2"
+                                                    >
+                                                        Browse Files
+                                                    </button>
+                                                    <p className="text-[10px] text-slate-400 font-bold tracking-tight mt-1">.xlsx and .xls supported</p>
+                                                </>
+                                            )}
+                                            <input 
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                                accept=".csv,.xlsx,.xls"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Right Side */}
+                                    <div className="lg:col-span-5 space-y-4">
+                                        {importMethod === 'sample' ? (
+                                            <>
+                                                {/* Sample Download Card */}
+                                                <div className="border border-indigo-100 bg-indigo-50/10 rounded-md p-4 flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
+                                                        <FileSpreadsheet size={20} />
+                                                    </div>
+                                                    <div className="flex-grow">
+                                                        <h5 className="text-xs font-bold text-slate-800">Sample Template</h5>
+                                                        <p className="text-[10px] text-slate-400 font-medium">Pre-formatted Excel file</p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={handleDownloadSample}
+                                                        className="px-4 py-2 bg-white hover:bg-slate-50 text-[#444CE7] border border-indigo-200 rounded-md text-[10px] font-bold transition-all shrink-0 shadow-sm"
+                                                    >
+                                                        Download Template
+                                                    </button>
+                                                </div>
+
+                                                {/* Instructions Card */}
+                                                <div className="border border-slate-200 rounded-md p-5 space-y-4 bg-white">
+                                                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
+                                                    <ul className="space-y-3 pl-1">
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Do not change the column names provided in the sample Excel template.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Columns indicated in <span className="text-rose-500 font-bold">red color</span> are mandatory fields.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Ensure to follow correct data types for each column.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {/* Instructions Card for Another System */}
+                                                <div className="border border-slate-200 rounded-md p-5 space-y-4 bg-white">
+                                                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
+                                                    <ul className="space-y-3.5 pl-1">
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>
+                                                                For Employees, the following fields are mandatory: <span className="font-semibold text-slate-700">Employee Code, Employee Name, Business Unit, Salary Structure, Annual CTC (₹), Effective From, Arrears Payout Month, PAN Number, Aadhaar Number, Tax Regime, Total Gross (Annual), Total CTC (Annual), Total Net Pay (Annual), Salary Pay Mode, Account Number, IFSC Code, Bank Name, Branch, and Appraisal Month.</span> Make sure your file has columns that can be mapped to these fields.
+                                                            </span>
+                                                        </li>
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Map each column from your file to the corresponding field in CollabCRM. Unmapped columns will be ignored during import.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Use "Apply Auto Mapping" to let the system automatically detect and map columns based on their names.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                            <span>Once all mandatory fields are mapped, you can proceed with the import. The system will validate data against field types.</span>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    {/* Download Sample File */}
+                                                    <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                                                        <span className="text-[11px] font-bold text-slate-400">Need a reference example?</span>
+                                                        <button 
+                                                            onClick={handleDownloadSample}
+                                                            className="w-full py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-md text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                                                        >
+                                                            <Download size={14} /> Download Sample File
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Warning Card */}
+                                        <div className="border border-amber-200 bg-amber-50/20 rounded-md p-4 flex items-start gap-3 text-xs text-amber-800 font-medium border-l-4">
+                                            <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                                            <span>Max file size: 10 MB. Accepted formats: .xlsx and .xls.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {(step === 2 || (importMethod === 'another' && step === 4)) && (
+                                <div className="w-full space-y-6 animate-in fade-in duration-300">
                                     {/* Alert Banner */}
-                                    <div className="w-full bg-blue-50/50 border border-blue-200 rounded-xl p-4 flex items-start gap-3.5 shadow-sm">
-                                        <div className="p-1 bg-blue-100 rounded-full text-blue-600 shrink-0 mt-0.5">
-                                            <Info size={18} />
+                                    {failureCount > 0 ? (
+                                        <div className="w-full bg-amber-50/50 border border-amber-200 rounded-md p-4 flex items-center gap-3.5 shadow-sm">
+                                            <div className="p-1 bg-amber-100 rounded-full text-amber-600 shrink-0">
+                                                <Info size={18} />
+                                            </div>
+                                            <div className="text-sm font-semibold text-amber-800">
+                                                Some records failed to import. Please review and correct them.
+                                            </div>
                                         </div>
-                                        <div className="text-sm text-blue-800 leading-relaxed font-medium">
-                                            We're currently uploading your file <span className="font-bold font-mono">'{file?.name || 'employees_compensation_sample.xlsx'}'</span>.
-                                            <br />
-                                            <span className="text-blue-600 font-normal mt-0.5 block">Please be patient while we fully process your data. This could take some time to complete.</span>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Dotted Spinner */}
-                                    <div className="flex justify-center items-center py-12">
-                                        <div className="relative w-16 h-16 animate-spin">
-                                            {[...Array(12)].map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="absolute w-2.5 h-2.5 bg-purple-500 rounded-full"
-                                                    style={{
-                                                        top: `${50 + 40 * Math.sin((i * 2 * Math.PI) / 12)}%`,
-                                                        left: `${50 + 40 * Math.cos((i * 2 * Math.PI) / 12)}%`,
-                                                        transform: 'translate(-50%, -50%)',
-                                                        opacity: 0.15 + (i * 0.85) / 11,
-                                                    }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-6 text-center animate-in fade-in">
-                                    <div className="w-16 h-16 bg-violet-50 text-violet-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
-                                        <Check size={28} strokeWidth={3} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-lg font-bold text-slate-800">File Processed Successfully!</h4>
-                                        <p className="text-sm text-slate-500 mt-2">File name: <span className="font-semibold text-slate-700 font-mono">{file?.name}</span></p>
-                                        <p className="text-xs text-slate-400 mt-1">({file ? (file.size >= 1024 ? `${Math.round(file.size / 1024)} KB` : `${file.size} Bytes`) : '0 KB'} • Ready for DB integration)</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="w-full space-y-6 animate-in fade-in duration-300">
-                            {/* Alert Banner */}
-                            {failureCount > 0 ? (
-                                <div className="w-full bg-amber-50/50 border border-amber-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
-                                    <div className="p-1 bg-amber-100 rounded-full text-amber-600 shrink-0">
-                                        <Info size={18} />
-                                    </div>
-                                    <div className="text-sm font-semibold text-amber-800">
-                                        Some records failed to import. Please review and correct them.
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="w-full bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
-                                    <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0">
-                                        <CheckCircle size={18} />
-                                    </div>
-                                    <div className="text-sm font-semibold text-emerald-800">
-                                        All records imported successfully!
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Summary Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Success Card */}
-                                <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-sm">
-                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/50 shrink-0">
-                                        <Check size={28} strokeWidth={3} />
-                                    </div>
-                                    <div className="text-sm font-bold text-slate-700 leading-tight">
-                                        {successCount} record(s) imported successfully.
-                                    </div>
-                                </div>
-
-                                {/* Failure Card */}
-                                <div className="border border-slate-200 bg-white rounded-xl p-6 flex flex-col justify-center gap-3 shadow-sm min-h-[110px]">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 border border-rose-100/50 shrink-0">
-                                            <X size={28} strokeWidth={3} />
-                                        </div>
-                                        <div className="text-sm font-bold text-slate-700 leading-tight">
-                                            {failureCount} record(s) failed to import.
-                                        </div>
-                                    </div>
-                                    {failureCount > 0 && (
-                                        <div className="pl-21">
-                                            <button
-                                                onClick={handleDownloadFailedRecords}
-                                                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-xs transition-all flex items-center gap-2 mt-1 cursor-pointer"
-                                            >
-                                                <Download size={14} /> Download Failed Records
-                                            </button>
+                                    ) : (
+                                        <div className="w-full bg-emerald-50/50 border border-emerald-200 rounded-md p-4 flex items-center gap-3.5 shadow-sm">
+                                            <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0">
+                                                <CheckCircle size={18} />
+                                            </div>
+                                            <div className="text-sm font-semibold text-emerald-800">
+                                                All records imported successfully!
+                                            </div>
                                         </div>
                                     )}
+
+                                    {/* Summary Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Success Card */}
+                                        <div className="border border-slate-200 bg-white rounded-md p-6 flex items-center gap-5 shadow-sm">
+                                            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/50 shrink-0">
+                                                <Check size={28} strokeWidth={3} />
+                                            </div>
+                                            <div className="text-sm font-bold text-slate-700 leading-tight">
+                                                {successCount} record(s) imported successfully.
+                                            </div>
+                                        </div>
+
+                                        {/* Failure Card */}
+                                        <div className="border border-slate-200 bg-white rounded-md p-6 flex flex-col justify-center gap-3 shadow-sm min-h-[110px]">
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 border border-rose-100/50 shrink-0">
+                                                    <X size={28} strokeWidth={3} />
+                                                </div>
+                                                <div className="text-sm font-bold text-slate-700 leading-tight">
+                                                    {failureCount} record(s) failed to import.
+                                                </div>
+                                            </div>
+                                            {failureCount > 0 && (
+                                                <div className="pl-21">
+                                                    <button
+                                                        onClick={handleDownloadFailedRecords}
+                                                        className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-md text-xs transition-all flex items-center gap-2 mt-1 cursor-pointer"
+                                                    >
+                                                        <Download size={14} /> Download Failed Records
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
 
                 {/* Footer */}
-                {!isUploading && (
+                {!isSaving && (
                     <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
                         {step === 1 && (
                             <>
                                 <button
-                                    onClick={onClose}
-                                    className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm animate-in fade-in"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleNext}
-                                    disabled={!file}
-                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed animate-in fade-in"
-                                >
-                                    Next
-                                </button>
-                            </>
-                        )}
-
-                        {step === 2 && (
-                            <>
-                                <button
-                                    onClick={handleBack}
-                                    disabled={isSaving}
-                                    className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition-all text-sm disabled:opacity-50 animate-in fade-in"
-                                >
-                                    Back
-                                </button>
-                                <button
                                     onClick={handleImport}
-                                    disabled={isUploading || isSaving}
-                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all text-sm shadow-md disabled:opacity-50 animate-in fade-in"
+                                    disabled={!file}
+                                    className="px-8 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold rounded-md transition-all text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed animate-in fade-in cursor-pointer"
                                 >
-                                    {isSaving ? 'Importing...' : 'Finish & Import'}
+                                    Import
                                 </button>
                             </>
                         )}
 
-                        {step === 3 && (
+                        {(step === 2 || (importMethod === 'another' && step === 4)) && (
                             <button
                                 onClick={onClose}
-                                className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all text-sm shadow-md animate-in fade-in"
+                                className="px-8 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold rounded-md transition-all text-sm shadow-md animate-in fade-in cursor-pointer"
                             >
                                 Done
                             </button>
