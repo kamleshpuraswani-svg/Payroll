@@ -1690,8 +1690,9 @@ const HRSalarySlipTemplate: React.FC = () => {
                     </>
                 ) : (
                     /* PREVIEW TAB */
-                    <div className="flex-1 bg-slate-100 p-8 flex justify-center overflow-y-auto">
-                        <div className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-12 flex flex-col relative text-slate-900" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    <div className="flex-1 bg-slate-100 p-8 overflow-y-auto">
+                        <div className="max-w-[1075px] mx-auto bg-white shadow-sm border border-slate-200 flex flex-col relative rounded-xl overflow-hidden text-slate-900">
+                        <div className="p-8 space-y-8">
 
                             {/* Dynamic Header */}
                             <div className={`flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
@@ -1711,170 +1712,182 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 <p className="text-sm font-medium mt-1">For the month of November 2025</p>
                             </div>
 
-                            {/* Dynamic Employee Details */}
-                            <div className="grid grid-cols-2 gap-y-3 gap-x-8 mb-8 text-sm border-b border-slate-200 pb-6">
-                                {headerConfig.employeeFields.name && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.name}</span><span>: Priya Sharma</span></div>}
-                                {headerConfig.employeeFields.id && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.id}</span><span>: TF00912</span></div>}
-                                {headerConfig.employeeFields.designation && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.designation}</span><span>: Senior Engineer</span></div>}
-                                {headerConfig.employeeFields.department && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.department}</span><span>: Engineering</span></div>}
-                                {headerConfig.employeeFields.doj && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.doj}</span><span>: 12 Jan 2023</span></div>}
-                                {headerConfig.employeeFields.location && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.location}</span><span>: Bangalore</span></div>}
-                                {headerConfig.employeeFields.pan && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.pan}</span><span>: ABCDE1234F</span></div>}
-                                {headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip' && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.lwk}</span><span>: 30 Nov 2025</span></div>}
-                                {headerConfig.employeeFields.uan && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.uan}</span><span>: 100900200300</span></div>}
-                                {headerConfig.employeeFields.bankAccount && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankAccount}</span><span>: HDFC0001234</span></div>}
-                                {headerConfig.employeeFields.bankName && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankName}</span><span>: HDFC Bank</span></div>}
-                                {headerConfig.employeeFields.bankIfsc && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankIfsc}</span><span>: HDFC0001234</span></div>}
-                                {headerConfig.employeeFields.pf && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.pf}</span><span>: AA/BBB/1234567/000/7654321</span></div>}
-                                {headerConfig.employeeFields.esi && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.esi}</span><span>: 31001234560007890</span></div>}
-                                {headerConfig.employeeFields.pran && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.pran}</span><span>: 100200300400</span></div>}
-                                {headerConfig.employeeFields.payrollPeriod && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.payrollPeriod}</span><span>: 01 Nov 2025 - 30 Nov 2025</span></div>}
-                                {headerConfig.employeeFields.attendancePeriod && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.attendancePeriod}</span><span>: 01 Nov 2025 - 30 Nov 2025</span></div>}
-                            </div>
 
-                            {/* Dynamic Earnings & Deductions Table */}
-                            <table className="w-full border-collapse border border-slate-300 mb-8 text-sm">
-                                <thead>
-                                    <tr className="bg-slate-100">
-                                        <th className={`border border-slate-300 p-2 text-left ${settings.showYTD ? 'w-[25%]' : 'w-[35%]'}`}>Earnings</th>
-                                        <th className={`border border-slate-300 p-2 text-right ${settings.showYTD ? 'w-[15%]' : 'w-[15%]'}`}>Amount</th>
-                                        {settings.showYTD && <th className="border border-slate-300 p-2 text-right w-[10%] text-slate-500">YTD</th>}
-                                        <th className={`border border-slate-300 p-2 text-left ${settings.showYTD ? 'w-[25%]' : 'w-[35%]'}`}>Deductions</th>
-                                        <th className={`border border-slate-300 p-2 text-right ${settings.showYTD ? 'w-[15%]' : 'w-[15%]'}`}>Amount</th>
-                                        {settings.showYTD && <th className="border border-slate-300 p-2 text-right w-[10%] text-slate-500">YTD</th>}
-                                    </tr>
-                                </thead>
+                            {/* Dynamic Employee Details - table format matching editor */}
+                            <table className="w-full text-sm text-slate-600 border-collapse border border-slate-200 mb-8">
                                 <tbody>
-                                    {Array.from({ length: Math.max(sections.earnings.length, sections.deductions.length) }).map((_, i) => (
-                                        <tr key={i}>
-                                            <td className="border-l border-r border-slate-300 p-2 text-left align-top">
-                                                {sections.earnings[i]?.name}
-                                            </td>
-                                             <td className="border-r border-slate-300 p-2 text-right align-top">
-                                                 {sections.earnings[i] ? `₹ ${formatCurrency(parseAmount(sections.earnings[i].amount))}` : ''}
-                                             </td>
-                                            {settings.showYTD && (
-                                                <td className="border-r border-slate-300 p-2 text-right align-top text-slate-500">
-                                                    {sections.earnings[i] ? `₹ ${formatCurrency(parseAmount(sections.earnings[i].amount) * 8)}` : ''}
-                                                </td>
-                                            )}
-                                            <td className="border-r border-slate-300 p-2 text-left align-top">
-                                                {sections.deductions[i]?.name}
-                                            </td>
-                                             <td className="border-r border-slate-300 p-2 text-right align-top">
-                                                 {sections.deductions[i] ? `₹ ${formatCurrency(parseAmount(sections.deductions[i].amount))}` : ''}
-                                             </td>
-                                            {settings.showYTD && (
-                                                <td className="border-r border-slate-300 p-2 text-right align-top text-slate-500">
-                                                    {sections.deductions[i] ? `₹ ${formatCurrency(parseAmount(sections.deductions[i].amount) * 8)}` : ''}
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
+                                    {(() => {
+                                        type EmpField = { label: string; value: string };
+                                        const fields: EmpField[] = [];
+                                        if (headerConfig.employeeFields.name) fields.push({ label: 'Employee Name', value: 'Priya Sharma' });
+                                        if (headerConfig.employeeFields.id) fields.push({ label: 'Employee ID', value: 'TF00912' });
+                                        if (headerConfig.employeeFields.designation) fields.push({ label: 'Designation', value: 'Senior Engineer' });
+                                        if (headerConfig.employeeFields.department) fields.push({ label: 'Department', value: 'Engineering' });
+                                        if (headerConfig.employeeFields.doj) fields.push({ label: 'Date of Joining', value: '12 Jan 2023' });
+                                        if (headerConfig.employeeFields.location) fields.push({ label: 'Address', value: 'Bangalore' });
+                                        if (headerConfig.employeeFields.pan) fields.push({ label: 'PAN', value: 'ABCDE1234F' });
+                                        if (headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip') fields.push({ label: 'Last Working Date', value: '30 Nov 2025' });
+                                        if (headerConfig.employeeFields.uan) fields.push({ label: 'UAN', value: '100900200300' });
+                                        if (headerConfig.employeeFields.bankAccount) fields.push({ label: 'Bank Account', value: 'HDFC0001234' });
+                                        if (headerConfig.employeeFields.bankName) fields.push({ label: 'Bank Name', value: 'HDFC Bank' });
+                                        if (headerConfig.employeeFields.bankIfsc) fields.push({ label: 'Bank IFSC', value: 'HDFC0001234' });
+                                        if (headerConfig.employeeFields.pf) fields.push({ label: 'PF Number', value: 'AA/BBB/1234567/000/7654321' });
+                                        if (headerConfig.employeeFields.esi) fields.push({ label: 'ESI Number', value: '31001234560007890' });
+                                        if (headerConfig.employeeFields.pran) fields.push({ label: 'PRAN Number', value: '100200300400' });
+                                        if (headerConfig.employeeFields.payrollPeriod) fields.push({ label: 'Payroll Period', value: '01 Nov 2025 - 30 Nov 2025' });
+                                        if (headerConfig.employeeFields.attendancePeriod) fields.push({ label: 'Attendance Period', value: '01 Nov 2025 - 30 Nov 2025' });
+                                        const rows: EmpField[][] = [];
+                                        for (let i = 0; i < fields.length; i += 2) {
+                                            rows.push(fields.slice(i, i + 2));
+                                        }
+                                        return rows.map((row, idx) => (
+                                            <tr key={idx}>
+                                                {row.map((f, i) => (
+                                                    <React.Fragment key={i}>
+                                                        <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">{f.label}</td>
+                                                        <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">{f.value}</td>
+                                                    </React.Fragment>
+                                                ))}
+                                                {row.length === 1 && <><td className="border border-slate-200 bg-slate-50/50" /><td className="border border-slate-200" /></>}
+                                            </tr>
+                                        ));
+                                    })()}
+                                </tbody>
+                            </table>
 
-                                    {settings.showEmployerContribution && (
-                                        <tr className="bg-emerald-50 text-emerald-800 text-xs">
-                                            <td className="border border-slate-300 p-2 text-left" colSpan={settings.showYTD ? 3 : 2}>
-                                                <div className="font-semibold mb-1">Employer PF Contribution</div>
-                                            </td>
-                                             <td className="border border-slate-300 p-2 text-right align-top" colSpan={settings.showYTD ? 3 : 2}>
-                                                 ₹ {formatCurrency(1800)}
-                                             </td>
-                                        </tr>
-                                    )}
-
-                                    {/* Spacing Rows to ensure minimum height if needed */}
-                                    {Math.max(sections.earnings.length, sections.deductions.length) < 3 && (
-                                        <tr>
-                                            <td className="border-l border-r border-slate-300 h-8"></td>
-                                            <td className="border-r border-slate-300"></td>
-                                            {settings.showYTD && <td className="border-r border-slate-300"></td>}
-                                            <td className="border-r border-slate-300"></td>
-                                            <td className="border-r border-slate-300"></td>
-                                            {settings.showYTD && <td className="border-r border-slate-300"></td>}
-                                        </tr>
-                                    )}
-
-                                    {/* Totals Row */}
-                                    <tr className="bg-slate-50 font-bold">
-                                        <td className="border border-slate-300 p-2 text-left">Total Earnings</td>
-                                        <td className="border border-slate-300 p-2 text-right">
-                                            ₹ {formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}
-                                        </td>
-                                        {settings.showYTD && (
-                                            <td className="border border-slate-300 p-2 text-right text-slate-500">
-                                                ₹ {formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0) * 8)}
-                                            </td>
-                                        )}
-                                        <td className="border border-slate-300 p-2 text-left">Total Deductions</td>
-                                        <td className="border border-slate-300 p-2 text-right">
-                                            ₹ {formatCurrency(sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0) + (settings.showEmployerContribution ? 1800 : 0))}
-                                        </td>
-                                        {settings.showYTD && (
-                                            <td className="border border-slate-300 p-2 text-right text-slate-500">
-                                                ₹ {formatCurrency(sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0) * 8 + (settings.showEmployerContribution ? 1800 * 8 : 0))}
-                                            </td>
-                                        )}
+                            {/* Attendance Summary Table */}
+                            <table className="w-full border-collapse border border-slate-200 text-sm text-slate-600 mb-8">
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Total Working Days</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">30</td>
+                                        <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Payable Days</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">21</td>
+                                        <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">LOP Days</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">2</td>
                                     </tr>
                                 </tbody>
                             </table>
 
-                            {/* Employer's Contribution for Preview */}
-                            {slipType === 'Payslip' && (
-                                <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                                    <h4 className="font-bold text-xs mb-3 uppercase text-slate-600 tracking-wider">Employer's Contribution</h4>
-                                    <div className="grid grid-cols-3 gap-y-3 gap-x-8">
-                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                                            <span className="text-sm font-semibold text-slate-500">EPF (Employer)</span>
-                                            <span className="text-sm font-bold text-slate-900">₹ 1,800.00</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                                            <span className="text-sm font-semibold text-slate-500">ESI (Employer)</span>
-                                            <span className="text-sm font-bold text-slate-900">₹ 450.00</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                                            <span className="text-sm font-semibold text-slate-500">LWF (Employer)</span>
-                                            <span className="text-sm font-bold text-slate-900">₹ 12.00</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Earnings & Deductions Table - matching editor 7-column format */}
+                            <table className="w-full border-collapse text-sm mb-8">
+                                <thead>
+                                    <tr>
+                                        <th colSpan={5} className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase bg-emerald-50 text-emerald-700">Earnings (INR)</th>
+                                        <th colSpan={2} className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase bg-rose-50 text-rose-700">Deductions (INR)</th>
+                                    </tr>
+                                    <tr>
+                                        <th className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase text-slate-500 bg-slate-50">Components</th>
+                                        <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Rate</th>
+                                        <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Monthly</th>
+                                        <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Arrear</th>
+                                        <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Total</th>
+                                        <th className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase text-slate-500 bg-slate-50">Components</th>
+                                        <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Array.from({ length: Math.max(sections.earnings.length, sections.deductions.length) }).map((_, i) => {
+                                        const earning = sections.earnings[i];
+                                        const deduction = sections.deductions[i];
+                                        const earningAmount = earning ? parseAmount(earning.amount) : 0;
+                                        return (
+                                            <tr key={i}>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-600">{earning ? earning.name : ''}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-600">{earning ? formatCurrency(earningAmount) : ''}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-600">{earning ? formatCurrency(earningAmount) : ''}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-600">{earning ? formatCurrency(0) : ''}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right font-medium text-slate-800">{earning ? formatCurrency(earningAmount) : ''}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-600">{deduction ? deduction.name : ''}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right font-medium text-slate-800">{deduction ? formatCurrency(parseAmount(deduction.amount)) : ''}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr className="font-bold bg-slate-50">
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">Total</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(0)}</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">Total</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                            {/* Salary Summary for Preview */}
-                            {sections.summary.length > 0 && (
-                                <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                                    <h4 className="font-bold text-xs mb-3 uppercase text-slate-600 tracking-wider">Salary Summary</h4>
-                                    <div className="grid grid-cols-3 gap-y-3 gap-x-8">
-                                        {sections.summary.map((item, i) => (
-                                            <div key={i} className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                                                <span className="text-sm font-semibold text-slate-500">{item.name}</span>
-                                                <span className="text-sm font-bold text-slate-900">₹ {formatCurrency(calculateSummaryValue(item.name))}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                            {/* Payslip Summary Table - matching editor format */}
+                            <table className="w-full border-collapse border border-slate-200 text-sm mb-8">
+                                <thead>
+                                    <tr>
+                                        <th colSpan={2} className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase bg-slate-100 text-slate-700">Payslip Summary</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Total Net Pay (INR)</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(calculateSummaryValue('Net Pay'))}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Total Net Pay (In Words)</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{numberToWordsIndian(calculateSummaryValue('Net Pay'))}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Total Monthly CTC (INR)</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(calculateSummaryValue('CTC Monthly'))}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                            {/* Net Pay */}
-                            <div className="flex justify-end mb-8">
-                                <div className="w-1/2 border-2 border-slate-800 p-4 flex justify-between items-center bg-slate-50">
-                                    <div className="text-left">
-                                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Net Payable</span>
-                                        <span className="text-[10px] text-slate-400">(Earnings - Deductions)</span>
-                                    </div>
-                                    <span className="font-bold text-2xl text-slate-900">
-                                        ₹ {formatCurrency(
-                                            sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0) -
-                                            sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0)
-                                        )}
-                                    </span>
+                            {/* Employer Contributions Table - matching editor format */}
+                            <table className="w-full border-collapse border border-slate-200 text-sm mb-8">
+                                <thead>
+                                    <tr>
+                                        <th colSpan={2} className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase bg-slate-100 text-slate-700">Employer Contributions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer PF</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,800.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer PF Charges</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">150.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer ESIC</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">165.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer NPS</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">2,000.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Gratuity</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,530.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            {/* Net Pay - full-width dark bar */}
+                            <div className="w-full border-2 border-slate-800 p-4 flex justify-between items-center bg-slate-800 mb-8">
+                                <div className="text-left">
+                                    <span className="block text-xs font-bold text-white uppercase tracking-widest">Net Payable</span>
+                                    <span className="text-[10px] text-slate-300">(Earnings - Deductions)</span>
                                 </div>
+                                <span className="font-bold text-2xl text-white">
+                                    ₹ {formatCurrency(
+                                        sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0) -
+                                        sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0)
+                                    )}
+                                </span>
                             </div>
 
-                            <div className="mt-8 pt-6 border-t border-slate-300">
+                            <div className="pt-6 border-t border-slate-300">
                                 <p className="text-center text-xs text-slate-500 mb-1">This is a computer-generated document and does not require a signature.</p>
                                 <p className="text-center text-[10px] text-slate-400">Generated on {new Date().toLocaleDateString()}</p>
                             </div>
+                        </div>
                         </div>
                     </div>
                 )}
