@@ -16,6 +16,7 @@ import {
     Check,
     Info,
     ChevronDown,
+    ChevronRight,
     Building2
 } from 'lucide-react';
 
@@ -53,6 +54,8 @@ interface TemplateSettings {
     passwordProtect: boolean;
     salaryStructure?: string;
     decimalPlaces?: string;
+    showMonthlyRate?: boolean;
+    showZeroValueComponents?: boolean;
 }
 
 interface PayslipTemplate {
@@ -93,6 +96,13 @@ interface HeaderConfig {
         lwk: boolean;
         uan: boolean;
         location: boolean;
+        pf: boolean;
+        esi: boolean;
+        pran: boolean;
+        bankName: boolean;
+        bankIfsc: boolean;
+        payrollPeriod: boolean;
+        attendancePeriod: boolean;
     };
 }
 
@@ -115,7 +125,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: true,
             payslipTitle: 'Payslip',
-            employeeFields: { name: true, id: true, designation: true, department: true, doj: true, bankAccount: true, pan: true, lwk: false, uan: true, location: true }
+            employeeFields: { name: true, id: true, designation: true, department: true, doj: true, bankAccount: true, pan: true, lwk: false, uan: true, location: true, pf: true, esi: true, pran: true, bankName: true, bankIfsc: true, payrollPeriod: true, attendancePeriod: true }
         },
         slipType: 'Payslip',
         sections: {
@@ -159,7 +169,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: false,
             payslipTitle: 'Stipend Receipt',
-            employeeFields: { name: true, id: true, designation: false, department: true, doj: true, bankAccount: true, pan: false, lwk: false, uan: false, location: false }
+            employeeFields: { name: true, id: true, designation: false, department: true, doj: true, bankAccount: true, pan: false, lwk: false, uan: false, location: false, pf: false, esi: false, pran: false, bankName: false, bankIfsc: false, payrollPeriod: false, attendancePeriod: false }
         },
         slipType: 'Payslip',
         sections: {
@@ -195,7 +205,7 @@ const MOCK_TEMPLATES: PayslipTemplate[] = [
             showCompanyName: true,
             showCompanyAddress: true,
             payslipTitle: 'Performance Bonus',
-            employeeFields: { name: true, id: true, designation: true, department: true, doj: false, bankAccount: true, pan: true, lwk: false, uan: true, location: true }
+            employeeFields: { name: true, id: true, designation: true, department: true, doj: false, bankAccount: true, pan: true, lwk: false, uan: true, location: true, pf: false, esi: false, pran: false, bankName: false, bankIfsc: false, payrollPeriod: false, attendancePeriod: false }
         },
         slipType: 'Payslip',
         sections: {
@@ -502,6 +512,7 @@ const HRSalarySlipTemplate: React.FC = () => {
     });
     const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(MOCK_TEMPLATES[0].headerConfig);
     const [settings, setSettings] = useState<TemplateSettings>(MOCK_TEMPLATES[0].settings);
+    const [isTemplateActive, setIsTemplateActive] = useState(true);
 
     // Payslip Naming Format State (Suffix only, as prefix is fixed)
     const [namingPatternSuffix, setNamingPatternSuffix] = useState('{{EmployeeName}}_{{Month}}_{{Year}}');
@@ -608,6 +619,7 @@ const HRSalarySlipTemplate: React.FC = () => {
 
     // Modal States
     const [headerConfigOpen, setHeaderConfigOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [settingsModal, setSettingsModal] = useState<{ isOpen: boolean; type: 'YTD' | 'EMPLOYER' | 'PASSWORD' | null }>({ isOpen: false, type: null });
     const [addComponentModal, setAddComponentModal] = useState<{
         isOpen: boolean;
@@ -709,6 +721,31 @@ const HRSalarySlipTemplate: React.FC = () => {
         }
     };
 
+    const numberToWordsIndian = (num: number): string => {
+        if (num === 0) return 'Zero Only';
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const twoDigits = (n: number): string => {
+            if (n < 20) return ones[n];
+            return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+        };
+        const threeDigits = (n: number): string => {
+            if (n < 100) return twoDigits(n);
+            return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + twoDigits(n % 100) : '');
+        };
+        let n = Math.round(num);
+        const crore = Math.floor(n / 10000000); n %= 10000000;
+        const lakh = Math.floor(n / 100000); n %= 100000;
+        const thousand = Math.floor(n / 1000); n %= 1000;
+        const rest = n;
+        const parts: string[] = [];
+        if (crore) parts.push(threeDigits(crore) + ' Crore');
+        if (lakh) parts.push(threeDigits(lakh) + ' Lakh');
+        if (thousand) parts.push(threeDigits(thousand) + ' Thousand');
+        if (rest) parts.push(threeDigits(rest));
+        return parts.join(' ') + ' Only';
+    };
+
     const calculateSummaryValue = (name: string) => {
         const totalEarnings = sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0);
         const totalDeductions = sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0);
@@ -762,6 +799,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         });
         setSettings(MOCK_TEMPLATES[0].settings); // Defaults
         setHeaderConfig(MOCK_TEMPLATES[0].headerConfig);
+        setIsTemplateActive(false);
         setActiveTab('EDITOR');
         setView('EDITOR');
     };
@@ -773,6 +811,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         setSettings(t.settings);
         setHeaderConfig(t.headerConfig);
         setSlipType(t.slipType);
+        setIsTemplateActive(t.isActive);
         setActiveTab('EDITOR');
         setView('EDITOR');
     };
@@ -801,7 +840,7 @@ const HRSalarySlipTemplate: React.FC = () => {
             type: slipType === 'F&F Settlement Slip' ? 'fnf_settlement' : 'salary_slip',
             name: templateName,
             status,
-            is_active: existingTemplate?.isActive ?? true,
+            is_active: isTemplateActive,
             target_type: targetType,
             target_id: targetId,
             content: { sections, headerConfig },
@@ -1075,10 +1114,17 @@ const HRSalarySlipTemplate: React.FC = () => {
         department: 'Department',
         doj: 'Date of Joining',
         bankAccount: 'Bank Account',
-        pan: 'PAN Number',
+        pan: 'PAN',
         lwk: 'Last Working Date',
         uan: 'UAN',
-        location: 'Address'
+        location: 'Address',
+        pf: 'PF Number',
+        esi: 'ESI Number',
+        pran: 'PRAN Number',
+        bankName: 'Bank Name',
+        bankIfsc: 'Bank IFSC',
+        payrollPeriod: 'Payroll Period',
+        attendancePeriod: 'Attendance Period'
     };
 
     return (
@@ -1112,35 +1158,23 @@ const HRSalarySlipTemplate: React.FC = () => {
                         </button>
                     ) : (
                         <>
-                            <button 
-                                onClick={() => setActiveTab('PREVIEW')} 
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                className="px-3 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer max-w-[180px] truncate"
+                            >
+                                <optgroup label="Business Units">
+                                    {BUSINESS_UNITS.map(bu => (
+                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <button
+                                onClick={() => setActiveTab('PREVIEW')}
                                 className="px-4 py-2 bg-white border border-purple-200 text-purple-600 rounded-lg text-sm font-bold hover:bg-purple-50 transition-colors flex items-center gap-2 shadow-sm"
                             >
                                 <Eye size={16} /> View Template
                             </button>
-                            <select
-                                value={slipType}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                    const newType = e.target.value as 'Payslip' | 'F&F Settlement Slip';
-                                    setSlipType(newType);
-                                    if (newType === 'F&F Settlement Slip') {
-                                        setHeaderConfig(prev => ({
-                                            ...prev,
-                                            payslipTitle: 'Full & Final Statement -',
-                                            employeeFields: { ...prev.employeeFields, lwk: true }
-                                        }));
-                                    } else {
-                                        setHeaderConfig(prev => ({
-                                            ...prev,
-                                            payslipTitle: 'Payslip'
-                                        }));
-                                    }
-                                }}
-                                className="px-3 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer"
-                            >
-                                <option value="Payslip">Payslip</option>
-                                <option value="F&F Settlement Slip">F&amp;F Settlement Slip</option>
-                            </select>
                             <button onClick={() => setView('LIST')} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
                             <button onClick={() => handleSave('Active')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2" title="Instantly updates format for all companies using default">
                                 <Save size={16} /> {editingTemplateId ? 'Save' : 'Submit'}
@@ -1169,16 +1203,188 @@ const HRSalarySlipTemplate: React.FC = () => {
             <div className="flex-1 flex overflow-hidden">
                 {activeTab === 'EDITOR' ? (
                     <>
-                        {/* Left: Builder Canvas */}
+                        {/* Left: Configuration Sidebar */}
+                        {!isReadOnly && (
+                            sidebarCollapsed ? (
+                                <div className="shrink-0 w-10 bg-white border-r border-slate-200 flex flex-col items-center pt-4">
+                                    <button onClick={() => setSidebarCollapsed(false)} className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="shrink-0 w-72 bg-white border-r border-slate-200 overflow-y-auto">
+                                    <div className="p-5 space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-bold text-slate-700">Configuration</h3>
+                                            <button onClick={() => setSidebarCollapsed(true)} className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+                                                <ChevronLeft size={14} />
+                                            </button>
+                                        </div>
+
+                                        {/* Template Type */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Template Type</label>
+                                            <select
+                                                value={slipType}
+                                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                                    const newType = e.target.value as 'Payslip' | 'F&F Settlement Slip';
+                                                    setSlipType(newType);
+                                                    if (newType === 'F&F Settlement Slip') {
+                                                        setHeaderConfig(prev => ({
+                                                            ...prev,
+                                                            payslipTitle: 'Full & Final Statement -',
+                                                            employeeFields: { ...prev.employeeFields, lwk: true }
+                                                        }));
+                                                    } else {
+                                                        setHeaderConfig(prev => ({
+                                                            ...prev,
+                                                            payslipTitle: 'Payslip'
+                                                        }));
+                                                    }
+                                                }}
+                                                className="w-full px-3 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer"
+                                            >
+                                                <option value="Payslip">Salary Slip</option>
+                                                <option value="F&F Settlement Slip">F&amp;F Settlement Slip</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Document Title */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Document Title</label>
+                                            <input
+                                                type="text"
+                                                value={headerConfig.payslipTitle}
+                                                onChange={e => setHeaderConfig({ ...headerConfig, payslipTitle: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                            />
+                                        </div>
+
+                                        {/* Branding */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-3">Branding</label>
+                                            <div className="space-y-2">
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input type="checkbox" checked={headerConfig.showLogo} onChange={e => setHeaderConfig({ ...headerConfig, showLogo: e.target.checked })} className="rounded text-[#444CE7] focus:ring-[#444CE7]" />
+                                                    Company Logo
+                                                </label>
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input type="checkbox" checked={headerConfig.showCompanyName} onChange={e => setHeaderConfig({ ...headerConfig, showCompanyName: e.target.checked })} className="rounded text-[#444CE7] focus:ring-[#444CE7]" />
+                                                    Company Name
+                                                </label>
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input type="checkbox" checked={headerConfig.showCompanyAddress} onChange={e => setHeaderConfig({ ...headerConfig, showCompanyAddress: e.target.checked })} className="rounded text-[#444CE7] focus:ring-[#444CE7]" />
+                                                    Address
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* Branding Position */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Branding Position</label>
+                                            <div className="flex bg-slate-100 p-1 rounded-lg">
+                                                {['Left', 'Center', 'Right'].map((pos) => (
+                                                    <button
+                                                        key={pos}
+                                                        onClick={() => setHeaderConfig({ ...headerConfig, logoPosition: pos as any })}
+                                                        className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${headerConfig.logoPosition === pos ? 'bg-[#444CE7] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        {pos}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Employee Details */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-3">Employee Details</label>
+                                            <div className="space-y-2">
+                                                {(['name', 'id', 'designation', 'department', 'location', 'doj', 'bankName', 'bankIfsc', 'pan', 'uan', 'bankAccount', 'pf', 'esi', 'pran', 'payrollPeriod', 'attendancePeriod'] as const).map((key) => {
+                                                    const mandatory = key === 'name' || key === 'id';
+                                                    const labelOverrides: Partial<Record<keyof HeaderConfig['employeeFields'], string>> = { location: 'Location' };
+                                                    return (
+                                                        <label key={key} className={`flex items-center gap-2 text-sm ${mandatory ? 'text-slate-400' : 'text-slate-700 cursor-pointer'}`}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={headerConfig.employeeFields[key]}
+                                                                disabled={mandatory}
+                                                                onChange={() => !mandatory && setHeaderConfig({ ...headerConfig, employeeFields: { ...headerConfig.employeeFields, [key]: !headerConfig.employeeFields[key] } })}
+                                                                className="rounded text-[#444CE7] focus:ring-[#444CE7] disabled:opacity-60"
+                                                            />
+                                                            {labelOverrides[key] || employeeFieldLabels[key]}
+                                                        </label>
+                                                    );
+                                                })}
+                                                {slipType === 'F&F Settlement Slip' && (
+                                                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={headerConfig.employeeFields.lwk}
+                                                            onChange={() => setHeaderConfig({ ...headerConfig, employeeFields: { ...headerConfig.employeeFields, lwk: !headerConfig.employeeFields.lwk } })}
+                                                            className="rounded text-[#444CE7] focus:ring-[#444CE7]"
+                                                        />
+                                                        {employeeFieldLabels.lwk}
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Display Settings */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-3">Display Settings</label>
+                                            <div className="space-y-2">
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!settings.showMonthlyRate}
+                                                        onChange={() => setSettings({ ...settings, showMonthlyRate: !settings.showMonthlyRate })}
+                                                        className="rounded text-[#444CE7] focus:ring-[#444CE7]"
+                                                    />
+                                                    Show Monthly Rate
+                                                </label>
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!settings.showZeroValueComponents}
+                                                        onChange={() => setSettings({ ...settings, showZeroValueComponents: !settings.showZeroValueComponents })}
+                                                        className="rounded text-[#444CE7] focus:ring-[#444CE7]"
+                                                    />
+                                                    Show Components with Zero Value
+                                                </label>
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={settings.passwordProtect}
+                                                        onChange={() => setSettings({ ...settings, passwordProtect: !settings.passwordProtect })}
+                                                        className="rounded text-[#444CE7] focus:ring-[#444CE7]"
+                                                    />
+                                                    Password Protect PDF
+                                                    <Info size={13} className="text-slate-400" title="Requires employee to enter a password to open the PDF" />
+                                                </label>
+                                                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer pt-1">
+                                                    <div
+                                                        onClick={() => setIsTemplateActive(!isTemplateActive)}
+                                                        className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${isTemplateActive ? 'bg-purple-600' : 'bg-slate-200'}`}
+                                                    >
+                                                        <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${isTemplateActive ? 'translate-x-5' : ''}`} />
+                                                    </div>
+                                                    {isTemplateActive ? 'Active' : 'Inactive'}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        )}
+
+                        {/* Right: Builder Canvas */}
                         <div className="flex-1 overflow-y-auto p-8">
-                            <div className="max-w-4xl mx-auto bg-white shadow-sm border border-slate-200 min-h-[800px] flex flex-col relative rounded-xl overflow-hidden">
+                            <div className="max-w-[1075px] mx-auto bg-white shadow-sm border border-slate-200 min-h-[800px] flex flex-col relative rounded-xl overflow-hidden">
                                 <div className="p-2 bg-slate-50 border-b border-slate-100 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Payslip Canvas</div>
 
                                 <div className="p-8 space-y-8">
                                     {/* Header Block */}
                                     <div className={`relative border border-slate-100 rounded-xl p-6 transition-all group ${!isReadOnly ? 'hover:border-purple-200 hover:shadow-sm' : ''}`}>
-                                        {!isReadOnly && <button onClick={() => setHeaderConfigOpen(true)} className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-slate-200 rounded-md text-slate-500 hover:text-purple-600 transition-colors"><Settings size={14} /></button>}
-
                                         <div className={`flex justify-between items-start ${headerConfig.logoPosition === 'Right' ? 'flex-row-reverse' : ''} ${headerConfig.logoPosition === 'Center' ? 'flex-col items-center text-center' : ''}`}>
                                             {headerConfig.showLogo && (
                                                 <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300 mb-4 sm:mb-0"><ImageIcon size={24} /></div>
@@ -1191,18 +1397,48 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         <div className="text-center mt-6 border-b border-slate-100 pb-4 mb-4">
                                             <h3 className="font-bold text-slate-700">{headerConfig.payslipTitle} <span className="font-normal text-slate-400">Nov 2025</span></h3>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-600">
-                                            {headerConfig.employeeFields.name && <div>Employee Name: <span className="font-semibold text-slate-800">Priya Sharma</span></div>}
-                                            {headerConfig.employeeFields.id && <div>Employee ID: <span className="font-semibold text-slate-800">TF00123</span></div>}
-                                            {headerConfig.employeeFields.designation && <div>Designation: <span className="font-semibold text-slate-800">Senior Engineer</span></div>}
-                                            {headerConfig.employeeFields.department && <div>Department: <span className="font-semibold text-slate-800">Engineering</span></div>}
-                                            {headerConfig.employeeFields.doj && <div>Date of Joining: <span className="font-semibold text-slate-800">12 Jan 2023</span></div>}
-                                            {headerConfig.employeeFields.location && <div>Address: <span className="font-semibold text-slate-800">Bangalore</span></div>}
-                                            {headerConfig.employeeFields.pan && <div>PAN Number: <span className="font-semibold text-slate-800">ABCDE1234F</span></div>}
-                                            {headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip' && <div>Last Working Date: <span className="font-semibold text-slate-800">30 Nov 2025</span></div>}
-                                            {headerConfig.employeeFields.uan && <div>UAN: <span className="font-semibold text-slate-800">100900200300</span></div>}
-                                            {headerConfig.employeeFields.bankAccount && <div>Bank Account: <span className="font-semibold text-slate-800">HDFC0001234</span></div>}
-                                        </div>
+                                        <table className="w-full text-sm text-slate-600 border-collapse border border-slate-200">
+                                            <tbody>
+                                                {(() => {
+                                                    type EmpField = { label: string; value: string };
+                                                    const fields: EmpField[] = [];
+                                                    if (headerConfig.employeeFields.name) fields.push({ label: 'Employee Name', value: 'Priya Sharma' });
+                                                    if (headerConfig.employeeFields.id) fields.push({ label: 'Employee ID', value: 'TF00123' });
+                                                    if (headerConfig.employeeFields.designation) fields.push({ label: 'Designation', value: 'Senior Engineer' });
+                                                    if (headerConfig.employeeFields.department) fields.push({ label: 'Department', value: 'Engineering' });
+                                                    if (headerConfig.employeeFields.doj) fields.push({ label: 'Date of Joining', value: '12 Jan 2023' });
+                                                    if (headerConfig.employeeFields.location) fields.push({ label: 'Address', value: 'Bangalore' });
+                                                    if (headerConfig.employeeFields.pan) fields.push({ label: 'PAN', value: 'ABCDE1234F' });
+                                                    if (headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip') fields.push({ label: 'Last Working Date', value: '30 Nov 2025' });
+                                                    if (headerConfig.employeeFields.uan) fields.push({ label: 'UAN', value: '100900200300' });
+                                                    if (headerConfig.employeeFields.bankAccount) fields.push({ label: 'Bank Account', value: 'HDFC0001234' });
+                                                    if (headerConfig.employeeFields.bankName) fields.push({ label: 'Bank Name', value: 'HDFC Bank' });
+                                                    if (headerConfig.employeeFields.bankIfsc) fields.push({ label: 'Bank IFSC', value: 'HDFC0001234' });
+                                                    if (headerConfig.employeeFields.pf) fields.push({ label: 'PF Number', value: 'AA/BBB/1234567/000/7654321' });
+                                                    if (headerConfig.employeeFields.esi) fields.push({ label: 'ESI Number', value: '31001234560007890' });
+                                                    if (headerConfig.employeeFields.pran) fields.push({ label: 'PRAN Number', value: '100200300400' });
+                                                    if (headerConfig.employeeFields.payrollPeriod) fields.push({ label: 'Payroll Period', value: '01 Nov 2025 - 30 Nov 2025' });
+                                                    if (headerConfig.employeeFields.attendancePeriod) fields.push({ label: 'Attendance Period', value: '01 Nov 2025 - 30 Nov 2025' });
+
+                                                    const rows: EmpField[][] = [];
+                                                    for (let i = 0; i < fields.length; i += 2) {
+                                                        rows.push(fields.slice(i, i + 2));
+                                                    }
+
+                                                    return rows.map((row, idx) => (
+                                                        <tr key={idx}>
+                                                            {row.map((f, i) => (
+                                                                <React.Fragment key={i}>
+                                                                    <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">{f.label}</td>
+                                                                    <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">{f.value}</td>
+                                                                </React.Fragment>
+                                                            ))}
+                                                            {row.length === 1 && <><td className="border border-slate-200 bg-slate-50/50" /><td className="border border-slate-200" /></>}
+                                                        </tr>
+                                                    ));
+                                                })()}
+                                            </tbody>
+                                        </table>
                                     </div>
 
                                     {/* ERROR BANNER */}
@@ -1212,92 +1448,143 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Earnings & Deductions Grid */}
-                                    <div className={`grid grid-cols-2 border rounded-xl overflow-hidden ${validationError && validationError.includes('Earnings') ? 'border-rose-300 ring-4 ring-rose-50' : 'border-slate-200'}`}>
-                                        {/* Earnings */}
-                                        <div className="border-r border-slate-200 flex flex-col">
-                                            <div className="bg-emerald-50 px-4 py-2 border-b border-emerald-100 text-xs font-bold uppercase text-emerald-700">Earnings</div>
-                                            <div className="p-4 space-y-2 flex-1">
-                                                {sections.earnings.map(item => (
-                                                    <div key={item.id} className="flex justify-between text-sm group">
-                                                        <span className="text-slate-600">{item.name}</span>
-                                                         <div className="flex items-center gap-2">
-                                                             <span className="font-medium text-slate-800">₹ {formatCurrency(parseAmount(item.amount))}</span>
-                                                             {!isReadOnly && <X size={14} onClick={() => removeComponent('earnings', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                         </div>
-                                                    </div>
-                                                ))}
-                                                {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className="hidden">
-                                                        <Plus size={14} /> Add Earning Component
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
+                                    {/* Attendance Summary Table */}
+                                    <table className="w-full border-collapse border border-slate-200 text-sm text-slate-600">
+                                        <tbody>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Total Working Days</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">30</td>
+                                                <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Payable Days</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">21</td>
+                                                <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">LOP Days</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">2</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                                        {/* Deductions */}
-                                        <div className="flex flex-col">
-                                            <div className="bg-rose-50 px-4 py-2 border-b border-rose-100 text-xs font-bold uppercase text-rose-700">Deductions</div>
-                                            <div className="p-4 space-y-2 flex-1">
-                                                {sections.deductions.map(item => (
-                                                    <div key={item.id} className="flex justify-between text-sm group">
-                                                        <span className="text-slate-600">{item.name}</span>
-                                                         <div className="flex items-center gap-2">
-                                                             <span className="font-medium text-slate-800">₹ {formatCurrency(parseAmount(item.amount))}</span>
-                                                             {!isReadOnly && <X size={14} onClick={() => removeComponent('deductions', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                         </div>
-                                                    </div>
-                                                ))}
-                                                {!isReadOnly && (
-                                                    <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className="hidden">
-                                                        <Plus size={14} /> Add Deduction Component
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Employer's Contribution Section */}
-                                    {slipType === 'Payslip' && (
-                                        <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                                            <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 text-xs font-bold uppercase text-slate-600">Employer's Contribution</div>
-                                            <div className="p-4 space-y-2">
-                                                <div className="flex justify-between text-sm font-medium">
-                                                    <span className="text-slate-600">EPF (Employer)</span>
-                                                    <span className="font-medium text-slate-800">₹ 1,800.00</span>
-                                                </div>
-                                                <div className="flex justify-between text-sm font-medium">
-                                                    <span className="text-slate-600">ESI (Employer)</span>
-                                                    <span className="font-medium text-slate-800">₹ 450.00</span>
-                                                </div>
-                                                <div className="flex justify-between text-sm font-medium">
-                                                    <span className="text-slate-600">LWF (Employer)</span>
-                                                    <span className="font-medium text-slate-800">₹ 12.00</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    {/* Earnings & Deductions Table */}
+                                    <table className={`w-full border-collapse text-sm rounded-xl overflow-hidden ${validationError && validationError.includes('Earnings') ? 'ring-4 ring-rose-50' : ''}`}>
+                                        <thead>
+                                            <tr>
+                                                <th colSpan={5} className={`border px-4 py-2 text-left text-xs font-bold uppercase bg-emerald-50 text-emerald-700 ${validationError && validationError.includes('Earnings') ? 'border-rose-300' : 'border-slate-200'}`}>Earnings (INR)</th>
+                                                <th colSpan={2} className={`border px-4 py-2 text-left text-xs font-bold uppercase bg-rose-50 text-rose-700 ${validationError && validationError.includes('Earnings') ? 'border-rose-300' : 'border-slate-200'}`}>Deductions (INR)</th>
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase text-slate-500 bg-slate-50">Components</th>
+                                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Rate</th>
+                                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Monthly</th>
+                                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Arrear</th>
+                                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Total</th>
+                                                <th className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase text-slate-500 bg-slate-50">Components</th>
+                                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-500 bg-slate-50">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {Array.from({ length: Math.max(sections.earnings.length, sections.deductions.length) }).map((_, i) => {
+                                                const earning = sections.earnings[i];
+                                                const deduction = sections.deductions[i];
+                                                const earningAmount = earning ? parseAmount(earning.amount) : 0;
+                                                return (
+                                                    <tr key={i} className="group">
+                                                        <td className="border border-slate-200 px-4 py-2 text-slate-600">{earning ? earning.name : ''}</td>
+                                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-600">{earning ? formatCurrency(earningAmount) : ''}</td>
+                                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-600">{earning ? formatCurrency(earningAmount) : ''}</td>
+                                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-600">{earning ? formatCurrency(0) : ''}</td>
+                                                        <td className="border border-slate-200 px-4 py-2 text-right">
+                                                            {earning && (
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <span className="font-medium text-slate-800">{formatCurrency(earningAmount)}</span>
+                                                                    {!isReadOnly && <X size={14} onClick={() => removeComponent('earnings', earning.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="border border-slate-200 px-4 py-2 text-slate-600">{deduction ? deduction.name : ''}</td>
+                                                        <td className="border border-slate-200 px-4 py-2 text-right">
+                                                            {deduction && (
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <span className="font-medium text-slate-800">{formatCurrency(parseAmount(deduction.amount))}</span>
+                                                                    {!isReadOnly && <X size={14} onClick={() => removeComponent('deductions', deduction.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            <tr className="font-bold bg-slate-50">
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">Total</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(0)}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">Total</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0))}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    {!isReadOnly && (
+                                        <>
+                                            <button onClick={() => setAddComponentModal({ isOpen: true, section: 'earnings' })} className="hidden">
+                                                <Plus size={14} /> Add Earning Component
+                                            </button>
+                                            <button onClick={() => setAddComponentModal({ isOpen: true, section: 'deductions' })} className="hidden">
+                                                <Plus size={14} /> Add Deduction Component
+                                            </button>
+                                        </>
                                     )}
 
-                                    {/* Summary Section */}
-                                    <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                        <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 text-xs font-bold uppercase text-slate-600">Salary Summary</div>
-                                        <div className="p-4 space-y-2">
-                                            {sections.summary.map(item => (
-                                                <div key={item.id} className="flex justify-between text-sm group font-medium">
-                                                    <span className="text-slate-700">{item.name}</span>
-                                                     <div className="flex items-center gap-2">
-                                                         <span className="font-bold text-slate-900">₹ {formatCurrency(calculateSummaryValue(item.name))}</span>
-                                                         {!isReadOnly && <X size={14} onClick={() => removeComponent('summary', item.id)} className="text-slate-300 hover:text-rose-500 cursor-pointer opacity-0 group-hover:opacity-100" />}
-                                                     </div>
-                                                </div>
-                                            ))}
-                                            {!isReadOnly && (
-                                                <button onClick={() => setAddComponentModal({ isOpen: true, section: 'summary' })} className="w-full py-2 border border-dashed border-slate-300 rounded text-xs font-medium text-slate-500 hover:bg-slate-100 mt-2">
-                                                    + Add Summary Item
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                                    {/* Payslip Summary Table */}
+                                    <table className="w-full border-collapse border border-slate-200 text-sm">
+                                        <thead>
+                                            <tr>
+                                                <th colSpan={2} className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase bg-slate-100 text-slate-700">Payslip Summary</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Total Net Pay (INR)</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(calculateSummaryValue('Net Pay'))}</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Total Net Pay (In Words)</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{numberToWordsIndian(calculateSummaryValue('Net Pay'))}</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Total Monthly CTC (INR)</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">{formatCurrency(calculateSummaryValue('CTC Monthly'))}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    {/* Employer Contributions Table */}
+                                    <table className="w-full border-collapse border border-slate-200 text-sm">
+                                        <thead>
+                                            <tr>
+                                                <th colSpan={2} className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase bg-slate-100 text-slate-700">Employer Contributions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer PF</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,800.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer PF Charges</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">150.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer ESIC</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">165.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer NPS</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">2,000.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Gratuity</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,530.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
                                 </div>
                             </div>
@@ -1436,6 +1723,13 @@ const HRSalarySlipTemplate: React.FC = () => {
                                 {headerConfig.employeeFields.lwk && slipType === 'F&F Settlement Slip' && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.lwk}</span><span>: 30 Nov 2025</span></div>}
                                 {headerConfig.employeeFields.uan && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.uan}</span><span>: 100900200300</span></div>}
                                 {headerConfig.employeeFields.bankAccount && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankAccount}</span><span>: HDFC0001234</span></div>}
+                                {headerConfig.employeeFields.bankName && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankName}</span><span>: HDFC Bank</span></div>}
+                                {headerConfig.employeeFields.bankIfsc && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.bankIfsc}</span><span>: HDFC0001234</span></div>}
+                                {headerConfig.employeeFields.pf && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.pf}</span><span>: AA/BBB/1234567/000/7654321</span></div>}
+                                {headerConfig.employeeFields.esi && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.esi}</span><span>: 31001234560007890</span></div>}
+                                {headerConfig.employeeFields.pran && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.pran}</span><span>: 100200300400</span></div>}
+                                {headerConfig.employeeFields.payrollPeriod && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.payrollPeriod}</span><span>: 01 Nov 2025 - 30 Nov 2025</span></div>}
+                                {headerConfig.employeeFields.attendancePeriod && <div className="flex"><span className="w-32 font-bold text-slate-600">{employeeFieldLabels.attendancePeriod}</span><span>: 01 Nov 2025 - 30 Nov 2025</span></div>}
                             </div>
 
                             {/* Dynamic Earnings & Deductions Table */}

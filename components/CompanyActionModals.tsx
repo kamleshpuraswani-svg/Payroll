@@ -52,6 +52,8 @@ import {
    Eye,
    Trash2,
    RefreshCw,
+   FileX,
+   Maximize2,
    TrendingDown
 } from 'lucide-react';
 import { Company } from '../types';
@@ -576,6 +578,10 @@ export const RunPayrollModal: React.FC<{
       const [showStep5BackConfirmDialog, setShowStep5BackConfirmDialog] = useState(false);
       // Step 1: Employee Selection State
       const [payrollEmployees, setPayrollEmployees] = useState<any[]>([]);
+      // ids that exist as a real row in the Supabase `employees` table (as opposed to
+      // demo/mock employees) — only these can be persisted to payroll_adjustments,
+      // since employee_id there has a foreign key to employees.id
+      const [realEmployeeIds, setRealEmployeeIds] = useState<Set<string>>(new Set());
 
       // Sync with Database
       useEffect(() => {
@@ -633,9 +639,11 @@ export const RunPayrollModal: React.FC<{
             const extraSupabase = mapped.filter(e => !mockEmpIds.has(e.employee_id));
 
             setPayrollEmployees([...mergedMock, ...extraSupabase]);
+            setRealEmployeeIds(new Set(mapped.map(e => e.id)));
          } catch (err) {
             console.error('Error fetching employees:', err);
             setPayrollEmployees(MOCK_PAYROLL_EMPLOYEES);
+            setRealEmployeeIds(new Set());
          } finally {
             setIsLoading(false);
          }
@@ -760,24 +768,15 @@ export const RunPayrollModal: React.FC<{
       const buildMockAdjustments = (employees: any[]) =>
          employees.map((emp, i) => {
             const grossValues = [154166, 200000, 131666, 176666, 158333, 185000, 142500, 168000, 195000, 122000];
-            const gross = grossValues[i % grossValues.length];
+            const gross = emp.ctc ? Math.round(Number(emp.ctc) / 12) : grossValues[i % grossValues.length];
             const tdsRate = [12500, 18000, 8500, 16200, 14000, 17500, 9800, 15000, 19200, 7500];
-            const basic = Math.round(gross * 0.40);
-            const hra = Math.round(gross * 0.20);
-            const specialAllowance = Math.round(gross * 0.30);
-            const transport = gross - basic - hra - specialAllowance;
             return {
                id: emp.id,
                db_id: null,
                employee_id: emp.employee_id,
                name: `${emp.first_name} ${emp.last_name}`,
                gross,
-               salaryComponents: [
-                  { name: 'Basic', amount: basic, type: 'Earning' },
-                  { name: 'HRA', amount: hra, type: 'Earning' },
-                  { name: 'Special Allowance', amount: specialAllowance, type: 'Earning' },
-                  { name: 'Transport', amount: transport, type: 'Earning' },
-               ],
+               salaryComponents: computeSalaryComponents(gross),
                customComponents: [],
                bonus: i % 5 === 1 ? 25000 : 0,
                arrears: i % 7 === 2 ? 5000 : 0,
@@ -803,6 +802,19 @@ export const RunPayrollModal: React.FC<{
          }
       }, [currentRunId, payrollEmployees]);
 
+      const computeSalaryComponents = (gross: number) => {
+         const basic = Math.round(gross * 0.40);
+         const hra = Math.round(gross * 0.20);
+         const specialAllowance = Math.round(gross * 0.30);
+         const transport = gross - basic - hra - specialAllowance;
+         return [
+            { name: 'Basic', amount: basic, type: 'Earning' },
+            { name: 'HRA', amount: hra, type: 'Earning' },
+            { name: 'Special Allowance', amount: specialAllowance, type: 'Earning' },
+            { name: 'Transport', amount: transport, type: 'Earning' },
+         ];
+      };
+
       const fetchAdjustments = async () => {
          if (!currentRunId) return;
          try {
@@ -813,49 +825,44 @@ export const RunPayrollModal: React.FC<{
 
             if (error) throw error;
 
-            const mapped = (data || []).map(adj => ({
-               id: adj.employee_id,
-               db_id: adj.id,
-               employee_id: adj.employee_id,
-               name: adj.employees?.name || 'Unknown',
-               gross: adj.gross || 0,
-               bonus: adj.bonus || 0,
-               arrears: adj.arrears || 0,
-               loanRecovery: adj.loan_recovery || 0,
-               salaryAdvanceRecovery: adj.salary_advance_recovery || 0,
-               expenseReimbursement: adj.expense_reimbursement || 0,
-               lop: adj.lop || 0,
-               lop_reversal: adj.lop_reversal || 0,
-               lopReversal: adj.lop_reversal || 0,
-               other: adj.other || 0,
-               proposedTds: adj.proposed_tds || 0,
-               actualTds: adj.actual_tds || 0,
-               is_exit: adj.is_exit,
-               isEditing: false,
-               salaryComponents: (() => {
-                  const g = adj.gross || 0;
-                  const basic = Math.round(g * 0.40);
-                  const hra = Math.round(g * 0.20);
-                  const specialAllowance = Math.round(g * 0.30);
-                  const transport = g - basic - hra - specialAllowance;
-                  return [
-                     { name: 'Basic', amount: basic, type: 'Earning' },
-                     { name: 'HRA', amount: hra, type: 'Earning' },
-                     { name: 'Special Allowance', amount: specialAllowance, type: 'Earning' },
-                     { name: 'Transport', amount: transport, type: 'Earning' },
-                  ];
-               })(),
-               customComponents: []
-            }));
+            // Base rows always come from the employees actually selected in Step 1.
+            // Demo/mock employees can't be written to payroll_adjustments (FK constraint
+            // on employee_id requires a real employees row), so we can't rely on the
+            // DB round-trip alone to know who belongs in this run.
+            const selectedEmployees = payrollEmployees.filter(e => selectedEmpIds.includes(e.id));
+            const baseRows = buildMockAdjustments(selectedEmployees.length > 0 ? selectedEmployees : payrollEmployees);
+            const dbByEmployeeId = new Map((data || []).map(adj => [adj.employee_id, adj]));
 
-            if (mapped.length > 0) {
-               setAdjustments(mapped);
-            } else {
-               setAdjustments(buildMockAdjustments(payrollEmployees));
-            }
+            const mapped = baseRows.map(row => {
+               const adj = dbByEmployeeId.get(row.id);
+               if (!adj) return row;
+               const gross = adj.gross || row.gross;
+               return {
+                  ...row,
+                  db_id: adj.id,
+                  name: adj.employees?.name || row.name,
+                  gross,
+                  bonus: adj.bonus || 0,
+                  arrears: adj.arrears || 0,
+                  loanRecovery: adj.loan_recovery || 0,
+                  salaryAdvanceRecovery: adj.salary_advance_recovery || 0,
+                  expenseReimbursement: adj.expense_reimbursement || 0,
+                  lop: adj.lop || 0,
+                  lop_reversal: adj.lop_reversal || 0,
+                  lopReversal: adj.lop_reversal || 0,
+                  other: adj.other || 0,
+                  proposedTds: adj.proposed_tds || 0,
+                  actualTds: adj.actual_tds || 0,
+                  is_exit: adj.is_exit,
+                  salaryComponents: computeSalaryComponents(gross),
+               };
+            });
+
+            setAdjustments(mapped);
          } catch (err) {
             console.error('Error fetching adjustments:', err);
-            setAdjustments(buildMockAdjustments(payrollEmployees));
+            const selectedEmployees = payrollEmployees.filter(e => selectedEmpIds.includes(e.id));
+            setAdjustments(buildMockAdjustments(selectedEmployees.length > 0 ? selectedEmployees : payrollEmployees));
          }
       };
 
@@ -959,30 +966,41 @@ export const RunPayrollModal: React.FC<{
             if (runError) throw runError;
             setCurrentRunId(runData.id);
 
-            // 2. Initialize Adjustments for selected employees if they don't exist
+            // 2. Build Step 3 rows immediately from the employees selected in Step 1.
+            // Demo/mock employees aren't real rows in the `employees` table, so they
+            // can never be written to payroll_adjustments (FK constraint on employee_id) —
+            // showing them client-side first means Step 3 is never empty because of that.
             if (selectedEmpIds.length > 0) {
-               const adjustmentsToCreate = selectedEmpIds.map(empId => ({
-                  payroll_run_id: runData.id,
-                  employee_id: empId,
-                  gross: 0, // In reality, fetch this from salary_structures
-                  bonus: 0,
-                  arrears: 0,
-                  loan_recovery: 0,
-                  salary_advance_recovery: 0,
-                  expense_reimbursement: 0,
-                  lop: 0,
-                  lop_reversal: 0,
-                  other: 0,
-                  proposed_tds: 0,
-                  actual_tds: 0
-               }));
+               const selectedEmployees = payrollEmployees.filter(e => selectedEmpIds.includes(e.id));
+               setAdjustments(buildMockAdjustments(selectedEmployees));
 
-               const { error: adjError } = await supabase
-                  .from('payroll_adjustments')
-                  .upsert(adjustmentsToCreate, { onConflict: 'payroll_run_id,employee_id' });
+               // 3. Persist to Supabase only for employees that exist in the real employees table
+               const realSelectedIds = selectedEmpIds.filter(id => realEmployeeIds.has(id));
+               if (realSelectedIds.length > 0) {
+                  const realRows = buildMockAdjustments(selectedEmployees.filter(e => realSelectedIds.includes(e.id)));
+                  const adjustmentsToCreate = realRows.map(row => ({
+                     payroll_run_id: runData.id,
+                     employee_id: row.id,
+                     gross: row.gross,
+                     bonus: 0,
+                     arrears: 0,
+                     loan_recovery: 0,
+                     salary_advance_recovery: 0,
+                     expense_reimbursement: 0,
+                     lop: 0,
+                     lop_reversal: 0,
+                     other: 0,
+                     proposed_tds: 0,
+                     actual_tds: 0
+                  }));
 
-               if (adjError) throw adjError;
-               await fetchAdjustments();
+                  const { error: adjError } = await supabase
+                     .from('payroll_adjustments')
+                     .upsert(adjustmentsToCreate, { onConflict: 'payroll_run_id,employee_id' });
+
+                  if (adjError) throw adjError;
+                  await fetchAdjustments();
+               }
             }
          } catch (err) {
             console.error('Error initiating payroll run:', err);
@@ -1535,63 +1553,53 @@ export const RunPayrollModal: React.FC<{
             case 1: // PERIOD & SCOPE + EMPLOYEES
                return (
                   <div className="w-full space-y-6">
-                     <div className="bg-white p-1 rounded-xl inline-flex border border-slate-200 shadow-sm">
-                        <button
-                           type="button"
-                           onClick={() => { setPayrollType('Regular Monthly Payroll'); onTypeChange?.('Regular Monthly'); }}
-                           className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${payrollType === 'Regular Monthly Payroll' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
-                        >
-                           Regular Monthly Payroll
-                        </button>
-                        <button
-                           type="button"
-                           onClick={() => { setPayrollType('F&F Settlement'); onTypeChange?.('F&F Settlement'); }}
-                           className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${payrollType === 'F&F Settlement' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
-                        >
-                           F&F Settlement
-                        </button>
-                     </div>
-                     <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3">
-                        <Info size={18} className="mt-0.5 shrink-0 text-blue-600" />
-                        <p>Please select the <strong>Payroll Period</strong> and at least one <strong>Business Unit</strong> to confirm eligible employees.</p>
-                     </div>
-                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row w-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-                        <div className="p-6 w-full lg:w-1/2">
-                           <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
-                              <Calendar size={16} className="text-sky-600" /> Payroll Period
-                           </h3>
-                           <div className="flex flex-col gap-3">
-                              <div className="flex gap-4 items-start">
-                                 <div className="flex-1 relative mt-[2px]">
-                                    <select
-                                       disabled={readOnly}
-                                       value={selectedPayrollMonth}
-                                       onChange={(e) => setSelectedPayrollMonth(e.target.value)}
-                                       className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 disabled:bg-slate-50 appearance-none cursor-pointer pr-10"
-                                    >
-                                       {payrollMonthsList.map(month => (
-                                          <option key={month} value={month}>{month}</option>
-                                       ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                    <span className="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-slate-400 uppercase">Select Month</span>
-                                 </div>
-                                 <div className="bg-slate-100 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 border border-slate-200 shadow-sm mt-[2px]">22 Working Days</div>
-                              </div>
-                              <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                                 <Info size={14} className="text-sky-500 shrink-0" />
-                                 Payroll Period: <span className="text-slate-700 font-bold">{getPayrollPeriod(selectedPayrollMonth)}</span>
-                              </p>
+                     {/* Top Fields Grid */}
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Select Payroll Type */}
+                        <div className="flex flex-col gap-1.5 text-left">
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Select Payroll Type <span className="text-red-500">*</span></label>
+                           <div className="relative">
+                              <select
+                                 disabled={readOnly}
+                                 value={payrollType}
+                                 onChange={(e) => {
+                                    setPayrollType(e.target.value);
+                                    onTypeChange?.(e.target.value === 'Regular Monthly Payroll' ? 'Regular Monthly' : 'F&F Settlement');
+                                 }}
+                                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 appearance-none cursor-pointer pr-10 text-sm"
+                              >
+                                 <option value="Regular Monthly Payroll">Regular Monthly Payroll</option>
+                                 <option value="F&F Settlement">F&F Settlement</option>
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                            </div>
                         </div>
 
-                        <div className="p-6 w-full lg:w-1/2 flex flex-col justify-start">
-                           <h3 className="text-sm font-bold text-slate-800 uppercase mb-4 flex items-center gap-2">
-                              <Briefcase size={16} className="text-sky-600" /> Business Unit <span className="text-red-500">*</span>
-                           </h3>
-                           <div className="flex-1 relative mt-[2px]">
+                        {/* Select Month */}
+                        <div className="flex flex-col gap-1.5 text-left">
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Select Month <span className="text-red-500">*</span></label>
+                           <div className="relative">
+                              <select
+                                 disabled={readOnly}
+                                 value={selectedPayrollMonth}
+                                 onChange={(e) => setSelectedPayrollMonth(e.target.value)}
+                                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 appearance-none cursor-pointer pr-10 text-sm"
+                              >
+                                 <option value="">Select Month</option>
+                                 {payrollMonthsList.map(month => (
+                                    <option key={month} value={month}>{month}</option>
+                                 ))}
+                              </select>
+                              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                           </div>
+                        </div>
+
+                        {/* Select Business Unit */}
+                        <div className="flex flex-col gap-1.5 text-left">
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Select Business Unit <span className="text-red-500">*</span></label>
+                           <div className="relative">
                               <MultiSelect
-                                 label="All Business Units"
+                                 label="Select business unit"
                                  options={availableBUs}
                                  selected={selectedBUs}
                                  onChange={setSelectedBUs}
@@ -1601,147 +1609,162 @@ export const RunPayrollModal: React.FC<{
                         </div>
                      </div>
 
-                     {/* Employee List - Only shown after BU selection */}
-                     {selectedBUs.length > 0 && (
-                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px] animate-in fade-in slide-in-from-top-4 duration-500">
-                           <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4">
-                              <div className="flex justify-between items-center">
-                                 <h3 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
-                                    <Users size={16} className="text-sky-600" /> Select Employees
-                                 </h3>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                 <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                    <input
-                                       type="text"
-                                       value={empSearch}
-                                       onChange={(e) => setEmpSearch(e.target.value)}
-                                       placeholder="Search employees by name or ID..."
-                                       className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                                    />
-                                 </div>
-                              </div>
-                           </div>
+                     {/* Select Employees Container */}
+                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                           <h3 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
+                              Select Employees
+                           </h3>
+                           <button type="button" className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 transition-colors">
+                              <Maximize2 size={16} />
+                           </button>
+                        </div>
 
-                           <div className="flex-1 overflow-y-auto">
-                              <table className="w-full text-left text-sm border-collapse">
-                                 <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
-                                    <tr>
-                                       {payrollType === 'F&F Settlement' && (
-                                          <th className="px-4 py-3 w-10">
-                                             <input
-                                                type="checkbox"
-                                                checked={selectedEmpIds.length === filteredEmployees.length && filteredEmployees.length > 0}
-                                                onChange={(e) => {
-                                                   if (e.target.checked) {
-                                                      setSelectedEmpIds(filteredEmployees.map(emp => emp.id));
-                                                   } else {
-                                                      setSelectedEmpIds([]);
-                                                   }
-                                                }}
-                                                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-600 cursor-pointer"
-                                             />
-                                          </th>
-                                       )}
-                                       <th className="px-4 py-3">Employee Name</th>
-                                       <th className="px-4 py-3">Employee ID</th>
-                                       <th className="px-4 py-3">Employee Status</th>
-                                       <th className="px-4 py-3">Designation</th>
-                                       <th className="px-4 py-3">Department</th>
-                                    </tr>
-                                 </thead>
-                                 <tbody className="divide-y divide-slate-100">
-                                    {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
-                                       <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
+                        <div className="p-4 border-b border-slate-100">
+                           <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                              <input
+                                 type="text"
+                                 value={empSearch}
+                                 onChange={(e) => setEmpSearch(e.target.value)}
+                                 placeholder="Search by name, email or code..."
+                                 disabled={selectedBUs.length === 0}
+                                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 disabled:text-slate-400"
+                              />
+                           </div>
+                        </div>
+
+                        {selectedBUs.length > 0 ? (
+                           <>
+                              <div className="flex-1 overflow-y-auto">
+                                 <table className="w-full text-left text-sm border-collapse">
+                                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
+                                       <tr>
                                           {payrollType === 'F&F Settlement' && (
-                                             <td className="px-4 py-3 w-10">
+                                             <th className="px-4 py-3 w-10">
                                                 <input
                                                    type="checkbox"
-                                                   checked={selectedEmpIds.includes(emp.id)}
+                                                   checked={selectedEmpIds.length === filteredEmployees.length && filteredEmployees.length > 0}
                                                    onChange={(e) => {
                                                       if (e.target.checked) {
-                                                         setSelectedEmpIds(prev => [...prev, emp.id]);
+                                                         setSelectedEmpIds(filteredEmployees.map(emp => emp.id));
                                                       } else {
-                                                         setSelectedEmpIds(prev => prev.filter(id => id !== emp.id));
+                                                         setSelectedEmpIds([]);
                                                       }
                                                    }}
                                                    className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-600 cursor-pointer"
                                                 />
-                                             </td>
+                                             </th>
                                           )}
-                                          <td className="px-4 py-3">
-                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
-                                                   <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                </div>
-                                                <div>
-                                                   <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
-                                                </div>
-                                             </div>
-                                          </td>
-                                          <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
-                                          <td className="px-4 py-3">
-                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                   emp.status === 'New Joinee' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                                      emp.status === 'On Notice' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                                         'bg-slate-50 text-slate-500 border-slate-100'
-                                                }`}>
-                                                {emp.status || 'Active'}
-                                             </span>
-                                          </td>
-                                          <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
-                                          <td className="px-4 py-3 text-slate-500">{emp.department}</td>
+                                          <th className="px-4 py-3">Employee Name</th>
+                                          <th className="px-4 py-3">Employee ID</th>
+                                          <th className="px-4 py-3">Employee Status</th>
+                                          <th className="px-4 py-3">Designation</th>
+                                          <th className="px-4 py-3">Department</th>
                                        </tr>
-                                    ))}
-                                    {filteredEmployees.length === 0 && (
-                                       <tr>
-                                          <td colSpan={payrollType === 'F&F Settlement' ? 6 : 5} className="px-6 py-12 text-center text-slate-400 italic">
-                                             No employees found matching "{empSearch}"
-                                          </td>
-                                       </tr>
-                                    )}
-                                 </tbody>
-                              </table>
-                           </div>
-
-                           {/* Pagination Controls */}
-                           {filteredEmployees.length > empRowsPerPage && (
-                              <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
-                                 <div className="text-xs text-slate-500">
-                                    Showing <span className="font-bold text-slate-700">{((empPage - 1) * empRowsPerPage) + 1}</span> to <span className="font-bold text-slate-700">{Math.min(empPage * empRowsPerPage, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
-                                 </div>
-                                 <div className="flex items-center gap-2">
-                                    <button
-                                       onClick={() => setEmpPage(prev => Math.max(1, prev - 1))}
-                                       disabled={empPage === 1}
-                                       className={`p-2 rounded-lg border transition-all ${empPage === 1 ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
-                                    >
-                                       <ChevronLeft size={16} />
-                                    </button>
-                                    <div className="flex items-center gap-1">
-                                       {Array.from({ length: Math.ceil(filteredEmployees.length / empRowsPerPage) }).map((_, i) => (
-                                          <button
-                                             key={i}
-                                             onClick={() => setEmpPage(i + 1)}
-                                             className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${empPage === i + 1 ? 'bg-sky-600 text-white shadow-md shadow-sky-100' : 'text-slate-500 hover:bg-slate-50'}`}
-                                          >
-                                             {i + 1}
-                                          </button>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                       {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
+                                          <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
+                                             {payrollType === 'F&F Settlement' && (
+                                                <td className="px-4 py-3 w-10">
+                                                   <input
+                                                      type="checkbox"
+                                                      checked={selectedEmpIds.includes(emp.id)}
+                                                      onChange={(e) => {
+                                                         if (e.target.checked) {
+                                                            setSelectedEmpIds(prev => [...prev, emp.id]);
+                                                         } else {
+                                                            setSelectedEmpIds(prev => prev.filter(id => id !== emp.id));
+                                                         }
+                                                      }}
+                                                      className="w-4 h-4 rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7] cursor-pointer"
+                                                   />
+                                                </td>
+                                             )}
+                                             <td className="px-4 py-3">
+                                                <div className="flex items-center gap-3">
+                                                   <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden">
+                                                      <img src={emp.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                   </div>
+                                                   <div>
+                                                      <div className="font-semibold text-slate-800">{emp.first_name} {emp.last_name}</div>
+                                                   </div>
+                                                </div>
+                                             </td>
+                                             <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
+                                             <td className="px-4 py-3">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                      emp.status === 'New Joinee' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                         emp.status === 'On Notice' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                                            'bg-slate-50 text-slate-500 border-slate-100'
+                                                   }`}>
+                                                   {emp.status || 'Active'}
+                                                </span>
+                                             </td>
+                                             <td className="px-4 py-3 text-slate-600 font-medium">{emp.designation}</td>
+                                             <td className="px-4 py-3 text-slate-500">{emp.department}</td>
+                                          </tr>
                                        ))}
-                                    </div>
-                                    <button
-                                       onClick={() => setEmpPage(prev => Math.min(Math.ceil(filteredEmployees.length / empRowsPerPage), prev + 1))}
-                                       disabled={empPage === Math.ceil(filteredEmployees.length / empRowsPerPage)}
-                                       className={`p-2 rounded-lg border transition-all ${empPage === Math.ceil(filteredEmployees.length / empRowsPerPage) ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
-                                    >
-                                       <ChevronRight size={16} />
-                                    </button>
-                                 </div>
+                                       {filteredEmployees.length === 0 && (
+                                          <tr>
+                                             <td colSpan={payrollType === 'F&F Settlement' ? 6 : 5} className="px-6 py-12 text-center text-slate-400 italic">
+                                                No employees found matching "{empSearch}"
+                                             </td>
+                                          </tr>
+                                       )}
+                                    </tbody>
+                                 </table>
                               </div>
-                           )}
-                        </div>
-                     )}
+
+                              {/* Pagination Controls */}
+                              {filteredEmployees.length > empRowsPerPage && (
+                                 <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
+                                    <div className="text-xs text-slate-500">
+                                       Showing <span className="font-bold text-slate-700">{((empPage - 1) * empRowsPerPage) + 1}</span> to <span className="font-bold text-slate-700">{Math.min(empPage * empRowsPerPage, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                       <button
+                                          onClick={() => setEmpPage(prev => Math.max(1, prev - 1))}
+                                          disabled={empPage === 1}
+                                          className={`p-2 rounded-lg border transition-all ${empPage === 1 ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
+                                       >
+                                          <ChevronLeft size={16} />
+                                       </button>
+                                       <div className="flex items-center gap-1">
+                                          {Array.from({ length: Math.ceil(filteredEmployees.length / empRowsPerPage) }).map((_, i) => (
+                                             <button
+                                                key={i}
+                                                onClick={() => setEmpPage(i + 1)}
+                                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${empPage === i + 1 ? 'bg-sky-600 text-white shadow-md shadow-sky-100' : 'text-slate-500 hover:bg-slate-50'}`}
+                                             >
+                                                {i + 1}
+                                             </button>
+                                          ))}
+                                       </div>
+                                       <button
+                                          onClick={() => setEmpPage(prev => Math.min(Math.ceil(filteredEmployees.length / empRowsPerPage), prev + 1))}
+                                          disabled={empPage === Math.ceil(filteredEmployees.length / empRowsPerPage)}
+                                          className={`p-2 rounded-lg border transition-all ${empPage === Math.ceil(filteredEmployees.length / empRowsPerPage) ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600'}`}
+                                       >
+                                          <ChevronRight size={16} />
+                                       </button>
+                                    </div>
+                                 </div>
+                              )}
+                           </>
+                        ) : (
+                           /* Empty state matching the screenshot */
+                           <div className="flex-grow flex flex-col items-center justify-center p-8 bg-white select-none animate-in fade-in duration-200">
+                              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100 mb-4 shadow-inner">
+                                 <FileX size={28} className="text-slate-400" />
+                              </div>
+                              <p className="text-sm font-semibold text-slate-500">
+                                 Select Payroll Type and Business Unit to load employees
+                              </p>
+                           </div>
+                        )}
+                     </div>
                   </div>
                );
 
@@ -1918,7 +1941,7 @@ export const RunPayrollModal: React.FC<{
                            <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
                               <Download size={16} /> Export Data
                            </button>
-                           <button onClick={() => setShowImportEmployeesModal(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all shadow-sm">
+                           <button onClick={() => setShowImportEmployeesModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
                               <Upload size={16} /> Import
                            </button>
                         </div>
@@ -2151,14 +2174,6 @@ export const RunPayrollModal: React.FC<{
                                                       </button>
                                                    );
                                                 })()}
-                                                <button
-                                                   onClick={() => !readOnly && handleRowLopClick(row.id)}
-                                                   disabled={readOnly}
-                                                   className="p-1.5 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                                   title="Recover LOP for this employee"
-                                                >
-                                                   <Undo size={18} />
-                                                </button>
                                                 <button
                                                    onClick={() => !readOnly && toggleEdit(row.id)}
                                                    disabled={readOnly}
@@ -3003,6 +3018,16 @@ export const RunPayrollModal: React.FC<{
                            <div className="mb-6 pl-4 shrink-0">
                               <h2 className="text-2xl font-bold text-slate-800">{stepTitles[currentStep]}</h2>
                               <p className="text-slate-500 mt-1">{stepSubtitles[currentStep]}</p>
+                              {currentStep >= 2 && currentStep <= 6 && (
+                                 <div className="flex items-center gap-2 mt-3">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                       <Users size={12} /> {selectedBUs.length > 0 ? selectedBUs.join(', ') : 'All Business Units'}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                       <Calendar size={12} /> {selectedPayrollMonth}
+                                    </span>
+                                 </div>
+                              )}
                            </div>
 
                            {renderStepContent()}

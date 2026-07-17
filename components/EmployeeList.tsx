@@ -1649,7 +1649,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                             </button>
                             <button 
                                 onClick={() => setIsImportModalOpen(true)}
-                                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px] transition-colors"
+                                className="px-4 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px] transition-colors"
                             >
                                 <Upload size={16} /> Import
                             </button>
@@ -1916,6 +1916,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importMethod, setImportMethod] = useState<'sample' | 'another'>('sample');
+    const [eraseEmptyCells, setEraseEmptyCells] = useState(false);
 
     // Success and failure state for step 2 Results screen
     const [successCount, setSuccessCount] = useState(0);
@@ -1932,6 +1933,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             setFailureCount(0);
             setFailedRecords([]);
             setImportMethod('sample');
+            setEraseEmptyCells(false);
         }
     }, [isOpen]);
 
@@ -2278,10 +2280,17 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             });
 
             // Fetch existing employees to resolve ID update by EID
-            const { data: existingEmps } = await supabase.from('employees').select('id, eid');
+            const { data: existingEmps } = await supabase.from('employees').select('*');
             const eidToIdMap = new Map<string, string>();
             existingEmps?.forEach(e => {
                 eidToIdMap.set(e.eid, e.id);
+            });
+
+            // Fetch existing configs
+            const { data: existingConfigs } = await supabase.from('operational_config').select('config_key, config_value');
+            const configMap = new Map<string, any>();
+            existingConfigs?.forEach(c => {
+                configMap.set(c.config_key, c.config_value);
             });
 
             const employeesToUpsert: any[] = [];
@@ -2312,22 +2321,22 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 const vpfAmount = cleanNumber(row[35]);
                 const vpfPercentage = cleanNumber(row[36]);
 
-                const pan = row[37]?.toString().trim() || null;
-                const aadhaar = row[38]?.toString().trim() || null;
-                const pfNo = row[39]?.toString().trim() || null;
-                const uan = row[40]?.toString().trim() || null;
-                const esiNo = row[41]?.toString().trim() || null;
-                const pranNo = row[42]?.toString().trim() || null;
+                const rawPan = row[37]?.toString().trim() || null;
+                const rawAadhaar = row[38]?.toString().trim() || null;
+                const rawPfNo = row[39]?.toString().trim() || null;
+                const rawUan = row[40]?.toString().trim() || null;
+                const rawEsiNo = row[41]?.toString().trim() || null;
+                const rawPranNo = row[42]?.toString().trim() || null;
                 const regime = mapRegime(row[43]?.toString());
 
                 // Additional parsed columns:
                 const totalGross = row[44] !== undefined && row[44] !== null ? Number(row[44]) : null;
-                const payMode = row[47]?.toString().trim() || "Online Transfer";
-                const bankAcc = row[48]?.toString().trim() || "";
-                const bankIfsc = row[49]?.toString().trim() || "";
-                const bankName = row[50]?.toString().trim() || "";
-                const bankBranch = row[51]?.toString().trim() || "";
-                const appraisalMonth = row[52]?.toString().trim() || null;
+                const rawPayMode = row[47]?.toString().trim() || "";
+                const rawBankAcc = row[48]?.toString().trim() || "";
+                const rawBankIfsc = row[49]?.toString().trim() || "";
+                const rawBankName = row[50]?.toString().trim() || "";
+                const rawBankBranch = row[51]?.toString().trim() || "";
+                const rawAppraisalMonth = row[52]?.toString().trim() || "";
 
                 if (!rawEid) errors.push("Missing 'Employee Code'");
                 if (!rawName) errors.push("Missing 'Employee Name'");
@@ -2335,19 +2344,19 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 if (!rawStructureName) errors.push("Missing 'Salary Structure'");
                 if (rawCtc === undefined || isNaN(Number(rawCtc))) errors.push("Invalid 'Annual CTC'");
                 if (!rawEffectiveFrom) errors.push("Missing 'Effective From'");
-                if (!pan) errors.push("Missing 'PAN Number'");
-                if (!aadhaar) errors.push("Missing 'Aadhaar Number'");
+                if (!rawPan) errors.push("Missing 'PAN Number'");
+                if (!rawAadhaar) errors.push("Missing 'Aadhaar Number'");
                 if (!row[43]) errors.push("Missing 'Tax Regime'");
 
                 if (totalGross === null || isNaN(totalGross)) errors.push("Missing 'Total Gross (Annual)'");
                 if (row[45] === undefined || row[45] === null || isNaN(Number(row[45]))) errors.push("Missing 'Total CTC (Annual)'");
                 if (row[46] === undefined || row[46] === null || isNaN(Number(row[46]))) errors.push("Missing 'Total Net Pay (Annual)'");
-                if (!payMode) errors.push("Missing 'Salary Pay Mode'");
-                if (!bankAcc) errors.push("Missing 'Account Number'");
-                if (!bankIfsc) errors.push("Missing 'IFSC Code'");
-                if (!bankName) errors.push("Missing 'Bank Name'");
-                if (!bankBranch) errors.push("Missing 'Branch'");
-                if (!appraisalMonth) errors.push("Missing 'Appraisal Month'");
+                if (!rawPayMode) errors.push("Missing 'Salary Pay Mode'");
+                if (!rawBankAcc) errors.push("Missing 'Account Number'");
+                if (!rawBankIfsc) errors.push("Missing 'IFSC Code'");
+                if (!rawBankName) errors.push("Missing 'Bank Name'");
+                if (!rawBankBranch) errors.push("Missing 'Branch'");
+                if (!rawAppraisalMonth) errors.push("Missing 'Appraisal Month'");
 
                 if (npsCheck) {
                     if (row[32] === undefined || row[32] === null || String(row[32]).trim() === '') errors.push("NPS Fixed Amount is required when NPS is applicable");
@@ -2395,6 +2404,24 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
 
                 const ctcVal = Number(rawCtc) || 0;
                 const employeeId = eidToIdMap.get(rawEid.toString().trim()) || (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
+                const existingEmp = existingEmps?.find(e => e.eid === rawEid.toString().trim());
+                const existingConfig = configMap.get(`emp_statutory:${rawEid.toString().trim()}`);
+
+                // Merge values for optional columns if eraseEmptyCells is false
+                const pan = rawPan;
+                const aadhaar = rawAadhaar;
+                
+                const uan = rawUan ? rawUan : (eraseEmptyCells ? null : (existingEmp?.uan_no || null));
+                const esiNo = rawEsiNo ? rawEsiNo : (eraseEmptyCells ? null : (existingEmp?.esi_no || null));
+                const pranNo = rawPranNo ? rawPranNo : (eraseEmptyCells ? null : (existingEmp?.pran_no || null));
+                const pfNo = rawPfNo ? rawPfNo : (eraseEmptyCells ? null : (existingEmp?.pf_no || null));
+
+                const payMode = rawPayMode ? rawPayMode : (eraseEmptyCells ? "Online Transfer" : (existingEmp?.salary_pay_mode || "Online Transfer"));
+                const bankAcc = rawBankAcc ? rawBankAcc : (eraseEmptyCells ? "" : (existingEmp?.bank_account_no || ""));
+                const bankIfsc = rawBankIfsc ? rawBankIfsc : (eraseEmptyCells ? "" : (existingEmp?.bank_ifsc || ""));
+                const bankName = rawBankName ? rawBankName : (eraseEmptyCells ? "" : (existingEmp?.bank_name || ""));
+                const bankBranch = rawBankBranch ? rawBankBranch : (eraseEmptyCells ? "" : (existingEmp?.bank_branch || ""));
+                const appraisalMonth = rawAppraisalMonth ? rawAppraisalMonth : (eraseEmptyCells ? null : (existingConfig?.appraisal_month || null));
 
                 employeesToUpsert.push({
                     id: employeeId,
@@ -2459,7 +2486,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             }
 
             if (onImportSuccess) onImportSuccess();
-            setStep(importMethod === 'sample' ? 2 : 4); // If another system, go to results step 4
+            setStep(importMethod === 'sample' ? 2 : 4);
         } catch (err: any) {
             console.error('Import process failed:', err);
             alert(`Error importing records: ${err.message || err}`);
@@ -2586,125 +2613,140 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                             {step === 1 && (
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
                                     {/* Left Side */}
-                                    <div className="lg:col-span-7 space-y-6">
-                                        <div>
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Import Method</h4>
-                                            <div className="space-y-3">
-                                                {/* Option 1: Sample Template (Selected) */}
-                                                <div 
-                                                    onClick={() => setImportMethod('sample')}
-                                                    className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
-                                                        importMethod === 'sample' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
-                                                    }`}
-                                                >
-                                                    <div>
-                                                        <h5 className="text-sm font-bold text-slate-800">Use the sample template</h5>
-                                                        <p className="text-xs text-slate-400 font-medium mt-0.5">Download our pre-formatted file, fill it in, and upload.</p>
-                                                    </div>
-                                                    {importMethod === 'sample' && (
-                                                        <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
-                                                            <Check size={12} strokeWidth={3} />
+                                    <div className="lg:col-span-7 space-y-5">
+                                        <div className="space-y-5">
+                                            <div>
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Import Method</h4>
+                                                <div className="space-y-3">
+                                                    {/* Option 1: Sample Template (Selected) */}
+                                                    <div 
+                                                        onClick={() => setImportMethod('sample')}
+                                                        className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
+                                                            importMethod === 'sample' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
+                                                        }`}
+                                                    >
+                                                        <div>
+                                                            <h5 className="text-sm font-bold text-slate-800">Use the sample template</h5>
+                                                            <p className="text-xs text-slate-400 font-medium mt-0.5">Download our pre-formatted file, fill it in, and upload.</p>
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        {importMethod === 'sample' && (
+                                                            <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
+                                                                <Check size={12} strokeWidth={3} />
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                                {/* Option 2: Another System (Unselected) */}
-                                                <div 
-                                                    onClick={() => setImportMethod('another')}
-                                                    className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
-                                                        importMethod === 'another' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
-                                                    }`}
-                                                >
-                                                    <div>
-                                                        <h5 className="text-sm font-bold text-slate-800">Use a file from another system</h5>
-                                                        <p className="text-xs text-slate-400 font-medium mt-0.5">Upload any spreadsheet and map columns to CRM fields.</p>
-                                                    </div>
-                                                    {importMethod === 'another' && (
-                                                        <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
-                                                            <Check size={12} strokeWidth={3} />
+                                                    {/* Option 2: Another System (Unselected) */}
+                                                    <div 
+                                                        onClick={() => setImportMethod('another')}
+                                                        className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
+                                                            importMethod === 'another' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
+                                                        }`}
+                                                    >
+                                                        <div>
+                                                            <h5 className="text-sm font-bold text-slate-800">Use a file from another system</h5>
+                                                            <p className="text-xs text-slate-400 font-medium mt-0.5">Upload any spreadsheet and map columns to CRM fields.</p>
                                                         </div>
-                                                    )}
+                                                        {importMethod === 'another' && (
+                                                            <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
+                                                                <Check size={12} strokeWidth={3} />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
+                                            </div>
+
+                                            {/* Drag & Drop Box */}
+                                            <div 
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                                        handleFileDrop(e.dataTransfer.files[0]);
+                                                    }
+                                                }}
+                                                className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center text-center transition-all ${
+                                                    file 
+                                                        ? 'border-emerald-300 bg-emerald-50/5 gap-4' 
+                                                        : 'border-indigo-200 bg-indigo-50/5 gap-3 hover:bg-indigo-50/10'
+                                                }`}
+                                            >
+                                                {file ? (
+                                                    <div className="flex flex-col items-center gap-4 animate-in fade-in duration-200 w-full">
+                                                        {/* File Doc Icon */}
+                                                        <div className="w-14 h-14 bg-emerald-100/60 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-200/50">
+                                                            <FileSpreadsheet size={24} />
+                                                        </div>
+                                                        
+                                                        {/* Filename and check */}
+                                                        <div className="flex items-center justify-center gap-2 max-w-full">
+                                                            <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+                                                            <span className="text-sm font-bold text-slate-800 truncate px-1 max-w-[280px]" title={file.name}>
+                                                                {file.name}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* File Size and status */}
+                                                        <p className="text-xs text-slate-400 font-semibold tracking-wide">
+                                                            {(file.size / 1024).toFixed(1)} KB · Ready to import
+                                                        </p>
+
+                                                        {/* Remove Button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFile(null);
+                                                                setParsedData([]);
+                                                                if (fileInputRef.current) {
+                                                                    fileInputRef.current.value = "";
+                                                                }
+                                                            }}
+                                                            className="px-4 py-2 border border-rose-200 bg-rose-50/40 hover:bg-rose-50/70 text-rose-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer mt-1"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                            Remove file
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="w-12 h-12 bg-indigo-50 rounded-md flex items-center justify-center text-[#444CE7] shadow-sm border border-indigo-100">
+                                                            <UploadCloud size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-700">Drag & drop your file here</p>
+                                                            <p className="text-xs text-slate-400 mt-1 font-medium">or click the button below to browse from your computer</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={handleUploadClick}
+                                                            className="px-6 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-md font-bold text-xs shadow-md transition-all cursor-pointer mt-2"
+                                                        >
+                                                            Browse Files
+                                                        </button>
+                                                        <p className="text-[10px] text-slate-400 font-bold tracking-tight mt-1">.xlsx and .xls supported</p>
+                                                    </>
+                                                )}
+                                                <input 
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleFileChange}
+                                                    className="hidden"
+                                                    accept=".csv,.xlsx,.xls"
+                                                />
                                             </div>
                                         </div>
 
-                                        {/* Drag & Drop Box */}
-                                        <div 
-                                            onDragOver={(e) => e.preventDefault()}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                                                    handleFileDrop(e.dataTransfer.files[0]);
-                                                }
-                                            }}
-                                            className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center text-center transition-all ${
-                                                file 
-                                                    ? 'border-emerald-300 bg-emerald-50/5 gap-4' 
-                                                    : 'border-indigo-200 bg-indigo-50/5 gap-3 hover:bg-indigo-50/10'
-                                            }`}
-                                        >
-                                            {file ? (
-                                                <div className="flex flex-col items-center gap-4 animate-in fade-in duration-200 w-full">
-                                                    {/* File Doc Icon */}
-                                                    <div className="w-14 h-14 bg-emerald-100/60 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-200/50">
-                                                        <FileSpreadsheet size={24} />
-                                                    </div>
-                                                    
-                                                    {/* Filename and check */}
-                                                    <div className="flex items-center justify-center gap-2 max-w-full">
-                                                        <CheckCircle size={16} className="text-emerald-500 shrink-0" />
-                                                        <span className="text-sm font-bold text-slate-800 truncate px-1 max-w-[280px]" title={file.name}>
-                                                            {file.name}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* File Size and status */}
-                                                    <p className="text-xs text-slate-400 font-semibold tracking-wide">
-                                                        {(file.size / 1024).toFixed(1)} KB · Ready to import
-                                                    </p>
-
-                                                    {/* Remove Button */}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setFile(null);
-                                                            setParsedData([]);
-                                                            if (fileInputRef.current) {
-                                                                fileInputRef.current.value = "";
-                                                            }
-                                                        }}
-                                                        className="px-4 py-2 border border-rose-200 bg-rose-50/40 hover:bg-rose-50/70 text-rose-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer mt-1"
-                                                    >
-                                                        <Trash2 size={13} />
-                                                        Remove file
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="w-12 h-12 bg-indigo-50 rounded-md flex items-center justify-center text-[#444CE7] shadow-sm border border-indigo-100">
-                                                        <UploadCloud size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-700">Drag & drop your file here</p>
-                                                        <p className="text-xs text-slate-400 mt-1 font-medium">or click the button below to browse from your computer</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={handleUploadClick}
-                                                        className="px-6 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-md font-bold text-xs shadow-md transition-all cursor-pointer mt-2"
-                                                    >
-                                                        Browse Files
-                                                    </button>
-                                                    <p className="text-[10px] text-slate-400 font-bold tracking-tight mt-1">.xlsx and .xls supported</p>
-                                                </>
-                                            )}
+                                        {/* Erase Empty Cells Checkbox */}
+                                        <label className="flex items-center gap-3 mt-4 cursor-pointer select-none">
                                             <input 
-                                                type="file"
-                                                ref={fileInputRef}
-                                                onChange={handleFileChange}
-                                                className="hidden"
-                                                accept=".csv,.xlsx,.xls"
+                                                type="checkbox"
+                                                checked={eraseEmptyCells}
+                                                onChange={(e) => setEraseEmptyCells(e.target.checked)}
+                                                className="rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7] cursor-pointer w-4 h-4"
                                             />
-                                        </div>
+                                            <span className="text-sm font-bold text-slate-700 leading-none">
+                                                Replace the cell value if existing data found.
+                                            </span>
+                                        </label>
                                     </div>
 
                                     {/* Right Side */}

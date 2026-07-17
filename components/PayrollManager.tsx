@@ -33,6 +33,7 @@ import {
     History,
     ArrowLeft,
     Upload,
+    UploadCloud,
     User,
     Send,
     Info,
@@ -1231,7 +1232,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 </div>
                 <button
                     onClick={() => { setWizardBU([]); setWizardReadOnly(false); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                    className="px-6 py-3 bg-[#444CE7] hover:bg-[#444CE7] text-white rounded-lg font-bold shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95"
                 >
                     Initiate Payroll
                 </button>
@@ -1335,7 +1336,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                             </button>
                             <button
                                 onClick={() => setShowForm16Modal(true)}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-2 cursor-pointer"
+                                className="px-4 py-2 bg-[#444CE7] hover:bg-[#444CE7] text-white rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 cursor-pointer"
                             >
                                 <FileText size={16} /> Distribute Form 16
                             </button>
@@ -2032,6 +2033,7 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [sendOnboarding, setSendOnboarding] = useState(false);
+    const [importMethod, setImportMethod] = useState<'sample' | 'another'>('sample');
 
     // Success and failure state for step 3 Results screen
     const [successCount, setSuccessCount] = useState(0);
@@ -2049,8 +2051,28 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
             setFailureCount(0);
             setFailedRecords([]);
             setSendOnboarding(false);
+            setImportMethod('sample');
         }
     }, [isOpen]);
+
+    const handleFileDrop = (droppedFile: File) => {
+        setFile(droppedFile);
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
+                setParsedData(jsonData);
+            } catch (err) {
+                console.error("Error reading file:", err);
+            }
+        };
+        reader.readAsArrayBuffer(droppedFile);
+    };
 
     if (!isOpen) return null;
 
@@ -2491,106 +2513,311 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-slate-800">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-md shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="text-lg font-bold text-slate-800">Import Payroll - Import historical data</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
-                        <X size={20} />
-                    </button>
+                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-white relative">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
+                            <Upload size={20} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-800">Import Payroll - Historical data</h3>
+                                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">
+                                    Step {step} of 3
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                {step === 1 
+                                    ? 'Select your import method and upload a spreadsheet to get started.' 
+                                    : step === 2 
+                                    ? 'Upload your historical payroll Excel sheet.' 
+                                    : 'Review the results of your import.'}
+                            </p>
+                        </div>
+                    </div>
+                    {!isSaving && (
+                        <button onClick={onClose} className="p-1.5 hover:bg-slate-50 rounded-md text-slate-400 hover:text-slate-600 transition-colors border border-slate-100 cursor-pointer">
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Stepper */}
-                <div className="border-b border-slate-100 py-4 bg-white select-none">
-                    <div className="flex items-center justify-center max-w-xl mx-auto px-4">
-                        {/* Step 1 */}
-                        <div className="flex flex-col items-center relative">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 1 ? 'border-indigo-600' : 'border-indigo-600 text-indigo-600'
-                            }`}>
-                                {step === 1 ? <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" /> : <Check size={16} strokeWidth={3} />}
-                            </div>
-                            <span className={`text-xs mt-2 transition-all ${step === 1 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>Prepare</span>
+                <div className="border-b border-slate-100 py-5 bg-white select-none">
+                    <div className="flex items-center justify-between max-w-2xl mx-auto px-4 relative">
+                        {/* Connecting Line */}
+                        <div className="absolute left-8 right-8 top-3 h-[2px] bg-slate-100 -translate-y-1/2 -z-0">
+                            <div 
+                                className="h-full bg-[#444CE7] transition-all duration-300"
+                                style={{ 
+                                    width: step === 1 ? '0%' : step === 2 ? '50%' : '100%'
+                                }}
+                            />
                         </div>
-                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-                        {/* Step 2 */}
-                        <div className="flex flex-col items-center relative">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 2 ? 'border-indigo-600' : step > 2 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
-                            }`}>
-                                {step === 2 ? <div className="w-3.5 h-3.5 bg-indigo-600 rounded-full" /> : step > 2 ? <Check size={16} strokeWidth={3} /> : null}
-                            </div>
-                            <span className={`text-xs mt-2 transition-all ${step === 2 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>Upload</span>
-                        </div>
-                        <div className={`h-[2px] flex-1 -mt-5 mx-2 transition-all ${step > 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
-                        {/* Step 3 */}
-                        <div className="flex flex-col items-center relative">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white transition-all ${
-                                step === 3 ? 'border-indigo-600 text-indigo-600' : 'border-slate-300'
-                            }`}>
-                                {step === 3 ? <Check size={16} strokeWidth={3} /> : null}
-                            </div>
-                            <span className={`text-xs mt-2 transition-all ${step === 3 ? 'font-bold text-indigo-600' : 'font-medium text-slate-400'}`}>Results</span>
-                        </div>
+
+                        {[
+                            { id: 1, label: 'Prepare' },
+                            { id: 2, label: 'Upload & Process' },
+                            { id: 3, label: 'Import Results' }
+                        ].map((s) => {
+                            const isCompleted = step > s.id;
+                            const isActive = step === s.id;
+                            const showActive = isActive || (isSaving && s.id === 3);
+                            const showDone = isCompleted;
+                            return (
+                                <div key={s.id} className="flex flex-col items-center relative z-10">
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white transition-all duration-300 ${
+                                        showActive || showDone ? 'border-[#444CE7] text-[#444CE7]' : 'border-slate-200 text-slate-400'
+                                    }`}>
+                                        {showDone ? (
+                                            <Check size={12} strokeWidth={3} className="text-[#444CE7]" />
+                                        ) : (
+                                            <div className={`w-2.5 h-2.5 bg-[#444CE7] rounded-full transition-all duration-300 ${showActive ? 'opacity-100' : 'opacity-0 scale-50'}`} />
+                                        )}
+                                    </div>
+                                    <span className={`text-[11px] mt-2 font-bold transition-all duration-300 ${showActive ? 'text-[#444CE7]' : 'text-slate-400'}`}>
+                                        {s.label}
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* Body */}
-                <div className="p-8 flex-grow relative min-h-[280px] bg-white">
+                <div className="p-8 flex-grow overflow-y-auto min-h-[350px] bg-slate-50/20 flex flex-col justify-center">
                     {step === 1 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
                             {/* Left Side */}
-                            <div className="space-y-6 flex flex-col justify-center pr-0 md:pr-8">
-                                <div className="text-sm text-slate-600">
-                                    Download a <span onClick={handleDownloadSample} className="text-indigo-600 hover:underline cursor-pointer font-semibold">Sample File</span>.
-                                </div>
+                            <div className="lg:col-span-7 space-y-5">
                                 <div>
-                                    <button onClick={handleUploadClick} className="w-full py-4 text-center border border-indigo-200 bg-indigo-50/20 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-2 cursor-pointer">
-                                        Upload Excel File <span className="text-rose-500">*</span>
-                                    </button>
-                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv,.xlsx,.xls" />
-                                    {file && (
-                                        <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 animate-in fade-in">
-                                            <Check className="text-emerald-600" size={14} strokeWidth={3} /> Selected: <span className="font-semibold text-slate-700 font-mono">{file.name}</span>
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Import Method</h4>
+                                    <div className="space-y-3">
+                                        {/* Option 1: Sample Template */}
+                                        <div 
+                                            onClick={() => setImportMethod('sample')}
+                                            className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
+                                                importMethod === 'sample' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div>
+                                                <h5 className="text-sm font-bold text-slate-800">Use the sample template</h5>
+                                                <p className="text-xs text-slate-400 font-medium mt-0.5">Download our pre-formatted file, fill it in, and upload.</p>
+                                            </div>
+                                            {importMethod === 'sample' && (
+                                                <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
+                                                    <Check size={12} strokeWidth={3} />
+                                                </div>
+                                            )}
                                         </div>
+
+                                        {/* Option 2: File from another system */}
+                                        <div 
+                                            onClick={() => setImportMethod('another')}
+                                            className={`border-2 rounded-md p-4 bg-white flex justify-between items-center shadow-sm relative cursor-pointer transition-all ${
+                                                importMethod === 'another' ? 'border-[#444CE7]' : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div>
+                                                <h5 className="text-sm font-bold text-slate-800">Use a file from another system</h5>
+                                                <p className="text-xs text-slate-400 font-medium mt-0.5">Upload any spreadsheet and map columns to CRM fields.</p>
+                                            </div>
+                                            {importMethod === 'another' && (
+                                                <div className="w-5 h-5 bg-[#444CE7]/10 border border-[#444CE7]/20 rounded-full flex items-center justify-center text-[#444CE7] shrink-0 shadow-inner">
+                                                    <Check size={12} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Drag & Drop Box */}
+                                <div 
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                            handleFileDrop(e.dataTransfer.files[0]);
+                                        }
+                                    }}
+                                    className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center text-center transition-all ${
+                                        file 
+                                            ? 'border-emerald-300 bg-emerald-50/5 gap-4' 
+                                            : 'border-indigo-200 bg-indigo-50/5 gap-3 hover:bg-indigo-50/10'
+                                    }`}
+                                >
+                                    {file ? (
+                                        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-200 w-full">
+                                            <div className="w-14 h-14 bg-emerald-100/60 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-200/50">
+                                                <FileSpreadsheet size={24} />
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-center gap-2 max-w-full">
+                                                <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+                                                <span className="text-sm font-bold text-slate-800 truncate px-1 max-w-[280px]" title={file.name}>
+                                                    {file.name}
+                                                </span>
+                                            </div>
+
+                                            <p className="text-xs text-slate-400 font-semibold tracking-wide">
+                                                {(file.size / 1024).toFixed(1)} KB · Ready to import
+                                            </p>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFile(null);
+                                                    setParsedData([]);
+                                                    if (fileInputRef.current) {
+                                                        fileInputRef.current.value = '';
+                                                    }
+                                                }}
+                                                className="px-4 py-2 border border-slate-200 hover:border-rose-200 text-slate-500 hover:text-rose-600 font-bold bg-white rounded-md text-[10px] transition-all shadow-sm hover:bg-rose-50/30 cursor-pointer"
+                                            >
+                                                Remove File
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div 
+                                                onClick={handleUploadClick}
+                                                className="w-12 h-12 bg-indigo-50 text-[#444CE7] rounded-xl flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-all border border-indigo-100"
+                                            >
+                                                <UploadCloud size={20} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-slate-600 font-medium">
+                                                    <span onClick={handleUploadClick} className="text-[#444CE7] font-bold hover:underline cursor-pointer">Browse Files</span> or drag and drop your file here
+                                                </p>
+                                                <p className="text-[10px] text-slate-400 font-medium">Any Excel sheet (.xlsx, .xls) or CSV</p>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 font-bold tracking-tight mt-1">.xlsx and .xls supported</p>
+                                        </>
                                     )}
+                                    <input 
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept=".csv,.xlsx,.xls"
+                                    />
                                 </div>
                             </div>
-                            <div className="hidden md:block absolute left-1/2 top-8 bottom-8 border-l border-dashed border-slate-200" />
+
                             {/* Right Side */}
-                            <div className="space-y-4 pl-0 md:pl-10 flex flex-col justify-center">
-                                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Instructions:</h4>
-                                <ul className="space-y-3 text-xs text-slate-500 font-medium leading-relaxed pl-4 list-disc">
-                                    <li>Do not change the column names provided in the sample Excel template.</li>
-                                    <li>Columns indicated in red color are mandatory fields.</li>
-                                    <li>Ensure to follow correct data types for each column.</li>
-                                    <li>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</li>
-                                </ul>
+                            <div className="lg:col-span-5 space-y-4">
+                                {importMethod === 'sample' ? (
+                                    <>
+                                        {/* Sample Download Card */}
+                                        <div className="border border-indigo-100 bg-indigo-50/10 rounded-md p-4 flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
+                                                <FileSpreadsheet size={20} />
+                                            </div>
+                                            <div className="flex-grow">
+                                                <h5 className="text-xs font-bold text-slate-800">Sample Template</h5>
+                                                <p className="text-[10px] text-slate-400 font-medium">Pre-formatted Excel file</p>
+                                            </div>
+                                            <button 
+                                                onClick={handleDownloadSample}
+                                                className="px-4 py-2 bg-white hover:bg-slate-50 text-[#444CE7] border border-indigo-200 rounded-md text-[10px] font-bold transition-all shrink-0 shadow-sm cursor-pointer"
+                                            >
+                                                Download Template
+                                            </button>
+                                        </div>
+
+                                        {/* Instructions Card */}
+                                        <div className="border border-slate-200 rounded-md p-5 space-y-4 bg-white">
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
+                                            <ul className="space-y-3 pl-1">
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Do not change the column names provided in the sample Excel template.</span>
+                                                </li>
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Columns indicated in <span className="text-rose-500 font-bold">red color</span> are mandatory fields.</span>
+                                                </li>
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Ensure to follow correct data types for each column.</span>
+                                                </li>
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Instructions Card for Another System */}
+                                        <div className="border border-slate-200 rounded-md p-5 space-y-4 bg-white">
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
+                                            <ul className="space-y-3.5 pl-1">
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>
+                                                        For payroll history, the following fields are mandatory: <span className="font-semibold text-slate-700">Employee Code, Employee Name, Business Unit, and Payroll Month.</span> Make sure your file has columns that can be mapped to these fields.
+                                                    </span>
+                                                </li>
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Map each column from your file to the corresponding field in CollabCRM. Unmapped columns will be ignored during import.</span>
+                                                </li>
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Use "Apply Auto Mapping" to let the system automatically detect and map columns based on their names.</span>
+                                                </li>
+                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                    <span>Once all mandatory fields are mapped, you can proceed with the import. The system will validate data against field types.</span>
+                                                </li>
+                                            </ul>
+                                            
+                                            {/* Download Sample File */}
+                                            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                                                <span className="text-[11px] font-bold text-slate-400">Need a reference example?</span>
+                                                <button 
+                                                    onClick={handleDownloadSample}
+                                                    className="w-full py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-md text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer animate-in fade-in"
+                                                >
+                                                    <Download size={14} /> Download Sample File
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Warning Card */}
+                                <div className="border border-amber-200 bg-amber-50/20 rounded-md p-4 flex items-start gap-3 text-xs text-amber-800 font-medium border-l-4">
+                                    <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                                    <span>Max file size: 10 MB. Accepted formats: .xlsx and .xls.</span>
+                                </div>
                             </div>
                         </div>
                     )}
+
                     {step === 2 && (
-                        <div className="flex flex-col items-center justify-center h-full min-h-[220px] animate-in fade-in duration-200">
+                        <div className="flex flex-col items-center justify-center h-full min-h-[250px] animate-in fade-in duration-200 space-y-4">
                             {isUploading ? (
-                                <div className="w-full space-y-8 p-4 animate-in fade-in duration-350">
-                                    <div className="w-full bg-blue-50/50 border border-blue-200 rounded-xl p-4 flex items-start gap-3.5 shadow-sm">
-                                        <div className="p-1 bg-blue-100 rounded-full text-blue-600 shrink-0 mt-0.5"><Info size={18} /></div>
-                                        <div className="text-sm text-blue-800 leading-relaxed font-medium">
-                                            We're currently uploading your file <span className="font-bold font-mono">'{file?.name}'</span>.<br />
-                                            <span className="text-blue-600 font-normal mt-0.5 block">Please be patient while we fully process your data.</span>
-                                        </div>
+                                <>
+                                    {/* Circular loader with document icon */}
+                                    <div className="relative w-16 h-16 flex items-center justify-center animate-spin">
+                                        <div className="absolute inset-0 rounded-full border-[3px] border-slate-100" />
+                                        <div className="absolute inset-0 rounded-full border-[3px] border-t-[#444CE7] border-r-transparent border-b-transparent border-l-transparent" />
+                                        <UploadCloud size={20} className="text-[#444CE7]" />
                                     </div>
-                                    <div className="flex justify-center items-center py-12">
-                                        <div className="relative w-16 h-16 animate-spin">
-                                            {[...Array(12)].map((_, i) => (
-                                                <div key={i} className="absolute w-2.5 h-2.5 bg-purple-500 rounded-full" style={{ top: `${50 + 40 * Math.sin((i * 2 * Math.PI) / 12)}%`, left: `${50 + 40 * Math.cos((i * 2 * Math.PI) / 12)}%`, transform: 'translate(-50%, -50%)', opacity: 0.15 + (i * 0.85) / 11 }} />
-                                            ))}
-                                        </div>
+
+                                    {/* Status message */}
+                                    <div className="text-center space-y-1.5">
+                                        <h4 className="text-sm font-bold text-slate-800">Processing your import...</h4>
+                                        <p className="text-xs text-slate-400 font-medium">Please be patient while we validate and map your data.</p>
                                     </div>
-                                </div>
+                                </>
                             ) : (
                                 <div className="space-y-6 text-center animate-in fade-in">
-                                    <div className="w-16 h-16 bg-violet-50 text-violet-500 rounded-full flex items-center justify-center mx-auto"><Check size={28} strokeWidth={3} /></div>
+                                    <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto"><Check size={28} strokeWidth={3} /></div>
                                     <div>
                                         <h4 className="text-lg font-bold text-slate-800">File Processed Successfully!</h4>
                                         <p className="text-sm text-slate-500 mt-2 font-mono">{file?.name}</p>
@@ -2599,6 +2826,7 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
                             )}
                         </div>
                     )}
+
                     {step === 3 && (
                         <div className="w-full space-y-6 animate-in fade-in">
                             <div className="w-full bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
@@ -2617,21 +2845,21 @@ const ImportEmployeesRunsModal: React.FC<ImportEmployeesRunsModalProps> = ({ isO
 
                 {/* Footer */}
                 {!isUploading && (
-                    <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 bg-white">
+                    <div className="px-6 py-4 border-t border-slate-100 bg-white flex justify-end gap-3">
                         {step === 1 && (
                             <>
-                                <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm cursor-pointer">Cancel</button>
-                                <button onClick={handleNext} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm cursor-pointer">Next</button>
+                                <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm cursor-pointer transition-colors">Cancel</button>
+                                <button onClick={handleNext} className="px-6 py-2.5 bg-[#444CE7] text-white font-bold rounded-xl hover:bg-[#3538CD] text-sm cursor-pointer transition-colors">Next</button>
                             </>
                         )}
                         {step === 2 && (
                             <>
-                                <button onClick={handleBack} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm cursor-pointer">Back</button>
-                                <button onClick={handleImport} disabled={isSaving} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm disabled:opacity-50 cursor-pointer">{isSaving ? 'Saving...' : 'Import'}</button>
+                                <button onClick={handleBack} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm cursor-pointer transition-colors">Back</button>
+                                <button onClick={handleImport} disabled={isSaving} className="px-6 py-2.5 bg-[#444CE7] text-white font-bold rounded-xl hover:bg-[#3538CD] text-sm disabled:opacity-50 cursor-pointer transition-colors">{isSaving ? 'Saving...' : 'Import'}</button>
                             </>
                         )}
                         {step === 3 && (
-                            <button onClick={onClose} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 text-sm cursor-pointer">Done</button>
+                            <button onClick={onClose} className="px-6 py-2.5 bg-[#444CE7] text-white font-bold rounded-xl hover:bg-[#3538CD] text-sm cursor-pointer transition-colors">Done</button>
                         )}
                     </div>
                 )}

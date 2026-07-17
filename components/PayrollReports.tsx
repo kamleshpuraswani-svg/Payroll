@@ -31,6 +31,405 @@ import {
     X
 } from 'lucide-react';
 
+const SALARY_REGISTER_COLS = [
+    "Sr. No.",
+    "Employee Code",
+    "Employee First Name",
+    "Employee Middle Name",
+    "Employee Last Name",
+    "Employment Status",
+    "Date of Joining",
+    "Date of Relieving",
+    "Business Unit",
+    "Department",
+    "Designation",
+    "Company Email Address",
+    "Mobile Number",
+    "State",
+    "Gender",
+    "Date of Birth",
+    "PAN Number",
+    "PRAN Number",
+    "Father Name",
+    "Spouse Name",
+    "UAN",
+    "Aadhaar Number",
+    "PF Number",
+    "ESI Number",
+    "Salary Date",
+    "Salary Month",
+    "Salary Year",
+    "Calendar Days",
+    "Paid Days",
+    "Arrear Days",
+    "Total Working Hours",
+    "Week Off",
+    "Present Days",
+    "Holidays",
+    "Paid Leaves",
+    "Unpaid Leaves",
+    "LOP Days",
+    "Basic (R)",
+    "HRA (R)",
+    "Conveyance Allowance (R)",
+    "Medical Allowance (R)",
+    "Meal Allowance (R)",
+    "Statutory Bonus (R)",
+    "Professional Allowance (R)",
+    "Monthly Rate",
+    "Basic",
+    "HRA",
+    "NPS Salary",
+    "Conveyance Allowance",
+    "Medical Allowance",
+    "Meal Allowance",
+    "Statutory Bonus",
+    "ERA Bonus",
+    "Performance Bonus",
+    "Quarterly Bonus",
+    "Leave Encashment 1",
+    "Professional Allowance",
+    "Gross Salary",
+    "Basic (Arrear)",
+    "HRA (Arrear)",
+    "Conveyance Allowance (Arrear)",
+    "Medical Allowance (Arrear)",
+    "Statutory Bonus (Arrear)",
+    "Professional Allowance (Arrear)",
+    "Gross Arrear",
+    "Gross Earning",
+    "Net Gross Total",
+    "NPS Deduction",
+    "Personal Loan",
+    "Meal Allowance Deduction",
+    "PF",
+    "PT",
+    "TDS",
+    "PF Salary",
+    "PF Arrear",
+    "ESI Salary",
+    "ESI Arrear",
+    "LWF Salary",
+    "LWF Arrear",
+    "PT Salary",
+    "PT Arrear",
+    "Gross Deduction",
+    "Net Take Home",
+    "Net Salary",
+    "Add Tax",
+    "Monthly CTC",
+    "Negative Salary Amount",
+    "NPS Amount",
+    "NPS Percentage",
+    "NPS Rate",
+    "EDLI Wages",
+    "Pension Wages",
+    "Employer PF",
+    "Employer NPS",
+    "Employer ESI",
+    "Employer LWF",
+    "Total Employee Cost",
+    "Annual CTC",
+    "Tax Regime",
+    "Salary Hold Status",
+    "Casual Leave",
+    "LOP",
+    "Privilege Leaves",
+    "Work From Home Type",
+    "Reimbursement account number",
+    "Reimbursement bank name",
+    "Reimbursement branch name",
+    "Reimbursement IFSC code",
+    "Reimbursement pay mode",
+    "Salary account number",
+    "Salary bank name",
+    "Salary branch name",
+    "Salary IFSC code",
+    "Salary pay mode",
+    "Salary processing date",
+    "Salary release date",
+    "Salary hold date",
+    "Reporting manager",
+    "Notice recovery days",
+    "Leave encashment days",
+    "PF Wages",
+    "ESI Wages",
+    "PF arrear wages",
+    "ESI arrear wages",
+    "LWF gross",
+    "Gratuity as per CTC",
+    "Currency"
+];
+
+const formatINR = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 2
+    }).format(amount);
+};
+
+const getSalaryRegisterRowValue = (row: any, colName: string, index: number, monthVal: string) => {
+    switch (colName) {
+        case "Sr. No.":
+            return index + 1;
+        case "Employee Code":
+            return row.id || "";
+        case "Employee First Name":
+            return (row.name || "").split(' ')[0] || "";
+        case "Employee Middle Name":
+            return "";
+        case "Employee Last Name":
+            return (row.name || "").split(' ').slice(1).join(' ') || "";
+        case "Employment Status":
+            return "Active";
+        case "Date of Joining":
+            return "2025-06-01";
+        case "Date of Relieving":
+            return "";
+        case "Business Unit":
+            return row.business_unit || "CollabCRM";
+        case "Department":
+            return row.dept || "Engineering";
+        case "Designation":
+            return "Software Engineer";
+        case "Company Email Address":
+            return `${(row.name || "").toLowerCase().replace(/\s+/g, '.')}@collabcrm.com`;
+        case "Mobile Number":
+            return "9876543210";
+        case "State":
+            return "Karnataka";
+        case "Gender":
+            return "Female";
+        case "Date of Birth":
+            return "1995-08-15";
+        case "PAN Number":
+            return "ABCDE1234F";
+        case "PRAN Number":
+            return "110098765432";
+        case "Father Name":
+            return "Rajesh Sharma";
+        case "Spouse Name":
+            return "";
+        case "UAN":
+            return "100987654321";
+        case "Aadhaar Number":
+            return "123456789012";
+        case "PF Number":
+            return "MH/BAN/1234567/123";
+        case "ESI Number":
+            return "3112345678";
+        case "Salary Date":
+            return "2025-11-30";
+        case "Salary Month":
+            return monthVal || "November";
+        case "Salary Year":
+            return "2025";
+        case "Calendar Days":
+            return 30;
+        case "Paid Days":
+            return 30;
+        case "Arrear Days":
+            return 0;
+        case "Total Working Hours":
+            return 180;
+        case "Week Off":
+            return 8;
+        case "Present Days":
+            return 22;
+        case "Holidays":
+            return 1;
+        case "Paid Leaves":
+            return 0;
+        case "Unpaid Leaves":
+            return 0;
+        case "LOP Days":
+            return 0;
+        case "Basic (R)":
+            return formatINR(row.basic || 0);
+        case "HRA (R)":
+            return formatINR(row.hra || 0);
+        case "Conveyance Allowance (R)":
+            return formatINR(1600);
+        case "Medical Allowance (R)":
+            return formatINR(1250);
+        case "Meal Allowance (R)":
+            return formatINR(2000);
+        case "Statutory Bonus (R)":
+            return formatINR(0);
+        case "Professional Allowance (R)":
+            return formatINR(0);
+        case "Monthly Rate":
+            return formatINR(row.gross || 0);
+        case "Basic":
+            return formatINR(row.basic || 0);
+        case "HRA":
+            return formatINR(row.hra || 0);
+        case "NPS Salary":
+            return formatINR(0);
+        case "Conveyance Allowance":
+            return formatINR(1600);
+        case "Medical Allowance":
+            return formatINR(1250);
+        case "Meal Allowance":
+            return formatINR(2000);
+        case "Statutory Bonus":
+            return formatINR(0);
+        case "ERA Bonus":
+            return formatINR(0);
+        case "Performance Bonus":
+            return formatINR(0);
+        case "Quarterly Bonus":
+            return formatINR(0);
+        case "Leave Encashment 1":
+            return formatINR(0);
+        case "Professional Allowance":
+            return formatINR(0);
+        case "Gross Salary":
+            return formatINR(row.gross || 0);
+        case "Basic (Arrear)":
+            return formatINR(0);
+        case "HRA (Arrear)":
+            return formatINR(0);
+        case "Conveyance Allowance (Arrear)":
+            return formatINR(0);
+        case "Medical Allowance (Arrear)":
+            return formatINR(0);
+        case "Statutory Bonus (Arrear)":
+            return formatINR(0);
+        case "Professional Allowance (Arrear)":
+            return formatINR(0);
+        case "Gross Arrear":
+            return formatINR(0);
+        case "Gross Earning":
+            return formatINR(row.gross || 0);
+        case "Net Gross Total":
+            return formatINR(row.gross || 0);
+        case "NPS Deduction":
+            return formatINR(0);
+        case "Personal Loan":
+            return formatINR(0);
+        case "Meal Allowance Deduction":
+            return formatINR(0);
+        case "PF":
+            return formatINR(1800);
+        case "PT":
+            return formatINR(200);
+        case "TDS":
+            return formatINR(0);
+        case "PF Salary":
+            return formatINR(row.basic || 0);
+        case "PF Arrear":
+            return formatINR(0);
+        case "ESI Salary":
+            return formatINR(0);
+        case "ESI Arrear":
+            return formatINR(0);
+        case "LWF Salary":
+            return formatINR(10);
+        case "LWF Arrear":
+            return formatINR(0);
+        case "PT Salary":
+            return formatINR(row.basic || 0);
+        case "PT Arrear":
+            return formatINR(0);
+        case "Gross Deduction":
+            return formatINR(2010);
+        case "Net Take Home":
+            return formatINR(row.net || 0);
+        case "Net Salary":
+            return formatINR(row.net || 0);
+        case "Add Tax":
+            return formatINR(0);
+        case "Monthly CTC":
+            return formatINR((row.gross || 0) + 1800);
+        case "Negative Salary Amount":
+            return formatINR(0);
+        case "NPS Amount":
+            return formatINR(0);
+        case "NPS Percentage":
+            return "0%";
+        case "NPS Rate":
+            return formatINR(0);
+        case "EDLI Wages":
+            return formatINR(15000);
+        case "Pension Wages":
+            return formatINR(15000);
+        case "Employer PF":
+            return formatINR(1800);
+        case "Employer NPS":
+            return formatINR(0);
+        case "Employer ESI":
+            return formatINR(0);
+        case "Employer LWF":
+            return formatINR(20);
+        case "Total Employee Cost":
+            return formatINR((row.gross || 0) + 1820);
+        case "Annual CTC":
+            return formatINR(((row.gross || 0) + 1820) * 12);
+        case "Tax Regime":
+            return "New Regime";
+        case "Salary Hold Status":
+            return "No";
+        case "Casual Leave":
+            return 1;
+        case "LOP":
+            return 0;
+        case "Privilege Leaves":
+            return 1;
+        case "Work From Home Type":
+            return "None";
+        case "Reimbursement account number":
+            return "1234567890";
+        case "Reimbursement bank name":
+            return "HDFC Bank";
+        case "Reimbursement branch name":
+            return "Koramangala";
+        case "Reimbursement IFSC code":
+            return "HDFC0000123";
+        case "Reimbursement pay mode":
+            return "Online Transfer";
+        case "Salary account number":
+            return "1234567890";
+        case "Salary bank name":
+            return "HDFC Bank";
+        case "Salary branch name":
+            return "Koramangala";
+        case "Salary IFSC code":
+            return "HDFC0000123";
+        case "Salary pay mode":
+            return "Online Transfer";
+        case "Salary processing date":
+            return "2025-11-28";
+        case "Salary release date":
+            return "2025-11-30";
+        case "Salary hold date":
+            return "";
+        case "Reporting manager":
+            return "Vikram Singh";
+        case "Notice recovery days":
+            return 0;
+        case "Leave encashment days":
+            return 0;
+        case "PF Wages":
+            return formatINR(15000);
+        case "ESI Wages":
+            return formatINR(0);
+        case "PF arrear wages":
+            return formatINR(0);
+        case "ESI arrear wages":
+            return formatINR(0);
+        case "LWF gross":
+            return formatINR(row.gross || 0);
+        case "Gratuity as per CTC":
+            return formatINR(0);
+        case "Currency":
+            return "INR";
+        default:
+            return "";
+    }
+};
+
 interface Report {
     id: string;
     title: string;
@@ -162,12 +561,8 @@ const REPORTS_LIST: Report[] = [
 ];
 
 const FIELDS = [
-    { name: 'Month', icon: Calendar },
-    { name: 'Department', icon: Building },
-    { name: 'Business Unit', icon: MapPin },
-    { name: 'Employee', icon: User },
-    { name: 'Status', icon: CheckSquare },
-    { name: 'Salary Structure', icon: CheckCircle }
+    { name: 'Payroll month', icon: Calendar },
+    { name: 'Business Unit', icon: MapPin }
 ];
 
 const PayrollReports: React.FC = () => {
@@ -244,7 +639,7 @@ const PayrollReports: React.FC = () => {
     };
 
     const getOptionsForField = (field: string) => {
-        if (field === 'Month') {
+        if (field === 'Month' || field === 'Payroll month') {
             return ['November 2025', 'October 2025', 'September 2025', 'August 2025'];
         }
         if (field === 'Department') {
@@ -357,6 +752,12 @@ const PayrollReports: React.FC = () => {
 
     // Generate mock data on running report
     const handleRunReport = () => {
+        if (selectedReport?.id === 'salary_register' && completedFilters.length === 0) {
+            setReportData([]);
+            setHasRun(true);
+            setIsRunning(false);
+            return;
+        }
         setIsRunning(true);
         setTimeout(() => {
             // Generate contextual mock data
@@ -468,27 +869,34 @@ const PayrollReports: React.FC = () => {
                     { claimId: 'EXP-8015', name: 'Vikram Singh', category: 'Other', claimAmt: 4500, approvedAmt: 0, date: '21 Nov 2025', status: 'Pending', dept: 'Sales', business_unit: 'MindInventory' }
                 ];
             } else if (selectedReport?.id === 'salary_register') {
-                if (isEng) {
-                    mockData.push(
-                        { id: 'TF00123', name: 'Priya Sharma', basic: 25000, hra: 12500, special: 17500, gross: 55000, net: 48500, dept: 'Engineering', business_unit: 'MindInventory' },
-                        { id: 'TF00456', name: 'Rohan Mehta', basic: 35000, hra: 17500, special: 25500, gross: 78000, net: 67800, dept: 'Engineering', business_unit: '300 Minds' }
-                    );
-                }
-                if (isHR) {
-                    mockData.push(
-                        { id: 'TF00789', name: 'Anjali Verma', basic: 22000, hra: 11000, special: 15000, gross: 48000, net: 43900, dept: 'HR', business_unit: 'CollabCRM' }
-                    );
-                }
-                if (isSales) {
-                    mockData.push(
-                        { id: 'TF00246', name: 'Vikram Singh', basic: 23000, hra: 11500, special: 15500, gross: 50000, net: 44800, dept: 'Sales', business_unit: 'MindInventory' }
-                    );
-                }
-                if (isFinance) {
-                    mockData.push(
-                        { id: 'TF00912', name: 'Siddharth Roy', basic: 30000, hra: 15000, special: 20000, gross: 65000, net: 57600, dept: 'Finance', business_unit: 'CollabCRM' }
-                    );
-                }
+                const employees = [
+                    { id: 'TF00101', name: 'Aarav Sharma', basic: 45000, hra: 22500, special: 32500, gross: 100000, net: 88000, dept: 'Engineering', business_unit: 'CollabCRM' },
+                    { id: 'TF00102', name: 'Vihaan Gupta', basic: 40000, hra: 20000, special: 30000, gross: 90000, net: 79200, dept: 'Engineering', business_unit: 'CollabCRM' },
+                    { id: 'TF00103', name: 'Vivaan Mehta', basic: 38000, hra: 19000, special: 28000, gross: 85000, net: 74800, dept: 'Engineering', business_unit: 'MindInventory' },
+                    { id: 'TF00104', name: 'Aditya Patel', basic: 35000, hra: 17500, special: 25500, gross: 78000, net: 68640, dept: 'Engineering', business_unit: '300 Minds' },
+                    { id: 'TF00105', name: 'Sai Reddy', basic: 32000, hra: 16000, special: 22000, gross: 70000, net: 61600, dept: 'Engineering', business_unit: 'MindInventory' },
+                    { id: 'TF00106', name: 'Arjun Verma', basic: 30000, hra: 15000, special: 20000, gross: 65000, net: 57200, dept: 'Engineering', business_unit: '300 Minds' },
+                    { id: 'TF00107', name: 'Reyansh Singh', basic: 28000, hra: 14000, special: 18000, gross: 60000, net: 52800, dept: 'Engineering', business_unit: 'CollabCRM' },
+                    { id: 'TF00108', name: 'Aanya Joshi', basic: 25000, hra: 12500, special: 17500, gross: 55000, net: 48400, dept: 'HR', business_unit: 'CollabCRM' },
+                    { id: 'TF00109', name: 'Diya Nair', basic: 22000, hra: 11000, special: 15000, gross: 48000, net: 42240, dept: 'HR', business_unit: 'MindInventory' },
+                    { id: 'TF00110', name: 'Pihu Chawla', basic: 21000, hra: 10500, special: 13500, gross: 45000, net: 39600, dept: 'HR', business_unit: '300 Minds' },
+                    { id: 'TF00111', name: 'Krishna Murthy', basic: 24000, hra: 12000, special: 16000, gross: 52000, net: 45760, dept: 'Sales', business_unit: 'CollabCRM' },
+                    { id: 'TF00112', name: 'Kabir Kapoor', basic: 23000, hra: 11500, special: 15500, gross: 50000, net: 44000, dept: 'Sales', business_unit: 'MindInventory' },
+                    { id: 'TF00113', name: 'Ishaan Roy', basic: 22000, hra: 11000, special: 15000, gross: 48000, net: 42240, dept: 'Sales', business_unit: '300 Minds' },
+                    { id: 'TF00114', name: 'Aarush Desai', basic: 20000, hra: 10000, special: 12000, gross: 42000, net: 36960, dept: 'Sales', business_unit: 'CollabCRM' },
+                    { id: 'TF00115', name: 'Dev Sen', basic: 32000, hra: 16000, special: 22000, gross: 70000, net: 61600, dept: 'Finance', business_unit: 'CollabCRM' },
+                    { id: 'TF00116', name: 'Siddharth Rao', basic: 30000, hra: 15000, special: 20000, gross: 65000, net: 57200, dept: 'Finance', business_unit: 'MindInventory' },
+                    { id: 'TF00117', name: 'Pranav Bhat', basic: 28000, hra: 14000, special: 18000, gross: 60000, net: 52800, dept: 'Finance', business_unit: '300 Minds' },
+                    { id: 'TF00118', name: 'Kiara Advani', basic: 35000, hra: 17500, special: 25500, gross: 78000, net: 68640, dept: 'Finance', business_unit: 'MindInventory' },
+                    { id: 'TF00119', name: 'Rohan Shinde', basic: 27000, hra: 13500, special: 17500, gross: 58000, net: 51040, dept: 'Engineering', business_unit: 'CollabCRM' },
+                    { id: 'TF00120', name: 'Meera Iyer', basic: 26000, hra: 13000, special: 16000, gross: 55000, net: 48400, dept: 'HR', business_unit: 'MindInventory' }
+                ];
+                employees.forEach(emp => {
+                    const isDeptMatch = !hasDeptFilter || activeDepts.some((d: string) => d.toLowerCase() === emp.dept.toLowerCase());
+                    if (isDeptMatch) {
+                        mockData.push(emp);
+                    }
+                });
             } else if (selectedReport?.id === 'employee_ctc') {
                 if (isEng) {
                     mockData.push(
@@ -636,7 +1044,7 @@ const PayrollReports: React.FC = () => {
             mockData = mockData.filter(row => {
                 for (const filter of completedFilters) {
                     let val = '';
-                    if (filter.field === 'Month') val = selectedMonth;
+                    if (filter.field === 'Month' || filter.field === 'Payroll month') val = selectedMonth;
                     else if (filter.field === 'Department') val = row.dept || '';
                     else if (filter.field === 'Business Unit') val = row.business_unit || '';
                     else if (filter.field === 'Employee') val = row.name || '';
@@ -800,24 +1208,7 @@ const PayrollReports: React.FC = () => {
 
                         {/* Right Header Options */}
                         <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                            <div className="relative">
-                                <select
-                                    value={selectedBU}
-                                    onChange={(e) => {
-                                        setSelectedBU(e.target.value);
-                                        if (hasRun) {
-                                            handleRunReport();
-                                        }
-                                    }}
-                                    className="pl-3 pr-8 py-1.5 bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none animate-in fade-in"
-                                >
-                                    <option value="All">Select Business Unit</option>
-                                    <option value="MindInventory">MindInventory</option>
-                                    <option value="300 Minds">300 Minds</option>
-                                    <option value="CollabCRM">CollabCRM</option>
-                                </select>
-                                <ChevronRight size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
-                            </div>
+
 
                             <button className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-colors border border-slate-200 bg-white shadow-sm">
                                 <Maximize2 size={16} />
@@ -1272,30 +1663,52 @@ const PayrollReports: React.FC = () => {
                                     {/* Salary Register Table */}
                                     {selectedReport.id === 'salary_register' && (
                                         <>
-                                            <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
-                                                <tr>
-                                                    <th className="px-6 py-4">Employee ID</th>
-                                                    <th className="px-6 py-4">Employee Name</th>
-                                                    <th className="px-6 py-4 text-right">Basic Pay</th>
-                                                    <th className="px-6 py-4 text-right">HRA</th>
-                                                    <th className="px-6 py-4 text-right">Special Allowance</th>
-                                                    <th className="px-6 py-4 text-right">Gross Earnings</th>
-                                                    <th className="px-6 py-4 text-right">Est. Net Salary</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {reportData.map((row, idx) => (
-                                                    <tr key={idx} className="hover:bg-slate-50/50">
-                                                        <td className="px-6 py-4 font-mono font-medium text-slate-500">{row.id}</td>
-                                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
-                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.basic)}</td>
-                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.hra)}</td>
-                                                        <td className="px-6 py-4 text-right font-medium">{formatINR(row.special)}</td>
-                                                        <td className="px-6 py-4 text-right font-bold text-slate-800">{formatINR(row.gross)}</td>
-                                                        <td className="px-6 py-4 text-right font-bold text-emerald-700">{formatINR(row.net)}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
+                                            {completedFilters.length > 0 ? (
+                                                <>
+                                                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100 whitespace-nowrap">
+                                                        <tr>
+                                                            {SALARY_REGISTER_COLS.map((col, cIdx) => (
+                                                                <th key={cIdx} className="px-6 py-4 text-left">{col}</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 whitespace-nowrap">
+                                                        {reportData.map((row, idx) => {
+                                                            const monthFilterVal = completedFilters.find(f => f.field === 'Payroll month')?.values[0] || "November";
+                                                            return (
+                                                                <tr key={idx} className="hover:bg-slate-50/50">
+                                                                    {SALARY_REGISTER_COLS.map((col, cIdx) => (
+                                                                        <td key={cIdx} className="px-6 py-4 text-left text-slate-700 text-sm font-medium">
+                                                                            {getSalaryRegisterRowValue(row, col, idx, monthFilterVal)}
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                                        <tr>
+                                                            <th className="px-6 py-4">Employee ID</th>
+                                                            <th className="px-6 py-4">Employee Name</th>
+                                                            <th className="px-6 py-4 text-right">Basic Pay</th>
+                                                            <th className="px-6 py-4 text-right">HRA</th>
+                                                            <th className="px-6 py-4 text-right">Special Allowance</th>
+                                                            <th className="px-6 py-4 text-right">Gross Earnings</th>
+                                                            <th className="px-6 py-4 text-right">Est. Net Salary</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        <tr>
+                                                            <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400 italic">
+                                                                No data available. Please select a filter to run the report.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </>
+                                            )}
                                         </>
                                     )}
 
