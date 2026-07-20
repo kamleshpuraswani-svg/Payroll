@@ -667,12 +667,12 @@ export const RunPayrollModal: React.FC<{
             setWizardOnHoldListIds(payrollEmployees.filter(e => e.payrollStatus === 'On Hold').map(e => e.id));
          }
       }, [showWizardOnHoldPanel]);
-      const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('March 2026');
+      const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('July 2026');
       const [payrollType, setPayrollType] = useState('Regular Monthly Payroll');
 
       // Step 2 Pagination
       const [empPage, setEmpPage] = useState(1);
-      const empRowsPerPage = 5;
+      const empRowsPerPage = 10;
 
       // Reset pagination on search or filter
       useEffect(() => {
@@ -688,7 +688,7 @@ export const RunPayrollModal: React.FC<{
 
       // Attendance pagination (step 2)
       const [attPage, setAttPage] = useState(1);
-      const attRowsPerPage = 5;
+      const attRowsPerPage = 10;
 
       // Adjustments pagination (step 3)
       const [adjPage, setAdjPage] = useState(1);
@@ -1449,16 +1449,16 @@ export const RunPayrollModal: React.FC<{
 
       // Mock Data
       const defaultAttendanceData = [
-         { id: 1, name: 'Priya Sharma', days: 22, leaves: 0, lop: 0, pendingLeaves: 0 },
-         { id: 2, name: 'Arjun Mehta', days: 20, leaves: 0, lop: 2, pendingLeaves: 1 },
-         { id: 3, name: 'Rohan Desai', days: 21, leaves: 1, lop: 0, pendingLeaves: 0 },
-         { id: 4, name: 'Neha Kapoor', days: 18, leaves: 0, lop: 4, pendingLeaves: 1 },
-         { id: 5, name: 'Vikram Singh', days: 21, leaves: 0, lop: 1, pendingLeaves: 0 },
-         { id: 6, name: 'Ananya Iyer', days: 22, leaves: 0, lop: 0, pendingLeaves: 0 },
-         { id: 7, name: 'Rahul Verma', days: 19, leaves: 2, lop: 1, pendingLeaves: 1 },
-         { id: 8, name: 'Sanya Malhotra', days: 22, leaves: 0, lop: 0, pendingLeaves: 0 },
-         { id: 9, name: 'Amit Shah', days: 20, leaves: 1, lop: 1, pendingLeaves: 0 },
-         { id: 10, name: 'Kavita Reddy', days: 21, leaves: 0, lop: 1, pendingLeaves: 1 },
+         { id: 1, name: 'Priya Sharma', days: 22, leaves: 0, lop: 0, pendingLeaves: 0, absent: 0, paidLeaves: 0, unpaidLeaves: 0 },
+         { id: 2, name: 'Arjun Mehta', days: 20, leaves: 0, lop: 2, pendingLeaves: 1, absent: 2, paidLeaves: 0, unpaidLeaves: 2 },
+         { id: 3, name: 'Rohan Desai', days: 21, leaves: 1, lop: 0, pendingLeaves: 0, absent: 1, paidLeaves: 1, unpaidLeaves: 0 },
+         { id: 4, name: 'Neha Kapoor', days: 18, leaves: 0, lop: 4, pendingLeaves: 1, absent: 4, paidLeaves: 0, unpaidLeaves: 4 },
+         { id: 5, name: 'Vikram Singh', days: 21, leaves: 0, lop: 1, pendingLeaves: 0, absent: 1, paidLeaves: 0, unpaidLeaves: 1 },
+         { id: 6, name: 'Ananya Iyer', days: 22, leaves: 0, lop: 0, pendingLeaves: 0, absent: 0, paidLeaves: 0, unpaidLeaves: 0 },
+         { id: 7, name: 'Rahul Verma', days: 19, leaves: 2, lop: 1, pendingLeaves: 1, absent: 3, paidLeaves: 2, unpaidLeaves: 1 },
+         { id: 8, name: 'Sanya Malhotra', days: 22, leaves: 0, lop: 0, pendingLeaves: 0, absent: 0, paidLeaves: 0, unpaidLeaves: 0 },
+         { id: 9, name: 'Amit Shah', days: 20, leaves: 1, lop: 1, pendingLeaves: 0, absent: 2, paidLeaves: 1, unpaidLeaves: 1 },
+         { id: 10, name: 'Kavita Reddy', days: 21, leaves: 0, lop: 1, pendingLeaves: 1, absent: 1, paidLeaves: 0, unpaidLeaves: 1 },
       ];
 
       const attendanceData = payrollType === 'F&F Settlement'
@@ -1467,17 +1467,34 @@ export const RunPayrollModal: React.FC<{
             name: `${e.first_name} ${e.last_name}`,
             employee_id: e.employee_id,
             days: 20, leaves: 0, lop: 0, pendingLeaves: 0,
+            absent: 2, paidLeaves: 1, unpaidLeaves: 1,
             lwd: '15/11/2025'
          }))
-         : defaultAttendanceData;
+         : filteredEmployees.map((e, index) => {
+            const mock = defaultAttendanceData[index % defaultAttendanceData.length] || { days: 22, leaves: 0, lop: 0, pendingLeaves: 0, absent: 0, paidLeaves: 0, unpaidLeaves: 0 };
+            return {
+               id: e.id,
+               name: `${e.first_name} ${e.last_name}`,
+               employee_id: e.employee_id,
+               days: mock.days,
+               leaves: mock.leaves,
+               lop: mock.lop,
+               pendingLeaves: mock.pendingLeaves,
+               absent: mock.absent,
+               paidLeaves: mock.paidLeaves,
+               unpaidLeaves: mock.unpaidLeaves
+            };
+         });
 
       const handleExport = () => {
-         const headers = ["Employee Name", "Working Days", "Present Days", "Leave Days", "LOP Days", "Payable Days"];
+         const headers = ["Employee Name", "Working Days", "Present Days", "Absent", "Paid Leaves", "Unpaid Leaves", "LOP Days", "Payable Days"];
          const data = attendanceData.map(row => [
             row.name,
             22,
             row.days,
-            row.leaves || 0,
+            (row as any).absent || 0,
+            (row as any).paidLeaves || 0,
+            (row as any).unpaidLeaves || 0,
             row.lop || 0,
             row.days + (row.leaves || 0)
          ]);
@@ -1527,25 +1544,22 @@ export const RunPayrollModal: React.FC<{
       }, 0);
 
       const formatLakh = (val: number) => {
-         const abs = Math.abs(val);
-         if (abs >= 100000) return `${(val / 100000).toFixed(2)} L`;
-         if (abs >= 1000) return `${(val / 1000).toFixed(2)} K`;
-         return val.toLocaleString('en-IN');
+         return Math.abs(val).toLocaleString('en-IN');
       }
 
       const previewEmployees = [
-         { id: 1, name: 'Priya Sharma', role: 'Senior Engineer', gross: 154166, lopReversal: 10278, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 12500, actualTds: 12500 },
-         { id: 2, name: 'Arjun Mehta', role: 'Sales Manager', gross: 200000, lopReversal: 0, bonus: 25000, expenseReimbursement: 8400, arrears: 0, loanRecovery: 5000, salaryAdvanceRecovery: 0, proposedTds: 18000, actualTds: 18000 },
-         { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', gross: 131666, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 5000, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 8500, actualTds: 8500 },
-         { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', gross: 176666, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 2000, salaryAdvanceRecovery: 1000, proposedTds: 16200, actualTds: 16200 },
-         { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', gross: 158333, lopReversal: 0, bonus: 5000, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 14000, actualTds: 14000 },
-         { id: 6, name: 'Kavita Rao', role: 'HR Specialist', gross: 120000, lopReversal: 0, bonus: 0, expenseReimbursement: 2000, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 9500, actualTds: 9500 },
-         { id: 7, name: 'Sanjay Patel', role: 'Tech Lead', gross: 220000, lopReversal: 0, bonus: 15000, expenseReimbursement: 0, arrears: 0, loanRecovery: 3000, salaryAdvanceRecovery: 0, proposedTds: 22000, actualTds: 22000 },
-         { id: 8, name: 'Amit Mishra', role: 'QA Engineer', gross: 95000, lopReversal: 0, bonus: 0, expenseReimbursement: 1500, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 6000, actualTds: 6000 },
-         { id: 9, name: 'Sneha Reddy', role: 'UX Designer', gross: 110000, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 8000, actualTds: 8000 },
-         { id: 10, name: 'Rahul Verma', role: 'Analyst', gross: 85000, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 2000, loanRecovery: 1000, salaryAdvanceRecovery: 0, proposedTds: 5000, actualTds: 5000 },
-         { id: 11, name: 'Pooja Hegde', role: 'Operations', gross: 75000, lopReversal: 0, bonus: 0, expenseReimbursement: 3000, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 4500, actualTds: 4500 },
-         { id: 12, name: 'Manoj Tiwari', role: 'Office Admin', gross: 45000, lopReversal: 0, bonus: 0, expenseReimbursement: 0, arrears: 0, loanRecovery: 0, salaryAdvanceRecovery: 0, proposedTds: 2000, actualTds: 2000 }
+         { id: 1, name: 'Priya Sharma', role: 'Senior Engineer', employee_id: 'MKR101', gross: 154166, salaryComponents: computeSalaryComponents(154166), lopReversal: 10278, bonus: 15000, expenseReimbursement: 2500, arrears: 1200, loanRecovery: 5000, salaryAdvanceRecovery: 2000, proposedTds: 12500, actualTds: 12500 },
+         { id: 2, name: 'Arjun Mehta', role: 'Sales Manager', employee_id: 'MKR102', gross: 200000, salaryComponents: computeSalaryComponents(200000), lopReversal: 5000, bonus: 25000, expenseReimbursement: 8400, arrears: 2500, loanRecovery: 5000, salaryAdvanceRecovery: 3000, proposedTds: 18000, actualTds: 18000 },
+         { id: 3, name: 'Neha Kapoor', role: 'Product Analyst', employee_id: 'MKR103', gross: 131666, salaryComponents: computeSalaryComponents(131666), lopReversal: 2000, bonus: 8000, expenseReimbursement: 1200, arrears: 5000, loanRecovery: 1500, salaryAdvanceRecovery: 1000, proposedTds: 8500, actualTds: 8500 },
+         { id: 4, name: 'Rohan Desai', role: 'DevOps Engineer', employee_id: 'MKR104', gross: 176666, salaryComponents: computeSalaryComponents(176666), lopReversal: 3500, bonus: 12000, expenseReimbursement: 3400, arrears: 1800, loanRecovery: 2000, salaryAdvanceRecovery: 1000, proposedTds: 16200, actualTds: 16200 },
+         { id: 5, name: 'Vikram Singh', role: 'Finance Assoc.', employee_id: 'MKR105', gross: 158333, salaryComponents: computeSalaryComponents(158333), lopReversal: 4000, bonus: 5000, expenseReimbursement: 2200, arrears: 1500, loanRecovery: 3000, salaryAdvanceRecovery: 1500, proposedTds: 14000, actualTds: 14000 },
+         { id: 6, name: 'Kavita Rao', role: 'HR Specialist', employee_id: 'MKR106', gross: 120000, salaryComponents: computeSalaryComponents(120000), lopReversal: 2500, bonus: 6000, expenseReimbursement: 2000, arrears: 800, loanRecovery: 1200, salaryAdvanceRecovery: 500, proposedTds: 9500, actualTds: 9500 },
+         { id: 7, name: 'Sanjay Patel', role: 'Tech Lead', employee_id: 'MKR107', gross: 220000, salaryComponents: computeSalaryComponents(220000), lopReversal: 6000, bonus: 15000, expenseReimbursement: 4500, arrears: 3000, loanRecovery: 3000, salaryAdvanceRecovery: 2500, proposedTds: 22000, actualTds: 22000 },
+         { id: 8, name: 'Amit Mishra', role: 'QA Engineer', employee_id: 'MKR108', gross: 95000, salaryComponents: computeSalaryComponents(95000), lopReversal: 1500, bonus: 4000, expenseReimbursement: 1500, arrears: 500, loanRecovery: 800, salaryAdvanceRecovery: 400, proposedTds: 6000, actualTds: 6000 },
+         { id: 9, name: 'Sneha Reddy', role: 'UX Designer', employee_id: 'MKR109', gross: 110000, salaryComponents: computeSalaryComponents(110000), lopReversal: 1800, bonus: 5500, expenseReimbursement: 1800, arrears: 600, loanRecovery: 1000, salaryAdvanceRecovery: 800, proposedTds: 8000, actualTds: 8000 },
+         { id: 10, name: 'Rahul Verma', role: 'Analyst', employee_id: 'MKR110', gross: 85000, salaryComponents: computeSalaryComponents(85000), lopReversal: 1200, bonus: 3500, expenseReimbursement: 1100, arrears: 2000, loanRecovery: 1000, salaryAdvanceRecovery: 600, proposedTds: 5000, actualTds: 5000 },
+         { id: 11, name: 'Pooja Hegde', role: 'Operations', employee_id: 'MKR111', gross: 75000, salaryComponents: computeSalaryComponents(75000), lopReversal: 1000, bonus: 3000, expenseReimbursement: 3000, arrears: 400, loanRecovery: 500, salaryAdvanceRecovery: 300, proposedTds: 4500, actualTds: 4500 },
+         { id: 12, name: 'Manoj Tiwari', role: 'Office Admin', employee_id: 'MKR112', gross: 45000, salaryComponents: computeSalaryComponents(45000), lopReversal: 500, bonus: 2000, expenseReimbursement: 800, arrears: 200, loanRecovery: 400, salaryAdvanceRecovery: 200, proposedTds: 2000, actualTds: 2000 }
       ];
 
       const renderStepContent = () => {
@@ -1610,7 +1624,7 @@ export const RunPayrollModal: React.FC<{
                      </div>
 
                      {/* Select Employees Container */}
-                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[700px]">
                         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                            <h3 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
                               Select Employees
@@ -1665,7 +1679,7 @@ export const RunPayrollModal: React.FC<{
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                        {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
-                                          <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-slate-100/70 opacity-60' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
+                                          <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-amber-200 hover:bg-amber-300 opacity-90' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
                                              {payrollType === 'F&F Settlement' && (
                                                 <td className="px-4 py-3 w-10">
                                                    <input
@@ -1812,7 +1826,7 @@ export const RunPayrollModal: React.FC<{
                                     alert('Attendance data has been recalculated successfully.');
                                  }
                               }}
-                              className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 rounded-lg text-sm font-bold transition-colors ml-auto"
+                              className="flex items-center gap-2 px-4 py-2 bg-white border border-[#444CE7] text-[#444CE7] hover:bg-[#444CE7]/10 rounded-lg text-sm font-bold transition-colors ml-auto"
                            >
                               <RefreshCw size={16} /> Recalculate
                            </button>
@@ -1827,7 +1841,9 @@ export const RunPayrollModal: React.FC<{
                                  <th className="px-4 py-3">Employee ID</th>
                                  <th className="px-4 py-3 whitespace-nowrap">Last Working Date</th>
                                  <th className="px-4 py-3 text-center">Present Days</th>
-                                 <th className="px-4 py-3 text-center">Leave Days</th>
+                                 <th className="px-4 py-3 text-center">Absent</th>
+                                 <th className="px-4 py-3 text-center">Paid Leaves</th>
+                                 <th className="px-4 py-3 text-center">Unpaid Leaves</th>
                                  <th className="px-4 py-3 text-center">LOP Days</th>
                                  <th className="px-4 py-3 text-right">Payable Days</th>
                               </tr>
@@ -1846,10 +1862,12 @@ export const RunPayrollModal: React.FC<{
                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{(row as any).employee_id || `MI00${100 + Number(row.id)}`}</td>
-                                    <td className="px-4 py-3 font-bold text-rose-600 tracking-tight whitespace-nowrap">{(row as any).lwd || '-'}</td>
+                                    <td className="px-4 py-3 font-bold text-rose-600 tracking-tight whitespace-nowrap">{(row as any).lwd || '31/07/2026'}</td>
                                     <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
-                                    <td className="px-4 py-3 text-center text-slate-600">{row.leaves || '-'}</td>
-                                    <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop || '-'}</td>
+                                    <td className="px-4 py-3 text-center text-slate-600">{(row as any).absent ?? '-'}</td>
+                                    <td className="px-4 py-3 text-center text-slate-600">{(row as any).paidLeaves ?? '-'}</td>
+                                    <td className="px-4 py-3 text-center text-slate-600">{(row as any).unpaidLeaves ?? '-'}</td>
+                                    <td className="px-4 py-3 text-center text-rose-600 font-medium">{row.lop ?? '-'}</td>
                                     <td className="px-4 py-3 text-right font-bold text-slate-800">{row.days + (row.leaves || 0)}</td>
                                  </tr>
                               ))}
@@ -1938,8 +1956,8 @@ export const RunPayrollModal: React.FC<{
                            />
                         </div>
                         <div className="flex items-center gap-3">
-                           <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                              <Download size={16} /> Export Data
+                           <button className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
+                              <Download size={16} /> Export
                            </button>
                            <button onClick={() => setShowImportEmployeesModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
                               <Upload size={16} /> Import
@@ -2022,7 +2040,7 @@ export const RunPayrollModal: React.FC<{
                                  const isOnHold = payrollEmployees.find(e => e.id === row.id)?.payrollStatus === 'On Hold';
                                  return (
                                     <React.Fragment key={row.id}>
-                                       <tr className={`transition-colors group ${isOnHold ? 'bg-amber-50/60 hover:bg-amber-100/60' : row.isEditing ? 'bg-purple-50/30' : releasedEmpIds.includes(String(row.id)) ? 'bg-slate-100/70 border-l-4 border-l-slate-400 hover:bg-slate-50/80' : 'hover:bg-slate-50/80'}`}>
+                                       <tr className={`transition-colors group ${isOnHold ? 'bg-amber-200 hover:bg-amber-300' : row.isEditing ? 'bg-purple-50/30' : 'hover:bg-slate-50/80'}`}>
                                           <td className="px-4 py-3 text-slate-800 truncate">{row.name}</td>
                                           <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{row.employee_id}</td>
                                           {(row.salaryComponents || []).map((comp: any, idx: number) => (
@@ -2354,25 +2372,20 @@ export const RunPayrollModal: React.FC<{
                                              <td className="px-3 py-3">
                                                 <div className="flex items-center justify-center gap-2">
                                                    {emp.payrollStatus === 'On Hold' ? (
-                                                      <>
-                                                         <button
-                                                            onClick={() => toggleHold(emp.id)}
-                                                            className="px-2.5 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 border border-emerald-100 transition-all flex items-center gap-1"
-                                                         >
-                                                            <PlayCircle size={12} /> Release
-                                                         </button>
-                                                         <button
-                                                            className="px-2.5 py-1.5 bg-slate-50 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 border border-slate-100 transition-all flex items-center gap-1"
-                                                         >
-                                                            <CheckCircle size={12} /> Continue Hold
-                                                         </button>
-                                                      </>
+                                                      <button
+                                                         onClick={() => toggleHold(emp.id)}
+                                                         title="Release"
+                                                         className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 border border-emerald-100 transition-all flex items-center justify-center"
+                                                      >
+                                                         <PlayCircle size={16} />
+                                                      </button>
                                                    ) : (
                                                       <button
                                                          onClick={() => handleHoldAgain(emp.id)}
-                                                         className="px-2.5 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 border border-amber-100 transition-all flex items-center gap-1"
+                                                         title="Hold Again"
+                                                         className="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 border border-amber-100 transition-all flex items-center justify-center"
                                                       >
-                                                         <PauseCircle size={12} /> Hold Again
+                                                         <PauseCircle size={16} />
                                                       </button>
                                                    )}
                                                 </div>
@@ -2464,7 +2477,7 @@ export const RunPayrollModal: React.FC<{
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                        {exitEmployees.map(emp => (
-                                          <tr key={emp.id} className={`transition-colors group ${emp.isOnHold ? 'bg-amber-50/60 hover:bg-amber-100/60' : 'hover:bg-slate-50'}`}>
+                                          <tr key={emp.id} className={`transition-colors group ${emp.isOnHold ? 'bg-amber-200 hover:bg-amber-300' : 'hover:bg-slate-50'}`}>
                                              <td className="px-5 py-4 font-bold text-slate-400">{emp.id}</td>
                                              <td className="px-5 py-4">
                                                 <div className="font-bold text-slate-700">{emp.name}</div>
@@ -2540,28 +2553,25 @@ export const RunPayrollModal: React.FC<{
                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-2 shrink-0">
                         <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Gross</p>
-                           <p className="text-base font-bold text-slate-800 truncate">₹ 82.08 L</p>
+                           <p className="text-base font-bold text-slate-800 truncate">₹ {(82_08_000).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Deductions</p>
-                           <p className="text-base font-bold text-rose-600 truncate">₹ 9.85 L</p>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Deductions</p>
+                           <p className="text-base font-bold text-rose-600 truncate">₹ {(9_85_000).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="bg-white p-2 rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm transition-all hover:shadow-md">
-                           <p className="text-[10px] font-bold text-emerald-700 uppercase mb-1 leading-tight">Net Payout</p>
-                           <p className="text-base font-bold text-emerald-800 truncate">₹ 72.23 L</p>
+                           <p className="text-[10px] font-bold text-emerald-700 uppercase mb-1 leading-tight">Total Net Pay</p>
+                           <p className="text-base font-bold text-emerald-800 truncate">₹ {(72_23_000).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Total Bonus</p>
                            <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.bonus)}</p>
                         </div>
                         <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimb.</p>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Expense Reimbursement</p>
                            <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.expenseReimb)}</p>
                         </div>
-                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">LOP Reversal</p>
-                           <p className="text-base font-bold text-emerald-600 truncate">+ ₹{formatLakh(summary.lopReversal)}</p>
-                        </div>
+                        {/* LOP Reversal card hidden */}
                         <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight">Loan & Salary Advance Recovery</p>
                            <p className="text-base font-bold text-rose-600 truncate">- ₹{formatLakh(summary.loanRecovery + summary.salaryAdvance)}</p>
@@ -2583,17 +2593,19 @@ export const RunPayrollModal: React.FC<{
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><FileText size={16} /> Final Register Preview</h3>
                            <div className="flex gap-2">
-                              <button onClick={handleExport} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 flex items-center gap-2 transition-colors">
-                                 <Download size={14} /> Export
-                              </button>
                            </div>
                         </div>
                         <div className="overflow-auto flex-1 min-h-0">
-                           <table className="w-full text-xs text-left min-w-[1400px]">
+                           <table className="w-full text-xs text-left min-w-[2200px]">
                               <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider sticky top-0 z-10">
                                  <tr>
-                                    <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 w-[250px]">Employee Name</th>
-                                    <th className="px-4 py-4 text-right">Gross</th>
+                                    <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 w-[200px]">Employee Name</th>
+                                    <th className="px-4 py-4 text-left w-28">Employee ID</th>
+                                    <th className="px-4 py-4 text-right text-indigo-500">Basic</th>
+                                    <th className="px-4 py-4 text-right text-indigo-500">HRA</th>
+                                    <th className="px-4 py-4 text-right text-indigo-500">Special Allow.</th>
+                                    <th className="px-4 py-4 text-right text-indigo-500">Transport</th>
+                                    <th className="px-4 py-4 text-right text-slate-700 font-black">Gross Total</th>
                                     <th className="px-4 py-4 text-right text-emerald-600">LOP Reversal</th>
                                     <th className="px-4 py-4 text-right">Bonus</th>
                                     <th className="px-4 py-4 text-right">Expense Reimb.</th>
@@ -2604,7 +2616,8 @@ export const RunPayrollModal: React.FC<{
                                     {uniqueCustomComponentNames.map(name => (
                                        <th key={name} className="px-4 py-4 text-right text-violet-600">{name}</th>
                                     ))}
-                                    <th className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/50">Net Pay</th>
+                                    <th className="px-4 py-4 text-right font-black text-slate-900 bg-slate-100">Final Gross</th>
+                                    <th className="px-6 py-4 text-right font-black text-emerald-700 bg-emerald-50/50">Net Pay</th>
                                  </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100 bg-white">
@@ -2614,6 +2627,7 @@ export const RunPayrollModal: React.FC<{
                                        acc + (c.type === 'Earning' ? c.amount : -c.amount), 0
                                     );
                                     const netPay = emp.gross + (emp.lopReversal || 0) + (emp.bonus || 0) + (emp.expenseReimbursement || 0) + (emp.arrears || 0) - (emp.loanRecovery || 0) - (emp.salaryAdvanceRecovery || 0) - (emp.actualTds || 0) + customImpact;
+                                    const finalGross = emp.gross + (emp.bonus || 0) + (emp.arrears || 0) + (emp.expenseReimbursement || 0) + (emp.lopReversal || 0) + customImpact;
 
                                     return (
                                        <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
@@ -2623,21 +2637,25 @@ export const RunPayrollModal: React.FC<{
                                                 <span className="text-[10px] text-slate-500 font-medium">{emp.role}</span>
                                              </div>
                                           </td>
-                                          <td className="px-4 py-4 text-right font-medium">₹{emp.gross.toLocaleString()}</td>
-                                          <td className="px-4 py-4 text-right text-emerald-600 font-bold">{emp.lopReversal > 0 ? `₹${emp.lopReversal.toLocaleString()}` : '-'}</td>
-                                          <td className="px-4 py-4 text-right text-slate-700">{emp.bonus > 0 ? `₹${emp.bonus.toLocaleString()}` : '-'}</td>
-                                          <td className="px-4 py-4 text-right text-slate-700">{emp.expenseReimbursement > 0 ? `₹${emp.expenseReimbursement.toLocaleString()}` : '-'}</td>
-                                          <td className="px-4 py-4 text-right text-slate-700">{emp.arrears > 0 ? `₹${emp.arrears.toLocaleString()}` : '-'}</td>
-                                          <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.loanRecovery > 0 ? `-₹${emp.loanRecovery.toLocaleString()}` : '-'}</td>
-                                          <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.salaryAdvanceRecovery > 0 ? `-₹${emp.salaryAdvanceRecovery.toLocaleString()}` : '-'}</td>
-                                          <td className="px-4 py-4 text-right text-rose-500 font-bold">₹{emp.actualTds.toLocaleString()}</td>
+                                          <td className="px-4 py-4 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{(emp as any).employee_id}</td>
+                                          {((emp as any).salaryComponents || []).map((comp: any, idx: number) => (
+                                             <td key={idx} className="px-4 py-4 text-right text-indigo-700 font-medium">₹{comp.amount.toLocaleString('en-IN')}</td>
+                                          ))}
+                                          <td className="px-4 py-4 text-right text-slate-700 font-semibold">₹{emp.gross.toLocaleString('en-IN')}</td>
+                                          <td className="px-4 py-4 text-right text-emerald-600 font-bold">{emp.lopReversal > 0 ? `₹${emp.lopReversal.toLocaleString('en-IN')}` : '-'}</td>
+                                          <td className="px-4 py-4 text-right text-slate-700">{emp.bonus > 0 ? `₹${emp.bonus.toLocaleString('en-IN')}` : '-'}</td>
+                                          <td className="px-4 py-4 text-right text-slate-700">{emp.expenseReimbursement > 0 ? `₹${emp.expenseReimbursement.toLocaleString('en-IN')}` : '-'}</td>
+                                          <td className="px-4 py-4 text-right text-slate-700">{emp.arrears > 0 ? `₹${emp.arrears.toLocaleString('en-IN')}` : '-'}</td>
+                                          <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.loanRecovery > 0 ? `-₹${emp.loanRecovery.toLocaleString('en-IN')}` : '-'}</td>
+                                          <td className="px-4 py-4 text-right text-rose-600 font-medium">{emp.salaryAdvanceRecovery > 0 ? `-₹${emp.salaryAdvanceRecovery.toLocaleString('en-IN')}` : '-'}</td>
+                                          <td className="px-4 py-4 text-right text-rose-500 font-bold">₹{emp.actualTds.toLocaleString('en-IN')}</td>
                                           {uniqueCustomComponentNames.map(name => {
                                              const comp = (emp.customComponents || []).find((c: any) => c.name === name);
                                              return (
                                                 <td key={name} className="px-4 py-4 text-right font-medium">
                                                    {comp ? (
                                                       <span className={comp.type === 'Earning' ? 'text-emerald-600' : 'text-rose-600'}>
-                                                         {comp.type === 'Earning' ? '+' : '−'}₹{comp.amount.toLocaleString()}
+                                                         {comp.type === 'Earning' ? '+' : '−'}₹{comp.amount.toLocaleString('en-IN')}
                                                       </span>
                                                    ) : (
                                                       <span className="text-slate-300">-</span>
@@ -2645,8 +2663,11 @@ export const RunPayrollModal: React.FC<{
                                                 </td>
                                              );
                                           })}
-                                          <td className="px-6 py-4 text-right font-black text-slate-900 bg-slate-50/30">
-                                             ₹{netPay.toLocaleString()}
+                                          <td className="px-4 py-4 text-right font-black text-slate-900 bg-slate-100/30">
+                                             ₹{finalGross.toLocaleString('en-IN')}
+                                          </td>
+                                          <td className="px-6 py-4 text-right font-black text-emerald-700 bg-emerald-50/30">
+                                             ₹{netPay.toLocaleString('en-IN')}
                                           </td>
                                        </tr>
                                     );
@@ -3058,7 +3079,7 @@ export const RunPayrollModal: React.FC<{
                                           onClick={handleNext}
                                           className="px-8 py-2.5 bg-rose-600 text-white rounded-lg font-bold text-sm hover:bg-rose-700 shadow-sm flex items-center gap-2 transition-all"
                                        >
-                                          <AlertTriangle size={16} /> Force Lock & Approve Payroll
+                                          <AlertTriangle size={16} /> Approve & Force Lock
                                        </button>
                                     )}
                                     <button
@@ -3390,7 +3411,7 @@ export const RunPayrollModal: React.FC<{
                         <button
                            onClick={handleAddCustomComponent}
                            disabled={!addCompName.trim() || !addCompAmount}
-                           className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50 shadow-sm"
+                           className="px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-medium hover:bg-[#444CE7]/90 disabled:opacity-50 shadow-sm"
                         >
                            Add
                         </button>
@@ -3957,7 +3978,6 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOp
          const { data, error } = await supabase
             .from('salary_components')
             .select('name')
-            .eq('category', 'Earnings')
             .eq('type', 'Variable Pay')
             .eq('status', true);
          
@@ -3965,11 +3985,11 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOp
          if (data && data.length > 0) {
             variableComponents = data.map(item => item.name);
          } else {
-            variableComponents = ["Performance Bonus", "Retention Bonus", "Referral Bonus"];
+            variableComponents = ["Performance Bonus", "Retention Bonus", "Referral Bonus", "Penalty Deduction"];
          }
       } catch (err) {
          console.error("Error fetching variable components:", err);
-         variableComponents = ["Performance Bonus", "Retention Bonus", "Referral Bonus"];
+         variableComponents = ["Performance Bonus", "Retention Bonus", "Referral Bonus", "Penalty Deduction"];
       }
 
       const headers = [
