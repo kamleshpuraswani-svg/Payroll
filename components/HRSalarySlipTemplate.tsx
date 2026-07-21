@@ -750,7 +750,7 @@ const HRSalarySlipTemplate: React.FC = () => {
         const totalEarnings = sections.earnings.reduce((sum, item) => sum + parseAmount(item.amount), 0);
         const totalDeductions = sections.deductions.reduce((sum, item) => sum + parseAmount(item.amount), 0);
         const employerPF = settings.showEmployerContribution ? 1800 : 0;
-        
+
         switch (name) {
             case 'Gross Earnings':
                 return totalEarnings;
@@ -759,7 +759,7 @@ const HRSalarySlipTemplate: React.FC = () => {
             case 'Net Pay':
                 return totalEarnings - totalDeductions;
             case 'CTC Monthly':
-                return totalEarnings + employerPF;
+                return totalEarnings + 1800 + 150 + 1500;
             default:
                 return 0;
         }
@@ -1455,9 +1455,9 @@ const HRSalarySlipTemplate: React.FC = () => {
                                                 <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Total Working Days</td>
                                                 <td className="border border-slate-200 px-4 py-2 text-slate-800">30</td>
                                                 <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Payable Days</td>
-                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">21</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">22</td>
                                                 <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">LOP Days</td>
-                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">2</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-slate-800">0</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1573,7 +1573,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             </tr>
                                             <tr>
                                                 <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer ESIC</td>
-                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">165.00</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">0.00</td>
                                             </tr>
                                             <tr>
                                                 <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer NPS</td>
@@ -1581,7 +1581,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                             </tr>
                                             <tr>
                                                 <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Gratuity</td>
-                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,530.00</td>
+                                                <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,500.00</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1762,9 +1762,9 @@ const HRSalarySlipTemplate: React.FC = () => {
                                         <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Total Working Days</td>
                                         <td className="border border-slate-200 px-4 py-2 text-slate-800">30</td>
                                         <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">Payable Days</td>
-                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">21</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">22</td>
                                         <td className="border border-slate-200 px-4 py-2 font-bold text-slate-700 bg-slate-50/50">LOP Days</td>
-                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">2</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-slate-800">0</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1856,7 +1856,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                     </tr>
                                     <tr>
                                         <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer ESIC</td>
-                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">165.00</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">0.00</td>
                                     </tr>
                                     <tr>
                                         <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Employer NPS</td>
@@ -1864,7 +1864,7 @@ const HRSalarySlipTemplate: React.FC = () => {
                                     </tr>
                                     <tr>
                                         <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-700">Gratuity</td>
-                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,530.00</td>
+                                        <td className="border border-slate-200 px-4 py-2 text-right text-slate-800">1,500.00</td>
                                     </tr>
                                 </tbody>
                             </table>

@@ -498,7 +498,8 @@ const MOCK_PAYROLL_EMPLOYEES = [
    { id: 'mi-1', employee_id: 'MI00101', first_name: 'Priya', last_name: 'Sharma', department: 'Engineering', designation: 'Senior Engineer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'mi-2', employee_id: 'MI00102', first_name: 'Rohan', last_name: 'Verma', department: 'Engineering', designation: 'Backend Developer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'mi-3', employee_id: 'MI00103', first_name: 'Sneha', last_name: 'Patel', department: 'QA', designation: 'QA Lead', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha', payrollStatus: 'Eligible', holdReason: '' },
-   { id: 'mi-4', employee_id: 'MI00104', first_name: 'Arjun', last_name: 'Mehta', department: 'Product', designation: 'Product Manager', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun', payrollStatus: 'On Hold', holdReason: 'Pending document' },
+   { id: 'mi-4', employee_id: 'MI00104', first_name: 'Arjun', last_name: 'Mehta', department: 'Product', designation: 'Product Manager', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun', payrollStatus: 'On Hold', holdReason: 'Pending document', holdMonth: 'June 2026' },
+   { id: 'mi-4b', employee_id: 'MI00104', first_name: 'Arjun', last_name: 'Mehta', department: 'Product', designation: 'Product Manager', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun', payrollStatus: 'On Hold', holdReason: 'Pending document', holdMonth: 'May 2026' },
    { id: 'mi-5', employee_id: 'MI00105', first_name: 'Kavita', last_name: 'Nair', department: 'Design', designation: 'UI/UX Designer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kavita', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'mi-6', employee_id: 'MI00106', first_name: 'Suresh', last_name: 'Kumar', department: 'DevOps', designation: 'DevOps Engineer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'mi-7', employee_id: 'MI00107', first_name: 'Meera', last_name: 'Joshi', department: 'HR', designation: 'HR Specialist', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Meera', payrollStatus: 'Eligible', holdReason: '', status: 'Relieved' },
@@ -509,7 +510,7 @@ const MOCK_PAYROLL_EMPLOYEES = [
    { id: 'tm-1', employee_id: 'TM00201', first_name: 'Aarav', last_name: 'Shah', department: 'Engineering', designation: 'Full Stack Developer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aarav', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'tm-2', employee_id: 'TM00202', first_name: 'Divya', last_name: 'Reddy', department: 'Sales', designation: 'Account Executive', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Divya', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'tm-3', employee_id: 'TM00203', first_name: 'Nikhil', last_name: 'Bose', department: 'Engineering', designation: 'Mobile Developer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nikhil', payrollStatus: 'Eligible', holdReason: '' },
-   { id: 'tm-4', employee_id: 'TM00204', first_name: 'Pooja', last_name: 'Iyer', department: 'Design', designation: 'Graphic Designer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pooja', payrollStatus: 'On Hold', holdReason: 'Salary revision pending' },
+   { id: 'tm-4', employee_id: 'TM00204', first_name: 'Pooja', last_name: 'Iyer', department: 'Design', designation: 'Graphic Designer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pooja', payrollStatus: 'On Hold', holdReason: 'Salary revision pending', holdMonth: 'May 2026' },
    { id: 'tm-5', employee_id: 'TM00205', first_name: 'Karan', last_name: 'Malhotra', department: 'Product', designation: 'Product Analyst', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Karan', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'tm-6', employee_id: 'TM00206', first_name: 'Sonal', last_name: 'Trivedi', department: 'QA', designation: 'Test Engineer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sonal', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'tm-7', employee_id: 'TM00207', first_name: 'Aditya', last_name: 'Kapoor', department: 'DevOps', designation: 'Cloud Engineer', business_unit: '300 Minds', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aditya', payrollStatus: 'Eligible', holdReason: '', status: 'Relieved' },
@@ -521,7 +522,7 @@ const MOCK_PAYROLL_EMPLOYEES = [
    { id: 'cc-2', employee_id: 'CC00302', first_name: 'Manish', last_name: 'Agarwal', department: 'Engineering', designation: 'Backend Engineer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Manish', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'cc-3', employee_id: 'CC00303', first_name: 'Tanvi', last_name: 'Mishra', department: 'HR', designation: 'HR Manager', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tanvi', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'cc-4', employee_id: 'CC00304', first_name: 'Sahil', last_name: 'Bansal', department: 'Finance', designation: 'CFO', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sahil', payrollStatus: 'Eligible', holdReason: '' },
-   { id: 'cc-5', employee_id: 'CC00305', first_name: 'Preeti', last_name: 'Kulkarni', department: 'Design', designation: 'Product Designer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Preeti', payrollStatus: 'On Hold', holdReason: 'Offer letter revision' },
+   { id: 'cc-5', employee_id: 'CC00305', first_name: 'Preeti', last_name: 'Kulkarni', department: 'Design', designation: 'Product Designer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Preeti', payrollStatus: 'On Hold', holdReason: 'Offer letter revision', holdMonth: 'June 2026' },
    { id: 'cc-6', employee_id: 'CC00306', first_name: 'Rajat', last_name: 'Srivastava', department: 'Engineering', designation: 'Tech Lead', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rajat', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'cc-7', employee_id: 'CC00307', first_name: 'Simran', last_name: 'Oberoi', department: 'Marketing', designation: 'Brand Manager', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Simran', payrollStatus: 'Eligible', holdReason: '', status: 'Relieved' },
    { id: 'cc-8', employee_id: 'CC00308', first_name: 'Harsh', last_name: 'Vardhan', department: 'QA', designation: 'QA Engineer', business_unit: 'CollabCRM', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Harsh', payrollStatus: 'Eligible', holdReason: '', status: 'Relieved' },
@@ -531,7 +532,7 @@ const MOCK_PAYROLL_EMPLOYEES = [
    { id: 'db-1', employee_id: 'DB00401', first_name: 'Varun', last_name: 'Tiwari', department: 'Engineering', designation: 'iOS Developer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Varun', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'db-2', employee_id: 'DB00402', first_name: 'Nisha', last_name: 'Goyal', department: 'Design', designation: 'UI Designer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nisha', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'db-3', employee_id: 'DB00403', first_name: 'Ajay', last_name: 'Rawat', department: 'Sales', designation: 'Business Dev Manager', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ajay', payrollStatus: 'Eligible', holdReason: '' },
-   { id: 'db-4', employee_id: 'DB00404', first_name: 'Shruti', last_name: 'Pathak', department: 'Finance', designation: 'Finance Manager', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Shruti', payrollStatus: 'On Hold', holdReason: 'Bank details update pending' },
+   { id: 'db-4', employee_id: 'DB00404', first_name: 'Shruti', last_name: 'Pathak', department: 'Finance', designation: 'Finance Manager', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Shruti', payrollStatus: 'On Hold', holdReason: 'Bank details update pending', holdMonth: 'April 2026' },
    { id: 'db-5', employee_id: 'DB00405', first_name: 'Yash', last_name: 'Bhardwaj', department: 'Engineering', designation: 'Android Developer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Yash', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'db-6', employee_id: 'DB00406', first_name: 'Riya', last_name: 'Menon', department: 'Marketing', designation: 'Digital Marketer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Riya', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'db-7', employee_id: 'DB00407', first_name: 'Tushar', last_name: 'Rane', department: 'QA', designation: 'Automation Engineer', business_unit: 'Dots & Boxes', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tushar', payrollStatus: 'Eligible', holdReason: '', status: 'Relieved' },
@@ -619,6 +620,7 @@ export const RunPayrollModal: React.FC<{
                designation: e.designation || designations[e.department] || 'Specialist',
                payrollStatus: e.payroll_status || 'Eligible',
                holdReason: e.hold_reason || '',
+               holdMonth: e.hold_month || '',
                first_name: e.first_name || (e.name ? e.name.split(' ')[0] : 'Employee'),
                last_name: e.last_name || (e.name ? e.name.split(' ').slice(1).join(' ') : String(i + 1)),
             }));
@@ -1320,7 +1322,7 @@ export const RunPayrollModal: React.FC<{
             : true;
 
          const empStatus = e.status || 'Active';
-         const matchesType = payrollType === 'F&F Settlement' ? empStatus === 'Relieved' : true;
+         const matchesType = payrollType === 'F&F Settlement' ? empStatus === 'Relieved' : payrollType === 'On-hold Payroll' ? e.payrollStatus === 'On Hold' : true;
 
          return matchesSearch && matchesBU && matchesType;
       });
@@ -1578,35 +1580,40 @@ export const RunPayrollModal: React.FC<{
                                  value={payrollType}
                                  onChange={(e) => {
                                     setPayrollType(e.target.value);
-                                    onTypeChange?.(e.target.value === 'Regular Monthly Payroll' ? 'Regular Monthly' : 'F&F Settlement');
+                                    if (e.target.value !== 'On-hold Payroll') {
+                                       onTypeChange?.(e.target.value === 'Regular Monthly Payroll' ? 'Regular Monthly' : 'F&F Settlement');
+                                    }
                                  }}
                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 appearance-none cursor-pointer pr-10 text-sm"
                               >
                                  <option value="Regular Monthly Payroll">Regular Monthly Payroll</option>
                                  <option value="F&F Settlement">F&F Settlement</option>
+                                 <option value="On-hold Payroll">On-hold Payroll</option>
                               </select>
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                            </div>
                         </div>
 
                         {/* Select Month */}
-                        <div className="flex flex-col gap-1.5 text-left">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Select Month <span className="text-red-500">*</span></label>
-                           <div className="relative">
-                              <select
-                                 disabled={readOnly}
-                                 value={selectedPayrollMonth}
-                                 onChange={(e) => setSelectedPayrollMonth(e.target.value)}
-                                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 appearance-none cursor-pointer pr-10 text-sm"
-                              >
-                                 <option value="">Select Month</option>
-                                 {payrollMonthsList.map(month => (
-                                    <option key={month} value={month}>{month}</option>
-                                 ))}
-                              </select>
-                              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        {payrollType !== 'On-hold Payroll' && (
+                           <div className="flex flex-col gap-1.5 text-left">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase">Select Month <span className="text-red-500">*</span></label>
+                              <div className="relative">
+                                 <select
+                                    disabled={readOnly}
+                                    value={selectedPayrollMonth}
+                                    onChange={(e) => setSelectedPayrollMonth(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 appearance-none cursor-pointer pr-10 text-sm"
+                                 >
+                                    <option value="">Select Month</option>
+                                    {payrollMonthsList.map(month => (
+                                       <option key={month} value={month}>{month}</option>
+                                    ))}
+                                 </select>
+                                 <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              </div>
                            </div>
-                        </div>
+                        )}
 
                         {/* Select Business Unit */}
                         <div className="flex flex-col gap-1.5 text-left">
@@ -1654,7 +1661,7 @@ export const RunPayrollModal: React.FC<{
                                  <table className="w-full text-left text-sm border-collapse">
                                     <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10 border-b border-slate-200">
                                        <tr>
-                                          {payrollType === 'F&F Settlement' && (
+                                          {(payrollType === 'F&F Settlement' || payrollType === 'On-hold Payroll') && (
                                              <th className="px-4 py-3 w-10">
                                                 <input
                                                    type="checkbox"
@@ -1672,6 +1679,9 @@ export const RunPayrollModal: React.FC<{
                                           )}
                                           <th className="px-4 py-3">Employee Name</th>
                                           <th className="px-4 py-3">Employee ID</th>
+                                          {payrollType === 'On-hold Payroll' && (
+                                             <th className="px-4 py-3">Hold Month</th>
+                                          )}
                                           <th className="px-4 py-3">Employee Status</th>
                                           <th className="px-4 py-3">Designation</th>
                                           <th className="px-4 py-3">Department</th>
@@ -1679,8 +1689,8 @@ export const RunPayrollModal: React.FC<{
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                        {filteredEmployees.slice((empPage - 1) * empRowsPerPage, empPage * empRowsPerPage).map(emp => (
-                                          <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' ? 'bg-amber-200 hover:bg-amber-300 opacity-90' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
-                                             {payrollType === 'F&F Settlement' && (
+                                          <tr key={emp.id} className={`hover:bg-slate-50 transition-colors group ${emp.payrollStatus === 'On Hold' && payrollType !== 'On-hold Payroll' ? 'bg-amber-200 hover:bg-amber-300 opacity-90' : selectedEmpIds.includes(emp.id) ? 'bg-sky-50/30' : ''}`}>
+                                             {(payrollType === 'F&F Settlement' || payrollType === 'On-hold Payroll') && (
                                                 <td className="px-4 py-3 w-10">
                                                    <input
                                                       type="checkbox"
@@ -1707,6 +1717,9 @@ export const RunPayrollModal: React.FC<{
                                                 </div>
                                              </td>
                                              <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{emp.employee_id}</td>
+                                             {payrollType === 'On-hold Payroll' && (
+                                                <td className="px-4 py-3 text-slate-600 font-medium">{(emp as any).holdMonth || '-'}</td>
+                                             )}
                                              <td className="px-4 py-3">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${emp.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                       emp.status === 'New Joinee' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
@@ -1722,7 +1735,7 @@ export const RunPayrollModal: React.FC<{
                                        ))}
                                        {filteredEmployees.length === 0 && (
                                           <tr>
-                                             <td colSpan={payrollType === 'F&F Settlement' ? 6 : 5} className="px-6 py-12 text-center text-slate-400 italic">
+                                             <td colSpan={payrollType === 'F&F Settlement' ? 6 : payrollType === 'On-hold Payroll' ? 7 : 5} className="px-6 py-12 text-center text-slate-400 italic">
                                                 No employees found matching "{empSearch}"
                                              </td>
                                           </tr>
