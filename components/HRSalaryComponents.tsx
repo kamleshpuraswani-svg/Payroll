@@ -1138,7 +1138,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInCTC ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {includeInCTC && <Check size={14} className="text-white" />}
                                 </div>
-                                <input type="checkbox" className="hidden" checked={includeInCTC} onChange={() => setIncludeInCTC(!includeInCTC)} />
+                                <input type="checkbox" className="hidden" checked={includeInCTC} onChange={() => {
+                                    const next = !includeInCTC;
+                                    setIncludeInCTC(next);
+                                    if (!next) setIncludeInGross(false);
+                                }} />
                                 <div className="flex items-center gap-1.5">
                                     <span className="block text-sm font-bold text-slate-700">Include this component in CTC</span>
                                     <div className="group/tip relative">
@@ -1151,11 +1155,11 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
                                 </div>
                             </label>
 
-                            <label className="flex items-start gap-2 cursor-pointer">
+                            <label className={`flex items-start gap-2 ${includeInCTC ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
                                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeInGross ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
                                     {includeInGross && <Check size={14} className="text-white" />}
                                 </div>
-                                <input type="checkbox" className="hidden" checked={includeInGross} onChange={() => setIncludeInGross(!includeInGross)} />
+                                <input type="checkbox" className="hidden" checked={includeInGross} disabled={!includeInCTC} onChange={() => setIncludeInGross(!includeInGross)} />
                                 <div className="flex items-center gap-1.5">
                                     <span className="block text-sm font-bold text-slate-700">Include this component in Gross salary</span>
                                     <div className="group/tip relative">
@@ -2999,7 +3003,7 @@ const HRSalaryComponents: React.FC = () => {
                             )}
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg hover:bg-[#3538CD] transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
                             >
                                 Add Component
                             </button>

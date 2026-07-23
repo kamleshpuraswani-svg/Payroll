@@ -32,9 +32,11 @@ const DEPARTMENTS = [
 
 const OperationalConfig: React.FC = () => {
     const [isHierarchyExpanded, setIsHierarchyExpanded] = useState(true);
+    const [isInvestmentHierarchyExpanded, setIsInvestmentHierarchyExpanded] = useState(true);
     const [isLoansHierarchyExpanded, setIsLoansHierarchyExpanded] = useState(true);
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
     const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
+    const [investmentApprovers, setInvestmentApprovers] = useState<SelectedEmployee[]>([]);
     const [loansApprovers, setLoansApprovers] = useState<SelectedEmployee[]>([]);
     const [allEmployees, setAllEmployees] = useState<EmployeeData[]>([]);
 
@@ -88,6 +90,14 @@ const OperationalConfig: React.FC = () => {
     const [isLopDropdownOpen, setIsLopDropdownOpen] = useState(false);
     const lopDropdownRef = React.useRef<HTMLDivElement>(null);
 
+    // Payroll Approval multi-select state
+    const [isPayrollApproverOpen, setIsPayrollApproverOpen] = useState(false);
+    const payrollApproverDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Investment Declaration Approval multi-select state
+    const [isInvestmentApproverOpen, setIsInvestmentApproverOpen] = useState(false);
+    const investmentApproverDropdownRef = React.useRef<HTMLDivElement>(null);
+
     // Round Off Settings state
     const [isRoundOffExpanded, setIsRoundOffExpanded] = useState(true);
     const [globalRoundOff, setGlobalRoundOff] = useState<'floor' | 'ceiling' | 'nearest_full' | 'nearest_half'>('floor');
@@ -140,6 +150,12 @@ const OperationalConfig: React.FC = () => {
             }
             if (lopDropdownRef.current && !lopDropdownRef.current.contains(event.target as Node)) {
                 setIsLopDropdownOpen(false);
+            }
+            if (payrollApproverDropdownRef.current && !payrollApproverDropdownRef.current.contains(event.target as Node)) {
+                setIsPayrollApproverOpen(false);
+            }
+            if (investmentApproverDropdownRef.current && !investmentApproverDropdownRef.current.contains(event.target as Node)) {
+                setIsInvestmentApproverOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -423,7 +439,7 @@ const OperationalConfig: React.FC = () => {
         }
     };
 
-    const handleSelectEmployee = (id: string, type: 'payroll' | 'expense' | 'loans') => {
+    const handleSelectEmployee = (id: string, type: 'payroll' | 'expense' | 'loans' | 'investment') => {
         if (!id) return;
 
         if (type === 'payroll') {
@@ -434,6 +450,10 @@ const OperationalConfig: React.FC = () => {
             if (loansApprovers.find(emp => emp.id === id)) return;
             const empToAdd = allEmployees.find(emp => emp.id === id);
             if (empToAdd) setLoansApprovers([...loansApprovers, empToAdd]);
+        } else if (type === 'investment') {
+            if (investmentApprovers.find(emp => emp.id === id)) return;
+            const empToAdd = allEmployees.find(emp => emp.id === id);
+            if (empToAdd) setInvestmentApprovers([...investmentApprovers, empToAdd]);
         } else {
             if (expenseApprovers.find(emp => emp.id === id)) return;
             const empToAdd = allEmployees.find(emp => emp.id === id);
@@ -441,18 +461,20 @@ const OperationalConfig: React.FC = () => {
         }
     };
 
-    const removeEmployee = (id: string, type: 'payroll' | 'expense' | 'loans') => {
+    const removeEmployee = (id: string, type: 'payroll' | 'expense' | 'loans' | 'investment') => {
         if (type === 'payroll') {
             setSelectedEmployees(selectedEmployees.filter(emp => emp.id !== id));
         } else if (type === 'loans') {
             setLoansApprovers(loansApprovers.filter(emp => emp.id !== id));
+        } else if (type === 'investment') {
+            setInvestmentApprovers(investmentApprovers.filter(emp => emp.id !== id));
         } else {
             setExpenseApprovers(expenseApprovers.filter(emp => emp.id !== id));
         }
     };
 
-    const moveEmployee = (index: number, direction: 'up' | 'down', type: 'payroll' | 'expense' | 'loans') => {
-        const items = type === 'payroll' ? [...selectedEmployees] : type === 'loans' ? [...loansApprovers] : [...expenseApprovers];
+    const moveEmployee = (index: number, direction: 'up' | 'down', type: 'payroll' | 'expense' | 'loans' | 'investment') => {
+        const items = type === 'payroll' ? [...selectedEmployees] : type === 'loans' ? [...loansApprovers] : type === 'investment' ? [...investmentApprovers] : [...expenseApprovers];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
         if (targetIndex < 0 || targetIndex >= items.length) return;
@@ -462,6 +484,7 @@ const OperationalConfig: React.FC = () => {
 
         if (type === 'payroll') setSelectedEmployees(items);
         else if (type === 'loans') setLoansApprovers(items);
+        else if (type === 'investment') setInvestmentApprovers(items);
         else setExpenseApprovers(items);
     };
 
@@ -552,12 +575,12 @@ const OperationalConfig: React.FC = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div
-                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors rounded-t-xl"
                     onClick={() => setIsHierarchyExpanded(!isHierarchyExpanded)}
                 >
-                    <h3 className="font-semibold text-slate-800">Payroll Approval Hierarchy</h3>
+                    <h3 className="font-semibold text-slate-800">Payroll Approval</h3>
                     <button className="text-slate-400">
                         {isHierarchyExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </button>
@@ -571,83 +594,155 @@ const OperationalConfig: React.FC = () => {
                                     Select Payroll Approver <span className="text-red-500">*</span>
                                     <Info size={14} className="text-slate-400 cursor-help" />
                                 </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                        <Search size={16} className="text-slate-400" />
-                                    </div>
-                                    <select
-                                        value=""
-                                        onChange={(e) => handleSelectEmployee(e.target.value, 'payroll')}
-                                        className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                <div className="relative" ref={payrollApproverDropdownRef}>
+                                    <div
+                                        onClick={() => setIsPayrollApproverOpen(true)}
+                                        className="w-full flex flex-wrap items-center gap-2 pl-10 pr-16 py-2 bg-white border border-slate-200 rounded-lg text-sm min-h-[42px] focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all cursor-text"
                                     >
-                                        <option value="" disabled>Search employee...</option>
-                                        {allEmployees.filter(emp => !selectedEmployees.find(s => s.id === emp.id)).map(emp => (
-                                            <option key={emp.id} value={emp.id}>
-                                                {emp.name} ({emp.eid})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                                        <ChevronDown size={16} className="text-slate-400" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Selected Hierarchy Section */}
-                            {selectedEmployees.length > 0 && (
-                                <div className="space-y-3">
-                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approval Workflow</p>
-                                    <div className="space-y-3">
-                                        {selectedEmployees.map((emp, index) => (
-                                            <div key={emp.id} className="flex items-center gap-3 group">
-                                                {/* Grip Icon */}
-                                                <div className="flex flex-col gap-1 text-slate-400">
-                                                    <div className="p-1.5 rounded hover:bg-slate-100 cursor-grab active:cursor-grabbing">
-                                                        <GripVertical size={20} className="text-slate-300" />
-                                                    </div>
-                                                </div>
-
-                                                {/* Name Box */}
-                                                <div className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 shadow-sm group-hover:border-sky-200 group-hover:shadow-sky-50 transition-all">
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
-                                                            <div className="text-sm font-semibold text-slate-700">{emp.name}</div>
-                                                            <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">Employee ID: {emp.eid} • Level {index + 1}</div>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button 
-                                                                disabled={index === 0}
-                                                                onClick={() => moveEmployee(index, 'up', 'payroll')}
-                                                                className="p-1 hover:text-sky-600 disabled:opacity-30"
-                                                            >
-                                                                <ArrowUp size={14} />
-                                                            </button>
-                                                            <button 
-                                                                disabled={index === selectedEmployees.length - 1}
-                                                                onClick={() => moveEmployee(index, 'down', 'payroll')}
-                                                                className="p-1 hover:text-sky-600 disabled:opacity-30"
-                                                            >
-                                                                <ArrowDown size={14} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Remove Button */}
+                                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <Search size={16} className="text-slate-400" />
+                                        </div>
+                                        {selectedEmployees.length === 0 && (
+                                            <span className="text-slate-400">Search employee...</span>
+                                        )}
+                                        {selectedEmployees.map(emp => (
+                                            <div
+                                                key={emp.id}
+                                                className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-xs font-semibold text-slate-700"
+                                            >
+                                                <span>{emp.name} ({emp.eid})</span>
                                                 <button
-                                                    onClick={() => removeEmployee(emp.id, 'payroll')}
-                                                    className="text-slate-300 hover:text-red-500 transition-all p-1"
+                                                    onClick={(e) => { e.stopPropagation(); removeEmployee(emp.id, 'payroll'); }}
+                                                    className="text-slate-400 hover:text-slate-600 transition-colors"
                                                 >
-                                                    <MinusCircle size={24} />
+                                                    <X size={12} />
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
-                                    <p className="text-[11px] text-slate-400 italic">
-                                        * Approvals will be requested sequentially in the order listed above.
-                                    </p>
+                                    <div className="absolute inset-y-0 right-3 flex items-center gap-2">
+                                        {selectedEmployees.length > 0 && (
+                                            <button
+                                                onClick={() => setSelectedEmployees([])}
+                                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                        <ChevronDown
+                                            onClick={() => setIsPayrollApproverOpen(!isPayrollApproverOpen)}
+                                            size={16}
+                                            className={`text-slate-400 cursor-pointer transition-transform ${isPayrollApproverOpen ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+
+                                    {isPayrollApproverOpen && (
+                                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="max-h-60 overflow-y-auto p-1 text-sm">
+                                                {allEmployees.filter(emp => !selectedEmployees.find(s => s.id === emp.id)).map(emp => (
+                                                    <div
+                                                        key={emp.id}
+                                                        onClick={() => handleSelectEmployee(emp.id, 'payroll')}
+                                                        className="px-3 py-2 rounded-md cursor-pointer transition-colors text-slate-700 hover:bg-slate-50"
+                                                    >
+                                                        {emp.name} ({emp.eid})
+                                                    </div>
+                                                ))}
+                                                {allEmployees.filter(emp => !selectedEmployees.find(s => s.id === emp.id)).length === 0 && (
+                                                    <div className="p-3 text-center text-slate-400 text-xs">No more employees available</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Investment Declaration Approval */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors rounded-t-xl"
+                    onClick={() => setIsInvestmentHierarchyExpanded(!isInvestmentHierarchyExpanded)}
+                >
+                    <h3 className="font-semibold text-slate-800">Investment Declaration Approval</h3>
+                    <button className="text-slate-400">
+                        {isInvestmentHierarchyExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isInvestmentHierarchyExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-3xl space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-1.5">
+                                    Select Investment Declaration Approver <span className="text-red-500">*</span>
+                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                </label>
+                                <div className="relative" ref={investmentApproverDropdownRef}>
+                                    <div
+                                        onClick={() => setIsInvestmentApproverOpen(true)}
+                                        className="w-full flex flex-wrap items-center gap-2 pl-10 pr-16 py-2 bg-white border border-slate-200 rounded-lg text-sm min-h-[42px] focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all cursor-text"
+                                    >
+                                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <Search size={16} className="text-slate-400" />
+                                        </div>
+                                        {investmentApprovers.length === 0 && (
+                                            <span className="text-slate-400">Search employee...</span>
+                                        )}
+                                        {investmentApprovers.map(emp => (
+                                            <div
+                                                key={emp.id}
+                                                className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-xs font-semibold text-slate-700"
+                                            >
+                                                <span>{emp.name} ({emp.eid})</span>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); removeEmployee(emp.id, 'investment'); }}
+                                                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="absolute inset-y-0 right-3 flex items-center gap-2">
+                                        {investmentApprovers.length > 0 && (
+                                            <button
+                                                onClick={() => setInvestmentApprovers([])}
+                                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                        <ChevronDown
+                                            onClick={() => setIsInvestmentApproverOpen(!isInvestmentApproverOpen)}
+                                            size={16}
+                                            className={`text-slate-400 cursor-pointer transition-transform ${isInvestmentApproverOpen ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+
+                                    {isInvestmentApproverOpen && (
+                                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="max-h-60 overflow-y-auto p-1 text-sm">
+                                                {allEmployees.filter(emp => !investmentApprovers.find(s => s.id === emp.id)).map(emp => (
+                                                    <div
+                                                        key={emp.id}
+                                                        onClick={() => handleSelectEmployee(emp.id, 'investment')}
+                                                        className="px-3 py-2 rounded-md cursor-pointer transition-colors text-slate-700 hover:bg-slate-50"
+                                                    >
+                                                        {emp.name} ({emp.eid})
+                                                    </div>
+                                                ))}
+                                                {allEmployees.filter(emp => !investmentApprovers.find(s => s.id === emp.id)).length === 0 && (
+                                                    <div className="p-3 text-center text-slate-400 text-xs">No more employees available</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

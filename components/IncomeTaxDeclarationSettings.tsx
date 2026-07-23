@@ -1367,6 +1367,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Approval Hierarchy Section */}
+                            {false && (
                             <div className="pt-2 border-t border-slate-200">
                                 <div className="flex items-center gap-2 mb-4">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval Hierarchy <span className="text-rose-500">*</span></h4>
@@ -1447,6 +1448,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                            )}
 
 
 
@@ -2087,6 +2089,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                             </div>
 
                             {/* Approval Hierarchy Section - NEW for POI */}
+                            {false && (
                             <div className="pt-2 border-t border-slate-200">
                                 <div className="flex items-center gap-2 mb-4">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">POI Approval Hierarchy <span className="text-rose-500">*</span></h4>
@@ -2161,6 +2164,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                            )}
 
                             <div className="mt-6 pl-1">
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider" style={{ whiteSpace: 'nowrap' }}>

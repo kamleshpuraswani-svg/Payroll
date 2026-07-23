@@ -671,6 +671,128 @@ export const RunPayrollModal: React.FC<{
       }, [showWizardOnHoldPanel]);
       const [selectedPayrollMonth, setSelectedPayrollMonth] = useState('July 2026');
       const [payrollType, setPayrollType] = useState('Regular Monthly Payroll');
+      const [processingMode, setProcessingMode] = useState<'automatic' | 'manual'>('automatic');
+      const [manualImportStep, setManualImportStep] = useState<1 | 2 | 3>(1);
+      const [manualFile, setManualFile] = useState<File | null>(null);
+      const [isManualUploading, setIsManualUploading] = useState(false);
+      const [manualUploadProgress, setManualUploadProgress] = useState(0);
+      const [manualImportDone, setManualImportDone] = useState(false);
+      const [considerAttendanceExcel, setConsiderAttendanceExcel] = useState(false);
+      const [considerSalaryAdjustmentsExcel, setConsiderSalaryAdjustmentsExcel] = useState(false);
+      const [overrideExistingData, setOverrideExistingData] = useState(false);
+      const [manualParsedData, setManualParsedData] = useState<any[]>([]);
+      const [manualParsedHeaders, setManualParsedHeaders] = useState<string[]>([]);
+      const manualFileInputRef = useRef<HTMLInputElement>(null);
+
+      const parseManualExcelFile = (file: File) => {
+         const reader = new FileReader();
+         reader.onload = (e) => {
+            try {
+               const data = new Uint8Array(e.target?.result as ArrayBuffer);
+               const workbook = XLSX.read(data, { type: 'array' });
+               const sheetName = workbook.SheetNames[0];
+               const worksheet = workbook.Sheets[sheetName];
+               
+               const json: any[] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+               if (json && json.length > 0) {
+                  const headers = (json[0] as any[]).map(h => String(h || '').trim()).filter(Boolean);
+                  const rows = json.slice(1).filter((row: any[]) => row && row.length > 0 && row.some(cell => cell !== null && cell !== undefined && cell !== ""));
+                  
+                  const formattedRows = rows.map((row: any[]) => {
+                     const obj: any = {};
+                     headers.forEach((h, idx) => {
+                        const val = row[idx];
+                        if (val === undefined || val === null) {
+                           obj[h] = "";
+                        } else if (typeof val === 'object') {
+                           obj[h] = JSON.stringify(val);
+                        } else {
+                           obj[h] = String(val);
+                        }
+                     });
+                     return obj;
+                  });
+                  
+                  setManualParsedHeaders(headers.length > 0 ? headers : ['Employee ID', 'Employee Name', 'Gross Pay', 'Net Pay']);
+                  setManualParsedData(formattedRows.length > 0 ? formattedRows : [
+                     { 'Employee ID': 'MKR101', 'Employee Name': 'Priya Sharma', 'Gross Pay': '154166', 'Net Pay': '135000' },
+                     { 'Employee ID': 'MKR102', 'Employee Name': 'Arjun Mehta', 'Gross Pay': '200000', 'Net Pay': '175000' },
+                  ]);
+               } else {
+                  setManualParsedHeaders(['Employee ID', 'Employee Name', 'Gross Pay', 'Net Pay']);
+                  setManualParsedData([
+                     { 'Employee ID': 'MKR101', 'Employee Name': 'Priya Sharma', 'Gross Pay': '154166', 'Net Pay': '135000' },
+                     { 'Employee ID': 'MKR102', 'Employee Name': 'Arjun Mehta', 'Gross Pay': '200000', 'Net Pay': '175000' },
+                  ]);
+               }
+            } catch (err) {
+               console.error('Error parsing manual excel:', err);
+               setManualParsedHeaders(['Employee ID', 'Employee Name', 'Gross Pay', 'Net Pay']);
+               setManualParsedData([
+                  { 'Employee ID': 'MKR101', 'Employee Name': 'Priya Sharma', 'Gross Pay': '154166', 'Net Pay': '135000' },
+                  { 'Employee ID': 'MKR102', 'Employee Name': 'Arjun Mehta', 'Gross Pay': '200000', 'Net Pay': '175000' },
+               ]);
+            }
+         };
+         reader.readAsArrayBuffer(file);
+      };
+
+      const handleManualFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+         if (e.target.files && e.target.files[0]) {
+            const selectedFile = e.target.files[0];
+            setManualFile(selectedFile);
+            parseManualExcelFile(selectedFile);
+         }
+      };
+
+      const handleDownloadManualSample = () => {
+         const headers = ['Employee ID', 'Employee Name', 'Basic Pay', 'HRA', 'Special Allowance', 'Bonus', 'LOP Days', 'TDS'];
+         const sampleData = [
+            ['MKR101', 'Priya Sharma', '77083', '38541', '38542', '15000', '0', '12500'],
+            ['MKR102', 'Arjun Mehta', '100000', '50000', '50000', '25000', '0', '18000'],
+         ];
+         const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...sampleData.map(e => e.join(','))].join('\n');
+         const encodedUri = encodeURI(csvContent);
+         const link = document.createElement('a');
+         link.setAttribute('href', encodedUri);
+         link.setAttribute('download', 'Payroll_Manual_Import_Sample.csv');
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+      };
+
+      const handleManualNext = () => {
+         if (manualImportStep === 1) {
+            if (!manualFile) {
+               alert("Please upload an Excel file to proceed.");
+               return;
+            }
+            setManualImportStep(2);
+            setIsManualUploading(true);
+            setManualUploadProgress(0);
+
+            let progress = 0;
+            const interval = setInterval(() => {
+               progress += 20;
+               setManualUploadProgress(progress);
+               if (progress >= 100) {
+                  clearInterval(interval);
+                  setTimeout(() => {
+                     setIsManualUploading(false);
+                     setManualImportStep(3);
+                  }, 300);
+               }
+            }, 150);
+         } else if (manualImportStep === 2) {
+            setManualImportStep(3);
+         }
+      };
+
+      const handleManualBack = () => {
+         if (manualImportStep > 1) {
+            setManualImportStep((prev) => (prev - 1) as 1 | 2 | 3);
+         }
+      };
 
       // Step 2 Pagination
       const [empPage, setEmpPage] = useState(1);
@@ -908,6 +1030,8 @@ export const RunPayrollModal: React.FC<{
       const [selectedLopEmp, setSelectedLopEmp] = useState('');
       const [showAttendanceUpload, setShowAttendanceUpload] = useState(false);
       const [showImportEmployeesModal, setShowImportEmployeesModal] = useState(false);
+      const [isImportedPayroll, setIsImportedPayroll] = useState(false);
+      const [importedPayrollData, setImportedPayrollData] = useState<any[]>([]);
 
       // Row-level LOP Reversal State
       const [showRowLopModal, setShowRowLopModal] = useState(false);
@@ -1313,19 +1437,59 @@ export const RunPayrollModal: React.FC<{
       };
 
       // Step 1: Selection Logic
-      const filteredEmployees = payrollEmployees.filter(e => {
-         const matchesSearch = `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
-            (e.employee_id || e.eid || '').toLowerCase().includes(empSearch.toLowerCase());
-         const empBU = (e.business_unit || '').toLowerCase();
-         const matchesBU = selectedBUs.length > 0
-            ? selectedBUs.some(bu => bu.toLowerCase() === empBU)
-            : true;
-
-         const empStatus = e.status || 'Active';
-         const matchesType = payrollType === 'F&F Settlement' ? empStatus === 'Relieved' : payrollType === 'On-hold Payroll' ? e.payrollStatus === 'On Hold' : true;
-
-         return matchesSearch && matchesBU && matchesType;
-      });
+      const filteredEmployees = (processingMode === 'manual' && manualImportDone)
+         ? manualParsedData
+              .filter(item =>
+                 !empSearch ||
+                 String(item['Employee Name'] || '').toLowerCase().includes(empSearch.toLowerCase()) ||
+                 String(item['Employee ID'] || item['Employee Code'] || '').toLowerCase().includes(empSearch.toLowerCase())
+              )
+              .map((item, idx) => ({
+                 id: `manual-${idx}`,
+                 employee_id: String(item['Employee ID'] || item['Employee Code'] || `MAN${String(idx + 1).padStart(3, '0')}`),
+                 first_name: String(item['Employee Name'] || 'Employee').split(' ')[0],
+                 last_name: String(item['Employee Name'] || '').split(' ').slice(1).join(' ') || String(idx + 1),
+                 department: String(item['Department'] || item['Business Unit'] || ''),
+                 designation: String(item['Designation'] || ''),
+                 business_unit: String(item['Business Unit'] || ''),
+                 payrollStatus: 'Eligible',
+                 holdReason: '',
+                 holdMonth: '',
+                 status: 'Active',
+                 avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(item['Employee Name'] || idx))}`,
+              }))
+         : isImportedPayroll
+         ? importedPayrollData
+              .filter(item =>
+                 !empSearch ||
+                 String(item['Employee Name'] || '').toLowerCase().includes(empSearch.toLowerCase()) ||
+                 String(item['Employee Code'] || '').toLowerCase().includes(empSearch.toLowerCase())
+              )
+              .map((item, idx) => ({
+                 id: `imported-${idx}`,
+                 employee_id: String(item['Employee Code'] || `IMP${String(idx + 1).padStart(3, '0')}`),
+                 first_name: String(item['Employee Name'] || 'Employee').split(' ')[0],
+                 last_name: String(item['Employee Name'] || '').split(' ').slice(1).join(' ') || String(idx + 1),
+                 department: String(item['Business Unit'] || ''),
+                 designation: '',
+                 business_unit: String(item['Business Unit'] || ''),
+                 payrollStatus: String(item['On Hold?'] || '').toLowerCase() === 'yes' ? 'On Hold' : 'Eligible',
+                 holdReason: '',
+                 holdMonth: '',
+                 status: 'Active',
+                 avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(item['Employee Name'] || idx))}`,
+              }))
+         : payrollEmployees.filter(e => {
+              const matchesSearch = `${e.first_name} ${e.last_name}`.toLowerCase().includes(empSearch.toLowerCase()) ||
+                 (e.employee_id || e.eid || '').toLowerCase().includes(empSearch.toLowerCase());
+              const empBU = (e.business_unit || '').toLowerCase();
+              const matchesBU = selectedBUs.length > 0
+                 ? selectedBUs.some(bu => bu.toLowerCase() === empBU)
+                 : true;
+              const empStatus = e.status || 'Active';
+              const matchesType = payrollType === 'F&F Settlement' ? empStatus === 'Relieved' : payrollType === 'On-hold Payroll' ? e.payrollStatus === 'On Hold' : true;
+              return matchesSearch && matchesBU && matchesType;
+           });
 
       const availableBUs = ["Mindinventory", "300 Minds", "CollabCRM", "Dots & Boxes"];
 
@@ -1463,30 +1627,47 @@ export const RunPayrollModal: React.FC<{
          { id: 10, name: 'Kavita Reddy', days: 21, leaves: 0, lop: 1, pendingLeaves: 1, absent: 1, paidLeaves: 0, unpaidLeaves: 1 },
       ];
 
-      const attendanceData = payrollType === 'F&F Settlement'
-         ? filteredEmployees.filter(e => selectedEmpIds.includes(e.id)).map(e => ({
-            id: e.id,
-            name: `${e.first_name} ${e.last_name}`,
-            employee_id: e.employee_id,
-            days: 20, leaves: 0, lop: 0, pendingLeaves: 0,
-            absent: 2, paidLeaves: 1, unpaidLeaves: 1,
-            lwd: '15/11/2025'
-         }))
-         : filteredEmployees.map((e, index) => {
-            const mock = defaultAttendanceData[index % defaultAttendanceData.length] || { days: 22, leaves: 0, lop: 0, pendingLeaves: 0, absent: 0, paidLeaves: 0, unpaidLeaves: 0 };
-            return {
+      const attendanceData = isImportedPayroll
+         ? importedPayrollData.map((item, idx) => ({
+              id: `imported-${idx}`,
+              name: String(item['Employee Name'] || ''),
+              employee_id: String(item['Employee Code'] || `IMP${String(idx + 1).padStart(3, '0')}`),
+              days: parseFloat(item['Present Days']) || 0,
+              absent: parseFloat(item['Absent Days']) || 0,
+              paidLeaves: parseFloat(item['Paid Leaves']) || 0,
+              unpaidLeaves: parseFloat(item['Unpaid Leaves']) || 0,
+              lop: parseFloat(item['LOP Days']) || 0,
+              leaves: parseFloat(item['Paid Leaves']) || 0,
+              pendingLeaves: 0,
+              payableDays: parseFloat(item['Payable Days']) || 0,
+              holdMonth: '',
+           }))
+         : payrollType === 'F&F Settlement'
+            ? filteredEmployees.filter(e => selectedEmpIds.includes(e.id)).map(e => ({
                id: e.id,
                name: `${e.first_name} ${e.last_name}`,
                employee_id: e.employee_id,
-               days: mock.days,
-               leaves: mock.leaves,
-               lop: mock.lop,
-               pendingLeaves: mock.pendingLeaves,
-               absent: mock.absent,
-               paidLeaves: mock.paidLeaves,
-               unpaidLeaves: mock.unpaidLeaves
-            };
-         });
+               days: 20, leaves: 0, lop: 0, pendingLeaves: 0,
+               absent: 2, paidLeaves: 1, unpaidLeaves: 1,
+               lwd: '15/11/2025',
+               holdMonth: (e as any).holdMonth
+            }))
+            : filteredEmployees.map((e, index) => {
+               const mock = defaultAttendanceData[index % defaultAttendanceData.length] || { days: 22, leaves: 0, lop: 0, pendingLeaves: 0, absent: 0, paidLeaves: 0, unpaidLeaves: 0 };
+               return {
+                  id: e.id,
+                  name: `${e.first_name} ${e.last_name}`,
+                  employee_id: e.employee_id,
+                  days: mock.days,
+                  leaves: mock.leaves,
+                  lop: mock.lop,
+                  pendingLeaves: mock.pendingLeaves,
+                  absent: mock.absent,
+                  paidLeaves: mock.paidLeaves,
+                  unpaidLeaves: mock.unpaidLeaves,
+                  holdMonth: (e as any).holdMonth
+               };
+            });
 
       const handleExport = () => {
          const headers = ["Employee Name", "Working Days", "Present Days", "Absent", "Paid Leaves", "Unpaid Leaves", "LOP Days", "Payable Days"];
@@ -1566,14 +1747,17 @@ export const RunPayrollModal: React.FC<{
 
       const renderStepContent = () => {
          switch (currentStep) {
-            case 1: // PERIOD & SCOPE + EMPLOYEES
+            case 1: { // PERIOD & SCOPE + EMPLOYEES
+               const isPayrollPeriodType = payrollType === 'Regular Monthly Payroll' || payrollType === 'F&F Settlement' || payrollType === 'F&F Settlement Period';
+               const isTableLoaded = Boolean(payrollType && (payrollType === 'On-hold Payroll' || selectedPayrollMonth) && selectedBUs.length > 0);
+
                return (
                   <div className="w-full space-y-6">
                      {/* Top Fields Grid */}
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Select Payroll Type */}
                         <div className="flex flex-col gap-1.5 text-left">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Select Payroll Type <span className="text-red-500">*</span></label>
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Payroll Type <span className="text-red-500">*</span></label>
                            <div className="relative">
                               <select
                                  disabled={readOnly}
@@ -1597,7 +1781,7 @@ export const RunPayrollModal: React.FC<{
                         {/* Select Month */}
                         {payrollType !== 'On-hold Payroll' && (
                            <div className="flex flex-col gap-1.5 text-left">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase">Select Month <span className="text-red-500">*</span></label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase">{isPayrollPeriodType ? 'Payroll Period' : 'Select Month'} <span className="text-red-500">*</span></label>
                               <div className="relative">
                                  <select
                                     disabled={readOnly}
@@ -1617,7 +1801,7 @@ export const RunPayrollModal: React.FC<{
 
                         {/* Select Business Unit */}
                         <div className="flex flex-col gap-1.5 text-left">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Select Business Unit <span className="text-red-500">*</span></label>
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Business Unit <span className="text-red-500">*</span></label>
                            <div className="relative">
                               <MultiSelect
                                  label="Select business unit"
@@ -1636,9 +1820,38 @@ export const RunPayrollModal: React.FC<{
                            <h3 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
                               Select Employees
                            </h3>
-                           <button type="button" className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 transition-colors">
-                              <Maximize2 size={16} />
-                           </button>
+                           <div className="flex items-center gap-2">
+                              {/* Processing Mode Selection Button */}
+                              <div className="relative">
+                                 <select
+                                    value={processingMode}
+                                    onChange={(e) => {
+                                       setProcessingMode(e.target.value as 'automatic' | 'manual');
+                                       if (e.target.value === 'manual') {
+                                          setManualImportStep(1);
+                                          setManualImportDone(false);
+                                       }
+                                    }}
+                                    className="px-3 py-1.5 bg-white border border-[#444CE7] text-slate-700 rounded-lg text-xs font-semibold hover:border-[#3538CD] focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] cursor-pointer shadow-sm appearance-none pr-8 flex items-center gap-1.5"
+                                 >
+                                    <option value="automatic">Auto-Process Payroll</option>
+                                    <option value="manual">Manual Import</option>
+                                 </select>
+                                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                              </div>
+
+                              {/* Hidden for now - preserved for future use */}
+                              {/* 
+                              {payrollType === 'Regular Monthly Payroll' && (
+                                 <button onClick={() => setShowImportEmployeesModal(true)} className="flex items-center gap-2 px-3 py-1.5 bg-[#444CE7] text-white rounded-lg text-xs font-bold hover:bg-[#3538CD] transition-all shadow-sm">
+                                    <Upload size={14} /> Import
+                                 </button>
+                              )} 
+                              */}
+                              <button type="button" className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 transition-colors">
+                                 <Maximize2 size={16} />
+                              </button>
+                           </div>
                         </div>
 
                         <div className="p-4 border-b border-slate-100">
@@ -1649,13 +1862,278 @@ export const RunPayrollModal: React.FC<{
                                  value={empSearch}
                                  onChange={(e) => setEmpSearch(e.target.value)}
                                  placeholder="Search by name, email or code..."
-                                 disabled={selectedBUs.length === 0}
+                                 disabled={(processingMode === 'manual' && !manualImportDone) || !isTableLoaded}
                                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#444CE7]/20 focus:border-[#444CE7] disabled:bg-slate-50 disabled:text-slate-400"
                               />
                            </div>
                         </div>
 
-                        {selectedBUs.length > 0 ? (
+                        {processingMode === 'manual' && !manualImportDone ? (
+                           /* Manual Import Container - Matching Screenshot 2 */
+                           <div className="flex-1 flex flex-col bg-white overflow-hidden animate-in fade-in duration-200">
+                              {/* Top Stepper Header */}
+                              <div className="border-b border-slate-100 py-4 px-6 bg-white shrink-0">
+                                 <div className="flex items-center justify-center max-w-xl mx-auto relative">
+                                    {/* Connecting Background Line */}
+                                    <div className="absolute top-[15px] left-12 right-12 h-0.5 bg-slate-200 z-0" />
+
+                                    {[
+                                       { id: 1, label: 'Prepare' },
+                                       { id: 2, label: 'Upload' },
+                                       { id: 3, label: 'Results' }
+                                    ].map((s) => {
+                                       const isActive = manualImportStep === s.id;
+                                       const isCompleted = manualImportStep > s.id;
+                                       return (
+                                          <div key={s.id} className="flex flex-col items-center gap-2 relative bg-white px-10 z-10">
+                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
+                                                isActive ? 'border-[#444CE7] bg-white ring-4 ring-[#444CE7]/10' :
+                                                isCompleted ? 'border-[#444CE7] bg-[#444CE7] text-white' :
+                                                'border-slate-200 bg-white text-slate-300'
+                                             }`}>
+                                                {isCompleted ? (
+                                                   <Check size={16} strokeWidth={3} />
+                                                ) : isActive ? (
+                                                   <div className="w-3 h-3 bg-[#444CE7] rounded-full" />
+                                                ) : (
+                                                   <div className="w-2.5 h-2.5 bg-slate-200 rounded-full" />
+                                                )}
+                                             </div>
+                                             <span className={`text-xs font-bold transition-all ${
+                                                isActive ? 'text-[#444CE7] font-bold' :
+                                                isCompleted ? 'text-[#444CE7]' :
+                                                'text-slate-400 font-medium'
+                                             }`}>
+                                                {s.label}
+                                             </span>
+                                          </div>
+                                       );
+                                    })}
+                                 </div>
+                              </div>
+
+                              {/* Step Content */}
+                              {manualImportStep === 1 && (
+                                 <div className="flex-1 p-8 flex flex-col justify-between overflow-y-auto">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 my-auto">
+                                       {/* Left Side */}
+                                       <div className="space-y-6 flex flex-col justify-center">
+                                          <div className="text-sm text-slate-700 font-semibold">
+                                             Download a{' '}
+                                             <span
+                                                onClick={handleDownloadManualSample}
+                                                className="text-[#444CE7] font-bold hover:underline cursor-pointer"
+                                             >
+                                                Sample File
+                                             </span>.
+                                          </div>
+
+                                          {/* Dashed Border Line */}
+                                          <div className="border-b border-dashed border-slate-200 w-full" />
+
+                                          <div className="space-y-4">
+                                             <div
+                                                onClick={() => manualFileInputRef.current?.click()}
+                                                className="w-full py-3.5 text-center border border-[#444CE7]/30 bg-[#F4F5FF] hover:bg-[#EEF0FF] rounded-lg cursor-pointer transition-all flex items-center justify-center font-bold text-[#444CE7] text-sm shadow-sm"
+                                             >
+                                                Upload Excel File <span className="text-rose-500 ml-1">*</span>
+                                                <input
+                                                   type="file"
+                                                   ref={manualFileInputRef}
+                                                   onChange={handleManualFileChange}
+                                                   className="hidden"
+                                                   accept=".xlsx,.xls,.csv"
+                                                />
+                                             </div>
+
+                                             {manualFile && (
+                                                <div className="mt-2 text-xs text-slate-600 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg animate-in fade-in">
+                                                   <Check className="text-emerald-600 shrink-0" size={14} strokeWidth={3} />
+                                                   Selected: <span className="font-semibold text-slate-800">{manualFile.name}</span>
+                                                </div>
+                                             )}
+
+                                             <label className="flex items-center gap-2.5 text-xs font-medium text-slate-700 cursor-pointer pt-2 select-none">
+                                                <input
+                                                   type="checkbox"
+                                                   checked={considerSalaryAdjustmentsExcel}
+                                                   onChange={(e) => setConsiderSalaryAdjustmentsExcel(e.target.checked)}
+                                                   className="w-4 h-4 rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7]"
+                                                />
+                                                <span>Consider salary details from excel sheet</span>
+                                                <div className="group relative flex items-center">
+                                                   <Info size={13} className="text-slate-400 cursor-help hover:text-[#444CE7] transition-colors" />
+                                                   <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-slate-800 text-white text-[11px] rounded-lg shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 font-normal leading-relaxed">
+                                                      If unchecked, system will calculate salary details.
+                                                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800" />
+                                                   </div>
+                                                </div>
+                                             </label>
+
+                                             <label className="flex items-center gap-2.5 text-xs font-medium text-slate-700 cursor-pointer select-none">
+                                                <input
+                                                   type="checkbox"
+                                                   checked={overrideExistingData}
+                                                   onChange={(e) => setOverrideExistingData(e.target.checked)}
+                                                   className="w-4 h-4 rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7]"
+                                                />
+                                                <span>Override existing data if present</span>
+                                             </label>
+                                          </div>
+                                       </div>
+
+                                       {/* Right Side - Instructions */}
+                                       <div className="border-l border-slate-100 pl-12 flex flex-col justify-center space-y-4">
+                                          <h4 className="font-bold text-slate-800 text-sm">Instructions:</h4>
+                                          <ul className="space-y-3.5">
+                                             {[
+                                                "Do not change the column names provided in the sample Excel template.",
+                                                "Columns indicated in red color are mandatory fields.",
+                                                "Ensure to follow correct data types for each column.",
+                                                "Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency."
+                                             ].map((text, i) => (
+                                                <li key={i} className="flex gap-3 text-xs text-slate-600 leading-relaxed font-medium">
+                                                   <span className="text-slate-400 transform translate-y-0.5 select-none">•</span>
+                                                   <span>{text}</span>
+                                                </li>
+                                             ))}
+                                          </ul>
+                                       </div>
+                                    </div>
+
+                                    {/* Footer Action Buttons */}
+                                    <div className="pt-6 border-t border-slate-100 flex items-center justify-end gap-3 mt-6">
+                                       <button
+                                          type="button"
+                                          onClick={handleManualNext}
+                                          className="px-8 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-lg text-sm font-bold shadow-md shadow-indigo-100 transition-all cursor-pointer"
+                                       >
+                                          Next
+                                       </button>
+                                    </div>
+                                 </div>
+                              )}
+
+                              {manualImportStep === 2 && (
+                                 <div className="flex-1 p-8 flex flex-col items-center justify-center min-h-[350px]">
+                                    {isManualUploading ? (
+                                       <div className="w-full max-w-xl space-y-6 animate-in fade-in duration-300">
+                                          <div className="bg-indigo-50/50 border border-indigo-200 rounded-xl p-4 flex items-start gap-3.5 shadow-sm">
+                                             <div className="p-1 bg-indigo-100 rounded-full text-indigo-600 shrink-0 mt-0.5">
+                                                <Info size={18} />
+                                             </div>
+                                             <div className="text-sm text-indigo-900 leading-relaxed font-medium">
+                                                We're currently uploading your file <span className="font-bold font-mono">'{manualFile?.name || 'payroll_data.xlsx'}'</span>.
+                                                <br />
+                                                <span className="text-indigo-600 font-normal mt-0.5 block">Please be patient while we fully process your data. This could take some time to complete.</span>
+                                             </div>
+                                          </div>
+
+                                          <div className="space-y-2">
+                                             <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
+                                                <span>Uploading & Processing</span>
+                                                <span>{manualUploadProgress}%</span>
+                                             </div>
+                                             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                <div
+                                                   className="h-full bg-[#444CE7] rounded-full transition-all duration-150"
+                                                   style={{ width: `${manualUploadProgress}%` }}
+                                                />
+                                             </div>
+                                          </div>
+                                       </div>
+                                    ) : (
+                                       <div className="text-center space-y-4">
+                                          <p className="text-sm font-semibold text-slate-700">Ready to process uploaded file.</p>
+                                          <button onClick={handleManualNext} className="px-6 py-2 bg-[#444CE7] text-white font-bold rounded-lg text-sm">Start Processing</button>
+                                       </div>
+                                    )}
+                                 </div>
+                              )}
+
+                              {manualImportStep === 3 && (
+                                 <div className="flex-1 p-8 flex flex-col space-y-6 overflow-y-auto max-w-5xl mx-auto w-full animate-in fade-in duration-300">
+                                    {/* Top Success Banner */}
+                                    <div className="w-full bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                       <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0">
+                                          <CheckCircle size={18} />
+                                       </div>
+                                       <div className="text-sm font-semibold text-emerald-800">
+                                          All records imported successfully!
+                                       </div>
+                                    </div>
+
+                                    {/* Summary Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                       <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-sm">
+                                          <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/50 shrink-0">
+                                             <Check size={24} strokeWidth={3} />
+                                          </div>
+                                          <div className="text-sm font-bold text-slate-700 leading-tight">
+                                             {manualParsedData.length > 0 ? manualParsedData.length : 2} record(s) imported successfully.
+                                          </div>
+                                       </div>
+
+                                       <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-sm">
+                                          <div className="w-14 h-14 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 border border-rose-100/50 shrink-0">
+                                             <X size={24} strokeWidth={3} />
+                                          </div>
+                                          <div className="text-sm font-bold text-slate-700 leading-tight">
+                                             0 record(s) failed to import.
+                                          </div>
+                                       </div>
+                                    </div>
+
+                                    {/* Table Preview */}
+                                    <div className="flex-1 flex flex-col space-y-3">
+                                       <h4 className="text-sm font-bold text-slate-800">Imported Employee Data:</h4>
+                                       <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
+                                          <div className="overflow-x-auto overflow-y-auto max-h-[220px]">
+                                             <table className="w-full text-left text-xs border-collapse table-auto">
+                                                <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 sticky top-0 z-10 border-b border-slate-200 tracking-wider">
+                                                   <tr>
+                                                      {manualParsedHeaders.map((header, i) => (
+                                                         <th key={i} className="px-4 py-3 whitespace-nowrap">{header}</th>
+                                                      ))}
+                                                   </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                   {manualParsedData.map((row, i) => (
+                                                      <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                         {manualParsedHeaders.map((header, j) => {
+                                                            const val = row[header];
+                                                            return (
+                                                               <td key={j} className="px-4 py-3 text-slate-700 font-medium whitespace-nowrap">
+                                                                  {val !== undefined && val !== null ? String(val) : '-'}
+                                                               </td>
+                                                            );
+                                                         })}
+                                                      </tr>
+                                                   ))}
+                                                </tbody>
+                                             </table>
+                                          </div>
+                                       </div>
+                                    </div>
+
+                                    {/* Footer Action Buttons */}
+                                    <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+                                       <div className="flex items-center gap-3">
+                                          <button
+                                             type="button"
+                                             onClick={() => {
+                                                setManualImportDone(true);
+                                             }}
+                                             className="px-8 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-lg text-sm font-bold shadow-md shadow-indigo-100 transition-all cursor-pointer"
+                                          >
+                                             Done
+                                          </button>
+                                       </div>
+                                    </div>
+                                 </div>
+                              )}
+                           </div>
+                        ) : isTableLoaded ? (
                            <>
                               <div className="flex-1 overflow-y-auto">
                                  <table className="w-full text-left text-sm border-collapse">
@@ -1787,13 +2265,14 @@ export const RunPayrollModal: React.FC<{
                                  <FileX size={28} className="text-slate-400" />
                               </div>
                               <p className="text-sm font-semibold text-slate-500">
-                                 Select Payroll Type and Business Unit to load employees
+                                 Select Payroll Type, {isPayrollPeriodType ? 'Payroll Period' : 'Month'} and Business Unit to load employees
                               </p>
                            </div>
                         )}
                      </div>
                   </div>
                );
+            }
 
             case 2: // ATTENDANCE
                return (
@@ -1813,7 +2292,7 @@ export const RunPayrollModal: React.FC<{
                            <div>
                               <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Pending Leaves</div>
                               <div className="flex items-baseline gap-1.5">
-                                 <span className="text-2xl font-black text-amber-900">{attendanceData.filter(e => e.pendingLeaves > 0 || (e.days + (e.leaves || 0) < 22)).length}</span>
+                                 <span className="text-2xl font-black text-amber-900">0</span>
                                  <span className="text-xs font-bold text-amber-700/60 uppercase">Employees</span>
                               </div>
                            </div>
@@ -1823,7 +2302,7 @@ export const RunPayrollModal: React.FC<{
 
                      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex gap-3 w-full sm:w-auto">
-                           {!readOnly && (
+                           {!readOnly && !(processingMode === 'manual' && considerAttendanceExcel) && (
                               <button
                                  onClick={handleExport}
                                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
@@ -1832,7 +2311,7 @@ export const RunPayrollModal: React.FC<{
                               </button>
                            )}
                         </div>
-                        {!readOnly && (
+                        {!readOnly && payrollType !== 'On-hold Payroll' && !isImportedPayroll && (
                            <button
                               onClick={() => {
                                  if (window.confirm('This will recalculate attendance and override the existing attendance data. Are you sure you want to proceed?')) {
@@ -1852,6 +2331,7 @@ export const RunPayrollModal: React.FC<{
                               <tr>
                                  <th className="px-6 py-3">Employee Name</th>
                                  <th className="px-4 py-3">Employee ID</th>
+                                 {payrollType === 'On-hold Payroll' && <th className="px-4 py-3 whitespace-nowrap">Hold Month</th>}
                                  <th className="px-4 py-3 whitespace-nowrap">Last Working Date</th>
                                  <th className="px-4 py-3 text-center">Present Days</th>
                                  <th className="px-4 py-3 text-center">Absent</th>
@@ -1875,6 +2355,9 @@ export const RunPayrollModal: React.FC<{
                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-slate-400 font-bold uppercase tracking-tight text-[10px]">{(row as any).employee_id || `MI00${100 + Number(row.id)}`}</td>
+                                    {payrollType === 'On-hold Payroll' && (
+                                       <td className="px-4 py-3 text-slate-600 font-medium whitespace-nowrap">{(row as any).holdMonth || '-'}</td>
+                                    )}
                                     <td className="px-4 py-3 font-bold text-rose-600 tracking-tight whitespace-nowrap">{(row as any).lwd || '31/07/2026'}</td>
                                     <td className="px-4 py-3 text-center text-slate-600">{row.days}</td>
                                     <td className="px-4 py-3 text-center text-slate-600">{(row as any).absent ?? '-'}</td>
@@ -1929,19 +2412,21 @@ export const RunPayrollModal: React.FC<{
                   <div className="flex flex-col h-full space-y-4">
 
                      <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-3">
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
-                           <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
-                           <div>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
-                              <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount}</p>
+                        {payrollType !== 'On-hold Payroll' && (
+                           <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
+                              <div>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 leading-tight relative z-10">On-hold Employees</p>
+                                 <p className="text-base font-bold text-amber-600 relative z-10">{onHoldCount}</p>
+                              </div>
+                              <button
+                                 onClick={() => setShowWizardOnHoldPanel(true)}
+                                 className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
+                              >
+                                 <Eye size={12} /> View Details
+                              </button>
                            </div>
-                           <button
-                              onClick={() => setShowWizardOnHoldPanel(true)}
-                              className="mt-2 text-[10px] font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors relative z-10"
-                           >
-                              <Eye size={12} /> View Details
-                           </button>
-                        </div>
+                        )}
                         <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all hover:shadow-md group relative overflow-hidden">
                            <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:scale-110"></div>
                            <div>
@@ -1969,12 +2454,16 @@ export const RunPayrollModal: React.FC<{
                            />
                         </div>
                         <div className="flex items-center gap-3">
-                           <button className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
-                              <Download size={16} /> Export
-                           </button>
-                           <button onClick={() => setShowImportEmployeesModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
-                              <Upload size={16} /> Import
-                           </button>
+                           {payrollType !== 'On-hold Payroll' && !isImportedPayroll && (
+                              <>
+                                 <button className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
+                                    <Download size={16} /> Export
+                                 </button>
+                                 <button onClick={() => setShowImportEmployeesModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3538CD] transition-all shadow-sm">
+                                    <Upload size={16} /> Import
+                                 </button>
+                              </>
+                           )}
                         </div>
                      </div>
 
@@ -2187,8 +2676,8 @@ export const RunPayrollModal: React.FC<{
                                                    const empStatus = payrollEmployees.find(e => e.id === row.id)?.payrollStatus;
                                                    return empStatus === 'On Hold' ? (
                                                       <button
-                                                         onClick={() => !readOnly && toggleHold(row.id)}
-                                                         disabled={readOnly}
+                                                         onClick={() => !readOnly && payrollType !== 'On-hold Payroll' && !isOnHold && toggleHold(row.id)}
+                                                         disabled={readOnly || payrollType === 'On-hold Payroll' || isOnHold}
                                                          className="p-1.5 rounded-lg border bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                          title="Release Hold"
                                                       >
@@ -2196,8 +2685,8 @@ export const RunPayrollModal: React.FC<{
                                                       </button>
                                                    ) : (
                                                       <button
-                                                         onClick={() => !readOnly && toggleHold(row.id)}
-                                                         disabled={readOnly}
+                                                         onClick={() => !readOnly && payrollType !== 'On-hold Payroll' && !isOnHold && toggleHold(row.id)}
+                                                         disabled={readOnly || payrollType === 'On-hold Payroll' || isOnHold}
                                                          className="p-1.5 rounded-lg border bg-white border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                          title="Put on Hold"
                                                       >
@@ -2206,16 +2695,16 @@ export const RunPayrollModal: React.FC<{
                                                    );
                                                 })()}
                                                 <button
-                                                   onClick={() => !readOnly && toggleEdit(row.id)}
-                                                   disabled={readOnly}
+                                                   onClick={() => !readOnly && payrollType !== 'On-hold Payroll' && !isOnHold && toggleEdit(row.id)}
+                                                   disabled={readOnly || payrollType === 'On-hold Payroll' || isOnHold}
                                                    className={`p-1.5 rounded-lg transition-all ${row.isEditing ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                                    title={row.isEditing ? "Save Changes" : "Edit Row"}
                                                 >
                                                    {row.isEditing ? <CheckCircle size={18} /> : <Edit size={18} />}
                                                 </button>
                                                 <button
-                                                   onClick={() => { if (!readOnly) { setAddCompTargetId(row.id); setShowAddCompModal(true); } }}
-                                                   disabled={readOnly}
+                                                   onClick={() => { if (!readOnly && payrollType !== 'On-hold Payroll' && !isOnHold) { setAddCompTargetId(row.id); setShowAddCompModal(true); } }}
+                                                   disabled={readOnly || payrollType === 'On-hold Payroll' || isOnHold}
                                                    className="p-1.5 rounded-lg text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                    title="Add one-time earning or deduction"
                                                 >
@@ -2387,16 +2876,18 @@ export const RunPayrollModal: React.FC<{
                                                    {emp.payrollStatus === 'On Hold' ? (
                                                       <button
                                                          onClick={() => toggleHold(emp.id)}
+                                                         disabled
                                                          title="Release"
-                                                         className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 border border-emerald-100 transition-all flex items-center justify-center"
+                                                         className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 border border-emerald-100 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-50"
                                                       >
                                                          <PlayCircle size={16} />
                                                       </button>
                                                    ) : (
                                                       <button
                                                          onClick={() => handleHoldAgain(emp.id)}
+                                                         disabled
                                                          title="Hold Again"
-                                                         className="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 border border-amber-100 transition-all flex items-center justify-center"
+                                                         className="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 border border-amber-100 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-50"
                                                       >
                                                          <PauseCircle size={16} />
                                                       </button>
@@ -3110,7 +3601,7 @@ export const RunPayrollModal: React.FC<{
                         ) : (
                            <button
                               onClick={currentStep === 2 ? () => setShowStep3ConfirmDialog(true) : handleNext}
-                              disabled={currentStep === 1 && selectedBUs.length === 0}
+                              disabled={currentStep === 1 && (selectedBUs.length === 0 || (processingMode === 'manual' && !manualImportDone))}
                               className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:shadow-none"
                            >
                               {getStepButtonLabel()} <ArrowRight size={16} />
@@ -3223,74 +3714,79 @@ export const RunPayrollModal: React.FC<{
                isOpen={showImportEmployeesModal}
                onClose={() => setShowImportEmployeesModal(false)}
                onImport={(data, headers) => {
-                  setAdjustments(prev => {
-                     const updated = prev.map(row => {
-                        const excelRow = data.find(item => {
-                           const excelCode = String(item["Employee Code"] || item["Employee ID"] || item["Code"] || "").trim().toLowerCase();
-                           const excelName = String(item["Employee Name"] || item["Name"] || "").trim().toLowerCase();
-                           
-                           const adjCode = String(row.employee_id || row.id || "").trim().toLowerCase();
-                           const adjName = String(row.name || "").trim().toLowerCase();
-                           
-                           if (excelCode && adjCode && excelCode === adjCode) return true;
-                           if (excelName && adjName && excelName === adjName) return true;
-                           return false;
-                        });
+                  // Store the raw imported data
+                  setImportedPayrollData(data);
+                  setIsImportedPayroll(true);
 
-                        if (excelRow) {
-                           const updatedRow = { ...row };
-                           let customComponents = [...(row.customComponents || [])];
+                  // Build payrollEmployees from imported rows
+                  const importedEmployees = data.map((item: any, idx: number) => ({
+                     id: `imported-${idx}`,
+                     employee_id: String(item['Employee Code'] || `IMP${String(idx + 1).padStart(3, '0')}`),
+                     first_name: String(item['Employee Name'] || 'Employee').split(' ')[0],
+                     last_name: String(item['Employee Name'] || '').split(' ').slice(1).join(' ') || String(idx + 1),
+                     department: String(item['Business Unit'] || ''),
+                     designation: '',
+                     business_unit: String(item['Business Unit'] || ''),
+                     payrollStatus: String(item['On Hold?'] || '').toLowerCase() === 'yes' ? 'On Hold' : 'Eligible',
+                     holdReason: '',
+                     holdMonth: '',
+                     status: 'Active',
+                     avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(item['Employee Name'] || idx))}`,
+                  }));
+                  setPayrollEmployees(importedEmployees);
 
-                           headers.forEach(header => {
-                              const normalizedHeader = header.trim().toLowerCase();
-                              if (
-                                 normalizedHeader === 'sr. no.' || 
-                                 normalizedHeader === 'sr.no.' || 
-                                 normalizedHeader === 'sr no' || 
-                                 normalizedHeader === 'sr no.' ||
-                                 normalizedHeader === 'employee name' || 
-                                 normalizedHeader === 'employee code' ||
-                                 normalizedHeader === 'name' ||
-                                 normalizedHeader === 'code'
-                              ) {
-                                 return;
-                              }
-
-                              const val = excelRow[header];
-                              const amount = parseFloat(val) || 0;
-
-                              if (normalizedHeader === 'bonus') {
-                                 updatedRow.bonus = amount;
-                              } else if (normalizedHeader === 'arrears') {
-                                 updatedRow.arrears = amount;
-                              } else if (normalizedHeader === 'expense reimbursement' || normalizedHeader === 'expense_reimbursement') {
-                                 updatedRow.expenseReimbursement = amount;
-                              } else if (normalizedHeader === 'lop reversal' || normalizedHeader === 'lop_reversal') {
-                                 updatedRow.lopReversal = amount;
-                              } else if (normalizedHeader === 'loan recovery' || normalizedHeader === 'loan_recovery') {
-                                 updatedRow.loanRecovery = amount;
-                              } else if (normalizedHeader === 'salary advance recovery' || normalizedHeader === 'salary_advance_recovery') {
-                                 updatedRow.salaryAdvanceRecovery = amount;
-                              } else if (normalizedHeader === 'tds' || normalizedHeader === 'actual tds' || normalizedHeader === 'actual_tds') {
-                                 updatedRow.actualTds = amount;
-                              } else {
-                                 const compIndex = customComponents.findIndex((c: any) => c.name.toLowerCase() === normalizedHeader);
-                                 if (compIndex > -1) {
-                                    customComponents[compIndex] = { ...customComponents[compIndex], amount };
-                                 } else {
-                                    customComponents.push({ name: header, amount, type: 'Earning' });
-                                 }
-                              }
-                           });
-
-                           updatedRow.customComponents = customComponents;
-                           saveAdjustmentToDb(updatedRow);
-                           return updatedRow;
-                        }
-                        return row;
-                     });
-                     return updated;
+                  // Build adjustments from imported salary data
+                  const importedAdjustments = data.map((item: any, idx: number) => {
+                     const gross = parseFloat(item['Total Gross']) || parseFloat(item['Basic Salary']) || 0;
+                     const basic = parseFloat(item['Basic Salary']) || Math.round(gross * 0.40);
+                     const hra = parseFloat(item['HRA']) || Math.round(gross * 0.20);
+                     const conveyance = parseFloat(item['Conveyance Allowance']) || 0;
+                     const medical = parseFloat(item['Medical Allowance']) || 0;
+                     const professional = parseFloat(item['Professional Allowance']) || 0;
+                     const transport = gross - basic - hra - conveyance - medical - professional > 0
+                        ? gross - basic - hra - conveyance - medical - professional
+                        : 0;
+                     const tds = parseFloat(item['TDS']) || 0;
+                     const employeePF = parseFloat(item['Employee PF']) || 0;
+                     const profTax = parseFloat(item['Professional Tax']) || 0;
+                     const netPay = parseFloat(item['Net Pay']) || 0;
+                     const totalDeductions = parseFloat(item['Total Deductions']) || tds + employeePF + profTax;
+                     const statutoryBonus = parseFloat(item['Statutory Bonus']) || 0;
+                     return {
+                        id: `imported-${idx}`,
+                        db_id: null,
+                        employee_id: String(item['Employee Code'] || `IMP${String(idx + 1).padStart(3, '0')}`),
+                        name: String(item['Employee Name'] || `Employee ${idx + 1}`),
+                        gross,
+                        salaryComponents: [
+                           { name: 'Basic', amount: basic, type: 'Earning' },
+                           { name: 'HRA', amount: hra, type: 'Earning' },
+                           { name: 'Conveyance Allowance', amount: conveyance, type: 'Earning' },
+                           { name: 'Medical Allowance', amount: medical, type: 'Earning' },
+                           { name: 'Professional Allowance', amount: professional, type: 'Earning' },
+                           { name: 'Statutory Bonus', amount: statutoryBonus, type: 'Earning' },
+                        ].filter(c => c.amount > 0),
+                        customComponents: [],
+                        bonus: 0,
+                        arrears: 0,
+                        loanRecovery: 0,
+                        salaryAdvanceRecovery: 0,
+                        expenseReimbursement: 0,
+                        lop: 0,
+                        lop_reversal: 0,
+                        lopReversal: 0,
+                        other: 0,
+                        proposedTds: tds,
+                        actualTds: tds,
+                        employeePF,
+                        profTax,
+                        totalDeductions,
+                        netPay,
+                        is_exit: false,
+                        isEditing: false,
+                     };
                   });
+                  setAdjustments(importedAdjustments);
                }}
             />
 
@@ -3580,7 +4076,7 @@ export const RunPayrollModal: React.FC<{
             )}
             {showStep3ConfirmDialog && (
                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
                      <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-blue-50">
                         <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
                            <Info size={20} />
@@ -3597,7 +4093,7 @@ export const RunPayrollModal: React.FC<{
                      <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
                         <button
                            onClick={() => setShowStep3ConfirmDialog(false)}
-                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-md font-bold text-sm hover:bg-slate-50 transition-colors"
                         >
                            No
                         </button>
@@ -3606,7 +4102,7 @@ export const RunPayrollModal: React.FC<{
                               setCurrentStep(3);
                               setShowStep3ConfirmDialog(false);
                            }}
-                           className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all"
+                           className="px-8 py-2 bg-blue-600 text-white rounded-md font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all"
                         >
                            Yes
                         </button>
@@ -3616,7 +4112,7 @@ export const RunPayrollModal: React.FC<{
             )}
             {showStep4BackConfirmDialog && (
                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
                      <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-rose-50">
                         <div className="p-2 bg-rose-100 text-rose-600 rounded-xl">
                            <AlertTriangle size={20} />
@@ -3633,7 +4129,7 @@ export const RunPayrollModal: React.FC<{
                      <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
                         <button
                            onClick={() => setShowStep4BackConfirmDialog(false)}
-                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-md font-bold text-sm hover:bg-slate-50 transition-colors"
                         >
                            No
                         </button>
@@ -3642,7 +4138,7 @@ export const RunPayrollModal: React.FC<{
                               setCurrentStep(2);
                               setShowStep4BackConfirmDialog(false);
                            }}
-                           className="px-8 py-2 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200/50 transition-all"
+                           className="px-8 py-2 bg-rose-600 text-white rounded-md font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200/50 transition-all"
                         >
                            Yes
                         </button>
@@ -3652,7 +4148,7 @@ export const RunPayrollModal: React.FC<{
             )}
             {showStep4NextConfirmDialog && (
                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
                      <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-blue-50">
                         <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
                            <Info size={20} />
@@ -3669,7 +4165,7 @@ export const RunPayrollModal: React.FC<{
                      <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
                         <button
                            onClick={() => setShowStep4NextConfirmDialog(false)}
-                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-md font-bold text-sm hover:bg-slate-50 transition-colors"
                         >
                            No
                         </button>
@@ -3678,7 +4174,7 @@ export const RunPayrollModal: React.FC<{
                               setCurrentStep(4);
                               setShowStep4NextConfirmDialog(false);
                            }}
-                           className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all"
+                           className="px-8 py-2 bg-blue-600 text-white rounded-md font-bold text-sm hover:bg-blue-700 shadow-md shadow-blue-200/50 transition-all"
                         >
                            Yes
                         </button>
@@ -3688,7 +4184,7 @@ export const RunPayrollModal: React.FC<{
             )}
             {showStep5BackConfirmDialog && (
                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                  <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
                      <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-rose-50">
                         <div className="p-2 bg-rose-100 text-rose-600 rounded-xl">
                            <AlertTriangle size={20} />
@@ -3705,7 +4201,7 @@ export const RunPayrollModal: React.FC<{
                      <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
                         <button
                            onClick={() => setShowStep5BackConfirmDialog(false)}
-                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                           className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-md font-bold text-sm hover:bg-slate-50 transition-colors"
                         >
                            No
                         </button>
@@ -3714,7 +4210,7 @@ export const RunPayrollModal: React.FC<{
                               setCurrentStep(3);
                               setShowStep5BackConfirmDialog(false);
                            }}
-                           className="px-8 py-2 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200/50 transition-all"
+                           className="px-8 py-2 bg-rose-600 text-white rounded-md font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200/50 transition-all"
                         >
                            Yes
                         </button>
@@ -3986,38 +4482,47 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOp
    if (!isOpen) return null;
 
    const handleDownloadSample = async () => {
-      let variableComponents: string[] = [];
-      try {
-         const { data, error } = await supabase
-            .from('salary_components')
-            .select('name')
-            .eq('type', 'Variable Pay')
-            .eq('status', true);
-         
-         if (error) throw error;
-         if (data && data.length > 0) {
-            variableComponents = data.map(item => item.name);
-         } else {
-            variableComponents = ["Performance Bonus", "Retention Bonus", "Referral Bonus", "Penalty Deduction"];
-         }
-      } catch (err) {
-         console.error("Error fetching variable components:", err);
-         variableComponents = ["Performance Bonus", "Retention Bonus", "Referral Bonus", "Penalty Deduction"];
-      }
-
       const headers = [
-         "Sr. No.",
+         "Payroll Type",
+         "Month",
+         "Business Unit",
          "Employee Name",
          "Employee Code",
-         ...variableComponents
+         "Absent Days",
+         "Present Days",
+         "Paid Leaves",
+         "Unpaid Leaves",
+         "LOP Days",
+         "Payable Days",
+         "Basic Salary",
+         "Conveyance Allowance",
+         "HRA",
+         "Medical Allowance",
+         "Professional Allowance",
+         "Statutory Bonus",
+         "Professional Tax",
+         "Employee PF",
+         "TDS",
+         "PF Charges",
+         "EDLI Contribution",
+         "EDLI Charges",
+         "Employer PF",
+         "Employer Gratuity",
+         "Total Gross",
+         "Total Deductions",
+         "Net Pay",
+         "Total CTC",
+         "On Hold?"
       ];
       
       const rows = [
          [
-            1,
+            "Regular Monthly Payroll",
+            "July 2026",
+            "Mindinventory",
             "Sachin Tendulkar",
             "CO-059",
-            ...variableComponents.map(() => "")
+            ...Array(25).fill("")
          ]
       ];
 
