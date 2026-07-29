@@ -40,6 +40,17 @@ const FALLBACK_DESIGNATIONS = [
     "Director"
 ];
 
+const FINANCIAL_YEARS = (() => {
+    const now = new Date();
+    const currentFyStart = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    const years: string[] = [];
+    for (let i = 1; i >= -5; i--) {
+        const start = currentFyStart + i;
+        years.push(`${start}-${String((start + 1) % 100).padStart(2, '0')}`);
+    }
+    return years;
+})();
+
 const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     // Selection State
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
@@ -98,12 +109,18 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     // TDS Data State
     const [enableTds, setEnableTds] = useState(true);
     const [tan, setTan] = useState('DELA12345B');
+    const [financialYear, setFinancialYear] = useState('');
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
     const [respName, setRespName] = useState('Rajesh Kumar');
     const [respDesg, setRespDesg] = useState('Finance Manager');
     const [respEmail, setRespEmail] = useState('rajesh.k@techflow.com');
     const [employeesList, setEmployeesList] = useState<string[]>([]);
     const [designationsList, setDesignationsList] = useState<string[]>([]);
+
+    // Auto-populated (read-only) from Organization Tax Details
+    const [orgPanNumber, setOrgPanNumber] = useState('');
+    const [orgGstin, setOrgGstin] = useState('');
+    const [orgCompanyAddress, setOrgCompanyAddress] = useState('');
 
     // Backup states
     const [backupPf, setBackupPf] = useState<any>(null);
@@ -236,11 +253,26 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             if (!tdsError && tdsData?.config_value) {
                 const config = tdsData.config_value;
                 setEnableTds(config.enableTds ?? true);
-                setTan(config.tan ?? 'DELA12345B');
+                setFinancialYear(config.financialYear ?? '');
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setRespName(config.respName ?? 'Rajesh Kumar');
                 setRespDesg(config.respDesg ?? 'Finance Manager');
                 setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
+            }
+
+            // Auto-populate PAN, TAN, GST & Company Address from Organization Tax Details
+            const { data: orgTaxData, error: orgTaxError } = await supabase.from('operational_config').select('config_value').eq('config_key', 'organization_tax_details').single();
+            if (!orgTaxError && orgTaxData?.config_value) {
+                const buName = selectedTarget.replace('bu:', '');
+                const orgConfig = orgTaxData.config_value[buName];
+                if (orgConfig) {
+                    setTan(orgConfig.tanNumber ?? '');
+                    setOrgPanNumber(orgConfig.panNumber ?? '');
+                    setOrgGstin(orgConfig.gstin ?? '');
+                    setOrgCompanyAddress(orgConfig.companyAddress ?? '');
+                } else {
+                    setTan(''); setOrgPanNumber(''); setOrgGstin(''); setOrgCompanyAddress('');
+                }
             }
         } catch (err) { console.error('Error fetching settings:', err); }
     };
@@ -294,13 +326,13 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         };
 
     const handleEditTds = () => {
-        setBackupTds({ enableTds, tan, defaultRegime, respName, respDesg, respEmail });
+        setBackupTds({ enableTds, financialYear, defaultRegime, respName, respDesg, respEmail });
         setIsEditingTds(true);
     };
 
     const handleSaveTds = async () => {
         try {
-            const configValue = { enableTds, tan, defaultRegime, respName, respDesg, respEmail };
+            const configValue = { enableTds, financialYear, defaultRegime, respName, respDesg, respEmail };
             const { error } = await supabase.from('operational_config').upsert({ config_key: `tds_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
             if (error) throw error;
             setIsEditingTds(false);
@@ -309,7 +341,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const handleCancelTds = () => {
         if (backupTds) {
-            setEnableTds(backupTds.enableTds); setTan(backupTds.tan); setDefaultRegime(backupTds.defaultRegime); setRespName(backupTds.respName); setRespDesg(backupTds.respDesg); setRespEmail(backupTds.respEmail);
+            setEnableTds(backupTds.enableTds); setFinancialYear(backupTds.financialYear); setDefaultRegime(backupTds.defaultRegime); setRespName(backupTds.respName); setRespDesg(backupTds.respDesg); setRespEmail(backupTds.respEmail);
         }
         setIsEditingTds(false);
     };
@@ -1210,12 +1242,6 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">TDS CONFIGURATION</h3>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <div className="flex items-center pr-6 border-r border-slate-200">
-                                            <label className={`relative inline-flex items-center cursor-pointer ${!isEditingTds && 'cursor-default opacity-80'}`}>
-                                                <input type="checkbox" checked={enableTds} onChange={() => isEditingTds && setEnableTds(!enableTds)} className="sr-only peer" />
-                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
-                                            </label>
-                                        </div>
                                         <div className="flex items-center gap-4">
                                             {isEditingTds ? (
                                                 <div className="flex gap-2">
@@ -1235,10 +1261,35 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
                                     {enableTds && (
                                         <div className="space-y-10 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <div className="grid grid-cols-1 gap-10">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Financial Year <span className="text-rose-500">*</span></label>
+                                                    <div className="relative group">
+                                                        <select
+                                                            value={financialYear}
+                                                            onChange={e => setFinancialYear(e.target.value)}
+                                                            disabled={!isEditingTds}
+                                                            className="w-full pl-5 pr-10 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="">Select Financial Year...</option>
+                                                            {FINANCIAL_YEARS.map(fy => (
+                                                                <option key={fy} value={fy}>{fy}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                    </div>
+                                                </div>
                                                 <div>
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN Number <span className="text-rose-500">*</span></label>
-                                                    <input type="text" value={tan} onChange={e => setTan(e.target.value)} disabled={!isEditingTds} className="w-full md:w-80 px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:normal-case disabled:opacity-70" placeholder="e.g., DELA12345B" />
+                                                    <input type="text" value={tan} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">PAN Number</label>
+                                                    <input type="text" value={orgPanNumber} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">GST Number</label>
+                                                    <input type="text" value={orgGstin} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
                                                 </div>
                                             </div>
 
@@ -1292,6 +1343,10 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="name@company.com" />
                                                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
                                                         </div>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Company Address</label>
+                                                        <input type="text" value={orgCompanyAddress} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 transition-all opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
                                                     </div>
                                                 </div>
                                             </div>

@@ -2744,7 +2744,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                                 className="rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7] cursor-pointer w-4 h-4"
                                             />
                                             <span className="text-sm font-bold text-slate-700 leading-none">
-                                                Replace the cell value if existing data found.
+                                                Override the existing data.
                                             </span>
                                         </label>
                                     </div>

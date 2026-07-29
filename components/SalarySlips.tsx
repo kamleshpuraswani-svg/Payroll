@@ -2,14 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 
-import { 
-  Download, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Download,
+  FileCheck,
+  TrendingUp,
+  TrendingDown,
   CreditCard,
-  Eye,
-  EyeOff,
-  Lock,
   X
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -86,12 +84,13 @@ const MOCK_PAYSLIPS_DATA: Record<string, PayslipData> = {
   'Jan 2024': { month: 'Jan', year: '2024', creditedDate: '07/01/2024', netPay: 66500, netPayWords: 'Sixty-Six Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 38000 }, { name: 'HRA', amount: 18000 }, { name: 'Special Allowance', amount: 10500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }], reimbursements: [], taxDonut: [] },
 };
 
-export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ currentEmployeeId = 'TF00912' }) => {
+export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValues?: boolean }> = ({ currentEmployeeId = 'TF00912', showValues = false }) => {
   const [selectedYear, setSelectedYear] = useState('2026');
   const [activeMonth, setActiveMonth] = useState('');
-  const [showValues, setShowValues] = useState(false);
   const [payslipsMap, setPayslipsMap] = useState<Record<string, PayslipData>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
+  const showHeaderDownloadButton = false; // Hidden for now, per request. Set to true to bring it back.
 
   useEffect(() => {
     fetchPayslips();
@@ -145,17 +144,11 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
     }
   };
 
-  
-  // Password Modal State
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-
   const slip = payslipsMap[activeMonth];
   const totalEarnings = slip ? slip.earnings.reduce((s, i) => s + i.amount, 0) : 0;
   const totalDeductions = slip ? slip.deductions.reduce((s, i) => s + i.amount, 0) : 0;
   const totalReimbursements = slip ? slip.reimbursements.reduce((s, i) => s + i.amount, 0) : 0;
-  
+
   const lopDays = slip ? slip.totalWorkingDays - slip.processedDays : 0;
 
   const availableMonths = Object.keys(payslipsMap)
@@ -183,26 +176,6 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
       setActiveMonth(monthsInYear[0]);
     } else {
       setActiveMonth('');
-    }
-  };
-
-  const handleToggleVisibility = () => {
-    if (showValues) {
-      setShowValues(false);
-    } else {
-      setIsPasswordModalOpen(true);
-      setPasswordInput('');
-      setPasswordError('');
-    }
-  };
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput === '1234') {
-      setShowValues(true);
-      setIsPasswordModalOpen(false);
-    } else {
-      setPasswordError('Incorrect password. Try 1234.');
     }
   };
 
@@ -321,24 +294,14 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
                  </div>
               </div>
               <div className="flex items-center gap-3">
-                 <div className="text-right mr-4">
-                    <h3 className="text-sm font-black text-slate-900 tracking-tighter">PAYSLIP #{slip.month.toUpperCase()}-{slip.year}</h3>
-                 </div>
-                 
-                 <button 
-                    onClick={handleToggleVisibility}
-                    className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all active:scale-95 border border-slate-100"
-                    title={showValues ? "Hide sensitive values" : "Show sensitive values"}
-                 >
-                    {showValues ? <EyeOff size={20}/> : <Eye size={20}/>}
-                 </button>
-
-                 <button 
-                   onClick={handleDownloadPDF}
-                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 h-12 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
-                 >
-                   <Download size={18}/> Download PDF
-                 </button>
+                 {showHeaderDownloadButton && (
+                    <button
+                      onClick={handleDownloadPDF}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 h-12 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
+                    >
+                      <Download size={18}/> Download
+                    </button>
+                 )}
               </div>
            </div>
 
@@ -348,173 +311,179 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string }> = ({ cu
            <div className="p-8">
               <div className="grid grid-cols-7 gap-6">
                  <InfoItem label="Employee Name" value="Priya Sharma" />
-                 <InfoItem label="Employee ID" value="TF00123" />
+                 <InfoItem label="Employee Code" value="TF00123" />
                  <InfoItem label="Designation" value="Senior Engineer" />
                  <InfoItem label="Department" value="Engineering" />
-                 <InfoItem label="Working Days" value={`${slip.totalWorkingDays} Days`} />
-                 <InfoItem label="Paid Days" value={`${slip.processedDays} Days`} />
+                 <InfoItem label="Total Working Days" value={`${slip.totalWorkingDays} Days`} />
+                 <InfoItem label="Payable Days" value={`${slip.processedDays} Days`} />
                  <InfoItem label="LOP Days" value={`${lopDays} Days`} isWarning={lopDays > 0} />
               </div>
            </div>
         </div>
 
-        {/* SALARY BREAKDOWN & FOOTER MERGED CARD */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-           
-           {/* Earnings */}
-           <div className="group">
-              <div className="w-full px-8 py-5 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
-                       <TrendingUp size={16}/>
-                    </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Earnings</span>
-                 </div>
-                 <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-emerald-600">Total: {formatCurrency(totalEarnings)}</span>
-                 </div>
-              </div>
-              <div className="px-8 pb-6">
-                 <table className="w-full text-left">
-                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                       <tr>
-                          <th className="py-4">Component</th>
-                          <th className="py-4 text-right">Amount (INR)</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                       {slip.earnings.map((e) => (
-                         <tr key={e.name} className="hover:bg-slate-50/50 transition-colors group">
-                            <td className="py-4 text-sm font-medium text-slate-700">{e.name}</td>
-                            <td className="py-4 text-right font-black text-slate-900">{formatCurrency(e.amount)}</td>
-                         </tr>
-                       ))}
-                    </tbody>
-                 </table>
-              </div>
+        {/* Payslip Generated Notice */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center">
+           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+              <FileCheck size={24} />
            </div>
-
-           <div className="h-px bg-slate-100 mx-8"></div>
-
-           {/* Deductions */}
-           <div className="group">
-              <div className="w-full px-8 py-5 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
-                       <TrendingDown size={16}/>
-                    </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Deductions</span>
-                 </div>
-                 <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-amber-600">Total: {formatCurrency(totalDeductions)}</span>
-                 </div>
-              </div>
-              <div className="px-8 pb-6">
-                 <table className="w-full text-left">
-                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                       <tr>
-                          <th className="py-4">Component</th>
-                          <th className="py-4 text-right">Amount (INR)</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                       {slip.deductions.map((d) => (
-                         <tr key={d.name} className="hover:bg-slate-50/50 transition-colors group">
-                            <td className="py-4 text-sm font-medium text-slate-700">{d.name}</td>
-                            <td className="py-4 text-right font-black text-slate-900 text-red-400">- {formatCurrency(d.amount)}</td>
-                         </tr>
-                       ))}
-                    </tbody>
-                 </table>
-              </div>
-           </div>
-
-           <div className="h-px bg-slate-100 mx-8"></div>
-
-           {/* Reimbursements */}
-           <div className="group">
-              <div className="w-full px-8 py-5 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gold/10 text-gold rounded-lg flex items-center justify-center">
-                       <CreditCard size={16}/>
-                    </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Reimbursements</span>
-                 </div>
-                 <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-gold">Total: {formatCurrency(totalReimbursements)}</span>
-                 </div>
-              </div>
-              <div className="px-8 pb-6">
-                 <table className="w-full text-left">
-                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                       <tr>
-                          <th className="py-4">Claim Detail</th>
-                          <th className="py-4 text-right">Amount (INR)</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                       {slip.reimbursements.length > 0 ? slip.reimbursements.map((r) => (
-                         <tr key={r.name} className="hover:bg-slate-50/50 transition-colors group">
-                            <td className="py-4 text-sm font-medium text-slate-700">{r.name}</td>
-                            <td className="py-4 text-right font-black text-slate-900">{formatCurrency(r.amount)}</td>
-                         </tr>
-                       )) : (
-                         <tr>
-                            <td className="py-8 text-center text-slate-400 text-xs italic" colSpan={2}>No reimbursements processed in this cycle.</td>
-                         </tr>
-                       )}
-                    </tbody>
-                 </table>
-              </div>
-           </div>
-
-           {/* SUMMARY FOOTER MERGED INSIDE */}
-           <div className="bg-blue-600 p-6 text-white shadow-2xl relative overflow-hidden flex items-center justify-between">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-48 translate-x-48"></div>
-              
-              <div className="relative z-10 space-y-1">
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 opacity-80">Final Payout Amount</p>
-                 <h2 className="text-4xl font-black tracking-tighter">{formatCurrency(slip.netPay)}</h2>
-                 <p className="text-xs font-medium italic text-blue-100 opacity-60">({showValues ? slip.netPayWords : '•••••••••••••••••••••'})</p>
-              </div>
-           </div>
-
+           <h3 className="text-sm font-black text-slate-900">Payslip generated for {slip.month} {slip.year}</h3>
+           <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 mt-5 bg-blue-600 hover:bg-blue-700 text-white px-6 h-12 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
+           >
+              <Download size={18} /> Download Payslip
+           </button>
         </div>
 
       </div>
       )}
 
-      {/* Password Modal */}
-      {isPasswordModalOpen && (
+      {/* Payslip Detail Modal */}
+      {isPayslipModalOpen && slip && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden p-6">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="font-bold text-slate-800">Enter Password</h3>
-                 <button onClick={() => setIsPasswordModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Payslip - {slip.month} {slip.year}</h3>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">CollabCRM Systems Pvt Ltd</p>
               </div>
-              
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Password</label>
-                    <div className="relative">
-                        <input 
-                           type="password" 
-                           value={passwordInput}
-                           onChange={(e) => setPasswordInput(e.target.value)}
-                           className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500"
-                           placeholder="Enter 1234"
-                           autoFocus
-                        />
-                        <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-all active:scale-95"
+                >
+                  <Download size={16}/> Download as PDF
+                </button>
+                <button onClick={() => setIsPayslipModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">
+                  <X size={20}/>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto">
+
+              {/* Earnings */}
+              <div className="group">
+                <div className="w-full px-8 py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                      <TrendingUp size={16}/>
                     </div>
-                    {passwordError && <p className="text-xs text-red-500 mt-2 font-medium">{passwordError}</p>}
-                 </div>
-                 
-                 <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-blue-100">
-                    Unlock View
-                 </button>
-              </form>
-           </div>
+                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Earnings</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-black text-emerald-600">Total: {formatCurrency(totalEarnings)}</span>
+                  </div>
+                </div>
+                <div className="px-8 pb-6">
+                  <table className="w-full text-left">
+                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
+                      <tr>
+                        <th className="py-4">Component</th>
+                        <th className="py-4 text-right">Amount (INR)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {slip.earnings.map((e) => (
+                        <tr key={e.name} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="py-4 text-sm font-medium text-slate-700">{e.name}</td>
+                          <td className="py-4 text-right font-black text-slate-900">{formatCurrency(e.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="h-px bg-slate-100 mx-8"></div>
+
+              {/* Deductions */}
+              <div className="group">
+                <div className="w-full px-8 py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                      <TrendingDown size={16}/>
+                    </div>
+                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Deductions</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-black text-amber-600">Total: {formatCurrency(totalDeductions)}</span>
+                  </div>
+                </div>
+                <div className="px-8 pb-6">
+                  <table className="w-full text-left">
+                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
+                      <tr>
+                        <th className="py-4">Component</th>
+                        <th className="py-4 text-right">Amount (INR)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {slip.deductions.map((d) => (
+                        <tr key={d.name} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="py-4 text-sm font-medium text-slate-700">{d.name}</td>
+                          <td className="py-4 text-right font-black text-slate-900 text-red-400">- {formatCurrency(d.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="h-px bg-slate-100 mx-8"></div>
+
+              {/* Reimbursements */}
+              <div className="group">
+                <div className="w-full px-8 py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gold/10 text-gold rounded-lg flex items-center justify-center">
+                      <CreditCard size={16}/>
+                    </div>
+                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Reimbursements</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-black text-gold">Total: {formatCurrency(totalReimbursements)}</span>
+                  </div>
+                </div>
+                <div className="px-8 pb-6">
+                  <table className="w-full text-left">
+                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
+                      <tr>
+                        <th className="py-4">Claim Detail</th>
+                        <th className="py-4 text-right">Amount (INR)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {slip.reimbursements.length > 0 ? slip.reimbursements.map((r) => (
+                        <tr key={r.name} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="py-4 text-sm font-medium text-slate-700">{r.name}</td>
+                          <td className="py-4 text-right font-black text-slate-900">{formatCurrency(r.amount)}</td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td className="py-8 text-center text-slate-400 text-xs italic" colSpan={2}>No reimbursements processed in this cycle.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Net Pay Footer */}
+              <div className="bg-blue-600 p-6 text-white shadow-2xl relative overflow-hidden flex items-center justify-between">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-48 translate-x-48"></div>
+                <div className="relative z-10 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 opacity-80">Final Payout Amount</p>
+                  <h2 className="text-4xl font-black tracking-tighter">{formatCurrency(slip.netPay)}</h2>
+                  <p className="text-xs font-medium italic text-blue-100 opacity-60">({showValues ? slip.netPayWords : '•••••••••••••••••••••'})</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       )}
 

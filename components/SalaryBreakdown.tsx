@@ -55,9 +55,9 @@ const BASE_DEDUCTIONS = [
 ];
 
 const BASE_DONUT_DATA = [
-  { name: 'Basic & Fixed', value: 980000, color: '#3B82F6' },
-  { name: 'Benefits (FBP)', value: 124000, color: '#F59E0B' },
-  { name: 'Statutory', value: 96000, color: '#8B5CF6' },
+  { name: 'Earnings', value: 980000, color: '#3B82F6' },
+  { name: 'Employee Deductions', value: 124000, color: '#F59E0B' },
+  { name: 'Employer Contributions', value: 96000, color: '#8B5CF6' },
 ];
 
 export const SalaryBreakdownModule: React.FC = () => {
@@ -237,7 +237,7 @@ export const SalaryBreakdownModule: React.FC = () => {
               <div key={d.name} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                 <span className="text-xs text-slate-600">
-                  {d.name} {showValues ? `₹${(d.value / 100000).toFixed(1)}L` : '••••'}
+                  {d.name}
                 </span>
               </div>
             ))}
@@ -247,7 +247,7 @@ export const SalaryBreakdownModule: React.FC = () => {
 
       {/* Salary Slips Section */}
       <div>
-        <SalarySlipsModule />
+        <SalarySlipsModule showValues={showValues} />
       </div>
 
       {/* Password Modal */}

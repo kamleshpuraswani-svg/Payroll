@@ -30,6 +30,9 @@ const OrganizationTaxDetails: React.FC = () => {
     const [viewMode, setViewMode] = useState<'cards' | 'details'>('cards');
     const [isEditing, setIsEditing] = useState(false);
 
+    // Company Information
+    const [companyAddress, setCompanyAddress] = useState('123, Business Park, Sector 4, Bangalore - 560001');
+
     // Statutory Identifiers
     const [panNumber, setPanNumber] = useState('ABCDE1234F');
     const [tanNumber, setTanNumber] = useState('BLRT12345C');
@@ -88,6 +91,7 @@ const OrganizationTaxDetails: React.FC = () => {
     useEffect(() => {
         const config = allBuConfigs[selectedBusinessUnit];
         if (config) {
+            setCompanyAddress(config.companyAddress || '123, Business Park, Sector 4, Bangalore - 560001');
             setPanNumber(config.panNumber || 'ABCDE1234F');
             setTanNumber(config.tanNumber || 'BLRT12345C');
             setGstin(config.gstin || '29ABCDE1234F1Z5');
@@ -107,6 +111,7 @@ const OrganizationTaxDetails: React.FC = () => {
             setBranch(config.branch || '');
         } else {
             // Revert to defaults if no specific config exists for this BU
+            setCompanyAddress('123, Business Park, Sector 4, Bangalore - 560001');
             setPanNumber('ABCDE1234F');
             setTanNumber('BLRT12345C');
             setGstin('29ABCDE1234F1Z5');
@@ -142,6 +147,7 @@ const OrganizationTaxDetails: React.FC = () => {
             } else {
                 setAllBuConfigs({
                     'MindInventory': {
+                        companyAddress: '123, Business Park, Sector 4, Bangalore - 560001',
                         panNumber: 'ABCDE1234F',
                         tanNumber: 'BLRT12345C',
                         gstin: '29ABCDE1234F1Z5',
@@ -163,6 +169,7 @@ const OrganizationTaxDetails: React.FC = () => {
             console.error('Error fetching config:', err);
             setAllBuConfigs({
                 'MindInventory': {
+                    companyAddress: '123, Business Park, Sector 4, Bangalore - 560001',
                     panNumber: 'ABCDE1234F',
                     tanNumber: 'BLRT12345C',
                     gstin: '29ABCDE1234F1Z5',
@@ -195,6 +202,7 @@ const OrganizationTaxDetails: React.FC = () => {
         try {
             // Build config for the CURRENT selected BU
             const currentBuFields = {
+                companyAddress,
                 panNumber, tanNumber, gstin,
                 ao1, ao2, ao3, ao4,
                 frequency,
@@ -351,7 +359,8 @@ const OrganizationTaxDetails: React.FC = () => {
                                         <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Company Address <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
-                                            defaultValue="123, Business Park, Sector 4, Bangalore - 560001"
+                                            value={companyAddress}
+                                            onChange={e => setCompanyAddress(e.target.value)}
                                             disabled={!isEditing}
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 transition-colors"
                                         />
