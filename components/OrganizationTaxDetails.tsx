@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Edit2, ShieldCheck, Info, ChevronDown, Building2, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { Country, State, ICountry, IState } from 'country-state-city';
 
 const BUSINESS_UNITS = [
     "MindInventory",
@@ -31,7 +32,15 @@ const OrganizationTaxDetails: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
 
     // Company Information
-    const [companyAddress, setCompanyAddress] = useState('123, Business Park, Sector 4, Bangalore - 560001');
+    const [address, setAddress] = useState('123, Business Park, Sector 4, Bangalore - 560001');
+    const [country, setCountry] = useState('IN');
+    const [state, setState] = useState('KA');
+    const [townCity, setTownCity] = useState('Bangalore');
+    const [zipCode, setZipCode] = useState('560001');
+
+    // Country/State dropdown data
+    const allCountries: ICountry[] = Country.getAllCountries();
+    const statesForCountry: IState[] = country ? State.getStatesOfCountry(country) : [];
 
     // Statutory Identifiers
     const [panNumber, setPanNumber] = useState('ABCDE1234F');
@@ -91,7 +100,11 @@ const OrganizationTaxDetails: React.FC = () => {
     useEffect(() => {
         const config = allBuConfigs[selectedBusinessUnit];
         if (config) {
-            setCompanyAddress(config.companyAddress || '123, Business Park, Sector 4, Bangalore - 560001');
+            setAddress(config.address || '123, Business Park, Sector 4, Bangalore - 560001');
+            setCountry(config.country || 'IN');
+            setState(config.state || 'KA');
+            setTownCity(config.townCity || 'Bangalore');
+            setZipCode(config.zipCode || '560001');
             setPanNumber(config.panNumber || 'ABCDE1234F');
             setTanNumber(config.tanNumber || 'BLRT12345C');
             setGstin(config.gstin || '29ABCDE1234F1Z5');
@@ -111,7 +124,11 @@ const OrganizationTaxDetails: React.FC = () => {
             setBranch(config.branch || '');
         } else {
             // Revert to defaults if no specific config exists for this BU
-            setCompanyAddress('123, Business Park, Sector 4, Bangalore - 560001');
+            setAddress('123, Business Park, Sector 4, Bangalore - 560001');
+            setCountry('IN');
+            setState('KA');
+            setTownCity('Bangalore');
+            setZipCode('560001');
             setPanNumber('ABCDE1234F');
             setTanNumber('BLRT12345C');
             setGstin('29ABCDE1234F1Z5');
@@ -147,7 +164,11 @@ const OrganizationTaxDetails: React.FC = () => {
             } else {
                 setAllBuConfigs({
                     'MindInventory': {
-                        companyAddress: '123, Business Park, Sector 4, Bangalore - 560001',
+                        address: '123, Business Park, Sector 4, Bangalore - 560001',
+                        country: 'IN',
+                        state: 'KA',
+                        townCity: 'Bangalore',
+                        zipCode: '560001',
                         panNumber: 'ABCDE1234F',
                         tanNumber: 'BLRT12345C',
                         gstin: '29ABCDE1234F1Z5',
@@ -202,7 +223,7 @@ const OrganizationTaxDetails: React.FC = () => {
         try {
             // Build config for the CURRENT selected BU
             const currentBuFields = {
-                companyAddress,
+                address, country, state, townCity, zipCode,
                 panNumber, tanNumber, gstin,
                 ao1, ao2, ao3, ao4,
                 frequency,
@@ -356,12 +377,77 @@ const OrganizationTaxDetails: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Company Address <span className="text-rose-500">*</span></label>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Address <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
-                                            value={companyAddress}
-                                            onChange={e => setCompanyAddress(e.target.value)}
+                                            value={address}
+                                            onChange={e => setAddress(e.target.value.slice(0, 255))}
                                             disabled={!isEditing}
+                                            maxLength={255}
+                                            placeholder="Enter address"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 transition-colors"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Country <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <select
+                                                value={country}
+                                                onChange={e => { setCountry(e.target.value); setState(''); }}
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 appearance-none focus:outline-none focus:border-sky-500 transition-colors"
+                                            >
+                                                <option value="">Select Country</option>
+                                                {allCountries.map(c => (
+                                                    <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">State <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <select
+                                                value={state}
+                                                onChange={e => setState(e.target.value)}
+                                                disabled={!isEditing || !country}
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 appearance-none focus:outline-none focus:border-sky-500 transition-colors disabled:opacity-60"
+                                            >
+                                                <option value="">Select State</option>
+                                                {statesForCountry.map(s => (
+                                                    <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Town/City <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={townCity}
+                                            onChange={e => setTownCity(e.target.value)}
+                                            disabled={!isEditing}
+                                            placeholder="Enter town/city"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Zip/Postal Code <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={zipCode}
+                                            onChange={e => setZipCode(e.target.value.replace(/\D/g, ''))}
+                                            disabled={!isEditing}
+                                            placeholder="Enter zip/postal code"
                                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 transition-colors"
                                         />
                                     </div>

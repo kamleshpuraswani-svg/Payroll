@@ -5,6 +5,7 @@ import {
     Plus, Search, User, Briefcase, AlertCircle, Mail, Landmark, Save
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { Country, State, ICountry, IState } from 'country-state-city';
 
 const BUSINESS_UNITS = [
     "MindInventory",
@@ -113,14 +114,25 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [defaultRegime, setDefaultRegime] = useState('New Regime');
     const [respName, setRespName] = useState('Rajesh Kumar');
     const [respDesg, setRespDesg] = useState('Finance Manager');
+    const [respFatherName, setRespFatherName] = useState('');
     const [respEmail, setRespEmail] = useState('rajesh.k@techflow.com');
+    const [respMobile, setRespMobile] = useState('');
+    const [respPan, setRespPan] = useState('');
     const [employeesList, setEmployeesList] = useState<string[]>([]);
     const [designationsList, setDesignationsList] = useState<string[]>([]);
+
+    // Address fields (auto-populated from Organization Tax Details, editable)
+    const [tdsAddress, setTdsAddress] = useState('');
+    const [tdsCountry, setTdsCountry] = useState('');
+    const [tdsState, setTdsState] = useState('');
+    const [tdsTownCity, setTdsTownCity] = useState('');
+    const [tdsZipCode, setTdsZipCode] = useState('');
+    const allCountries: ICountry[] = Country.getAllCountries();
+    const tdsStatesForCountry: IState[] = tdsCountry ? State.getStatesOfCountry(tdsCountry) : [];
 
     // Auto-populated (read-only) from Organization Tax Details
     const [orgPanNumber, setOrgPanNumber] = useState('');
     const [orgGstin, setOrgGstin] = useState('');
-    const [orgCompanyAddress, setOrgCompanyAddress] = useState('');
 
     // Backup states
     const [backupPf, setBackupPf] = useState<any>(null);
@@ -249,6 +261,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setPfPerquisiteRate(config.pfPerquisiteRate ?? '8.25');
                 setPfPerquisiteLimit(config.pfPerquisiteLimit ?? '250000');
             }
+            let savedTdsHasAddress = false;
             const { data: tdsData, error: tdsError } = await supabase.from('operational_config').select('config_value').eq('config_key', `tds_settings:${selectedTarget}`).single();
             if (!tdsError && tdsData?.config_value) {
                 const config = tdsData.config_value;
@@ -257,10 +270,21 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 setDefaultRegime(config.defaultRegime ?? 'New Regime');
                 setRespName(config.respName ?? 'Rajesh Kumar');
                 setRespDesg(config.respDesg ?? 'Finance Manager');
+                setRespFatherName(config.respFatherName ?? '');
                 setRespEmail(config.respEmail ?? 'rajesh.k@techflow.com');
+                setRespMobile(config.respMobile ?? '');
+                setRespPan(config.respPan ?? '');
+                if (config.address !== undefined) {
+                    savedTdsHasAddress = true;
+                    setTdsAddress(config.address ?? '');
+                    setTdsCountry(config.country ?? '');
+                    setTdsState(config.state ?? '');
+                    setTdsTownCity(config.townCity ?? '');
+                    setTdsZipCode(config.zipCode ?? '');
+                }
             }
 
-            // Auto-populate PAN, TAN, GST & Company Address from Organization Tax Details
+            // Auto-populate PAN, TAN, GST & Address from Organization Tax Details
             const { data: orgTaxData, error: orgTaxError } = await supabase.from('operational_config').select('config_value').eq('config_key', 'organization_tax_details').single();
             if (!orgTaxError && orgTaxData?.config_value) {
                 const buName = selectedTarget.replace('bu:', '');
@@ -269,9 +293,18 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                     setTan(orgConfig.tanNumber ?? '');
                     setOrgPanNumber(orgConfig.panNumber ?? '');
                     setOrgGstin(orgConfig.gstin ?? '');
-                    setOrgCompanyAddress(orgConfig.companyAddress ?? '');
+                    if (!savedTdsHasAddress) {
+                        setTdsAddress(orgConfig.address ?? '');
+                        setTdsCountry(orgConfig.country ?? '');
+                        setTdsState(orgConfig.state ?? '');
+                        setTdsTownCity(orgConfig.townCity ?? '');
+                        setTdsZipCode(orgConfig.zipCode ?? '');
+                    }
                 } else {
-                    setTan(''); setOrgPanNumber(''); setOrgGstin(''); setOrgCompanyAddress('');
+                    setTan(''); setOrgPanNumber(''); setOrgGstin('');
+                    if (!savedTdsHasAddress) {
+                        setTdsAddress(''); setTdsCountry(''); setTdsState(''); setTdsTownCity(''); setTdsZipCode('');
+                    }
                 }
             }
         } catch (err) { console.error('Error fetching settings:', err); }
@@ -326,13 +359,16 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         };
 
     const handleEditTds = () => {
-        setBackupTds({ enableTds, financialYear, defaultRegime, respName, respDesg, respEmail });
+        setBackupTds({ enableTds, financialYear, defaultRegime, respName, respDesg, respFatherName, respEmail, respMobile, respPan, tdsAddress, tdsCountry, tdsState, tdsTownCity, tdsZipCode });
         setIsEditingTds(true);
     };
 
     const handleSaveTds = async () => {
         try {
-            const configValue = { enableTds, financialYear, defaultRegime, respName, respDesg, respEmail };
+            const configValue = {
+                enableTds, financialYear, defaultRegime, respName, respDesg, respFatherName, respEmail, respMobile, respPan,
+                address: tdsAddress, country: tdsCountry, state: tdsState, townCity: tdsTownCity, zipCode: tdsZipCode
+            };
             const { error } = await supabase.from('operational_config').upsert({ config_key: `tds_settings:${selectedTarget}`, config_value: configValue, updated_at: new Date().toISOString() }, { onConflict: 'config_key' });
             if (error) throw error;
             setIsEditingTds(false);
@@ -341,7 +377,9 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
     const handleCancelTds = () => {
         if (backupTds) {
-            setEnableTds(backupTds.enableTds); setFinancialYear(backupTds.financialYear); setDefaultRegime(backupTds.defaultRegime); setRespName(backupTds.respName); setRespDesg(backupTds.respDesg); setRespEmail(backupTds.respEmail);
+            setEnableTds(backupTds.enableTds); setFinancialYear(backupTds.financialYear); setDefaultRegime(backupTds.defaultRegime); setRespName(backupTds.respName); setRespDesg(backupTds.respDesg); setRespFatherName(backupTds.respFatherName); setRespEmail(backupTds.respEmail);
+            setRespMobile(backupTds.respMobile); setRespPan(backupTds.respPan);
+            setTdsAddress(backupTds.tdsAddress); setTdsCountry(backupTds.tdsCountry); setTdsState(backupTds.tdsState); setTdsTownCity(backupTds.tdsTownCity); setTdsZipCode(backupTds.tdsZipCode);
         }
         setIsEditingTds(false);
     };
@@ -1269,7 +1307,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                             value={financialYear}
                                                             onChange={e => setFinancialYear(e.target.value)}
                                                             disabled={!isEditingTds}
-                                                            className="w-full pl-5 pr-10 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                            className="w-full pl-5 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
                                                         >
                                                             <option value="">Select Financial Year...</option>
                                                             {FINANCIAL_YEARS.map(fy => (
@@ -1281,15 +1319,91 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                 </div>
                                                 <div>
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">TAN Number <span className="text-rose-500">*</span></label>
-                                                    <input type="text" value={tan} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                    <input type="text" value={tan} disabled className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
                                                 </div>
                                                 <div>
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">PAN Number</label>
-                                                    <input type="text" value={orgPanNumber} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                    <input type="text" value={orgPanNumber} disabled className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
                                                 </div>
                                                 <div>
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">GST Number</label>
-                                                    <input type="text" value={orgGstin} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                    <input type="text" value={orgGstin} disabled className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-800 uppercase transition-all placeholder:normal-case opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-8 border-t border-slate-300 space-y-8">
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Address <span className="text-rose-500">*</span></label>
+                                                    <input
+                                                        type="text"
+                                                        value={tdsAddress}
+                                                        onChange={e => setTdsAddress(e.target.value.slice(0, 255))}
+                                                        disabled={!isEditingTds}
+                                                        maxLength={255}
+                                                        placeholder="Enter address"
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Country <span className="text-rose-500">*</span></label>
+                                                        <div className="relative group">
+                                                            <select
+                                                                value={tdsCountry}
+                                                                onChange={e => { setTdsCountry(e.target.value); setTdsState(''); }}
+                                                                disabled={!isEditingTds}
+                                                                className="w-full pl-5 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                            >
+                                                                <option value="">Select Country</option>
+                                                                {allCountries.map(c => (
+                                                                    <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
+                                                                ))}
+                                                            </select>
+                                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">State <span className="text-rose-500">*</span></label>
+                                                        <div className="relative group">
+                                                            <select
+                                                                value={tdsState}
+                                                                onChange={e => setTdsState(e.target.value)}
+                                                                disabled={!isEditingTds || !tdsCountry}
+                                                                className="w-full pl-5 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                            >
+                                                                <option value="">Select State</option>
+                                                                {tdsStatesForCountry.map(s => (
+                                                                    <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
+                                                                ))}
+                                                            </select>
+                                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Town/City <span className="text-rose-500">*</span></label>
+                                                        <input
+                                                            type="text"
+                                                            value={tdsTownCity}
+                                                            onChange={e => setTdsTownCity(e.target.value)}
+                                                            disabled={!isEditingTds}
+                                                            placeholder="Enter town/city"
+                                                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">Zip/Postal Code <span className="text-rose-500">*</span></label>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={tdsZipCode}
+                                                            onChange={e => setTdsZipCode(e.target.value.replace(/\D/g, ''))}
+                                                            disabled={!isEditingTds}
+                                                            placeholder="Enter zip/postal code"
+                                                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1298,7 +1412,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                     <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                                                         <User size={18} strokeWidth={2.5} />
                                                     </div>
-                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person <span className="text-rose-500">*</span></h4>
+                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Responsible Person Details <span className="text-rose-500">*</span></h4>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-4">
@@ -1308,7 +1422,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 value={respName}
                                                                 onChange={e => setRespName(e.target.value)}
                                                                 disabled={!isEditingTds}
-                                                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
                                                             >
                                                                 <option value="">Select Employee...</option>
                                                                 {(employeesList.length > 0 ? employeesList : FALLBACK_EMPLOYEES).map(emp => (
@@ -1326,7 +1440,7 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                                 value={respDesg}
                                                                 onChange={e => setRespDesg(e.target.value)}
                                                                 disabled={!isEditingTds}
-                                                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
+                                                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70 appearance-none cursor-pointer"
                                                             >
                                                                 <option value="">Select Designation...</option>
                                                                 {(designationsList.length > 0 ? designationsList : FALLBACK_DESIGNATIONS).map(desg => (
@@ -1338,15 +1452,39 @@ const PfTdsSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                                         </div>
                                                     </div>
                                                     <div className="space-y-4">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Official Email <span className="text-rose-500">*</span></label>
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Father's Name <span className="text-rose-500">*</span></label>
+                                                        <input type="text" value={respFatherName} onChange={e => setRespFatherName(e.target.value)} disabled={!isEditingTds} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="Enter father's name" />
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Email <span className="text-rose-500">*</span></label>
                                                         <div className="relative group">
-                                                            <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="name@company.com" />
+                                                            <input type="email" value={respEmail} onChange={e => setRespEmail(e.target.value)} disabled={!isEditingTds} className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70" placeholder="name@company.com" />
                                                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={16} />
                                                         </div>
                                                     </div>
                                                     <div className="space-y-4">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Company Address</label>
-                                                        <input type="text" value={orgCompanyAddress} disabled className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-800 transition-all opacity-70 cursor-not-allowed" placeholder="Not set in Organization Tax Details" />
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Mobile Number</label>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={respMobile}
+                                                            onChange={e => setRespMobile(e.target.value.replace(/\D/g, ''))}
+                                                            disabled={!isEditingTds}
+                                                            placeholder="Enter mobile number"
+                                                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">PAN Number</label>
+                                                        <input
+                                                            type="text"
+                                                            value={respPan}
+                                                            onChange={e => setRespPan(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
+                                                            disabled={!isEditingTds}
+                                                            maxLength={10}
+                                                            placeholder="AAAAA1111A"
+                                                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-800 uppercase focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-70"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
