@@ -35,6 +35,8 @@ const OperationalConfig: React.FC = () => {
     const [isInvestmentHierarchyExpanded, setIsInvestmentHierarchyExpanded] = useState(true);
     const [isLoansHierarchyExpanded, setIsLoansHierarchyExpanded] = useState(true);
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
+    const [isPayrollCornerExpanded, setIsPayrollCornerExpanded] = useState(true);
+    const [showPayrollCornerToEmployees, setShowPayrollCornerToEmployees] = useState(false);
     const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
     const [investmentApprovers, setInvestmentApprovers] = useState<SelectedEmployee[]>([]);
     const [loansApprovers, setLoansApprovers] = useState<SelectedEmployee[]>([]);
@@ -743,6 +745,40 @@ const OperationalConfig: React.FC = () => {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Payroll Corner Visibility */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsPayrollCornerExpanded(!isPayrollCornerExpanded)}
+                >
+                    <h3 className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        Payroll Corner Visibility
+                        <Info size={14} className="text-slate-400 cursor-help" />
+                    </h3>
+                    <button className="text-slate-400">
+                        {isPayrollCornerExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
+
+                {isPayrollCornerExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <div className="max-w-3xl flex items-center justify-between">
+                            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                                Show Payroll Corner to Employees
+                                <Info size={14} className="text-slate-400 cursor-help" />
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setShowPayrollCornerToEmployees(!showPayrollCornerToEmployees)}
+                                className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${showPayrollCornerToEmployees ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                            >
+                                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${showPayrollCornerToEmployees ? 'left-5' : 'left-0.5'}`} />
+                            </button>
                         </div>
                     </div>
                 )}

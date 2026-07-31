@@ -226,10 +226,10 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
   };
 
   return (
-    <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-300 pb-10">
-      
+    <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-300 pb-10 h-full">
+
       {/* LEFT: INTERACTIVE TIMELINE */}
-      <div className="col-span-3 flex flex-col">
+      <div className="col-span-3 flex flex-col h-full">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex-1">
            <div className="flex justify-between items-center mb-6">
              <h3 className="text-xl font-bold text-slate-900">Payslips</h3>
@@ -279,8 +279,8 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
 
       {/* RIGHT: MAIN PAYSLIP CONTENT */}
       {slip && (
-      <div className="col-span-9 space-y-6">
-        
+      <div className="col-span-9 flex flex-col gap-6 h-full">
+
         {/* MERGED: Header Actions & Employee Info */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
            
@@ -322,7 +322,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
         </div>
 
         {/* Payslip Generated Notice */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center justify-center text-center flex-1">
            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
               <FileCheck size={24} />
            </div>

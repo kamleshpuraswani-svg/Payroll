@@ -192,10 +192,10 @@ export const SalaryBreakdownModule: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 h-full animate-fade-in pb-10">
+    <div className="flex flex-col gap-3 h-full animate-fade-in pb-10">
 
       {/* Module Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex-shrink-0">
         {/* Top row: title + actions */}
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -246,7 +246,7 @@ export const SalaryBreakdownModule: React.FC = () => {
       </div>
 
       {/* Salary Slips Section */}
-      <div>
+      <div className="flex-1 min-h-0">
         <SalarySlipsModule showValues={showValues} />
       </div>
 

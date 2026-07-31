@@ -1303,7 +1303,7 @@ const AddEarningComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, onSa
 
                 <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                     <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                    <button onClick={handleSave} className="px-6 py-2 bg-[#444CE7] text-white rounded-lg hover:bg-[#3538CD] font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
                 </>)}
             </div>
@@ -1951,7 +1951,7 @@ const AddDeductionComponentForm: React.FC<AddEarningFormProps> = ({ onCancel, on
                 </div>
                 <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                     <button onClick={onCancel} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">Cancel</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                    <button onClick={handleSave} className="px-6 py-2 bg-[#444CE7] text-white rounded-lg hover:bg-[#3538CD] font-medium text-sm shadow-sm transition-colors">{initialData ? 'Update' : 'Save'}</button>
                 </div>
                 </>)}
             </div>
@@ -3003,7 +3003,7 @@ const HRSalaryComponents: React.FC = () => {
                             )}
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-lg hover:bg-[#3538CD] transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] text-white rounded-md transition-colors text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
                             >
                                 Add Component
                             </button>
