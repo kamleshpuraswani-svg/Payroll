@@ -555,6 +555,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [is80DExpanded, setIs80DExpanded] = useState(false);
     const [is80GExpanded, setIs80GExpanded] = useState(false);
     const [is1014Expanded, setIs1014Expanded] = useState(false);
+    const [showInDeclarationIds, setShowInDeclarationIds] = useState<Set<string>>(new Set());
 
     // Backup states for cancel functionality
     const [invBackup, setInvBackup] = useState<any>(null);
@@ -1710,223 +1711,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     )}
                 </div>
 
-                {/* 2. Income Tax Deductions Limit Section */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/30">
-                        <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                                    <ShieldCheck size={20} />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-800 tracking-tight">Income Tax Deductions Limit</h3>
-                            </div>
-                            
-                            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-                                <button 
-                                    onClick={() => setLimitViewRegime('Old')}
-                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${limitViewRegime === 'Old' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Old Regime
-                                </button>
-                                <button 
-                                    onClick={() => setLimitViewRegime('New')}
-                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${limitViewRegime === 'New' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    New Regime
-                                </button>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button 
-                                onClick={() => setIsLimitsExpanded(!isLimitsExpanded)}
-                                className="p-2 hover:bg-slate-100 rounded-lg transition-all text-slate-400 hover:text-slate-600"
-                            >
-                                {isLimitsExpanded ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
-                            </button>
-                        </div>
-                    </div>
-                    {isLimitsExpanded && (
-                        <div className="p-8 animate-in fade-in slide-in-from-top-2 duration-300">
-
-                        {/* Age group sub-tabs — only for Old Regime */}
-                        {limitViewRegime === 'Old' && (
-                            <div className="mb-5 flex items-center gap-1 bg-slate-100/80 border border-slate-200 rounded-lg p-1 w-fit shadow-sm">
-                                {([
-                                    { key: 'individual', label: 'Individuals (Below 60 years)' },
-                                    { key: 'senior',     label: 'Senior Citizens (60\u201380 years)' },
-                                    { key: 'superSenior', label: 'Super Senior Citizens (80+ years)' },
-                                ] as const).map(tab => (
-                                    <button
-                                        key={tab.key}
-                                        onClick={() => setOldRegimeAgeGroup(tab.key)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
-                                            oldRegimeAgeGroup === tab.key
-                                                ? 'bg-white text-violet-600 shadow-sm border border-slate-200'
-                                                : 'text-slate-500 hover:text-slate-700'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                            <table className="w-full text-left text-sm border-collapse">
-                                        <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
-                                    <tr>
-                                        <th className="px-6 py-4">Section</th>
-                                        <th className="px-6 py-4">Description</th>
-                                        <th className="px-6 py-4">Max. Limit (₹)</th>
-                                        {isEditingInv && <th className="px-6 py-4 w-16 text-center">Action</th>}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {(limits as any[]).filter(l => {
-                                            if ((l.regime || 'Old') !== limitViewRegime) return false;
-                                            if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
-                                            return true;
-                                        }).length > 0 ? (
-                                        (limits as any[]).filter(l => {
-                                            if ((l.regime || 'Old') !== limitViewRegime) return false;
-                                            if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
-                                            return true;
-                                        }).filter(l => {
-                                            if (l.section === '80C' && l.isSubSection) {
-                                                return isEditingInv || is80CExpanded;
-                                            }
-                                            if (l.section === '80D' && l.isSubSection) {
-                                                return isEditingInv || is80DExpanded;
-                                            }
-                                            if (l.section === '80G' && l.isSubSection) {
-                                                return isEditingInv || is80GExpanded;
-                                            }
-                                            if (l.section === '10(14)' && l.isSubSection) {
-                                                return isEditingInv || is1014Expanded;
-                                            }
-                                            return true;
-                                        }).map((limit, idx) => {
-                                            const actualIdx = limits.findIndex(l => l.id === limit.id);
-                                            const hasSubsections = (limit.section === '80C' || limit.section === '80D' || limit.section === '80G' || limit.section === '10(14)') && !limit.isSubSection && limits.some(l => 
-                                                l.section === limit.section && 
-                                                l.isSubSection && 
-                                                (l.regime || 'Old') === limitViewRegime && 
-                                                (limitViewRegime === 'Old' ? (l.ageGroup || 'individual') === oldRegimeAgeGroup : true)
-                                            );
-                                            return (
-                                                <tr 
-                                                    key={limit.id} 
-                                                    onClick={() => {
-                                                        if (!isEditingInv && hasSubsections) {
-                                                            if (limit.section === '80C') {
-                                                                setIs80CExpanded(!is80CExpanded);
-                                                            } else if (limit.section === '80D') {
-                                                                setIs80DExpanded(!is80DExpanded);
-                                                            } else if (limit.section === '80G') {
-                                                                setIs80GExpanded(!is80GExpanded);
-                                                            } else if (limit.section === '10(14)') {
-                                                                setIs1014Expanded(!is1014Expanded);
-                                                            }
-                                                        }
-                                                    }}
-                                                    className={`hover:bg-slate-50/50 transition-colors group ${hasSubsections && !isEditingInv ? 'cursor-pointer select-none' : ''}`}
-                                                >
-                                                    <td className="px-6 py-4 font-bold text-slate-700">
-                                                        {!(limit as any).isSubSection ? (
-                                                            isEditingInv ? (
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={limit.section} 
-                                                                    onChange={(e) => {
-                                                                        const newLimits = [...limits];
-                                                                        newLimits[actualIdx].section = e.target.value;
-                                                                        setLimits(newLimits);
-                                                                    }}
-                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
-                                                                    placeholder="e.g. 80C"
-                                                                />
-                                                            ) : (
-                                                                <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>
-                                                            )
-                                                        ) : (
-                                                            (limit as any).displaySection ? (
-                                                                <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{(limit as any).displaySection}</span>
-                                                            ) : null
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-slate-500 text-xs font-medium">
-                                                        <div className={`relative flex items-center w-full ${(limit as any).isSubSection ? 'pl-6 before:absolute before:left-0 before:w-3 before:h-[1px] before:bg-slate-300' : ''}`}>
-                                                            {isEditingInv ? (
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={limit.description} 
-                                                                    onChange={(e) => {
-                                                                        const newLimits = [...limits];
-                                                                        newLimits[actualIdx].description = e.target.value;
-                                                                        setLimits(newLimits);
-                                                                    }}
-                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all bg-white"
-                                                                    placeholder="Section description..."
-                                                                />
-                                                            ) : limit.description}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 font-black text-slate-800">
-                                                        {isEditingInv ? (
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={limit.limit} 
-                                                                    onChange={(e) => {
-                                                                        const newLimits = [...limits];
-                                                                        newLimits[actualIdx].limit = e.target.value;
-                                                                        setLimits(newLimits);
-                                                                    }}
-                                                                    className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all bg-white"
-                                                                    placeholder="0"
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-indigo-600 font-black">
-                                                                    {limit.limit === '--' || limit.section === '80E' || /^[A-Za-z]/.test(limit.limit) ? limit.limit : `₹${limit.limit}`}
-                                                                </span>
-                                                                {hasSubsections && (
-                                                                    <ChevronDown 
-                                                                        size={16} 
-                                                                        className={`text-slate-400 transition-all duration-200 ${(limit.section === '80C' ? is80CExpanded : limit.section === '80D' ? is80DExpanded : limit.section === '80G' ? is80GExpanded : is1014Expanded) ? 'rotate-180 text-indigo-600' : ''}`} 
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    {isEditingInv && (
-                                                        <td className="px-6 py-4 text-center">
-                                                            <button 
-                                                                onClick={() => setLimits(limits.filter(l => (l as any).id !== limit.id))}
-                                                                className="w-8 h-8 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </td>
-                                                    )}
-                                                </tr>
-                                            );
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={isEditingInv ? 4 : 3} className="px-6 py-12 text-center text-slate-400 italic text-sm">
-                                                No deductions configured for {limitViewRegime} Regime.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    )}
-                </div>
 
                 {/* 3. Proof of Investment Section */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -2212,6 +1996,255 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
 
                         </div>
+                    )}
+                </div>
+
+                {/* 2. Income Tax Deductions Limit Section */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/30">
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                    <ShieldCheck size={20} />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 tracking-tight">Income Tax Deductions Limit</h3>
+                            </div>
+                            
+                            <div className="flex items-center rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                                <button 
+                                    onClick={() => setLimitViewRegime('New')}
+                                    className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
+                                        limitViewRegime === 'New'
+                                            ? 'text-white shadow-md'
+                                            : 'bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    }`}
+                                    style={limitViewRegime === 'New' ? { backgroundColor: '#444CE7' } : {}}
+                                >
+                                    New Regime (Default)
+                                </button>
+                                <button 
+                                    onClick={() => setLimitViewRegime('Old')}
+                                    className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all border-l border-slate-200 ${
+                                        limitViewRegime === 'Old'
+                                            ? 'text-white shadow-md'
+                                            : 'bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    }`}
+                                    style={limitViewRegime === 'Old' ? { backgroundColor: '#444CE7' } : {}}
+                                >
+                                    Old Regime
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={() => setIsLimitsExpanded(!isLimitsExpanded)}
+                                className="p-2 hover:bg-slate-100 rounded-lg transition-all text-slate-400 hover:text-slate-600"
+                            >
+                                {isLimitsExpanded ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
+                            </button>
+                        </div>
+                    </div>
+                    {isLimitsExpanded && (
+                        <div className="p-8 animate-in fade-in slide-in-from-top-2 duration-300">
+
+                        {/* Age group sub-tabs — only for Old Regime */}
+                        {limitViewRegime === 'Old' && (
+                            <div className="mb-5 flex items-center gap-1 bg-slate-100/80 border border-slate-200 rounded-lg p-1 w-fit shadow-sm">
+                                {([
+                                    { key: 'individual', label: 'Individuals (Below 60 years)' },
+                                    { key: 'senior',     label: 'Senior Citizens (60\u201380 years)' },
+                                    { key: 'superSenior', label: 'Super Senior Citizens (80+ years)' },
+                                ] as const).map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setOldRegimeAgeGroup(tab.key)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                                            oldRegimeAgeGroup === tab.key
+                                                ? 'bg-white text-violet-600 shadow-sm border border-slate-200'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                            <table className="w-full text-left text-sm border-collapse">
+                                        <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-6 py-4">Section</th>
+                                        <th className="px-6 py-4">Description</th>
+                                        <th className="px-6 py-4">Max. Limit (₹)</th>
+                                        <th className="px-6 py-4 text-center">Show in Declaration Form</th>
+                                        {isEditingInv && <th className="px-6 py-4 w-16 text-center">Action</th>}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {(limits as any[]).filter(l => {
+                                            if ((l.regime || 'Old') !== limitViewRegime) return false;
+                                            if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
+                                            return true;
+                                        }).length > 0 ? (
+                                        (limits as any[]).filter(l => {
+                                            if ((l.regime || 'Old') !== limitViewRegime) return false;
+                                            if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
+                                            return true;
+                                        }).filter(l => {
+                                            if (l.section === '80C' && l.isSubSection) {
+                                                return isEditingInv || is80CExpanded;
+                                            }
+                                            if (l.section === '80D' && l.isSubSection) {
+                                                return isEditingInv || is80DExpanded;
+                                            }
+                                            if (l.section === '80G' && l.isSubSection) {
+                                                return isEditingInv || is80GExpanded;
+                                            }
+                                            if (l.section === '10(14)' && l.isSubSection) {
+                                                return isEditingInv || is1014Expanded;
+                                            }
+                                            return true;
+                                        }).map((limit, idx) => {
+                                            const actualIdx = limits.findIndex(l => l.id === limit.id);
+                                            const hasSubsections = (limit.section === '80C' || limit.section === '80D' || limit.section === '80G' || limit.section === '10(14)') && !limit.isSubSection && limits.some(l => 
+                                                l.section === limit.section && 
+                                                l.isSubSection && 
+                                                (l.regime || 'Old') === limitViewRegime && 
+                                                (limitViewRegime === 'Old' ? (l.ageGroup || 'individual') === oldRegimeAgeGroup : true)
+                                            );
+                                            return (
+                                                <tr 
+                                                    key={limit.id} 
+                                                    onClick={() => {
+                                                        if (!isEditingInv && hasSubsections) {
+                                                            if (limit.section === '80C') {
+                                                                setIs80CExpanded(!is80CExpanded);
+                                                            } else if (limit.section === '80D') {
+                                                                setIs80DExpanded(!is80DExpanded);
+                                                            } else if (limit.section === '80G') {
+                                                                setIs80GExpanded(!is80GExpanded);
+                                                            } else if (limit.section === '10(14)') {
+                                                                setIs1014Expanded(!is1014Expanded);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={`hover:bg-slate-50/50 transition-colors group ${hasSubsections && !isEditingInv ? 'cursor-pointer select-none' : ''}`}
+                                                >
+                                                    <td className="px-6 py-4 font-bold text-slate-700">
+                                                        {!(limit as any).isSubSection ? (
+                                                            isEditingInv ? (
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={limit.section} 
+                                                                    onChange={(e) => {
+                                                                        const newLimits = [...limits];
+                                                                        newLimits[actualIdx].section = e.target.value;
+                                                                        setLimits(newLimits);
+                                                                    }}
+                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 bg-white"
+                                                                    placeholder="e.g. 80C"
+                                                                />
+                                                            ) : (
+                                                                <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{limit.section}</span>
+                                                            )
+                                                        ) : (
+                                                            (limit as any).displaySection ? (
+                                                                <span className="px-3 py-1 bg-slate-100/50 rounded-lg">{(limit as any).displaySection}</span>
+                                                            ) : null
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-500 text-xs font-medium">
+                                                        <div className={`relative flex items-center w-full ${(limit as any).isSubSection ? 'pl-6 before:absolute before:left-0 before:w-3 before:h-[1px] before:bg-slate-300' : ''}`}>
+                                                            {isEditingInv ? (
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={limit.description} 
+                                                                    onChange={(e) => {
+                                                                        const newLimits = [...limits];
+                                                                        newLimits[actualIdx].description = e.target.value;
+                                                                        setLimits(newLimits);
+                                                                    }}
+                                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                    placeholder="Section description..."
+                                                                />
+                                                            ) : limit.description}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-black text-slate-800">
+                                                        {isEditingInv ? (
+                                                            <div className="relative">
+                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={limit.limit} 
+                                                                    onChange={(e) => {
+                                                                        const newLimits = [...limits];
+                                                                        newLimits[actualIdx].limit = e.target.value;
+                                                                        setLimits(newLimits);
+                                                                    }}
+                                                                    className="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 outline-none transition-all bg-white"
+                                                                    placeholder="0"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-indigo-600 font-black">
+                                                                    {limit.limit === '--' || limit.section === '80E' || /^[A-Za-z]/.test(limit.limit) ? limit.limit : `₹${limit.limit}`}
+                                                                </span>
+                                                                {hasSubsections && (
+                                                                    <ChevronDown 
+                                                                        size={16} 
+                                                                        className={`text-slate-400 transition-all duration-200 ${(limit.section === '80C' ? is80CExpanded : limit.section === '80D' ? is80DExpanded : limit.section === '80G' ? is80GExpanded : is1014Expanded) ? 'rotate-180 text-indigo-600' : ''}`} 
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                                        <label className="inline-flex items-center justify-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={showInDeclarationIds.has(limit.id)}
+                                                                onChange={() => {
+                                                                    setShowInDeclarationIds(prev => {
+                                                                        const next = new Set(prev);
+                                                                        if (next.has(limit.id)) {
+                                                                            next.delete(limit.id);
+                                                                        } else {
+                                                                            next.add(limit.id);
+                                                                        }
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                className="w-4 h-4 rounded border-slate-300 accent-indigo-600 cursor-pointer"
+                                                            />
+                                                        </label>
+                                                    </td>
+                                                    {isEditingInv && (
+                                                        <td className="px-6 py-4 text-center">
+                                                            <button 
+                                                                onClick={() => setLimits(limits.filter(l => (l as any).id !== limit.id))}
+                                                                className="w-8 h-8 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={isEditingInv ? 5 : 4} className="px-6 py-12 text-center text-slate-400 italic text-sm">
+                                                No deductions configured for {limitViewRegime} Regime.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     )}
                 </div>
             </div>

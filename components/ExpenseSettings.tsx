@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag, Sigma, Power } from 'lucide-react';
+import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, ChevronUp, GripVertical, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag, Sigma, Power, Info } from 'lucide-react';
 
 const EXPENSE_FIELDS = [
     { name: 'Category', icon: Tag },
@@ -12,6 +12,57 @@ const BUSINESS_UNITS = [
     "300 Minds",
     "CollabCRM"
 ];
+
+const FALLBACK_EMPLOYEES = [
+    "Amit Verma",
+    "Rajesh Kumar",
+    "Sunita Gupta",
+    "Kavita Sharma",
+    "Vikram Singh",
+    "Anjali Mehta",
+    "Priya Sharma",
+    "Arjun Mehta"
+];
+
+const loadAddedRules = (applicableTo: any[]) => {
+    if (!applicableTo || applicableTo.length === 0) {
+        return [];
+    }
+    const groups: Record<string, { frequency: string; resetCycleBasis: string; applicableTarget: string; values: string[]; expenseLimit: string; receiptThreshold: string }> = {};
+    applicableTo.forEach(item => {
+        if (!item.type) return;
+        const freq = item.frequency || 'Monthly';
+        const reset = item.reset_cycle || 'Calendar Year (Jan-Dec)';
+        const targetType = item.type;
+        const limitVal = item.max_limit !== undefined ? String(item.max_limit) : '';
+        const thresholdVal = item.receipt_threshold !== undefined ? String(item.receipt_threshold) : '';
+        const key = `${freq}_${reset}_${targetType}_${limitVal}_${thresholdVal}`;
+        if (!groups[key]) {
+            groups[key] = {
+                frequency: freq,
+                resetCycleBasis: reset,
+                applicableTarget: targetType,
+                values: [],
+                expenseLimit: limitVal,
+                receiptThreshold: thresholdVal
+            };
+        }
+        const valId = item.id || item.name;
+        if (!groups[key].values.includes(valId)) {
+            groups[key].values.push(valId);
+        }
+    });
+    return Object.keys(groups).map((key, index) => ({
+        id: `rule-${index}-${Date.now()}`,
+        frequency: groups[key].frequency,
+        resetCycleBasis: groups[key].resetCycleBasis,
+        applicableTarget: groups[key].applicableTarget,
+        selectedTargetValues: groups[key].values,
+        expenseLimit: groups[key].expenseLimit,
+        receiptThreshold: groups[key].receiptThreshold
+    }));
+};
+
 
 const ExpenseSettings: React.FC = () => {
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -31,11 +82,94 @@ const ExpenseSettings: React.FC = () => {
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState('bu:MindInventory');
     
-    // Multi-select state for Add Expense modal
-    const [applicableTarget, setApplicableTarget] = useState<'dept' | 'desig' | ''>('');
+    interface AddedRule {
+        id: string;
+        frequency: string;
+        resetCycleBasis: string;
+        applicableTarget: string;
+        selectedTargetValues: string[];
+        expenseLimit: string;
+        receiptThreshold: string;
+    }
+
+    const [addedRules, setAddedRules] = useState<AddedRule[]>([]);
+    const [ruleFrequency, setRuleFrequency] = useState<'Monthly' | 'Yearly' | 'Once per tenure'>('Monthly');
+    const [ruleResetCycleBasis, setRuleResetCycleBasis] = useState('Calendar Year (Jan-Dec)');
+    interface InputTargetRow {
+        id: string;
+        applicableTarget: string;
+        selectedTargetValues: string[];
+        isTargetDropdownOpen: boolean;
+    }
+
+    const [inputTargetRows, setInputTargetRows] = useState<InputTargetRow[]>([
+        { id: 'row-0', applicableTarget: 'Business Unit', selectedTargetValues: [], isTargetDropdownOpen: false }
+    ]);
+    const [sharedExpenseLimit, setSharedExpenseLimit] = useState('');
+    const [sharedReceiptThreshold, setSharedReceiptThreshold] = useState('');
+
+    const addInputTargetRow = (currentRowId: string) => {
+        const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
+        const usedInAdded = addedRules.map(r => r.applicableTarget);
+        const usedInInputs = inputTargetRows.map(r => r.applicableTarget);
+        const nextAvailable = ALL_TARGET_OPTIONS.find(opt => !usedInAdded.includes(opt) && !usedInInputs.includes(opt));
+        if (nextAvailable) {
+            setInputTargetRows(prev => {
+                const currentIndex = prev.findIndex(r => r.id === currentRowId);
+                const nextRows = [...prev];
+                nextRows.splice(currentIndex + 1, 0, {
+                    id: `row-${Date.now()}`,
+                    applicableTarget: nextAvailable,
+                    selectedTargetValues: [],
+                    isTargetDropdownOpen: false
+                });
+                return nextRows;
+            });
+        }
+    };
+
+    const handleAddRulesList = () => {
+        const validRows = inputTargetRows.filter(row => row.applicableTarget && row.selectedTargetValues.length > 0);
+        if (validRows.length === 0) {
+            alert('Please select at least one target and items before adding.');
+            return;
+        }
+
+        const newRules = validRows.map((row, idx) => ({
+            id: `rule-${Date.now()}-${idx}-${Math.random()}`,
+            frequency: ruleFrequency,
+            resetCycleBasis: ruleResetCycleBasis,
+            applicableTarget: row.applicableTarget,
+            selectedTargetValues: [...row.selectedTargetValues],
+            expenseLimit: sharedExpenseLimit || '0',
+            receiptThreshold: sharedReceiptThreshold || '0'
+        }));
+
+        const updatedRules = [...addedRules, ...newRules];
+        setAddedRules(updatedRules);
+
+        // Reset to a single row containing the first unused option
+        const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
+        const nextUsed = updatedRules.map(r => r.applicableTarget);
+        const nextAvailable = ALL_TARGET_OPTIONS.find(opt => !nextUsed.includes(opt)) || 'Business Unit';
+
+        setInputTargetRows([{
+            id: `row-0-${Date.now()}`,
+            applicableTarget: nextAvailable,
+            selectedTargetValues: [],
+            isTargetDropdownOpen: false
+        }]);
+        setSharedExpenseLimit('');
+        setSharedReceiptThreshold('');
+    };
+
     const [newEntityValue, setNewEntityValue] = useState('');
     const [newMonthlyLimit, setNewMonthlyLimit] = useState('');
     const [newReceiptThreshold, setNewReceiptThreshold] = useState('');
+    const [defaultExpenseLimit, setDefaultExpenseLimit] = useState('0');
+    const [defaultReceiptThreshold, setDefaultReceiptThreshold] = useState('0');
+    const [showCriteriaOverrides, setShowCriteriaOverrides] = useState(false);
+    const [applicabilityScope, setApplicabilityScope] = useState<'all' | 'specific'>('all');
     const [selectedEntities, setSelectedEntities] = useState<any[]>([]);
     const [availableDesignations, setAvailableDesignations] = useState<string[]>([]);
     const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
@@ -44,6 +178,23 @@ const ExpenseSettings: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const expDropdownRef = useRef<HTMLDivElement>(null);
+
+    const getTargetOptions = (targetType: string) => {
+        switch (targetType) {
+            case 'Business Unit':
+                return BUSINESS_UNITS;
+            case 'Department':
+                return availableDepartments.length > 0 ? availableDepartments : FALLBACK_DEPTS;
+            case 'Designation':
+                return availableDesignations.length > 0 ? availableDesignations : FALLBACK_DESIGS;
+            case 'Employee Status':
+                return ['Active', 'On Probation', 'Notice Period', 'Suspended'];
+            case 'Employee':
+                return allEmployees.length > 0 ? allEmployees.map(e => e.name) : FALLBACK_EMPLOYEES;
+            default:
+                return [];
+        }
+    };
 
     // Hardcoded fallbacks
     const FALLBACK_DEPTS = ['Engineering', 'Product', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations', 'QA', 'Customer Success', 'Design', 'Legal', 'Administration'];
@@ -57,6 +208,11 @@ const ExpenseSettings: React.FC = () => {
         const handler = (e: MouseEvent) => {
             if (expDropdownRef.current && !expDropdownRef.current.contains(e.target as Node)) {
                 setIsFilterOpen(false);
+            }
+            const path = e.composedPath ? e.composedPath() : [];
+            const isClickInsideDropdown = path.some((el: any) => el.classList && el.classList.contains('target-dropdown-container'));
+            if (!isClickInsideDropdown) {
+                setInputTargetRows(prev => prev.map(row => ({ ...row, isTargetDropdownOpen: false })));
             }
         };
         document.addEventListener('mousedown', handler);
@@ -237,9 +393,20 @@ const ExpenseSettings: React.FC = () => {
         const status = formData.get('status') === 'on' ? 'Active' : 'Inactive';
         const effectiveFrom = formData.get('effectiveFrom') as string;
 
-        // Check if at least one entity is added with limits
-        if (selectedEntities.length === 0) {
-            alert('Please select at least one Department or Designation before saving.');
+        const applicableTo = addedRules.flatMap(rule => 
+            rule.selectedTargetValues.map(val => ({
+                type: rule.applicableTarget,
+                id: val,
+                name: val,
+                frequency: rule.frequency,
+                reset_cycle: rule.resetCycleBasis,
+                max_limit: parseFloat(rule.expenseLimit) || 0,
+                receipt_threshold: parseFloat(rule.receiptThreshold) || 0
+            }))
+        );
+
+        if (applicableTo.length === 0) {
+            alert('Please add at least one applicability rule before saving.');
             return;
         }
 
@@ -248,7 +415,7 @@ const ExpenseSettings: React.FC = () => {
             const [targetType, targetId] = selectedTarget.split(':');
             const configData: any = {
                 status: status,
-                applicable_to: selectedEntities,
+                applicable_to: applicableTo,
                 effective_from: effectiveFrom || null,
                 updated_at: new Date().toISOString(),
                 last_updated_by: 'HR Manager',
@@ -282,7 +449,6 @@ const ExpenseSettings: React.FC = () => {
             setIsAddingExpense(false);
             setEditingExpense(null);
             setSelectedEntities([]);
-            setEntitySearch('');
         } catch (error: any) {
             console.error('Error saving expense config:', error);
             if (error?.code === '23505') {
@@ -306,6 +472,7 @@ const ExpenseSettings: React.FC = () => {
     };
 
     const handleAddEntity = () => {
+        const applicableTarget = '';
         if (!applicableTarget) {
             alert('Please select an Applicable Target.');
             return;
@@ -365,10 +532,17 @@ const ExpenseSettings: React.FC = () => {
                                 setIsAddingExpense(false);
                                 setEditingExpense(null);
                                 setSelectedEntities([]);
-                                setApplicableTarget('');
+                                setRuleFrequency('Monthly');
+                                setRuleResetCycleBasis('Calendar Year (Jan-Dec)');
+                                setInputTargetRows([{ id: 'row-0', applicableTarget: 'Business Unit', selectedTargetValues: [], isTargetDropdownOpen: false }]);
+                                setAddedRules([]);
                                 setNewEntityValue('');
                                 setNewMonthlyLimit('');
                                 setNewReceiptThreshold('');
+                                setDefaultExpenseLimit('0');
+                                setDefaultReceiptThreshold('0');
+                                setShowCriteriaOverrides(false);
+                                setApplicabilityScope('all');
                             }}
                             className="p-2 -ml-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors focus:outline-none"
                         >
@@ -392,10 +566,17 @@ const ExpenseSettings: React.FC = () => {
                                 setIsAddingExpense(false);
                                 setEditingExpense(null);
                                 setSelectedEntities([]);
-                                setApplicableTarget('');
+                                setRuleFrequency('Monthly');
+                                setRuleResetCycleBasis('Calendar Year (Jan-Dec)');
+                                setInputTargetRows([{ id: 'row-0', applicableTarget: 'Business Unit', selectedTargetValues: [], isTargetDropdownOpen: false }]);
+                                setAddedRules([]);
                                 setNewEntityValue('');
                                 setNewMonthlyLimit('');
                                 setNewReceiptThreshold('');
+                                setDefaultExpenseLimit('0');
+                                setDefaultReceiptThreshold('0');
+                                setShowCriteriaOverrides(false);
+                                setApplicabilityScope('all');
                             }}
                             className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 font-bold text-sm transition-all shadow-sm"
                         >
@@ -415,7 +596,8 @@ const ExpenseSettings: React.FC = () => {
                                  <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
+                                    className="px-6 py-2 text-white rounded-md hover:opacity-90 font-bold text-sm transition-all shadow-md active:scale-95 disabled:hover:scale-100 disabled:opacity-50 flex items-center gap-2"
+                                    style={{ backgroundColor: '#444CE7' }}
                                 >
                                     {isSaving ? 'Saving...' : 'Submit'}
                                 </button>
@@ -425,7 +607,7 @@ const ExpenseSettings: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-in fade-in duration-300">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="w-full">
                         {expenseActiveTab === 'HISTORY' ? (
                             <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {/* Left Column: Configuration Details */}
@@ -565,12 +747,13 @@ const ExpenseSettings: React.FC = () => {
                         ) : (
                             <div className="space-y-6">
                                 {/* Section 1: Basic Details */}
-                                <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm space-y-6 relative overflow-hidden">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                        <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">1</span> 
-                                        Expense Category & Settings
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                <div className="flex flex-col lg:flex-row gap-4 lg:gap-10">
+                                    <div className="lg:w-64 flex-shrink-0 space-y-1">
+                                        <h3 className="text-sm font-bold text-slate-800">Expense Category & Settings</h3>
+                                        <p className="text-xs text-slate-500 leading-relaxed">Define the category name and the month this rule becomes effective.</p>
+                                    </div>
+                                    <div className="flex-1 bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-1.5">
                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expense Category Name <span className="text-rose-500">*</span></label>
                                             <div className="relative">
@@ -603,187 +786,407 @@ const ExpenseSettings: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    </div>
                                 </div>
 
-                                {/* Section 2: Target Configuration */}
-                                <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm space-y-6">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-4">
-                                        <span className="bg-sky-100 text-sky-700 w-6 h-6 rounded-md flex items-center justify-center text-xs">2</span> 
-                                        Target Limits & Defaults
-                                    </h3>
-                                    
-                                    {/* Entity Search & Selection */}
-                                    <div className="space-y-5 pt-2">
-                                        {/* Unified card: Applicable Target + conditional fields */}
-                                        <div className="p-5 bg-slate-50/70 border border-slate-200 rounded-lg space-y-4">
-                                            {/* Applicable Target Dropdown — 50% width */}
-                                            <div className="space-y-1.5 w-1/2">
-                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
-                                                <div className="relative">
-                                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                                        <ChevronDown size={16} className="text-slate-400" />
+                                {/* Section: Applicability & Limits */}
+                                <div className="flex flex-col lg:flex-row gap-4 lg:gap-10">
+                                    <div className="lg:w-64 flex-shrink-0 space-y-1">
+                                        <h3 className="text-sm font-bold text-slate-800">Applicability & Limits</h3>
+                                        <p className="text-xs text-slate-500 leading-relaxed">Applies company-wide unless a specific override is added.</p>
+                                    </div>
+                                    <div className="flex-1 bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm relative">
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Frequency <span className="text-rose-500">*</span></label>
+                                                    <div className="relative">
+                                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                            <ChevronDown size={16} className="text-slate-400" />
+                                                        </div>
+                                                        <select
+                                                            name="frequency"
+                                                            value={ruleFrequency}
+                                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                                                const value = e.target.value as 'Monthly' | 'Yearly' | 'Once per tenure';
+                                                                setRuleFrequency(value);
+                                                                if (value !== 'Yearly') setRuleResetCycleBasis('Calendar Year (Jan-Dec)');
+                                                            }}
+                                                            required
+                                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="Monthly">Monthly</option>
+                                                            <option value="Yearly">Yearly</option>
+                                                            <option value="Once per tenure">Once per tenure</option>
+                                                        </select>
                                                     </div>
-                                                    <select
-                                                        value={applicableTarget}
-                                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                                            setApplicableTarget(e.target.value as 'dept' | 'desig' | '');
-                                                            setNewEntityValue('');
-                                                            setNewMonthlyLimit('');
-                                                            setNewReceiptThreshold('');
-                                                        }}
-                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="">Select target type...</option>
-                                                        <option value="dept">Department</option>
-                                                        <option value="desig">Designation</option>
-                                                    </select>
                                                 </div>
-                                            </div>
 
-                                            {/* Conditional row: Dept/Desig + Monthly Limit + Receipt Threshold */}
-                                            {applicableTarget !== '' && (
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    {/* Department / Designation dropdown */}
+                                                {ruleFrequency === 'Yearly' && (
                                                     <div className="space-y-1.5">
-                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                                            {applicableTarget === 'dept' ? 'Department' : 'Designation'} <span className="text-rose-500">*</span>
-                                                        </label>
+                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reset Cycle Based On: <span className="text-rose-500">*</span></label>
                                                         <div className="relative">
                                                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                                                <ChevronDown size={14} className="text-slate-400" />
+                                                                <ChevronDown size={16} className="text-slate-400" />
                                                             </div>
                                                             <select
-                                                                value={newEntityValue}
-                                                                onChange={(e) => setNewEntityValue(e.target.value)}
-                                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                                name="reset_cycle_based_on"
+                                                                value={ruleResetCycleBasis}
+                                                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRuleResetCycleBasis(e.target.value)}
+                                                                required
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
                                                             >
-                                                                <option value="">Select {applicableTarget === 'dept' ? 'department' : 'designation'}...</option>
-                                                                {(applicableTarget === 'dept' ? availableDepartments : availableDesignations).map((item: string) => (
-                                                                    <option key={item} value={item}>{item}</option>
-                                                                ))}
+                                                                <option value="Calendar Year (Jan-Dec)">Calendar Year (Jan-Dec)</option>
+                                                                <option value="Financial Year">Financial Year</option>
+                                                                <option value="Employee's Joining Date">Employee's Joining Date</option>
                                                             </select>
                                                         </div>
                                                     </div>
+                                                )}
+                                            </div>
 
-                                                    {/* Monthly Limit */}
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                                            Monthly Limit (₹) <span className="text-rose-500">*</span>
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={newMonthlyLimit}
-                                                            onChange={(e) => setNewMonthlyLimit(e.target.value)}
-                                                            min="1"
-                                                            step="1"
-                                                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                            placeholder="e.g. 5000"
-                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                        />
-                                                    </div>
-
-                                                    {/* Receipt Threshold */}
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                                            Receipt Threshold (₹) <span className="text-rose-500">*</span>
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={newReceiptThreshold}
-                                                            onChange={(e) => setNewReceiptThreshold(e.target.value)}
-                                                            min="0"
-                                                            step="1"
-                                                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                            placeholder="e.g. 1000"
-                                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Add button — outside the card, right-aligned, blue border */}
-                                        <div className="flex justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={handleAddEntity}
-                                                className="flex items-center gap-2 px-5 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-md font-bold text-sm hover:bg-blue-50 transition-all shadow-sm"
-                                            >
-                                                <Plus size={15} /> Add
-                                            </button>
-                                        </div>
-
-                                        {/* Selected Entities — rendered as cards matching the input layout */}
-                                        <div className="space-y-4">
-                                            {selectedEntities.map((entity, index) => (
-                                                <div key={`${entity.type}-${entity.id}`} className="p-5 bg-slate-50/70 border border-slate-200 rounded-lg space-y-4 group">
-                                                    {/* Row 1: Applicable Target (read-only) + delete */}
-                                                    <div className="flex items-end justify-between">
-                                                        <div className="space-y-1.5 w-1/2">
+                                            {inputTargetRows.map((row) => (
+                                                <div key={row.id} className="p-5 border border-slate-100 rounded-xl bg-slate-50/20 space-y-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                                        <div className="space-y-1.5">
                                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
-                                                            <div className="px-4 py-3 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800">
-                                                                {entity.type === 'dept' ? 'Department' : 'Designation'}
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                                    <ChevronDown size={16} className="text-slate-400" />
+                                                                </div>
+                                                                <select
+                                                                    name={`applicable_target_${row.id}`}
+                                                                    value={row.applicableTarget}
+                                                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                                                        const val = e.target.value;
+                                                                        setInputTargetRows(prev => prev.map(r => r.id === row.id ? { ...r, applicableTarget: val, selectedTargetValues: [], isTargetDropdownOpen: false } : r));
+                                                                    }}
+                                                                    disabled={(() => {
+                                                                        const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
+                                                                        const usedInAddedRules = addedRules.map(r => r.applicableTarget);
+                                                                        const usedInOtherInputRows = inputTargetRows.filter(r => r.id !== row.id).map(r => r.applicableTarget);
+                                                                        const availableTargetOptions = ALL_TARGET_OPTIONS.filter(opt => 
+                                                                            opt === row.applicableTarget || 
+                                                                            (!usedInAddedRules.includes(opt) && !usedInOtherInputRows.includes(opt))
+                                                                        );
+                                                                        return availableTargetOptions.length === 0;
+                                                                    })()}
+                                                                    required
+                                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                >
+                                                                    {(() => {
+                                                                        const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
+                                                                        const usedInAddedRules = addedRules.map(r => r.applicableTarget);
+                                                                        const usedInOtherInputRows = inputTargetRows.filter(r => r.id !== row.id).map(r => r.applicableTarget);
+                                                                        const availableTargetOptions = ALL_TARGET_OPTIONS.filter(opt => 
+                                                                            opt === row.applicableTarget || 
+                                                                            (!usedInAddedRules.includes(opt) && !usedInOtherInputRows.includes(opt))
+                                                                        );
+                                                                        if (availableTargetOptions.length === 0) {
+                                                                            return <option value="">All targets configured</option>;
+                                                                        }
+                                                                        return availableTargetOptions.map(opt => (
+                                                                            <option key={opt} value={opt}>{opt}</option>
+                                                                        ));
+                                                                    })()}
+                                                                </select>
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeEntityFromSelection(entity.type, entity.id)}
-                                                            className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all mb-0.5"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                    {/* Row 2: Entity name + Monthly Limit + Receipt Threshold */}
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                                                {entity.type === 'dept' ? 'Department' : 'Designation'} <span className="text-rose-500">*</span>
-                                                            </label>
-                                                            <div className="px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-semibold text-slate-800">
-                                                                {entity.name}
+
+                                                        {row.applicableTarget && (
+                                                            <div className="space-y-1.5 relative">
+                                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select {row.applicableTarget}(s) <span className="text-rose-500">*</span></label>
+                                                                <div className="flex items-start gap-3 w-full">
+                                                                    <div className="flex-1 relative target-dropdown-container">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setInputTargetRows(prev => prev.map(r => 
+                                                                                    r.id === row.id 
+                                                                                        ? { ...r, isTargetDropdownOpen: !r.isTargetDropdownOpen }
+                                                                                        : { ...r, isTargetDropdownOpen: false }
+                                                                                ));
+                                                                            }}
+                                                                            className={`w-full pl-3 pr-10 py-2 bg-slate-50 border rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all text-left flex items-center justify-between cursor-pointer min-h-12 ${row.isTargetDropdownOpen ? 'border-indigo-400 ring-2 ring-indigo-500/10' : 'border-slate-200'}`}
+                                                                        >
+                                                                            <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0 pr-2">
+                                                                                {row.selectedTargetValues.length === 0 ? (
+                                                                                    <span className="text-slate-400 font-medium">Select {row.applicableTarget.toLowerCase()}(s)...</span>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        {row.selectedTargetValues.slice(0, 2).map(val => (
+                                                                                            <span 
+                                                                                                key={val} 
+                                                                                                className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-200/80 text-slate-700 rounded-full text-xs font-semibold select-none"
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setInputTargetRows(prev => prev.map(r => 
+                                                                                                        r.id === row.id 
+                                                                                                            ? { ...r, selectedTargetValues: r.selectedTargetValues.filter(v => v !== val) }
+                                                                                                            : r
+                                                                                                    ));
+                                                                                                }}
+                                                                                            >
+                                                                                                <span className="truncate max-w-[120px]">{val}</span>
+                                                                                                <span className="text-slate-400 hover:text-slate-600 cursor-pointer font-bold text-sm ml-0.5">×</span>
+                                                                                            </span>
+                                                                                        ))}
+                                                                                        {row.selectedTargetValues.length > 2 && (
+                                                                                            <span className="text-slate-600 font-bold text-xs select-none">...</span>
+                                                                                        )}
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                            <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${row.isTargetDropdownOpen ? 'rotate-180 text-indigo-600' : ''}`} />
+                                                                        </button>
+                                                                        
+                                                                        {row.isTargetDropdownOpen && (
+                                                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg z-50 py-1">
+                                                                                {getTargetOptions(row.applicableTarget).map(option => {
+                                                                                    const isSelected = row.selectedTargetValues.includes(option);
+                                                                                    return (
+                                                                                        <div
+                                                                                            key={option}
+                                                                                            onClick={() => {
+                                                                                                setInputTargetRows(prev => prev.map(r => {
+                                                                                                    if (r.id === row.id) {
+                                                                                                        const nextVals = r.selectedTargetValues.includes(option)
+                                                                                                            ? r.selectedTargetValues.filter(item => item !== option)
+                                                                                                            : [...r.selectedTargetValues, option];
+                                                                                                        return { ...r, selectedTargetValues: nextVals };
+                                                                                                    }
+                                                                                                    return r;
+                                                                                                }));
+                                                                                            }}
+                                                                                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors cursor-pointer hover:bg-slate-50 ${isSelected ? 'bg-indigo-50/50 text-indigo-900 font-semibold' : 'text-slate-700'}`}
+                                                                                        >
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                checked={isSelected}
+                                                                                                readOnly
+                                                                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                                                                                            />
+                                                                                            <span>{option}</span>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-2 h-12 flex-shrink-0">
+                                                                        {(inputTargetRows.length + addedRules.length < 5) && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => addInputTargetRow(row.id)}
+                                                                                className="p-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-600 rounded-md transition-all flex items-center justify-center h-12 w-12 flex-shrink-0 active:scale-95 shadow-sm"
+                                                                                title="Add target row"
+                                                                            >
+                                                                                <Plus size={20} />
+                                                                            </button>
+                                                                        )}
+                                                                        
+                                                                        {inputTargetRows.length > 1 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setInputTargetRows(prev => prev.filter(r => r.id !== row.id))}
+                                                                                className="p-3 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-600 rounded-md transition-all flex items-center justify-center h-12 w-12 flex-shrink-0 active:scale-95 shadow-sm"
+                                                                                title="Delete target row"
+                                                                            >
+                                                                                <Trash2 size={18} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Limit (₹) <span className="text-rose-500">*</span></label>
-                                                            <input
-                                                                type="number"
-                                                                value={entity.max_limit}
-                                                                onChange={(e) => updateEntityLimit(entity.type, entity.id, 'max_limit', parseFloat(e.target.value) || 0)}
-                                                                min="1"
-                                                                step="1"
-                                                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                                placeholder="0"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Threshold (₹) <span className="text-rose-500">*</span></label>
-                                                            <input
-                                                                type="number"
-                                                                value={entity.receipt_threshold}
-                                                                onChange={(e) => updateEntityLimit(entity.type, entity.id, 'receipt_threshold', parseFloat(e.target.value) || 0)}
-                                                                min="0"
-                                                                step="1"
-                                                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === '.' || e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                                placeholder="0"
-                                                            />
-                                                        </div>
+                                                        )}
                                                     </div>
+
                                                 </div>
                                             ))}
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                                <div className="space-y-1.5">
+                                                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{ruleFrequency === 'Monthly' ? 'Expense Limit (Monthly)' : ruleFrequency === 'Yearly' ? 'Expense Limit (Yearly)' : 'Expense Limit'} <span className="text-rose-500">*</span></label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="e.g. 5000"
+                                                            value={sharedExpenseLimit}
+                                                            onChange={(e) => setSharedExpenseLimit(e.target.value)}
+                                                            required
+                                                            min="0"
+                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Threshold <span className="text-rose-500">*</span></label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="e.g. 1000"
+                                                            value={sharedReceiptThreshold}
+                                                            onChange={(e) => setSharedReceiptThreshold(e.target.value)}
+                                                            required
+                                                            min="0"
+                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-md text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-end pt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddRulesList}
+                                                    className="inline-flex items-center gap-1.5 px-5 py-2 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100/70 hover:border-indigo-300 text-indigo-600 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-sm"
+                                                >
+                                                    <Plus size={16} /> Add
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    {/* Info helper text */}
-                                    <p className="text-xs text-slate-400 font-medium mt-2 flex items-start gap-1.5 leading-relaxed">
-                                        <span className="text-sky-400 mt-0.5 flex-shrink-0">ℹ</span>
-                                        If an employee matches both a department rule and a designation rule for the same category, the designation limit will be applied automatically.
-                                    </p>
                                 </div>
 
+                                 {/* Section: Rules and Limits */}
+                                 <div className="flex flex-col lg:flex-row gap-4 lg:gap-10">
+                                     <div className="lg:w-64 flex-shrink-0 space-y-1">
+                                         <h3 className="text-sm font-bold text-slate-800">Rules and Limits</h3>
+                                         <p className="text-xs text-slate-500 leading-relaxed">Configured applicability rules for this expense category.</p>
+                                     </div>
+                                     <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                         {addedRules.length === 0 ? (
+                                             <div className="p-8 text-center text-slate-400">
+                                                 <Info size={32} className="mx-auto mb-2 text-slate-300 animate-pulse" />
+                                                 <p className="text-sm font-semibold">No rules added yet.</p>
+                                                 <p className="text-xs text-slate-400 mt-0.5">Select a Frequency and Applicable Target above, click Add, and they will show up here.</p>
+                                             </div>
+                                         ) : (
+                                             <div className="overflow-x-auto">
+                                                 <table className="w-full text-left border-collapse">
+                                                     <thead>
+                                                         <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+
+                                                             <th className="px-6 py-4">Applicable Target</th>
+                                                             <th className="px-6 py-4">Selected Items</th>
+                                                             <th className="px-6 py-4">Expense Limit</th>
+                                                             <th className="px-6 py-4">Receipt Threshold</th>
+                                                             <th className="px-6 py-4 text-center">Actions</th>
+                                                         </tr>
+                                                     </thead>
+                                                      <tbody className="divide-y divide-slate-100">
+                                                          {(() => {
+                                                              const groups: { key: string; rules: typeof addedRules }[] = [];
+                                                              addedRules.forEach(rule => {
+                                                                  const key = `${rule.frequency}__${rule.resetCycleBasis}__${rule.expenseLimit}__${rule.receiptThreshold}`;
+                                                                  const existing = groups.find(g => g.key === key);
+                                                                  if (existing) { existing.rules.push(rule); }
+                                                                  else { groups.push({ key, rules: [rule] }); }
+                                                              });
+                                                              return groups.map(group => {
+                                                                  const first = group.rules[0];
+                                                                  const allTargets = group.rules.map(r => r.applicableTarget).join(', ');
+                                                                  const allItems = group.rules.flatMap(r => r.selectedTargetValues).join(', ');
+                                                                  const groupIds = group.rules.map(r => r.id);
+                                                                  return (
+                                                                      <tr key={group.key} className="hover:bg-slate-50/50 transition-colors">
+
+
+
+
+
+
+                                                                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                                                                              {allTargets}
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm text-slate-600">
+                                                                              {allItems}
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm font-semibold text-slate-800">
+                                                                               ₹{first.expenseLimit || '0'}
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm font-semibold text-slate-800">
+                                                                               ₹{first.receiptThreshold || '0'}
+                                                                          </td>
+                                                                           <td className="px-6 py-4">
+                                                                               <div className="flex items-center justify-center gap-1">
+                                                                                   <button
+                                                                                       type="button"
+                                                                                       onClick={() => {
+                                                                                           setAddedRules(prev => {
+                                                                                               const firstIdx = prev.findIndex(r => r.id === groupIds[0]);
+                                                                                               if (firstIdx === 0) return prev;
+                                                                                               const next = [...prev];
+                                                                                               const groupSize = groupIds.length;
+                                                                                               const prevGroupStart = firstIdx - 1;
+                                                                                               const moved = next.splice(firstIdx, groupSize);
+                                                                                               next.splice(prevGroupStart, 0, ...moved);
+                                                                                               return next;
+                                                                                           });
+                                                                                       }}
+                                                                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                                                                                       title="Move Up"
+                                                                                   >
+                                                                                       <ChevronUp size={14} />
+                                                                                   </button>
+                                                                                   <button
+                                                                                       type="button"
+                                                                                       onClick={() => {
+                                                                                           setAddedRules(prev => {
+                                                                                               const firstIdx = prev.findIndex(r => r.id === groupIds[0]);
+                                                                                               const groupSize = groupIds.length;
+                                                                                               if (firstIdx + groupSize >= prev.length) return prev;
+                                                                                               const next = [...prev];
+                                                                                               const moved = next.splice(firstIdx, groupSize);
+                                                                                               next.splice(firstIdx + 1, 0, ...moved);
+                                                                                               return next;
+                                                                                           });
+                                                                                       }}
+                                                                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                                                                                       title="Move Down"
+                                                                                   >
+                                                                                       <ChevronDown size={14} />
+                                                                                   </button>
+                                                                                   <button
+                                                                                       type="button"
+                                                                                       onClick={() => setAddedRules(prev => prev.filter(r => !groupIds.includes(r.id)))}
+                                                                                       className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                                                       title="Remove Rule"
+                                                                                   >
+                                                                                       <Trash2 size={14} />
+                                                                                   </button>
+                                                                               </div>
+                                                                           </td>
+
+
+
+
+
+
+
+
+
+                                                                      </tr>
+                                                                  );
+                                                              });
+                                                          })()}
+                                                      </tbody>
+
+                                                 </table>
+                                             </div>
+                                         )}
+                                     </div>
+                                 </div>
+
                                 {/* Section 3: Status */}
-                                <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                                <div className="flex flex-col lg:flex-row gap-4 lg:gap-10">
+                                    <div className="lg:w-64 flex-shrink-0 space-y-1">
+                                        <h3 className="text-sm font-bold text-slate-800">Status</h3>
+                                        <p className="text-xs text-slate-500 leading-relaxed">Whether this expense rule is currently active.</p>
+                                    </div>
+                                    <div className="flex-1 bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
                                             <ShieldCheck size={20} />
@@ -801,6 +1204,7 @@ const ExpenseSettings: React.FC = () => {
                                         />
                                         <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
                                     </label>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -812,7 +1216,7 @@ const ExpenseSettings: React.FC = () => {
 
     return (
         <div className="h-full overflow-y-auto bg-slate-50/30">
-            <div className="p-4 lg:p-8 w-full space-y-8 animate-in fade-in duration-300 pb-20 max-w-7xl mx-auto">
+            <div className="p-4 lg:p-8 w-full space-y-8 animate-in fade-in duration-300 pb-20">
 
                 {/* Modal for Add Category / Override */}
                 {isAddingCategory && (
@@ -898,9 +1302,15 @@ const ExpenseSettings: React.FC = () => {
                                 onClick={() => {
                                     setEditingExpense(null);
                                     setSelectedEntities([]);
+                                    setRuleFrequency('Monthly');
+                                    setRuleResetCycleBasis('Calendar Year (Jan-Dec)');
+                                    setInputTargetRows([{ id: 'row-0', applicableTarget: 'Business Unit', selectedTargetValues: [], isTargetDropdownOpen: false }]);
+                                    setAddedRules([]);
+                                    setShowCriteriaOverrides(false);
+                                    setApplicabilityScope('all');
                                     setIsAddingExpense(true);
                                 }}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                                className="flex items-center gap-2 px-5 py-2.5 text-white rounded-lg font-bold text-sm transition-all shadow-lg" style={{ backgroundColor: '#444CE7' }}
                             >
                                 ADD EXPENSE RULE
                             </button>
@@ -1062,7 +1472,17 @@ const ExpenseSettings: React.FC = () => {
                                                 </button>
                                                 <button onClick={() => {
                                                     setEditingExpense(cat);
+                                                    const loaded = loadAddedRules(cat.applicable_to);
+                                                    setAddedRules(loaded);
+                                                    const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
+                                                    const usedTargets = loaded.map(r => r.applicableTarget);
+                                                    const firstUnused = ALL_TARGET_OPTIONS.find(opt => !usedTargets.includes(opt)) || 'Business Unit';
+                                                    setInputTargetRows([{ id: 'row-0', applicableTarget: firstUnused, selectedTargetValues: [], isTargetDropdownOpen: false }]);
+                                                    setRuleFrequency('Monthly');
+                                                    setRuleResetCycleBasis('Calendar Year (Jan-Dec)');
                                                     setSelectedEntities((cat.applicable_to || []).filter((ent: any) => ent.type === 'dept' || ent.type === 'desig'));
+                                                    setShowCriteriaOverrides((cat.applicable_to || []).some((ent: any) => ent.type === 'dept' || ent.type === 'desig'));
+                                                    setApplicabilityScope((cat.applicable_to || []).some((ent: any) => ent.type === 'dept' || ent.type === 'desig') ? 'specific' : 'all');
                                                     setIsAddingExpense(true);
                                                 }} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all">
                                                     <Edit2 size={16} />
