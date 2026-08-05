@@ -1543,7 +1543,8 @@ const ExpenseSettings: React.FC = () => {
                             <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
                                 <button
                                     onClick={() => setLimitsPreviewCategory(null)}
-                                    className="px-5 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-sm"
+                                    className="px-5 py-2 text-white font-bold rounded-xl hover:opacity-90 transition-colors text-sm shadow-sm"
+                                    style={{ backgroundColor: '#444CE7' }}
                                 >
                                     Close
                                 </button>
