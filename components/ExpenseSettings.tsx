@@ -141,6 +141,7 @@ const ExpenseSettings: React.FC = () => {
         const groupId = 'group-' + Date.now();
         const newRules = validRows.map((row, idx) => ({
             id: `rule-${Date.now()}-${idx}-${Math.random()}`,
+            groupId: groupId,
             frequency: ruleFrequency,
             resetCycleBasis: ruleResetCycleBasis,
             applicableTarget: row.applicableTarget,
