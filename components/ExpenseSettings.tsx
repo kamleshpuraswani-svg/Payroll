@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, ChevronUp, GripVertical, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag, Sigma, Power, Info } from 'lucide-react';
+import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, GripVertical, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag, Sigma, Power, Info } from 'lucide-react';
 
 const EXPENSE_FIELDS = [
     { name: 'Category', icon: Tag },
@@ -93,7 +93,10 @@ const ExpenseSettings: React.FC = () => {
     }
 
     const [addedRules, setAddedRules] = useState<AddedRule[]>([]);
+    const [draggedRuleGroupKey, setDraggedRuleGroupKey] = useState<string | null>(null);
     const [ruleFrequency, setRuleFrequency] = useState<'Monthly' | 'Yearly' | 'Once per tenure'>('Monthly');
+    const [expenseStatusActive, setExpenseStatusActive] = useState(true);
+    const [limitsPreviewCategory, setLimitsPreviewCategory] = useState<any>(null);
     const [ruleResetCycleBasis, setRuleResetCycleBasis] = useState('Calendar Year (Jan-Dec)');
     interface InputTargetRow {
         id: string;
@@ -110,9 +113,8 @@ const ExpenseSettings: React.FC = () => {
 
     const addInputTargetRow = (currentRowId: string) => {
         const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
-        const usedInAdded = addedRules.map(r => r.applicableTarget);
         const usedInInputs = inputTargetRows.map(r => r.applicableTarget);
-        const nextAvailable = ALL_TARGET_OPTIONS.find(opt => !usedInAdded.includes(opt) && !usedInInputs.includes(opt));
+        const nextAvailable = ALL_TARGET_OPTIONS.find(opt => !usedInInputs.includes(opt));
         if (nextAvailable) {
             setInputTargetRows(prev => {
                 const currentIndex = prev.findIndex(r => r.id === currentRowId);
@@ -148,10 +150,9 @@ const ExpenseSettings: React.FC = () => {
         const updatedRules = [...addedRules, ...newRules];
         setAddedRules(updatedRules);
 
-        // Reset to a single row containing the first unused option
+        // Reset to a single row - all target types are available again since Add created a separate group
         const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
-        const nextUsed = updatedRules.map(r => r.applicableTarget);
-        const nextAvailable = ALL_TARGET_OPTIONS.find(opt => !nextUsed.includes(opt)) || 'Business Unit';
+        const nextAvailable = ALL_TARGET_OPTIONS[0];
 
         setInputTargetRows([{
             id: `row-0-${Date.now()}`,
@@ -161,6 +162,38 @@ const ExpenseSettings: React.FC = () => {
         }]);
         setSharedExpenseLimit('');
         setSharedReceiptThreshold('');
+    };
+
+    const handleDropRuleGroup = (targetId: string) => {
+        if (!draggedRuleGroupKey || draggedRuleGroupKey === targetId) {
+            setDraggedRuleGroupKey(null);
+            return;
+        }
+        setAddedRules(prev => {
+            const draggedIdx = prev.findIndex(r => r.id === draggedRuleGroupKey);
+            if (draggedIdx === -1) return prev;
+            const next = [...prev];
+            const [moved] = next.splice(draggedIdx, 1);
+            const targetIdx = next.findIndex(r => r.id === targetId);
+            if (targetIdx === -1) return prev;
+            next.splice(targetIdx, 0, moved);
+            return next;
+        });
+        setDraggedRuleGroupKey(null);
+    };
+
+    const handleEditAddedRule = (rule: AddedRule) => {
+        setRuleFrequency(rule.frequency as 'Monthly' | 'Yearly' | 'Once per tenure');
+        setRuleResetCycleBasis(rule.resetCycleBasis);
+        setInputTargetRows([{
+            id: `row-edit-${Date.now()}`,
+            applicableTarget: rule.applicableTarget,
+            selectedTargetValues: [...rule.selectedTargetValues],
+            isTargetDropdownOpen: false
+        }]);
+        setSharedExpenseLimit(rule.expenseLimit);
+        setSharedReceiptThreshold(rule.receiptThreshold);
+        setAddedRules(prev => prev.filter(r => r.id !== rule.id));
     };
 
     const [newEntityValue, setNewEntityValue] = useState('');
@@ -845,8 +878,9 @@ const ExpenseSettings: React.FC = () => {
                                                 )}
                                             </div>
 
+                                            <div className="p-5 border border-slate-200 rounded-xl bg-slate-50/30 space-y-5">
                                             {inputTargetRows.map((row) => (
-                                                <div key={row.id} className="p-5 border border-slate-100 rounded-xl bg-slate-50/20 space-y-4">
+                                                <div key={row.id} className="p-5 border border-slate-100 rounded-xl bg-white space-y-4">
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                                         <div className="space-y-1.5">
                                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable Target <span className="text-rose-500">*</span></label>
@@ -863,11 +897,10 @@ const ExpenseSettings: React.FC = () => {
                                                                     }}
                                                                     disabled={(() => {
                                                                         const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
-                                                                        const usedInAddedRules = addedRules.map(r => r.applicableTarget);
                                                                         const usedInOtherInputRows = inputTargetRows.filter(r => r.id !== row.id).map(r => r.applicableTarget);
-                                                                        const availableTargetOptions = ALL_TARGET_OPTIONS.filter(opt => 
-                                                                            opt === row.applicableTarget || 
-                                                                            (!usedInAddedRules.includes(opt) && !usedInOtherInputRows.includes(opt))
+                                                                        const availableTargetOptions = ALL_TARGET_OPTIONS.filter(opt =>
+                                                                            opt === row.applicableTarget ||
+                                                                            !usedInOtherInputRows.includes(opt)
                                                                         );
                                                                         return availableTargetOptions.length === 0;
                                                                     })()}
@@ -876,11 +909,10 @@ const ExpenseSettings: React.FC = () => {
                                                                 >
                                                                     {(() => {
                                                                         const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
-                                                                        const usedInAddedRules = addedRules.map(r => r.applicableTarget);
                                                                         const usedInOtherInputRows = inputTargetRows.filter(r => r.id !== row.id).map(r => r.applicableTarget);
-                                                                        const availableTargetOptions = ALL_TARGET_OPTIONS.filter(opt => 
-                                                                            opt === row.applicableTarget || 
-                                                                            (!usedInAddedRules.includes(opt) && !usedInOtherInputRows.includes(opt))
+                                                                        const availableTargetOptions = ALL_TARGET_OPTIONS.filter(opt =>
+                                                                            opt === row.applicableTarget ||
+                                                                            !usedInOtherInputRows.includes(opt)
                                                                         );
                                                                         if (availableTargetOptions.length === 0) {
                                                                             return <option value="">All targets configured</option>;
@@ -1036,6 +1068,7 @@ const ExpenseSettings: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                            </div>
 
                                             <div className="flex justify-end pt-2">
                                                 <button
@@ -1069,6 +1102,7 @@ const ExpenseSettings: React.FC = () => {
                                                      <thead>
                                                          <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
 
+                                                             <th className="px-4 py-4 w-10"></th>
                                                              <th className="px-6 py-4">Applicable Target</th>
                                                              <th className="px-6 py-4">Selected Items</th>
                                                              <th className="px-6 py-4">Expense Limit</th>
@@ -1077,101 +1111,55 @@ const ExpenseSettings: React.FC = () => {
                                                          </tr>
                                                      </thead>
                                                       <tbody className="divide-y divide-slate-100">
-                                                          {(() => {
-                                                              const groups: { key: string; rules: typeof addedRules }[] = [];
-                                                              addedRules.forEach(rule => {
-                                                                  const key = `${rule.frequency}__${rule.resetCycleBasis}__${rule.expenseLimit}__${rule.receiptThreshold}`;
-                                                                  const existing = groups.find(g => g.key === key);
-                                                                  if (existing) { existing.rules.push(rule); }
-                                                                  else { groups.push({ key, rules: [rule] }); }
-                                                              });
-                                                              return groups.map(group => {
-                                                                  const first = group.rules[0];
-                                                                  const allTargets = group.rules.map(r => r.applicableTarget).join(', ');
-                                                                  const allItems = group.rules.flatMap(r => r.selectedTargetValues).join(', ');
-                                                                  const groupIds = group.rules.map(r => r.id);
-                                                                  return (
-                                                                      <tr key={group.key} className="hover:bg-slate-50/50 transition-colors">
-
-
-
-
-
-
-                                                                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                                                                              {allTargets}
-                                                                          </td>
-                                                                          <td className="px-6 py-4 text-sm text-slate-600">
-                                                                              {allItems}
-                                                                          </td>
-                                                                          <td className="px-6 py-4 text-sm font-semibold text-slate-800">
-                                                                               ₹{first.expenseLimit || '0'}
-                                                                          </td>
-                                                                          <td className="px-6 py-4 text-sm font-semibold text-slate-800">
-                                                                               ₹{first.receiptThreshold || '0'}
-                                                                          </td>
-                                                                           <td className="px-6 py-4">
-                                                                               <div className="flex items-center justify-center gap-1">
-                                                                                   <button
-                                                                                       type="button"
-                                                                                       onClick={() => {
-                                                                                           setAddedRules(prev => {
-                                                                                               const firstIdx = prev.findIndex(r => r.id === groupIds[0]);
-                                                                                               if (firstIdx === 0) return prev;
-                                                                                               const next = [...prev];
-                                                                                               const groupSize = groupIds.length;
-                                                                                               const prevGroupStart = firstIdx - 1;
-                                                                                               const moved = next.splice(firstIdx, groupSize);
-                                                                                               next.splice(prevGroupStart, 0, ...moved);
-                                                                                               return next;
-                                                                                           });
-                                                                                       }}
-                                                                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
-                                                                                       title="Move Up"
-                                                                                   >
-                                                                                       <ChevronUp size={14} />
-                                                                                   </button>
-                                                                                   <button
-                                                                                       type="button"
-                                                                                       onClick={() => {
-                                                                                           setAddedRules(prev => {
-                                                                                               const firstIdx = prev.findIndex(r => r.id === groupIds[0]);
-                                                                                               const groupSize = groupIds.length;
-                                                                                               if (firstIdx + groupSize >= prev.length) return prev;
-                                                                                               const next = [...prev];
-                                                                                               const moved = next.splice(firstIdx, groupSize);
-                                                                                               next.splice(firstIdx + 1, 0, ...moved);
-                                                                                               return next;
-                                                                                           });
-                                                                                       }}
-                                                                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
-                                                                                       title="Move Down"
-                                                                                   >
-                                                                                       <ChevronDown size={14} />
-                                                                                   </button>
-                                                                                   <button
-                                                                                       type="button"
-                                                                                       onClick={() => setAddedRules(prev => prev.filter(r => !groupIds.includes(r.id)))}
-                                                                                       className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                                                       title="Remove Rule"
-                                                                                   >
-                                                                                       <Trash2 size={14} />
-                                                                                   </button>
-                                                                               </div>
-                                                                           </td>
-
-
-
-
-
-
-
-
-
-                                                                      </tr>
-                                                                  );
-                                                              });
-                                                          })()}
+                                                          {addedRules.map(rule => (
+                                                              <tr
+                                                                  key={rule.id}
+                                                                  draggable
+                                                                  onDragStart={() => setDraggedRuleGroupKey(rule.id)}
+                                                                  onDragOver={(e: React.DragEvent) => e.preventDefault()}
+                                                                  onDrop={() => handleDropRuleGroup(rule.id)}
+                                                                  onDragEnd={() => setDraggedRuleGroupKey(null)}
+                                                                  className={`hover:bg-slate-50/50 transition-colors ${draggedRuleGroupKey === rule.id ? 'opacity-40' : ''}`}
+                                                              >
+                                                                  <td className="px-4 py-4">
+                                                                      <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors" title="Drag to reorder">
+                                                                          <GripVertical size={16} />
+                                                                      </div>
+                                                                  </td>
+                                                                  <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                                                                      {rule.applicableTarget}
+                                                                  </td>
+                                                                  <td className="px-6 py-4 text-sm text-slate-600">
+                                                                      {rule.selectedTargetValues.join(', ')}
+                                                                  </td>
+                                                                  <td className="px-6 py-4 text-sm font-semibold text-slate-800">
+                                                                       ₹{rule.expenseLimit || '0'}
+                                                                  </td>
+                                                                  <td className="px-6 py-4 text-sm font-semibold text-slate-800">
+                                                                       ₹{rule.receiptThreshold || '0'}
+                                                                  </td>
+                                                                   <td className="px-6 py-4">
+                                                                       <div className="flex items-center justify-center gap-1">
+                                                                           <button
+                                                                               type="button"
+                                                                               onClick={() => handleEditAddedRule(rule)}
+                                                                               className="p-1 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-all"
+                                                                               title="Edit Rule"
+                                                                           >
+                                                                               <Edit2 size={14} />
+                                                                           </button>
+                                                                           <button
+                                                                               type="button"
+                                                                               onClick={() => setAddedRules(prev => prev.filter(r => r.id !== rule.id))}
+                                                                               className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                                               title="Remove Rule"
+                                                                           >
+                                                                               <Trash2 size={14} />
+                                                                           </button>
+                                                                       </div>
+                                                                   </td>
+                                                              </tr>
+                                                          ))}
                                                       </tbody>
 
                                                  </table>
@@ -1184,26 +1172,20 @@ const ExpenseSettings: React.FC = () => {
                                 <div className="flex flex-col lg:flex-row gap-4 lg:gap-10">
                                     <div className="lg:w-64 flex-shrink-0 space-y-1">
                                         <h3 className="text-sm font-bold text-slate-800">Status</h3>
-                                        <p className="text-xs text-slate-500 leading-relaxed">Whether this expense rule is currently active.</p>
+                                        <p className="text-xs text-slate-500 leading-relaxed">Set whether this expense rule is active or inactive.</p>
                                     </div>
-                                    <div className="flex-1 bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
-                                            <ShieldCheck size={20} />
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <label className="text-base font-black text-slate-800">Status</label>
-                                        </div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer scale-110 mr-2">
-                                        <input
-                                            type="checkbox"
-                                            name="status"
-                                            defaultChecked={editingExpense ? editingExpense.status === 'Active' : true}
-                                            className="sr-only peer"
-                                        />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                                    </label>
+                                    <div className="flex-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="status"
+                                                checked={expenseStatusActive}
+                                                onChange={(e) => setExpenseStatusActive(e.target.checked)}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        </label>
+                                        <span className="text-sm font-semibold text-indigo-700">{expenseStatusActive ? 'Active' : 'Inactive'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1308,6 +1290,7 @@ const ExpenseSettings: React.FC = () => {
                                     setAddedRules([]);
                                     setShowCriteriaOverrides(false);
                                     setApplicabilityScope('all');
+                                    setExpenseStatusActive(true);
                                     setIsAddingExpense(true);
                                 }}
                                 className="flex items-center gap-2 px-5 py-2.5 text-white rounded-lg font-bold text-sm transition-all shadow-lg" style={{ backgroundColor: '#444CE7' }}
@@ -1379,7 +1362,7 @@ const ExpenseSettings: React.FC = () => {
                             <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applicable To</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Frequency</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Limits</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Created By</th>
                                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Last Modified By</th>
@@ -1394,52 +1377,32 @@ const ExpenseSettings: React.FC = () => {
                                          </td>
                                          <td className="px-6 py-5">
                                              <div className="flex flex-col gap-2">
-                                                 {(cat.applicable_to || [])
-                                                     .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
-                                                     .map((ent: any, i: number) => (
-                                                     <div key={i} className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-h-[44px]">
-                                                         <div className="text-slate-400 flex-shrink-0">
-                                                             {ent.type === 'dept' ? <Home size={10} /> : ent.type === 'desig' ? <ShieldCheck size={10} /> : <User size={10} />}
-                                                         </div>
-                                                         <span className="text-[10px] font-black text-slate-800 uppercase truncate max-w-[140px]">
-                                                             {ent.name}
+                                                 {(() => {
+                                                     const frequencies = Array.from(new Set((cat.applicable_to || []).map((ent: any) => ent.frequency).filter(Boolean)));
+                                                     if (frequencies.length === 0) frequencies.push('Monthly');
+                                                     return frequencies.map((freq: any, i: number) => (
+                                                         <span key={i} className="text-[10px] font-black text-slate-700 uppercase tracking-wider px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg w-fit">
+                                                             {freq}
                                                          </span>
-                                                     </div>
-                                                 ))}
-                                                 {(!cat.applicable_to || cat.applicable_to.length === 0) && (
-                                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider italic">All Employees</span>
-                                                 )}
+                                                     ));
+                                                 })()}
                                              </div>
                                          </td>
                                          <td className="px-6 py-5">
-                                             <div className="flex flex-col gap-2">
-                                                 {(cat.applicable_to || [])
-                                                     .filter((ent: any) => ent.type === 'dept' || ent.type === 'desig')
-                                                     .map((ent: any, i: number) => (
-                                                     <div key={i} className="flex flex-col gap-0.5 px-3 py-2 min-h-[44px] justify-center">
-                                                         <div className="flex items-center gap-1.5">
-                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">LIMIT</span>
-                                                             <span className="text-[10px] font-black text-slate-700">₹{ent.max_limit?.toLocaleString()}</span>
-                                                         </div>
-                                                         <div className="flex items-center gap-1.5">
-                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">THRESH.</span>
-                                                             <span className="text-[10px] font-black text-slate-700">₹{ent.receipt_threshold?.toLocaleString()}</span>
-                                                         </div>
-                                                     </div>
-                                                 ))}
-                                                 {(!cat.applicable_to || cat.applicable_to.length === 0) && (
-                                                     <div className="flex flex-col gap-0.5 justify-center">
-                                                         <div className="flex items-center gap-1.5">
-                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">LIMIT</span>
-                                                             <span className="text-[10px] font-black text-slate-700">₹{cat.max_limit?.toLocaleString() || '5,000'}</span>
-                                                         </div>
-                                                         <div className="flex items-center gap-1.5">
-                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter w-12">THRESH.</span>
-                                                             <span className="text-[10px] font-black text-slate-700">₹{cat.receipt_threshold?.toLocaleString() || '500'}</span>
-                                                         </div>
-                                                     </div>
-                                                 )}
-                                             </div>
+                                             <button
+                                                 type="button"
+                                                 onClick={() => setLimitsPreviewCategory(cat)}
+                                                 className="text-sm font-bold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
+                                             >
+                                                 {(() => {
+                                                     const limitVals = (cat.applicable_to && cat.applicable_to.length > 0)
+                                                         ? cat.applicable_to.map((e: any) => Number(e.max_limit) || 0)
+                                                         : [Number(cat.max_limit) || 0];
+                                                     const min = Math.min(...limitVals);
+                                                     const max = Math.max(...limitVals);
+                                                     return min === max ? `₹${min.toLocaleString()}` : `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+                                                 })()}
+                                             </button>
                                          </td>
                                          <td className="px-6 py-5">
                                              <div className="flex items-center gap-2">
@@ -1475,14 +1438,13 @@ const ExpenseSettings: React.FC = () => {
                                                     const loaded = loadAddedRules(cat.applicable_to);
                                                     setAddedRules(loaded);
                                                     const ALL_TARGET_OPTIONS = ["Business Unit", "Department", "Designation", "Employee Status", "Employee"];
-                                                    const usedTargets = loaded.map(r => r.applicableTarget);
-                                                    const firstUnused = ALL_TARGET_OPTIONS.find(opt => !usedTargets.includes(opt)) || 'Business Unit';
-                                                    setInputTargetRows([{ id: 'row-0', applicableTarget: firstUnused, selectedTargetValues: [], isTargetDropdownOpen: false }]);
+                                                    setInputTargetRows([{ id: 'row-0', applicableTarget: ALL_TARGET_OPTIONS[0], selectedTargetValues: [], isTargetDropdownOpen: false }]);
                                                     setRuleFrequency('Monthly');
                                                     setRuleResetCycleBasis('Calendar Year (Jan-Dec)');
                                                     setSelectedEntities((cat.applicable_to || []).filter((ent: any) => ent.type === 'dept' || ent.type === 'desig'));
                                                     setShowCriteriaOverrides((cat.applicable_to || []).some((ent: any) => ent.type === 'dept' || ent.type === 'desig'));
                                                     setApplicabilityScope((cat.applicable_to || []).some((ent: any) => ent.type === 'dept' || ent.type === 'desig') ? 'specific' : 'all');
+                                                    setExpenseStatusActive(cat.status === 'Active');
                                                     setIsAddingExpense(true);
                                                 }} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all">
                                                     <Edit2 size={16} />
@@ -1505,6 +1467,62 @@ const ExpenseSettings: React.FC = () => {
                         </table>
                     </div>
                 </div>
+                {/* Limits Preview Modal */}
+                {limitsPreviewCategory && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800">{limitsPreviewCategory.name}</h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Configured applicability rules and limits for this expense category.</p>
+                                </div>
+                                <button
+                                    onClick={() => setLimitsPreviewCategory(null)}
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="overflow-y-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            <th className="px-6 py-4">Applicable Target</th>
+                                            <th className="px-6 py-4">Selected Items</th>
+                                            <th className="px-6 py-4">Expense Limit</th>
+                                            <th className="px-6 py-4">Receipt Threshold</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {loadAddedRules(limitsPreviewCategory.applicable_to).map(rule => (
+                                            <tr key={rule.id}>
+                                                <td className="px-6 py-4 text-sm text-slate-600 font-medium">{rule.applicableTarget}</td>
+                                                <td className="px-6 py-4 text-sm text-slate-600">{rule.selectedTargetValues.join(', ')}</td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-slate-800">₹{rule.expenseLimit || '0'}</td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-slate-800">₹{rule.receiptThreshold || '0'}</td>
+                                            </tr>
+                                        ))}
+                                        {loadAddedRules(limitsPreviewCategory.applicable_to).length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-8 text-center text-slate-400 text-sm">
+                                                    No specific rules configured — applies to all employees.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                                <button
+                                    onClick={() => setLimitsPreviewCategory(null)}
+                                    className="px-5 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-sm"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* Categories Management Dialog */}
                 {isShowCategoriesDialog && (
                     <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
