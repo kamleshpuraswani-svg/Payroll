@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { X, Search, Home, ShieldCheck, User, Trash2, ChevronDown, GripVertical, Receipt, Plus, Edit2, ArrowLeft, Calendar, Repeat, Clock, Filter, Tag, Sigma, Power, Info } from 'lucide-react';
 
@@ -90,6 +90,7 @@ const ExpenseSettings: React.FC = () => {
         selectedTargetValues: string[];
         expenseLimit: string;
         receiptThreshold: string;
+        groupId?: string;
     }
 
     const [addedRules, setAddedRules] = useState<AddedRule[]>([]);
@@ -137,6 +138,7 @@ const ExpenseSettings: React.FC = () => {
             return;
         }
 
+        const groupId = 'group-' + Date.now();
         const newRules = validRows.map((row, idx) => ({
             id: `rule-${Date.now()}-${idx}-${Math.random()}`,
             frequency: ruleFrequency,
@@ -164,36 +166,43 @@ const ExpenseSettings: React.FC = () => {
         setSharedReceiptThreshold('');
     };
 
-    const handleDropRuleGroup = (targetId: string) => {
-        if (!draggedRuleGroupKey || draggedRuleGroupKey === targetId) {
+    const handleDropRuleGroup = (targetKey: string) => {
+        if (!draggedRuleGroupKey || draggedRuleGroupKey === targetKey) {
             setDraggedRuleGroupKey(null);
             return;
         }
         setAddedRules(prev => {
-            const draggedIdx = prev.findIndex(r => r.id === draggedRuleGroupKey);
-            if (draggedIdx === -1) return prev;
             const next = [...prev];
-            const [moved] = next.splice(draggedIdx, 1);
-            const targetIdx = next.findIndex(r => r.id === targetId);
-            if (targetIdx === -1) return prev;
-            next.splice(targetIdx, 0, moved);
-            return next;
+            const draggedRules = next.filter(r => (r.groupId || r.id) === draggedRuleGroupKey);
+            const remainingRules = next.filter(r => (r.groupId || r.id) !== draggedRuleGroupKey);
+            
+            const targetIndexInRemaining = remainingRules.findIndex(r => (r.groupId || r.id) === targetKey);
+            if (targetIndexInRemaining === -1) return prev;
+            
+            remainingRules.splice(targetIndexInRemaining, 0, ...draggedRules);
+            return remainingRules;
         });
         setDraggedRuleGroupKey(null);
     };
 
-    const handleEditAddedRule = (rule: AddedRule) => {
-        setRuleFrequency(rule.frequency as 'Monthly' | 'Yearly' | 'Once per tenure');
-        setRuleResetCycleBasis(rule.resetCycleBasis);
-        setInputTargetRows([{
-            id: `row-edit-${Date.now()}`,
-            applicableTarget: rule.applicableTarget,
-            selectedTargetValues: [...rule.selectedTargetValues],
+    const handleEditRuleGroup = (rules: AddedRule[]) => {
+        if (rules.length === 0) return;
+        const first = rules[0];
+        setRuleFrequency(first.frequency as 'Monthly' | 'Yearly' | 'Once per tenure');
+        setRuleResetCycleBasis(first.resetCycleBasis);
+        
+        setInputTargetRows(rules.map((r, idx) => ({
+            id: `row-edit-${Date.now()}-${idx}`,
+            applicableTarget: r.applicableTarget,
+            selectedTargetValues: [...r.selectedTargetValues],
             isTargetDropdownOpen: false
-        }]);
-        setSharedExpenseLimit(rule.expenseLimit);
-        setSharedReceiptThreshold(rule.receiptThreshold);
-        setAddedRules(prev => prev.filter(r => r.id !== rule.id));
+        })));
+        
+        setSharedExpenseLimit(first.expenseLimit);
+        setSharedReceiptThreshold(first.receiptThreshold);
+        
+        const groupIds = rules.map(r => r.id);
+        setAddedRules(prev => prev.filter(r => !groupIds.includes(r.id)));
     };
 
     const [newEntityValue, setNewEntityValue] = useState('');
@@ -1111,55 +1120,73 @@ const ExpenseSettings: React.FC = () => {
                                                          </tr>
                                                      </thead>
                                                       <tbody className="divide-y divide-slate-100">
-                                                          {addedRules.map(rule => (
-                                                              <tr
-                                                                  key={rule.id}
-                                                                  draggable
-                                                                  onDragStart={() => setDraggedRuleGroupKey(rule.id)}
-                                                                  onDragOver={(e: React.DragEvent) => e.preventDefault()}
-                                                                  onDrop={() => handleDropRuleGroup(rule.id)}
-                                                                  onDragEnd={() => setDraggedRuleGroupKey(null)}
-                                                                  className={`hover:bg-slate-50/50 transition-colors ${draggedRuleGroupKey === rule.id ? 'opacity-40' : ''}`}
-                                                              >
-                                                                  <td className="px-4 py-4">
-                                                                      <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors" title="Drag to reorder">
-                                                                          <GripVertical size={16} />
-                                                                      </div>
-                                                                  </td>
-                                                                  <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                                                                      {rule.applicableTarget}
-                                                                  </td>
-                                                                  <td className="px-6 py-4 text-sm text-slate-600">
-                                                                      {rule.selectedTargetValues.join(', ')}
-                                                                  </td>
-                                                                  <td className="px-6 py-4 text-sm font-semibold text-slate-800">
-                                                                       ₹{rule.expenseLimit || '0'}
-                                                                  </td>
-                                                                  <td className="px-6 py-4 text-sm font-semibold text-slate-800">
-                                                                       ₹{rule.receiptThreshold || '0'}
-                                                                  </td>
-                                                                   <td className="px-6 py-4">
-                                                                       <div className="flex items-center justify-center gap-1">
-                                                                           <button
-                                                                               type="button"
-                                                                               onClick={() => handleEditAddedRule(rule)}
-                                                                               className="p-1 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-all"
-                                                                               title="Edit Rule"
-                                                                           >
-                                                                               <Edit2 size={14} />
-                                                                           </button>
-                                                                           <button
-                                                                               type="button"
-                                                                               onClick={() => setAddedRules(prev => prev.filter(r => r.id !== rule.id))}
-                                                                               className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                                               title="Remove Rule"
-                                                                           >
-                                                                               <Trash2 size={14} />
-                                                                           </button>
-                                                                       </div>
-                                                                   </td>
-                                                              </tr>
-                                                          ))}
+                                                          {(() => {
+                                                              const groups: { key: string; rules: typeof addedRules }[] = [];
+                                                              addedRules.forEach(rule => {
+                                                                  const key = rule.groupId || rule.id;
+                                                                  const existing = groups.find(g => g.key === key);
+                                                                  if (existing) { existing.rules.push(rule); }
+                                                                  else { groups.push({ key, rules: [rule] }); }
+                                                              });
+                                                              return groups.map(group => {
+                                                                  const first = group.rules[0];
+                                                                  const allTargets = group.rules.map(r => r.applicableTarget).join(', ');
+                                                                  const allItems = group.rules.flatMap(r => r.selectedTargetValues).join(', ');
+                                                                  const groupKey = group.key;
+                                                                  return (
+                                                                      <tr
+                                                                          key={groupKey}
+                                                                          draggable
+                                                                          onDragStart={() => setDraggedRuleGroupKey(groupKey)}
+                                                                          onDragOver={(e: React.DragEvent) => e.preventDefault()}
+                                                                          onDrop={() => handleDropRuleGroup(groupKey)}
+                                                                          onDragEnd={() => setDraggedRuleGroupKey(null)}
+                                                                          className={`hover:bg-slate-50/50 transition-colors ${draggedRuleGroupKey === groupKey ? 'opacity-40' : ''}`}
+                                                                      >
+                                                                          <td className="px-4 py-4">
+                                                                              <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors" title="Drag to reorder">
+                                                                                  <GripVertical size={16} />
+                                                                              </div>
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                                                                              {allTargets}
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm text-slate-600">
+                                                                              {allItems}
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm font-semibold text-slate-800">
+                                                                               ₹{first.expenseLimit || '0'}
+                                                                          </td>
+                                                                          <td className="px-6 py-4 text-sm font-semibold text-slate-800">
+                                                                               ₹{first.receiptThreshold || '0'}
+                                                                          </td>
+                                                                           <td className="px-6 py-4">
+                                                                               <div className="flex items-center justify-center gap-1">
+                                                                                   <button
+                                                                                       type="button"
+                                                                                       onClick={() => handleEditRuleGroup(group.rules)}
+                                                                                       className="p-1 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-all"
+                                                                                       title="Edit Rule Group"
+                                                                                   >
+                                                                                       <Edit2 size={14} />
+                                                                                   </button>
+                                                                                   <button
+                                                                                       type="button"
+                                                                                       onClick={() => {
+                                                                                           const groupIds = group.rules.map(r => r.id);
+                                                                                           setAddedRules(prev => prev.filter(r => !groupIds.includes(r.id)));
+                                                                                       }}
+                                                                                       className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                                                       title="Remove Rule Group"
+                                                                                   >
+                                                                                       <Trash2 size={14} />
+                                                                                   </button>
+                                                                               </div>
+                                                                           </td>
+                                                                      </tr>
+                                                                  );
+                                                              });
+                                                          })()}
                                                       </tbody>
 
                                                  </table>
