@@ -37,6 +37,8 @@ const OperationalConfig: React.FC = () => {
     const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(true);
     const [isPayrollCornerExpanded, setIsPayrollCornerExpanded] = useState(true);
     const [showPayrollCornerToEmployees, setShowPayrollCornerToEmployees] = useState(false);
+    const [enableExpenseReimbursement, setEnableExpenseReimbursement] = useState(false);
+    const [enableLoansAdvances, setEnableLoansAdvances] = useState(false);
     const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
     const [investmentApprovers, setInvestmentApprovers] = useState<SelectedEmployee[]>([]);
     const [loansApprovers, setLoansApprovers] = useState<SelectedEmployee[]>([]);
@@ -100,6 +102,12 @@ const OperationalConfig: React.FC = () => {
     const [isInvestmentApproverOpen, setIsInvestmentApproverOpen] = useState(false);
     const investmentApproverDropdownRef = React.useRef<HTMLDivElement>(null);
 
+    // Payroll Corner - Expense & Reimbursement / Loans & Advances approver multi-select state
+    const [isPayrollCornerExpenseApproverOpen, setIsPayrollCornerExpenseApproverOpen] = useState(false);
+    const payrollCornerExpenseApproverDropdownRef = React.useRef<HTMLDivElement>(null);
+    const [isPayrollCornerLoansApproverOpen, setIsPayrollCornerLoansApproverOpen] = useState(false);
+    const payrollCornerLoansApproverDropdownRef = React.useRef<HTMLDivElement>(null);
+
     // Round Off Settings state
     const [isRoundOffExpanded, setIsRoundOffExpanded] = useState(true);
     const [globalRoundOff, setGlobalRoundOff] = useState<'floor' | 'ceiling' | 'nearest_full' | 'nearest_half'>('floor');
@@ -158,6 +166,12 @@ const OperationalConfig: React.FC = () => {
             }
             if (investmentApproverDropdownRef.current && !investmentApproverDropdownRef.current.contains(event.target as Node)) {
                 setIsInvestmentApproverOpen(false);
+            }
+            if (payrollCornerExpenseApproverDropdownRef.current && !payrollCornerExpenseApproverDropdownRef.current.contains(event.target as Node)) {
+                setIsPayrollCornerExpenseApproverOpen(false);
+            }
+            if (payrollCornerLoansApproverDropdownRef.current && !payrollCornerLoansApproverDropdownRef.current.contains(event.target as Node)) {
+                setIsPayrollCornerLoansApproverOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -751,9 +765,9 @@ const OperationalConfig: React.FC = () => {
             </div>
 
             {/* Payroll Corner Visibility */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div
-                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors rounded-t-xl"
                     onClick={() => setIsPayrollCornerExpanded(!isPayrollCornerExpanded)}
                 >
                     <h3 className="font-semibold text-slate-800 flex items-center gap-1.5">
@@ -780,11 +794,186 @@ const OperationalConfig: React.FC = () => {
                                 <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${showPayrollCornerToEmployees ? 'left-5' : 'left-0.5'}`} />
                             </button>
                         </div>
+
+                        {showPayrollCornerToEmployees && (
+                            <div className="max-w-3xl space-y-4 mt-6 animate-in fade-in slide-in-from-top-2 duration-200">
+                                {/* Enable Expense & Reimbursement */}
+                                <div className={`rounded-xl border p-5 transition-colors ${enableExpenseReimbursement ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50/50'}`}>
+                                    <div className="flex items-center justify-between">
+                                        <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                                            Enable Expense & Reimbursement
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEnableExpenseReimbursement(!enableExpenseReimbursement)}
+                                            className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${enableExpenseReimbursement ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                        >
+                                            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${enableExpenseReimbursement ? 'left-5' : 'left-0.5'}`} />
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label className={`block text-xs font-medium mb-2 flex items-center gap-1.5 ${enableExpenseReimbursement ? 'text-slate-500' : 'text-slate-400'}`}>
+                                            Select Approvers for Expense & Reimbursement <span className="text-red-500">*</span>
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                        </label>
+                                        <div className={`relative ${!enableExpenseReimbursement ? 'opacity-60 pointer-events-none' : ''}`} ref={payrollCornerExpenseApproverDropdownRef}>
+                                            <div
+                                                onClick={() => enableExpenseReimbursement && setIsPayrollCornerExpenseApproverOpen(true)}
+                                                className="w-full flex flex-wrap items-center gap-2 pl-10 pr-16 py-2 bg-white border border-slate-200 rounded-lg text-sm min-h-[42px] focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all cursor-text"
+                                            >
+                                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                    <Search size={16} className="text-slate-400" />
+                                                </div>
+                                                {expenseApprovers.length === 0 && (
+                                                    <span className="text-slate-400">Select</span>
+                                                )}
+                                                {expenseApprovers.map(emp => (
+                                                    <div
+                                                        key={emp.id}
+                                                        className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-xs font-semibold text-slate-700"
+                                                    >
+                                                        <span>{emp.name} ({emp.eid})</span>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); removeEmployee(emp.id, 'expense'); }}
+                                                            className="text-slate-400 hover:text-slate-600 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="absolute inset-y-0 right-3 flex items-center gap-2">
+                                                {expenseApprovers.length > 0 && (
+                                                    <button
+                                                        onClick={() => setExpenseApprovers([])}
+                                                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
+                                                <ChevronDown
+                                                    onClick={() => setIsPayrollCornerExpenseApproverOpen(!isPayrollCornerExpenseApproverOpen)}
+                                                    size={16}
+                                                    className={`text-slate-400 cursor-pointer transition-transform ${isPayrollCornerExpenseApproverOpen ? 'rotate-180' : ''}`}
+                                                />
+                                            </div>
+
+                                            {isPayrollCornerExpenseApproverOpen && (
+                                                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                                    <div className="max-h-60 overflow-y-auto p-1 text-sm">
+                                                        {allEmployees.filter(emp => !expenseApprovers.find(s => s.id === emp.id)).map(emp => (
+                                                            <div
+                                                                key={emp.id}
+                                                                onClick={() => handleSelectEmployee(emp.id, 'expense')}
+                                                                className="px-3 py-2 rounded-md cursor-pointer transition-colors text-slate-700 hover:bg-slate-50"
+                                                            >
+                                                                {emp.name} ({emp.eid})
+                                                            </div>
+                                                        ))}
+                                                        {allEmployees.filter(emp => !expenseApprovers.find(s => s.id === emp.id)).length === 0 && (
+                                                            <div className="p-3 text-center text-slate-400 text-xs">No more employees available</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Enable Loans & Advances */}
+                                <div className={`rounded-xl border p-5 transition-colors ${enableLoansAdvances ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50/50'}`}>
+                                    <div className="flex items-center justify-between">
+                                        <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                                            Enable Loans & Advances
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEnableLoansAdvances(!enableLoansAdvances)}
+                                            className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${enableLoansAdvances ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                        >
+                                            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${enableLoansAdvances ? 'left-5' : 'left-0.5'}`} />
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label className={`block text-xs font-medium mb-2 flex items-center gap-1.5 ${enableLoansAdvances ? 'text-slate-500' : 'text-slate-400'}`}>
+                                            Select Approvers for Loans & Advances <span className="text-red-500">*</span>
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                        </label>
+                                        <div className={`relative ${!enableLoansAdvances ? 'opacity-60 pointer-events-none' : ''}`} ref={payrollCornerLoansApproverDropdownRef}>
+                                            <div
+                                                onClick={() => enableLoansAdvances && setIsPayrollCornerLoansApproverOpen(true)}
+                                                className="w-full flex flex-wrap items-center gap-2 pl-10 pr-16 py-2 bg-white border border-slate-200 rounded-lg text-sm min-h-[42px] focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all cursor-text"
+                                            >
+                                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                    <Search size={16} className="text-slate-400" />
+                                                </div>
+                                                {loansApprovers.length === 0 && (
+                                                    <span className="text-slate-400">Select</span>
+                                                )}
+                                                {loansApprovers.map(emp => (
+                                                    <div
+                                                        key={emp.id}
+                                                        className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-xs font-semibold text-slate-700"
+                                                    >
+                                                        <span>{emp.name} ({emp.eid})</span>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); removeEmployee(emp.id, 'loans'); }}
+                                                            className="text-slate-400 hover:text-slate-600 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="absolute inset-y-0 right-3 flex items-center gap-2">
+                                                {loansApprovers.length > 0 && (
+                                                    <button
+                                                        onClick={() => setLoansApprovers([])}
+                                                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
+                                                <ChevronDown
+                                                    onClick={() => setIsPayrollCornerLoansApproverOpen(!isPayrollCornerLoansApproverOpen)}
+                                                    size={16}
+                                                    className={`text-slate-400 cursor-pointer transition-transform ${isPayrollCornerLoansApproverOpen ? 'rotate-180' : ''}`}
+                                                />
+                                            </div>
+
+                                            {isPayrollCornerLoansApproverOpen && (
+                                                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                                    <div className="max-h-60 overflow-y-auto p-1 text-sm">
+                                                        {allEmployees.filter(emp => !loansApprovers.find(s => s.id === emp.id)).map(emp => (
+                                                            <div
+                                                                key={emp.id}
+                                                                onClick={() => handleSelectEmployee(emp.id, 'loans')}
+                                                                className="px-3 py-2 rounded-md cursor-pointer transition-colors text-slate-700 hover:bg-slate-50"
+                                                            >
+                                                                {emp.name} ({emp.eid})
+                                                            </div>
+                                                        ))}
+                                                        {allEmployees.filter(emp => !loansApprovers.find(s => s.id === emp.id)).length === 0 && (
+                                                            <div className="p-3 text-center text-slate-400 text-xs">No more employees available</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* Loans & Advances Approval Hierarchy */}
+            {/* Loans & Advances Approval Hierarchy - Hidden, set to true to restore */}
+            {false && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div
                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
@@ -880,6 +1069,7 @@ const OperationalConfig: React.FC = () => {
                     </div>
                 )}
             </div>
+            )}
 
 
             {/* Hidden: Loans & Advances Eligibility Section - Restore if required */}
@@ -953,7 +1143,8 @@ const OperationalConfig: React.FC = () => {
                 )}
             </div>
             */}
-            {/* Expenses Management Section */}
+            {/* Expenses Management Section - Hidden, set to true to restore */}
+            {false && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div
                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
@@ -1030,6 +1221,7 @@ const OperationalConfig: React.FC = () => {
                     </div>
                 )}
             </div>
+            )}
 
             {/* Payslip Naming Format Section */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1295,29 +1487,8 @@ const OperationalConfig: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Divisor Selection */}
-                                <div className="space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                                            <Calculator size={16} />
-                                        </div>
-                                        <h4 className="text-sm font-bold text-slate-700 tracking-tight text-xs uppercase tracking-widest">Divisor <span className="text-red-500">*</span></h4>
-                                    </div>
-
-                                    <div className="max-w-xs">
-                                        <input 
-                                            type="text" 
-                                            value={divisor} 
-                                            onChange={(e) => setDivisor(e.target.value.replace(/[^0-9]/g, ''))}
-                                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
-                                            placeholder="e.g. 26"
-                                        />
-                                        <p className="text-[10px] text-slate-400 font-medium mt-2 italic">Enter the number of days used as divisor for daily rate calculation.</p>
-                                    </div>
-                                </div>
-
                                 {/* Formula Preview */}
-                                <div className="self-start lg:mt-14 w-full max-w-sm">
+                                <div className="self-start w-full max-w-sm">
                                     <div className="p-4 bg-slate-50/50 border border-slate-200 rounded-xl shadow-sm">
                                         <div className="mb-3">
                                             <div className="flex items-center gap-2 mb-1">
@@ -1517,7 +1688,7 @@ const OperationalConfig: React.FC = () => {
                                             </div>
                                             <div className="font-mono text-[15px] text-indigo-700 pl-4 py-1 tracking-tight">
                                                 {(() => {
-                                                    const divVal = lopDivisor || '30';
+                                                    const divVal = 'Payable Days';
                                                     if (lopType === 'gross') return `Gross Salary / ${divVal}`;
                                                     const active = ["Basic Salary", "Dearness Allowance (DA)", "HRA", "Special Allowance"].filter(opt => lopComponents.includes(opt));
                                                     if (active.length === 0) return `(None Selected) / ${divVal}`;

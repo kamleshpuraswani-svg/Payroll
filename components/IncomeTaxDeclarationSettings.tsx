@@ -2202,7 +2202,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                                        <label className="inline-flex items-center justify-center cursor-pointer">
+                                                        <label className="relative inline-flex items-center justify-center cursor-pointer">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={showInDeclarationIds.has(limit.id)}
@@ -2217,8 +2217,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                                         return next;
                                                                     });
                                                                 }}
-                                                                className="w-4 h-4 rounded border-slate-300 accent-indigo-600 cursor-pointer"
+                                                                className="sr-only peer"
                                                             />
+                                                            <div className="w-12 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                                         </label>
                                                     </td>
                                                     {isEditingInv && (
