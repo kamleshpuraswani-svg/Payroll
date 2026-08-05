@@ -1017,7 +1017,7 @@ const ExpenseSettings: React.FC = () => {
                                                                     </div>
 
                                                                     <div className="flex items-center gap-2 h-12 flex-shrink-0">
-                                                                        {(inputTargetRows.length + addedRules.length < 5) && (
+                                                                        {(inputTargetRows.length < 5) && (
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() => addInputTargetRow(row.id)}
