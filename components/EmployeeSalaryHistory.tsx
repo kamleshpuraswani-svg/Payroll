@@ -39,8 +39,19 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell
 } from 'recharts';
+
+const SALARY_BREAKDOWN_DATA = [
+  { name: 'Base Pay', value: 100000, fill: '#4c1d95' }, 
+  { name: 'HRA', value: 40000, fill: '#7c3aed' }, 
+  { name: 'Special Allowance', value: 30000, fill: '#a78bfa' }, 
+  { name: 'Statutory Deductions (EPF, ESI)', value: 10200, fill: '#ef4444' },
+  { name: 'Variable Bonus', value: 15000, fill: '#94a3b8' }
+];
 
 interface SalaryHistoryRow {
   id: string;
@@ -619,8 +630,10 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
           {activeTab === 'HISTORY' ? (
             <div className="space-y-6 animate-in fade-in duration-300">
 
-              {/* 3. Salary Trend Graph */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2">
+              {/* 3. Salary Trend Graphs Container */}
+              <div className="flex flex-col lg:flex-row gap-6 w-full">
+                {/* Gross vs Net Pay Trend */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -739,6 +752,58 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   </div>
                 </div>
               </div>
+
+              {/* Salary Breakdown Pie Chart */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col">
+                <div className="mb-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    Salary Breakdown
+                  </h3>
+                </div>
+                
+                <div className="flex-1 flex flex-col items-center justify-center relative min-h-[220px]">
+                  <ResponsiveContainer width="100%" height={240}>
+                    <RechartsPieChart>
+                      <Pie
+                        data={SALARY_BREAKDOWN_DATA}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={95}
+                        paddingAngle={3}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {SALARY_BREAKDOWN_DATA.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip 
+                        formatter={(value: any) => formatINR(value)}
+                        cursor={{ fill: '#f8fafc' }}
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 'bold' }}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                  
+                  {/* Inner Text for Donut */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center pt-2">
+                    <span className="text-xs font-bold text-slate-500">Gross</span>
+                    <span className="text-sm font-black text-slate-800">Salary</span>
+                  </div>
+                </div>
+
+                {/* Legends */}
+                <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3 mt-4 text-[10px] font-bold text-slate-600">
+                  {SALARY_BREAKDOWN_DATA.map((entry, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.fill }}></div> 
+                      {entry.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
               {/* 4. Salary History Table */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
