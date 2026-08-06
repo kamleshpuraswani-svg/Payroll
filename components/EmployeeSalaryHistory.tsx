@@ -620,7 +620,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
             <div className="space-y-6 animate-in fade-in duration-300">
 
               {/* 3. Salary Trend Graph */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 mx-auto">
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -667,8 +667,35 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                           dy={10} 
                         />
                         <RechartsTooltip 
-                          formatter={(value: any) => formatINR(value)}
                           cursor={{ fill: '#f8fafc' }}
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const gross = payload.find((p: any) => p.dataKey === 'gross')?.value || 0;
+                              const net = payload.find((p: any) => p.dataKey === 'net')?.value || 0;
+                              const deductions = payload.find((p: any) => p.dataKey === 'totalDeductions')?.value || 0;
+                              
+                              return (
+                                <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[160px]">
+                                  <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{label}</p>
+                                  <div className="space-y-1.5">
+                                    <div className="flex justify-between items-center text-[#22c55e]">
+                                      <span>Net Pay:</span>
+                                      <span className="font-semibold">{formatINR(net as number)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[#ef4444]">
+                                      <span>Deductions:</span>
+                                      <span className="font-semibold">{formatINR(deductions as number)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[#4f46e5]">
+                                      <span>Gross:</span>
+                                      <span className="font-semibold">{formatINR(gross as number)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
                         />
                         <Bar dataKey="net" stackId="a" fill="#22c55e" />
                         <Bar dataKey="totalDeductions" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
