@@ -31,6 +31,16 @@ import {
   CheckSquare,
   Pencil
 } from 'lucide-react';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 interface SalaryHistoryRow {
   id: string;
@@ -466,8 +476,49 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   };
 
   // Graph Data
-  const graphData = [...MOCK_HISTORY_ROWS].filter(r => r.period.includes(graphYear)).reverse();
+  const graphData = [...MOCK_HISTORY_ROWS].filter(r => r.period.includes(graphYear)).reverse().map((d, i, arr) => {
+    const totalDeductions = d.deductions.pf + d.deductions.tds + d.deductions.others;
+    return {
+      ...d,
+      monthLabel: d.period.split(' ')[0],
+      totalDeductions,
+      isIncrement: i > 0 && d.gross > arr[i - 1].gross
+    };
+  });
   const maxGross = Math.max(...graphData.map(d => d.gross), 1);
+
+  // Custom dot for the Gross Salary line — highlights months where an increment was applied
+  const renderGrossDot = (props: any) => {
+    const { cx, cy, payload, index } = props;
+    if (payload?.isIncrement) {
+      return (
+        <g key={`increment-dot-${index}`}>
+          <path d={`M ${cx - 4} ${cy - 9} L ${cx} ${cy - 15} L ${cx + 4} ${cy - 9} Z`} fill="#7c3aed" />
+          <circle cx={cx} cy={cy} r={5} fill="#7c3aed" stroke="#fff" strokeWidth={2} />
+        </g>
+      );
+    }
+    return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill="#6366F1" stroke="#fff" strokeWidth={1.5} />;
+  };
+
+  // Custom tooltip for the Gross vs. Net Pay trend chart
+  const renderTrendTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || payload.length === 0) return null;
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-800 text-white text-xs rounded-xl shadow-xl px-3 py-2.5 space-y-1 font-medium">
+        <p className="font-bold text-[11px] mb-1">{data.period}</p>
+        <p>Gross Salary: <span className="font-bold">{formatINR(data.gross)}</span></p>
+        <p>Net Pay: <span className="font-bold">{formatINR(data.net)}</span></p>
+        <p>Deductions: <span className="font-bold">{formatINR(data.totalDeductions)}</span></p>
+        {data.isIncrement && (
+          <p className="text-purple-300 font-bold flex items-center gap-1 pt-1 border-t border-slate-700 mt-1.5">
+            <ArrowUpRight size={10} /> Increment Applied
+          </p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="p-4 lg:p-8 max-w-[1600px] mx-auto animate-in fade-in duration-300">
@@ -532,10 +583,13 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
               </div>
 
               <div className="flex gap-3 pt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold text-slate-600">
-                  <Clock size={12} className="text-slate-400" />
-                  Last Disbursal: 30 Nov 2025
-                </div>
+                {/* Hidden per user request */}
+                {false && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold text-slate-600">
+                    <Clock size={12} className="text-slate-400" />
+                    Last Disbursal: 30 Nov 2025
+                  </div>
+                )}
                 <button
                   onClick={() => setShowAnnexureModal(true)}
                   className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-full text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
@@ -567,11 +621,11 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
               {/* 3. Salary Trend Graph */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                       <TrendingUp size={18} className="text-purple-600" />
-                      Monthly Salary Trend
+                      Gross vs. Net Pay Trend
                     </h3>
                   </div>
                   <div className="flex items-center gap-6">
@@ -584,41 +638,72 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       <option value="2024">2024</option>
                       <option value="2023">2023</option>
                     </select>
-                    <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span> Gross Salary</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-purple-100 border border-purple-300"></span> Increment Applied</div>
-                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-end justify-between h-40 gap-3 px-2">
-                  {graphData.length > 0 ? graphData.map((d, i) => {
-                    const isRaise = i > 0 && d.gross > graphData[i - 1].gross;
-                    return (
-                      <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
-                        <div className="relative w-full flex justify-end flex-col items-center">
-                          <div
-                            className={`w-full rounded-t-md transition-all duration-500 hover:scale-x-105 group-hover:opacity-100 relative ${isRaise ? 'bg-purple-600 shadow-[0_0_12px_rgba(147,51,234,0.3)] ring-2 ring-purple-100' : 'bg-indigo-500 opacity-80'}`}
-                            style={{ height: `${(d.gross / maxGross) * 120}px` }}
-                          >
-                            {isRaise && (
-                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-purple-600 font-black animate-bounce">
-                                <ArrowUpRight size={14} />
-                              </div>
-                            )}
-                          </div>
-                          <div className="absolute -top-8 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                            {formatINR(d.gross)}
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap">{d.period.split(' ')[0]}</span>
-                      </div>
-                    );
-                  }) : (
+                {/* Top Legend */}
+                <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-[#4f46e5]"></div> Gross Salary
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-[#ef4444]"></div> Net Pay
+                  </div>
+                </div>
+
+                <div className="h-64 w-full">
+                  {graphData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={graphData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                          dataKey="monthLabel" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                          dy={10} 
+                        />
+                        <RechartsTooltip 
+                          formatter={(value: any) => formatINR(value)}
+                          cursor={{ fill: '#f8fafc' }}
+                        />
+                        <Bar dataKey="net" stackId="a" fill="#22c55e" />
+                        <Bar dataKey="totalDeductions" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="gross" 
+                          stroke="#4f46e5" 
+                          strokeWidth={2} 
+                          dot={(props: any) => {
+                            const { cx, cy, payload, key } = props;
+                            if (payload.isIncrement) {
+                              return (
+                                <text key={key} x={cx} y={cy - 12} fill="#4f46e5" fontSize="16" fontWeight="900" textAnchor="middle">
+                                  {'>'}
+                                </text>
+                              );
+                            }
+                            return <g key={key}></g>;
+                          }}
+                        />
+                        <Line type="monotone" dataKey="net" stroke="#ef4444" strokeWidth={2} dot={false} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm italic">
                       No salary data available for {graphYear}
                     </div>
                   )}
+                </div>
+
+                {/* Bottom Legend */}
+                <div className="flex justify-center items-center gap-6 mt-4 text-xs font-bold text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#22c55e] rounded-sm"></div> Net
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#ef4444] rounded-sm"></div> Deductions
+                  </div>
                 </div>
               </div>
 
