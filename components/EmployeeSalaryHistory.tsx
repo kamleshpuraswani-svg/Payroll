@@ -773,16 +773,15 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       onChange={(e) => setTaxYear(e.target.value)}
                       className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-rose-500 cursor-pointer hover:bg-slate-100 transition-colors"
                     >
-                      <option value="2025">2025</option>
-                      <option value="2024">2024</option>
-                      <option value="2023">2023</option>
+                      <option value="2026">FY 2026-27</option>
+                      <option value="2025">FY 2025-26</option>
+                      <option value="2024">FY 2024-25</option>
                     </select>
                   </div>
                 </div>
                 
                 <div className="flex items-baseline gap-2 mt-2 ml-6">
                   <span className="text-3xl font-black text-slate-800">₹1,24,500</span>
-                  <span className="text-sm font-bold text-slate-500">/ year</span>
                 </div>
               </div>
             </div>
