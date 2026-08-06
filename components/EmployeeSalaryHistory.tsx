@@ -620,7 +620,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
             <div className="space-y-6 animate-in fade-in duration-300">
 
               {/* 3. Salary Trend Graph */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 mx-auto">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -642,12 +642,15 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
 
                 {/* Top Legend */}
-                <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600">
+                <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600 flex-wrap">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-0.5 bg-[#4f46e5]"></div> Gross Salary
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-0.5 bg-[#ef4444]"></div> Net Pay
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#4f46e5] font-black text-sm">↑</span> Increment
                   </div>
                 </div>
 
@@ -678,9 +681,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                             const { cx, cy, payload, key } = props;
                             if (payload.isIncrement) {
                               return (
-                                <text key={key} x={cx} y={cy - 12} fill="#4f46e5" fontSize="16" fontWeight="900" textAnchor="middle">
-                                  {'>'}
-                                </text>
+                                <g key={key}>
+                                  <rect x={cx - 35} y={cy - 25} width={70} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                                  <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                    ↑ Increment
+                                  </text>
+                                </g>
                               );
                             }
                             return <g key={key}></g>;
