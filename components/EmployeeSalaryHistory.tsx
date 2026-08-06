@@ -798,8 +798,8 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   
                   {/* Inner Text for Donut */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center pt-2">
-                    <span className="text-xs font-bold text-slate-500">Gross</span>
-                    <span className="text-sm font-black text-slate-800">Salary</span>
+                    <span className="text-xs font-bold text-slate-500">Annual</span>
+                    <span className="text-sm font-black text-slate-800">CTC</span>
                   </div>
                 </div>
 
