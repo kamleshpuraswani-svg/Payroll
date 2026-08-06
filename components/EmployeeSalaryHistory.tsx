@@ -419,6 +419,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   // Graph State
   const [graphYear, setGraphYear] = useState('2025');
   const [breakdownYear, setBreakdownYear] = useState('2025');
+  const [taxYear, setTaxYear] = useState('2025');
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -631,8 +632,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
               {/* 3. Salary Trend Graphs Container */}
               <div className="flex flex-col lg:flex-row gap-6 w-full">
-                {/* Gross vs Net Pay Trend */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2">
+                
+                {/* Left Column: Trend Graph + Tax Liability */}
+                <div className="flex flex-col gap-6 w-full lg:w-1/2">
+                  
+                  {/* Gross vs Net Pay Trend */}
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -751,6 +756,36 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   </div>
                 </div>
               </div>
+
+              {/* Total Tax Liability Card */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex flex-col justify-center">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Calculator size={18} className="text-rose-600" />
+                      Total Tax Liability
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 font-medium ml-6 border bg-slate-100 rounded px-2 py-0.5 inline-block">New Tax Regime</p>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <select
+                      value={taxYear}
+                      onChange={(e) => setTaxYear(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-rose-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                    >
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="flex items-baseline gap-2 mt-2 ml-6">
+                  <span className="text-3xl font-black text-slate-800">₹1,24,500</span>
+                  <span className="text-sm font-bold text-slate-500">/ year</span>
+                </div>
+              </div>
+            </div>
 
               {/* Salary Breakdown Pie Chart */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col">
