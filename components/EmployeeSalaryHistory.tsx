@@ -46,11 +46,9 @@ import {
 } from 'recharts';
 
 const SALARY_BREAKDOWN_DATA = [
-  { name: 'Base Pay', value: 100000, fill: '#4c1d95' }, 
-  { name: 'HRA', value: 40000, fill: '#7c3aed' }, 
-  { name: 'Special Allowance', value: 30000, fill: '#a78bfa' }, 
-  { name: 'Statutory Deductions (EPF, ESI)', value: 10200, fill: '#ef4444' },
-  { name: 'Variable Bonus', value: 15000, fill: '#94a3b8' }
+  { name: 'Total Earnings', value: 250000, fill: '#4f46e5' }, 
+  { name: 'Employee Deductions', value: 25000, fill: '#ef4444' }, 
+  { name: 'Employer Deductions', value: 15000, fill: '#f97316' }
 ];
 
 interface SalaryHistoryRow {
@@ -420,6 +418,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
   // Graph State
   const [graphYear, setGraphYear] = useState('2025');
+  const [breakdownYear, setBreakdownYear] = useState('2025');
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -755,10 +754,21 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
               {/* Salary Breakdown Pie Chart */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col">
-                <div className="mb-4">
+                <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
                     Salary Breakdown
                   </h3>
+                  <div className="flex items-center gap-6">
+                    <select
+                      value={breakdownYear}
+                      onChange={(e) => setBreakdownYear(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                    >
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                    </select>
+                  </div>
                 </div>
                 
                 <div className="flex-1 flex flex-col items-center justify-center relative min-h-[220px]">
