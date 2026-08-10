@@ -24,6 +24,10 @@ const ChallanSettings: React.FC = () => {
     const [pfAuthorizedSignatory, setPfAuthorizedSignatory] = useState('');
     const [pfBankName, setPfBankName] = useState('HDFC Bank');
     const [pfAccountNumber, setPfAccountNumber] = useState('');
+    const [pfCompanyName, setPfCompanyName] = useState('TechFlow Systems Pvt Ltd');
+    const [pfResponsiblePerson, setPfResponsiblePerson] = useState('');
+    const [pfNumber, setPfNumber] = useState('');
+    const [pfRegisteredAddress, setPfRegisteredAddress] = useState('');
 
     // ESI
     const [esiEnabled, setEsiEnabled] = useState(true);
@@ -153,6 +157,41 @@ const ChallanSettings: React.FC = () => {
                 setPtAuthorizedSignatory('');
                 setPtBankName('HDFC Bank');
                 setPtAccountNumber('');
+            }
+
+            // Fetch pre-fill data for read-only fields
+            try {
+                // Fetch pfNumber
+                const { data: pfData } = await supabase.from('operational_config').select('config_value').eq('config_key', `pf_settings:${selectedTarget}`).single();
+                if (pfData?.config_value) {
+                    setPfNumber(pfData.config_value.pfNumber || 'Not configured');
+                } else {
+                    setPfNumber('Not configured');
+                }
+
+                // Fetch respName
+                const { data: tdsData } = await supabase.from('operational_config').select('config_value').eq('config_key', `tds_settings:${selectedTarget}`).single();
+                if (tdsData?.config_value) {
+                    setPfResponsiblePerson(tdsData.config_value.respName || 'Not configured');
+                } else {
+                    setPfResponsiblePerson('Not configured');
+                }
+
+                // Fetch address
+                const { data: orgData } = await supabase.from('operational_config').select('config_value').eq('config_key', 'organization_tax_details').single();
+                if (orgData?.config_value) {
+                    const buName = selectedTarget.replace('bu:', '');
+                    const orgConfig = orgData.config_value[buName];
+                    if (orgConfig) {
+                        setPfRegisteredAddress(orgConfig.address || 'Not configured');
+                    } else {
+                        setPfRegisteredAddress('Not configured');
+                    }
+                } else {
+                    setPfRegisteredAddress('Not configured');
+                }
+            } catch (err) {
+                console.error("Error fetching pre-fill data:", err);
             }
         } catch (err) {
             console.error('Error fetching Challan settings:', err);
@@ -339,90 +378,48 @@ const ChallanSettings: React.FC = () => {
 
                             {pfEnabled && (
                                 <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
-                            <label className="flex items-start gap-4 cursor-pointer group">
-                                <div
-                                    onClick={() => isEditing && setAutoPfChallan(!autoPfChallan)}
-                                    className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${autoPfChallan ? 'bg-sky-500 border-sky-500 text-white shadow-lg' : 'border-slate-300 bg-white group-hover:border-sky-400'} ${!isEditing ? 'cursor-not-allowed opacity-70' : ''}`}
-                                >
-                                    {autoPfChallan && <Check size={14} strokeWidth={4} />}
-                                </div>
-                                <div>
-                                    <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Auto-generate PF ECR file on payroll finalization</span>
-                                    <p className="text-xs text-slate-400 mt-1">Automatically compile and generate the Electronic Challan-cum-Return text file after monthly payroll signoff.</p>
-                                </div>
-                            </label>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                                {/* Signatory Dropdown */}
+                                {/* Company Name */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Authorized Signatory <span className="text-rose-500">*</span></label>
-                                    <div className="relative max-w-xs">
-                                        <select
-                                            value={pfAuthorizedSignatory}
-                                            onChange={e => setPfAuthorizedSignatory(e.target.value)}
-                                            disabled={!isEditing}
-                                            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer"
-                                        >
-                                            <option value="">Select Employee...</option>
-                                            {employees.map(emp => (
-                                                <option key={emp} value={emp}>{emp}</option>
-                                            ))}
-                                        </select>
-                                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-
-                                {/* Payment Mode */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Payment Mode <span className="text-rose-500">*</span></label>
-                                    <div className="relative max-w-xs">
-                                        <select
-                                            value={pfPaymentMode}
-                                            onChange={e => setPfPaymentMode(e.target.value)}
-                                            disabled={!isEditing}
-                                            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer"
-                                        >
-                                            <option>Direct Debit</option>
-                                            <option>Corporate Net Banking</option>
-                                            <option>NEFT / RTGS Transfer</option>
-                                        </select>
-                                        <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-
-                                {/* Bank Name */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Authorized Bank <span className="text-rose-500">*</span></label>
-                                    <div className="relative max-w-xs">
-                                        <select
-                                            value={pfBankName}
-                                            onChange={e => setPfBankName(e.target.value)}
-                                            disabled={!isEditing}
-                                            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer"
-                                        >
-                                            <option>HDFC Bank</option>
-                                            <option>State Bank of India</option>
-                                            <option>ICICI Bank</option>
-                                            <option>Axis Bank</option>
-                                            <option>Kotak Mahindra Bank</option>
-                                        </select>
-                                        <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-
-                                {/* Account Number */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Account Number <span className="text-rose-500">*</span></label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Company Name</label>
                                     <input
                                         type="text"
-                                        value={pfAccountNumber}
-                                        onChange={e => setPfAccountNumber(e.target.value.replace(/\D/g, ''))}
-                                        disabled={!isEditing}
-                                        placeholder="Enter bank account number"
-                                        className="max-w-xs w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed font-mono"
+                                        value={pfCompanyName}
+                                        disabled
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 focus:outline-none cursor-not-allowed opacity-80"
+                                    />
+                                </div>
+
+                                {/* Responsible Person */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Responsible Person</label>
+                                    <input
+                                        type="text"
+                                        value={pfResponsiblePerson}
+                                        disabled
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 focus:outline-none cursor-not-allowed opacity-80"
+                                    />
+                                </div>
+
+                                {/* Provident Fund Number */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Provident Fund Number</label>
+                                    <input
+                                        type="text"
+                                        value={pfNumber}
+                                        disabled
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 focus:outline-none cursor-not-allowed opacity-80 font-mono"
+                                    />
+                                </div>
+
+                                {/* Registered Address */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Registered Address</label>
+                                    <input
+                                        type="text"
+                                        value={pfRegisteredAddress}
+                                        disabled
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 focus:outline-none cursor-not-allowed opacity-80"
                                     />
                                 </div>
                             </div>
