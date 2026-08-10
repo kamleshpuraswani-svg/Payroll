@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Save, Edit2, FileText, ChevronDown, Check, AlertCircle, Info, Landmark, User, CreditCard, Shield, Activity, Briefcase, Building2 } from 'lucide-react';
+import { Save, Edit2, FileText, ChevronDown, ChevronUp, Check, AlertCircle, Info, Landmark, User, CreditCard, Shield, Activity, Briefcase, Building2 } from 'lucide-react';
 
 const BUSINESS_UNITS = [
     "MindInventory",
@@ -48,6 +48,18 @@ const ChallanSettings: React.FC = () => {
     const [ptAuthorizedSignatory, setPtAuthorizedSignatory] = useState('');
     const [ptBankName, setPtBankName] = useState('HDFC Bank');
     const [ptAccountNumber, setPtAccountNumber] = useState('');
+
+    // Expanded sections state
+    const [expandedSections, setExpandedSections] = useState({
+        pf: true,
+        esi: true,
+        lwf: true,
+        pt: true
+    });
+    
+    const toggleSection = (section: keyof typeof expandedSections) => {
+        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     // Backup state for cancel
     const [backupState, setBackupState] = useState<any>(null);
@@ -292,10 +304,18 @@ const ChallanSettings: React.FC = () => {
                 
                 {/* 1. Provident Fund (PF) Section */}
                 <div className={`bg-white p-8 rounded-xl border shadow-sm ${isEditing ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
+                    <div className={`flex justify-between items-center ${expandedSections.pf ? 'mb-6' : ''}`}>
+                        <div 
+                            className="flex items-center gap-3 cursor-pointer group select-none"
+                            onClick={() => toggleSection('pf')}
+                        >
                             <Shield size={20} className="text-sky-600" />
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROVIDENT FUND (PF)</h3>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide group-hover:text-sky-700 transition-colors">PROVIDENT FUND (PF)</h3>
+                            {expandedSections.pf ? (
+                                <ChevronUp size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            ) : (
+                                <ChevronDown size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            )}
                         </div>
                         <div className="flex items-center gap-3">
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -311,12 +331,14 @@ const ChallanSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <p className="text-sm text-slate-500 -mt-2 mb-6">
-                        Configure Challan preferences for Provident Fund contributions. Enabling this will auto-generate the PF Electronic Challan-cum-Return (ECR) file during monthly payroll finalization.
-                    </p>
+                    {expandedSections.pf && (
+                        <>
+                            <p className="text-sm text-slate-500 -mt-2 mb-6">
+                                Configure Challan preferences for Provident Fund contributions. Enabling this will auto-generate the PF Electronic Challan-cum-Return (ECR) file during monthly payroll finalization.
+                            </p>
 
-                    {pfEnabled && (
-                        <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
+                            {pfEnabled && (
+                                <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
                             <label className="flex items-start gap-4 cursor-pointer group">
                                 <div
                                     onClick={() => isEditing && setAutoPfChallan(!autoPfChallan)}
@@ -410,10 +432,18 @@ const ChallanSettings: React.FC = () => {
 
                 {/* 2. Employee State Insurance (ESI) Section */}
                 <div className={`bg-white p-8 rounded-xl border shadow-sm ${isEditing ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
+                    <div className={`flex justify-between items-center ${expandedSections.esi ? 'mb-6' : ''}`}>
+                        <div 
+                            className="flex items-center gap-3 cursor-pointer group select-none"
+                            onClick={() => toggleSection('esi')}
+                        >
                             <Activity size={20} className="text-sky-600" />
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">EMPLOYEE STATE INSURANCE (ESI)</h3>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide group-hover:text-sky-700 transition-colors">EMPLOYEE STATE INSURANCE (ESI)</h3>
+                            {expandedSections.esi ? (
+                                <ChevronUp size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            ) : (
+                                <ChevronDown size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            )}
                         </div>
                         <div className="flex items-center gap-3">
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -429,12 +459,14 @@ const ChallanSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <p className="text-sm text-slate-500 -mt-2 mb-6">
-                        Configure Challan preferences for Employee State Insurance contributions. Enabling this will compile and auto-generate ESI Challan details during monthly payroll finalization.
-                    </p>
+                    {expandedSections.esi && (
+                        <>
+                            <p className="text-sm text-slate-500 -mt-2 mb-6">
+                                Configure Challan preferences for Employee State Insurance contributions. Enabling this will compile and auto-generate ESI Challan details during monthly payroll finalization.
+                            </p>
 
-                    {esiEnabled && (
-                        <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
+                            {esiEnabled && (
+                                <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
                             <label className="flex items-start gap-4 cursor-pointer group">
                                 <div
                                     onClick={() => isEditing && setAutoEsiChallan(!autoEsiChallan)}
@@ -528,10 +560,18 @@ const ChallanSettings: React.FC = () => {
 
                 {/* 3. Labour Welfare Fund (LWF) Section */}
                 <div className={`bg-white p-8 rounded-xl border shadow-sm ${isEditing ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
+                    <div className={`flex justify-between items-center ${expandedSections.lwf ? 'mb-6' : ''}`}>
+                        <div 
+                            className="flex items-center gap-3 cursor-pointer group select-none"
+                            onClick={() => toggleSection('lwf')}
+                        >
                             <Briefcase size={20} className="text-sky-600" />
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">LABOUR WELFARE FUND (LWF)</h3>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide group-hover:text-sky-700 transition-colors">LABOUR WELFARE FUND (LWF)</h3>
+                            {expandedSections.lwf ? (
+                                <ChevronUp size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            ) : (
+                                <ChevronDown size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            )}
                         </div>
                         <div className="flex items-center gap-3">
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -547,12 +587,14 @@ const ChallanSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <p className="text-sm text-slate-500 -mt-2 mb-6">
-                        Configure Challan preferences for Labour Welfare Fund contributions. Enabling this will compute state-specific LWF challan formats and generation rules.
-                    </p>
+                    {expandedSections.lwf && (
+                        <>
+                            <p className="text-sm text-slate-500 -mt-2 mb-6">
+                                Configure Challan preferences for Labour Welfare Fund contributions. Enabling this will compute state-specific LWF challan formats and generation rules.
+                            </p>
 
-                    {lwfEnabled && (
-                        <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
+                            {lwfEnabled && (
+                                <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
                             <label className="flex items-start gap-4 cursor-pointer group">
                                 <div
                                     onClick={() => isEditing && setAutoLwfChallan(!autoLwfChallan)}
@@ -646,10 +688,18 @@ const ChallanSettings: React.FC = () => {
 
                 {/* 4. Professional Tax (PT) Section */}
                 <div className={`bg-white p-8 rounded-xl border shadow-sm ${isEditing ? 'border-sky-300 ring-1 ring-sky-100' : 'border-slate-200'}`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
+                    <div className={`flex justify-between items-center ${expandedSections.pt ? 'mb-6' : ''}`}>
+                        <div 
+                            className="flex items-center gap-3 cursor-pointer group select-none"
+                            onClick={() => toggleSection('pt')}
+                        >
                             <Building2 size={20} className="text-sky-600" />
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">PROFESSIONAL TAX (PT)</h3>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide group-hover:text-sky-700 transition-colors">PROFESSIONAL TAX (PT)</h3>
+                            {expandedSections.pt ? (
+                                <ChevronUp size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            ) : (
+                                <ChevronDown size={16} className="text-slate-400 group-hover:text-sky-600 transition-colors" />
+                            )}
                         </div>
                         <div className="flex items-center gap-3">
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -665,12 +715,14 @@ const ChallanSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <p className="text-sm text-slate-500 -mt-2 mb-6">
-                        Configure Challan preferences for Professional Tax. Enabling this will compile and auto-generate PT Challan summaries across active states during monthly finalization.
-                    </p>
+                    {expandedSections.pt && (
+                        <>
+                            <p className="text-sm text-slate-500 -mt-2 mb-6">
+                                Configure Challan preferences for Professional Tax. Enabling this will compile and auto-generate PT Challan summaries across active states during monthly finalization.
+                            </p>
 
-                    {ptEnabled && (
-                        <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
+                            {ptEnabled && (
+                                <div className="space-y-6 border-t border-slate-100 pt-6 animate-in fade-in">
                             <label className="flex items-start gap-4 cursor-pointer group">
                                 <div
                                     onClick={() => isEditing && setAutoPtChallan(!autoPtChallan)}
