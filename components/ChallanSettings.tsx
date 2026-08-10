@@ -428,6 +428,8 @@ const ChallanSettings: React.FC = () => {
                             </div>
                         </div>
                     )}
+                        </>
+                    )}
                 </div>
 
                 {/* 2. Employee State Insurance (ESI) Section */}
@@ -555,6 +557,8 @@ const ChallanSettings: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                    )}
+                        </>
                     )}
                 </div>
 
@@ -684,6 +688,8 @@ const ChallanSettings: React.FC = () => {
                             </div>
                         </div>
                     )}
+                        </>
+                    )}
                 </div>
 
                 {/* 4. Professional Tax (PT) Section */}
@@ -811,6 +817,8 @@ const ChallanSettings: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                    )}
+                        </>
                     )}
                 </div>
             </div>
