@@ -2009,8 +2009,9 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-800 tracking-tight">Income Tax Deductions Limit</h3>
                             </div>
-                            
-                            <div className="flex items-center rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center rounded-lg overflow-hidden border border-slate-200 shadow-sm mr-2">
                                 <button 
                                     onClick={() => setLimitViewRegime('New')}
                                     className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
@@ -2034,8 +2035,6 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     Old Regime
                                 </button>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => setIsLimitsExpanded(!isLimitsExpanded)}
                                 className="p-2 hover:bg-slate-100 rounded-lg transition-all text-slate-400 hover:text-slate-600"
