@@ -2196,6 +2196,8 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
             {/* Copy Schedules Modal */}
             {isCopyModalOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
