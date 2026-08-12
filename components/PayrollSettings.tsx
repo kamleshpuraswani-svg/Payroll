@@ -2201,7 +2201,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
             {/* Copy Schedules Modal */}
             {isCopyModalOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-lg w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-800">Copy Pay Schedules</h3>
@@ -2274,10 +2274,10 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             <button
                                 onClick={handleExecuteCopy}
                                 disabled={!copyFromBU || copyToBUs.length === 0}
-                                className="px-5 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-5 py-2.5 bg-[#444CE7] text-white rounded-lg text-sm font-bold hover:bg-[#3b43d6] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 <Copy size={16} />
-                                Copy Schedules
+                                Copy
                             </button>
                         </div>
                     </div>
