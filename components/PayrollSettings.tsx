@@ -1688,7 +1688,9 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
     const [selectedTarget, setSelectedTarget] = useState<string>(`bu:${BUSINESS_UNITS[0]}`);
-    const [showCopyDropdown, setShowCopyDropdown] = useState(false);
+    const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+    const [copyFromBU, setCopyFromBU] = useState<string>('');
+    const [copyToBUs, setCopyToBUs] = useState<string[]>([]);
     const [deactivatingSchedule, setDeactivatingSchedule] = useState<PaySchedule | null>(null);
 
     const filteredSchedules = useMemo(() => {
@@ -1834,26 +1836,37 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         setIsModalOpen(true);
     };
 
-    const handleCopySchedules = async (fromBU: string) => {
-        const sourceSchedules = schedules.filter(s => s.targetType === 'BusinessUnit' && s.targetId === fromBU);
-        if (sourceSchedules.length === 0) {
-            alert(`No schedules found in ${fromBU} to copy.`);
-            setShowCopyDropdown(false);
+    const handleExecuteCopy = async () => {
+        if (!copyFromBU) {
+            alert('Please select a Business Unit to copy from.');
+            return;
+        }
+        if (copyToBUs.length === 0) {
+            alert('Please select at least one Business Unit to copy to.');
             return;
         }
 
-        const currentBuName = selectedTarget.replace('bu:', '');
+        const sourceSchedules = schedules.filter(s => s.targetType === 'BusinessUnit' && s.targetId === copyFromBU);
+        if (sourceSchedules.length === 0) {
+            alert(`No schedules found in ${copyFromBU} to copy.`);
+            return;
+        }
+
+        const otherSchedules = schedules.filter(s => !(s.targetType === 'BusinessUnit' && copyToBUs.includes(s.targetId!)));
         
-        const otherSchedules = schedules.filter(s => !(s.targetType === 'BusinessUnit' && s.targetId === currentBuName));
-        
-        const copiedSchedules = sourceSchedules.map(s => ({
-            ...s,
-            id: `sch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            targetType: 'BusinessUnit' as const,
-            targetId: currentBuName,
-            created_by: 'System',
-            last_modified_by: 'Admin'
-        }));
+        const copiedSchedules: PaySchedule[] = [];
+        copyToBUs.forEach(targetBu => {
+            sourceSchedules.forEach(s => {
+                copiedSchedules.push({
+                    ...s,
+                    id: `sch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                    targetType: 'BusinessUnit' as const,
+                    targetId: targetBu,
+                    created_by: 'System',
+                    last_modified_by: 'Admin'
+                });
+            });
+        });
 
         const newSchedules = [...otherSchedules, ...copiedSchedules];
         
@@ -1866,11 +1879,14 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
             if (error) throw error;
             setSchedules(newSchedules);
+            alert(`Successfully copied schedules from ${copyFromBU} to selected Business Units.`);
+            setIsCopyModalOpen(false);
+            setCopyFromBU('');
+            setCopyToBUs([]);
         } catch (err) {
             console.error('Error copying schedules:', err);
             alert('Failed to copy schedules.');
         }
-        setShowCopyDropdown(false);
     };
 
     const handleSave = async (scheduleData: Partial<PaySchedule>, targetInfo: { targetId: string; targetType: 'Paygroup' | 'BusinessUnit' }) => {
@@ -2009,29 +2025,16 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                         <div className="flex items-center gap-2 relative">
                             <div className="relative">
                                 <button
-                                    onClick={() => setShowCopyDropdown(!showCopyDropdown)}
+                                    onClick={() => {
+                                        setIsCopyModalOpen(true);
+                                        setCopyFromBU('');
+                                        setCopyToBUs([]);
+                                    }}
                                     className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-sky-600 hover:border-sky-200 transition-colors shadow-sm"
                                     title="Copy schedules from another Business Unit"
                                 >
                                     <Copy size={18} />
                                 </button>
-                                {showCopyDropdown && (
-                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-100 shadow-xl rounded-xl p-2 z-50 animate-in fade-in zoom-in-95">
-                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 py-2 mb-1 border-b border-slate-50">
-                                            Copy from
-                                        </div>
-                                        {BUSINESS_UNITS.filter(bu => `bu:${bu}` !== selectedTarget).map(bu => (
-                                            <button
-                                                key={bu}
-                                                onClick={() => handleCopySchedules(bu)}
-                                                className="w-full text-left px-3 py-2.5 text-sm text-slate-600 font-medium hover:bg-sky-50 hover:text-sky-700 rounded-lg transition-colors flex items-center gap-2"
-                                            >
-                                                <Building2 size={14} />
-                                                {bu}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                             <div className="relative">
                                 <select
@@ -2190,6 +2193,90 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                     Deactivate
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            {/* Copy Schedules Modal */}
+            {isCopyModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">Copy Pay Schedules</h3>
+                                <p className="text-sm text-slate-500 mt-1">Duplicate configurations across Business Units</p>
+                            </div>
+                            <button
+                                onClick={() => setIsCopyModalOpen(false)}
+                                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Copy From</label>
+                                <div className="relative">
+                                    <select
+                                        value={copyFromBU}
+                                        onChange={(e) => {
+                                            setCopyFromBU(e.target.value);
+                                            // Ensure copyFromBU is removed from copyToBUs if it was selected
+                                            setCopyToBUs(prev => prev.filter(b => b !== e.target.value));
+                                        }}
+                                        className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
+                                    >
+                                        <option value="" disabled>Select Business Unit...</option>
+                                        {BUSINESS_UNITS.map(bu => (
+                                            <option key={bu} value={bu}>{bu}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+                            {copyFromBU && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Copy To (Select Multiple)</label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                        {BUSINESS_UNITS.filter(bu => bu !== copyFromBU).map(bu => (
+                                            <label key={bu} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
+                                                <div className="relative flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={copyToBUs.includes(bu)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setCopyToBUs([...copyToBUs, bu]);
+                                                            } else {
+                                                                setCopyToBUs(copyToBUs.filter(b => b !== bu));
+                                                            }
+                                                        }}
+                                                        className="w-5 h-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/30 transition-all peer"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors">{bu}</span>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsCopyModalOpen(false)}
+                                className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleExecuteCopy}
+                                disabled={!copyFromBU || copyToBUs.length === 0}
+                                className="px-5 py-2.5 bg-sky-600 text-white rounded-lg text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <Copy size={16} />
+                                Copy Schedules
+                            </button>
                         </div>
                     </div>
                 </div>
