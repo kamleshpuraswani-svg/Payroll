@@ -2052,26 +2052,20 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     {isLimitsExpanded && (
                         <div className="p-8 animate-in fade-in slide-in-from-top-2 duration-300">
 
-                        {/* Age group sub-tabs — only for Old Regime */}
+                        {/* Age group dropdown — only for Old Regime */}
                         {limitViewRegime === 'Old' && (
-                            <div className="mb-5 flex items-center gap-1 bg-slate-100/80 border border-slate-200 rounded-lg p-1 w-fit shadow-sm">
-                                {([
-                                    { key: 'individual', label: 'Individuals (Below 60 years)' },
-                                    { key: 'senior',     label: 'Senior Citizens (60\u201380 years)' },
-                                    { key: 'superSenior', label: 'Super Senior Citizens (80+ years)' },
-                                ] as const).map(tab => (
-                                    <button
-                                        key={tab.key}
-                                        onClick={() => setOldRegimeAgeGroup(tab.key)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
-                                            oldRegimeAgeGroup === tab.key
-                                                ? 'bg-white text-violet-600 shadow-sm border border-slate-200'
-                                                : 'text-slate-500 hover:text-slate-700'
-                                        }`}
+                            <div className="mb-5 flex justify-end w-full">
+                                <div className="relative">
+                                    <select
+                                        value={oldRegimeAgeGroup}
+                                        onChange={(e) => setOldRegimeAgeGroup(e.target.value as 'individual' | 'senior' | 'superSenior')}
+                                        className="appearance-none bg-white border border-slate-200 rounded-lg py-2 pl-4 pr-10 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm cursor-pointer hover:border-slate-300 transition-colors"
                                     >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                                        <option value="individual">Individuals (Below 60 years)</option>
+                                        <option value="senior">Senior Citizens (60 and above)</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                </div>
                             </div>
                         )}
 
