@@ -1691,6 +1691,14 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
     const [copyFromBU, setCopyFromBU] = useState<string>('');
     const [copyToBUs, setCopyToBUs] = useState<string[]>([]);
+    const [toastMessage, setToastMessage] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+    useEffect(() => {
+        if (toastMessage) {
+            const timer = setTimeout(() => setToastMessage(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
     const [deactivatingSchedule, setDeactivatingSchedule] = useState<PaySchedule | null>(null);
 
     const filteredSchedules = useMemo(() => {
@@ -1879,13 +1887,13 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
 
             if (error) throw error;
             setSchedules(newSchedules);
-            alert(`Successfully copied schedules from ${copyFromBU} to selected Business Units.`);
+            setToastMessage({ message: 'Pay schedules configuration updated successfully.', type: 'success' });
             setIsCopyModalOpen(false);
             setCopyFromBU('');
             setCopyToBUs([]);
         } catch (err) {
             console.error('Error copying schedules:', err);
-            alert('Failed to copy schedules.');
+            setToastMessage({ message: 'Failed to copy schedules.', type: 'error' });
         }
     };
 
@@ -2281,6 +2289,19 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Toast Notification */}
+            {toastMessage && (
+                <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-[300] flex items-center gap-3 animate-in slide-in-from-bottom-5 fade-in duration-300 ${
+                    toastMessage.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                }`}>
+                    {toastMessage.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                    <span className="text-sm font-bold">{toastMessage.message}</span>
+                    <button onClick={() => setToastMessage(null)} className="ml-4 opacity-70 hover:opacity-100 transition-opacity">
+                        <X size={16} />
+                    </button>
                 </div>
             )}
         </div>
