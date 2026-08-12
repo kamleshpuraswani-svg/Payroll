@@ -2243,34 +2243,32 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 </div>
                             </div>
-                            {copyFromBU && (
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Copy To (Select Multiple)</label>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                        {BUSINESS_UNITS.filter(bu => bu !== copyFromBU).map(bu => (
-                                            <label key={bu} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
-                                                <div className="relative flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={copyToBUs.includes(bu)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setCopyToBUs([...copyToBUs, bu]);
-                                                            } else {
-                                                                setCopyToBUs(copyToBUs.filter(b => b !== bu));
-                                                            }
-                                                        }}
-                                                        className="w-5 h-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/30 transition-all peer"
-                                                    />
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors">{bu}</span>
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Copy To</label>
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                    {BUSINESS_UNITS.filter(bu => bu !== copyFromBU).map(bu => (
+                                        <label key={bu} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={copyToBUs.includes(bu)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setCopyToBUs([...copyToBUs, bu]);
+                                                        } else {
+                                                            setCopyToBUs(copyToBUs.filter(b => b !== bu));
+                                                        }
+                                                    }}
+                                                    className="w-5 h-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/30 transition-all peer"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors">{bu}</span>
+                                            </div>
+                                        </label>
+                                    ))}
                                 </div>
-                            )}
+                            </div>
                         </div>
                         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
                             <button
