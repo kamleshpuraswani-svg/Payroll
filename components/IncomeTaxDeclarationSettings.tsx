@@ -309,6 +309,12 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                      if (l.section === '80C' && l.isSubSection && l.displaySection !== '80CCD (1)' && l.displaySection !== '80CCD(1)') {
                          return { ...l, limit: '--' };
                      }
+                     if (l.regime === 'New') {
+                         const newDef = defaultLimits.find(d => d.id === l.id && d.regime === 'New');
+                         if (newDef) {
+                             return { ...l, section: newDef.section, limit: newDef.limit, description: newDef.description };
+                         }
+                     }
                      return l;
                  });
 
