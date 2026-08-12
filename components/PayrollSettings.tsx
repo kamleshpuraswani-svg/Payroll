@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2, ArrowLeft } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, X, Search, Info, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, Loader2, Building2, ArrowLeft, Copy } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface ChangeHistory {
@@ -1688,6 +1688,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PaySchedule | null>(null);
     const [selectedTarget, setSelectedTarget] = useState<string>(`bu:${BUSINESS_UNITS[0]}`);
+    const [showCopyDropdown, setShowCopyDropdown] = useState(false);
     const [deactivatingSchedule, setDeactivatingSchedule] = useState<PaySchedule | null>(null);
 
     const filteredSchedules = useMemo(() => {
@@ -1833,6 +1834,45 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
         setIsModalOpen(true);
     };
 
+    const handleCopySchedules = async (fromBU: string) => {
+        const sourceSchedules = schedules.filter(s => s.targetType === 'BusinessUnit' && s.targetId === fromBU);
+        if (sourceSchedules.length === 0) {
+            alert(`No schedules found in ${fromBU} to copy.`);
+            setShowCopyDropdown(false);
+            return;
+        }
+
+        const currentBuName = selectedTarget.replace('bu:', '');
+        
+        const otherSchedules = schedules.filter(s => !(s.targetType === 'BusinessUnit' && s.targetId === currentBuName));
+        
+        const copiedSchedules = sourceSchedules.map(s => ({
+            ...s,
+            id: `sch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            targetType: 'BusinessUnit' as const,
+            targetId: currentBuName,
+            created_by: 'System',
+            last_modified_by: 'Admin'
+        }));
+
+        const newSchedules = [...otherSchedules, ...copiedSchedules];
+        
+        try {
+            const { error } = await supabase.from('operational_config').upsert({
+                config_key: 'pay_schedules',
+                config_value: newSchedules,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'config_key' });
+
+            if (error) throw error;
+            setSchedules(newSchedules);
+        } catch (err) {
+            console.error('Error copying schedules:', err);
+            alert('Failed to copy schedules.');
+        }
+        setShowCopyDropdown(false);
+    };
+
     const handleSave = async (scheduleData: Partial<PaySchedule>, targetInfo: { targetId: string; targetType: 'Paygroup' | 'BusinessUnit' }) => {
         const { targetId, targetType } = targetInfo;
 
@@ -1966,19 +2006,47 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                 {/* ... (rest of the header) */}
                 <div className="flex items-center gap-3">
                     {userRole === 'HR_MANAGER' && (
-                        <div className="relative">
-                            <select
-                                value={selectedTarget}
-                                onChange={(e) => setSelectedTarget(e.target.value)}
-                                className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
-                            >
-                                <optgroup label="Business Units">
-                                    {BUSINESS_UNITS.map(bu => (
-                                        <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                                    ))}
-                                </optgroup>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        <div className="flex items-center gap-2 relative">
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowCopyDropdown(!showCopyDropdown)}
+                                    className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-sky-600 hover:border-sky-200 transition-colors shadow-sm"
+                                    title="Copy schedules from another Business Unit"
+                                >
+                                    <Copy size={18} />
+                                </button>
+                                {showCopyDropdown && (
+                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-100 shadow-xl rounded-xl p-2 z-50 animate-in fade-in zoom-in-95">
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 py-2 mb-1 border-b border-slate-50">
+                                            Copy from
+                                        </div>
+                                        {BUSINESS_UNITS.filter(bu => `bu:${bu}` !== selectedTarget).map(bu => (
+                                            <button
+                                                key={bu}
+                                                onClick={() => handleCopySchedules(bu)}
+                                                className="w-full text-left px-3 py-2.5 text-sm text-slate-600 font-medium hover:bg-sky-50 hover:text-sky-700 rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <Building2 size={14} />
+                                                {bu}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={selectedTarget}
+                                    onChange={(e) => setSelectedTarget(e.target.value)}
+                                    className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
+                                >
+                                    <optgroup label="Business Units">
+                                        {BUSINESS_UNITS.map(bu => (
+                                            <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                        ))}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
                         </div>
                     )}
                     {userRole !== 'HR_MANAGER' && (
