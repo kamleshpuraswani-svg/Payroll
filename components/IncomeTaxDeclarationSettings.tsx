@@ -260,94 +260,48 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 let mergedLimits = [
                     ...baseLoaded,
                     ...defaultLimits.filter(def => !baseLoaded.some((l: any) => l.id === def.id))
-                ].filter(l => l.id !== '2' && l.id !== '3' && l.id !== '7')
-                 .map(l => {
-                     if (l.id === '4') {
-                         return { ...l, description: 'Additional NPS contribution - Additional contribution beyond the 80C limit' };
-                     }
-                     if (l.id === '5' || l.id === '24') {
-                         return { ...l, limit: '14% of salary (Govt.) / 10% (Others)' };
-                     }
-                     if (l.id === '6') {
-                         return { ...l, description: 'Self, Spouse, Children (below 60 years)' };
-                     }
-                     if (l.id === '9') {
-                         return { ...l, limit: '40,000 / (₹1,00,000 for senior citizens)' };
-                     }
-                     if (l.id === '11') {
-                         return { ...l, description: 'Interest on home loan (first-time buyer, loan ≤50L)' };
-                     }
-                     if (l.id === '12') {
-                         return { ...l, description: 'Interest on affordable housing home loan (Stamp duty value ≤ ₹45L).' };
-                     }
-                     if (l.id === '13') {
-                         return { ...l, description: 'Donations', limit: '--' };
-                     }
-                     if (l.id === '14') {
-                         return { ...l, limit: 'Least of: ₹5,000/month, 25% of income, or rent minus 10% of income' };
-                     }
-                     if (l.id === '16') {
-                         return { ...l, description: 'Interest on savings account (For individuals below 60 years)' };
-                     }
-                     if (l.id === '17') {
-                         return { ...l, description: 'Interest on deposits (Only for senior citizens (60+). Replaces 80TTA.)' };
-                     }
-                     if (l.id === '18') {
-                         return { ...l, limit: '75,000 (₹1,25,000 for severe disability 80%+)' };
-                     }
-                     if (l.id === '20') {
-                         return { ...l, limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic' };
-                     }
-                     if (l.id === '21') {
-                         return { ...l, description: 'Special Allowances', limit: '--' };
-                     }
-                     if (l.section === '80C' && l.isSubSection && l.displaySection !== '80CCD (1)' && l.displaySection !== '80CCD(1)') {
-                         return { ...l, limit: '--' };
-                     }
-                     if (l.regime === 'New' || (l.regime === 'Old' && !l.ageGroup)) {
-                         const newDef = defaultLimits.find(d => d.id === l.id && d.regime === l.regime);
-                         if (newDef) {
-                             return { ...l, section: newDef.section, limit: newDef.limit, description: newDef.description };
-                         }
-                     }
-                     return l;
-                 });
+                ].map(l => {
+                    if (l.regime === "New" || (l.regime === "Old" && (!l.ageGroup || l.ageGroup === "individual"))) {
+                        const newDef = defaultLimits.find(d => d.id === l.id && d.regime === l.regime);
+                        if (newDef) {
+                            return { ...l, section: newDef.section, limit: newDef.limit, description: newDef.description, isSubSection: newDef.isSubSection, displaySection: newDef.displaySection };
+                        }
+                    }
+                    return l;
+                });
 
-                // Ensure 80C subsections are placed immediately after the main 80C entry
-                const main80CIndex = mergedLimits.findIndex(l => l.id === '1');
+                // Enforce exactly the order defined in defaultLimits for Old Regime Individuals
+                const oldIndividualOrder = defaultLimits.filter(d => d.regime === "Old" && (!d.ageGroup || d.ageGroup === "individual")).map(d => d.id);
+                mergedLimits.sort((a, b) => {
+                    if (a.regime === "Old" && (!a.ageGroup || a.ageGroup === "individual") && b.regime === "Old" && (!b.ageGroup || b.ageGroup === "individual")) {
+                        return oldIndividualOrder.indexOf(a.id) - oldIndividualOrder.indexOf(b.id);
+                    }
+                    return 0; // retain original order for others
+                });
+
+                // Group subsections (even though sort above handles it, this ensures strictly nested grouping just in case)
+                const main80CIndex = mergedLimits.findIndex(l => l.id === "1");
                 if (main80CIndex !== -1) {
-                    const subSections = mergedLimits.filter(l => l.section === '80C' && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection);
-                    mergedLimits = mergedLimits.filter(l => !(l.section === '80C' && l.id !== '1' && l.regime === 'Old' && (l as any).isSubSection));
-                    // Re-evaluate main80CIndex after filtering just in case it shifted (though it shouldn't have)
-                    const newMain80CIndex = mergedLimits.findIndex(l => l.id === '1');
+                    const subSections = mergedLimits.filter(l => l.section === "80C Investments" && l.id !== "1" && l.regime === "Old" && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === "80C Investments" && l.id !== "1" && l.regime === "Old" && (l as any).isSubSection));
+                    const newMain80CIndex = mergedLimits.findIndex(l => l.id === "1");
                     mergedLimits.splice(newMain80CIndex + 1, 0, ...subSections);
                 }
 
-                // Ensure 80D subsections are placed immediately after the main 80D entry
-                const main80DIndex = mergedLimits.findIndex(l => l.id === '6');
+                const main80DIndex = mergedLimits.findIndex(l => l.id === "6");
                 if (main80DIndex !== -1) {
-                    const subSections = mergedLimits.filter(l => l.section === '80D' && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection);
-                    mergedLimits = mergedLimits.filter(l => !(l.section === '80D' && l.id !== '6' && l.regime === 'Old' && (l as any).isSubSection));
-                    const newMain80DIndex = mergedLimits.findIndex(l => l.id === '6');
+                    const subSections = mergedLimits.filter(l => l.section === "80D Medical Insurance" && l.id !== "6" && l.regime === "Old" && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === "80D Medical Insurance" && l.id !== "6" && l.regime === "Old" && (l as any).isSubSection));
+                    const newMain80DIndex = mergedLimits.findIndex(l => l.id === "6");
                     mergedLimits.splice(newMain80DIndex + 1, 0, ...subSections);
                 }
 
-                // Ensure 80G subsections are placed immediately after the main 80G entry
-                const main80GIndex = mergedLimits.findIndex(l => l.id === '13');
-                if (main80GIndex !== -1) {
-                    const subSections = mergedLimits.filter(l => l.section === '80G' && l.id !== '13' && l.regime === 'Old' && (l as any).isSubSection);
-                    mergedLimits = mergedLimits.filter(l => !(l.section === '80G' && l.id !== '13' && l.regime === 'Old' && (l as any).isSubSection));
-                    const newMain80GIndex = mergedLimits.findIndex(l => l.id === '13');
-                    mergedLimits.splice(newMain80GIndex + 1, 0, ...subSections);
-                }
-
-                // Ensure 10(14) subsections are placed immediately after the main 10(14) entry
-                const main1014Index = mergedLimits.findIndex(l => l.id === '21');
-                if (main1014Index !== -1) {
-                    const subSections = mergedLimits.filter(l => l.section === '10(14)' && l.id !== '21' && l.regime === 'Old' && (l as any).isSubSection);
-                    mergedLimits = mergedLimits.filter(l => !(l.section === '10(14)' && l.id !== '21' && l.regime === 'Old' && (l as any).isSubSection));
-                    const newMain1014Index = mergedLimits.findIndex(l => l.id === '21');
-                    mergedLimits.splice(newMain1014Index + 1, 0, ...subSections);
+                const mainOieIndex = mergedLimits.findIndex(l => l.id === "new-oie");
+                if (mainOieIndex !== -1) {
+                    const subSections = mergedLimits.filter(l => l.section === "Other Investments & Exemptions" && l.id !== "new-oie" && l.regime === "Old" && (l as any).isSubSection);
+                    mergedLimits = mergedLimits.filter(l => !(l.section === "Other Investments & Exemptions" && l.id !== "new-oie" && l.regime === "Old" && (l as any).isSubSection));
+                    const newMainOieIndex = mergedLimits.findIndex(l => l.id === "new-oie");
+                    mergedLimits.splice(newMainOieIndex + 1, 0, ...subSections);
                 }
 
                 setLimits(mergedLimits);
