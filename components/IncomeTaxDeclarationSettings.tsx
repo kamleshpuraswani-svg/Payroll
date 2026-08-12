@@ -205,14 +205,19 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                     { id: '27', section: '80CCH - Agniveer Corpus Fund', limit: '-', description: 'Deduction for contribution made to Agniveer Corpus Fund', regime: 'New' },
                     { id: '28', section: 'Disability Deductions', limit: '-', description: 'Sections 80U and 80DD are allowed under new regime', regime: 'New' },
                     // Senior Citizens (60–80 years)
-                    { id: 'sc-1', section: '80C', limit: '1,50,000', description: 'PPF, LIC, ELSS, SCSS etc.', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-2', section: '80D', limit: '50,000', description: 'Health insurance premium', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-3', section: '80DDB', limit: '1,00,000', description: 'Treatment of specified diseases', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-4', section: '80TTB', limit: '50,000', description: 'Interest on deposits (FD/savings)', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-5', section: 'TDS on FD interest', limit: '1,00,000', description: 'Section 194A threshold', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-6', section: '87A Rebate', limit: 'Old: ₹12,500 (income ≤ ₹5L) | New: ₹60,000 (income ≤ ₹12L) — same for all ages', description: 'Tax rebate', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-7', section: 'Standard deduction', limit: 'Old: ₹50,000 | New: ₹75,000 — same for all ages', description: 'Salary / pension income', regime: 'Old', ageGroup: 'senior' },
-                    { id: 'sc-8', section: 'Advance tax', limit: 'Exempt*', description: 'Quarterly payment requirement', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-new-pe', section: 'Previous Employment Income', limit: '-', description: 'Income and TDS details from previous employer(s) in the current financial year', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-20', section: 'House Rent Allowance (HRA)', limit: '-', description: 'Deduction for rent paid, including HRA exemption based on actual rent paid, basic salary, and city of residence, or deduction for rent paid when HRA is not received from the employer', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-14', section: '80GG - Rent Paid Without HRA', limit: '-', description: 'Deduction for rent paid where HRA is not received from employer', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-19', section: 'Home Loan Interest (Section 24B)', limit: '₹ 2,00,000', description: 'Deduction on interest paid on home loan. ₹2,00,000 for self-occupied; no limit for let-out property', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-new-lo', section: 'Income from Let Out Property', limit: '-', description: 'Net annual income from rented property after property tax, 30% standard deduction and home loan interest', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-new-os', section: 'Other Sources of Income', limit: '-', description: 'Taxable income from interest, dividends, family pension and other sources', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-1', section: '80C Investments', limit: '₹ 1,50,000', description: 'Deduction on investments in specified instruments. Combined limit ₹1,50,000', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-6', section: '80D Medical Insurance', limit: '₹ 1,00,000', description: 'Deduction on health insurance premiums. ₹50,000 self/family (senior); ₹25,000 parents below 60 or ₹50,000 parents above 60', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-4', section: '80CCD(1B) - Additional NPS Contribution', limit: '₹ 50,000', description: '80CCD(1B) extra ₹50,000 above 80C ₹1,50,000 limit', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-5', section: '80CCD(2) - Employer NPS Contribution', limit: '-', description: 'Employer\'s NPS contribution — up to 10% of salary (14% for central govt. employees)', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-9', section: '80DDB - Medical Treatment', limit: '₹ 1,00,000', description: 'Deduction on medical expenses for specified diseases. ₹1,00,000 for senior citizen self; ₹40,000 or ₹1,00,000 for dependent based on dependent age', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-new-oie', section: 'Other Investments & Exemptions', limit: '-', description: 'Disability deductions and other specific investment instruments', regime: 'Old', ageGroup: 'senior' },
+                    { id: 'sc-new-pt', section: 'Professional Tax', limit: '-', description: 'Professional tax paid during the financial year deductible under old regime', regime: 'Old', ageGroup: 'senior' },
                     // Super Senior Citizens (80+ years)
                     { id: 'ssc-1', section: '80C', limit: '1,50,000', description: 'PPF, LIC, ELSS, SCSS etc.', regime: 'Old', ageGroup: 'superSenior' },
                     { id: 'ssc-2', section: '80D', limit: '50,000', description: 'Health insurance premium', regime: 'Old', ageGroup: 'superSenior' },
@@ -228,10 +233,10 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 const isLegacyDefaults = config.limits && config.limits.length === 2 && config.limits[0].description === 'Investments & Expenses';
                 const baseLoaded = (!config.limits || config.limits.length === 0 || isLegacyDefaults) ? defaultLimits : config.limits;
                 let mergedLimits = [
-                    ...baseLoaded.filter((l: any) => !(l.regime === 'Old' && (!l.ageGroup || l.ageGroup === 'individual'))),
-                    ...defaultLimits.filter(def => !baseLoaded.some((l: any) => l.id === def.id) || (def.regime === 'Old' && (!def.ageGroup || def.ageGroup === 'individual')))
+                    ...baseLoaded.filter((l: any) => !(l.regime === 'Old' && (!l.ageGroup || l.ageGroup === 'individual' || l.ageGroup === 'senior'))),
+                    ...defaultLimits.filter(def => !baseLoaded.some((l: any) => l.id === def.id) || (def.regime === 'Old' && (!def.ageGroup || def.ageGroup === 'individual' || def.ageGroup === 'senior')))
                 ].map(l => {
-                    if (l.regime === "New" || (l.regime === "Old" && (!l.ageGroup || l.ageGroup === "individual"))) {
+                    if (l.regime === "New" || (l.regime === "Old" && (!l.ageGroup || l.ageGroup === "individual" || l.ageGroup === "senior"))) {
                         const newDef = defaultLimits.find(d => d.id === l.id && d.regime === l.regime);
                         if (newDef) {
                             return { ...l, section: newDef.section, limit: newDef.limit, description: newDef.description, isSubSection: (newDef as any).isSubSection, displaySection: (newDef as any).displaySection };
@@ -242,9 +247,13 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                 // Enforce exactly the order defined in defaultLimits for Old Regime Individuals
                 const oldIndividualOrder = defaultLimits.filter(d => d.regime === "Old" && (!d.ageGroup || d.ageGroup === "individual")).map(d => d.id);
+                const oldSeniorOrder = defaultLimits.filter(d => d.regime === "Old" && d.ageGroup === "senior").map(d => d.id);
                 mergedLimits.sort((a, b) => {
                     if (a.regime === "Old" && (!a.ageGroup || a.ageGroup === "individual") && b.regime === "Old" && (!b.ageGroup || b.ageGroup === "individual")) {
                         return oldIndividualOrder.indexOf(a.id) - oldIndividualOrder.indexOf(b.id);
+                    }
+                    if (a.regime === "Old" && a.ageGroup === "senior" && b.regime === "Old" && b.ageGroup === "senior") {
+                        return oldSeniorOrder.indexOf(a.id) - oldSeniorOrder.indexOf(b.id);
                     }
                     return 0; // retain original order for others
                 });
