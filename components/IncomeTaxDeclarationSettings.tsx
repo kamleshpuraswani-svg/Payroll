@@ -185,54 +185,49 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                 setDeclarationFrequency(config.declarationFrequency ?? 'Annually');
                 setInvApprovers(config.invApprovers ?? ["Kavita Sharma (HR)"]);
                 const defaultLimits = [
-                    { id: '1', section: '80C', limit: '1,50,000', description: 'Investments under section 80C', regime: 'Old' },
-                    { id: '1a', section: '80C', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
-                    { id: '1b', section: '80C', limit: '--', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
-                    { id: '1c', section: '80C', limit: '--', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
-                    { id: '1d', section: '80C', limit: '--', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
-                    { id: '1e', section: '80C', limit: '--', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
-                    { id: '1f', section: '80C', limit: '--', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
-                    { id: '1g', section: '80C', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
-                    { id: '1h', section: '80C', limit: '--', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
-                    { id: '1i', section: '80C', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
-                    { id: '1j', section: '80C', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
-                    { id: '1k', section: '80C', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
-                    { id: '1l', section: '80C', displaySection: '80CCC', limit: '--', description: 'Pension Fund Contribution', regime: 'Old', isSubSection: true },
-                    { id: '1m', section: '80C', displaySection: '80CCD (1)', limit: '10% of salary', description: 'Employee NPS Contribution (Up to 10% of basic + DA)', regime: 'Old', isSubSection: true },
-                    { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution - Additional contribution beyond the 80C limit', regime: 'Old' },
-                    { id: '5', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'Old' },
-                    { id: '6', section: '80D', limit: '25,000', description: 'Self, Spouse, Children (below 60 years)', regime: 'Old' },
-                    { id: '6a', section: '80D', limit: '50,000', description: 'Self, Spouse, Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6b', section: '80D', limit: '75,000', description: 'Self, Spouse, Children (below 60 years) & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6c', section: '80D', limit: '1,00,000', description: 'Self, Spouse, Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6d', section: '80D', limit: '25,000', description: 'Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6e', section: '80D', limit: '50,000', description: 'Members of HUF (Above 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6f', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children', regime: 'Old', isSubSection: true },
-                    { id: '6g', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6h', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children (below 60 years) & Parents (above 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6i', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6j', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '6k', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (above 60 years)', regime: 'Old', isSubSection: true },
-                    { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
-                    { id: '9', section: '80DDB', limit: '40,000 / (₹1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
-                    { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
-                    { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan (Stamp duty value ≤ ₹45L).', regime: 'Old' },
-                    { id: '13', section: '80G', limit: '--', description: 'Donations', regime: 'Old' },
-                    { id: '13a', section: '80G', limit: '100% deduction, no limit', description: 'PM Relief Fund / National Defence Fund', regime: 'Old', isSubSection: true },
-                    { id: '13b', section: '80G', limit: '50% deduction, subject to 10% of gross income', description: 'Approved charitable trusts', regime: 'Old', isSubSection: true },
-                    { id: '13c', section: '80G', limit: '100% deduction under 80GGC', description: 'Political parties', regime: 'Old', isSubSection: true },
-                    { id: '14', section: '80GG', limit: 'Least of: ₹5,000/month, 25% of income, or rent minus 10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
-                    { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
-                    { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (For individuals below 60 years)', regime: 'Old' },
-                    { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (Only for senior citizens (60+). Replaces 80TTA.)', regime: 'Old' },
-                    { id: '18', section: '80U', limit: '75,000 (₹1,25,000 for severe disability 80%+)', description: 'Self disability deduction', regime: 'Old' },
-                    { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
-                    { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic', description: 'HRA exemption', regime: 'Old' },
-                    { id: '21', section: '10(14)', limit: '--', description: 'Special Allowances', regime: 'Old' },
-                    { id: '21a', section: '10(14)', limit: 'Actual travel cost for 2 journeys in 4-year block', description: 'Leave travel allowance (LTA)', regime: 'Old', isSubSection: true },
-                    { id: '21b', section: '10(14)', limit: '100/month per child (max 2 children)', description: 'Children education allowance', regime: 'Old', isSubSection: true },
-                    { id: '21c', section: '10(14)', limit: '300/month per child (max 2 children)', description: 'Hostel allowance', regime: 'Old', isSubSection: true },
-                    { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
+        { id: 'new-pe', section: 'Previous Employment Income', limit: '-', description: 'Income and TDS details from previous employer(s) in the current financial year', regime: 'Old' },
+        { id: '20', section: 'House Rent Allowance (HRA)', limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic', description: 'Deduction for rent paid, including HRA exemption based on actual rent paid, basic salary, and city of residence, or deduction for rent paid when HRA is not received from the employer', regime: 'Old' },
+        { id: '14', section: '80GG - Rent Paid Without HRA', limit: 'Least of: ?5,000/month, 25% of income, or rent minus 10% of income', description: 'Deduction for rent paid where HRA is not received from employer', regime: 'Old' },
+        { id: '19', section: 'Home Loan Interest (Section 24B)', limit: '2,00,000', description: 'Deduction on interest paid on home loan. ?2,00,000 for self-occupied; no limit for let-out property', regime: 'Old' },
+        { id: 'new-lo', section: 'Income from Let Out Property', limit: '-', description: 'Net annual income from rented property after property tax, 30% standard deduction and home loan interest', regime: 'Old' },
+        { id: 'new-os', section: 'Other Sources of Income', limit: '-', description: 'Taxable income from interest, dividends, family pension and other sources', regime: 'Old' },
+        { id: '1', section: '80C Investments', limit: '1,50,000', description: 'Deduction on investments in specified instruments. Combined limit ?1,50,000', regime: 'Old' },
+        { id: '1a', section: '80C Investments', displaySection: 'Life insurance', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
+        { id: '1b', section: '80C Investments', displaySection: 'PPF', limit: '--', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
+        { id: '1c', section: '80C Investments', displaySection: 'EPF', limit: '--', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
+        { id: '1d', section: '80C Investments', displaySection: 'ELSS', limit: '--', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
+        { id: '1e', section: '80C Investments', displaySection: 'NSC', limit: '--', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
+        { id: '1f', section: '80C Investments', displaySection: 'SSY', limit: '--', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
+        { id: '1g', section: '80C Investments', displaySection: 'Tax-saving FD', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
+        { id: '1h', section: '80C Investments', displaySection: 'SCSS', limit: '--', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
+        { id: '1i', section: '80C Investments', displaySection: 'Home loan principal', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
+        { id: '1j', section: '80C Investments', displaySection: 'Stamp duty', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
+        { id: '1k', section: '80C Investments', displaySection: 'Tuition fees', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
+        { id: '1l', section: '80C Investments', displaySection: '80CCC', limit: '--', description: 'Pension Fund Contribution', regime: 'Old', isSubSection: true },
+        { id: '1m', section: '80C Investments', displaySection: '80CCD (1)', limit: '10% of salary', description: 'Employee NPS Contribution (Up to 10% of basic + DA)', regime: 'Old', isSubSection: true },
+        { id: '6', section: '80D Medical Insurance', limit: '25,000', description: 'Self, Spouse, Children (below 60 years)', regime: 'Old' },
+        { id: '6a', section: '80D Medical Insurance', displaySection: 'Parents (<60)', limit: '50,000', description: 'Self, Spouse, Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6b', section: '80D Medical Insurance', displaySection: 'Parents (>60)', limit: '75,000', description: 'Self, Spouse, Children (below 60 years) & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6c', section: '80D Medical Insurance', displaySection: 'All (>60)', limit: '1,00,000', description: 'Self, Spouse, Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6d', section: '80D Medical Insurance', displaySection: 'HUF (<60)', limit: '25,000', description: 'Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6e', section: '80D Medical Insurance', displaySection: 'HUF (>60)', limit: '50,000', description: 'Members of HUF (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6f', section: '80D Medical Insurance', displaySection: 'Preventive checkup', limit: '5,000', description: 'Preventive health checkup', regime: 'Old', isSubSection: true },
+        { id: '4', section: '80CCD(1B) - Additional NPS Contribution', limit: '50,000', description: '80CCD(1B) extra ?50,000 above 80C ?1,50,000 limit', regime: 'Old' },
+        { id: '5', section: '80CCD(2) - Employer NPS Contribution', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'Old' },
+        { id: '9', section: '80DDB - Medical Treatment', limit: '40,000 / (?1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
+        { id: 'new-oie', section: 'Other Investments & Exemptions', limit: '-', description: 'Disability deductions and other specific investment instruments', regime: 'Old' },
+        { id: '8', section: 'Other Investments & Exemptions', displaySection: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old', isSubSection: true },
+        { id: '10', section: 'Other Investments & Exemptions', displaySection: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old', isSubSection: true },
+        { id: '12', section: 'Other Investments & Exemptions', displaySection: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old', isSubSection: true },
+        { id: '13', section: 'Other Investments & Exemptions', displaySection: '80G', limit: '--', description: 'Donations', regime: 'Old', isSubSection: true },
+        { id: '13a', section: 'Other Investments & Exemptions', displaySection: 'PM Relief', limit: '100%', description: 'PM Relief Fund', regime: 'Old', isSubSection: true },
+        { id: '15', section: 'Other Investments & Exemptions', displaySection: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old', isSubSection: true },
+        { id: '16', section: 'Other Investments & Exemptions', displaySection: '80TTA', limit: '10,000', description: 'Interest on savings account', regime: 'Old', isSubSection: true },
+        { id: '18', section: 'Other Investments & Exemptions', displaySection: '80U', limit: '75,000 / 1,25,000 (severe)', description: 'Self disability deduction', regime: 'Old', isSubSection: true },
+        { id: '21', section: 'Other Investments & Exemptions', displaySection: '10(14)', limit: '--', description: 'Special Allowances', regime: 'Old', isSubSection: true },
+        { id: '21a', section: 'Other Investments & Exemptions', displaySection: 'LTA', limit: 'Actual', description: 'Leave travel allowance', regime: 'Old', isSubSection: true },
+        { id: '22', section: 'Other Investments & Exemptions', displaySection: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old', isSubSection: true },
+        { id: 'new-pt', section: 'Professional Tax', limit: '-', description: 'Professional tax paid during the financial year', regime: 'Old' },
                     { id: '23', section: 'Previous Employment Income', limit: '-', description: 'Income and TDS details from previous employer(s) in the current financial year', regime: 'New' },
                     { id: '24', section: 'Income from Let Out Property', limit: '-', description: 'Net annual income from rented property after property tax, 30% standard deduction and home loan interest', regime: 'New' },
                     { id: '25', section: 'Other Sources of Income', limit: '-', description: 'Taxable income from interest, dividends, family pension and other sources. 80TTA/80TTB not available under new regime', regime: 'New' },
@@ -309,8 +304,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                      if (l.section === '80C' && l.isSubSection && l.displaySection !== '80CCD (1)' && l.displaySection !== '80CCD(1)') {
                          return { ...l, limit: '--' };
                      }
-                     if (l.regime === 'New') {
-                         const newDef = defaultLimits.find(d => d.id === l.id && d.regime === 'New');
+                     if (l.regime === 'New' || (l.regime === 'Old' && !l.ageGroup)) {
+                         const newDef = defaultLimits.find(d => d.id === l.id && d.regime === l.regime);
                          if (newDef) {
                              return { ...l, section: newDef.section, limit: newDef.limit, description: newDef.description };
                          }
@@ -421,56 +416,50 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
     const [selectedInvApprover, setSelectedInvApprover] = useState("");
     
     const [limits, setLimits] = useState([
-        { id: '1', section: '80C', limit: '1,50,000', description: 'Investments under section 80C', regime: 'Old' },
-        { id: '1a', section: '80C', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
-        { id: '1b', section: '80C', limit: '--', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
-        { id: '1c', section: '80C', limit: '--', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
-        { id: '1d', section: '80C', limit: '--', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
-        { id: '1e', section: '80C', limit: '--', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
-        { id: '1f', section: '80C', limit: '--', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
-        { id: '1g', section: '80C', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
-        { id: '1h', section: '80C', limit: '--', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
-        { id: '1i', section: '80C', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
-        { id: '1j', section: '80C', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
-        { id: '1k', section: '80C', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
-        { id: '1l', section: '80C', displaySection: '80CCC', limit: '--', description: 'Pension Fund Contribution', regime: 'Old', isSubSection: true },
-        { id: '1m', section: '80C', displaySection: '80CCD (1)', limit: '10% of salary', description: 'Employee NPS Contribution (Up to 10% of basic + DA)', regime: 'Old', isSubSection: true },
-        { id: '4', section: '80CCD(1B)', limit: '50,000', description: 'Additional NPS contribution - Additional contribution beyond the 80C limit', regime: 'Old' },
-        { id: '5', section: '80CCD(2)', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'Old' },
-        { id: '6', section: '80D', limit: '25,000', description: 'Self, Spouse, Children (below 60 years)', regime: 'Old' },
-        { id: '6a', section: '80D', limit: '50,000', description: 'Self, Spouse, Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6b', section: '80D', limit: '75,000', description: 'Self, Spouse, Children (below 60 years) & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6c', section: '80D', limit: '1,00,000', description: 'Self, Spouse, Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6d', section: '80D', limit: '25,000', description: 'Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6e', section: '80D', limit: '50,000', description: 'Members of HUF (Above 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6f', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children', regime: 'Old', isSubSection: true },
-        { id: '6g', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6h', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children (below 60 years) & Parents (above 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6i', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Self, Spouse & Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6j', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
-        { id: '6k', section: '80D', limit: '5,000 (inclusive in above limits)', description: 'Preventive health checkup for Members of HUF (above 60 years)', regime: 'Old', isSubSection: true },
-        { id: '8', section: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old' },
-        { id: '9', section: '80DDB', limit: '40,000 / (₹1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
-        { id: '10', section: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old' },
-        { id: '11', section: '80EE', limit: '50,000', description: 'Interest on home loan (first-time buyer, loan ≤50L)', regime: 'Old' },
-        { id: '12', section: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan (Stamp duty value ≤ ₹45L).', regime: 'Old' },
-        { id: '13', section: '80G', limit: '--', description: 'Donations', regime: 'Old' },
-        { id: '13a', section: '80G', limit: '100% deduction, no limit', description: 'PM Relief Fund / National Defence Fund', regime: 'Old', isSubSection: true },
-        { id: '13b', section: '80G', limit: '50% deduction, subject to 10% of gross income', description: 'Approved charitable trusts', regime: 'Old', isSubSection: true },
-        { id: '13c', section: '80G', limit: '100% deduction under 80GGC', description: 'Political parties', regime: 'Old', isSubSection: true },
-        { id: '14', section: '80GG', limit: 'Least of: ₹5,000/month, 25% of income, or rent minus 10% of income', description: 'House rent (no HRA received)', regime: 'Old' },
-        { id: '15', section: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old' },
-        { id: '16', section: '80TTA', limit: '10,000', description: 'Interest on savings account (For individuals below 60 years)', regime: 'Old' },
-        { id: '17', section: '80TTB', limit: '50,000', description: 'Interest on deposits (Only for senior citizens (60+). Replaces 80TTA.)', regime: 'Old' },
-        { id: '18', section: '80U', limit: '75,000 (₹1,25,000 for severe disability 80%+)', description: 'Self disability deduction', regime: 'Old' },
-        { id: '19', section: '24(b)', limit: '2,00,000', description: 'Interest on home loan (self-occupied)', regime: 'Old' },
-        { id: '20', section: '10(13A)', limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic', description: 'HRA exemption', regime: 'Old' },
-        { id: '21', section: '10(14)', limit: '--', description: 'Special Allowances', regime: 'Old' },
-        { id: '21a', section: '10(14)', limit: 'Actual travel cost for 2 journeys in 4-year block', description: 'Leave travel allowance (LTA)', regime: 'Old', isSubSection: true },
-        { id: '21b', section: '10(14)', limit: '100/month per child (max 2 children)', description: 'Children education allowance', regime: 'Old', isSubSection: true },
-        { id: '21c', section: '10(14)', limit: '300/month per child (max 2 children)', description: 'Hostel allowance', regime: 'Old', isSubSection: true },
-        { id: '22', section: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old' },
-        { id: '23', section: 'Previous Employment Income', limit: '-', description: 'Income and TDS details from previous employer(s) in the current financial year', regime: 'New' },
+        { id: 'new-pe', section: 'Previous Employment Income', limit: '-', description: 'Income and TDS details from previous employer(s) in the current financial year', regime: 'Old' },
+        { id: '20', section: 'House Rent Allowance (HRA)', limit: 'Least of: actual HRA, 50%/40% of basic (metro/non-metro), or rent minus 10% of basic', description: 'Deduction for rent paid, including HRA exemption based on actual rent paid, basic salary, and city of residence, or deduction for rent paid when HRA is not received from the employer', regime: 'Old' },
+        { id: '14', section: '80GG - Rent Paid Without HRA', limit: 'Least of: ?5,000/month, 25% of income, or rent minus 10% of income', description: 'Deduction for rent paid where HRA is not received from employer', regime: 'Old' },
+        { id: '19', section: 'Home Loan Interest (Section 24B)', limit: '2,00,000', description: 'Deduction on interest paid on home loan. ?2,00,000 for self-occupied; no limit for let-out property', regime: 'Old' },
+        { id: 'new-lo', section: 'Income from Let Out Property', limit: '-', description: 'Net annual income from rented property after property tax, 30% standard deduction and home loan interest', regime: 'Old' },
+        { id: 'new-os', section: 'Other Sources of Income', limit: '-', description: 'Taxable income from interest, dividends, family pension and other sources', regime: 'Old' },
+        { id: '1', section: '80C Investments', limit: '1,50,000', description: 'Deduction on investments in specified instruments. Combined limit ?1,50,000', regime: 'Old' },
+        { id: '1a', section: '80C Investments', displaySection: 'Life insurance', limit: '--', description: 'Life insurance premium', regime: 'Old', isSubSection: true },
+        { id: '1b', section: '80C Investments', displaySection: 'PPF', limit: '--', description: 'Public Provident Fund (PPF)', regime: 'Old', isSubSection: true },
+        { id: '1c', section: '80C Investments', displaySection: 'EPF', limit: '--', description: 'Employee Provident Fund (EPF) contributions', regime: 'Old', isSubSection: true },
+        { id: '1d', section: '80C Investments', displaySection: 'ELSS', limit: '--', description: 'Equity Linked Savings Scheme (ELSS) mutual funds', regime: 'Old', isSubSection: true },
+        { id: '1e', section: '80C Investments', displaySection: 'NSC', limit: '--', description: 'National Savings Certificate (NSC)', regime: 'Old', isSubSection: true },
+        { id: '1f', section: '80C Investments', displaySection: 'SSY', limit: '--', description: 'Sukanya Samriddhi Yojana (SSY)', regime: 'Old', isSubSection: true },
+        { id: '1g', section: '80C Investments', displaySection: 'Tax-saving FD', limit: '--', description: '5 year tax-saving fixed deposits', regime: 'Old', isSubSection: true },
+        { id: '1h', section: '80C Investments', displaySection: 'SCSS', limit: '--', description: 'Senior Citizen Savings Scheme (SCSS)', regime: 'Old', isSubSection: true },
+        { id: '1i', section: '80C Investments', displaySection: 'Home loan principal', limit: '--', description: 'Home loan principal repayment', regime: 'Old', isSubSection: true },
+        { id: '1j', section: '80C Investments', displaySection: 'Stamp duty', limit: '--', description: 'Stamp duty and registration charges on property purchase', regime: 'Old', isSubSection: true },
+        { id: '1k', section: '80C Investments', displaySection: 'Tuition fees', limit: '--', description: 'Tuition fees paid for up to two children', regime: 'Old', isSubSection: true },
+        { id: '1l', section: '80C Investments', displaySection: '80CCC', limit: '--', description: 'Pension Fund Contribution', regime: 'Old', isSubSection: true },
+        { id: '1m', section: '80C Investments', displaySection: '80CCD (1)', limit: '10% of salary', description: 'Employee NPS Contribution (Up to 10% of basic + DA)', regime: 'Old', isSubSection: true },
+        { id: '6', section: '80D Medical Insurance', limit: '25,000', description: 'Self, Spouse, Children (below 60 years)', regime: 'Old' },
+        { id: '6a', section: '80D Medical Insurance', displaySection: 'Parents (<60)', limit: '50,000', description: 'Self, Spouse, Children & Parents (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6b', section: '80D Medical Insurance', displaySection: 'Parents (>60)', limit: '75,000', description: 'Self, Spouse, Children (below 60 years) & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6c', section: '80D Medical Insurance', displaySection: 'All (>60)', limit: '1,00,000', description: 'Self, Spouse, Children & Parents (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6d', section: '80D Medical Insurance', displaySection: 'HUF (<60)', limit: '25,000', description: 'Members of HUF (below 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6e', section: '80D Medical Insurance', displaySection: 'HUF (>60)', limit: '50,000', description: 'Members of HUF (Above 60 years)', regime: 'Old', isSubSection: true },
+        { id: '6f', section: '80D Medical Insurance', displaySection: 'Preventive checkup', limit: '5,000', description: 'Preventive health checkup', regime: 'Old', isSubSection: true },
+        { id: '4', section: '80CCD(1B) - Additional NPS Contribution', limit: '50,000', description: '80CCD(1B) extra ?50,000 above 80C ?1,50,000 limit', regime: 'Old' },
+        { id: '5', section: '80CCD(2) - Employer NPS Contribution', limit: '14% of salary (Govt.) / 10% (Others)', description: 'Employer NPS contribution', regime: 'Old' },
+        { id: '9', section: '80DDB - Medical Treatment', limit: '40,000 / (?1,00,000 for senior citizens)', description: 'Treatment of specified diseases', regime: 'Old' },
+        { id: 'new-oie', section: 'Other Investments & Exemptions', limit: '-', description: 'Disability deductions and other specific investment instruments', regime: 'Old' },
+        { id: '8', section: 'Other Investments & Exemptions', displaySection: '80DD', limit: '75,000 / 1,25,000 (severe)', description: 'Disabled dependent medical expenses', regime: 'Old', isSubSection: true },
+        { id: '10', section: 'Other Investments & Exemptions', displaySection: '80E', limit: 'Actual', description: 'Interest on education loan', regime: 'Old', isSubSection: true },
+        { id: '12', section: 'Other Investments & Exemptions', displaySection: '80EEA', limit: '1,50,000', description: 'Interest on affordable housing home loan', regime: 'Old', isSubSection: true },
+        { id: '13', section: 'Other Investments & Exemptions', displaySection: '80G', limit: '--', description: 'Donations', regime: 'Old', isSubSection: true },
+        { id: '13a', section: 'Other Investments & Exemptions', displaySection: 'PM Relief', limit: '100%', description: 'PM Relief Fund', regime: 'Old', isSubSection: true },
+        { id: '15', section: 'Other Investments & Exemptions', displaySection: '80GGB/GGC', limit: 'Actual amount', description: 'Political party donations', regime: 'Old', isSubSection: true },
+        { id: '16', section: 'Other Investments & Exemptions', displaySection: '80TTA', limit: '10,000', description: 'Interest on savings account', regime: 'Old', isSubSection: true },
+        { id: '18', section: 'Other Investments & Exemptions', displaySection: '80U', limit: '75,000 / 1,25,000 (severe)', description: 'Self disability deduction', regime: 'Old', isSubSection: true },
+        { id: '21', section: 'Other Investments & Exemptions', displaySection: '10(14)', limit: '--', description: 'Special Allowances', regime: 'Old', isSubSection: true },
+        { id: '21a', section: 'Other Investments & Exemptions', displaySection: 'LTA', limit: 'Actual', description: 'Leave travel allowance', regime: 'Old', isSubSection: true },
+        { id: '22', section: 'Other Investments & Exemptions', displaySection: '16(ia)', limit: '75,000', description: 'Standard Deduction (salaried)', regime: 'Old', isSubSection: true },
+        { id: 'new-pt', section: 'Professional Tax', limit: '-', description: 'Professional tax paid during the financial year', regime: 'Old' },
+{ id: '23', section: 'Previous Employment Income', limit: '-', description: 'Income and TDS details from previous employer(s) in the current financial year', regime: 'New' },
         { id: '24', section: 'Income from Let Out Property', limit: '-', description: 'Net annual income from rented property after property tax, 30% standard deduction and home loan interest', regime: 'New' },
         { id: '25', section: 'Other Sources of Income', limit: '-', description: 'Taxable income from interest, dividends, family pension and other sources. 80TTA/80TTB not available under new regime', regime: 'New' },
         { id: '26', section: '80CCD(2) - Employer NPS Contribution', limit: '-', description: 'Only employer NPS contribution (80CCD(2)) is deductible under new regime. Employee contributions (80CCD(1) and 80CCD(1B)) are not available', regime: 'New' },
@@ -2091,13 +2080,13 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             if (limitViewRegime === 'Old') return (l.ageGroup || 'individual') === oldRegimeAgeGroup;
                                             return true;
                                         }).filter(l => {
-                                            if (l.section === '80C' && l.isSubSection) {
+                                            if (l.section === '80C Investments' && l.isSubSection) {
                                                 return isEditingInv || is80CExpanded;
                                             }
-                                            if (l.section === '80D' && l.isSubSection) {
+                                            if (l.section === '80D Medical Insurance' && l.isSubSection) {
                                                 return isEditingInv || is80DExpanded;
                                             }
-                                            if (l.section === '80G' && l.isSubSection) {
+                                            if (l.section === '80DDB - Medical Treatment' && l.isSubSection) {
                                                 return isEditingInv || is80GExpanded;
                                             }
                                             if (l.section === '10(14)' && l.isSubSection) {
@@ -2106,7 +2095,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             return true;
                                         }).map((limit, idx) => {
                                             const actualIdx = limits.findIndex(l => l.id === limit.id);
-                                            const hasSubsections = (limit.section === '80C' || limit.section === '80D' || limit.section === '80G' || limit.section === '10(14)') && !limit.isSubSection && limits.some(l => 
+                                            const hasSubsections = (limit.section === '80C Investments' || limit.section === '80D Medical Insurance' || limit.section === '80DDB - Medical Treatment' || limit.section === 'Other Investments & Exemptions' || limit.section === 'Other Sources of Income') && !limit.isSubSection && limits.some(l => 
                                                 l.section === limit.section && 
                                                 l.isSubSection && 
                                                 (l.regime || 'Old') === limitViewRegime && 
@@ -2117,11 +2106,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                     key={limit.id} 
                                                     onClick={() => {
                                                         if (!isEditingInv && hasSubsections) {
-                                                            if (limit.section === '80C') {
+                                                            if (limit.section === '80C Investments' || limit.section === 'Other Sources of Income') {
                                                                 setIs80CExpanded(!is80CExpanded);
-                                                            } else if (limit.section === '80D') {
+                                                            } else if (limit.section === '80D Medical Insurance') {
                                                                 setIs80DExpanded(!is80DExpanded);
-                                                            } else if (limit.section === '80G') {
+                                                            } else if (limit.section === '80DDB - Medical Treatment') {
                                                                 setIs80GExpanded(!is80GExpanded);
                                                             } else if (limit.section === '10(14)') {
                                                                 setIs1014Expanded(!is1014Expanded);
