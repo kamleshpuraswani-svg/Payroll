@@ -19,6 +19,36 @@ const EMPLOYEES_LIST = [
     "Anjali Mehta (Team Lead)"
 ];
 
+// Default Surcharge & Rebate Parameters (Old vs New Regime)
+const DEFAULT_TAX_COMPUTATION_PARAMS = {
+    education_cess_rate: 0.04,
+    old: {
+        standard_deduction: 50000,
+        rebate_87a_limit: 500000,
+        rebate_87a_amount: 12500,
+        // Surcharge on income tax, applied above ₹50L total income. Old regime
+        // keeps the 37% top slab for income > ₹5Cr.
+        surcharge_slabs: [
+            { threshold: 5000000, rate: 0.1 },
+            { threshold: 10000000, rate: 0.15 },
+            { threshold: 20000000, rate: 0.25 },
+            { threshold: 50000000, rate: 0.37 },
+        ],
+    },
+    new: {
+        standard_deduction: 75000,
+        rebate_87a_limit: 1200000,
+        rebate_87a_amount: 60000,
+        // Finance Act 2023: new regime caps surcharge at 25% — no 37% slab,
+        // so income above ₹2Cr never attracts more than 25% surcharge.
+        surcharge_slabs: [
+            { threshold: 5000000, rate: 0.1 },
+            { threshold: 10000000, rate: 0.15 },
+            { threshold: 20000000, rate: 0.25 },
+        ],
+    },
+};
+
 /**
  * Robust date formatter that handles potential invalid date objects safely.
  */
@@ -2165,6 +2195,70 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Surcharge & Rebate Parameters */}
+                        <div className="mt-8 pt-6 border-t border-slate-100">
+                            <div className="flex items-center gap-2 mb-4">
+                                <ShieldCheck size={16} className="text-indigo-600" />
+                                <h3 className="text-sm font-bold text-slate-800">Surcharge & Rebate Parameters</h3>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded">
+                                    {limitViewRegime === 'New' ? 'New Regime' : 'Old Regime'}
+                                </span>
+                                <div className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-600">
+                                    <Percent size={12} className="text-slate-400" />
+                                    Education Cess: {(DEFAULT_TAX_COMPUTATION_PARAMS.education_cess_rate * 100).toFixed(0)}%
+                                </div>
+                            </div>
+
+                            {(() => {
+                                const activeRegimeParams = limitViewRegime === 'New' ? DEFAULT_TAX_COMPUTATION_PARAMS.new : DEFAULT_TAX_COMPUTATION_PARAMS.old;
+                                return (
+                                    <>
+                                        {/* Stat Tiles */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Standard Deduction</p>
+                                                <p className="text-lg font-black text-slate-800">₹ {activeRegimeParams.standard_deduction.toLocaleString('en-IN')}</p>
+                                            </div>
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Rebate u/s 87A &ndash; Income Limit</p>
+                                                <p className="text-lg font-black text-slate-800">₹ {activeRegimeParams.rebate_87a_limit.toLocaleString('en-IN')}</p>
+                                            </div>
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Rebate u/s 87A &ndash; Max Amount</p>
+                                                <p className="text-lg font-black text-slate-800">₹ {activeRegimeParams.rebate_87a_amount.toLocaleString('en-IN')}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Surcharge Slabs Table */}
+                                        <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                                            <table className="w-full text-sm text-left border-collapse">
+                                                <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200">
+                                                    <tr>
+                                                        <th className="px-6 py-3 w-16 text-center">#</th>
+                                                        <th className="px-6 py-3">Total Income Above (₹)</th>
+                                                        <th className="px-6 py-3">Surcharge Rate (%)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {activeRegimeParams.surcharge_slabs.map((slab, index) => (
+                                                        <tr key={index} className="hover:bg-indigo-50/30 transition-colors">
+                                                            <td className="px-6 py-3 text-center text-slate-400 font-medium">{index + 1}</td>
+                                                            <td className="px-6 py-3">
+                                                                <span className="font-medium text-slate-700">₹ {slab.threshold.toLocaleString('en-IN')}</span>
+                                                            </td>
+                                                            <td className="px-6 py-3">
+                                                                <span className="font-bold text-slate-700 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md">{(slab.rate * 100).toFixed(0)}%</span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
                     )}

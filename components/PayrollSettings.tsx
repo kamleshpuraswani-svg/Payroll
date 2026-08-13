@@ -2035,7 +2035,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                                 <button
                                     onClick={() => {
                                         setIsCopyModalOpen(true);
-                                        setCopyFromBU('');
+                                        setCopyFromBU(selectedTarget.startsWith('bu:') ? selectedTarget.split(':')[1] : '');
                                         setCopyToBUs([]);
                                     }}
                                     className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-sky-600 hover:border-sky-200 transition-colors shadow-sm"
@@ -2213,7 +2213,7 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-800">Copy Pay Schedules</h3>
-                                <p className="text-sm text-slate-500 mt-1">Duplicate configurations across Business Units</p>
+                                <p className="text-sm text-slate-500 mt-1">Duplicate configurations from <span className="font-bold text-slate-700">{copyFromBU}</span> to selected Business Units</p>
                             </div>
                             <button
                                 onClick={() => setIsCopyModalOpen(false)}
@@ -2223,26 +2223,6 @@ const PayrollSettings: React.FC<{ userRole?: string }> = ({ userRole }) => {
                             </button>
                         </div>
                         <div className="p-6 space-y-6">
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Copy From</label>
-                                <div className="relative">
-                                    <select
-                                        value={copyFromBU}
-                                        onChange={(e) => {
-                                            setCopyFromBU(e.target.value);
-                                            // Ensure copyFromBU is removed from copyToBUs if it was selected
-                                            setCopyToBUs(prev => prev.filter(b => b !== e.target.value));
-                                        }}
-                                        className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none"
-                                    >
-                                        <option value="" disabled>Select Business Unit...</option>
-                                        {BUSINESS_UNITS.map(bu => (
-                                            <option key={bu} value={bu}>{bu}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                </div>
-                            </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Copy To</label>
                                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
