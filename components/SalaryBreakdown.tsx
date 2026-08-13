@@ -434,7 +434,7 @@ export const SalaryBreakdownModule: React.FC = () => {
                      </div>
 
                      <button type="submit" className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-indigo-100">
-                        Sign In
+                        Unlock
                      </button>
                   </form>
 
