@@ -51,6 +51,152 @@ const SALARY_BREAKDOWN_DATA = [
   { name: 'Employer Deductions', value: 15000, fill: '#f97316' }
 ];
 
+const LOP_TREND_DATA_2025 = [
+  { month: 'Jan', lop: 0, deduction: 0 },
+  { month: 'Feb', lop: 1, deduction: 2500 },
+  { month: 'Mar', lop: 0, deduction: 0 },
+  { month: 'Apr', lop: 0, deduction: 0 },
+  { month: 'May', lop: 2, deduction: 5000 },
+  { month: 'Jun', lop: 0, deduction: 0 },
+  { month: 'Jul', lop: 3, deduction: 7500 },
+  { month: 'Aug', lop: 0, deduction: 0 },
+  { month: 'Sep', lop: 1, deduction: 2500 },
+  { month: 'Oct', lop: 0, deduction: 0 },
+  { month: 'Nov', lop: 0, deduction: 0 },
+  { month: 'Dec', lop: 1, deduction: 2500 },
+];
+
+const LOP_TREND_DATA_2024 = [
+  { month: 'Jan', lop: 2, deduction: 5000 },
+  { month: 'Feb', lop: 0, deduction: 0 },
+  { month: 'Mar', lop: 4, deduction: 10000 },
+  { month: 'Apr', lop: 0, deduction: 0 },
+  { month: 'May', lop: 1, deduction: 2500 },
+  { month: 'Jun', lop: 1, deduction: 2500 },
+  { month: 'Jul', lop: 0, deduction: 0 },
+  { month: 'Aug', lop: 2, deduction: 5000 },
+  { month: 'Sep', lop: 0, deduction: 0 },
+  { month: 'Oct', lop: 0, deduction: 0 },
+  { month: 'Nov', lop: 3, deduction: 7500 },
+  { month: 'Dec', lop: 0, deduction: 0 },
+];
+
+const LOP_TREND_DATA_2023 = [
+  { month: 'Jan', lop: 0, deduction: 0 },
+  { month: 'Feb', lop: 0, deduction: 0 },
+  { month: 'Mar', lop: 1, deduction: 2500 },
+  { month: 'Apr', lop: 3, deduction: 7500 },
+  { month: 'May', lop: 0, deduction: 0 },
+  { month: 'Jun', lop: 0, deduction: 0 },
+  { month: 'Jul', lop: 2, deduction: 5000 },
+  { month: 'Aug', lop: 4, deduction: 10000 },
+  { month: 'Sep', lop: 0, deduction: 0 },
+  { month: 'Oct', lop: 1, deduction: 2500 },
+  { month: 'Nov', lop: 1, deduction: 2500 },
+  { month: 'Dec', lop: 0, deduction: 0 },
+];
+
+const getLopTrendData = (year: string) => {
+  if (year === '2024') return LOP_TREND_DATA_2024;
+  if (year === '2023') return LOP_TREND_DATA_2023;
+  return LOP_TREND_DATA_2025;
+};
+
+const LopCustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg">
+        <p className="text-xs font-bold text-slate-800 mb-1">{label} 2025</p>
+        <p className="text-xs text-rose-600 font-semibold">{payload[0].value} LOP Days</p>
+        <p className="text-xs text-slate-500 font-medium mt-1">Deduction: ₹{payload[0].payload.deduction.toLocaleString()}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const REIMBURSEMENT_CLAIMS_DATA_2025 = [
+  { month: 'Jun', Travel: 12000, Food: 4000, Communication: 1500, Pending: 2000 },
+  { month: 'Jul', Travel: 8000, Food: 3500, Communication: 1500, Pending: 1000 },
+  { month: 'Aug', Travel: 15000, Food: 5000, Communication: 1500, Pending: 0 },
+  { month: 'Sep', Travel: 10000, Food: 4200, Communication: 1500, Pending: 3500 },
+  { month: 'Oct', Travel: 22000, Food: 8000, Communication: 1500, Pending: 1200 },
+  { month: 'Nov', Travel: 9000, Food: 3800, Communication: 1500, Pending: 500 },
+];
+
+const REIMBURSEMENT_CLAIMS_DATA_2024 = [
+  { month: 'Jun', Travel: 18000, Food: 6000, Communication: 2500, Pending: 0 },
+  { month: 'Jul', Travel: 12000, Food: 5500, Communication: 2500, Pending: 4000 },
+  { month: 'Aug', Travel: 14000, Food: 3000, Communication: 2500, Pending: 1000 },
+  { month: 'Sep', Travel: 9000, Food: 2200, Communication: 2500, Pending: 0 },
+  { month: 'Oct', Travel: 17000, Food: 4000, Communication: 2500, Pending: 2200 },
+  { month: 'Nov', Travel: 11000, Food: 4800, Communication: 2500, Pending: 1500 },
+];
+
+const REIMBURSEMENT_CLAIMS_DATA_2023 = [
+  { month: 'Jun', Travel: 15000, Food: 3000, Communication: 1000, Pending: 5000 },
+  { month: 'Jul', Travel: 11000, Food: 4500, Communication: 1000, Pending: 0 },
+  { month: 'Aug', Travel: 25000, Food: 7000, Communication: 1000, Pending: 3000 },
+  { month: 'Sep', Travel: 8000, Food: 5200, Communication: 1000, Pending: 1500 },
+  { month: 'Oct', Travel: 19000, Food: 6000, Communication: 1000, Pending: 0 },
+  { month: 'Nov', Travel: 13000, Food: 2800, Communication: 1000, Pending: 2500 },
+];
+
+const getReimbursementData = (year: string) => {
+  if (year === '2024') return REIMBURSEMENT_CLAIMS_DATA_2024;
+  if (year === '2023') return REIMBURSEMENT_CLAIMS_DATA_2023;
+  return REIMBURSEMENT_CLAIMS_DATA_2025;
+};
+
+const ReimbursementTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    let total = 0;
+    payload.forEach((p: any) => {
+      if (p.dataKey !== 'Pending') {
+        total += p.value;
+      }
+    });
+    return (
+      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg min-w-[150px]">
+        <p className="text-xs font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1">{label} 2025</p>
+        <div className="space-y-1">
+          {payload.map((p: any, idx: number) => (
+            <div key={idx} className="flex justify-between items-center text-xs">
+              <span style={{ color: p.color }} className="font-semibold">{p.name}:</span>
+              <span className="text-slate-700 font-bold">₹{p.value.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 pt-1 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-800">
+          <span>Total Approved:</span>
+          <span>₹{total.toLocaleString()}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CTC_TREND_DATA = [
+  { year: '2021', ctc: 1800000 },
+  { year: '2022', ctc: 2100000 },
+  { year: '2023', ctc: 2400000 },
+  { year: '2024', ctc: 2800000 },
+  { year: '2025', ctc: 3000000 },
+];
+
+const CtcTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg">
+        <p className="text-xs font-bold text-slate-800 mb-1">{label}</p>
+        <p className="text-xs text-emerald-600 font-semibold">CTC: ₹{payload[0].value.toLocaleString()}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface SalaryHistoryRow {
   id: string;
   period: string;
@@ -125,6 +271,8 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   const [appraisalMonth, setAppraisalMonth] = useState('');
   const [pranNumber, setPranNumber] = useState('');
   const [isDataLoading, setIsDataLoading] = useState(false);
+  const [lopYear, setLopYear] = useState('2025');
+  const [reimbursementYear, setReimbursementYear] = useState('2025');
 
   const [structureComponents, setStructureComponents] = useState<{ earnings: any[]; deductions: any[] }>({ earnings: [], deductions: [] });
   const [statutoryDeductions, setStatutoryDeductions] = useState<any>({
@@ -631,13 +779,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
             <div className="space-y-6 animate-in fade-in duration-300">
 
               {/* 3. Salary Trend Graphs Container */}
-              <div className="flex flex-col lg:flex-row gap-6 w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-stretch">
                 
-                {/* Left Column: Trend Graph + Tax Liability */}
-                <div className="flex flex-col gap-6 w-full lg:w-1/2">
+                
                   
                   {/* Gross vs Net Pay Trend */}
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full">
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -758,7 +905,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
               </div>
 
               {/* Total Tax Liability Card */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex flex-col justify-center">
+              <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex-col justify-center">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -784,69 +931,257 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <span className="text-3xl font-black text-slate-800">₹1,24,500</span>
                 </div>
               </div>
-            </div>
 
-              {/* Salary Breakdown Pie Chart */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full lg:w-1/2 flex flex-col">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                    Salary Breakdown
-                  </h3>
-                  <div className="flex items-center gap-6">
-                    <select
-                      value={breakdownYear}
-                      onChange={(e) => setBreakdownYear(e.target.value)}
-                      className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
-                    >
-                      <option value="2025">2025</option>
-                      <option value="2024">2024</option>
-                      <option value="2023">2023</option>
-                    </select>
+              {/* Outstanding Loan/Advance Balance Card */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex flex-col justify-center h-full">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <CreditCard size={18} className="text-blue-600" />
+                      Outstanding Loan/Advance Balance
+                    </h3>
                   </div>
                 </div>
                 
-                <div className="flex-1 flex flex-col items-center justify-center relative min-h-[220px]">
-                  <ResponsiveContainer width="100%" height={240}>
-                    <RechartsPieChart>
-                      <Pie
-                        data={SALARY_BREAKDOWN_DATA}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={65}
-                        outerRadius={95}
-                        paddingAngle={3}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {SALARY_BREAKDOWN_DATA.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip 
-                        formatter={(value: any) => formatINR(value)}
-                        cursor={{ fill: '#f8fafc' }}
-                        contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 'bold' }}
-                      />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
+                <div className="flex flex-col sm:flex-row gap-8 sm:items-center ml-6">
+                  <div>
+                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Remaining Balance</div>
+                    <span className="text-3xl font-black text-slate-800">₹2,16,667</span>
+                  </div>
                   
-                  {/* Inner Text for Donut */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center pt-2">
-                    <span className="text-xs font-bold text-slate-500">Annual</span>
-                    <span className="text-sm font-black text-slate-800">CTC</span>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="flex justify-between text-xs font-bold text-slate-600">
+                      <span>Amount Repaid (₹2,83,333)</span>
+                      <span>Total: ₹5,00,000</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                      <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '56.6%' }}></div>
+                    </div>
+                    <div className="flex justify-between text-xs font-semibold text-slate-500 mt-1">
+                      <span className="flex items-center gap-1.5 text-slate-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                        EMI: <strong className="text-slate-800">₹16,667</strong> / month
+                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        <strong className="text-slate-800">17</strong> of 30 paid
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTC Annual Trend Chart */}
+              {userRole === 'CEO' && (
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex flex-col justify-center">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <TrendingUp size={18} className="text-emerald-600" />
+                      Cost to Company — Annual Trend
+                    </h3>
+                  </div>
+                  
+                  <div className="flex-1 w-full min-h-[200px]">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <ComposedChart data={CTC_TREND_DATA} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                          dataKey="year" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                          dy={10}
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                          tickFormatter={(value) => `${value / 100000}L`}
+                        />
+                        <RechartsTooltip content={<CtcTooltip />} cursor={{ fill: '#f8fafc' }} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="ctc" 
+                          stroke="#10b981" 
+                          strokeWidth={3}
+                          dot={{ r: 4, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
+                          activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center text-xs font-semibold text-slate-600">
+                    <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1 shadow-sm">
+                      ▲ 66% CTC growth over 4 years
+                    </span>
+                  </div>
+                </div>
+              )}
+
+                {/* Salary Breakdown Pie Chart */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      Salary Breakdown
+                    </h3>
+                    <div className="flex items-center gap-6">
+                      <select
+                        value={breakdownYear}
+                        onChange={(e) => setBreakdownYear(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                      >
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-center justify-center relative min-h-[220px]">
+                    <ResponsiveContainer width="100%" height={240}>
+                      <RechartsPieChart>
+                        <Pie
+                          data={SALARY_BREAKDOWN_DATA}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={65}
+                          outerRadius={95}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {SALARY_BREAKDOWN_DATA.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip 
+                          formatter={(value: any) => formatINR(value)}
+                          cursor={{ fill: '#f8fafc' }}
+                          contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 'bold' }}
+                        />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                    
+                    {/* Inner Text for Donut */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center pt-2">
+                      <span className="text-xs font-bold text-slate-500">Annual</span>
+                      <span className="text-sm font-black text-slate-800">CTC</span>
+                    </div>
+                  </div>
+
+                  {/* Legends */}
+                  <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3 mt-4 text-[10px] font-bold text-slate-600">
+                    {SALARY_BREAKDOWN_DATA.map((entry, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.fill }}></div> 
+                        {entry.name}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Legends */}
-                <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3 mt-4 text-[10px] font-bold text-slate-600">
-                  {SALARY_BREAKDOWN_DATA.map((entry, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.fill }}></div> 
-                      {entry.name}
+                {/* LOP Trend Chart */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col flex-1 min-h-[280px] h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <TrendingUp size={18} className="text-rose-600" />
+                        Loss of Pay (LOP) Trend
+                      </h3>
+                      <div className="flex items-center gap-6">
+                        <select
+                          value={lopYear}
+                          onChange={(e) => setLopYear(e.target.value)}
+                          className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-rose-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                        >
+                          <option value="2025">2025</option>
+                          <option value="2024">2024</option>
+                          <option value="2023">2023</option>
+                        </select>
+                      </div>
                     </div>
-                  ))}
+                    
+                    <div className="flex-1 w-full min-h-[200px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={getLopTrendData(lopYear)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis 
+                            dataKey="month" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                            allowDecimals={false}
+                          />
+                          <RechartsTooltip content={<LopCustomTooltip />} cursor={{ fill: '#fff1f2', opacity: 0.4 }} />
+                          <Line 
+                            type="monotone" 
+                            dataKey="lop" 
+                            stroke="#e11d48" 
+                            strokeWidth={3}
+                            dot={{ r: 4, fill: '#fff', stroke: '#e11d48', strokeWidth: 2 }}
+                            activeDot={{ r: 6, fill: '#e11d48', stroke: '#fff', strokeWidth: 2 }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
                 </div>
-              </div>
+
+                {/* Reimbursement Claims Chart */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col flex-1 min-h-[280px] h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <DollarSign size={18} className="text-sky-500" />
+                        Reimbursement Claims
+                      </h3>
+                      <div className="flex items-center gap-6">
+                        <select
+                          value={reimbursementYear}
+                          onChange={(e) => setReimbursementYear(e.target.value)}
+                          className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                        >
+                          <option value="2025">2025</option>
+                          <option value="2024">2024</option>
+                          <option value="2023">2023</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 w-full min-h-[200px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={getReimbursementData(reimbursementYear)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis 
+                            dataKey="month" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
+                            allowDecimals={false}
+                          />
+                          <RechartsTooltip content={<ReimbursementTooltip />} cursor={{ fill: '#f8fafc' }} />
+                          <Bar dataKey="Travel" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} maxBarSize={30} />
+                          <Bar dataKey="Food" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} maxBarSize={30} />
+                          <Bar dataKey="Communication" stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                          <Bar dataKey="Pending" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={8} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center text-xs font-semibold text-slate-600">
+                      <span className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200 shadow-sm flex items-center gap-1">
+                        <span className="text-sky-600">Peak in Oct</span> — High travel claims
+                      </span>
+                    </div>
+                </div>
             </div>
 
               {/* 4. Salary History Table */}

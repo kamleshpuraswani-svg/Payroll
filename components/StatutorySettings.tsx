@@ -155,6 +155,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                 setPtNumber(config.ptNumber ?? '');
                 setEnableNps(config.enableNps ?? true);
                 setNpsRegistrationId(config.npsRegistrationId ?? '');
+                setCboRegistrationNumber(config.cboRegistrationNumber ?? '');
+                setNpsIncludeInEarnings(config.npsIncludeInEarnings ?? false);
                 setNpsDeductionCycle(config.npsDeductionCycle ?? 'Monthly');
                 if (config.npsContributionBase) {
                     if (typeof config.npsContributionBase === 'string') {
@@ -252,6 +254,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                 setPtNumber('');
                 setEnableNps(true);
                 setNpsRegistrationId('');
+                setCboRegistrationNumber('');
+                setNpsIncludeInEarnings(false);
                 setNpsDeductionCycle('Monthly');
                 setNpsContributionBase(['Basic Salary', 'Dearness Allowance (DA)']);
                 setNpsEmpRate('10');
@@ -359,6 +363,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
     // NPS State
     const [enableNps, setEnableNps] = useState(true);
     const [npsRegistrationId, setNpsRegistrationId] = useState('');
+    const [cboRegistrationNumber, setCboRegistrationNumber] = useState('');
+    const [npsIncludeInEarnings, setNpsIncludeInEarnings] = useState(false);
     const [npsDeductionCycle, setNpsDeductionCycle] = useState('Monthly');
     const [npsContributionBase, setNpsContributionBase] = useState<string[]>(['Basic Salary', 'Dearness Allowance (DA)']);
     const [npsDropdownOpen, setNpsDropdownOpen] = useState(false);
@@ -408,7 +414,7 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
             lwfEmployeeContribution, lwfEmployerContribution,
             ptState, ptNumber,
             ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
-            enableNps, npsRegistrationId, npsDeductionCycle, npsContributionBase: [...npsContributionBase], npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
+            enableNps, npsRegistrationId, cboRegistrationNumber, npsIncludeInEarnings, npsDeductionCycle, npsContributionBase: [...npsContributionBase], npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
         });
         // isEditing is now derived from editingSection
     };
@@ -431,7 +437,7 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                 lwfEmployeeContribution, lwfEmployerContribution,
                 ptState, ptNumber,
                 ptProcessArrear, ptExemptionDisabled, ptExemptionSenior, ptExemptionLimit, ptMonthlyContribution,
-                enableNps, npsRegistrationId, npsDeductionCycle, npsContributionBase, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
+                enableNps, npsRegistrationId, cboRegistrationNumber, npsIncludeInEarnings, npsDeductionCycle, npsContributionBase, npsEmpRate, npsEmprRate, npsWageCeiling, npsIncludeInCtc, npsIncludeEmployerInPayslip
             };
 
             const { error } = await supabase
@@ -526,6 +532,8 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
             setPtMonthlyContribution(backupState.ptMonthlyContribution);
             setEnableNps(backupState.enableNps);
             setNpsRegistrationId(backupState.npsRegistrationId);
+            setCboRegistrationNumber(backupState.cboRegistrationNumber);
+            setNpsIncludeInEarnings(backupState.npsIncludeInEarnings);
             setNpsDeductionCycle(backupState.npsDeductionCycle);
             setNpsContributionBase(backupState.npsContributionBase);
             setNpsEmpRate(backupState.npsEmpRate);
@@ -1579,7 +1587,7 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="max-w-xs w-full">
                                         <label className="block text-sm font-bold text-slate-700 mb-2">
-                                            {userRole === 'HR_MANAGER' ? 'Corporate NPS Registration ID (CHO No.)' : 'Corporate NPS Registration ID'} <span className="text-rose-500">*</span>
+                                            CHO Registration Number <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -1590,7 +1598,19 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                             className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-300"
                                         />
                                     </div>
-                                    <div></div>
+                                    <div className="max-w-xs w-full">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">
+                                            CBO Registration Number <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={cboRegistrationNumber}
+                                            onChange={(e) => setCboRegistrationNumber(e.target.value)}
+                                            disabled={!isEditing}
+                                            placeholder="Enter CBO Registration Number"
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-300"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Cycle & Base */}
@@ -1616,105 +1636,7 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>
                                     </div>
-                                    <div className="max-w-xs w-full relative">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Contribution Base</label>
-                                        {userRole === 'HR_MANAGER' ? (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    disabled={!isEditing}
-                                                    onClick={() => setNpsDropdownOpen(!npsDropdownOpen)}
-                                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white flex items-center justify-between focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-not-allowed"
-                                                >
-                                                    <span className="truncate">
-                                                        {npsContributionBase.length > 0
-                                                            ? npsContributionBase.join(' + ')
-                                                            : 'Select components'}
-                                                    </span>
-                                                    <ChevronDown className="text-slate-400 shrink-0" size={16} />
-                                                </button>
-
-                                                {npsDropdownOpen && isEditing && (
-                                                    <>
-                                                        <div
-                                                            className="fixed inset-0 z-40"
-                                                            onClick={() => setNpsDropdownOpen(false)}
-                                                        />
-                                                        <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
-                                                             {earningComponents.map((comp) => {
-                                                                 const isSelected = npsContributionBase.includes(comp);
-                                                                 return (
-                                                                     <label
-                                                                         key={comp}
-                                                                         className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 cursor-pointer w-full text-left"
-                                                                     >
-                                                                         <input
-                                                                             type="checkbox"
-                                                                             checked={isSelected}
-                                                                             onChange={() => {
-                                                                                 if (isSelected) {
-                                                                                     setNpsContributionBase(npsContributionBase.filter((c) => c !== comp));
-                                                                                 } else {
-                                                                                     setNpsContributionBase([...npsContributionBase, comp]);
-                                                                                 }
-                                                                             }}
-                                                                             className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                                                                         />
-                                                                         <span className="text-sm text-slate-700 font-medium">{comp}</span>
-                                                                     </label>
-                                                                 );
-                                                             })}
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <input
-                                                type="text"
-                                                value={Array.isArray(npsContributionBase) ? npsContributionBase.join(' + ') : npsContributionBase}
-                                                disabled
-                                                className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-700 cursor-not-allowed"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Rates */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="max-w-xs w-full">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employee Contribution Rate <span className="text-rose-500">*</span></label>
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                type="number"
-                                                value={npsEmpRate}
-                                                onChange={(e) => setNpsEmpRate(e.target.value)}
-                                                disabled={!isEditing}
-                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
-                                            />
-                                            {userRole !== 'HR_MANAGER' && (
-                                                <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="max-w-xs w-full">
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Employer Contribution Rate <span className="text-rose-500">*</span></label>
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                type="number"
-                                                value={npsEmprRate}
-                                                onChange={(e) => setNpsEmprRate(e.target.value)}
-                                                disabled={!isEditing}
-                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-sky-500 disabled:bg-slate-50 disabled:cursor-not-allowed"
-                                            />
-                                            {userRole !== 'HR_MANAGER' && (
-                                                <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-2.5 rounded-lg border border-slate-200 font-bold uppercase tracking-tighter shrink-0">% of (Basic + DA)</span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                                            <Info size={12} />
-                                            Tax benefit capped at 10% for private sector
-                                        </div>
-                                    </div>
+                                    <div></div>
                                 </div>
 
                                 {/* Toggles */}
@@ -1726,15 +1648,27 @@ const StatutorySettings: React.FC<StatutorySettingsProps> = ({ userRole }) => {
                                         <input type="checkbox" className="hidden" checked={npsIncludeInCtc} onChange={() => isEditing && setNpsIncludeInCtc(!npsIncludeInCtc)} disabled={!isEditing} />
                                         <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer contribution in employee's CTC</span>
                                     </label>
-                                    {npsIncludeInCtc && userRole === 'HR_MANAGER' && (
-                                        <label className="flex items-center gap-3 cursor-pointer group ml-8 animate-in fade-in slide-in-from-top-2">
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${npsIncludeEmployerInPayslip ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
-                                                {npsIncludeEmployerInPayslip && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${npsIncludeEmployerInPayslip ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {npsIncludeEmployerInPayslip && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={npsIncludeEmployerInPayslip} onChange={() => isEditing && setNpsIncludeEmployerInPayslip(!npsIncludeEmployerInPayslip)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer contribution in payslip</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${npsIncludeInEarnings ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'}`}>
+                                            {npsIncludeInEarnings && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={npsIncludeInEarnings} onChange={() => isEditing && setNpsIncludeInEarnings(!npsIncludeInEarnings)} disabled={!isEditing} />
+                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include in Employee's Earnings</span>
+                                        <div className="group/tooltip relative inline-block">
+                                            <Info size={14} className="text-slate-400 cursor-help" />
+                                            <div className="invisible group-hover/tooltip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50 text-center leading-relaxed font-normal normal-case whitespace-normal border border-slate-700">
+                                                When enabled, Employer NPS will be included in the employee's earnings and will be a part of payslip.
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
                                             </div>
-                                            <input type="checkbox" className="hidden" checked={npsIncludeEmployerInPayslip} onChange={() => isEditing && setNpsIncludeEmployerInPayslip(!npsIncludeEmployerInPayslip)} disabled={!isEditing} />
-                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700 transition-colors">Include employer contribution in payslip</span>
-                                        </label>
-                                    )}
+                                        </div>
+                                    </label>
                                 </div>
 
                             </div>
