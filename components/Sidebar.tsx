@@ -160,6 +160,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       ]
     },
     {
+      id: 'hr-challan',
+      label: 'Challan',
+      icon: <FileText size={20} />,
+      viewState: ViewState.CHALLAN
+    },
+    {
       id: 'hr-payroll-reports',
       label: 'Payroll Reports',
       icon: <PieChart size={20} />,
