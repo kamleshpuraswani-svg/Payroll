@@ -46,6 +46,14 @@ import { MOCK_COMPANIES } from '../constants';
 import { supabase } from '../services/supabaseClient';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
+
+const parseCurrency = (str: string) => {
+    let val = parseFloat(str.replace(/[^0-9.]/g, ''));
+    if (str.includes('Cr')) val *= 10000000;
+    else if (str.includes('L')) val *= 100000;
+    return val || 0;
+};
 
 interface PastPayroll {
     id: string;
@@ -1607,7 +1615,21 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                                     {novPayrollStatus === 'Locked' || novPayrollStatus === 'Paid' ? (
                                                         <>
                                                             <button
-                                                                onClick={() => { setWizardBU(['Mindinventory', '300 Minds']); setWizardReadOnly(true); setWizardInitialStep(1); setUnlockedRegularMonthly(false); setView('WIZARD'); }}
+                                                                onClick={() => {
+                                                                    setShowDetailsModal({
+                                                                        id: 'PR-CURRENT',
+                                                                        month: 'November 2025',
+                                                                        businessUnit: 'Mindinventory, 300 Minds',
+                                                                        processedDate: '-',
+                                                                        employeeCount: 450,
+                                                                        grossAmount: '₹ 1.85 Cr',
+                                                                        totalDeductions: '₹ 43.00 L',
+                                                                        netPay: '₹ 1.42 Cr',
+                                                                        status: novPayrollStatus as any,
+                                                                        createdBy: 'System',
+                                                                        lastModifiedBy: 'HR Manager'
+                                                                    });
+                                                                }}
                                                                 className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                                                 title="View Details"
                                                             >
@@ -1682,18 +1704,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                         <td className="px-6 py-5 text-right pr-8">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => {
-                                                        if (payroll.status === 'Locked' || payroll.status === 'Paid') {
-                                                            const bus = payroll.businessUnit.split(',').map(s => s.trim());
-                                                            setWizardBU(bus);
-                                                            setWizardReadOnly(true);
-                                                            setWizardInitialStep(1);
-                                                            setUnlockedRegularMonthly(false);
-                                                            setView('WIZARD');
-                                                        } else {
-                                                            setShowDetailsModal(payroll);
-                                                        }
-                                                    }}
+                                                    onClick={() => setShowDetailsModal(payroll)}
                                                     className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-colors shadow-sm border border-transparent hover:border-slate-200"
                                                     title="View Details"
                                                 >
@@ -1905,7 +1916,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             {/* View Details Modal */}
             {showDetailsModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[85vh]">
                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Calendar size={18} /></div>
@@ -1917,20 +1928,174 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Total Gross</p>
-                                    <p className="text-xl font-bold text-indigo-900">{showDetailsModal.grossAmount}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                    <p className="text-sm font-medium text-slate-500 mb-2">Total payroll cost</p>
+                                    <p className="text-2xl font-bold text-slate-800">₹ 1,82,00,000</p>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
-                                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Net Payout</p>
-                                    <p className="text-xl font-bold text-emerald-900">{showDetailsModal.netPay}</p>
+                                <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                    <p className="text-sm font-medium text-slate-500 mb-2">Employees processed</p>
+                                    <p className="text-2xl font-bold text-slate-800">{showDetailsModal.employeeCount}</p>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-purple-50 border border-purple-100">
-                                    <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-1">Employees</p>
-                                    <p className="text-xl font-bold text-purple-900">{showDetailsModal.employeeCount}</p>
+                                <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                    <p className="text-sm font-medium text-slate-500 mb-2">Statutory deductions</p>
+                                    <p className="text-2xl font-bold text-slate-800">₹ 42,00,000</p>
+                                </div>
+                                <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                    <p className="text-sm font-medium text-slate-500 mb-2">Net pay disbursed</p>
+                                    <p className="text-2xl font-bold text-slate-800">₹ 1,42,00,000</p>
+                                </div>
+                                <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                    <p className="text-sm font-medium text-slate-500 mb-2">Employees On-hold</p>
+                                    <p className="text-2xl font-bold text-slate-800">2</p>
                                 </div>
                             </div>
+
+                            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative">
+                                    <h3 className="text-xl font-bold text-slate-800 mb-6">Employee Details</h3>
+                                    
+                                    <div className="flex items-center gap-12">
+                                        <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 w-[40%]">
+                                            <h2 className="text-3xl font-black text-slate-800">{showDetailsModal.employeeCount}</h2>
+                                            <p className="text-sm font-semibold text-slate-500 mt-1">Total Employees</p>
+                                            <p className="text-xs font-semibold text-emerald-600 mt-3">+4 vs previous month</p>
+                                        </div>
+
+                                        <div className="flex-1 flex items-center gap-24">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-5 bg-[#93C5FD] rounded-full"></div>
+                                                    <p className="text-lg font-bold text-slate-700">04</p>
+                                                </div>
+                                                <p className="text-sm font-semibold text-slate-400 ml-3.5">Addition</p>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-5 bg-[#2DD4BF] rounded-full"></div>
+                                                    <p className="text-lg font-bold text-slate-700">00</p>
+                                                </div>
+                                                <p className="text-sm font-semibold text-slate-400 ml-3.5">Exclusion</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <h3 className="text-xl font-bold text-slate-800">6-month cost trend</h3>
+                                        <div className="relative group flex items-center">
+                                            <Info size={16} className="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors" />
+                                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-xs bg-slate-800 text-white text-xs px-2 py-1.5 rounded whitespace-nowrap shadow-lg z-10">
+                                                based on total payroll cost
+                                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="w-full h-64">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={[
+                                                { month: 'Mar', cost: 1.31 },
+                                                { month: 'Apr', cost: 1.33 },
+                                                { month: 'May', cost: 1.36 },
+                                                { month: 'Jun', cost: 1.38 },
+                                                { month: 'Jul', cost: 1.40 },
+                                                { month: 'Aug', cost: 1.42 },
+                                            ]} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                                <defs>
+                                                    <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} dy={10} />
+                                                <YAxis domain={[1.3, 1.42]} axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} tickFormatter={(val) => `₹${val}Cr`} />
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', color: '#F8FAFC' }}
+                                                    itemStyle={{ color: '#F8FAFC' }}
+                                                    formatter={(value: number) => [`₹${value}Cr`, 'cost']}
+                                                    labelStyle={{ color: '#94A3B8', fontWeight: 'bold', marginBottom: '4px' }}
+                                                />
+                                                <Area type="linear" dataKey="cost" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorCost)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <h3 className="text-xl font-bold text-slate-800">Department-wise cost</h3>
+                                            <div className="relative group flex items-center">
+                                                <Info size={16} className="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors" />
+                                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-xs bg-slate-800 text-white text-xs px-2 py-1.5 rounded whitespace-nowrap shadow-lg z-10">
+                                                    based on total payroll cost
+                                                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={[
+                                                    { name: 'Engineering', cost: 52 },
+                                                    { name: 'Sales', cost: 34 },
+                                                    { name: 'Operations', cost: 28 },
+                                                    { name: 'Support', cost: 18 },
+                                                    { name: 'HR', cost: 10 },
+                                                ]} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} tickFormatter={(val) => `₹${val}L`} />
+                                                    <Tooltip 
+                                                        cursor={{fill: 'transparent'}}
+                                                        contentStyle={{ backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', color: '#F8FAFC' }}
+                                                        itemStyle={{ color: '#F8FAFC' }}
+                                                        formatter={(value: number) => [`₹${value}L`, 'cost']}
+                                                        labelStyle={{ color: '#94A3B8', fontWeight: 'bold', marginBottom: '4px' }}
+                                                    />
+                                                    <Bar dataKey="cost" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={24} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <h3 className="text-xl font-bold text-slate-800">Salary band distribution</h3>
+                                            <div className="relative group flex items-center">
+                                                <Info size={16} className="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors" />
+                                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-xs bg-slate-800 text-white text-xs px-2 py-1.5 rounded whitespace-nowrap shadow-lg z-10">
+                                                    based on total payroll cost
+                                                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={[
+                                                    { band: '<25k', count: 40 },
+                                                    { band: '25-50k', count: 130 },
+                                                    { band: '50-75k', count: 158 },
+                                                    { band: '75k-1L', count: 95 },
+                                                    { band: '1L-2L', count: 45 },
+                                                    { band: '>2L', count: 10 },
+                                                ]} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                    <XAxis dataKey="band" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} />
+                                                    <Tooltip 
+                                                        cursor={{fill: 'transparent'}}
+                                                        contentStyle={{ backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', color: '#F8FAFC' }}
+                                                        itemStyle={{ color: '#F8FAFC' }}
+                                                        formatter={(value: number) => [value, 'count']}
+                                                        labelStyle={{ color: '#94A3B8', fontWeight: 'bold', marginBottom: '4px' }}
+                                                    />
+                                                    <Bar dataKey="count" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={24} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </div>
 
                             <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
                                 <div className="flex items-center gap-3 px-4 py-2 bg-slate-200/60 rounded-xl mb-4 w-max">
@@ -1942,26 +2107,22 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                     </div>
                                     <h4 className="text-[15px] font-bold text-slate-800 tracking-tight">Deductions & Recoveries</h4>
                                 </div>
-                                <div className="space-y-4 px-1">
-                                    <div className="flex justify-between items-center bg-white">
-                                        <span className="text-[15px] text-slate-700 tracking-tight">TDS (Income Tax):</span>
-                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 15,40,000</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                        <p className="text-sm font-medium text-slate-500 mb-2">TDS (Income Tax)</p>
+                                        <p className="text-2xl font-bold text-slate-800">₹ 15,40,000</p>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white">
-                                        <span className="text-[15px] text-slate-700 tracking-tight">PF (Employee):</span>
-                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 0.40,000</span>
+                                    <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                        <p className="text-sm font-medium text-slate-500 mb-2">PF (Employee)</p>
+                                        <p className="text-2xl font-bold text-slate-800">₹ 10,40,000</p>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white">
-                                        <span className="text-[15px] text-slate-700 tracking-tight">Professional Tax:</span>
-                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 20,000</span>
+                                    <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                        <p className="text-sm font-medium text-slate-500 mb-2">Professional Tax</p>
+                                        <p className="text-2xl font-bold text-slate-800">₹ 20,000</p>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white">
-                                        <span className="text-[15px] text-slate-700 tracking-tight">Loan Repayments:</span>
-                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 30,000</span>
-                                    </div>
-                                    <div className="flex justify-between items-center bg-white">
-                                        <span className="text-[15px] text-slate-700 tracking-tight">Unpaid Leaves (LWP):</span>
-                                        <span className="font-bold text-[15px] text-red-700 tracking-tight">- ₹ 10,000</span>
+                                    <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                                        <p className="text-sm font-medium text-slate-500 mb-2">Loans & Advances recovery</p>
+                                        <p className="text-2xl font-bold text-slate-800">₹ 30,000</p>
                                     </div>
                                 </div>
                             </div>

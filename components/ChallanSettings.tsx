@@ -781,7 +781,7 @@ const ChallanSettings: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-4">No.</th>
                                     <th className="px-6 py-4">Month</th>
-                                    <th className="px-6 py-4">Created By</th>
+                                    <th className="px-6 py-4">Last Action By</th>
                                     <th className="px-6 py-4">Actions</th>
                                 </tr>
                             </thead>

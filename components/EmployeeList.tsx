@@ -1315,6 +1315,8 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isImportOptionsModalOpen, setIsImportOptionsModalOpen] = useState(false);
+    const [importOption, setImportOption] = useState<string>('');
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -1648,7 +1650,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 <Filter size={16} /> Filter
                             </button>
                             <button 
-                                onClick={() => setIsImportModalOpen(true)}
+                                onClick={() => setIsImportOptionsModalOpen(true)}
                                 className="px-4 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm shrink-0 h-[40px] transition-colors"
                             >
                                 <Upload size={16} /> Import
@@ -1672,7 +1674,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 <Filter size={16} /> Filter
                             </button>
                             <button 
-                                onClick={() => setIsImportModalOpen(true)}
+                                onClick={() => setIsImportOptionsModalOpen(true)}
                                 className="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white border border-transparent rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
                             >
                                 <Upload size={16} /> Import
@@ -1835,11 +1837,65 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                 employees={employees}
             />
 
+            <ImportOptionsModal
+                isOpen={isImportOptionsModalOpen}
+                onClose={() => setIsImportOptionsModalOpen(false)}
+                onSelectOption={(option) => {
+                    setImportOption(option);
+                    setIsImportOptionsModalOpen(false);
+                    setIsImportModalOpen(true);
+                }}
+            />
+
             <ImportEmployeesModal
                 isOpen={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}
                 onImportSuccess={fetchEmployees}
+                importOption={importOption}
             />
+        </div>
+    );
+};
+
+// ==========================================
+// IMPORT OPTIONS MODAL COMPONENT
+// ==========================================
+interface ImportOptionsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSelectOption: (option: string) => void;
+}
+
+const ImportOptionsModal: React.FC<ImportOptionsModalProps> = ({ isOpen, onClose, onSelectOption }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white">
+                    <h2 className="text-xl font-bold text-slate-800 tracking-tight">Import data</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                <div className="p-6">
+                    <div className="flex items-center gap-3 p-4 mb-6 bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg text-[#4338CA]">
+                        <Info size={20} className="shrink-0" />
+                        <p className="text-[15px] font-medium">Choose the appropriate option to proceed.</p>
+                    </div>
+                    <div className="flex gap-4">
+                        <button onClick={() => onSelectOption('new')} className="flex-1 py-3 px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold rounded-lg text-[15px] transition-colors shadow-sm">
+                            Update Statutory Details
+                        </button>
+                        <button onClick={() => onSelectOption('update')} className="flex-1 py-3 px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold rounded-lg text-[15px] transition-colors shadow-sm">
+                            Import & Auto-calculate Salary Details
+                        </button>
+                        <button onClick={() => onSelectOption('emergency')} className="flex-1 py-3 px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold rounded-lg text-[15px] transition-colors shadow-sm">
+                            Manually Import Salary Details
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
@@ -1851,6 +1907,7 @@ interface ImportEmployeesModalProps {
     isOpen: boolean;
     onClose: () => void;
     onImportSuccess?: () => void;
+    importOption?: string;
 }
 
 // Helper to extract value case-insensitively from Excel row object
@@ -1909,7 +1966,7 @@ const mapRegime = (val: any): 'Old Regime' | 'New Regime' => {
     return 'Old Regime';
 };
 
-const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
+const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onClose, onImportSuccess, importOption }) => {
     const [step, setStep] = useState(1);
     const [file, setFile] = useState<File | null>(null);
     const [parsedData, setParsedData] = useState<any[]>([]);
@@ -1940,119 +1997,243 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
     if (!isOpen) return null;
 
     const handleDownloadSample = async () => {
-        const headers = [
-            "Sr. No.",
-            "Employee Code",
-            "Employee Name",
-            "Business Unit",
-            "Salary Structure",
-            "Annual CTC (₹)",
-            "Basic Salary",
-            "Dearness Allowance (DA)",
-            "Conveyance Allowance",
-            "Child Education Allowance",
-            "Child hostel allowance",
-            "House Rent Allowance (HRA)",
-            "Meal Allowance",
-            "Medical Allowance",
-            "Professional Allowance",
-            "Statutory Bonus",
-            "PF (Employee)",
-            "ESI (Employee)",
-            "Gratuity (Employer)",
-            "PF (Employer)",
-            "ESI (Employer)",
-            "NPS (Employer)",
-            "LWF (Employee)",
-            "LWF (Employer)",
-            "Voluntary Provident Fund (Employee)",
-            "Professional Tax",
-            "Effective From",
-            "Arrears Payout Month",
-            "PF Applicable",
-            "ESI Applicable",
-            "Gratuity Applicable",
-            "NPS Applicable",
-            "Fixed Amount (Monthly)",
-            "Percentage (%)",
-            "VPF Applicable",
-            "Fixed Amount (Monthly)",
-            "Percentage (%)",
-            "PAN Number",
-            "Aadhaar Number",
-            "PF Number",
-            "UAN Number",
-            "ESI Number",
-            "PRAN Number",
-            "Tax Regime",
-            "Total Gross (Annual)",
-            "Total CTC (Annual)",
-            "Total Net Pay (Annual)",
-            "Salary Pay Mode",
-            "Account Number",
-            "IFSC Code",
-            "Bank Name",
-            "Branch",
-            "Appraisal Month"
-        ];
-        
-        const rows = [
-            [
-                1,
-                "CO-059",
-                "Sachin Tendulkar",
-                "CollabCRM",
-                "Executive Structure",
-                1800000,
-                720000, // Basic Salary
-                0, // Dearness Allowance (DA)
-                19200, // Conveyance Allowance
-                2400, // Child Education Allowance
-                4800, // Child hostel allowance
-                288000, // House Rent Allowance (HRA)
-                0, // Meal Allowance
-                0, // Medical Allowance
-                0, // Professional Allowance
-                0, // Statutory Bonus
-                21600, // PF (Employee)
-                0, // ESI (Employee)
-                34600, // Gratuity (Employer)
-                21600, // PF (Employer)
-                0, // ESI (Employer)
-                0, // NPS (Employer)
-                120, // LWF (Employee)
-                240, // LWF (Employer)
-                0, // Voluntary Provident Fund (Employee)
-                2500, // Professional Tax
-                "2026-06-01",
-                "2026-05-01",
-                "Yes", // PF Applicable
-                "No", // ESI Applicable
-                "Yes", // Gratuity Applicable
-                "Yes", // NPS Applicable
-                0, // Fixed Amount (Monthly) for NPS
-                10, // Percentage (%) for NPS
-                "No", // VPF Applicable
-                0, // Fixed Amount (Monthly) for VPF
-                0, // Percentage (%) for VPF
-                "ABCDE1234F", // PAN
-                "123456789012", // Aadhaar
-                "MH/BAN/1234567/123", // PF No
-                "100987654321", // UAN No
-                "3112345678", // ESI No
-                "110098765432", // PRAN No
-                "New Regime", // Tax Regime
-                1620000, // Total Gross (Annual)
-                1800000, // Total CTC (Annual)
-                1500000, // Total Net Pay (Annual)
-                "Online Transfer", // Salary Pay Mode
-                "1234567890", // Account Number
-                "HDFC0000123", // IFSC Code
-                "HDFC Bank", // Bank Name
-                "Koramangala", // Branch
-                "April" // Appraisal Month
-            ]
-        ];
+        let headers: string[] = [];
+        let rows: any[][] = [];
+
+        if (importOption === 'new') {
+            headers = [
+                "Employee Code",
+                "PAN Number",
+                "Aadhaar Number",
+                "Tax Regime",
+                "PF Applicable",
+                "PF Number",
+                "UAN Number",
+                "ESI Applicable",
+                "ESI Number",
+                "NPS Applicable",
+                "PRAN Number",
+                "Salary Pay Mode",
+                "Account Number",
+                "IFSC Code",
+                "Bank Name",
+                "Branch",
+                "Appraisal Month"
+            ];
+            rows = [
+                [
+                    "CO-059",
+                    "ABCDE1234F",
+                    "123456789012",
+                    "New Regime",
+                    "Yes",
+                    "MH/BAN/1234567/123",
+                    "100987654321",
+                    "No",
+                    "3112345678",
+                    "Yes",
+                    "110098765432",
+                    "Online Transfer",
+                    "1234567890",
+                    "HDFC0000123",
+                    "HDFC Bank",
+                    "Koramangala",
+                    "April"
+                ]
+            ];
+        } else if (importOption === 'update') {
+            headers = [
+                "Employee Code",
+                "Salary Structure",
+                "Effective From",
+                "Annual CTC",
+                "PF Applicable",
+                "ESI Applicable",
+                "Gratuity Applicable",
+                "NPS Applicable",
+                "NPS Fixed Amount (Monthly)",
+                "NPS Percentage",
+                "VPF Applicable",
+                "VPF Fixed Amount (Monthly)",
+                "VPF Percentage"
+            ];
+            rows = [
+                [
+                    "CO-059",
+                    "Executive Structure",
+                    "2026-06-01",
+                    1800000,
+                    "Yes",
+                    "No",
+                    "Yes",
+                    "Yes",
+                    0,
+                    10,
+                    "No",
+                    0,
+                    0
+                ]
+            ];
+        } else if (importOption === 'emergency') {
+            headers = [
+                "Employee Code",
+                "Salary Structure",
+                "Effective From",
+                "Annual CTC",
+                "Basic Salary (Monthly)",
+                "Conveyance Allowance (Monthly)",
+                "Medical Allowance (Monthly)",
+                "House Rent Allowance (Monthly)",
+                "Professional Allowance (Monthly)",
+                "Statutory Bonus (Monthly)",
+                "PF Applicable",
+                "ESI Applicable",
+                "Gratuity Applicable",
+                "NPS Applicable",
+                "NPS Fixed Amount (Monthly)",
+                "NPS Percentage",
+                "VPF Applicable",
+                "VPF Fixed Amount (Monthly)",
+                "VPF Percentage"
+            ];
+            rows = [
+                [
+                    "CO-059",
+                    "Executive Structure",
+                    "2026-06-01",
+                    1800000,
+                    60000, // Basic Salary (Monthly)
+                    1600,  // Conveyance Allowance (Monthly)
+                    0,     // Medical Allowance (Monthly)
+                    24000, // House Rent Allowance (Monthly)
+                    0,     // Professional Allowance (Monthly)
+                    0,     // Statutory Bonus (Monthly)
+                    "Yes",
+                    "No",
+                    "Yes",
+                    "Yes",
+                    0,
+                    10,
+                    "No",
+                    0,
+                    0
+                ]
+            ];
+        } else {
+            headers = [
+                "Sr. No.",
+                "Employee Code",
+                "Employee Name",
+                "Business Unit",
+                "Salary Structure",
+                "Annual CTC (₹)",
+                "Basic Salary",
+                "Dearness Allowance (DA)",
+                "Conveyance Allowance",
+                "Child Education Allowance",
+                "Child hostel allowance",
+                "House Rent Allowance (HRA)",
+                "Meal Allowance",
+                "Medical Allowance",
+                "Professional Allowance",
+                "Statutory Bonus",
+                "PF (Employee)",
+                "ESI (Employee)",
+                "Gratuity (Employer)",
+                "PF (Employer)",
+                "ESI (Employer)",
+                "NPS (Employer)",
+                "LWF (Employee)",
+                "LWF (Employer)",
+                "Voluntary Provident Fund (Employee)",
+                "Professional Tax",
+                "Effective From",
+                "Arrears Payout Month",
+                "PF Applicable",
+                "ESI Applicable",
+                "Gratuity Applicable",
+                "NPS Applicable",
+                "Fixed Amount (Monthly)",
+                "Percentage (%)",
+                "VPF Applicable",
+                "Fixed Amount (Monthly)",
+                "Percentage (%)",
+                "PAN Number",
+                "Aadhaar Number",
+                "PF Number",
+                "UAN Number",
+                "ESI Number",
+                "PRAN Number",
+                "Tax Regime",
+                "Total Gross (Annual)",
+                "Total CTC (Annual)",
+                "Total Net Pay (Annual)",
+                "Salary Pay Mode",
+                "Account Number",
+                "IFSC Code",
+                "Bank Name",
+                "Branch",
+                "Appraisal Month"
+            ];
+            
+            rows = [
+                [
+                    1,
+                    "CO-059",
+                    "Sachin Tendulkar",
+                    "CollabCRM",
+                    "Executive Structure",
+                    1800000,
+                    720000, // Basic Salary
+                    0, // Dearness Allowance (DA)
+                    19200, // Conveyance Allowance
+                    2400, // Child Education Allowance
+                    4800, // Child hostel allowance
+                    288000, // House Rent Allowance (HRA)
+                    0, // Meal Allowance
+                    0, // Medical Allowance
+                    0, // Professional Allowance
+                    0, // Statutory Bonus
+                    21600, // PF (Employee)
+                    0, // ESI (Employee)
+                    34600, // Gratuity (Employer)
+                    21600, // PF (Employer)
+                    0, // ESI (Employer)
+                    0, // NPS (Employer)
+                    120, // LWF (Employee)
+                    240, // LWF (Employer)
+                    0, // Voluntary Provident Fund (Employee)
+                    2500, // Professional Tax
+                    "2026-06-01",
+                    "2026-05-01",
+                    "Yes", // PF Applicable
+                    "No", // ESI Applicable
+                    "Yes", // Gratuity Applicable
+                    "Yes", // NPS Applicable
+                    0, // Fixed Amount (Monthly) for NPS
+                    10, // Percentage (%) for NPS
+                    "No", // VPF Applicable
+                    0, // Fixed Amount (Monthly) for VPF
+                    0, // Percentage (%) for VPF
+                    "ABCDE1234F", // PAN
+                    "123456789012", // Aadhaar
+                    "MH/BAN/1234567/123", // PF No
+                    "100987654321", // UAN No
+                    "3112345678", // ESI No
+                    "110098765432", // PRAN No
+                    "New Regime", // Tax Regime
+                    1620000, // Total Gross (Annual)
+                    1800000, // Total CTC (Annual)
+                    1500000, // Total Net Pay (Annual)
+                    "Online Transfer", // Salary Pay Mode
+                    "1234567890", // Account Number
+                    "HDFC0000123", // IFSC Code
+                    "HDFC Bank", // Bank Name
+                    "Koramangala", // Branch
+                    "April" // Appraisal Month
+                ]
+            ];
+        }
 
         // Create workbook & worksheet using ExcelJS
         const workbook = new ExcelJS.Workbook();
@@ -2521,7 +2702,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-slate-800">Import Employees Compensation</h3>
+                                <h3 className="text-base font-bold text-slate-800">Import Employees Compensation{importOption === 'new' ? ' - Update Statutory Details' : (importOption === 'update' || importOption === 'emergency') ? ' - Update Salary Details' : ''}</h3>
                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">
                                     Step {showStep2UI ? (importMethod === 'sample' ? '2 of 2' : '4 of 4') : `${step} of ${importMethod === 'sample' ? '2' : '4'}`}
                                 </span>
@@ -2722,7 +2903,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                                         >
                                                             Browse Files
                                                         </button>
-                                                        <p className="text-[10px] text-slate-400 font-bold tracking-tight mt-1">.xlsx and .xls supported</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold tracking-tight mt-2">Max file size: 10 MB. Accepted formats: .xlsx and .xls.</p>
                                                     </>
                                                 )}
                                                 <input 
@@ -2743,8 +2924,15 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                                 onChange={(e) => setEraseEmptyCells(e.target.checked)}
                                                 className="rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7] cursor-pointer w-4 h-4"
                                             />
-                                            <span className="text-sm font-bold text-slate-700 leading-none">
+                                            <span className="text-sm font-bold text-slate-700 leading-none flex items-center gap-1.5">
                                                 Override the existing data.
+                                                <div className="relative group flex items-center">
+                                                    <Info size={14} className="text-slate-400 cursor-help hover:text-slate-600 transition-colors" />
+                                                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-xs bg-slate-800 text-white text-xs px-2 py-1.5 rounded shadow-lg z-10 whitespace-normal text-center font-normal">
+                                                        Checking this will override the employee's existing details if any.
+                                                        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800"></div>
+                                                    </div>
+                                                </div>
                                             </span>
                                         </label>
                                     </div>
@@ -2782,10 +2970,12 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                                             <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
                                                             <span>Columns indicated in <span className="text-rose-500 font-bold">red color</span> are mandatory fields.</span>
                                                         </li>
-                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
-                                                            <span>Ensure to follow correct data types for each column.</span>
-                                                        </li>
+                                                        {importOption === 'new' && (
+                                                            <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                                <span>Existing employee details can be updated through this import.</span>
+                                                            </li>
+                                                        )}
                                                         <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
                                                             <span>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</span>
@@ -2833,11 +3023,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                             </>
                                         )}
 
-                                        {/* Warning Card */}
-                                        <div className="border border-amber-200 bg-amber-50/20 rounded-md p-4 flex items-start gap-3 text-xs text-amber-800 font-medium border-l-4">
-                                            <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
-                                            <span>Max file size: 10 MB. Accepted formats: .xlsx and .xls.</span>
-                                        </div>
+
                                     </div>
                                 </div>
                             )}
