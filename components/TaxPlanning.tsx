@@ -368,6 +368,8 @@ export const TaxPlanning: React.FC = () => {
    const [calc80EEA, setCalc80EEA] = useState(0);
    const [calc80CCD, setCalc80CCD] = useState(0);
    const [calc80CCD2, setCalc80CCD2] = useState(0);
+   const [calc80DDB, setCalc80DDB] = useState(0);
+   const [calcProfessionalTax, setCalcProfessionalTax] = useState(0);
 
    const [calcOtherDeductions, setCalcOtherDeductions] = useState(0);
    const [calcHRA, setCalcHRA] = useState(0);
@@ -1120,10 +1122,11 @@ export const TaxPlanning: React.FC = () => {
                            setPreviousView(view);
                            setCalcSalary(ANNUAL_GROSS_SALARY);
                            setView('CALCULATOR');
+                           setCalcStep('INCOME');
                         }}
                         className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
                      >
-                        Income Tax Calculator
+                        Tax Calculator
                      </button>
                   </div>
                   <div className="flex items-center gap-6 mt-4 text-sm font-medium text-slate-500">
@@ -1571,7 +1574,7 @@ export const TaxPlanning: React.FC = () => {
       const total80D = Math.min(calc80D, 100000);
       const total80TTA = Math.min(calc80TTA, 10000);
       const total80CCD = Math.min(calc80CCD, 50000);
-      const totalDeductionsOld = total80C + total80D + total80TTA + total80CCD + calc80G + calc80EEA + calc80CCD2 + calcOtherDeductions + calcHRA + 50000; // Std Ded included
+      const totalDeductionsOld = total80C + total80D + total80TTA + total80CCD + calc80G + calc80EEA + calc80CCD2 + calc80DDB + calcProfessionalTax + calcOtherDeductions + calcHRA + 50000; // Std Ded included
 
       interface TaxBreakdown {
          totalIncome: number;
@@ -1635,83 +1638,108 @@ export const TaxPlanning: React.FC = () => {
       const newTax = newResult.totalTax;
 
       const steps = [
-         { id: 'BASIC', label: 'Basic details' },
          { id: 'INCOME', label: 'Income details' },
          { id: 'DEDUCTION', label: 'Deduction' }
       ] as const;
 
       return (
-         <div className="space-y-6 animate-fade-in-up">
-            {/* Header */}
-            <div className="flex items-center gap-4 mb-2">
-               <button onClick={() => setView(previousView)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
-                  <ArrowLeft size={20} />
-               </button>
-               <div>
-                  <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                     <Calculator className="text-blue-600" /> Income Tax Calculator
-                  </h1>
-                  <p className="text-sm text-slate-500 font-medium italic">Simulate different scenarios to find your optimal tax regime</p>
-               </div>
-            </div>
+         <div className="fixed inset-0 z-[150] flex justify-end">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setView(previousView)}></div>
+            <div className="relative w-full md:w-[90%] max-w-5xl bg-slate-50 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out overflow-y-auto">
+               <div className="p-4 md:p-8 space-y-6 flex-1">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                     <div>
+                        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                           <Calculator className="text-blue-600" /> Tax Calculator
+                        </h1>
+                        <p className="text-sm text-slate-500 font-medium italic mt-1">Simulate different scenarios to find your optimal tax regime</p>
+                     </div>
+                     <button onClick={() => setView(previousView)} className="p-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-full text-slate-500 transition-colors shadow-sm">
+                        <X size={20} />
+                     </button>
+                  </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-0">
-               <div className="grid grid-cols-12">
-                  {/* Left Main Content */}
-                  <div className={`col-span-12 ${calcStep !== 'BASIC' ? 'lg:col-span-8 border-r' : ''} border-slate-200`}>
-                     {/* Calculator Tabs */}
+               <div className="flex flex-col">
+                  {/* Top: Tax Liability Summary (Horizontal) */}
+                  {calcStep !== 'BASIC' && calcStep !== 'SUMMARY' && (
+                     <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200">
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 mb-4">
+                           <div className="flex items-center justify-between mb-6">
+                              <h3 className="text-xl font-bold text-slate-800">Tax Liability Summary</h3>
+                              <div className="text-right">
+                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Financial year</p>
+                                 <p className="text-sm font-black text-slate-700">FY 2025-2026</p>
+                              </div>
+                           </div>
+                           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                              <div className="flex-1 text-center md:text-left border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0 md:pr-6">
+                                 <p className="text-sm font-medium text-slate-400 mb-1">Old Regime</p>
+                                 <p className="text-2xl font-black text-slate-900">₹ {oldTax.toLocaleString()}</p>
+                              </div>
+                              <div className="flex-1 text-center md:text-left border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0 md:px-6">
+                                 <p className="text-sm font-medium text-slate-400 mb-1">New Regime</p>
+                                 <p className="text-2xl font-black text-slate-900">₹ {newTax.toLocaleString()}</p>
+                              </div>
+                              <div className={`flex-1 p-4 rounded-xl text-center transition-all ${newTax <= oldTax ? 'bg-emerald-50 border border-emerald-100' : 'bg-blue-50 border border-blue-100'}`}>
+                                 <p className={`text-sm font-bold mb-1 ${newTax <= oldTax ? 'text-emerald-600' : 'text-blue-600'}`}>You save</p>
+                                 <p className={`text-2xl font-black ${newTax <= oldTax ? 'text-emerald-700' : 'text-blue-700'}`}>₹ {Math.abs(oldTax - newTax).toLocaleString()}</p>
+                              </div>
+                           </div>
+                        </div>
+
+                     </div>
+                  )}
+
+                  {/* Main Content */}
+                  <div className="w-full">
+                     {/* Calculator Tabs & Regime Switch */}
                      {calcStep !== 'SUMMARY' && (
-                        <div className="flex border-b border-slate-200 px-8 pt-6">
-                           {steps.map((step) => (
+                        <div className="flex border-b border-slate-200 px-8 pt-6 justify-between items-end">
+                           <div className="flex">
+                              {steps.map((step) => (
+                                 <button
+                                    key={step.id}
+                                    onClick={() => setCalcStep(step.id)}
+                                    className={`px-6 py-4 text-sm font-bold transition-all relative ${calcStep === step.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                 >
+                                    {step.label}
+                                    {calcStep === step.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full animate-in fade-in slide-in-from-bottom-1"></div>}
+                                 </button>
+                              ))}
+                           </div>
+                           
+                           {/* Regime Switch */}
+                           <div className="mb-3 flex items-center bg-slate-100 p-1 rounded-lg">
                               <button
-                                 key={step.id}
-                                 onClick={() => setCalcStep(step.id)}
-                                 className={`px-6 py-4 text-sm font-bold transition-all relative ${calcStep === step.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                 onClick={() => setCalcSummaryRegime('OLD')}
+                                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${calcSummaryRegime === 'OLD' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                               >
-                                 {step.label}
-                                 {calcStep === step.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full animate-in fade-in slide-in-from-bottom-1"></div>}
+                                 Old Regime
                               </button>
-                           ))}
+                              <button
+                                 onClick={() => setCalcSummaryRegime('NEW')}
+                                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${calcSummaryRegime === 'NEW' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                 New Regime
+                              </button>
+                           </div>
                         </div>
                      )}
 
                      <div className="p-10">
                         {calcStep === 'BASIC' && (
                            <div className="space-y-10">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                 <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-1 gap-10">
+                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-slate-600 ml-1">Financial year</label>
-                                    <div className="relative">
-                                       <select
-                                          value={calcFY}
-                                          onChange={(e) => setCalcFY(e.target.value)}
-                                          className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none overflow-hidden text-ellipsis whitespace-nowrap"
-                                       >
-                                          <option>FY 2026-2027 (Return to be filed between 1st April 2027 - 31st March 2028)</option>
-                                          <option>FY 2025-2026 (Return to be filed between 1st April 2026 - 31st March 2027)</option>
-                                       </select>
-                                       <ChevronDown size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    </div>
-                                 </div>
-                                 <div className="space-y-3">
-                                    <label className="text-sm font-bold text-slate-600 ml-1">Age group</label>
-                                    <div className="relative">
-                                       <select
-                                          value={calcAgeGroup}
-                                          onChange={(e) => setCalcAgeGroup(e.target.value as any)}
-                                          className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-bold outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none"
-                                       >
-                                          <option value="0-60">0-60</option>
-                                          <option value="60-80">60-80</option>
-                                          <option value="80+">80+</option>
-                                       </select>
-                                       <ChevronDown size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    </div>
+                                    <p className="text-sm font-bold text-slate-800 ml-1">FY 2025-2026</p>
                                  </div>
                               </div>
 
                               <div className="space-y-6">
-                                 <h3 className="text-xl font-black text-center text-slate-800">Income Tax Slab Rates</h3>
+                                 <h3 className="text-xl font-black text-center text-slate-800">Income Tax Slab Rates (FY 2025-26)</h3>
                                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* New Regime Table */}
                                     <div className="space-y-4">
@@ -1759,7 +1787,7 @@ export const TaxPlanning: React.FC = () => {
                               <div className="flex justify-center pt-10">
                                  <button
                                     onClick={() => setCalcStep('INCOME')}
-                                    className="px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black shadow-lg shadow-blue-500/20 transition-all border border-blue-500"
+                                    className="px-12 py-4 bg-[#444CE7] hover:bg-indigo-700 text-white rounded-md font-black text-lg shadow-lg shadow-indigo-500/20 transition-all border border-[#444CE7]"
                                  >
                                     Continue
                                  </button>
@@ -1768,13 +1796,13 @@ export const TaxPlanning: React.FC = () => {
                         )}
 
                         {calcStep === 'INCOME' && (
-                           <div className="space-y-10 animate-fade-in-up">
+                           <div className="space-y-10 animate-fade-in-up pt-4">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                  {/* Column 1 */}
                                  <div className="space-y-8">
                                     <div className="space-y-3">
                                        <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Income from Salary</label>
+                                          <label className="text-sm font-bold text-slate-600">Annual Income from salary</label>
                                           <Info size={16} className="text-slate-400 cursor-help" />
                                        </div>
                                        <div className="relative">
@@ -1782,8 +1810,8 @@ export const TaxPlanning: React.FC = () => {
                                           <input
                                              type="number"
                                              value={calcSalary || ''}
-                                             onChange={(e) => setCalcSalary(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             readOnly
+                                             className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-bold outline-none cursor-not-allowed transition-all"
                                           />
                                        </div>
                                     </div>
@@ -1820,40 +1848,11 @@ export const TaxPlanning: React.FC = () => {
                                        </div>
                                     </div>
 
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Income from digital assets</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calcDigitalAssetsIncome || ''}
-                                             onChange={(e) => setCalcDigitalAssetsIncome(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
+
                                  </div>
 
                                  {/* Column 2 */}
                                  <div className="space-y-8">
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Exempt allowances</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calcExemptAllowances || ''}
-                                             onChange={(e) => setCalcExemptAllowances(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
 
                                     <div className="space-y-3">
                                        <div className="flex justify-between items-center pr-1">
@@ -1889,7 +1888,7 @@ export const TaxPlanning: React.FC = () => {
 
                                     <div className="space-y-3">
                                        <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Other income</label>
+                                          <label className="text-sm font-bold text-slate-600">Income From Other Sources</label>
                                           <Info size={16} className="text-slate-400 cursor-help" />
                                        </div>
                                        <div className="relative">
@@ -1905,16 +1904,16 @@ export const TaxPlanning: React.FC = () => {
                                  </div>
                               </div>
 
-                              <div className="flex justify-center gap-6 pt-10">
+                              <div className="flex justify-end gap-6 pt-10">
                                  <button
-                                    onClick={() => setCalcStep('BASIC')}
-                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold transition-all min-w-[160px]"
+                                    onClick={() => setView(previousView)}
+                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-lg font-bold transition-all min-w-[160px]"
                                  >
-                                    Back
+                                    Cancel
                                  </button>
                                  <button
                                     onClick={() => setCalcStep('DEDUCTION')}
-                                    className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg shadow-blue-500/20 transition-all min-w-[160px]"
+                                    className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-lg font-bold shadow-lg shadow-blue-500/20 transition-all min-w-[160px]"
                                  >
                                     Continue
                                  </button>
@@ -1924,6 +1923,127 @@ export const TaxPlanning: React.FC = () => {
 
                         {calcStep === 'DEDUCTION' && (
                            <div className="space-y-10 animate-fade-in-up">
+                              {calcSummaryRegime === 'OLD' ? (
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                    {/* Column 1 */}
+                                    <div className="space-y-8">
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">80C - Investments</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calc80C || ''}
+                                                onChange={(e) => setCalc80C(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">80D - Medical Insurance</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calc80D || ''}
+                                                onChange={(e) => setCalc80D(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">80CCD(1B) – Additional NPS Contribution</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calc80CCD || ''}
+                                                onChange={(e) => setCalc80CCD(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">80CCD(2) – Employer NPS Contribution</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calc80CCD2 || ''}
+                                                onChange={(e) => setCalc80CCD2(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+                                    </div>
+
+                                    {/* Column 2 */}
+                                    <div className="space-y-8">
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">80DDB – Medical Treatment</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calc80DDB || ''}
+                                                onChange={(e) => setCalc80DDB(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">Other Investments & Exemptions</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calcOtherDeductions || ''}
+                                                onChange={(e) => setCalcOtherDeductions(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+
+                                       <div className="space-y-3">
+                                          <div className="flex justify-between items-center pr-1">
+                                             <label className="text-sm font-bold text-slate-600">Professional Tax</label>
+                                             <Info size={16} className="text-slate-400 cursor-help" />
+                                          </div>
+                                          <div className="relative">
+                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                             <input
+                                                type="number"
+                                                value={calcProfessionalTax || ''}
+                                                onChange={(e) => setCalcProfessionalTax(Number(e.target.value))}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
+                                             />
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              ) : (
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                  {/* Column 1 */}
                                  <div className="space-y-8">
@@ -2059,17 +2179,18 @@ export const TaxPlanning: React.FC = () => {
                                     </div>
                                  </div>
                               </div>
+                              )}
 
-                              <div className="flex justify-center gap-6 pt-10">
+                              <div className="flex justify-end gap-6 pt-10">
                                  <button
                                     onClick={() => setCalcStep('INCOME')}
-                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold transition-all min-w-[170px]"
+                                    className="px-10 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-lg font-bold transition-all min-w-[170px]"
                                  >
                                     Back
                                  </button>
                                  <button
                                     onClick={() => setCalcStep('SUMMARY')}
-                                    className="px-10 py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg font-bold transition-all min-w-[170px]"
+                                    className="px-10 py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg text-lg font-bold transition-all min-w-[170px]"
                                  >
                                     View Calculation
                                  </button>
@@ -2230,48 +2351,9 @@ export const TaxPlanning: React.FC = () => {
                      </div>
                   </div>
 
-                  {/* Right Sidebar: Tax Liability Summary */}
-                  {calcStep !== 'BASIC' && calcStep !== 'SUMMARY' && (
-                     <div className="col-span-12 lg:col-span-4 bg-slate-50/50 p-8 h-full">
-                        <div className="sticky top-8 space-y-8">
-                           <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 space-y-8">
-                              <h3 className="text-xl font-bold text-center text-slate-800">Tax Liability Summary</h3>
-
-                              <div className="space-y-6">
-                                 <div className="text-center">
-                                    <p className="text-sm font-medium text-slate-400 mb-1">Old Regime</p>
-                                    <p className="text-2xl font-black text-slate-900">₹ {oldTax.toLocaleString()}</p>
-                                 </div>
-
-                                 <div className="flex items-center justify-center gap-4">
-                                    <div className="h-px bg-slate-100 flex-1"></div>
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase italic">vs</span>
-                                    <div className="h-px bg-slate-100 flex-1"></div>
-                                 </div>
-
-                                 <div className="text-center">
-                                    <p className="text-sm font-medium text-slate-400 mb-1">New Regime</p>
-                                    <p className="text-2xl font-black text-slate-900">₹ {newTax.toLocaleString()}</p>
-                                 </div>
-                              </div>
-
-                              <div className={`p-6 rounded-xl text-center transition-all ${newTax <= oldTax ? 'bg-emerald-50 border border-emerald-100' : 'bg-blue-50 border border-blue-100'}`}>
-                                 <p className={`text-sm font-bold mb-1 ${newTax <= oldTax ? 'text-emerald-600' : 'text-blue-600'}`}>You save</p>
-                                 <p className={`text-3xl font-black ${newTax <= oldTax ? 'text-emerald-700' : 'text-blue-700'}`}>₹ {Math.abs(oldTax - newTax).toLocaleString()}</p>
-                              </div>
-
-                           </div>
-
-                           <div className="bg-amber-50 rounded-xl p-5 border border-amber-100 flex gap-4 items-start">
-                              <Info size={18} className="text-amber-500 mt-1 shrink-0" />
-                              <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                                 Standard deduction of ₹75,000 is included in New Regime calculation for FY 2025-26.
-                              </p>
-                           </div>
-                        </div>
-                     </div>
-                  )}
                </div>
+            </div>
+         </div>
             </div>
          </div>
       );
@@ -2388,6 +2470,7 @@ export const TaxPlanning: React.FC = () => {
                         setPreviousView(view);
                         setCalcSalary(ANNUAL_GROSS_SALARY);
                         setView('CALCULATOR');
+                        setCalcStep('INCOME');
                      }}
                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-blue-700 transition-all flex items-center gap-2"
                   >
@@ -3842,8 +3925,8 @@ export const TaxPlanning: React.FC = () => {
 
    return (
       <div className="pb-10 max-w-[1536px] mx-auto xl:max-w-screen-2xl px-4">
-         {view === 'DASHBOARD' && renderDashboard()}
-         {view === 'PLANNING' && renderPlanning()}
+         {(view === 'DASHBOARD' || (view === 'CALCULATOR' && previousView === 'DASHBOARD')) && renderDashboard()}
+         {(view === 'PLANNING' || (view === 'CALCULATOR' && previousView === 'PLANNING')) && renderPlanning()}
          {view === 'CALCULATOR' && renderCalculator()}
       </div>
    );
