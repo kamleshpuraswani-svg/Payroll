@@ -265,7 +265,7 @@ const MOCK_HISTORY_ROWS: SalaryHistoryRow[] = [
 ];
 
 const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, employeeId, onEdit, userRole }) => {
-  const [activeTab, setActiveTab] = useState<'HISTORY' | 'PROFILE'>('HISTORY');
+  const [activeTab, setActiveTab] = useState<'HISTORY' | 'PROFILE' | 'INSIGHTS'>('HISTORY');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [employeeData, setEmployeeData] = useState<any>(null);
   const [appraisalMonth, setAppraisalMonth] = useState('');
@@ -680,6 +680,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   };
 
   return (
+    <>
     <div className="p-4 lg:p-8 max-w-[1600px] mx-auto animate-in fade-in duration-300">
 
       {/* Navigation Header */}
@@ -773,9 +774,15 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
             >
               Profile Details
             </button>
+            <button
+              onClick={() => setActiveTab('INSIGHTS')}
+              className={`py-4 text-sm font-bold border-b-2 transition-all ${activeTab === 'INSIGHTS' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            >
+              Salary Insights
+            </button>
           </div>
 
-          {activeTab === 'HISTORY' ? (
+          {activeTab === 'INSIGHTS' ? (
             <div className="space-y-6 animate-in fade-in duration-300">
 
               {/* 3. Salary Trend Graphs Container */}
@@ -1183,7 +1190,9 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     </div>
                 </div>
             </div>
-
+            </div>
+          ) : activeTab === 'HISTORY' ? (
+            <div className="space-y-6 animate-in fade-in duration-300">
               {/* 4. Salary History Table */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -1340,7 +1349,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                  </div>
               </div>
             </div>
-          ) : (
+          ) : activeTab === 'PROFILE' ? (
             /* 5. Profile Details Tab Content */
             <div className="space-y-6 animate-in fade-in duration-300">
               {/* Identity & Basic Info */}
@@ -1436,7 +1445,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
       </div>
@@ -1868,6 +1877,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
       )}
 
     </div>
+    </>
   );
 };
 

@@ -39,11 +39,13 @@ import {
     Info,
     PauseCircle,
     Calculator,
-    Minus
+    Minus,
+    Receipt
 } from 'lucide-react';
 import { RunPayrollModal, PayrollAlertsModal, PayrollOnHoldPanel } from './CompanyActionModals';
 import { MOCK_COMPANIES } from '../constants';
 import { supabase } from '../services/supabaseClient';
+import { generateTaxSlipPDF } from './taxSlipGenerator';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
@@ -1338,7 +1340,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setShowImportModal(true)}
-                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-sm font-bold hover:bg-slate-50 shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+                                className="hidden px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-sm font-bold hover:bg-slate-50 shadow-sm flex items-center gap-2 transition-all cursor-pointer"
                             >
                                 <Upload size={16} /> Import
                             </button>
@@ -2167,6 +2169,17 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                                     <p className="text-xs text-slate-400">Bundled PDFs for all 452 employees</p>
                                 </div>
                                 <Download size={16} className="text-slate-300 group-hover:text-orange-500" />
+                            </button>
+                            <button 
+                                className="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group text-left"
+                                onClick={() => generateTaxSlipPDF(showDownloadModal.month)}
+                            >
+                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-200 transition-colors"><Receipt size={20} /></div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-bold text-slate-700">Tax Slip</p>
+                                    <p className="text-xs text-slate-400">Detailed tax deduction summary for employees</p>
+                                </div>
+                                <Download size={16} className="text-slate-300 group-hover:text-blue-500" />
                             </button>
                         </div>
                         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">

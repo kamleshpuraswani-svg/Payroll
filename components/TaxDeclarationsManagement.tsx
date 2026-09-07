@@ -2023,10 +2023,10 @@ const TaxDeclarationsManagement: React.FC<TaxDeclarationsManagementProps> = ({ u
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button onClick={() => { setHrDeclView('SELECT'); setHrDeclEmpId(''); setHrDeclOption('use_last'); }} className="flex items-center gap-2 px-6 py-2.5 bg-sky-600 text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all transform active:scale-95">
+                                <button onClick={() => { setHrDeclView('SELECT'); setHrDeclEmpId(''); setHrDeclOption('use_last'); }} className="flex items-center gap-2 px-6 py-2.5 bg-[#444CE7] text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-[#3538CD] shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
                                     <Plus size={18} /> Add Declarations for Employee
                                 </button>
-                                <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
+                                <button onClick={() => setIsForm16ModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#444CE7] text-white font-black text-xs uppercase tracking-widest rounded-lg hover:bg-[#3538CD] shadow-lg shadow-indigo-100 transition-all transform active:scale-95">
                                     <FileText size={18} /> Generate Form 16
                                 </button>
                             </div>

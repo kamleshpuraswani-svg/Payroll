@@ -306,6 +306,8 @@ export const TaxPlanning: React.FC = () => {
    const [showPastDeclarations, setShowPastDeclarations] = useState(false);
    const [historyFilterYear, setHistoryFilterYear] = useState('All');
    const [recentSearchQuery, setRecentSearchQuery] = useState('');
+   const [showTaxProjection, setShowTaxProjection] = useState(false);
+   const [activeRspTab, setActiveRspTab] = useState<'OLD' | 'NEW'>('OLD');
 
    // Persisted States
    const [declarationStatus, setDeclarationStatus] = useState<'NEW' | 'DRAFT' | 'SUBMITTED'>('NEW'); // Fetched from DB
@@ -429,6 +431,13 @@ export const TaxPlanning: React.FC = () => {
    const [calcSummaryRegime, setCalcSummaryRegime] = useState<'OLD' | 'NEW'>('NEW');
    const [calcAgeGroup, setCalcAgeGroup] = useState<'0-60' | '60-80' | '80+'>('0-60');
    const [calcFY, setCalcFY] = useState('FY 2026-27');
+   const [calculatedTaxes, setCalculatedTaxes] = useState<{oldTax: number, newTax: number} | null>(null);
+
+   useEffect(() => {
+      if (view !== 'CALCULATOR') {
+         setCalculatedTaxes(null);
+      }
+   }, [view]);
 
    // --- Supabase Integration ---
    const EMPLOYEE_ID = '1'; // Hardcoded for prototype (Priya Sharma)
@@ -723,7 +732,10 @@ export const TaxPlanning: React.FC = () => {
          newRegimeTax: calculateTaxLiability('NEW'),
          totalDeductionsOld,
          grossTotalIncome,
-         totalApprovedAmount
+         totalApprovedAmount,
+         totalRentPaid,
+         rentDeduction,
+         total80C
       };
    }, [declarations, hraEnabled, rentedHouses, homeLoanEnabled, homeLoanDetails, letOutEnabled, letOutProperties, otherIncomeEnabled, otherIncomeDetails, prevEmploymentEnabled, prevEmploymentDetails]);
 
@@ -1127,6 +1139,12 @@ export const TaxPlanning: React.FC = () => {
                         className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
                      >
                         Tax Calculator
+                     </button>
+                     <button
+                        onClick={() => { setActiveRspTab(planningRegime); setShowTaxProjection(true); }}
+                        className="px-8 py-4 bg-[#3B3F8C] hover:bg-[#2D306F] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 border border-indigo-400/20 shadow-lg whitespace-nowrap"
+                     >
+                        Tax Projection
                      </button>
                   </div>
                   <div className="flex items-center gap-6 mt-4 text-sm font-medium text-slate-500">
@@ -1634,8 +1652,13 @@ export const TaxPlanning: React.FC = () => {
 
       const oldResult = calculate(grossIncome, totalDeductionsOld, 'OLD', calcAgeGroup);
       const newResult = calculate(grossIncome, 0, 'NEW', calcAgeGroup);
-      const oldTax = oldResult.totalTax;
-      const newTax = newResult.totalTax;
+      
+      if (view === 'CALCULATOR' && calculatedTaxes === null) {
+         setCalculatedTaxes({ oldTax: oldResult.totalTax, newTax: newResult.totalTax });
+      }
+
+      const oldTax = calculatedTaxes ? calculatedTaxes.oldTax : oldResult.totalTax;
+      const newTax = calculatedTaxes ? calculatedTaxes.newTax : newResult.totalTax;
 
       const steps = [
          { id: 'INCOME', label: 'Income details' },
@@ -2049,54 +2072,6 @@ export const TaxPlanning: React.FC = () => {
                                  <div className="space-y-8">
                                     <div className="space-y-3">
                                        <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Basic deductions - 80C</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calc80C || ''}
-                                             onChange={(e) => setCalc80C(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Medical insurance - 80D</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calc80D || ''}
-                                             onChange={(e) => setCalc80D(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Interest on housing loan - 80EEA</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calc80EEA || ''}
-                                             onChange={(e) => setCalc80EEA(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
                                           <label className="text-sm font-bold text-slate-600">Employer's contribution to NPS - 80CCD(2)</label>
                                           <Info size={16} className="text-slate-400 cursor-help" />
                                        </div>
@@ -2106,73 +2081,6 @@ export const TaxPlanning: React.FC = () => {
                                              type="number"
                                              value={calc80CCD2 || ''}
                                              onChange={(e) => setCalc80CCD2(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-                                 </div>
-
-                                 {/* Column 2 */}
-                                 <div className="space-y-8">
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Interest from deposits - 80TTA</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calc80TTA || ''}
-                                             onChange={(e) => setCalc80TTA(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Donations to charity - 80G</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calc80G || ''}
-                                             onChange={(e) => setCalc80G(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Employee's contribution to NPS - 80CCD</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calc80CCD || ''}
-                                             onChange={(e) => setCalc80CCD(Number(e.target.value))}
-                                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
-                                          />
-                                       </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center pr-1">
-                                          <label className="text-sm font-bold text-slate-600">Any other deduction</label>
-                                          <Info size={16} className="text-slate-400 cursor-help" />
-                                       </div>
-                                       <div className="relative">
-                                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                          <input
-                                             type="number"
-                                             value={calcOtherDeductions || ''}
-                                             onChange={(e) => setCalcOtherDeductions(Number(e.target.value))}
                                              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold outline-none focus:border-blue-500 transition-all"
                                           />
                                        </div>
@@ -2189,10 +2097,10 @@ export const TaxPlanning: React.FC = () => {
                                     Back
                                  </button>
                                  <button
-                                    onClick={() => setCalcStep('SUMMARY')}
+                                    onClick={() => setCalculatedTaxes({ oldTax: oldResult.totalTax, newTax: newResult.totalTax })}
                                     className="px-10 py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg text-lg font-bold transition-all min-w-[170px]"
                                  >
-                                    View Calculation
+                                    Calculate
                                  </button>
                               </div>
                            </div>
@@ -3928,6 +3836,153 @@ export const TaxPlanning: React.FC = () => {
          {(view === 'DASHBOARD' || (view === 'CALCULATOR' && previousView === 'DASHBOARD')) && renderDashboard()}
          {(view === 'PLANNING' || (view === 'CALCULATOR' && previousView === 'PLANNING')) && renderPlanning()}
          {view === 'CALCULATOR' && renderCalculator()}
+
+         {/* Tax Projection RSP */}
+         {showTaxProjection && (
+            <div className="fixed inset-0 z-[9999] flex justify-end bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+               <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-300">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                     <h2 className="text-xl font-black text-slate-800">Tax Projection</h2>
+                     <button onClick={() => setShowTaxProjection(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+                        <X size={20} />
+                     </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto bg-slate-50">
+                     {/* Financial Year Header */}
+                     <div className="px-6 pt-6 pb-4">
+                        <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                           <span className="text-slate-500 font-bold text-sm">Financial Year</span>
+                           <span className="text-slate-800 font-black">2025-26</span>
+                        </div>
+                     </div>
+
+                     {/* Tabs */}
+                     <div className="px-6 pb-4">
+                        <div className="flex bg-slate-200/50 p-1 rounded-xl">
+                           <button 
+                              onClick={() => setActiveRspTab('OLD')} 
+                              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeRspTab === 'OLD' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                           >
+                              Old Tax Regime
+                           </button>
+                           <button 
+                              onClick={() => setActiveRspTab('NEW')} 
+                              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeRspTab === 'NEW' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                           >
+                              New Tax Regime
+                           </button>
+                        </div>
+                     </div>
+
+                     {/* Data Table */}
+                     <div className="px-6 pb-6">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                           
+                           {/* Tax Regime */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">Tax Regime</span>
+                              {activeRspTab === 'OLD' ? (
+                                 <span className="font-black px-2 py-0.5 rounded text-xs bg-[#3b82f6]/10 text-[#3b82f6]">Old Regime</span>
+                              ) : (
+                                 <span className="font-black px-2 py-0.5 rounded text-xs bg-[#10b981]/10 text-[#10b981]">New Regime</span>
+                              )}
+                           </div>
+
+                           {/* Annual Income */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">Annual Income from Salary</span>
+                              <span className="text-slate-800 font-black text-right">₹ {ANNUAL_GROSS_SALARY.toLocaleString()}</span>
+                           </div>
+
+                           {/* Old Regime Sections */}
+                           {activeRspTab === 'OLD' && (
+                              <>
+                                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                                    <span className="text-slate-500 font-bold text-sm">HRA/80GG</span>
+                                    <span className="text-slate-800 font-black text-right">₹ {(taxCalc.totalRentPaid || 0).toLocaleString()}</span>
+                                 </div>
+                                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                                    <span className="text-slate-500 font-bold text-sm">HRA Exempted</span>
+                                    <span className="text-slate-800 font-black text-right">₹ {(taxCalc.rentDeduction || 0).toLocaleString()}</span>
+                                 </div>
+                                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                                    <span className="text-slate-500 font-bold text-sm">Chapter VI A - 80C</span>
+                                    <span className="text-slate-800 font-black text-right">₹ {(taxCalc.total80C || 0).toLocaleString()}</span>
+                                 </div>
+                                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                                    <span className="text-slate-500 font-bold text-sm">Chapter VI A - Others</span>
+                                    <span className="text-slate-800 font-black text-right">₹ {Math.max(0, taxCalc.totalDeductionsOld - taxCalc.total80C - taxCalc.rentDeduction - 50000).toLocaleString()}</span>
+                                 </div>
+                              </>
+                           )}
+
+                           {/* New Regime Sections */}
+                           {activeRspTab === 'NEW' && (() => {
+                              const employerNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                              return (
+                                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                                    <span className="text-slate-500 font-bold text-sm">Chapter VI A - Others</span>
+                                    <span className="text-slate-800 font-black text-right">₹ {employerNPS.toLocaleString()}</span>
+                                 </div>
+                              );
+                           })()}
+
+                           {/* Standard Deduction */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">Standard Deduction</span>
+                              <span className="text-slate-800 font-black text-right">₹ {activeRspTab === 'NEW' ? '75,000' : '50,000'}</span>
+                           </div>
+
+                           {/* Net Taxable Income */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">Net Taxable Income</span>
+                              <span className="text-slate-800 font-black text-right">₹ {(() => {
+                                 if (activeRspTab === 'OLD') {
+                                    return Math.max(0, taxCalc.grossTotalIncome - taxCalc.totalDeductionsOld).toLocaleString();
+                                 } else {
+                                    const employerNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                                    return Math.max(0, taxCalc.grossTotalIncome - 75000 - employerNPS).toLocaleString();
+                                 }
+                              })()}</span>
+                           </div>
+
+                           {/* Total Projected Tax */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-blue-50/50">
+                              <span className="text-blue-800 font-bold text-sm">Total Projected Tax (Annual)</span>
+                              <span className="text-blue-900 font-black text-lg text-right">₹ {(activeRspTab === 'OLD' ? taxCalc.oldRegimeTax : taxCalc.newRegimeTax).toLocaleString()}</span>
+                           </div>
+
+                           {/* Total Tax Deducted */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">Total Tax deducted (Till Date)</span>
+                              <span className="text-slate-800 font-black text-right">₹ 0</span>
+                           </div>
+
+                           {/* Remaining Tax To Be Paid */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">Remaining Tax To Be Paid</span>
+                              <span className="text-slate-800 font-black text-right">₹ {(activeRspTab === 'OLD' ? taxCalc.oldRegimeTax : taxCalc.newRegimeTax).toLocaleString()}</span>
+                           </div>
+
+                           {/* TDS to be paid (Subsequent Month) */}
+                           <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <span className="text-slate-500 font-bold text-sm">TDS to be paid (Subsequent Month)</span>
+                              <span className="text-slate-800 font-black text-right">₹ 0</span>
+                           </div>
+
+                           {/* TDS to be paid (Current Month) */}
+                           <div className="flex justify-between items-center p-4 bg-indigo-50/50">
+                              <span className="text-indigo-800 font-bold text-sm">TDS to be paid (Current Month)</span>
+                              <span className="text-indigo-900 font-black text-lg text-right">₹ 0</span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };

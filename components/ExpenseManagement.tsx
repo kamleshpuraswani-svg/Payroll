@@ -35,7 +35,13 @@ import {
     AlertCircle as AlertIcon,
     Briefcase,
     Upload,
+    MoreVertical,
+    Columns,
+    ListFilter,
+    ChevronUp,
+    Info
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { supabase } from '../services/supabaseClient';
 import { ViewState } from '../types';
 import { MOCK_CLAIMS, ExpenseClaim, ClaimProof } from './mockData';
@@ -838,6 +844,8 @@ const ExpenseManagement: React.FC<{
     const [approveClaim, setApproveClaim] = useState<ExpenseClaim | null>(null);
     const [downloadClaim, setDownloadClaim] = useState<ExpenseClaim | null>(null);
     const [showAddExpensePanel, setShowAddExpensePanel] = useState(false);
+    const [showViewOptions, setShowViewOptions] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -1418,18 +1426,71 @@ const ExpenseManagement: React.FC<{
                                         </div>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        if (userRole === 'HR_MANAGER') {
-                                            setShowAddExpensePanel(true);
-                                        } else {
-                                            onChangeView(ViewState.HR_ADD_EXPENSE);
-                                        }
-                                    }}
-                                    className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all transform active:scale-95 shrink-0 ml-auto flex items-center justify-center"
-                                >
-                                    Add Expense for Employee
-                                </button>
+                                <div className="flex items-center gap-2 ml-auto shrink-0">
+                                    <button
+                                        onClick={() => {
+                                            if (userRole === 'HR_MANAGER') {
+                                                setShowAddExpensePanel(true);
+                                            } else {
+                                                onChangeView(ViewState.HR_ADD_EXPENSE);
+                                            }
+                                        }}
+                                        className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all transform active:scale-95 flex items-center justify-center"
+                                    >
+                                        Add Expense for Employee
+                                    </button>
+                                    <div className="relative">
+                                        <button 
+                                            onClick={() => setShowViewOptions(!showViewOptions)}
+                                            className={`p-2 rounded-lg border transition-colors ${showViewOptions ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:bg-slate-50'} text-slate-600 shadow-sm`}
+                                        >
+                                            <MoreVertical size={20} />
+                                        </button>
+                                        
+                                        {showViewOptions && (
+                                            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                                                    <span className="text-xs font-semibold text-slate-500">View Options</span>
+                                                </div>
+                                                
+                                                <div className="py-1">
+                                                    <button className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                                                        <div className="flex items-center gap-3 text-slate-700 group-hover:text-[#444CE7]">
+                                                            <Columns size={16} className="text-slate-400 group-hover:text-[#444CE7]" />
+                                                            <span className="text-sm font-medium">Table Columns</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                                            <span className="text-xs">11 shown</span>
+                                                            <ChevronRightIcon size={14} />
+                                                        </div>
+                                                    </button>
+                                                    
+                                                    <button className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                                                        <div className="flex items-center gap-3 text-slate-700 group-hover:text-[#444CE7]">
+                                                            <ListFilter size={16} className="text-slate-400 group-hover:text-[#444CE7]" />
+                                                            <span className="text-sm font-medium">Sort</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                                            <span className="text-xs">None</span>
+                                                            <ChevronRightIcon size={14} />
+                                                        </div>
+                                                    </button>
+                                                    
+                                                    <button 
+                                                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 transition-colors group text-slate-700 group-hover:text-[#444CE7]"
+                                                        onClick={() => {
+                                                            setIsExportModalOpen(true);
+                                                            setShowViewOptions(false);
+                                                        }}
+                                                    >
+                                                        <Download size={16} className="text-slate-400 group-hover:text-[#444CE7]" />
+                                                        <span className="text-sm font-medium">Export Data</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <>
@@ -1648,6 +1709,14 @@ const ExpenseManagement: React.FC<{
                 </div>
             )}
 
+            {/* Export Modal */}
+            <ExpenseExportDataModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                claims={claims}
+                filteredClaims={filteredClaims}
+            />
+
             {/* --- CONFIRMATION & ACTION MODALS --- */}
 
             {/* Success Toast */}
@@ -1715,3 +1784,208 @@ const ExpenseManagement: React.FC<{
 };
 
 export default ExpenseManagement;
+
+// ==========================================
+// EXPORT DATA MODAL COMPONENT
+// ==========================================
+interface ExpenseExportDataModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    claims: ExpenseClaim[];
+    filteredClaims: ExpenseClaim[];
+}
+
+const ExpenseExportDataModal: React.FC<ExpenseExportDataModalProps> = ({ isOpen, onClose, claims, filteredClaims }) => {
+    const [exportFormat, setExportFormat] = useState<'Excel' | 'CSV'>('Excel');
+    const [showColumnSelector, setShowColumnSelector] = useState(false);
+    const [columnSearch, setColumnSearch] = useState('');
+    const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+
+    if (!isOpen) return null;
+
+    const SYSTEM_COLUMNS = [
+        { id: 'id', label: 'Claim ID', alwaysOn: true },
+        { id: 'employee_id', label: 'Employee ID', alwaysOn: true },
+        { id: 'employee_name', label: 'Employee Name', alwaysOn: true },
+        { id: 'category', label: 'Category' },
+        { id: 'title', label: 'Title' },
+        { id: 'amount', label: 'Requested Amount' },
+        { id: 'approvedAmount', label: 'Approved Amount' },
+        { id: 'status', label: 'Status' },
+        { id: 'submittedDate', label: 'Submitted Date' },
+        { id: 'requestedOn', label: 'Requested On' },
+        { id: 'createdByName', label: 'Created By' },
+        { id: 'rejectionReason', label: 'Rejection Reason' }
+    ];
+
+    const toggleColumn = (id: string) => {
+        setSelectedColumns(prev => 
+            prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+        );
+    };
+
+    const toggleAll = () => {
+        const selectable = SYSTEM_COLUMNS.filter(c => !c.alwaysOn);
+        if (selectedColumns.length === selectable.length) {
+            setSelectedColumns([]);
+        } else {
+            setSelectedColumns(selectable.map(c => c.id));
+        }
+    };
+
+    const handleExport = (type: 'all' | 'filtered') => {
+        const dataToExport = type === 'all' ? claims : filteredClaims;
+        
+        const flatData = dataToExport.map(claim => {
+            const row: any = {};
+            const isSelected = (id: string) => {
+                const col = SYSTEM_COLUMNS.find(c => c.id === id);
+                return col?.alwaysOn || selectedColumns.includes(id);
+            };
+
+            if (isSelected('id')) row['Claim ID'] = claim.id || '';
+            if (isSelected('employee_id')) row['Employee ID'] = claim.employee?.id || '';
+            if (isSelected('employee_name')) row['Employee Name'] = claim.employee?.name || '';
+            if (isSelected('category')) row['Category'] = claim.category || '';
+            if (isSelected('title')) row['Title'] = claim.title || '';
+            if (isSelected('amount')) row['Requested Amount'] = claim.amount || 0;
+            if (isSelected('approvedAmount')) row['Approved Amount'] = claim.approvedAmount || 0;
+            if (isSelected('status')) row['Status'] = claim.status || '';
+            if (isSelected('submittedDate')) row['Submitted Date'] = claim.submittedDate || '';
+            if (isSelected('requestedOn')) row['Requested On'] = claim.requestedOn || '';
+            if (isSelected('createdByName')) row['Created By'] = claim.createdByName || '';
+            if (isSelected('rejectionReason')) row['Rejection Reason'] = claim.rejectionReason || '';
+            
+            return row;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(flatData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+        
+        if (exportFormat === 'CSV') {
+            XLSX.writeFile(wb, `Expenses_${type}_data.csv`, { bookType: 'csv' });
+        } else {
+            XLSX.writeFile(wb, `Expenses_${type}_data.xlsx`, { bookType: 'xlsx' });
+        }
+        
+        onClose();
+    };
+
+    const alwaysOnCount = SYSTEM_COLUMNS.filter(c => c.alwaysOn).length;
+    const totalSelected = alwaysOnCount + selectedColumns.length;
+    const totalColumns = SYSTEM_COLUMNS.length;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-bold text-slate-800">Export data</h2>
+                        <div className="relative">
+                            <select 
+                                value={exportFormat}
+                                onChange={(e) => setExportFormat(e.target.value as 'Excel' | 'CSV')}
+                                className="appearance-none bg-white border border-slate-200 rounded-lg py-1.5 pl-3 pr-8 text-sm text-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                            >
+                                <option value="Excel">Excel</option>
+                                <option value="CSV">CSV</option>
+                            </select>
+                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                <div className="p-6">
+                    <div 
+                        className={`flex items-center justify-between px-4 py-3 border rounded-lg cursor-pointer transition-colors ${showColumnSelector ? 'border-b-0 rounded-b-none border-slate-200 bg-white' : 'border-slate-200 hover:border-slate-300 mb-4'}`}
+                        onClick={() => setShowColumnSelector(!showColumnSelector)}
+                    >
+                        <span className="text-sm text-slate-600">Columns to export: <span className="font-bold text-slate-800">{totalSelected} of {totalColumns}</span></span>
+                        <button className="text-sm font-medium text-[#444CE7] flex items-center gap-1">
+                            Choose columns {showColumnSelector ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                    </div>
+
+                    {showColumnSelector && (
+                        <div className="border border-t-0 border-slate-200 rounded-b-lg mb-4 bg-white overflow-hidden animate-in slide-in-from-top-1">
+                            <div className="flex items-center border-b border-slate-200 px-2">
+                                <button className="px-4 py-2.5 text-sm font-semibold text-[#444CE7] border-b-2 border-[#444CE7]">
+                                    System Fields ({totalColumns})
+                                </button>
+                                <button className="px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700">
+                                    Custom Fields (0)
+                                </button>
+                            </div>
+                            <div className="p-3 border-b border-slate-200 flex items-center gap-3">
+                                <div className="relative flex-1">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search columns..." 
+                                        value={columnSearch}
+                                        onChange={(e) => setColumnSearch(e.target.value)}
+                                        className="w-full pl-8 pr-3 py-1.5 text-sm border-none bg-transparent focus:outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400"
+                                    />
+                                </div>
+                                <button onClick={toggleAll} className="text-sm font-medium text-[#444CE7] hover:underline whitespace-nowrap">
+                                    {selectedColumns.length === SYSTEM_COLUMNS.filter(c => !c.alwaysOn).length ? 'Deselect all' : 'Select all'}
+                                </button>
+                            </div>
+                            <div className="p-4 max-h-[260px] overflow-y-auto custom-scrollbar">
+                                <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                    {SYSTEM_COLUMNS.filter(col => col.label.toLowerCase().includes(columnSearch.toLowerCase())).map(col => (
+                                        <label key={col.id} className={`flex items-center justify-between group ${col.alwaysOn ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={col.alwaysOn || selectedColumns.includes(col.id)}
+                                                        onChange={() => !col.alwaysOn && toggleColumn(col.id)}
+                                                        disabled={col.alwaysOn}
+                                                        className={`appearance-none w-4 h-4 rounded border transition-colors ${col.alwaysOn ? 'bg-slate-200 border-slate-300 cursor-not-allowed' : selectedColumns.includes(col.id) ? 'bg-[#444CE7] border-[#444CE7] cursor-pointer' : 'border-slate-300 bg-white cursor-pointer'}`}
+                                                    />
+                                                    {(col.alwaysOn || selectedColumns.includes(col.id)) && (
+                                                        <Check size={12} strokeWidth={3} className={`absolute pointer-events-none ${col.alwaysOn ? 'text-slate-400' : 'text-white'}`} />
+                                                    )}
+                                                </div>
+                                                <span className="text-sm text-slate-700 font-medium group-hover:text-slate-900 transition-colors select-none">{col.label}</span>
+                                            </div>
+                                            {col.alwaysOn && (
+                                                <span className="text-xs font-semibold text-slate-300 tracking-wide select-none">always on</span>
+                                            )}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex gap-3 text-indigo-700">
+                        <Info size={20} className="shrink-0 mt-0.5" />
+                        <p className="text-sm leading-relaxed">
+                            Are you sure you want to export the data? The exported file will reflect the current filters. Please choose an option:
+                        </p>
+                    </div>
+                </div>
+                
+                <div className="p-6 pt-2 flex gap-3">
+                    <button 
+                        onClick={() => handleExport('all')}
+                        className="flex-1 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-lg text-sm font-bold transition-colors text-center shadow-md shadow-[#444CE7]/20"
+                    >
+                        Export All Data
+                    </button>
+                    <button 
+                        onClick={() => handleExport('filtered')}
+                        className="flex-1 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-lg text-sm font-bold transition-colors text-center shadow-md shadow-[#444CE7]/20"
+                    >
+                        {selectedColumns.length > 0 ? 'Export Data' : 'Export Filtered Data'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};

@@ -30,7 +30,14 @@ import {
     AlertTriangle,
     Upload,
     UploadCloud,
-    FileSpreadsheet
+    FileSpreadsheet,
+    MoreVertical,
+    Columns,
+    ListFilter,
+    FileText,
+    ChevronRight,
+    UserPlus,
+    ChevronUp
 } from 'lucide-react';
 import { Employee } from '../types';
 import { MOCK_EMPLOYEES } from '../constants';
@@ -1075,6 +1082,8 @@ interface EmployeeListProps {
 
 const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [showViewOptions, setShowViewOptions] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -1655,6 +1664,56 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                             >
                                 <Upload size={16} /> Import
                             </button>
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setShowViewOptions(!showViewOptions)}
+                                    className={`p-2 bg-white border ${showViewOptions ? 'border-[#444CE7] text-[#444CE7] bg-indigo-50' : 'border-slate-200 text-slate-500 hover:bg-slate-50'} rounded-lg transition-colors shadow-sm shrink-0 h-[40px] flex items-center justify-center`}
+                                >
+                                    {showViewOptions ? <X size={18} /> : <MoreVertical size={18} />}
+                                </button>
+
+                                {showViewOptions && (
+                                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                                            <span className="text-xs font-semibold text-slate-500">View Options</span>
+                                        </div>
+                                        
+                                        <div className="py-1">
+                                            <button className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                                                <div className="flex items-center gap-3 text-slate-700 group-hover:text-[#444CE7]">
+                                                    <Columns size={16} className="text-slate-400 group-hover:text-[#444CE7]" />
+                                                    <span className="text-sm font-medium">Table Columns</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-slate-400">
+                                                    <span className="text-xs">11 shown</span>
+                                                    <ChevronRight size={14} />
+                                                </div>
+                                            </button>
+
+                                            <button className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                                                <div className="flex items-center gap-3 text-slate-700 group-hover:text-[#444CE7]">
+                                                    <ListFilter size={16} className="text-slate-400 group-hover:text-[#444CE7]" />
+                                                    <span className="text-sm font-medium">Sort</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-slate-400">
+                                                    <span className="text-xs">None</span>
+                                                    <ChevronRight size={14} />
+                                                </div>
+                                            </button>
+
+                                            <button 
+                                                onClick={() => {
+                                                    setShowViewOptions(false);
+                                                    setIsExportModalOpen(true);
+                                                }}
+                                                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 transition-colors group text-slate-700 group-hover:text-[#444CE7]">
+                                                <Download size={16} className="text-slate-400 group-hover:text-[#444CE7]" />
+                                                <span className="text-sm font-medium">Export Data</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -1837,6 +1896,13 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                 employees={employees}
             />
 
+            <ExportDataModal 
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                employees={employees || []}
+                filteredEmployees={filteredEmployees || []}
+            />
+
             <ImportOptionsModal
                 isOpen={isImportOptionsModalOpen}
                 onClose={() => setIsImportOptionsModalOpen(false)}
@@ -1853,6 +1919,228 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                 onImportSuccess={fetchEmployees}
                 importOption={importOption}
             />
+        </div>
+    );
+};
+
+// ==========================================
+// EXPORT DATA MODAL COMPONENT
+// ==========================================
+interface ExportDataModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    employees: Employee[];
+    filteredEmployees: Employee[];
+}
+
+const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose, employees, filteredEmployees }) => {
+    const [exportFormat, setExportFormat] = useState<'Excel' | 'CSV'>('Excel');
+    const [showColumnSelector, setShowColumnSelector] = useState(false);
+    const [columnSearch, setColumnSearch] = useState('');
+    const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+
+    if (!isOpen) return null;
+
+    const SYSTEM_COLUMNS = [
+        { id: 'employee_id', label: 'Employee Code', alwaysOn: true },
+        { id: 'first_name', label: 'First Name', alwaysOn: true },
+        { id: 'last_name', label: 'Last Name', alwaysOn: true },
+        { id: 'business_unit', label: 'Business Unit' },
+        { id: 'middle_name', label: 'Middle Name' },
+        { id: 'email', label: 'Work Email' },
+        { id: 'department', label: 'Department' },
+        { id: 'designation', label: 'Designation' },
+        { id: 'reporting_to', label: 'Reporting to' },
+        { id: 'reporting_manager_code', label: 'Reporting Manager Code' },
+        { id: 'status', label: 'Status' },
+        { id: 'date_of_joining', label: 'Joining Date' },
+        { id: 'ctc', label: 'CTC' },
+        { id: 'salary_structure', label: 'Salary Structure' },
+        { id: 'pf_applicable', label: 'PF Applicable' },
+        { id: 'esi_applicable', label: 'ESI Applicable' },
+        { id: 'lwf_applicable', label: 'LWF Applicable' },
+        { id: 'nps_applicable', label: 'NPS Applicable' },
+        { id: 'pt_applicable', label: 'Professional Tax' },
+        { id: 'gratuity_applicable', label: 'Gratuity' },
+        { id: 'tds_applicable', label: 'TDS' }
+    ];
+
+    const toggleColumn = (id: string) => {
+        setSelectedColumns(prev => 
+            prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+        );
+    };
+
+    const toggleAll = () => {
+        const selectable = SYSTEM_COLUMNS.filter(c => !c.alwaysOn);
+        if (selectedColumns.length === selectable.length) {
+            setSelectedColumns([]);
+        } else {
+            setSelectedColumns(selectable.map(c => c.id));
+        }
+    };
+
+    const handleExport = (type: 'all' | 'filtered') => {
+        const dataToExport = type === 'all' ? employees : filteredEmployees;
+        
+        const flatData = dataToExport.map(emp => {
+            const row: any = {};
+            const isSelected = (id: string) => {
+                const col = SYSTEM_COLUMNS.find(c => c.id === id);
+                return col?.alwaysOn || selectedColumns.includes(id);
+            };
+
+            if (isSelected('employee_id')) row['Employee Code'] = emp.employee_id || '';
+            if (isSelected('first_name')) row['First Name'] = emp.first_name || '';
+            if (isSelected('last_name')) row['Last Name'] = emp.last_name || '';
+            if (isSelected('middle_name')) row['Middle Name'] = '';
+            if (isSelected('business_unit')) row['Business Unit'] = emp.business_unit || '';
+            if (isSelected('email')) row['Work Email'] = emp.email || '';
+            if (isSelected('department')) row['Department'] = emp.department || '';
+            if (isSelected('designation')) row['Designation'] = emp.designation || '';
+            if (isSelected('reporting_to')) row['Reporting to'] = '';
+            if (isSelected('reporting_manager_code')) row['Reporting Manager Code'] = '';
+            if (isSelected('status')) row['Status'] = emp.status || '';
+            if (isSelected('date_of_joining')) row['Joining Date'] = emp.date_of_joining || '';
+            if (isSelected('ctc')) row['CTC'] = emp.ctc || '';
+            if (isSelected('salary_structure')) row['Salary Structure'] = emp.salary_structure_name || 'N/A';
+            if (isSelected('pf_applicable')) row['PF Applicable'] = emp.statutory_deductions?.providentFund ? 'Yes' : 'No';
+            if (isSelected('esi_applicable')) row['ESI Applicable'] = emp.statutory_deductions?.esi ? 'Yes' : 'No';
+            if (isSelected('lwf_applicable')) row['LWF Applicable'] = emp.statutory_deductions?.lwf ? 'Yes' : 'No';
+            if (isSelected('nps_applicable')) row['NPS Applicable'] = emp.statutory_deductions?.nps ? 'Yes' : 'No';
+            if (isSelected('pt_applicable')) row['Professional Tax'] = emp.statutory_deductions?.professionalTax ? 'Yes' : 'No';
+            if (isSelected('gratuity_applicable')) row['Gratuity'] = emp.statutory_deductions?.gratuity ? 'Yes' : 'No';
+            if (isSelected('tds_applicable')) row['TDS'] = emp.statutory_deductions?.tds ? 'Yes' : 'No';
+            return row;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(flatData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Employees");
+        
+        if (exportFormat === 'CSV') {
+            XLSX.writeFile(wb, `Employees_${type}_data.csv`, { bookType: 'csv' });
+        } else {
+            XLSX.writeFile(wb, `Employees_${type}_data.xlsx`, { bookType: 'xlsx' });
+        }
+        
+        onClose();
+    };
+
+    const alwaysOnCount = SYSTEM_COLUMNS.filter(c => c.alwaysOn).length;
+    const totalSelected = alwaysOnCount + selectedColumns.length;
+    const totalColumns = SYSTEM_COLUMNS.length;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-bold text-slate-800">Export data</h2>
+                        <div className="relative">
+                            <select 
+                                value={exportFormat}
+                                onChange={(e) => setExportFormat(e.target.value as 'Excel' | 'CSV')}
+                                className="appearance-none bg-white border border-slate-200 rounded-lg py-1.5 pl-3 pr-8 text-sm text-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                            >
+                                <option value="Excel">Excel</option>
+                                <option value="CSV">CSV</option>
+                            </select>
+                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                <div className="p-6">
+                    <div 
+                        className={`flex items-center justify-between px-4 py-3 border rounded-lg cursor-pointer transition-colors ${showColumnSelector ? 'border-b-0 rounded-b-none border-slate-200 bg-white' : 'border-slate-200 hover:border-slate-300 mb-4'}`}
+                        onClick={() => setShowColumnSelector(!showColumnSelector)}
+                    >
+                        <span className="text-sm text-slate-600">Columns to export: <span className="font-bold text-slate-800">{totalSelected} of {totalColumns}</span></span>
+                        <button className="text-sm font-medium text-[#444CE7] flex items-center gap-1">
+                            Choose columns {showColumnSelector ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                    </div>
+
+                    {showColumnSelector && (
+                        <div className="border border-t-0 border-slate-200 rounded-b-lg mb-4 bg-white overflow-hidden animate-in slide-in-from-top-1">
+                            <div className="flex items-center border-b border-slate-200 px-2">
+                                <button className="px-4 py-2.5 text-sm font-semibold text-[#444CE7] border-b-2 border-[#444CE7]">
+                                    System Fields ({totalColumns})
+                                </button>
+                                <button className="px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700">
+                                    Custom Fields (0)
+                                </button>
+                            </div>
+                            <div className="p-3 border-b border-slate-200 flex items-center gap-3">
+                                <div className="relative flex-1">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search columns..." 
+                                        value={columnSearch}
+                                        onChange={(e) => setColumnSearch(e.target.value)}
+                                        className="w-full pl-8 pr-3 py-1.5 text-sm border-none bg-transparent focus:outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400"
+                                    />
+                                </div>
+                                <button onClick={toggleAll} className="text-sm font-medium text-[#444CE7] hover:underline whitespace-nowrap">
+                                    {selectedColumns.length === SYSTEM_COLUMNS.filter(c => !c.alwaysOn).length ? 'Deselect all' : 'Select all'}
+                                </button>
+                            </div>
+                            <div className="p-4 max-h-[260px] overflow-y-auto">
+                                <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                    {SYSTEM_COLUMNS.filter(col => col.label.toLowerCase().includes(columnSearch.toLowerCase())).map(col => (
+                                        <label key={col.id} className={`flex items-center justify-between group ${col.alwaysOn ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={col.alwaysOn || selectedColumns.includes(col.id)}
+                                                        onChange={() => !col.alwaysOn && toggleColumn(col.id)}
+                                                        disabled={col.alwaysOn}
+                                                        className={`appearance-none w-4 h-4 rounded border transition-colors ${col.alwaysOn ? 'bg-slate-200 border-slate-300 cursor-not-allowed' : selectedColumns.includes(col.id) ? 'bg-[#444CE7] border-[#444CE7] cursor-pointer' : 'border-slate-300 bg-white cursor-pointer'}`}
+                                                    />
+                                                    {(col.alwaysOn || selectedColumns.includes(col.id)) && (
+                                                        <Check size={12} strokeWidth={3} className={`absolute pointer-events-none ${col.alwaysOn ? 'text-slate-400' : 'text-white'}`} />
+                                                    )}
+                                                </div>
+                                                <span className="text-sm text-slate-700 font-medium group-hover:text-slate-900 transition-colors select-none">{col.label}</span>
+                                            </div>
+                                            {col.alwaysOn && (
+                                                <span className="text-xs font-semibold text-slate-300 tracking-wide select-none">always on</span>
+                                            )}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex gap-3 text-indigo-700">
+                        <Info size={20} className="shrink-0 mt-0.5" />
+                        <p className="text-sm leading-relaxed">
+                            Are you sure you want to export the data? The exported file will reflect the current filters. Please choose an option:
+                        </p>
+                    </div>
+                </div>
+                
+                <div className="p-6 pt-2 flex gap-3">
+                    <button 
+                        onClick={() => handleExport('all')}
+                        className="flex-1 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-lg text-sm font-bold transition-colors text-center"
+                    >
+                        Export All Data
+                    </button>
+                    <button 
+                        onClick={() => handleExport('filtered')}
+                        className="flex-1 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-lg text-sm font-bold transition-colors text-center"
+                    >
+                        {selectedColumns.length > 0 ? 'Export Data' : 'Export Filtered Data'}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
@@ -2667,7 +2955,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
             }
 
             if (onImportSuccess) onImportSuccess();
-            setStep(importMethod === 'sample' ? 2 : 4);
+            setStep(importMethod === 'sample' ? 2 : 3);
         } catch (err: any) {
             console.error('Import process failed:', err);
             alert(`Error importing records: ${err.message || err}`);
@@ -2676,7 +2964,8 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
         }
     };
 
-    const showStep2UI = step === 2 || isSaving || (importMethod === 'another' && step >= 2);
+    const isAnother = importMethod === 'another';
+    const showResultsStep = step === (isAnother ? 3 : 2) || isSaving;
 
     const stepperSteps = importMethod === 'sample' 
         ? [
@@ -2685,41 +2974,38 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
           ]
         : [
             { id: 1, label: 'Upload File' },
-            { id: 2, label: 'Import Options' },
-            { id: 3, label: 'Review Mapping' },
-            { id: 4, label: 'Import Results' }
+            { id: 2, label: 'Review Mapping' },
+            { id: 3, label: 'Import Results' }
           ];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-md shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
-                
-                {/* Header */}
-                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between bg-white relative">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
-                            <Upload size={20} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-slate-800">Import Employees Compensation{importOption === 'new' ? ' - Update Statutory Details' : (importOption === 'update' || importOption === 'emergency') ? ' - Update Salary Details' : ''}</h3>
-                                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">
-                                    Step {showStep2UI ? (importMethod === 'sample' ? '2 of 2' : '4 of 4') : `${step} of ${importMethod === 'sample' ? '2' : '4'}`}
-                                </span>
-                            </div>
-                            <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                {showStep2UI 
-                                    ? 'Review the results of your import and download any failed records.' 
-                                    : 'Select your import method and upload a spreadsheet to get started.'}
-                            </p>
-                        </div>
+        <div className="fixed inset-0 top-[64px] z-[90] bg-slate-50 flex flex-col animate-in fade-in duration-200 overflow-hidden">
+            {/* Header */}
+            <div className="px-8 py-5 border-b border-slate-200 bg-white shadow-sm flex items-start justify-between relative shrink-0">
+                <div className="flex items-start gap-4 w-full">
+                    <div className="w-10 h-10 bg-[#444CE7] rounded-lg flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/20 mt-0.5">
+                        <FileText size={20} />
                     </div>
-                    {!isSaving && (
-                        <button onClick={onClose} className="p-1.5 hover:bg-slate-50 rounded-md text-slate-400 hover:text-slate-600 transition-colors border border-slate-100">
-                            <X size={18} />
-                        </button>
-                    )}
+                    <div className="w-full">
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-bold text-slate-800">Import Employees</h3>
+                            <span className="text-[11px] font-bold text-[#444CE7] bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                                Step {showResultsStep ? (isAnother ? '3 of 3' : '2 of 2') : `${step} of ${isAnother ? '3' : '2'}`}
+                            </span>
+                        </div>
+                        <p className="text-sm text-slate-500 font-medium mt-1">
+                            {showResultsStep 
+                                ? 'Review the results of your import and download any failed records.' 
+                                : 'Map your file columns to CollabCRM fields before completing the import.'}
+                        </p>
+                    </div>
                 </div>
+                {!isSaving && (
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 transition-colors border border-slate-200 shadow-sm shrink-0">
+                        <X size={18} strokeWidth={2.5} />
+                    </button>
+                )}
+            </div>
 
                 {/* Stepper */}
                 <div className="border-b border-slate-100 py-5 bg-white select-none">
@@ -2730,17 +3016,17 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                 className="h-full bg-[#444CE7] transition-all duration-300"
                                 style={{ 
                                     width: importMethod === 'sample'
-                                        ? (showStep2UI ? '100%' : '0%')
-                                        : (step === 1 && !isSaving ? '0%' : step === 2 ? '33.3%' : step === 3 ? '66.6%' : '100%')
+                                        ? (showResultsStep ? '100%' : '0%')
+                                        : (step === 1 && !isSaving ? '0%' : step === 2 && !isSaving ? '50%' : '100%')
                                 }}
                             />
                         </div>
 
                         {stepperSteps.map((s) => {
-                            const isCompleted = step > s.id;
-                            const isActive = step === s.id;
-                            const showActive = isActive || (isSaving && s.id === (importMethod === 'sample' ? 2 : 4));
-                            const showDone = isCompleted && (!isSaving || s.id < (importMethod === 'sample' ? 2 : 4));
+                            const isCompleted = step > s.id || (isSaving && step === s.id);
+                            const isActive = step === s.id && !isSaving;
+                            const showActive = isActive || (isSaving && s.id === (isAnother ? 3 : 2));
+                            const showDone = isCompleted && (!isSaving || s.id < (isAnother ? 3 : 2));
                             return (
                                 <div key={s.id} className="flex flex-col items-center relative z-10">
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white transition-all duration-300 ${
@@ -3028,7 +3314,109 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                 </div>
                             )}
 
-                            {(step === 2 || (importMethod === 'another' && step === 4)) && (
+                            {isAnother && step === 2 && (
+                                <div className="w-full flex gap-6 min-h-[450px]">
+                                    {/* Left: Table */}
+                                    <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-lg shadow-sm">
+                                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <h4 className="text-[15px] font-bold text-slate-800">Review Data Mapping</h4>
+                                                <span className="text-xs text-slate-500 font-medium mt-0.5">68 of 68 Columns mapped</span>
+                                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 ml-4 cursor-pointer">
+                                                    <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7]" />
+                                                    Include custom fields in mapping
+                                                </label>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-xs font-semibold">
+                                                <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Mapped</span>
+                                                <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Unmapped</span>
+                                                <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Custom Field</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 overflow-auto p-4">
+                                            <table className="w-full text-sm text-left">
+                                                <thead>
+                                                    <tr className="text-xs font-bold text-slate-400 border-b border-slate-100">
+                                                        <th className="pb-3 w-16 px-4 font-semibold uppercase">No.</th>
+                                                        <th className="pb-3 w-1/3 font-semibold uppercase">Column in File</th>
+                                                        <th className="pb-3 w-1/3 font-semibold uppercase">Field in CollabCRM</th>
+                                                        <th className="pb-3 font-semibold uppercase">Field Type</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {[
+                                                        { no: '01', col: 'Business unit', field: 'Business unit', type: 'Textbox' },
+                                                        { no: '02', col: 'Employee code', field: 'Employee code', type: 'Textbox' },
+                                                        { no: '03', col: 'First name', field: 'First name', type: 'Textbox' },
+                                                        { no: '04', col: 'Middle name', field: 'Middle name', type: 'Textbox' },
+                                                        { no: '05', col: 'Last name', field: 'Last name', type: 'Textbox' },
+                                                        { no: '06', col: 'Gender', field: 'Gender', type: 'Textbox' },
+                                                        { no: '07', col: 'Date of birth', field: 'Date of birth', type: 'Date' }
+                                                    ].map((item, idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="py-3 px-4 text-slate-400 font-medium">{item.no}</td>
+                                                            <td className="py-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></div>
+                                                                    <span className="font-semibold text-slate-700">{item.col}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-3 pr-4">
+                                                                <div className="border border-slate-200 rounded-md px-3 py-1.5 flex justify-between items-center bg-white w-full max-w-[220px]">
+                                                                    <span className="font-semibold text-slate-700 text-[13px]">{item.field} <span className="text-red-500">*</span></span>
+                                                                    <ChevronDown size={14} className="text-slate-400" />
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-3">
+                                                                <div className="flex gap-2 items-center">
+                                                                    <span className="px-3 py-1 rounded-md bg-blue-50 text-[#444CE7] font-bold text-xs border border-blue-100">{item.type}</span>
+                                                                    {item.type === 'Date' && (
+                                                                        <div className="border border-slate-200 rounded-md px-3 py-1.5 flex justify-between items-center bg-white min-w-[120px]">
+                                                                            <span className="font-semibold text-slate-700 text-xs">DD/MM/YYYY (02/...</span>
+                                                                            <ChevronDown size={14} className="text-slate-400" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    {/* Right: Status Cards */}
+                                    <div className="w-[300px] flex flex-col gap-4">
+                                        <div className="bg-[#4F46E5] rounded-xl p-5 text-white shadow-md relative overflow-hidden">
+                                            <div className="text-[11px] font-bold text-indigo-100 mb-1 tracking-wide">Mapping Progress</div>
+                                            <div className="flex items-baseline gap-1 font-black text-3xl mb-2">
+                                                58<span className="text-lg text-indigo-200">/ 58</span>
+                                            </div>
+                                            <div className="text-[11px] font-medium text-indigo-100 mb-4 tracking-wide">Columns mapped</div>
+                                            <div className="w-full bg-indigo-900/40 rounded-full h-1.5 mb-1.5">
+                                                <div className="bg-white h-1.5 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-right text-indigo-100">100% complete</div>
+                                        </div>
+                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div className="text-sm font-bold text-slate-800">Mandatory Fields</div>
+                                                <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-100">0 Missing</div>
+                                            </div>
+                                            <div className="border border-emerald-100 bg-emerald-50/50 rounded-lg p-5 flex flex-col items-center text-center gap-3 border-dashed">
+                                                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-sm shadow-emerald-200/50">
+                                                    <Check size={20} strokeWidth={3} />
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-bold text-emerald-800 mb-1">All Mapped!</div>
+                                                    <div className="text-[11px] leading-relaxed text-slate-500 font-medium">All mandatory CRM fields are covered. You're ready to import.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {showResultsStep && (
                                 <div className="w-full space-y-6 animate-in fade-in duration-300">
                                     {/* Alert Banner */}
                                     {failureCount > 0 ? (
@@ -3092,31 +3480,60 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                 </div>
 
                 {/* Footer */}
+                {/* Footer */}
                 {!isSaving && (
-                    <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
-                        {step === 1 && (
-                            <>
+                    <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center gap-3">
+                        <div className="flex gap-3">
+                            {isAnother && step === 2 && (
+                                <>
+                                    <button className="px-4 py-2 bg-transparent text-[#444CE7] font-bold rounded-md text-sm hover:bg-[#EEF2FF] transition-colors border border-transparent hover:border-[#444CE7]/20">
+                                        Reset Field Mapping
+                                    </button>
+                                    <button className="px-4 py-2 bg-[#444CE7] text-white font-bold rounded-md text-sm hover:bg-[#3538CD] transition-colors shadow-sm">
+                                        Apply Auto Mapping
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                        <div className="flex gap-3">
+                            {step === 1 && (
                                 <button
-                                    onClick={handleImport}
+                                    onClick={() => isAnother ? setStep(2) : handleImport()}
                                     disabled={!file}
                                     className="px-8 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold rounded-md transition-all text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed animate-in fade-in cursor-pointer"
                                 >
                                     Import
                                 </button>
-                            </>
-                        )}
+                            )}
 
-                        {(step === 2 || (importMethod === 'another' && step === 4)) && (
-                            <button
-                                onClick={onClose}
-                                className="px-8 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold rounded-md transition-all text-sm shadow-md animate-in fade-in cursor-pointer"
-                            >
-                                Done
-                            </button>
-                        )}
+                            {isAnother && step === 2 && (
+                                <>
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="px-6 py-2.5 bg-transparent text-[#444CE7] font-bold rounded-md text-sm hover:bg-[#EEF2FF] transition-colors border border-transparent hover:border-[#444CE7]/20"
+                                    >
+                                        Go Back
+                                    </button>
+                                    <button
+                                        onClick={handleImport}
+                                        className="px-8 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold rounded-md transition-all text-sm shadow-md animate-in fade-in cursor-pointer"
+                                    >
+                                        Import Employees
+                                    </button>
+                                </>
+                            )}
+
+                            {showResultsStep && (
+                                <button
+                                    onClick={onClose}
+                                    className="px-8 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold rounded-md transition-all text-sm shadow-md animate-in fade-in cursor-pointer"
+                                >
+                                    Done
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
-            </div>
         </div>
     );
 };
