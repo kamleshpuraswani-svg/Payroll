@@ -1938,6 +1938,8 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose, empl
     const [showColumnSelector, setShowColumnSelector] = useState(false);
     const [columnSearch, setColumnSearch] = useState('');
     const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+    const [salaryValue, setSalaryValue] = useState<'Monthly' | 'Annual' | 'Both'>('Monthly');
+    const [salaryStructure, setSalaryStructure] = useState<'Current' | 'All'>('Current');
 
     if (!isOpen) return null;
 
@@ -2118,6 +2120,46 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose, empl
                         </div>
                     )}
                     
+                    <div className="mb-6 space-y-6">
+                        <div>
+                            <div className="text-[13px] font-semibold text-slate-500 mb-3 uppercase tracking-wider">Salary Values</div>
+                            <div className="flex gap-3">
+                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${salaryValue === 'Monthly' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <input type="radio" name="salaryValue" value="Monthly" checked={salaryValue === 'Monthly'} onChange={() => setSalaryValue('Monthly')} className="w-4 h-4 accent-slate-900" />
+                                    <span className="font-medium text-slate-900 text-base">Monthly</span>
+                                </label>
+                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${salaryValue === 'Annual' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <input type="radio" name="salaryValue" value="Annual" checked={salaryValue === 'Annual'} onChange={() => setSalaryValue('Annual')} className="w-4 h-4 accent-slate-900" />
+                                    <span className="font-medium text-slate-900 text-base">Annual</span>
+                                </label>
+                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${salaryValue === 'Both' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <input type="radio" name="salaryValue" value="Both" checked={salaryValue === 'Both'} onChange={() => setSalaryValue('Both')} className="w-4 h-4 accent-slate-900" />
+                                    <span className="font-medium text-slate-900 text-base">Both</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="text-[13px] font-semibold text-slate-500 mb-3 uppercase tracking-wider">Salary Structure</div>
+                            <div className="flex gap-3">
+                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-start gap-3 transition-colors ${salaryStructure === 'Current' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <input type="radio" name="salaryStructure" value="Current" checked={salaryStructure === 'Current'} onChange={() => setSalaryStructure('Current')} className="w-4 h-4 mt-0.5 accent-slate-900" />
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-slate-900 text-base leading-tight mb-1">Current structure</span>
+                                        <span className="text-sm text-slate-500 leading-tight">Latest active structure only</span>
+                                    </div>
+                                </label>
+                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-start gap-3 transition-colors ${salaryStructure === 'All' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <input type="radio" name="salaryStructure" value="All" checked={salaryStructure === 'All'} onChange={() => setSalaryStructure('All')} className="w-4 h-4 mt-0.5 accent-slate-900" />
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-slate-900 text-base leading-tight mb-1">All structures</span>
+                                        <span className="text-sm text-slate-500 leading-tight">Full revision history</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex gap-3 text-indigo-700">
                         <Info size={20} className="shrink-0 mt-0.5" />
                         <p className="text-sm leading-relaxed">
