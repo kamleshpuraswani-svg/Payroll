@@ -1396,7 +1396,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
     };
 
     return (
-        <div className="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-300">
+        <div className="p-4 lg:px-4 lg:py-6 w-full space-y-6 animate-in fade-in duration-300">
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1753,31 +1753,25 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                     <table className="w-full text-left text-sm text-slate-600">
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
-
-                                <th className="px-6 py-4">Employee ID</th>
-                                <th className="px-6 py-4">Name</th>
-                                <th className="px-6 py-4">Joining Date</th>
-                                <th className="px-6 py-4">Department</th>
-                                <th className="px-6 py-4">Designation</th>
-                                <th className="px-6 py-4">Business Unit</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Salary Structure</th>
-                                <th className="px-6 py-4">CTC Status</th>
-                                <th className="px-6 py-4 whitespace-nowrap">PF Applicable?</th>
-                                <th className="px-6 py-4 whitespace-nowrap">ESI Applicable?</th>
-                                <th className="px-6 py-4 whitespace-nowrap">LWF Applicable?</th>
-                                <th className="px-6 py-4 whitespace-nowrap">NPS Applicable?</th>
-                                <th className="px-6 py-4 whitespace-nowrap">Gratuity Applicable?</th>
-
-                                <th className="px-6 py-4">Created By</th>
-                                <th className="px-6 py-4 whitespace-nowrap">Last Modified By</th>
+                                <th className="px-4 py-4">Employee</th>
+                                <th className="px-4 py-4">Joining Date</th>
+                                <th className="px-4 py-4">Department</th>
+                                <th className="px-4 py-4">Designation</th>
+                                <th className="px-4 py-4">Business Unit</th>
+                                <th className="px-4 py-4">Status</th>
+                                <th className="px-4 py-4">Salary Structure</th>
+                                <th className="px-4 py-4 whitespace-nowrap">PF Applicable?</th>
+                                <th className="px-4 py-4 whitespace-nowrap">ESI Applicable?</th>
+                                <th className="px-4 py-4 whitespace-nowrap">LWF Applicable?</th>
+                                <th className="px-4 py-4 whitespace-nowrap">NPS Applicable?</th>
+                                <th className="px-4 py-4 whitespace-nowrap">Gratuity Applicable?</th>
                                 <th className="sticky right-0 bg-slate-50 border-l border-slate-200 px-4 py-4 text-right z-20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={18} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={13} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                                             <span>Loading employees...</span>
@@ -1786,7 +1780,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : fetchError ? (
                                 <tr>
-                                    <td colSpan={18} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
+                                    <td colSpan={13} className="px-6 py-12 text-center text-rose-500 bg-rose-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <AlertTriangle size={24} />
                                             <span className="font-bold">Error loading employees</span>
@@ -1797,7 +1791,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : filteredEmployees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={18} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <td colSpan={13} className="px-6 py-12 text-center text-slate-400 bg-slate-50/30">
                                         <div className="flex flex-col items-center gap-2">
                                             <Users size={24} className="text-slate-200" />
                                             <span>No employees found matching filters.</span>
@@ -1806,75 +1800,64 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEdit, onView, userRole })
                                 </tr>
                             ) : (filteredEmployees || []).map((emp) => (
                                 <tr key={emp?.id || Math.random()} className={`hover:bg-slate-50 transition-colors group ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-purple-50/30' : ''}`}>
-
-                                    <td className="px-6 py-4 font-mono text-slate-700 font-semibold">{emp?.employee_id || 'N/A'}</td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <div className="flex items-center gap-3">
                                             {emp?.avatar_url ? (
-                                                <img src={emp.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 object-cover" />
+                                                <img src={emp.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 object-cover shrink-0" />
                                             ) : (
-                                                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                                    <Users size={14} />
+                                                <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0 border border-indigo-200">
+                                                    {(emp?.first_name?.[0] || '') + (emp?.last_name?.[0] || '') || <Users size={14} />}
                                                 </div>
                                             )}
-                                            <div className="font-semibold text-slate-800">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
+                                            <div className="flex flex-col">
+                                                <div className="font-semibold text-slate-800 leading-snug">{emp?.first_name || 'N/A'} {emp?.last_name || ''}</div>
+                                                <div className="text-xs font-mono text-slate-400">{emp?.employee_id || 'N/A'}</div>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600">
+                                    <td className="px-4 py-4 text-slate-600">
                                         <div className="flex items-center gap-1.5">
                                             <Calendar size={14} className="text-slate-300" />
                                             {emp?.date_of_joining || 'N/A'}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 font-medium text-slate-700">{emp?.department || 'N/A'}</td>
-                                    <td className="px-6 py-4 text-slate-500 italic">{emp?.designation || 'N/A'}</td>
-                                    <td className="px-6 py-4">{emp?.business_unit || 'CollabCRM'}</td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4 font-medium text-slate-700">{emp?.department || 'N/A'}</td>
+                                    <td className="px-4 py-4 text-slate-500 italic">{emp?.designation || 'N/A'}</td>
+                                    <td className="px-4 py-4">{emp?.business_unit || 'CollabCRM'}</td>
+                                    <td className="px-4 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${emp?.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                             {emp?.status || 'Unknown'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 font-bold uppercase tracking-tight">
                                             {emp?.salary_structure_name || 'Standard'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`text-[10px] px-2 py-0.5 rounded border font-bold uppercase tracking-tight ${emp?.salary_structure_name ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
-                                            {emp?.salary_structure_name ? 'Assigned' : 'Pending'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.providentFund ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                                             {emp?.statutory_deductions?.providentFund ? 'Yes' : 'No'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.esi ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                                             {emp?.statutory_deductions?.esi ? 'Yes' : 'No'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.lwf ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                                             {emp?.statutory_deductions?.lwf ? 'Yes' : 'No'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.nps ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                                             {emp?.statutory_deductions?.nps ? 'Yes' : 'No'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${emp?.statutory_deductions?.gratuity ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                                             {emp?.statutory_deductions?.gratuity ? 'Yes' : 'No'}
                                         </span>
-                                    </td>
-
-                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
-                                        {formatAuditUser(emp?.created_by || 'HR Manager', emp?.created_at)}
-                                    </td>
-                                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-pre-line">
-                                        {formatAuditUser(emp?.last_modified_by || 'HR Manager', emp?.updated_at)}
                                     </td>
                                     <td className={`sticky right-0 border-l border-slate-200/80 px-4 py-4 text-right transition-colors z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] ${selectedEmployeeIds.includes(emp?.id || '') ? 'bg-[#faf8fd] group-hover:bg-[#f5f0fb]' : 'bg-white group-hover:bg-slate-50'}`}>
                                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -1945,26 +1928,35 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose, empl
 
     const SYSTEM_COLUMNS = [
         { id: 'employee_id', label: 'Employee Code', alwaysOn: true },
-        { id: 'first_name', label: 'First Name', alwaysOn: true },
-        { id: 'last_name', label: 'Last Name', alwaysOn: true },
-        { id: 'business_unit', label: 'Business Unit' },
-        { id: 'middle_name', label: 'Middle Name' },
-        { id: 'email', label: 'Work Email' },
+        { id: 'employee_name', label: 'Employee Name', alwaysOn: true },
+        { id: 'date_of_joining', label: 'Joining Date' },
         { id: 'department', label: 'Department' },
         { id: 'designation', label: 'Designation' },
-        { id: 'reporting_to', label: 'Reporting to' },
-        { id: 'reporting_manager_code', label: 'Reporting Manager Code' },
+        { id: 'business_unit', label: 'Business Unit' },
         { id: 'status', label: 'Status' },
-        { id: 'date_of_joining', label: 'Joining Date' },
-        { id: 'ctc', label: 'CTC' },
         { id: 'salary_structure', label: 'Salary Structure' },
+        { id: 'annual_ctc', label: 'Annual CTC' },
+        { id: 'effective_from', label: 'Effective From' },
         { id: 'pf_applicable', label: 'PF Applicable' },
         { id: 'esi_applicable', label: 'ESI Applicable' },
-        { id: 'lwf_applicable', label: 'LWF Applicable' },
+        { id: 'gratuity_applicable', label: 'Gratuity Applicable' },
         { id: 'nps_applicable', label: 'NPS Applicable' },
-        { id: 'pt_applicable', label: 'Professional Tax' },
-        { id: 'gratuity_applicable', label: 'Gratuity' },
-        { id: 'tds_applicable', label: 'TDS' }
+        { id: 'vpf_applicable', label: 'VPF Applicable' },
+        { id: 'monthly_salary_values', label: 'Monthly Salary Values', alwaysOn: true },
+        { id: 'annual_salary_values', label: 'Annual Salary Values' },
+        { id: 'salary_pay_mode', label: 'Salary Pay Mode' },
+        { id: 'account_number', label: 'Account Number' },
+        { id: 'ifsc_code', label: 'IFSC Code' },
+        { id: 'bank_name', label: 'Bank Name' },
+        { id: 'branch', label: 'Branch' },
+        { id: 'pan_number', label: 'PAN Number' },
+        { id: 'aadhaar_number', label: 'Aadhaar Number' },
+        { id: 'pf_number', label: 'PF Number' },
+        { id: 'uan_number', label: 'UAN Number' },
+        { id: 'esi_number', label: 'ESI Number' },
+        { id: 'pran_number', label: 'PRAN Number' },
+        { id: 'tax_regime', label: 'Tax Regime' },
+        { id: 'appraisal_month', label: 'Appraisal Month' },
     ];
 
     const toggleColumn = (id: string) => {
@@ -2121,24 +2113,6 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose, empl
                     )}
                     
                     <div className="mb-6 space-y-6">
-                        <div>
-                            <div className="text-[13px] font-semibold text-slate-500 mb-3 uppercase tracking-wider">Salary Values</div>
-                            <div className="flex gap-3">
-                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${salaryValue === 'Monthly' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
-                                    <input type="radio" name="salaryValue" value="Monthly" checked={salaryValue === 'Monthly'} onChange={() => setSalaryValue('Monthly')} className="w-4 h-4 accent-slate-900" />
-                                    <span className="font-medium text-slate-900 text-base">Monthly</span>
-                                </label>
-                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${salaryValue === 'Annual' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
-                                    <input type="radio" name="salaryValue" value="Annual" checked={salaryValue === 'Annual'} onChange={() => setSalaryValue('Annual')} className="w-4 h-4 accent-slate-900" />
-                                    <span className="font-medium text-slate-900 text-base">Annual</span>
-                                </label>
-                                <label className={`flex-1 border rounded-xl p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${salaryValue === 'Both' ? 'bg-[#EEF2F6] border-slate-800' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
-                                    <input type="radio" name="salaryValue" value="Both" checked={salaryValue === 'Both'} onChange={() => setSalaryValue('Both')} className="w-4 h-4 accent-slate-900" />
-                                    <span className="font-medium text-slate-900 text-base">Both</span>
-                                </label>
-                            </div>
-                        </div>
-
                         <div>
                             <div className="text-[13px] font-semibold text-slate-500 mb-3 uppercase tracking-wider">Salary Structure</div>
                             <div className="flex gap-3">
