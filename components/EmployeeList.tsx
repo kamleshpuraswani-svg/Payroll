@@ -2278,6 +2278,7 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importMethod, setImportMethod] = useState<'sample' | 'another'>('sample');
     const [eraseEmptyCells, setEraseEmptyCells] = useState(false);
+    const [sampleDataType, setSampleDataType] = useState<'all' | 'filtered' | 'dummy'>('all');
 
     // Success and failure state for step 2 Results screen
     const [successCount, setSuccessCount] = useState(0);
@@ -3243,47 +3244,124 @@ const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({ isOpen, onC
                                     <div className="lg:col-span-5 space-y-4">
                                         {importMethod === 'sample' ? (
                                             <>
-                                                {/* Sample Download Card */}
-                                                <div className="border border-indigo-100 bg-indigo-50/10 rounded-md p-4 flex items-center gap-4">
-                                                    <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
-                                                        <FileSpreadsheet size={20} />
-                                                    </div>
-                                                    <div className="flex-grow">
-                                                        <h5 className="text-xs font-bold text-slate-800">Sample Template</h5>
-                                                        <p className="text-[10px] text-slate-400 font-medium">Pre-formatted Excel file</p>
-                                                    </div>
-                                                    <button 
-                                                        onClick={handleDownloadSample}
-                                                        className="px-4 py-2 bg-white hover:bg-slate-50 text-[#444CE7] border border-indigo-200 rounded-md text-[10px] font-bold transition-all shrink-0 shadow-sm"
-                                                    >
-                                                        Download Template
-                                                    </button>
-                                                </div>
+                                                {importOption === 'emergency' ? (
+                                                    <>
+                                                        {/* Select data for sample file - Manually Import */}
+                                                        <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                                                            <div className="px-5 py-4 border-b border-slate-100">
+                                                                <h4 className="text-sm font-bold text-slate-800">Select data for sample file</h4>
+                                                            </div>
+                                                            <div className="p-4 space-y-3">
+                                                                {/* All Employees */}
+                                                                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${sampleDataType === 'all' ? 'border-[#444CE7] bg-indigo-50/30' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                                    <input type="radio" name="sampleDataType" checked={sampleDataType === 'all'} onChange={() => setSampleDataType('all')} className="mt-0.5 w-4 h-4 accent-[#444CE7] shrink-0" />
+                                                                    <div>
+                                                                        <div className="text-sm font-semibold text-slate-800 leading-snug">All Employees - Update existing records</div>
+                                                                        <div className="text-xs text-slate-500 mt-0.5 font-medium">Includes the entire employees. Update existing records database in the sample file.</div>
+                                                                    </div>
+                                                                </label>
+                                                                {/* Filtered Only */}
+                                                                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${sampleDataType === 'filtered' ? 'border-[#444CE7] bg-indigo-50/30' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                                    <input type="radio" name="sampleDataType" checked={sampleDataType === 'filtered'} onChange={() => setSampleDataType('filtered')} className="mt-0.5 w-4 h-4 accent-[#444CE7] shrink-0" />
+                                                                    <div>
+                                                                        <div className="text-sm font-semibold text-slate-800 leading-snug">Filtered Only</div>
+                                                                        <div className="text-xs text-slate-500 mt-0.5 font-medium">Only includes records from your current filtered view.</div>
+                                                                    </div>
+                                                                </label>
+                                                                {/* Download Dummy Sample File */}
+                                                                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${sampleDataType === 'dummy' ? 'border-[#444CE7] bg-indigo-50/30' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                                    <input type="radio" name="sampleDataType" checked={sampleDataType === 'dummy'} onChange={() => setSampleDataType('dummy')} className="mt-0.5 w-4 h-4 accent-[#444CE7] shrink-0" />
+                                                                    <div>
+                                                                        <div className="text-sm font-semibold text-slate-800 leading-snug">Download Dummy Sample File</div>
+                                                                        <div className="text-xs text-slate-500 mt-0.5 font-medium">User needs to prepare data manually with this option.</div>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                                                <span className="text-xs text-slate-500 font-medium">Template will be generated with ready-to-use data.</span>
+                                                                <button
+                                                                    onClick={handleDownloadSample}
+                                                                    className="flex items-center gap-2 px-4 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-md text-xs font-bold transition-all shadow-sm shrink-0"
+                                                                >
+                                                                    <Download size={13} /> Download a Sample File
+                                                                </button>
+                                                            </div>
+                                                        </div>
 
-                                                {/* Instructions Card */}
-                                                <div className="border border-slate-200 rounded-md p-5 space-y-4 bg-white">
-                                                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
-                                                    <ul className="space-y-3 pl-1">
-                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
-                                                            <span>Do not change the column names provided in the sample Excel template.</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
-                                                            <span>Columns indicated in <span className="text-rose-500 font-bold">red color</span> are mandatory fields.</span>
-                                                        </li>
-                                                        {importOption === 'new' && (
-                                                            <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
-                                                                <span>Existing employee details can be updated through this import.</span>
-                                                            </li>
-                                                        )}
-                                                        <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
-                                                            <span>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</span>
-                                                        </li>
-                                                    </ul>
-                                                </div>
+                                                        {/* Instructions Card */}
+                                                        <div className="border border-slate-200 rounded-lg p-5 space-y-4 bg-white">
+                                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
+                                                            <ul className="space-y-2.5 pl-1">
+                                                                <li className="flex items-start gap-2.5 text-xs text-[#444CE7] font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-1.5" />
+                                                                    <span>Existing employee details can be updated through this import.</span>
+                                                                </li>
+                                                                <li className="flex items-start gap-2.5 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+                                                                    <span>You can keep only the columns that need to be updated. Remove other columns from the file before importing.</span>
+                                                                </li>
+                                                                <li className="flex items-start gap-2.5 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+                                                                    <span>Ensure to follow correct data types for each column.</span>
+                                                                </li>
+                                                                <li className="flex items-start gap-2.5 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+                                                                    <span>Leaving a cell blank in the import file, you can either erase an existing employee detail from the system or leave the data in the system unchanged. You can not leave a cell blank for the mandatory columns.</span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+
+                                                        {/* Erase existing data section */}
+                                                        <div className="border border-slate-200 rounded-lg p-4 bg-white">
+                                                            <div className="font-semibold text-sm text-slate-800 mb-0.5">Erase existing data if cell value is empty</div>
+                                                            <div className="text-xs text-slate-500 font-medium">(Possible for optional columns only)</div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {/* Sample Download Card */}
+                                                        <div className="border border-indigo-100 bg-indigo-50/10 rounded-md p-4 flex items-center gap-4">
+                                                            <div className="w-10 h-10 bg-[#444CE7] rounded-md flex items-center justify-center text-white shrink-0 shadow-md shadow-[#444CE7]/10">
+                                                                <FileSpreadsheet size={20} />
+                                                            </div>
+                                                            <div className="flex-grow">
+                                                                <h5 className="text-xs font-bold text-slate-800">Sample Template</h5>
+                                                                <p className="text-[10px] text-slate-400 font-medium">Pre-formatted Excel file</p>
+                                                            </div>
+                                                            <button 
+                                                                onClick={handleDownloadSample}
+                                                                className="px-4 py-2 bg-white hover:bg-slate-50 text-[#444CE7] border border-indigo-200 rounded-md text-[10px] font-bold transition-all shrink-0 shadow-sm"
+                                                            >
+                                                                Download Template
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Instructions Card */}
+                                                        <div className="border border-slate-200 rounded-md p-5 space-y-4 bg-white">
+                                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Instructions</h4>
+                                                            <ul className="space-y-3 pl-1">
+                                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                                    <span>Do not change the column names provided in the sample Excel template.</span>
+                                                                </li>
+                                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                                    <span>Columns indicated in <span className="text-rose-500 font-bold">red color</span> are mandatory fields.</span>
+                                                                </li>
+                                                                {importOption === 'new' && (
+                                                                    <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                                        <span>Existing employee details can be updated through this import.</span>
+                                                                    </li>
+                                                                )}
+                                                                <li className="flex items-start gap-3 text-xs text-slate-500 font-medium leading-relaxed">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#444CE7] shrink-0 mt-2" />
+                                                                    <span>Once the import is complete, verify that the data has been accurately imported. Cross-check a few records to ensure consistency.</span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </>
                                         ) : (
                                             <>
