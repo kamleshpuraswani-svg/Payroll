@@ -183,6 +183,64 @@ const ReimbursementTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Category-wise claims broken down by approval status (Approved/Pending/Rejected)
+const EXPENSE_CLAIMS_BY_CATEGORY_STATUS_2025 = [
+  { category: 'Travel', Approved: 45000, Pending: 8000, Rejected: 3000 },
+  { category: 'Meal', Approved: 22000, Pending: 4000, Rejected: 1000 },
+  { category: 'Mobile', Approved: 12000, Pending: 1500, Rejected: 500 },
+  { category: 'Broadband', Approved: 9000, Pending: 1000, Rejected: 0 },
+  { category: 'Learning', Approved: 15000, Pending: 3000, Rejected: 2000 },
+  { category: 'Other', Approved: 6000, Pending: 2000, Rejected: 1500 },
+];
+
+const EXPENSE_CLAIMS_BY_CATEGORY_STATUS_2024 = [
+  { category: 'Travel', Approved: 38000, Pending: 5000, Rejected: 2000 },
+  { category: 'Meal', Approved: 18000, Pending: 3000, Rejected: 500 },
+  { category: 'Mobile', Approved: 10000, Pending: 1000, Rejected: 0 },
+  { category: 'Broadband', Approved: 8000, Pending: 500, Rejected: 0 },
+  { category: 'Learning', Approved: 20000, Pending: 2000, Rejected: 1000 },
+  { category: 'Other', Approved: 4000, Pending: 1500, Rejected: 500 },
+];
+
+const EXPENSE_CLAIMS_BY_CATEGORY_STATUS_2023 = [
+  { category: 'Travel', Approved: 30000, Pending: 4000, Rejected: 1500 },
+  { category: 'Meal', Approved: 15000, Pending: 2500, Rejected: 500 },
+  { category: 'Mobile', Approved: 8000, Pending: 800, Rejected: 0 },
+  { category: 'Broadband', Approved: 6000, Pending: 500, Rejected: 0 },
+  { category: 'Learning', Approved: 12000, Pending: 1500, Rejected: 500 },
+  { category: 'Other', Approved: 3000, Pending: 1000, Rejected: 800 },
+];
+
+const getExpenseClaimsByCategoryStatus = (year: string) => {
+  if (year === '2024') return EXPENSE_CLAIMS_BY_CATEGORY_STATUS_2024;
+  if (year === '2023') return EXPENSE_CLAIMS_BY_CATEGORY_STATUS_2023;
+  return EXPENSE_CLAIMS_BY_CATEGORY_STATUS_2025;
+};
+
+const ExpenseCategoryStatusTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const total = payload.reduce((sum: number, p: any) => sum + p.value, 0);
+    return (
+      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg min-w-[180px]">
+        <p className="text-xs font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1">{label}</p>
+        <div className="space-y-1.5">
+          {payload.map((p: any, idx: number) => (
+            <div key={idx} className="flex items-center justify-between gap-4 text-xs">
+              <span style={{ color: p.color }} className="font-semibold whitespace-nowrap">{p.name}:</span>
+              <span className="text-slate-700 font-bold whitespace-nowrap">₹{p.value.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 pt-1 border-t border-slate-100 flex justify-between items-center gap-4 text-xs font-bold text-slate-800">
+          <span>Total:</span>
+          <span>₹{total.toLocaleString()}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const CTC_TREND_DATA = [
   { year: '2021', ctc: 1800000 },
   { year: '2022', ctc: 2100000 },
@@ -279,6 +337,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [lopYear, setLopYear] = useState('2025');
   const [reimbursementYear, setReimbursementYear] = useState('2025');
+  const [expenseCategoryStatusYear, setExpenseCategoryStatusYear] = useState('2025');
 
   const [structureComponents, setStructureComponents] = useState<{ earnings: any[]; deductions: any[] }>({ earnings: [], deductions: [] });
   const [statutoryDeductions, setStatutoryDeductions] = useState<any>({
@@ -643,14 +702,16 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   // Graph Data
   const graphData = [...MOCK_HISTORY_ROWS].filter(r => r.period.includes(graphYear)).reverse().map((d, i, arr) => {
     const totalDeductions = d.deductions.pf + d.deductions.tds + d.deductions.others;
-    const isIncrement = i > 0 && d.gross > arr[i - 1].gross;
+    const isIncrement = i > 0 && d.gross > arr[i - 1].gross && !d.period.startsWith('Jul');
     const incrementPercent = isIncrement ? Math.round(((d.gross - arr[i - 1].gross) / arr[i - 1].gross) * 100) : 0;
+    const incrementAmount = isIncrement ? d.gross - arr[i - 1].gross : 0;
     return {
       ...d,
       monthLabel: d.period.split(' ')[0],
       totalDeductions,
       isIncrement,
-      incrementPercent
+      incrementPercent,
+      incrementAmount
     };
   });
   const maxGross = Math.max(...graphData.map(d => d.gross), 1);
@@ -1161,7 +1222,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                                     {rowData?.isIncrement && (
                                       <div className="flex justify-between items-center text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
                                         <span>Increment:</span>
-                                        <span className="font-semibold">+{rowData.incrementPercent}%</span>
+                                        <span className="font-semibold">+{formatINR(rowData.incrementAmount)}</span>
                                       </div>
                                     )}
                                   </div>
@@ -1181,11 +1242,13 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                           dot={(props: any) => {
                             const { cx, cy, payload, key } = props;
                             if (payload.isIncrement) {
+                              const label = `↑ +${formatINR(payload.incrementAmount)}`;
+                              const badgeWidth = Math.max(70, label.length * 6.5);
                               return (
                                 <g key={key}>
-                                  <rect x={cx - 35} y={cy - 25} width={70} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                                  <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
                                   <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
-                                    {`↑ +${payload.incrementPercent}%`}
+                                    {label}
                                   </text>
                                 </g>
                               );
@@ -1300,7 +1363,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       <Calculator size={18} className="text-rose-600" />
                       Total Tax Liability
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 font-medium ml-6 border bg-slate-100 rounded px-2 py-0.5 inline-block">{employeeData?.tax_regime || 'New Tax Regime'}</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium ml-6 border bg-slate-100 rounded px-2 py-0.5 inline-block">{(employeeData?.tax_regime || 'New Tax Regime').replace(/\s*\(\d{4}\)/, '')}</p>
                   </div>
                   <div className="flex items-center gap-6">
                     <select
@@ -1317,7 +1380,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
                 <div className="flex items-baseline gap-2 mt-2 ml-6">
                   <span className="text-3xl font-black text-slate-800">{formatINR(estimatedAnnualTax)}</span>
-                  <span className="text-xs font-semibold text-slate-400">estimated for the year</span>
+                  <span className="text-xs font-semibold text-slate-400">estimated</span>
                 </div>
 
                 <div className="ml-6 mt-4">
@@ -1344,30 +1407,71 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     </h3>
                   </div>
                 </div>
-                
-                <div className="flex flex-col sm:flex-row gap-8 sm:items-center ml-6">
-                  <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Remaining Balance</div>
-                    <span className="text-3xl font-black text-slate-800">₹2,16,667</span>
+
+                {/* Loan */}
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Loan</span>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">2 active loans</span>
                   </div>
-                  
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="flex justify-between text-xs font-bold text-slate-600">
-                      <span>Amount Repaid (₹2,83,333)</span>
-                      <span>Total: ₹5,00,000</span>
+                  <div className="flex flex-col sm:flex-row gap-8 sm:items-center ml-6">
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Remaining Balance</div>
+                      <span className="text-2xl font-black text-slate-800">₹1,73,333</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                      <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '56.6%' }}></div>
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex justify-between text-xs font-bold text-slate-600">
+                        <span>Amount Repaid (₹2,26,667)</span>
+                        <span>Total: ₹4,00,000</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '56.7%' }}></div>
+                      </div>
+                      <div className="flex justify-between text-xs font-semibold text-slate-500 mt-1">
+                        <span className="flex items-center gap-1.5 text-slate-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                          EMI: <strong className="text-slate-800">₹13,333</strong> / month
+                        </span>
+                        <span className="flex items-center gap-1.5 text-slate-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                          <strong className="text-slate-800">17</strong> of 30 paid
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs font-semibold text-slate-500 mt-1">
-                      <span className="flex items-center gap-1.5 text-slate-600">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                        EMI: <strong className="text-slate-800">₹16,667</strong> / month
-                      </span>
-                      <span className="flex items-center gap-1.5 text-slate-600">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        <strong className="text-slate-800">17</strong> of 30 paid
-                      </span>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 my-3"></div>
+
+                {/* Salary Advance */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Salary Advance</span>
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">2 active advances</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-8 sm:items-center ml-6">
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Remaining Balance</div>
+                      <span className="text-2xl font-black text-slate-800">₹20,000</span>
+                    </div>
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex justify-between text-xs font-bold text-slate-600">
+                        <span>Amount Repaid (₹40,000)</span>
+                        <span>Total: ₹60,000</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: '66.7%' }}></div>
+                      </div>
+                      <div className="flex justify-between text-xs font-semibold text-slate-500 mt-1">
+                        <span className="flex items-center gap-1.5 text-slate-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                          EMI: <strong className="text-slate-800">₹10,000</strong> / month
+                        </span>
+                        <span className="flex items-center gap-1.5 text-slate-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                          <strong className="text-slate-800">4</strong> of 6 paid
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1534,7 +1638,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
 
                 {/* Reimbursement Claims Chart */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col flex-1 min-h-[280px] h-full">
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col flex-1 min-h-[280px] h-full">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <DollarSign size={18} className="text-sky-500" />
@@ -1579,6 +1683,64 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       </ResponsiveContainer>
                     </div>
 
+                </div>
+
+                {/* Expense Claims by Category & Status */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col flex-1 min-h-[280px] h-full col-span-1">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <DollarSign size={18} className="text-sky-500" />
+                        Expenses & Reimbursement Summary
+                      </h3>
+                      <select
+                        value={expenseCategoryStatusYear}
+                        onChange={(e) => setExpenseCategoryStatusYear(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                      >
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-center items-center gap-4 mb-4 text-xs font-bold text-slate-600 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Approved
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-amber-400 rounded-sm"></div> Pending
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-rose-500 rounded-sm"></div> Rejected
+                      </div>
+                    </div>
+
+                    <div className="flex-1 w-full min-h-[200px] overflow-x-auto">
+                      <div style={{ minWidth: `${Math.max(560, getExpenseClaimsByCategoryStatus(expenseCategoryStatusYear).length * 110)}px`, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart data={getExpenseClaimsByCategoryStatus(expenseCategoryStatusYear)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis
+                              dataKey="category"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
+                              dy={10}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
+                              allowDecimals={false}
+                            />
+                            <RechartsTooltip content={<ExpenseCategoryStatusTooltip />} cursor={{ fill: '#f8fafc' }} />
+                            <Bar dataKey="Approved" stackId="status" fill="#10b981" radius={[0, 0, 0, 0]} maxBarSize={40} />
+                            <Bar dataKey="Pending" stackId="status" fill="#fbbf24" radius={[0, 0, 0, 0]} maxBarSize={40} />
+                            <Bar dataKey="Rejected" stackId="status" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                 </div>
 
                 {/* 1. Compa-Ratio / Market Benchmark */}
