@@ -29,12 +29,19 @@ import {
   Loader2,
   // Fixed: Corrected typo in lucide-react import from CheckSquares to CheckSquare
   CheckSquare,
-  Pencil
+  Pencil,
+  AlertTriangle,
+  Award,
+  Wallet,
+  Users,
+  Percent,
+  Palmtree
 } from 'lucide-react';
 import {
   ComposedChart,
   Bar,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -46,7 +53,7 @@ import {
 } from 'recharts';
 
 const SALARY_BREAKDOWN_DATA = [
-  { name: 'Total Earnings', value: 250000, fill: '#4f46e5' }, 
+  { name: 'Gross Earnings', value: 250000, fill: '#4f46e5' }, 
   { name: 'Employee Deductions', value: 25000, fill: '#ef4444' }, 
   { name: 'Employer Deductions', value: 15000, fill: '#f97316' }
 ];
@@ -106,9 +113,8 @@ const LopCustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg">
-        <p className="text-xs font-bold text-slate-800 mb-1">{label} 2025</p>
-        <p className="text-xs text-rose-600 font-semibold">{payload[0].value} LOP Days</p>
-        <p className="text-xs text-slate-500 font-medium mt-1">Deduction: ₹{payload[0].payload.deduction.toLocaleString()}</p>
+        <p className="text-xs font-bold text-slate-800 mb-1">{label}</p>
+        <p className="text-xs text-rose-600 font-semibold">{payload[0].value} days</p>
       </div>
     );
   }
@@ -157,18 +163,18 @@ const ReimbursementTooltip = ({ active, payload, label }: any) => {
       }
     });
     return (
-      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg min-w-[150px]">
-        <p className="text-xs font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1">{label} 2025</p>
-        <div className="space-y-1">
+      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-lg min-w-[200px]">
+        <p className="text-xs font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1">{label}</p>
+        <div className="space-y-1.5">
           {payload.map((p: any, idx: number) => (
-            <div key={idx} className="flex justify-between items-center text-xs">
-              <span style={{ color: p.color }} className="font-semibold">{p.name}:</span>
-              <span className="text-slate-700 font-bold">₹{p.value.toLocaleString()}</span>
+            <div key={idx} className="flex items-center justify-between gap-4 text-xs">
+              <span style={{ color: p.color }} className="font-semibold whitespace-nowrap">{p.name}:</span>
+              <span className="text-slate-700 font-bold whitespace-nowrap">₹{p.value.toLocaleString()}</span>
             </div>
           ))}
         </div>
-        <div className="mt-2 pt-1 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-800">
-          <span>Total Approved:</span>
+        <div className="mt-2 pt-1 border-t border-slate-100 flex justify-between items-center gap-4 text-xs font-bold text-slate-800">
+          <span>Total:</span>
           <span>₹{total.toLocaleString()}</span>
         </div>
       </div>
@@ -637,11 +643,14 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   // Graph Data
   const graphData = [...MOCK_HISTORY_ROWS].filter(r => r.period.includes(graphYear)).reverse().map((d, i, arr) => {
     const totalDeductions = d.deductions.pf + d.deductions.tds + d.deductions.others;
+    const isIncrement = i > 0 && d.gross > arr[i - 1].gross;
+    const incrementPercent = isIncrement ? Math.round(((d.gross - arr[i - 1].gross) / arr[i - 1].gross) * 100) : 0;
     return {
       ...d,
       monthLabel: d.period.split(' ')[0],
       totalDeductions,
-      isIncrement: i > 0 && d.gross > arr[i - 1].gross
+      isIncrement,
+      incrementPercent
     };
   });
   const maxGross = Math.max(...graphData.map(d => d.gross), 1);
@@ -678,6 +687,95 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
       </div>
     );
   };
+
+  // ===================================================================
+  // Salary Insights — additional HR/CEO/Management widgets (mock/derived data)
+  // ===================================================================
+  const employeeCTC = employeeData?.ctc || 1200000;
+
+  // 1. Compa-Ratio / Market Benchmark
+  const bandMin = Math.round(employeeCTC * 0.75);
+  const bandMid = Math.round(employeeCTC * 1.0);
+  const bandMax = Math.round(employeeCTC * 1.35);
+  const compaRatio = Math.round((employeeCTC / bandMid) * 100);
+  const compaPosition = Math.min(100, Math.max(0, ((employeeCTC - bandMin) / (bandMax - bandMin)) * 100));
+
+  // 2. Retention Risk Indicator
+  const RETENTION_FACTORS: { label: string; value: string; status: 'low' | 'medium' | 'high' }[] = [
+    { label: 'Time since last increment', value: '8 months', status: 'low' },
+    { label: 'LOP frequency (last 6 months)', value: '3 months affected', status: 'medium' },
+    { label: 'Compa-ratio position', value: compaRatio < 90 ? 'Below midpoint' : 'On/above midpoint', status: compaRatio < 90 ? 'medium' : 'low' },
+  ];
+  const retentionRiskLevel: 'Low' | 'Medium' | 'High' = RETENTION_FACTORS.some(f => f.status === 'high')
+    ? 'High'
+    : RETENTION_FACTORS.some(f => f.status === 'medium')
+      ? 'Medium'
+      : 'Low';
+  // Static class maps (Tailwind needs literal class strings, not runtime-interpolated ones)
+  const RISK_LEVEL_CLASSES: Record<'Low' | 'Medium' | 'High', { badge: string; icon: string; dot: string }> = {
+    Low: { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'text-emerald-600', dot: 'bg-emerald-500' },
+    Medium: { badge: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'text-amber-600', dot: 'bg-amber-500' },
+    High: { badge: 'bg-rose-50 text-rose-700 border-rose-200', icon: 'text-rose-600', dot: 'bg-rose-500' },
+  };
+  const FACTOR_STATUS_CLASSES: Record<'low' | 'medium' | 'high', string> = {
+    low: 'bg-emerald-500',
+    medium: 'bg-amber-500',
+    high: 'bg-rose-500',
+  };
+
+  // 3. Total Rewards Summary
+  const TOTAL_REWARDS_DATA = [
+    { label: 'Fixed Cash (CTC)', value: Math.round(employeeCTC * 0.82), color: '#4f46e5' },
+    { label: 'Variable Pay / Bonus', value: Math.round(employeeCTC * 0.08), color: '#f59e0b' },
+    { label: 'Retirals (PF + Gratuity)', value: Math.round(employeeCTC * 0.08), color: '#10b981' },
+    { label: 'Benefits & Perks', value: Math.round(employeeCTC * 0.02), color: '#0ea5e9' },
+  ];
+  const totalRewardsValue = TOTAL_REWARDS_DATA.reduce((s, i) => s + i.value, 0);
+
+  // 4. Appraisal & Increment History
+  const APPRAISAL_HISTORY = [
+    { date: 'Jul 2025', hikePercent: 12, newCtc: employeeCTC, rating: 'Exceeds Expectations' },
+    { date: 'Jul 2024', hikePercent: 8, newCtc: Math.round(employeeCTC / 1.12), rating: 'Meets Expectations' },
+    { date: 'Jul 2023', hikePercent: 10, newCtc: Math.round(employeeCTC / 1.12 / 1.08), rating: 'Exceeds Expectations' },
+  ];
+
+  // 5. Tax Liability & TDS Tracking (enhances the existing Total Tax Liability card)
+  const estimatedAnnualTax = Math.round(employeeCTC * 0.09);
+  const tdsDeductedYtd = Math.round(estimatedAnnualTax * 0.55);
+
+  // 6. Investment Declaration Utilization
+  const INVESTMENT_DECLARATION_DATA = [
+    { section: '80C', declared: 150000, proofSubmitted: 90000 },
+    { section: '80D', declared: 25000, proofSubmitted: 25000 },
+    { section: 'HRA', declared: 240000, proofSubmitted: 180000 },
+  ];
+
+  // 7. Leave Balance & Encashment Liability
+  const LEAVE_BALANCE_DATA = [
+    { type: 'Earned Leave (EL)', balance: 12, encashable: true },
+    { type: 'Casual Leave (CL)', balance: 4, encashable: false },
+    { type: 'Sick Leave (SL)', balance: 6, encashable: false },
+  ];
+  const perDaySalary = Math.round(employeeCTC / 365);
+  const encashmentLiability = LEAVE_BALANCE_DATA.filter(l => l.encashable).reduce((s, l) => s + l.balance * perDaySalary, 0);
+
+  // 8. Statutory Compliance Snapshot
+  const COMPLIANCE_SNAPSHOT = [
+    { label: 'Provident Fund (PF)', applicable: true, ytd: Math.round(employeeCTC * 0.04) },
+    { label: 'ESI', applicable: false, ytd: 0 },
+    { label: 'Gratuity', applicable: true, ytd: Math.round(employeeCTC * 0.0192) },
+    { label: 'NPS', applicable: false, ytd: 0 },
+  ];
+
+  // 9. Peer Comparison (Department/Designation)
+  const PEER_COMPARISON_DATA = [
+    { name: 'You', ctc: employeeCTC },
+    { name: `${employeeData?.designation || 'Peer'} Avg`, ctc: Math.round(employeeCTC * 0.92) },
+    { name: 'Dept Min', ctc: bandMin },
+    { name: 'Dept Max', ctc: bandMax },
+  ];
+  const peerMaxCtc = Math.max(...PEER_COMPARISON_DATA.map(p => p.ctc), 1);
+  const [statutoryYear, setStatutoryYear] = React.useState('2025');
 
   return (
     <>
@@ -791,7 +889,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 
                   
                   {/* Gross vs Net Pay Trend */}
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
+                  <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -815,10 +913,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 {/* Top Legend */}
                 <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-0.5 bg-[#4f46e5]"></div> Gross Salary
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-0.5 bg-[#ef4444]"></div> Net Pay
+                    <div className="w-4 border-t-2 border-dashed border-[#4f46e5]"></div> Gross Salary
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#4f46e5] font-black text-sm">↑</span> Increment
@@ -844,7 +939,8 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                               const gross = payload.find((p: any) => p.dataKey === 'gross')?.value || 0;
                               const net = payload.find((p: any) => p.dataKey === 'net')?.value || 0;
                               const deductions = payload.find((p: any) => p.dataKey === 'totalDeductions')?.value || 0;
-                              
+                              const rowData = payload[0]?.payload;
+
                               return (
                                 <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[160px]">
                                   <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{label}</p>
@@ -861,6 +957,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                                       <span>Gross:</span>
                                       <span className="font-semibold">{formatINR(gross as number)}</span>
                                     </div>
+                                    {rowData?.isIncrement && (
+                                      <div className="flex justify-between items-center text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                        <span>Increment:</span>
+                                        <span className="font-semibold">+{rowData.incrementPercent}%</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               );
@@ -870,11 +972,12 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                         />
                         <Bar dataKey="net" stackId="a" fill="#22c55e" />
                         <Bar dataKey="totalDeductions" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                        <Line 
-                          type="monotone" 
-                          dataKey="gross" 
-                          stroke="#4f46e5" 
-                          strokeWidth={2} 
+                        <Line
+                          type="monotone"
+                          dataKey="gross"
+                          stroke="#4f46e5"
+                          strokeWidth={2.5}
+                          strokeDasharray="5 3"
                           dot={(props: any) => {
                             const { cx, cy, payload, key } = props;
                             if (payload.isIncrement) {
@@ -882,15 +985,14 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                                 <g key={key}>
                                   <rect x={cx - 35} y={cy - 25} width={70} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
                                   <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
-                                    ↑ Increment
+                                    {`↑ +${payload.incrementPercent}%`}
                                   </text>
                                 </g>
                               );
                             }
-                            return <g key={key}></g>;
+                            return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
                           }}
                         />
-                        <Line type="monotone" dataKey="net" stroke="#ef4444" strokeWidth={2} dot={false} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   ) : (
@@ -911,15 +1013,294 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
               </div>
 
-              {/* Total Tax Liability Card */}
-              <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex-col justify-center">
+              {/* OPTION 1: Dual Line Chart (Gross + Net, no bars) */}
+              <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    <TrendingUp size={18} className="text-purple-600" />
+                    Gross vs. Net Pay Trend — Option 1: Dual Line Chart
+                  </h3>
+                </div>
+                <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-[#4f46e5]"></div> Gross Salary
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-[#22c55e]"></div> Net Pay
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#4f46e5] font-black text-sm">↑</span> Increment
+                  </div>
+                </div>
+                <div className="h-64 w-full">
+                  {graphData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={graphData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} />
+                        <RechartsTooltip
+                          cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const gross = payload.find((p: any) => p.dataKey === 'gross')?.value || 0;
+                              const net = payload.find((p: any) => p.dataKey === 'net')?.value || 0;
+                              const rowData = payload[0]?.payload;
+                              return (
+                                <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[160px]">
+                                  <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{label}</p>
+                                  <div className="space-y-1.5">
+                                    <div className="flex justify-between items-center text-[#4f46e5]">
+                                      <span>Gross:</span>
+                                      <span className="font-semibold">{formatINR(gross as number)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[#22c55e]">
+                                      <span>Net Pay:</span>
+                                      <span className="font-semibold">{formatINR(net as number)}</span>
+                                    </div>
+                                    {rowData?.isIncrement && (
+                                      <div className="flex justify-between items-center text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                        <span>Increment:</span>
+                                        <span className="font-semibold">+{rowData.incrementPercent}%</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="gross"
+                          stroke="#4f46e5"
+                          strokeWidth={2.5}
+                          dot={(props: any) => {
+                            const { cx, cy, payload, key } = props;
+                            if (payload.isIncrement) {
+                              return (
+                                <g key={key}>
+                                  <rect x={cx - 35} y={cy - 25} width={70} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                                  <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                    {`↑ +${payload.incrementPercent}%`}
+                                  </text>
+                                </g>
+                              );
+                            }
+                            return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
+                          }}
+                        />
+                        <Line type="monotone" dataKey="net" stroke="#22c55e" strokeWidth={2.5} dot={{ r: 3, fill: '#22c55e', stroke: '#fff', strokeWidth: 1.5 }} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm italic">
+                      No salary data available for {graphYear}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* OPTION 2: Grouped Bar Chart (Gross & Net side-by-side) */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    <TrendingUp size={18} className="text-purple-600" />
+                    Gross vs. Net Pay Trend
+                  </h3>
+                  <div className="flex items-center gap-6">
+                    <select
+                      value={graphYear}
+                      onChange={(e) => setGraphYear(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                    >
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#4f46e5] rounded-sm"></div> Gross Salary
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#22c55e] rounded-sm"></div> Net Pay
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#4f46e5] font-black text-sm">↑</span> Increment
+                  </div>
+                </div>
+                <div className="h-64 w-full">
+                  {graphData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={graphData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} />
+                        <RechartsTooltip
+                          cursor={{ fill: '#f8fafc' }}
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const gross = payload.find((p: any) => p.dataKey === 'gross')?.value || 0;
+                              const net = payload.find((p: any) => p.dataKey === 'net')?.value || 0;
+                              const rowData = payload[0]?.payload;
+                              return (
+                                <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[160px]">
+                                  <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{label}</p>
+                                  <div className="space-y-1.5">
+                                    <div className="flex justify-between items-center text-[#4f46e5]">
+                                      <span>Gross:</span>
+                                      <span className="font-semibold">{formatINR(gross as number)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[#22c55e]">
+                                      <span>Net Pay:</span>
+                                      <span className="font-semibold">{formatINR(net as number)}</span>
+                                    </div>
+                                    {rowData?.isIncrement && (
+                                      <div className="flex justify-between items-center text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                        <span>Increment:</span>
+                                        <span className="font-semibold">+{rowData.incrementPercent}%</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="gross" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="net" fill="#22c55e" radius={[4, 4, 0, 0]}>
+                        </Bar>
+                        <Line
+                          type="monotone"
+                          dataKey="gross"
+                          stroke="transparent"
+                          dot={(props: any) => {
+                            const { cx, cy, payload, key } = props;
+                            if (payload.isIncrement) {
+                              return (
+                                <g key={key}>
+                                  <rect x={cx - 35} y={cy - 25} width={70} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                                  <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                    {`↑ +${payload.incrementPercent}%`}
+                                  </text>
+                                </g>
+                              );
+                            }
+                            return <g key={key}></g>;
+                          }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm italic">
+                      No salary data available for {graphYear}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* OPTION 3: Layered Area Chart (Gross & Net overlapping areas) */}
+              <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    <TrendingUp size={18} className="text-purple-600" />
+                    Gross vs. Net Pay Trend — Option 3: Layered Area Chart
+                  </h3>
+                </div>
+                <div className="flex justify-center items-center gap-6 mb-4 text-xs font-bold text-slate-600 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#c7d2fe] border border-[#4f46e5] rounded-sm"></div> Gross Salary
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#86efac] border border-[#16a34a] rounded-sm"></div> Net Pay
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#4f46e5] font-black text-sm">↑</span> Increment
+                  </div>
+                </div>
+                <div className="h-64 w-full">
+                  {graphData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={graphData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} />
+                        <RechartsTooltip
+                          cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const gross = payload.find((p: any) => p.dataKey === 'gross')?.value || 0;
+                              const net = payload.find((p: any) => p.dataKey === 'net')?.value || 0;
+                              const rowData = payload[0]?.payload;
+                              return (
+                                <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[160px]">
+                                  <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{label}</p>
+                                  <div className="space-y-1.5">
+                                    <div className="flex justify-between items-center text-[#4f46e5]">
+                                      <span>Gross:</span>
+                                      <span className="font-semibold">{formatINR(gross as number)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[#22c55e]">
+                                      <span>Net Pay:</span>
+                                      <span className="font-semibold">{formatINR(net as number)}</span>
+                                    </div>
+                                    {rowData?.isIncrement && (
+                                      <div className="flex justify-between items-center text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                        <span>Increment:</span>
+                                        <span className="font-semibold">+{rowData.incrementPercent}%</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Area type="monotone" dataKey="gross" stroke="#4f46e5" strokeWidth={2} fill="#4f46e5" fillOpacity={0.15} />
+                        <Area type="monotone" dataKey="net" stroke="#16a34a" strokeWidth={2} fill="#22c55e" fillOpacity={0.35} />
+                        <Line
+                          type="monotone"
+                          dataKey="gross"
+                          stroke="transparent"
+                          dot={(props: any) => {
+                            const { cx, cy, payload, key } = props;
+                            if (payload.isIncrement) {
+                              return (
+                                <g key={key}>
+                                  <rect x={cx - 35} y={cy - 25} width={70} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                                  <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                    {`↑ +${payload.incrementPercent}%`}
+                                  </text>
+                                </g>
+                              );
+                            }
+                            return <g key={key}></g>;
+                          }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm italic">
+                      No salary data available for {graphYear}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Total Tax Liability & TDS Tracking Card */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full flex flex-col justify-center">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                       <Calculator size={18} className="text-rose-600" />
                       Total Tax Liability
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 font-medium ml-6 border bg-slate-100 rounded px-2 py-0.5 inline-block">New Tax Regime</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium ml-6 border bg-slate-100 rounded px-2 py-0.5 inline-block">{employeeData?.tax_regime || 'New Tax Regime'}</p>
                   </div>
                   <div className="flex items-center gap-6">
                     <select
@@ -933,9 +1314,23 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="flex items-baseline gap-2 mt-2 ml-6">
-                  <span className="text-3xl font-black text-slate-800">₹1,24,500</span>
+                  <span className="text-3xl font-black text-slate-800">{formatINR(estimatedAnnualTax)}</span>
+                  <span className="text-xs font-semibold text-slate-400">estimated for the year</span>
+                </div>
+
+                <div className="ml-6 mt-4">
+                  <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                    <span>TDS Deducted (YTD): <strong className="text-slate-800">{formatINR(tdsDeductedYtd)}</strong></span>
+                    <span>{Math.round((tdsDeductedYtd / estimatedAnnualTax) * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="bg-rose-500 h-2.5 rounded-full" style={{ width: `${Math.min(100, Math.round((tdsDeductedYtd / estimatedAnnualTax) * 100))}%` }}></div>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 mt-1.5">
+                    Remaining {formatINR(estimatedAnnualTax - tdsDeductedYtd)} to be deducted over the rest of the financial year
+                  </p>
                 </div>
               </div>
 
@@ -945,7 +1340,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   <div>
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                       <CreditCard size={18} className="text-blue-600" />
-                      Outstanding Loan/Advance Balance
+                      Outstanding Loan/Advance Summary
                     </h3>
                   </div>
                 </div>
@@ -1143,7 +1538,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <DollarSign size={18} className="text-sky-500" />
-                        Reimbursement Claims
+                        Expenses & Reimbursement Summary
                       </h3>
                       <div className="flex items-center gap-6">
                         <select
@@ -1183,11 +1578,217 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center text-xs font-semibold text-slate-600">
-                      <span className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200 shadow-sm flex items-center gap-1">
-                        <span className="text-sky-600">Peak in Oct</span> — High travel claims
-                      </span>
+
+                </div>
+
+                {/* 1. Compa-Ratio / Market Benchmark */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Percent size={18} className="text-indigo-600" />
+                      Compa-Ratio / Market Benchmark
+                    </h3>
+                    <span className={`text-xs font-black px-2.5 py-1 rounded-full border ${compaRatio < 90 ? 'bg-amber-50 text-amber-700 border-amber-200' : compaRatio > 110 ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                      {compaRatio}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-6">Current CTC relative to the salary band midpoint for this designation.</p>
+                  <div className="relative mt-2 mb-2">
+                    <div className="w-full h-2 bg-gradient-to-r from-amber-200 via-emerald-200 to-sky-200 rounded-full"></div>
+                    <div className="absolute top-1/2" style={{ left: `${compaPosition}%`, transform: 'translate(-50%, -50%)' }}>
+                      <div className="w-4 h-4 rounded-full bg-indigo-600 border-2 border-white shadow-md"></div>
                     </div>
+                  </div>
+                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span>Min: {formatINR(bandMin)}</span>
+                    <span>Mid: {formatINR(bandMid)}</span>
+                    <span>Max: {formatINR(bandMax)}</span>
+                  </div>
+                  <div className="mt-auto pt-4 mt-4 border-t border-slate-100 text-xs font-semibold text-slate-600">
+                    Current CTC: <strong className="text-slate-800">{formatINR(employeeCTC)}</strong>
+                  </div>
+                </div>
+
+                {/* 2. Retention Risk Indicator */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <AlertTriangle size={18} className={RISK_LEVEL_CLASSES[retentionRiskLevel].icon} />
+                      Retention Risk Indicator
+                    </h3>
+                    <span className={`text-xs font-black px-2.5 py-1 rounded-full border ${RISK_LEVEL_CLASSES[retentionRiskLevel].badge}`}>
+                      {retentionRiskLevel} Risk
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {RETENTION_FACTORS.map((factor, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs font-semibold text-slate-600 bg-slate-50 rounded-lg px-3 py-2.5">
+                        <span className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${FACTOR_STATUS_CLASSES[factor.status]}`}></span>
+                          {factor.label}
+                        </span>
+                        <span className="text-slate-800 font-bold">{factor.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Total Rewards Summary */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Wallet size={18} className="text-emerald-600" />
+                      Total Rewards Summary
+                    </h3>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-2xl font-black text-slate-800">{formatINR(totalRewardsValue)}</span>
+                    <span className="text-xs font-semibold text-slate-400">total annual value</span>
+                  </div>
+                  <div className="w-full flex h-3 rounded-full overflow-hidden mb-4">
+                    {TOTAL_REWARDS_DATA.map((item, idx) => (
+                      <div key={idx} style={{ width: `${(item.value / totalRewardsValue) * 100}%`, backgroundColor: item.color }}></div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {TOTAL_REWARDS_DATA.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: item.color }}></span>
+                          {item.label}
+                        </span>
+                        <span className="text-slate-800 font-bold">{formatINR(item.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 4. Appraisal & Increment History */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Award size={18} className="text-amber-600" />
+                      Appraisal & Increment History
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {APPRAISAL_HISTORY.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between border-b border-slate-50 last:border-0 pb-3 last:pb-0">
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">{item.date}</p>
+                          <p className="text-xs text-slate-500">{item.rating}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black text-emerald-600">↑ {item.hikePercent}%</p>
+                          <p className="text-xs font-semibold text-slate-500">{formatINR(item.newCtc)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 6. Investment Declaration Utilization */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <FileText size={18} className="text-sky-600" />
+                      Investment Declaration Utilization
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {INVESTMENT_DECLARATION_DATA.map((item, idx) => {
+                      const pct = Math.round((item.proofSubmitted / item.declared) * 100);
+                      return (
+                        <div key={idx}>
+                          <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                            <span>{item.section}</span>
+                            <span>{formatINR(item.proofSubmitted)} / {formatINR(item.declared)}</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div className={`h-2 rounded-full ${pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-sky-500' : 'bg-amber-500'}`} style={{ width: `${Math.min(100, pct)}%` }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 7. Leave Balance & Encashment Liability */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Palmtree size={18} className="text-teal-600" />
+                      Leave Balance & Encashment Liability
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {LEAVE_BALANCE_DATA.map((item, idx) => (
+                      <div key={idx} className="bg-slate-50 rounded-lg p-3 text-center">
+                        <p className="text-lg font-black text-slate-800">{item.balance}</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-0.5">{item.type}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-600">
+                    <span>Potential Encashment Liability</span>
+                    <span className="text-slate-800 font-black text-sm">{formatINR(encashmentLiability)}</span>
+                  </div>
+                </div>
+
+                {/* 8. Statutory Compliance Snapshot */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <ShieldCheck size={18} className="text-violet-600" />
+                      Statutory Snapshot
+                    </h3>
+                      <select
+                        value={statutoryYear}
+                        onChange={(e) => setStatutoryYear(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                      >
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                      </select>
+                  </div>
+                  <div className="space-y-2">
+                    {COMPLIANCE_SNAPSHOT.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2.5">
+                        <span className="text-xs font-bold text-slate-700">{item.label}</span>
+                        <div className="flex items-center gap-3">
+                          {item.applicable && <span className="text-xs font-semibold text-slate-500">YTD: {formatINR(item.ytd)}</span>}
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${item.applicable ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                            {item.applicable ? 'Applicable' : 'Not Applicable'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 9. Peer Comparison (Department/Designation) */}
+                <div className="hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full col-span-1 lg:col-span-2">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Users size={18} className="text-fuchsia-600" />
+                      Peer Comparison — {employeeData?.designation || 'Designation'}
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {PEER_COMPARISON_DATA.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-4">
+                        <span className="w-24 text-xs font-bold text-slate-600 shrink-0">{item.name}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+                          <div
+                            className={`h-3 rounded-full ${item.name === 'You' ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                            style={{ width: `${(item.ctc / peerMaxCtc) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="w-24 text-right text-xs font-bold text-slate-800 shrink-0">{formatINR(item.ctc)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
             </div>
             </div>
