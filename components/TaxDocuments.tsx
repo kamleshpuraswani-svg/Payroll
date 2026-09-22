@@ -42,8 +42,10 @@ const FY_MONTHS = ['April', 'May', 'June', 'July', 'August', 'September', 'Octob
 export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNavigateToPlanning }) => {
   const [previewDoc, setPreviewDoc] = useState<string | null>(null);
   const [selectedFY, setSelectedFY] = useState<string>('2025-26');
+  const [fyDropdownOpen, setFyDropdownOpen] = useState(false);
 
   // Hidden for now, per request. Set to true to bring back.
+  const showTaxComputationSheet = false;
   const showInvestmentProofReport = false;
   const showTdsCertificate = false;
   const showForm12BA = false;
@@ -60,17 +62,54 @@ export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNaviga
 
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-8 animate-fade-in pb-20">
+    <div className="w-full space-y-6 animate-fade-in pb-20">
+      {/* Header Bar — title + FY filter, matches Payslips tab position/style */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm px-6 py-4 flex justify-between items-center relative">
+        <h3 className="text-base font-bold text-slate-900">Tax Documents</h3>
+        <div className="relative">
+          <button
+            onClick={() => setFyDropdownOpen((prev: boolean) => !prev)}
+            className={`flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-white transition-all cursor-pointer ${
+              fyDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20 text-slate-800' : 'border-blue-400 text-slate-700 hover:border-blue-500'
+            }`}
+          >
+            <Calendar size={16} className="text-slate-600" />
+            <span className="text-sm font-semibold text-slate-800">FY {selectedFY}</span>
+            <ChevronDown size={14} className={`transition-transform text-slate-400 ${fyDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {fyDropdownOpen && (
+            <div className="absolute right-0 top-11 z-50 w-40 bg-white border border-slate-100 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              {FINANCIAL_YEARS.map(fy => (
+                <button
+                  key={fy}
+                  onClick={() => {
+                    setSelectedFY(fy);
+                    setFyDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors cursor-pointer
+                    ${selectedFY === fy ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                  `}
+                >
+                  FY {fy}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* 2. Unified Document Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <DocCard
-          title="Tax Computation Sheet"
-          description="Detailed calculation of your projected tax for the current FY based on regime."
-          status="ready"
-          date={selectedFY === '2025-26' ? "Dec 15, 2025" : `March 31, 20${selectedFY.split('-')[1]}`}
-          onPreview={() => setPreviewDoc(`Computation Sheet FY ${selectedFY}`)}
-          monthDropdown
-        />
+        {showTaxComputationSheet && (
+          <DocCard
+            title="Tax Computation Sheet"
+            description="Detailed calculation of your projected tax for the current FY based on regime."
+            status="ready"
+            date={selectedFY === '2025-26' ? "Dec 15, 2025" : `March 31, 20${selectedFY.split('-')[1]}`}
+            onPreview={() => setPreviewDoc(`Computation Sheet FY ${selectedFY}`)}
+            monthDropdown
+          />
+        )}
         {showInvestmentProofReport && (
           <DocCard
             title="Investment Proof Report"
@@ -86,11 +125,6 @@ export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNaviga
           status="ready"
           date={selectedFY === '2025-26' ? "June 2026" : `June 12, 20${selectedFY.split('-')[1]}`}
           downloadParts={['Part A', 'Part B']}
-          fySelector={{
-            years: FINANCIAL_YEARS,
-            selectedYear: selectedFY,
-            onChange: setSelectedFY
-          }}
         />
         {showTdsCertificate && (
           <DocCard
