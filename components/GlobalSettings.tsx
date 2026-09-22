@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
    Building2,
@@ -30,6 +29,7 @@ import PFSettings from './PFSettings';
 import StatutorySettings from './StatutorySettings';
 import StatutoryBonusSettings from './StatutoryBonusSettings';
 import IncomeTaxDeclarationSettings from './IncomeTaxDeclarationSettings';
+import HRTaxSlipTemplate from './HRTaxSlipTemplate';
 import TDSSettings from './TDSSettings';
 
 import LoanAdvancesTypes from './LoanAdvancesTypes';
@@ -59,6 +59,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
       { id: 'statutory', label: 'Statutory Settings', icon: ShieldCheck },
       { id: 'pf-tds', label: 'PF & TDS Settings', icon: Landmark },
       { id: 'it-declaration', label: 'Income Tax Declaration', icon: Receipt },
+      { id: 'tax-slip', label: 'Tax Slip', icon: FileText },
       ...(userRole === 'HR_MANAGER' ? [] : [
          { id: 'pf-settings', label: 'PF Settings - DNU', icon: Shield },
          { id: 'tds-settings', label: 'TDS Settings - DNU', icon: Landmark },
@@ -86,12 +87,13 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          case 'tds-settings': return <TDSSettings />;
          case 'statutory-bonus': return <StatutoryBonusSettings />;
          case 'it-declaration': return <IncomeTaxDeclarationSettings />;
+         case 'tax-slip': return <HRTaxSlipTemplate />;
          default: return <div className="p-8">Select a module</div>;
       }
    };
 
    return (
-      <div className="flex h-[calc(100vh-64px)] bg-white overflow-hidden">
+      <div className="flex h-full min-h-0 bg-white overflow-hidden">
          {/* Left Sidebar */}
          <div className="w-64 border-r border-slate-200 h-full flex flex-col bg-white shrink-0">
             <div className="px-4 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -120,7 +122,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ userRole }) => {
          </div>
 
          {/* Right Content */}
-         <div className="flex-1 h-full overflow-y-auto flex flex-col bg-white relative">
+         <div className="flex-1 min-h-0 h-full overflow-y-auto flex flex-col bg-slate-50 relative">
             {renderContent()}
          </div>
       </div>
