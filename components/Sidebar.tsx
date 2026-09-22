@@ -204,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         },
         {
           id: 'emp-salary-breakdown',
-          label: 'Salary Slips',
+          label: 'Payroll Documents',
           viewState: ViewState.EMP_SALARY_BREAKDOWN
         },
         {
@@ -215,7 +215,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         {
           id: 'emp-tax-documents',
           label: 'Tax Documents',
-          viewState: ViewState.EMP_TAX_DOCUMENTS
+          viewState: ViewState.EMP_TAX_DOCUMENTS,
+          hidden: true
         },
         {
           id: 'emp-loans-advances',

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { SalarySlipsModule } from './SalarySlips';
+import { TaxDocumentsModule } from './TaxDocuments';
 
 // --- Constants & Types ---
 const COLORS = {
@@ -55,9 +56,9 @@ const BASE_DEDUCTIONS = [
 ];
 
 const BASE_DONUT_DATA = [
-  { name: 'Earnings', value: 980000, color: '#3B82F6' },
-  { name: 'Employee Deductions', value: 124000, color: '#F59E0B' },
-  { name: 'Employer Contributions', value: 96000, color: '#8B5CF6' },
+  { name: 'Gross Earnings', value: 980000, color: '#10B981' },
+  { name: 'Employee Deductions', value: 124000, color: '#EF4444' },
+  { name: 'Employer Contributions', value: 96000, color: '#3B82F6' },
 ];
 
 export const SalaryBreakdownModule: React.FC = () => {
@@ -74,6 +75,7 @@ export const SalaryBreakdownModule: React.FC = () => {
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [isSalaryBreakupOpen, setIsSalaryBreakupOpen] = useState(false);
   const [selectedVersionId, setSelectedVersionId] = useState('v1');
+  const [activeTab, setActiveTab] = useState<'payslips' | 'tax-documents'>('payslips');
 
   // Date State
   const [effectiveDate, setEffectiveDate] = useState('July 2025 (Current)');
@@ -270,7 +272,7 @@ export const SalaryBreakdownModule: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setIsSalaryBreakupOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-blue-400 hover:decoration-blue-600 font-medium transition-colors cursor-pointer">View Salary Breakup</button>
-            <span className="bg-emerald-50 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-100">UAN Active</span>
+            <span className="hidden bg-emerald-50 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-100">UAN Active</span>
             <button
               onClick={handleToggleVisibility}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all border border-slate-100"
@@ -284,7 +286,7 @@ export const SalaryBreakdownModule: React.FC = () => {
         {/* CTC Breakdown Bar */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Annual CTC Breakdown</span>
+            <span className="text-sm font-bold text-slate-700">Annual CTC Breakdown</span>
             <span className="text-2xl font-black text-slate-900">
               {showValues ? `₹${totalCTC.toLocaleString()}` : '₹ ••••••'}
             </span>
@@ -299,7 +301,7 @@ export const SalaryBreakdownModule: React.FC = () => {
               <div key={d.name} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                 <span className="text-xs text-slate-600">
-                  {d.name}
+                  {d.name} {showValues ? `₹${d.value.toLocaleString()}` : '₹ ••••••'}
                 </span>
               </div>
             ))}
@@ -307,9 +309,35 @@ export const SalaryBreakdownModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Salary Slips Section */}
+      {/* Payroll Documents Section with Tabs */}
       <div className="flex-1 min-h-0">
-        <SalarySlipsModule showValues={showValues} />
+        {/* Tab Bar — full-width white block with compact indigo buttons */}
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-5 mb-4 w-full shadow-sm">
+          <button
+            onClick={() => setActiveTab('payslips')}
+            className={`px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'payslips'
+                ? 'bg-indigo-600 text-white border border-indigo-600 shadow-sm'
+                : 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50'
+            }`}
+          >
+            Payslips
+          </button>
+          <button
+            onClick={() => setActiveTab('tax-documents')}
+            className={`px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'tax-documents'
+                ? 'bg-indigo-600 text-white border border-indigo-600 shadow-sm'
+                : 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50'
+            }`}
+          >
+            Tax Documents
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'payslips' && <SalarySlipsModule showValues={showValues} />}
+        {activeTab === 'tax-documents' && <TaxDocumentsModule />}
       </div>
 
       {/* Password / Two-Factor Unlock Modal */}

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 
 import {
@@ -8,7 +8,9 @@ import {
   TrendingUp,
   TrendingDown,
   CreditCard,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
@@ -91,6 +93,47 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
   const [isLoading, setIsLoading] = useState(true);
   const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
   const showHeaderDownloadButton = false; // Hidden for now, per request. Set to true to bring it back.
+
+  // Date Picker Popover State
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState<number>(2026);
+  const [pickerMonth, setPickerMonth] = useState<string>('Mar');
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setIsDatePickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleApplyFilter = () => {
+    const yrStr = pickerYear.toString();
+    setSelectedYear(yrStr);
+    if (pickerMonth) {
+      const key = `${pickerMonth} ${yrStr}`;
+      if (payslipsMap[key]) {
+        setActiveMonth(key);
+      } else {
+        const availableInYear = Object.keys(payslipsMap).filter(k => k.endsWith(yrStr));
+        if (availableInYear.length > 0) {
+          setActiveMonth(availableInYear[0]);
+        }
+      }
+    }
+    setIsDatePickerOpen(false);
+  };
+
+  const handleClearFilter = () => {
+    setPickerYear(2026);
+    setPickerMonth('Mar');
+    setSelectedYear('2026');
+    setActiveMonth('Mar 2026');
+    setIsDatePickerOpen(false);
+  };
 
   useEffect(() => {
     fetchPayslips();
@@ -226,270 +269,169 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
   };
 
   return (
-    <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-300 pb-10 h-full">
+    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden animate-in fade-in duration-300">
+      {/* Top Header Bar */}
+      <div className="bg-white px-6 py-4 flex justify-between items-center border-b border-slate-100 relative">
+        <h3 className="text-base font-bold text-slate-900">Payslips</h3>
 
-      {/* LEFT: INTERACTIVE TIMELINE */}
-      <div className="col-span-3 flex flex-col h-full">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex-1">
-           <div className="flex justify-between items-center mb-6">
-             <h3 className="text-xl font-bold text-slate-900">Payslips</h3>
-             <select 
-               value={selectedYear}
-               onChange={handleYearChange}
-               className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none cursor-pointer"
-             >
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-             </select>
-           </div>
-           
-           <div className="space-y-4">
-              {availableMonths.length > 0 ? availableMonths.map((m) => (
-                <button 
-                  key={m}
-                  onClick={() => setActiveMonth(m)}
-                  className={`w-full group relative pl-8 py-3 pr-4 rounded-2xl flex items-center justify-between transition-all border cursor-pointer
-                    ${activeMonth === m ? 'bg-purple-50 border-purple-200 shadow-sm' : 'hover:bg-slate-50 border-transparent'}
-                  `}
-                >
-                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full transition-all
-                    ${activeMonth === m ? 'bg-purple-600 ring-4 ring-purple-100' : 'bg-slate-200 group-hover:bg-slate-300'}
-                  `}></div>
-                  
-                  <div className="text-left">
-                    <p className={`text-sm font-bold ${activeMonth === m ? 'text-purple-900' : 'text-slate-600'}`}>{m}</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Credited {payslipsMap[m]?.creditedDate || 'N/A'}</p>
-                  </div>
+        {/* Date Filter Dropdown Trigger & Popover */}
+        <div className="relative" ref={datePickerRef}>
+          <button
+            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+            className={`flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-white transition-all cursor-pointer ${
+              isDatePickerOpen ? 'border-blue-500 ring-2 ring-blue-500/20 text-slate-800' : 'border-blue-400 text-slate-700 hover:border-blue-500'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span className="text-sm font-semibold text-slate-800">{selectedYear}</span>
+          </button>
 
-                  <div className="text-right flex flex-col items-end">
-                     <p className={`text-sm font-black ${activeMonth === m ? 'text-purple-900' : 'text-slate-800'}`}>
-                        {payslipsMap[m] ? formatCurrency(payslipsMap[m].netPay) : '--'}
-                     </p>
-                  </div>
-                </button>
-              )) : (
-                <div className="text-center py-6 text-xs text-slate-400 font-medium italic">
-                  No payslips found for {selectedYear}
-                </div>
-              )}
-           </div>
-        </div>
-      </div>
-
-      {/* RIGHT: MAIN PAYSLIP CONTENT */}
-      {slip && (
-      <div className="col-span-9 flex flex-col gap-6 h-full">
-
-        {/* MERGED: Header Actions & Employee Info */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-           
-           {/* Top Section: Company Info & Actions */}
-           <div className="p-8 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl">C</div>
-                 <div>
-                    <h2 className="text-lg font-black text-slate-900">CollabCRM Systems Pvt Ltd</h2>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Tech Park, Bangalore - 560103</p>
-                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                 {showHeaderDownloadButton && (
-                    <button
-                      onClick={handleDownloadPDF}
-                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 h-12 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
-                    >
-                      <Download size={18}/> Download
-                    </button>
-                 )}
-              </div>
-           </div>
-
-           <div className="h-px bg-slate-100 mx-8"></div>
-
-           {/* Bottom Section: Employee Info Grid */}
-           <div className="p-8">
-              <div className="grid grid-cols-7 gap-6">
-                 <InfoItem label="Employee Name" value="Priya Sharma" />
-                 <InfoItem label="Employee Code" value="TF00123" />
-                 <InfoItem label="Designation" value="Senior Engineer" />
-                 <InfoItem label="Department" value="Engineering" />
-                 <InfoItem label="Total Working Days" value={`${slip.totalWorkingDays} Days`} />
-                 <InfoItem label="Payable Days" value={`${slip.processedDays} Days`} />
-                 <InfoItem label="LOP Days" value={`${lopDays} Days`} isWarning={lopDays > 0} />
-              </div>
-           </div>
-        </div>
-
-        {/* Payslip Generated Notice */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center justify-center text-center flex-1">
-           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
-              <FileCheck size={24} />
-           </div>
-           <h3 className="text-sm font-black text-slate-900">Payslip generated for {slip.month} {slip.year}</h3>
-           <button
-              onClick={handleDownloadPDF}
-              className="flex items-center gap-2 mt-5 bg-blue-600 hover:bg-blue-700 text-white px-6 h-12 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
-           >
-              <Download size={18} /> Download Payslip
-           </button>
-        </div>
-
-      </div>
-      )}
-
-      {/* Payslip Detail Modal */}
-      {isPayslipModalOpen && slip && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100">
-              <div>
-                <h3 className="text-base font-black text-slate-900">Payslip - {slip.month} {slip.year}</h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">CollabCRM Systems Pvt Ltd</p>
-              </div>
-              <div className="flex items-center gap-3">
+          {/* Date Picker Popover */}
+          {isDatePickerOpen && (
+            <div className="absolute right-0 top-11 z-50 w-72 bg-white rounded-2xl border border-slate-100 shadow-2xl p-5 animate-in fade-in zoom-in-95 duration-150">
+              {/* Year Navigation Header */}
+              <div className="flex items-center justify-between mb-5 px-1">
                 <button
-                  onClick={handleDownloadPDF}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-all active:scale-95"
+                  type="button"
+                  onClick={() => setPickerYear(prev => prev - 1)}
+                  className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                 >
-                  <Download size={16}/> Download as PDF
+                  <ChevronLeft size={18} />
                 </button>
-                <button onClick={() => setIsPayslipModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">
-                  <X size={20}/>
+                <span className="text-xl font-bold text-slate-900">{pickerYear}</span>
+                <button
+                  type="button"
+                  onClick={() => setPickerYear(prev => prev + 1)}
+                  className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <ChevronRight size={18} />
                 </button>
+              </div>
+
+              {/* Month Selector Grid */}
+              <div className="grid grid-cols-4 gap-y-4 gap-x-2 mb-6">
+                {MONTH_ORDER.map((m) => {
+                  const key = `${m} ${pickerYear}`;
+                  const hasData = !!payslipsMap[key];
+                  const isSelected = pickerMonth === m;
+
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPickerMonth(m)}
+                      className={`py-1.5 rounded-lg text-sm font-medium transition-all text-center ${
+                        isSelected
+                          ? 'text-indigo-600 font-bold bg-indigo-50/80'
+                          : hasData
+                          ? 'text-slate-700 hover:text-indigo-600 hover:bg-slate-50 cursor-pointer'
+                          : 'text-slate-300 font-normal cursor-pointer hover:bg-slate-50'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Action Footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleClearFilter}
+                  className="text-xs font-semibold text-indigo-500 hover:text-indigo-700 cursor-pointer transition-colors bg-transparent border-none p-0"
+                >
+                  Clear
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsDatePickerOpen(false)}
+                    className="px-4 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyFilter}
+                    className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                  >
+                    Apply
+                  </button>
+                </div>
               </div>
             </div>
-
-            {/* Modal Body */}
-            <div className="overflow-y-auto">
-
-              {/* Earnings */}
-              <div className="group">
-                <div className="w-full px-8 py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
-                      <TrendingUp size={16}/>
-                    </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Earnings</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-emerald-600">Total: {formatCurrency(totalEarnings)}</span>
-                  </div>
-                </div>
-                <div className="px-8 pb-6">
-                  <table className="w-full text-left">
-                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                      <tr>
-                        <th className="py-4">Component</th>
-                        <th className="py-4 text-right">Amount (INR)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {slip.earnings.map((e) => (
-                        <tr key={e.name} className="hover:bg-slate-50/50 transition-colors group">
-                          <td className="py-4 text-sm font-medium text-slate-700">{e.name}</td>
-                          <td className="py-4 text-right font-black text-slate-900">{formatCurrency(e.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="h-px bg-slate-100 mx-8"></div>
-
-              {/* Deductions */}
-              <div className="group">
-                <div className="w-full px-8 py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
-                      <TrendingDown size={16}/>
-                    </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Deductions</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-amber-600">Total: {formatCurrency(totalDeductions)}</span>
-                  </div>
-                </div>
-                <div className="px-8 pb-6">
-                  <table className="w-full text-left">
-                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                      <tr>
-                        <th className="py-4">Component</th>
-                        <th className="py-4 text-right">Amount (INR)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {slip.deductions.map((d) => (
-                        <tr key={d.name} className="hover:bg-slate-50/50 transition-colors group">
-                          <td className="py-4 text-sm font-medium text-slate-700">{d.name}</td>
-                          <td className="py-4 text-right font-black text-slate-900 text-red-400">- {formatCurrency(d.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="h-px bg-slate-100 mx-8"></div>
-
-              {/* Reimbursements */}
-              <div className="group">
-                <div className="w-full px-8 py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gold/10 text-gold rounded-lg flex items-center justify-center">
-                      <CreditCard size={16}/>
-                    </div>
-                    <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Reimbursements</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-gold">Total: {formatCurrency(totalReimbursements)}</span>
-                  </div>
-                </div>
-                <div className="px-8 pb-6">
-                  <table className="w-full text-left">
-                    <thead className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                      <tr>
-                        <th className="py-4">Claim Detail</th>
-                        <th className="py-4 text-right">Amount (INR)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {slip.reimbursements.length > 0 ? slip.reimbursements.map((r) => (
-                        <tr key={r.name} className="hover:bg-slate-50/50 transition-colors group">
-                          <td className="py-4 text-sm font-medium text-slate-700">{r.name}</td>
-                          <td className="py-4 text-right font-black text-slate-900">{formatCurrency(r.amount)}</td>
-                        </tr>
-                      )) : (
-                        <tr>
-                          <td className="py-8 text-center text-slate-400 text-xs italic" colSpan={2}>No reimbursements processed in this cycle.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Net Pay Footer */}
-              <div className="bg-blue-600 p-6 text-white shadow-2xl relative overflow-hidden flex items-center justify-between">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-48 translate-x-48"></div>
-                <div className="relative z-10 space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 opacity-80">Final Payout Amount</p>
-                  <h2 className="text-4xl font-black tracking-tighter">{formatCurrency(slip.netPay)}</h2>
-                  <p className="text-xs font-medium italic text-blue-100 opacity-60">({showValues ? slip.netPayWords : '•••••••••••••••••••••'})</p>
-                </div>
-              </div>
-
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
+      {/* Content Canvas */}
+      <div className="p-6 bg-slate-50/80 min-h-[220px] flex justify-between items-start gap-6">
+        
+        {/* Left: Month Cards */}
+        <div className="flex flex-wrap gap-4 items-start">
+          {availableMonths.length > 0 ? availableMonths.map((m) => (
+            <button
+              key={m}
+              onClick={() => setActiveMonth(m)}
+              className={`flex flex-col items-start p-4 rounded-lg border transition-all cursor-pointer w-48 text-left ${
+                activeMonth === m
+                  ? 'bg-white border-blue-500 ring-1 ring-blue-500/20 shadow-xs'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs'
+              }`}
+            >
+              <div className={`w-9 h-9 rounded-md flex items-center justify-center mb-3 ${
+                activeMonth === m ? 'bg-indigo-600 text-white' : 'bg-indigo-600/90 text-white'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-slate-800">{m}</span>
+            </button>
+          )) : (
+            <div className="text-center py-6 text-xs text-slate-400 font-medium italic">
+              No payslips found for {selectedYear}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Selected Payslip Summary Box */}
+        {slip && (
+          <div className="w-80 bg-white rounded-xl border border-slate-200/70 shadow-sm p-5 shrink-0 ml-auto">
+            <h3 className="text-base font-bold text-slate-900 mb-4">{activeMonth}</h3>
+
+            <div className="space-y-2 mb-4">
+              <div className="bg-slate-50 rounded-lg px-4 py-3 flex justify-between items-center">
+                <span className="text-xs text-slate-500 font-medium">Total Working Days</span>
+                <span className="text-xs font-bold text-slate-900">{slip.totalWorkingDays}</span>
+              </div>
+              <div className="bg-slate-50 rounded-lg px-4 py-3 flex justify-between items-center">
+                <span className="text-xs text-slate-500 font-medium">Payable Days</span>
+                <span className="text-xs font-bold text-slate-900">{slip.processedDays}</span>
+              </div>
+              <div className="bg-slate-50 rounded-lg px-4 py-3 flex justify-between items-center">
+                <span className="text-xs text-slate-500 font-medium">LOP Days</span>
+                <span className={`text-xs font-bold ${lopDays > 0 ? 'text-red-500' : 'text-slate-900'}`}>{lopDays}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDownloadPDF}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-semibold text-xs shadow-sm shadow-indigo-100 transition-all active:scale-[0.99] cursor-pointer"
+            >
+              <Download size={15} /> Download payslip
+            </button>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };
+
 
 /* --- Visual UI Atoms --- */
 

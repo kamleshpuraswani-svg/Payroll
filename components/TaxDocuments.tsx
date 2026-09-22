@@ -42,7 +42,6 @@ const FY_MONTHS = ['April', 'May', 'June', 'July', 'August', 'September', 'Octob
 export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNavigateToPlanning }) => {
   const [previewDoc, setPreviewDoc] = useState<string | null>(null);
   const [selectedFY, setSelectedFY] = useState<string>('2025-26');
-  const [fyDropdownOpen, setFyDropdownOpen] = useState(false);
 
   // Hidden for now, per request. Set to true to bring back.
   const showInvestmentProofReport = false;
@@ -62,46 +61,6 @@ export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNaviga
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-8 animate-fade-in pb-20">
-      {/* 1. Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Tax Documents</h2>
-          <p className="text-sm text-slate-500 font-medium mt-1">Self-service portal for statutory forms and tax proofs.</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {/* Financial Year Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setFyDropdownOpen((prev: boolean) => !prev)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-700 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
-            >
-              <Calendar size={14} />
-              FY {selectedFY}
-              <ChevronDown size={14} className={`transition-transform ${fyDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {fyDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
-                {FINANCIAL_YEARS.map(fy => (
-                  <button
-                    key={fy}
-                    onClick={() => {
-                      setSelectedFY(fy);
-                      setFyDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-colors
-                      ${selectedFY === fy ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
-                    `}
-                  >
-                    FY {fy}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* 2. Unified Document Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <DocCard
@@ -123,10 +82,15 @@ export const TaxDocumentsModule: React.FC<TaxDocumentsModuleProps> = ({ onNaviga
         )}
         <DocCard
           title="Form 16 (Part A & B)"
-          description="Consolidated salary TDS certificate. Available after the end of the financial year."
+          description="Consolidated salary TDS certificate. Released once per financial year after it ends."
           status="ready"
           date={selectedFY === '2025-26' ? "June 2026" : `June 12, 20${selectedFY.split('-')[1]}`}
           downloadParts={['Part A', 'Part B']}
+          fySelector={{
+            years: FINANCIAL_YEARS,
+            selectedYear: selectedFY,
+            onChange: setSelectedFY
+          }}
         />
         {showTdsCertificate && (
           <DocCard
@@ -196,7 +160,7 @@ const SummaryStat = ({ label, value, sub, highlight }: { label: string, value: s
   </div>
 );
 
-const DocCard = ({ title, description, status, date, onPreview, hidePreview, downloadParts, monthDropdown }: { title: string, description: string, status: 'ready' | 'upcoming' | 'na' | 'link', date?: string, onPreview?: () => void, hidePreview?: boolean, downloadParts?: string[], monthDropdown?: boolean }) => {
+const DocCard = ({ title, description, status, date, onPreview, hidePreview, downloadParts, monthDropdown, fySelector }: { title: string, description: string, status: 'ready' | 'upcoming' | 'na' | 'link', date?: string, onPreview?: () => void, hidePreview?: boolean, downloadParts?: string[], monthDropdown?: boolean, fySelector?: { years: string[], selectedYear: string, onChange: (fy: string) => void } }) => {
   const [selectedMonth, setSelectedMonth] = useState(FY_MONTHS[0]);
 
   const handleDownload = (partLabel?: string) => {
@@ -221,6 +185,20 @@ const DocCard = ({ title, description, status, date, onPreview, hidePreview, dow
              <div className={`p-3 rounded-lg ${(status === 'ready' || downloadParts) ? 'bg-blue-50 text-blue-600 shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
                 <FileText size={24} />
              </div>
+             {fySelector && (
+                <div className="relative">
+                   <select
+                      value={fySelector.selectedYear}
+                      onChange={(e) => fySelector.onChange(e.target.value)}
+                      className="pl-3 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs font-black uppercase tracking-widest text-slate-700 bg-white appearance-none focus:outline-none focus:border-blue-500 cursor-pointer"
+                   >
+                      {fySelector.years.map(fy => (
+                         <option key={fy} value={fy}>FY {fy}</option>
+                      ))}
+                   </select>
+                   <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+             )}
              {isLocked && (
                 <div className="flex flex-col items-end">
                   <span className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full border border-slate-200"><Clock size={12}/> Post-FY End</span>
