@@ -19,10 +19,10 @@ import {
   Calculator,
   Banknote,
   PieChart,
-  Receipt,
   FileCheck,
   MessageSquare,
-  Database
+  Database,
+  UploadCloud
 } from 'lucide-react';
 import { ViewState, UserRole } from '../types';
 
@@ -166,6 +166,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       viewState: ViewState.CHALLAN
     },
     {
+      id: 'hr-upload-form16',
+      label: 'Upload Form-16',
+      icon: <UploadCloud size={20} />,
+      viewState: ViewState.HR_UPLOAD_FORM16
+    },
+    {
       id: 'hr-payroll-reports',
       label: 'Payroll Reports',
       icon: <PieChart size={20} />,
@@ -204,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         },
         {
           id: 'emp-salary-breakdown',
-          label: 'Payroll Documents',
+          label: 'Payslips',
           viewState: ViewState.EMP_SALARY_BREAKDOWN
         },
         {

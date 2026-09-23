@@ -309,35 +309,9 @@ export const SalaryBreakdownModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Payroll Documents Section with Tabs */}
+      {/* Payslips Section */}
       <div className="flex-1 min-h-0">
-        {/* Tab Bar — full-width white block with compact indigo buttons */}
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-5 mb-4 w-full shadow-sm">
-          <button
-            onClick={() => setActiveTab('payslips')}
-            className={`px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === 'payslips'
-                ? 'bg-indigo-600 text-white border border-indigo-600 shadow-sm'
-                : 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50'
-            }`}
-          >
-            Payslips
-          </button>
-          <button
-            onClick={() => setActiveTab('tax-documents')}
-            className={`px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === 'tax-documents'
-                ? 'bg-indigo-600 text-white border border-indigo-600 shadow-sm'
-                : 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50'
-            }`}
-          >
-            Tax Documents
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'payslips' && <SalarySlipsModule showValues={showValues} />}
-        {activeTab === 'tax-documents' && <TaxDocumentsModule />}
+        <SalarySlipsModule showValues={showValues} />
       </div>
 
       {/* Password / Two-Factor Unlock Modal */}

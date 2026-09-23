@@ -10,7 +10,10 @@ import {
   CreditCard,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText,
+  ChevronDown,
+  Calendar
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { generateTaxSlipPDF } from './taxSlipGenerator';
@@ -93,7 +96,31 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
   const [payslipsMap, setPayslipsMap] = useState<Record<string, PayslipData>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
+  const [isForm16ModalOpen, setIsForm16ModalOpen] = useState(false);
+  const [form16FY, setForm16FY] = useState('2025-26');
   const showHeaderDownloadButton = false; // Hidden for now, per request. Set to true to bring it back.
+
+  const handleDownloadForm16Part = (part: string) => {
+    const docTitle = `Form 16 - ${part} (FY ${form16FY})`;
+    const content = `COLLABCRM SYSTEMS PVT LTD
+FORM 16 (${part.toUpperCase()})
+Assessment Year: 2026-27 | Financial Year: ${form16FY}
+--------------------------------------------------
+Employee: Priya Sharma (TF00123)
+Designation: Senior Engineer
+PAN: ABCDE1234F
+Gross Salary: ₹ 12,00,000.00
+Total TDS Deducted: ₹ 1,01,800.00
+--------------------------------------------------
+Certified that this is a valid TDS certificate generated for ${part}.`;
+    const element = document.createElement("a");
+    const file = new Blob([content], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${docTitle.replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
   // Date Picker Popover State
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -289,19 +316,30 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
       <div className="bg-white px-6 py-4 flex justify-between items-center border-b border-slate-100 relative">
         <h3 className="text-base font-bold text-slate-900">Payslips</h3>
 
-        {/* Date Filter Dropdown Trigger & Popover */}
-        <div className="relative" ref={datePickerRef}>
+        <div className="flex items-center gap-3">
+          {/* Download Form-16 Button */}
           <button
-            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-            className={`flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-white transition-all cursor-pointer ${
-              isDatePickerOpen ? 'border-blue-500 ring-2 ring-blue-500/20 text-slate-800' : 'border-blue-400 text-slate-700 hover:border-blue-500'
-            }`}
+            type="button"
+            onClick={() => setIsForm16ModalOpen(true)}
+            className="flex items-center gap-2 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors cursor-pointer shadow-xs"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span className="text-sm font-semibold text-slate-800">{selectedYear}</span>
+            <Download size={15} />
+            <span>Download Form-16</span>
           </button>
+
+          {/* Date Filter Dropdown Trigger & Popover */}
+          <div className="relative" ref={datePickerRef}>
+            <button
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className={`flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-white transition-all cursor-pointer ${
+                isDatePickerOpen ? 'border-blue-500 ring-2 ring-blue-500/20 text-slate-800' : 'border-blue-400 text-slate-700 hover:border-blue-500'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span className="text-sm font-semibold text-slate-800">{selectedYear}</span>
+            </button>
 
           {/* Date Picker Popover */}
           {isDatePickerOpen && (
@@ -381,6 +419,7 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
           )}
         </div>
       </div>
+    </div>
 
       {/* Content Canvas */}
       <div className="p-6 bg-slate-50/80 min-h-[220px] flex justify-between items-start gap-6">
@@ -391,47 +430,20 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
             <div
               key={m}
               onClick={() => setActiveMonth(m)}
-              className={`flex flex-col items-start p-4 rounded-xl border transition-all cursor-pointer w-52 sm:w-56 text-left ${
+              className={`flex items-center gap-3 p-4 rounded-xl border transition-all cursor-pointer w-48 sm:w-52 text-left ${
                 activeMonth === m
                   ? 'bg-white border-blue-500 ring-1 ring-blue-500/20 shadow-sm'
                   : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs'
               }`}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
-                  activeMonth === m ? 'bg-indigo-600 text-white' : 'bg-indigo-600/90 text-white'
-                }`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </div>
-                <span className="text-sm font-bold text-slate-800">{m}</span>
+              <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
+                activeMonth === m ? 'bg-indigo-600 text-white' : 'bg-indigo-600/90 text-white'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
               </div>
-
-              <div className="flex flex-col gap-2 mt-1 w-full">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveMonth(m);
-                    handleDownloadPayslipForMonth(m);
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Download size={13} /> Download Payslip
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveMonth(m);
-                    handleDownloadTaxSlipForMonth(m);
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                >
-                  <Download size={13} /> Download Tax Slip
-                </button>
-              </div>
+              <span className="text-sm font-bold text-slate-800">{m}</span>
             </div>
           )) : (
             <div className="text-center py-6 text-xs text-slate-400 font-medium italic">
@@ -476,6 +488,65 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
         )}
 
       </div>
+
+      {/* Form-16 Dialog Box Modal */}
+      {isForm16ModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 p-8 relative overflow-hidden animate-in zoom-in-95 duration-150">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setIsForm16ModalOpen(false)}
+              className="absolute right-4 top-4 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            {/* DocCard exact structure */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="p-3.5 rounded-xl bg-blue-50 text-blue-600 shadow-xs">
+                  <FileText size={26} />
+                </div>
+                <div className="mr-8">
+                  <div className="relative">
+                    <select
+                      value={form16FY}
+                      onChange={(e) => setForm16FY(e.target.value)}
+                      className="pl-3 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs font-black uppercase tracking-widest text-slate-700 bg-white appearance-none focus:outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      {['2025-26', '2024-25', '2023-24', '2022-23'].map(fy => (
+                        <option key={fy} value={fy}>FY {fy}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-black text-slate-900">Form 16 (Part A & B)</h4>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed mt-2">
+                  Consolidated salary TDS certificate. Released once per financial year after it ends.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-4">
+              {['Part A', 'Part B'].map((part) => (
+                <button
+                  key={part}
+                  type="button"
+                  onClick={() => handleDownloadForm16Part(part)}
+                  className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-blue-100 cursor-pointer"
+                >
+                  <Download size={18} /> {part}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

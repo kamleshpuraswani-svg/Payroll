@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { formatAuditUser } from './auditUtils';
 import {
@@ -631,8 +631,22 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
   // Graph State
   const [graphYear, setGraphYear] = useState('2025');
-  const [breakdownYear, setBreakdownYear] = useState('2025');
+  const [breakdownYear, setBreakdownYear] = useState('Nov 2025');
   const [taxYear, setTaxYear] = useState('2025');
+
+  const currentBreakdownData = useMemo(() => {
+    const row = MOCK_HISTORY_ROWS.find(r => r.period === breakdownYear);
+    if (row) {
+      const employeeDeductions = (row.deductions?.pf || 0) + (row.deductions?.tds || 0) + (row.deductions?.others || 0);
+      const employerDeductions = Math.round(row.gross * 0.06);
+      return [
+        { name: 'Gross Earnings', value: row.gross, fill: '#4f46e5' },
+        { name: 'Employee Deductions', value: employeeDeductions, fill: '#ef4444' },
+        { name: 'Employer Deductions', value: employerDeductions, fill: '#f97316' }
+      ];
+    }
+    return SALARY_BREAKDOWN_DATA;
+  }, [breakdownYear]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -1536,9 +1550,11 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                         onChange={(e) => setBreakdownYear(e.target.value)}
                         className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
                       >
-                        <option value="2025">2025</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
+                        {MOCK_HISTORY_ROWS.slice(0, 10).map((row) => (
+                          <option key={row.id} value={row.period}>
+                            {row.period}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1547,7 +1563,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                     <ResponsiveContainer width="100%" height={240}>
                       <RechartsPieChart>
                         <Pie
-                          data={SALARY_BREAKDOWN_DATA}
+                          data={currentBreakdownData}
                           cx="50%"
                           cy="50%"
                           innerRadius={65}
@@ -1556,7 +1572,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                           dataKey="value"
                           stroke="none"
                         >
-                          {SALARY_BREAKDOWN_DATA.map((entry, index) => (
+                          {currentBreakdownData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ))}
                         </Pie>
@@ -1577,7 +1593,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
                   {/* Legends */}
                   <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3 mt-4 text-[10px] font-bold text-slate-600">
-                    {SALARY_BREAKDOWN_DATA.map((entry, idx) => (
+                    {currentBreakdownData.map((entry, idx) => (
                       <div key={idx} className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.fill }}></div> 
                         {entry.name}
