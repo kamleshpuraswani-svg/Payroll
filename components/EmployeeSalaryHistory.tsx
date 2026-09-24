@@ -1470,16 +1470,22 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                           if (active && payload && payload.length) {
                             const row = payload[0].payload;
                             return (
-                              <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[160px]">
+                              <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[230px]">
                                 <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{row.period}</p>
-                                <div className="flex justify-between items-center text-[#4f46e5]">
-                                  <span>Salary:</span>
-                                  <span className="font-semibold">{formatINR(row.gross)}</span>
+                                <div className="flex justify-between items-center gap-4 text-[#4f46e5]">
+                                  <span className="whitespace-nowrap">Monthly CTC:</span>
+                                  <span className="font-semibold whitespace-nowrap">{formatINR(row.gross)}</span>
                                 </div>
                                 {row.isIncrement && (
-                                  <div className="flex justify-between items-center text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
-                                    <span>Increment:</span>
-                                    <span className="font-semibold">+{formatINR(row.incrementAmount)}</span>
+                                  <div className="flex justify-between items-center gap-4 text-[#4f46e5] pt-1.5 mt-1.5 border-t border-slate-100">
+                                    <span className="whitespace-nowrap">Revised Monthly CTC:</span>
+                                    <span className="font-semibold whitespace-nowrap">{formatINR(row.gross)}</span>
+                                  </div>
+                                )}
+                                {row.isIncrement && (
+                                  <div className="flex justify-between items-center gap-4 text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                    <span className="whitespace-nowrap">Monthly Increment:</span>
+                                    <span className="font-semibold whitespace-nowrap">+{formatINR(row.incrementAmount)}</span>
                                   </div>
                                 )}
                               </div>
