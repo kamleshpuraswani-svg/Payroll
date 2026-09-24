@@ -1555,7 +1555,7 @@ const HRDashboard: React.FC = () => {
                 {/* 2. Charts & Analytics */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Monthly Trend */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="lg:col-span-3 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="font-bold text-slate-800">Monthly Payroll Expense Trend</h3>
@@ -1638,51 +1638,6 @@ const HRDashboard: React.FC = () => {
                                     <span className="text-xs font-medium text-slate-500">{d.month}</span>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-
-                    {/* Department Breakdown */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 className="font-bold text-slate-800">Dept. Payroll Cost</h3>
-                                <p className="text-xs text-slate-500">Distribution by department</p>
-                            </div>
-                            <div className="p-2 bg-slate-50 rounded-lg text-slate-600">
-                                <PieChart size={18} />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex items-center justify-center relative">
-                            {/* CSS Conic Gradient Donut */}
-                            <div
-                                className="w-40 h-40 rounded-full"
-                                style={{
-                                    background: 'conic-gradient(#6366f1 0% 45%, #ec4899 45% 70%, #10b981 70% 90%, #f59e0b 90% 100%)'
-                                }}
-                            >
-                                <div className="w-28 h-28 bg-white rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
-                                    <span className="text-2xl font-bold text-slate-800">100%</span>
-                                    <span className="text-[10px] text-slate-400">Total</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-6 space-y-2">
-                            <div className="flex justify-between text-xs">
-                                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-indigo-500 rounded-full"></span> Engineering</div>
-                                <span className="font-medium text-slate-700">45%</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-pink-500 rounded-full"></span> Sales & Mktg</div>
-                                <span className="font-medium text-slate-700">25%</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Operations</div>
-                                <span className="font-medium text-slate-700">20%</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Others</div>
-                                <span className="font-medium text-slate-700">10%</span>
-                            </div>
                         </div>
                     </div>
                 </div>

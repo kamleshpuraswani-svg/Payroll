@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import HRDashboard from './components/HRDashboard';
+import PayrollDashboardNew from './components/PayrollDashboardNew';
 import Workforce from './components/Workforce';
 import DocumentsManager from './components/DocumentsManager';
 import TaxDeclarationsManagement from './components/TaxDeclarationsManagement';
@@ -247,6 +248,7 @@ const App: React.FC = () => {
             {userRole === 'HR_MANAGER' && (
               <>
                 {currentView === ViewState.HR_DASHBOARD && <HRDashboard />}
+                {currentView === ViewState.HR_DASHBOARD_NEW && <PayrollDashboardNew />}
                 {currentView === ViewState.HR_EMPLOYEES && <Workforce userRole={userRole} />}
                 {currentView === ViewState.TAX_DECLARATIONS && <TaxDeclarationsManagement />}
                 {currentView === ViewState.HR_PAYROLL_RUN && <PayrollManager userRole={userRole} />}
@@ -333,7 +335,7 @@ const App: React.FC = () => {
 
             {/* Fallback for Work In Progress Views */}
             {((userRole === 'SUPER_ADMIN' && ![ViewState.DASHBOARD, ViewState.PAYROLL, ViewState.TAX, ViewState.SALARY, ViewState.TEMPLATE_SETUP].includes(currentView)) ||
-              (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.HR_ADD_EXPENSE, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS, ViewState.HR_OPERATIONAL_CONFIG, ViewState.CHALLAN, ViewState.HR_UPLOAD_FORM16, ViewState.HR_PAYROLL_REPORTS, ViewState.HR_ROLES_PERMISSIONS].includes(currentView)) ||
+              (userRole === 'HR_MANAGER' && ![ViewState.HR_DASHBOARD, ViewState.HR_DASHBOARD_NEW, ViewState.HR_EMPLOYEES, ViewState.TAX_DECLARATIONS, ViewState.HR_PAYROLL_RUN, ViewState.PAYROLL_APPROVAL, ViewState.HR_DOCUMENTS, ViewState.HR_EXPENSES, ViewState.HR_ADD_EXPENSE, ViewState.LOANS_ADVANCES, ViewState.HR_SALARY_COMPONENTS, ViewState.SETTINGS, ViewState.HR_OPERATIONAL_CONFIG, ViewState.CHALLAN, ViewState.HR_UPLOAD_FORM16, ViewState.HR_PAYROLL_REPORTS, ViewState.HR_ROLES_PERMISSIONS].includes(currentView)) ||
               (userRole === 'EMPLOYEE' && ![ViewState.EMP_OVERVIEW, ViewState.EMP_PAYROLL_CORNER, ViewState.EMP_TAX_PLANNING, ViewState.EMP_REIMBURSEMENTS, ViewState.EMP_PAYSLIPS, ViewState.EMP_SALARY_BREAKDOWN, ViewState.EMP_TAX_DOCUMENTS, ViewState.EMP_LOANS_ADVANCES].includes(currentView))) && (
                 <div className="flex flex-col items-center justify-center h-full text-slate-400">
                   <div className="p-6 rounded-full bg-slate-100 mb-4">
