@@ -24,7 +24,8 @@ import {
   CheckSquare,
   Info,
   FileUp,
-  ArrowLeft
+  ArrowLeft,
+  RotateCcw
 } from 'lucide-react';
 
 interface Form16Record {
@@ -1713,13 +1714,16 @@ export const UploadForm16: React.FC = () => {
                     <span className="font-bold text-slate-800">{mappingStats.total}</span> files matched successfully
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setBulkModalStep(1)}
-                      className="px-4 py-2 border border-slate-200 text-slate-700 font-bold text-xs rounded-lg hover:bg-white transition-all flex items-center gap-1.5 cursor-pointer"
+                      onClick={() => {
+                        setBulkModalStep(1);
+                        setBulkFile(null);
+                      }}
+                      className="px-5 py-2.5 border border-slate-200 text-slate-700 font-bold text-sm rounded-lg hover:bg-white transition-all flex items-center gap-2 cursor-pointer shadow-xs"
                     >
-                      <ArrowLeft size={14} /> Back
+                      <RotateCcw size={15} /> Start Again
                     </button>
                     <button
                       type="button"
@@ -1728,16 +1732,16 @@ export const UploadForm16: React.FC = () => {
                         setBulkModalStep(1);
                         setBulkFile(null);
                       }}
-                      className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-white transition-all cursor-pointer"
+                      className="px-5 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleConfirmMappingUpload}
-                      className="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
                     >
-                      <CheckCircle2 size={14} /> Confirm & Upload
+                      <CheckCircle2 size={16} /> Confirm & Upload
                     </button>
                   </div>
                 </div>
