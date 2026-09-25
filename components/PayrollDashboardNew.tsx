@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Users,
   Wallet,
@@ -18,7 +18,12 @@ import {
   Activity,
   PieChart as PieChartIcon,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  Filter,
+  DollarSign,
+  FileText,
+  Download,
+  X
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -247,12 +252,13 @@ const EXCEPTIONS = [
 ];
 
 const STATUTORY_BREAKDOWN = [
-  { name: 'Provident Fund (PF)', employer: 5.2, employee: 5.2 },
-  { name: 'ESI', employer: 0.9, employee: 0.3 },
-  { name: 'Professional Tax', employer: 0, employee: 0.4 },
-  { name: 'TDS', employer: 0, employee: 17.9 },
-  { name: 'Gratuity', employer: 2.1, employee: 0 },
-  { name: 'LWF', employer: 0.05, employee: 0.05 },
+  { name: 'Provident Fund (PF)', code: 'PF', employer: 5.2, employee: 5.2, tag: 'Mandatory', fill: '#4f46e5' },
+  { name: 'National Pension System (NPS)', code: 'NPS', employer: 1.8, employee: 1.8, tag: 'Tier 1 / Corporate', fill: '#0ea5e9' },
+  { name: 'Employee State Insurance (ESI)', code: 'ESI', employer: 0.9, employee: 0.3, tag: 'Statutory', fill: '#06b6d4' },
+  { name: 'Professional Tax (PT)', code: 'PT', employer: 0, employee: 0.4, tag: 'State Levy', fill: '#f59e0b' },
+  { name: 'Tax Deducted at Source (TDS)', code: 'TDS', employer: 0, employee: 17.9, tag: 'Income Tax', fill: '#10b981' },
+  { name: 'Gratuity Provision', code: 'Gratuity', employer: 2.1, employee: 0, tag: 'Retiral', fill: '#8b5cf6' },
+  { name: 'Labour Welfare Fund (LWF)', code: 'LWF', employer: 0.05, employee: 0.05, tag: 'Welfare', fill: '#ec4899' },
 ];
 
 const AUDIT_TRAIL = [
@@ -277,6 +283,41 @@ const CTC_BAND_DISTRIBUTION = [
   { band: '40L+', count: 6 },
 ];
 
+const CTC_BAND_MAP: Record<string, typeof CTC_BAND_DISTRIBUTION> = {
+  'This Month': [
+    { band: '<5L', count: 42 },
+    { band: '5-10L', count: 128 },
+    { band: '10-15L', count: 156 },
+    { band: '15-25L', count: 89 },
+    { band: '25-40L', count: 31 },
+    { band: '40L+', count: 6 },
+  ],
+  'Last Month': [
+    { band: '<5L', count: 44 },
+    { band: '5-10L', count: 126 },
+    { band: '10-15L', count: 154 },
+    { band: '15-25L', count: 88 },
+    { band: '25-40L', count: 30 },
+    { band: '40L+', count: 6 },
+  ],
+  'Last Quarter': [
+    { band: '<5L', count: 46 },
+    { band: '5-10L', count: 124 },
+    { band: '10-15L', count: 150 },
+    { band: '15-25L', count: 85 },
+    { band: '25-40L', count: 28 },
+    { band: '40L+', count: 5 },
+  ],
+  'FY 2025-26': [
+    { band: '<5L', count: 42 },
+    { band: '5-10L', count: 128 },
+    { band: '10-15L', count: 156 },
+    { band: '15-25L', count: 89 },
+    { band: '25-40L', count: 31 },
+    { band: '40L+', count: 6 },
+  ],
+};
+
 const DEPT_HEADCOUNT_COST = [
   { dept: 'Engineering', headcount: 180, cost: 92 },
   { dept: 'QA', headcount: 64, cost: 28 },
@@ -286,9 +327,44 @@ const DEPT_HEADCOUNT_COST = [
   { dept: 'HR', headcount: 18, cost: 9 },
 ];
 
+const DEPT_HEADCOUNT_COST_MAP: Record<string, typeof DEPT_HEADCOUNT_COST> = {
+  'This Month': [
+    { dept: 'Engineering', headcount: 180, cost: 92 },
+    { dept: 'QA', headcount: 64, cost: 28 },
+    { dept: 'Sales', headcount: 58, cost: 24 },
+    { dept: 'Marketing', headcount: 34, cost: 16 },
+    { dept: 'Finance', headcount: 22, cost: 12 },
+    { dept: 'HR', headcount: 18, cost: 9 },
+  ],
+  'Last Month': [
+    { dept: 'Engineering', headcount: 177, cost: 89.5 },
+    { dept: 'QA', headcount: 63, cost: 27.2 },
+    { dept: 'Sales', headcount: 56, cost: 23.1 },
+    { dept: 'Marketing', headcount: 33, cost: 15.4 },
+    { dept: 'Finance', headcount: 22, cost: 11.8 },
+    { dept: 'HR', headcount: 17, cost: 8.6 },
+  ],
+  'Last Quarter': [
+    { dept: 'Engineering', headcount: 172, cost: 86 },
+    { dept: 'QA', headcount: 60, cost: 25.5 },
+    { dept: 'Sales', headcount: 54, cost: 22 },
+    { dept: 'Marketing', headcount: 32, cost: 14.8 },
+    { dept: 'Finance', headcount: 21, cost: 11.2 },
+    { dept: 'HR', headcount: 17, cost: 8.2 },
+  ],
+  'FY 2025-26': [
+    { dept: 'Engineering', headcount: 180, cost: 92 },
+    { dept: 'QA', headcount: 64, cost: 28 },
+    { dept: 'Sales', headcount: 58, cost: 24 },
+    { dept: 'Marketing', headcount: 34, cost: 16 },
+    { dept: 'Finance', headcount: 22, cost: 12 },
+    { dept: 'HR', headcount: 18, cost: 9 },
+  ],
+};
+
 const TAX_REGIME_SPLIT = [
-  { name: 'New Regime', value: 312, fill: '#4f46e5' },
-  { name: 'Old Regime', value: 140, fill: '#f59e0b' },
+  { name: 'Old Regime', value: 140, count: 140, percentage: '31.4%', fill: '#f97316' },
+  { name: 'New Regime', value: 312, count: 312, percentage: '68.6%', fill: '#5b6cf9' },
 ];
 
 const TAX_DECLARATION_DATA = [
@@ -334,6 +410,135 @@ const BONUS_SEASONALITY = [
   { month: 'Nov', bonus: 3 },
   { month: 'Dec', bonus: 15 },
 ];
+
+const EXPENSE_TREND_DATA_MAP: Record<string, { month: string; amount: number; count: number }[]> = {
+  'This Year': [
+    { month: 'May 2025', amount: 16500, count: 3 },
+    { month: 'Jun 2025', amount: 32000, count: 5 },
+    { month: 'Jul 2025', amount: 18500, count: 3 },
+    { month: 'Aug 2025', amount: 22000, count: 4 },
+    { month: 'Sep 2025', amount: 19000, count: 3 },
+    { month: 'Oct 2025', amount: 26500, count: 4 },
+    { month: 'Nov 2025', amount: 21000, count: 3 },
+    { month: 'Dec 2025', amount: 29000, count: 5 },
+    { month: 'Jan 2026', amount: 14500, count: 2 },
+    { month: 'Feb 2026', amount: 24000, count: 4 },
+    { month: 'Mar 2026', amount: 22500, count: 3 },
+    { month: 'Apr 2026', amount: 15000, count: 2 },
+  ],
+  'This Month': [
+    { month: 'Nov 2025', amount: 21000, count: 3 },
+  ],
+  'Last Month': [
+    { month: 'Oct 2025', amount: 26500, count: 4 },
+  ],
+  'This Quarter': [
+    { month: 'Oct 2025', amount: 26500, count: 4 },
+    { month: 'Nov 2025', amount: 21000, count: 3 },
+    { month: 'Dec 2025', amount: 29000, count: 5 },
+  ],
+  'Last Quarter': [
+    { month: 'Jul 2025', amount: 18500, count: 3 },
+    { month: 'Aug 2025', amount: 22000, count: 4 },
+    { month: 'Sep 2025', amount: 19000, count: 3 },
+  ],
+  'Last Year': [
+    { month: 'May 2024', amount: 15000, count: 2 },
+    { month: 'Jun 2024', amount: 28000, count: 4 },
+    { month: 'Jul 2024', amount: 17500, count: 3 },
+    { month: 'Aug 2024', amount: 21000, count: 3 },
+    { month: 'Sep 2024', amount: 18000, count: 3 },
+    { month: 'Oct 2024', amount: 24500, count: 4 },
+    { month: 'Nov 2024', amount: 20000, count: 3 },
+    { month: 'Dec 2024', amount: 27000, count: 5 },
+    { month: 'Jan 2025', amount: 13500, count: 2 },
+    { month: 'Feb 2025', amount: 22000, count: 3 },
+    { month: 'Mar 2025', amount: 25000, count: 4 },
+    { month: 'Apr 2025', amount: 16000, count: 2 },
+  ],
+  'Custom': [
+    { month: 'Period 1', amount: 18500, count: 3 },
+    { month: 'Period 2', amount: 24000, count: 4 },
+    { month: 'Period 3', amount: 19500, count: 3 },
+  ],
+};
+
+const EXPENSE_TREND_DATA = EXPENSE_TREND_DATA_MAP['This Year'];
+
+const TdsFullReportModal: React.FC<{ onClose: () => void; data: any[] }> = ({ onClose, data }) => {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div>
+            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+              <FileText className="text-purple-600" size={20} /> TDS Detailed Report
+            </h3>
+            <p className="text-xs text-slate-500">Comprehensive breakdown of tax deductions</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors">
+              <Download size={14} /> Export CSV
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"><X size={20} /></button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+              <p className="text-xs font-bold text-purple-600 uppercase mb-1">Total TDS</p>
+              <p className="text-xl font-bold text-purple-900">₹ {(data || []).reduce((acc, curr) => acc + (curr?.tds || 0), 0).toFixed(2)} L</p>
+            </div>
+            <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+              <p className="text-xs font-bold text-indigo-600 uppercase mb-1">Salary TDS</p>
+              <p className="text-xl font-bold text-indigo-900">₹ {(data || []).reduce((acc, curr) => acc + (curr?.salaryTds || 0), 0).toFixed(2)} L</p>
+            </div>
+            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+              <p className="text-xs font-bold text-amber-600 uppercase mb-1">Perquisite Tax</p>
+              <p className="text-xl font-bold text-amber-900">₹ {(data || []).reduce((acc, curr) => acc + (curr?.perqTds || 0), 0).toFixed(2)} L</p>
+            </div>
+            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+              <p className="text-xs font-bold text-emerald-600 uppercase mb-1">Avg Employees</p>
+              <p className="text-xl font-bold text-emerald-900">{Math.round((data || []).reduce((acc, curr) => acc + (curr?.employees || 0), 0) / (data?.length || 1))}</p>
+            </div>
+          </div>
+
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0 z-10">
+              <tr>
+                <th className="px-4 py-3 border-b border-slate-200">Period</th>
+                <th className="px-4 py-3 border-b border-slate-200 text-right">Gross Salary</th>
+                <th className="px-4 py-3 border-b border-slate-200 text-right">TDS from Salary</th>
+                <th className="px-4 py-3 border-b border-slate-200 text-right">TDS on Perquisites</th>
+                <th className="px-4 py-3 border-b border-slate-200 text-right">Total TDS</th>
+                <th className="px-4 py-3 border-b border-slate-200 text-right">Employee Count</th>
+                <th className="px-4 py-3 border-b border-slate-200 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {[...(data || [])].reverse().map((row, idx) => (
+                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-slate-800">{row?.period || 'N/A'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row?.gross || 'N/A'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">₹ {(row?.salaryTds || 0).toFixed(2)} L</td>
+                  <td className="px-4 py-3 text-right text-slate-600">₹ {(row?.perqTds || 0).toFixed(2)} L</td>
+                  <td className="px-4 py-3 text-right font-bold text-purple-700">₹ {(row?.tds || 0).toFixed(2)} L</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row?.employees || 0}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
+                      Deposited
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ===================== Small Reusable Bits =====================
 
@@ -508,6 +713,204 @@ const TaxDeclarationTooltip = ({ active, payload }: any) => {
     );
   }
   return null;
+};
+
+const CompensationRangeTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="relative z-50 bg-white p-3 border border-slate-200 rounded-xl shadow-2xl min-w-[180px] text-xs">
+        <p className="font-extrabold text-sm text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
+          <span>{label}</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CTC Band</span>
+        </p>
+        <div className="flex justify-between items-center text-slate-700">
+          <span className="font-medium text-slate-600">Employees:</span>
+          <span className="font-black text-indigo-600 text-sm">{data.count}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const DeptHeadcountCostTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[210px] text-xs">
+        <p className="font-extrabold text-sm text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
+          <span>{label}</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Department</span>
+        </p>
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center text-slate-700">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#4f46e5]"></span>
+              Total Cost:
+            </span>
+            <span className="font-black text-[#4f46e5] text-sm">{formatLakhValueAsINR(data.cost)}</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-700 pt-1 border-t border-slate-50">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#818cf8]"></span>
+              Headcount:
+            </span>
+            <span className="font-bold text-slate-900">{data.headcount} employees</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const TaxRegimeDonutChart: React.FC = () => {
+  const [hovered, setHovered] = useState<'old' | 'new' | null>(null);
+
+  const size = 260;
+  const center = size / 2; // 130
+  const outerR = 114;
+  const innerR = 64;
+  const labelR = (outerR + innerR) / 2; // 89
+
+  const polarToXY = (cx: number, cy: number, r: number, angleDeg: number) => {
+    const rad = ((angleDeg - 90) * Math.PI) / 180;
+    return {
+      x: cx + r * Math.cos(rad),
+      y: cy + r * Math.sin(rad),
+    };
+  };
+
+  // Slice 1: Old Regime (140 / 452 = 30.97% -> 111.5 deg)
+  const oldStart = 0;
+  const oldEnd = 111.5;
+  const oldOuterStart = polarToXY(center, center, outerR, oldStart);
+  const oldOuterEnd = polarToXY(center, center, outerR, oldEnd);
+  const oldInnerStart = polarToXY(center, center, innerR, oldStart);
+  const oldInnerEnd = polarToXY(center, center, innerR, oldEnd);
+  const oldPath = `M ${oldOuterStart.x} ${oldOuterStart.y} A ${outerR} ${outerR} 0 0 1 ${oldOuterEnd.x} ${oldOuterEnd.y} L ${oldInnerEnd.x} ${oldInnerEnd.y} A ${innerR} ${innerR} 0 0 0 ${oldInnerStart.x} ${oldInnerStart.y} Z`;
+
+  // Label for Old Regime: midpoint is 55.75 deg
+  const oldLabelPos = polarToXY(center, center, labelR, (oldStart + oldEnd) / 2);
+
+  // Slice 2: New Regime (312 / 452 = 69.03% -> 248.5 deg)
+  const newStart = 111.5;
+  const newEnd = 360;
+  const newOuterStart = polarToXY(center, center, outerR, newStart);
+  const newOuterEnd = polarToXY(center, center, outerR, newEnd);
+  const newInnerStart = polarToXY(center, center, innerR, newStart);
+  const newInnerEnd = polarToXY(center, center, innerR, newEnd);
+  const newPath = `M ${newOuterStart.x} ${newOuterStart.y} A ${outerR} ${outerR} 0 1 1 ${newOuterEnd.x} ${newOuterEnd.y} L ${newInnerEnd.x} ${newInnerEnd.y} A ${innerR} ${innerR} 0 1 0 ${newInnerStart.x} ${newInnerStart.y} Z`;
+
+  // Label for New Regime: lower left (228 deg / ~7:35 o'clock)
+  const newLabelPos = polarToXY(center, center, labelR, 228);
+
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="w-[230px] h-[230px] sm:w-[245px] sm:h-[245px] drop-shadow-xs"
+      >
+        {/* Slice 1: Old Regime (Orange) */}
+        <path
+          d={oldPath}
+          fill="#f97316"
+          stroke="#ffffff"
+          strokeWidth="3.5"
+          className="cursor-pointer transition-all duration-200"
+          style={{
+            opacity: hovered === 'new' ? 0.65 : 1,
+            filter: hovered === 'old' ? 'brightness(1.08)' : 'none',
+          }}
+          onMouseEnter={() => setHovered('old')}
+          onMouseLeave={() => setHovered(null)}
+        />
+
+        {/* Slice 2: New Regime (Blue) */}
+        <path
+          d={newPath}
+          fill="#5b6cf9"
+          stroke="#ffffff"
+          strokeWidth="3.5"
+          className="cursor-pointer transition-all duration-200"
+          style={{
+            opacity: hovered === 'old' ? 0.65 : 1,
+            filter: hovered === 'new' ? 'brightness(1.08)' : 'none',
+          }}
+          onMouseEnter={() => setHovered('new')}
+          onMouseLeave={() => setHovered(null)}
+        />
+
+        {/* Old Regime Percentage Pill */}
+        <g className="select-none pointer-events-none">
+          <rect x={oldLabelPos.x - 24} y={oldLabelPos.y - 11} width={48} height={22} rx={11} fill="#ffffff" stroke="#f97316" strokeWidth={1.5} />
+          <text
+            x={oldLabelPos.x}
+            y={oldLabelPos.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{ fontWeight: 800, fontSize: '13px', fill: '#c2410c' }}
+          >
+            31.4%
+          </text>
+        </g>
+
+        {/* New Regime Percentage Pill */}
+        <g className="select-none pointer-events-none">
+          <rect x={newLabelPos.x - 24} y={newLabelPos.y - 11} width={48} height={22} rx={11} fill="#ffffff" stroke="#5b6cf9" strokeWidth={1.5} />
+          <text
+            x={newLabelPos.x}
+            y={newLabelPos.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{ fontWeight: 800, fontSize: '13px', fill: '#4338ca' }}
+          >
+            68.6%
+          </text>
+        </g>
+
+        {/* Center: Total Employees */}
+        <text
+          x={center}
+          y={center - 7}
+          fill="#0f172a"
+          textAnchor="middle"
+          dominantBaseline="central"
+          className="select-none font-black"
+          style={{ fontWeight: 900, fontSize: '32px' }}
+        >
+          452
+        </text>
+        <text
+          x={center}
+          y={center + 18}
+          fill="#64748b"
+          textAnchor="middle"
+          dominantBaseline="central"
+          className="select-none font-semibold uppercase tracking-wider"
+          style={{ fontWeight: 600, fontSize: '11px', fill: '#64748b' }}
+        >
+          Total Employees
+        </text>
+      </svg>
+
+      {/* Hover tooltip */}
+      {hovered && (
+        <div
+          className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1.5 rounded-lg shadow-xl text-xs font-bold pointer-events-none z-30 flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <span
+            className="w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: hovered === 'new' ? '#5b6cf9' : '#f97316' }}
+          />
+          <span className="whitespace-nowrap">
+            {hovered === 'new' ? 'New Regime: 312 employees' : 'Old Regime: 140 employees'}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const DateRangeFilterDropdown: React.FC<{
@@ -795,10 +1198,120 @@ const PayrollDashboardNew: React.FC = () => {
   const [buTimeRange, setBuTimeRange] = useState('This Month');
   const [deptTimeRange, setDeptTimeRange] = useState('This Month');
   const [varPayTimeRange, setVarPayTimeRange] = useState('This Year');
+  const [compRangeFilter, setCompRangeFilter] = useState('This Month');
+  const [deptCostFilter, setDeptCostFilter] = useState('This Month');
 
   const currentBuData = COST_BY_BU_MAP[buTimeRange] || COST_BY_BU_MAP['This Month'];
   const currentDept = COST_BY_DEPT_MAP[deptTimeRange] || COST_BY_DEPT_MAP['This Month'];
   const currentVarPayData = getVariablePayData(varPayTimeRange);
+  const currentCompData = CTC_BAND_MAP[compRangeFilter] || CTC_BAND_MAP['This Month'] || CTC_BAND_DISTRIBUTION;
+  const currentDeptHeadcountCost = DEPT_HEADCOUNT_COST_MAP[deptCostFilter] || DEPT_HEADCOUNT_COST_MAP['This Month'] || DEPT_HEADCOUNT_COST;
+
+  // TDS Dashboard State
+  const [tdsTimeRange, setTdsTimeRange] = useState('This Year');
+  const [isTdsFilterPopoverOpen, setIsTdsFilterPopoverOpen] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
+
+  // Expense & Reimbursement Trend State
+  const [expenseTimeRange, setExpenseTimeRange] = useState('This Year');
+  const [isExpenseFilterPopoverOpen, setIsExpenseFilterPopoverOpen] = useState(false);
+  const [hoveredExpenseIndex, setHoveredExpenseIndex] = useState<number | null>(null);
+
+  const getGraphData = useMemo(() => {
+    switch (tdsTimeRange) {
+      case 'This Month':
+        return [
+          { period: 'Week 1', tds: 5.2, employees: 1840, salaryTds: 4.8, perqTds: 0.4, gross: '₹ 45 L' },
+          { period: 'Week 2', tds: 5.5, employees: 1842, salaryTds: 5.0, perqTds: 0.5, gross: '₹ 48 L' },
+          { period: 'Week 3', tds: 5.1, employees: 1839, salaryTds: 4.6, perqTds: 0.5, gross: '₹ 44 L' },
+          { period: 'Week 4', tds: 6.6, employees: 1845, salaryTds: 5.9, perqTds: 0.7, gross: '₹ 52 L' },
+        ];
+      case 'Last Month':
+        return [
+          { period: 'Week 1', tds: 4.8, employees: 1835, salaryTds: 4.2, perqTds: 0.6, gross: '₹ 42 L' },
+          { period: 'Week 2', tds: 5.0, employees: 1836, salaryTds: 4.5, perqTds: 0.5, gross: '₹ 45 L' },
+          { period: 'Week 3', tds: 4.9, employees: 1838, salaryTds: 4.4, perqTds: 0.5, gross: '₹ 43 L' },
+          { period: 'Week 4', tds: 5.1, employees: 1838, salaryTds: 4.6, perqTds: 0.5, gross: '₹ 46 L' },
+        ];
+      case 'This Quarter':
+        return [
+          { period: 'Oct 2025', tds: 19.8, employees: 1838, salaryTds: 18.0, perqTds: 1.8, gross: '₹ 1.81 Cr' },
+          { period: 'Nov 2025', tds: 22.4, employees: 1842, salaryTds: 20.1, perqTds: 2.3, gross: '₹ 1.85 Cr' },
+          { period: 'Dec 2025', tds: 21.5, employees: 1845, salaryTds: 19.5, perqTds: 2.0, gross: '₹ 1.83 Cr' },
+        ];
+      case 'Last Quarter':
+        return [
+          { period: 'Jul 2025', tds: 17.2, employees: 1825, salaryTds: 15.8, perqTds: 1.4, gross: '₹ 1.75 Cr' },
+          { period: 'Aug 2025', tds: 18.0, employees: 1830, salaryTds: 16.5, perqTds: 1.5, gross: '₹ 1.78 Cr' },
+          { period: 'Sep 2025', tds: 18.5, employees: 1835, salaryTds: 17.0, perqTds: 1.5, gross: '₹ 1.80 Cr' },
+        ];
+      case 'This Year':
+        return [
+          { period: 'Apr 2025', tds: 15.2, employees: 1810, salaryTds: 14.0, perqTds: 1.2, gross: '₹ 1.65 Cr' },
+          { period: 'May 2025', tds: 15.8, employees: 1815, salaryTds: 14.5, perqTds: 1.3, gross: '₹ 1.68 Cr' },
+          { period: 'Jun 2025', tds: 16.5, employees: 1820, salaryTds: 15.0, perqTds: 1.5, gross: '₹ 1.72 Cr' },
+          { period: 'Jul 2025', tds: 17.2, employees: 1825, salaryTds: 15.8, perqTds: 1.4, gross: '₹ 1.75 Cr' },
+          { period: 'Aug 2025', tds: 18.0, employees: 1830, salaryTds: 16.5, perqTds: 1.5, gross: '₹ 1.78 Cr' },
+          { period: 'Sep 2025', tds: 18.5, employees: 1835, salaryTds: 17.0, perqTds: 1.5, gross: '₹ 1.80 Cr' },
+          { period: 'Oct 2025', tds: 19.8, employees: 1838, salaryTds: 18.0, perqTds: 1.8, gross: '₹ 1.81 Cr' },
+          { period: 'Nov 2025', tds: 22.4, employees: 1842, salaryTds: 20.1, perqTds: 2.3, gross: '₹ 1.85 Cr' },
+        ];
+      case 'Last Year':
+        return [
+          { period: 'Apr 2024', tds: 14.0, employees: 1750, salaryTds: 13.0, perqTds: 1.0, gross: '₹ 1.50 Cr' },
+          { period: 'Mar 2025', tds: 16.0, employees: 1800, salaryTds: 14.5, perqTds: 1.5, gross: '₹ 1.60 Cr' },
+        ];
+      case 'Custom':
+        return [
+          { period: 'Custom 1', tds: 10.0, employees: 1800, salaryTds: 9.0, perqTds: 1.0, gross: '₹ 1.0 Cr' },
+          { period: 'Custom 2', tds: 12.0, employees: 1810, salaryTds: 11.0, perqTds: 1.0, gross: '₹ 1.2 Cr' }
+        ];
+      default: return [];
+    }
+  }, [tdsTimeRange]);
+
+  const tdsGraphData = getGraphData;
+  const maxTdsValue = Math.max(...tdsGraphData.map(d => d.tds), 1);
+  const yAxisMax = Math.ceil(maxTdsValue * 1.1);
+
+  const getGraphPath = () => {
+    if (tdsGraphData.length === 0) return '';
+    const points = tdsGraphData.map((d, i) => {
+      const x = (i / (tdsGraphData.length - 1)) * 1000;
+      const y = 300 - ((d.tds / yAxisMax) * 300);
+      return `${x},${y}`;
+    });
+    return `M ${points.join(' L ')}`;
+  };
+
+  const getAreaPath = () => {
+    const linePath = getGraphPath();
+    if (!linePath) return '';
+    return `${linePath} L 1000,300 L 0,300 Z`;
+  };
+
+  const getPointCoords = (index: number) => {
+    const x = (index / (tdsGraphData.length - 1)) * 1000;
+    const y = 300 - ((tdsGraphData[index].tds / yAxisMax) * 300);
+    return { x, y };
+  };
+
+  const currentExpenseData = useMemo(() => {
+    return EXPENSE_TREND_DATA_MAP[expenseTimeRange] || EXPENSE_TREND_DATA_MAP['This Year'];
+  }, [expenseTimeRange]);
+
+  const maxExpenseAmount = 35000;
+
+  const mostExpensiveMonth = useMemo(() => {
+    if (!currentExpenseData || currentExpenseData.length === 0) return { month: '-', amount: 0 };
+    return [...currentExpenseData].sort((a, b) => b.amount - a.amount)[0];
+  }, [currentExpenseData]);
+
+  const leastExpensiveMonth = useMemo(() => {
+    if (!currentExpenseData || currentExpenseData.length === 0) return { month: '-', amount: 0 };
+    return [...currentExpenseData].sort((a, b) => a.amount - b.amount)[0];
+  }, [currentExpenseData]);
 
   return (
     <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300">
@@ -1056,7 +1569,7 @@ const PayrollDashboardNew: React.FC = () => {
 
       {/* ===================== SECTION C: HR Operational Widgets ===================== */}
       <SectionHeader title="HR Operations" subtitle="Actionable items for day-to-day payroll and compliance management" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card
           title="Payroll Run Status"
           icon={<CheckCircle2 size={16} className="text-emerald-600" />}
@@ -1068,8 +1581,8 @@ const PayrollDashboardNew: React.FC = () => {
         >
           <div className="space-y-2.5">
             <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pb-1.5 border-b border-slate-100 mb-1">
-              <span>Cycle: <strong className="text-slate-800">November 2025 (Current)</strong></span>
-              <span className="text-emerald-600 font-bold">400 / 452 Processed</span>
+              <span>Cycle: <strong className="text-slate-800">Nov 2025</strong></span>
+              <span className="text-emerald-600 font-bold">400/452 Done</span>
             </div>
             <div className="flex justify-between items-center bg-emerald-50 rounded-lg px-3 py-2.5">
               <span className="text-xs font-bold text-emerald-800 flex items-center gap-2"><CheckCircle2 size={14} /> Processed</span>
@@ -1087,12 +1600,12 @@ const PayrollDashboardNew: React.FC = () => {
           subtitle="(FY 2026-27)"
           icon={<ShieldCheck size={16} className="text-indigo-600" />}
         >
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex flex-col xl:flex-row items-center gap-3">
             {/* Donut Chart with Center Metric */}
-            <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+            <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-                <span className="text-base font-black text-slate-800 leading-none">78%</span>
-                <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-tight mt-0.5">Approved</span>
+                <span className="text-sm font-black text-slate-800 leading-none">78%</span>
+                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tight mt-0.5">Approved</span>
               </div>
               <ResponsiveContainer width="100%" height="100%" className="relative z-10">
                 <RechartsPieChart>
@@ -1100,8 +1613,8 @@ const PayrollDashboardNew: React.FC = () => {
                     data={TAX_DECLARATION_DATA}
                     cx="50%"
                     cy="50%"
-                    innerRadius={34}
-                    outerRadius={48}
+                    innerRadius={28}
+                    outerRadius={40}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -1130,7 +1643,7 @@ const PayrollDashboardNew: React.FC = () => {
               <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-amber-50/70 border border-amber-100">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-                  <span className="text-xs font-semibold text-slate-700 truncate" title="Proof Verification Pending">Verification Pending</span>
+                  <span className="text-xs font-semibold text-slate-700 truncate" title="Proof Verification Pending">Pending</span>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs font-bold text-amber-700">68</span>
@@ -1152,62 +1665,115 @@ const PayrollDashboardNew: React.FC = () => {
           </div>
         </Card>
 
-        <Card title="Loans & Advances Summary" icon={<Landmark size={16} className="text-blue-600" />}>
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Total Outstanding</span><span className="text-sm font-black text-slate-800">{formatL(4820000)}</span></div>
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Pending Approval</span><span className="text-sm font-black text-amber-600">6 requests</span></div>
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Overdue EMIs</span><span className="text-sm font-black text-rose-600">3</span></div>
-          </div>
-        </Card>
-
-        <Card title="Expense & Reimbursement Claims" icon={<Wallet size={16} className="text-sky-600" />}>
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Pending Approval</span><span className="text-sm font-black text-amber-600">23 claims</span></div>
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Pending Amount</span><span className="text-sm font-black text-slate-800">{formatL(186000)}</span></div>
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Approved This Month</span><span className="text-sm font-black text-emerald-600">{formatL(412000)}</span></div>
-          </div>
-        </Card>
-
-        <Card title="New Joiners / Exits This Month" icon={<UserPlus size={16} className="text-emerald-600" />}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-emerald-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-black text-emerald-700">8</p>
-              <p className="text-[10px] font-bold text-emerald-700 uppercase mt-1">New Joiners</p>
-              <p className="text-[10px] text-slate-500 mt-1">6 payroll setup done</p>
+        <Card
+          title="Loans & Advances Summary"
+          subtitle="Till Date"
+          icon={<Landmark size={16} className="text-blue-600" />}
+        >
+          <div className="space-y-3">
+            <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 flex justify-between items-center">
+              <div>
+                <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Total Outstanding</p>
+                <p className="text-base font-black text-blue-950 mt-0.5">{formatL(4820000)}</p>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                <Landmark size={18} />
+              </div>
             </div>
-            <div className="bg-rose-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-black text-rose-700">3</p>
-              <p className="text-[10px] font-bold text-rose-700 uppercase mt-1">Exits</p>
-              <p className="text-[10px] text-slate-500 mt-1">2 F&F pending</p>
+
+            <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-3 flex justify-between items-center">
+              <div>
+                <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Pending Approval</p>
+                <p className="text-base font-black text-amber-950 mt-0.5">6 requests</p>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                <Clock size={18} />
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card title="Leave Encashment & LOP Summary" icon={<CalendarClock size={16} className="text-amber-600" />}>
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Total LOP Deduction (Cycle)</span><span className="text-sm font-black text-rose-600">{formatL(142000)}</span></div>
-            <div className="flex justify-between items-center"><span className="text-xs text-slate-500 font-semibold">Encashment Liability (Open)</span><span className="text-sm font-black text-slate-800">{formatL(890000)}</span></div>
+        <Card
+          title="Expense & Reimbursement Claims"
+          subtitle="Till Date"
+          icon={<Wallet size={16} className="text-sky-600" />}
+        >
+          <div className="space-y-3">
+            <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-3 flex justify-between items-center">
+              <div>
+                <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Pending</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
+                  <span className="text-base font-black text-amber-950">23 claims</span>
+                  <span className="text-xs font-semibold text-amber-700">({formatL(186000)})</span>
+                </div>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                <Clock size={18} />
+              </div>
+            </div>
+
+            <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 flex justify-between items-center">
+              <div>
+                <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Approved</p>
+                <p className="text-base font-black text-emerald-950 mt-0.5">{formatL(412000)}</p>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <CheckCircle2 size={18} />
+              </div>
+            </div>
           </div>
         </Card>
+      </div>
 
-        <Card title="Statutory Contribution Breakdown" icon={<ShieldCheck size={16} className="text-purple-600" />} className="lg:col-span-3">
-          <div className="overflow-x-auto">
+      {/* Statutory Contribution Breakdown - matching Compensation Range Distribution width (50% on lg) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+        <Card
+          title="Statutory Contribution Breakdown"
+          subtitle="Employer and employee statutory compliance liabilities for the period"
+          icon={<ShieldCheck size={16} className="text-purple-600" />}
+          className="w-full"
+        >
+          {/* KPI Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+            <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3 min-w-0">
+              <span className="text-[10px] xl:text-[11px] font-bold text-purple-700 uppercase tracking-tight block truncate" title="Total Statutory Compliance">Total Statutory Compliance</span>
+              <p className="text-base xl:text-lg font-black text-purple-950 mt-0.5">{formatL(3570000)}</p>
+            </div>
+            <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 min-w-0">
+              <span className="text-[10px] xl:text-[11px] font-bold text-indigo-700 uppercase tracking-tight block truncate" title="Employer Contribution">Employer Contribution</span>
+              <p className="text-base xl:text-lg font-black text-indigo-950 mt-0.5">{formatL(1005000)}</p>
+            </div>
+            <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 min-w-0">
+              <span className="text-[10px] xl:text-[11px] font-bold text-emerald-700 uppercase tracking-tight block truncate" title="Employee Contribution">Employee Contribution</span>
+              <p className="text-base xl:text-lg font-black text-emerald-950 mt-0.5">{formatL(2565000)}</p>
+            </div>
+          </div>
+
+          {/* Modern styled table without Total Outflow column */}
+          <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-2xs">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                  <th className="py-2">Component</th>
-                  <th className="py-2 text-right">Employer Contribution</th>
-                  <th className="py-2 text-right">Employee Contribution</th>
-                  <th className="py-2 text-right">Total</th>
+                <tr className="bg-slate-50/80 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">
+                  <th className="py-2.5 px-3 sm:px-4">Statutory Component</th>
+                  <th className="py-2.5 px-3 sm:px-4 text-right">Employer Contribution</th>
+                  <th className="py-2.5 px-3 sm:px-4 text-right">Employee Contribution</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {STATUTORY_BREAKDOWN.map(s => (
-                  <tr key={s.name}>
-                    <td className="py-2.5 font-bold text-slate-700">{s.name}</td>
-                    <td className="py-2.5 text-right text-slate-600">{formatL(s.employer * 100000)}</td>
-                    <td className="py-2.5 text-right text-slate-600">{formatL(s.employee * 100000)}</td>
-                    <td className="py-2.5 text-right font-bold text-slate-800">{formatL((s.employer + s.employee) * 100000)}</td>
+                  <tr key={s.name} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-2.5 px-3 sm:px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.fill }}></span>
+                        <span className="font-bold text-slate-800">{s.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 sm:px-4 text-right font-semibold text-slate-700">
+                      {formatL(s.employer * 100000)}
+                    </td>
+                    <td className="py-2.5 px-3 sm:px-4 text-right font-semibold text-slate-700">
+                      {formatL(s.employee * 100000)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1216,167 +1782,503 @@ const PayrollDashboardNew: React.FC = () => {
         </Card>
       </div>
 
-      {/* ===================== SECTION D: Compliance & Risk ===================== */}
-      <SectionHeader title="Compliance & Risk" subtitle="Statutory filing health, alerts, and governance audit trail" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Card title="Statutory Filing Status" icon={<ShieldCheck size={16} className="text-indigo-600" />}>
-          <div className="space-y-2">
-            {[
-              { label: 'PF Challan (Nov 2025)', status: 'Filed' as const },
-              { label: 'ESI Challan (Nov 2025)', status: 'Pending' as const },
-              { label: 'PT Return (Nov 2025)', status: 'Filed' as const },
-              { label: 'TDS Deposit (Nov 2025)', status: 'Overdue' as const },
-            ].map((s, idx) => (
-              <div key={idx} className="flex justify-between items-center px-1 py-1.5">
-                <span className="text-xs font-bold text-slate-700">{s.label}</span>
-                <RAGBadge status={s.status} />
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Compliance Risk Alerts" icon={<AlertTriangle size={16} className="text-amber-600" />}>
-          <div className="space-y-2.5">
-            {RISK_ALERTS.map((r, idx) => (
-              <div key={idx} className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 ${r.level === 'red' ? 'bg-rose-50' : 'bg-amber-50'}`}>
-                <AlertTriangle size={14} className={`mt-0.5 shrink-0 ${r.level === 'red' ? 'text-rose-600' : 'text-amber-600'}`} />
-                <span className={`text-xs font-semibold ${r.level === 'red' ? 'text-rose-800' : 'text-amber-800'}`}>{r.text}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Audit Trail Summary" icon={<Activity size={16} className="text-slate-600" />}>
-          <div className="space-y-3">
-            {AUDIT_TRAIL.map((a, idx) => (
-              <div key={idx} className="flex justify-between items-start gap-3">
-                <div>
-                  <p className="text-xs font-semibold text-slate-700">{a.action}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">by {a.by}</p>
-                </div>
-                <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{a.time}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
       {/* ===================== SECTION E: Distribution & Composition ===================== */}
       <SectionHeader title="Distribution & Composition" subtitle="How headcount, cost, and compensation are structured across the org" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card title="CTC Band Distribution" icon={<Users size={16} className="text-indigo-600" />}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <Card
+          title="Compensation Range Distribution"
+          icon={<Users size={16} className="text-indigo-600" />}
+          action={<DateRangeFilterDropdown value={compRangeFilter} onChange={setCompRangeFilter} />}
+        >
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={CTC_BAND_DISTRIBUTION} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={currentCompData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="band" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} allowDecimals={false} />
-                <RechartsTooltip />
+                <RechartsTooltip content={<CompensationRangeTooltip />} cursor={{ fill: '#f8fafc' }} />
                 <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Employees" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card title="Department-wise Headcount & Cost" icon={<Building2 size={16} className="text-indigo-600" />}>
+        <Card
+          title="Department-wise Headcount & Cost"
+          icon={<Building2 size={16} className="text-indigo-600" />}
+          action={<DateRangeFilterDropdown value={deptCostFilter} onChange={setDeptCostFilter} />}
+        >
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={DEPT_HEADCOUNT_COST} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={currentDeptHeadcountCost} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="dept" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} />
-                <RechartsTooltip formatter={(v: any, name: any) => name === 'Cost' ? formatLakhValueAsINR(v) : v} />
-                <Bar dataKey="headcount" fill="#818cf8" radius={[4, 4, 0, 0]} name="Headcount" />
-                <Bar dataKey="cost" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Cost" />
+                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
+                <RechartsTooltip content={<DeptHeadcountCostTooltip />} cursor={{ fill: '#f8fafc' }} />
+                <Bar dataKey="cost" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Total Cost" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card title="Tax Regime Split" icon={<PieChartIcon size={16} className="text-indigo-600" />}>
-          <div className="h-56 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie data={TAX_REGIME_SPLIT} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                  {TAX_REGIME_SPLIT.map((entry, index) => <Cell key={index} fill={entry.fill} />)}
-                </Pie>
-                <RechartsTooltip />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-6 text-xs font-bold text-slate-600">
-            {TAX_REGIME_SPLIT.map(t => (
-              <div key={t.name} className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: t.fill }}></div>{t.name} ({t.value})</div>
-            ))}
+        {/* Tax Regime Split */}
+        <Card
+          title="Tax Regime Split"
+          subtitle="(FY 2026-27)"
+          icon={<PieChartIcon size={16} className="text-indigo-600" />}
+        >
+          <div className="py-2 w-full flex flex-col sm:flex-row items-center justify-around gap-6 sm:gap-8">
+            {/* Left: Pixel-perfect Donut Chart strictly matching Screenshot 4 */}
+            <TaxRegimeDonutChart />
+
+            {/* Right: Clean Legend matching Screenshot 4 */}
+            <div className="w-full sm:w-auto flex flex-col justify-center space-y-4 sm:pl-2">
+              <div className="flex items-center gap-3.5">
+                <span className="w-4 h-4 rounded-full bg-[#5b6cf9] shrink-0 shadow-xs" />
+                <div>
+                  <h4 className="font-extrabold text-slate-800 text-base leading-tight">New Regime</h4>
+                  <p className="text-sm font-medium text-slate-500 mt-0.5">312 employees</p>
+                </div>
+              </div>
+
+              <div className="w-full border-t border-slate-100" />
+
+              <div className="flex items-center gap-3.5">
+                <span className="w-4 h-4 rounded-full bg-[#f97316] shrink-0 shadow-xs" />
+                <div>
+                  <h4 className="font-extrabold text-slate-800 text-base leading-tight">Old Regime</h4>
+                  <p className="text-sm font-medium text-slate-500 mt-0.5">140 employees</p>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
 
-        <Card title="Salary Component Composition (Company-wide)" icon={<PieChartIcon size={16} className="text-indigo-600" />}>
-          <div className="h-56 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie data={SALARY_COMPOSITION} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                  {SALARY_COMPOSITION.map((entry, index) => <Cell key={index} fill={entry.fill} />)}
-                </Pie>
-                <RechartsTooltip formatter={(v: any) => `${v}%`} />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4 text-xs font-bold text-slate-600">
-            {SALARY_COMPOSITION.map(s => (
-              <div key={s.name} className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.fill }}></div>{s.name} ({s.value}%)</div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* ===================== SECTION F: Trend & Forecast ===================== */}
-      <SectionHeader title="Trends & Forecast" subtitle="Where payroll costs and deductions are headed" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Upcoming Payroll Cost Forecast (Right side of Tax Regime Split) */}
         <Card title="Upcoming Payroll Cost Forecast" icon={<TrendingUp size={16} className="text-indigo-600" />}>
-          <div className="h-56 w-full">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={COST_FORECAST} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={COST_FORECAST} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} domain={[170, 200]} width={90} />
+                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} domain={[170, 200]} width={95} />
                 <RechartsTooltip formatter={(v: any) => v != null ? formatLakhValueAsINR(v) : '-'} />
-                <Line type="monotone" dataKey="actual" stroke="#4f46e5" strokeWidth={2.5} dot={{ r: 3 }} connectNulls name="Actual" />
-                <Line type="monotone" dataKey="forecast" stroke="#a5b4fc" strokeWidth={2.5} strokeDasharray="5 4" dot={{ r: 3 }} connectNulls name="Forecast" />
+                <Line type="monotone" dataKey="actual" stroke="#4f46e5" strokeWidth={2.5} dot={{ r: 4 }} connectNulls name="Actual" />
+                <Line type="monotone" dataKey="forecast" stroke="#a5b4fc" strokeWidth={2.5} strokeDasharray="5 4" dot={{ r: 4 }} connectNulls name="Forecast" />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-[10px] text-slate-400 mt-2 text-center">Based on confirmed increments, new joiners, and exits</p>
-        </Card>
-
-        <Card title="TDS Trend (Company-wide)" icon={<ShieldCheck size={16} className="text-purple-600" />}>
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={TDS_TREND} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
-                <RechartsTooltip formatter={(v: any) => formatLakhValueAsINR(v)} />
-                <Area type="monotone" dataKey="tds" stroke="#7c3aed" strokeWidth={2.5} fill="#7c3aed" fillOpacity={0.15} name="TDS" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card title="Bonus / Overtime Seasonality" icon={<TrendingUp size={16} className="text-amber-600" />}>
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={BONUS_SEASONALITY} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
-                <RechartsTooltip formatter={(v: any) => formatLakhValueAsINR(v)} />
-                <Bar dataKey="bonus" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Bonus/OT" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <p className="text-xs text-slate-400 mt-3 text-center">Based on confirmed increments, new joiners, and exits</p>
         </Card>
       </div>
+
+      {/* 2-Column Grid: TDS Deductions & Expense Reimbursement Side-by-Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        {/* Left Column: TDS Deductions Over Time */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          {/* Header & Filters */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-purple-100 text-purple-600 rounded-lg shrink-0">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-base leading-tight">TDS Deductions Over Time</h3>
+              </div>
+            </div>
+
+            <div className="relative shrink-0">
+              {/* Filter Popover */}
+              <button
+                onClick={() => setIsTdsFilterPopoverOpen(!isTdsFilterPopoverOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Filter size={13} className="text-purple-600" />
+                  <span>{tdsTimeRange}</span>
+                </div>
+                <ChevronDown size={13} className={`text-slate-400 transition-transform ${isTdsFilterPopoverOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isTdsFilterPopoverOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsTdsFilterPopoverOpen(false)}
+                  />
+
+                  <div className="absolute right-0 mt-2 p-3.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 w-[290px] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2.5 tracking-wider">Date Range</p>
+
+                    <div className="grid grid-cols-3 gap-1.5 mb-3">
+                      {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
+                        <button
+                          key={label}
+                          onClick={() => {
+                            setTdsTimeRange(label);
+                            setIsTdsFilterPopoverOpen(false);
+                          }}
+                          className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${
+                            tdsTimeRange === label
+                              ? 'bg-purple-600 border-purple-600 text-white shadow-xs'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="pt-2.5 border-t border-slate-100">
+                      <div className="relative">
+                        <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="month"
+                          className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 focus:outline-none focus:border-purple-500 focus:bg-white transition-all cursor-pointer"
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              setTdsTimeRange('Custom');
+                              setIsTdsFilterPopoverOpen(false);
+                            }
+                          }}
+                        />
+                        <p className="absolute left-8 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-400 pointer-events-none">
+                          {tdsTimeRange === 'Custom' ? 'Selected' : 'Custom Month'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Average Monthly TDS</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
+                  ₹ {Math.round(Number((tdsGraphData.reduce((acc, curr) => acc + curr.tds, 0) / (tdsGraphData.length || 1)).toFixed(2)) * 100000).toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Employees with TDS</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5">1,842</p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-indigo-600 shadow-xs">
+                <Users size={15} />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Highest TDS Month</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 flex flex-wrap items-baseline gap-1">
+                  <span>Nov '25</span>
+                  <span className="text-[11px] xl:text-xs font-semibold text-emerald-600">₹ {(22.4 * 100000).toLocaleString('en-IN')}</span>
+                </p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-emerald-600 shadow-xs">
+                <TrendingUp size={15} />
+              </div>
+            </div>
+          </div>
+
+          {/* Main Graph (fills the 50% card) */}
+          <div className="w-full bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between h-[310px]">
+            {/* Chart Area with Y-axis */}
+            <div className="flex-1 min-h-0 flex gap-2">
+              {/* Y-Axis Labels */}
+              <div className="w-20 shrink-0 flex flex-col justify-between text-[10px] font-semibold text-slate-400 text-right pr-2 select-none">
+                <span>₹{Math.round(yAxisMax * 100000).toLocaleString('en-IN')}</span>
+                <span>₹{Math.round(yAxisMax * 0.75 * 100000).toLocaleString('en-IN')}</span>
+                <span>₹{Math.round(yAxisMax * 0.5 * 100000).toLocaleString('en-IN')}</span>
+                <span>₹{Math.round(yAxisMax * 0.25 * 100000).toLocaleString('en-IN')}</span>
+                <span>₹0</span>
+              </div>
+
+              {/* SVG Area */}
+              <div className="flex-1 min-h-0 relative">
+                <svg viewBox="0 0 1000 300" className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <line key={i} x1="0" y1={300 - (i * 75)} x2="1000" y2={300 - (i * 75)} stroke="#f1f5f9" strokeWidth="1" />
+                  ))}
+
+                  <defs>
+                    <linearGradient id="purpleGradientNew" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#9333ea" stopOpacity="0.12" />
+                      <stop offset="100%" stopColor="#9333ea" stopOpacity="0.01" />
+                    </linearGradient>
+                  </defs>
+                  <path d={getAreaPath()} fill="url(#purpleGradientNew)" />
+                  <path d={getGraphPath()} fill="none" stroke="#9333ea" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                  {tdsGraphData.map((d, i) => {
+                    const { x, y } = getPointCoords(i);
+                    return (
+                      <g key={i} onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)} style={{ cursor: 'pointer' }}>
+                        <circle cx={x} cy={y} r="4.5" fill="white" stroke="#9333ea" strokeWidth="2.5" className="transition-all hover:r-6" />
+                        <rect x={Math.max(0, x - 25)} y={0} width="50" height="300" fill="transparent" />
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Tooltip */}
+                {hoveredPoint !== null && (
+                  <div
+                    className="absolute bg-slate-900 text-white text-xs rounded-xl p-3 shadow-2xl z-30 pointer-events-none min-w-[200px]"
+                    style={{
+                      left: `${getPointCoords(hoveredPoint).x / 10}%`,
+                      top: `${(getPointCoords(hoveredPoint).y / 300) * 100}%`,
+                      transform: 'translate(-50%, -120%)'
+                    }}
+                  >
+                    <div className="font-bold border-b border-slate-700 pb-1.5 mb-1.5">
+                      <span className="text-slate-200 font-extrabold">{tdsGraphData[hoveredPoint].period}</span>
+                    </div>
+                    <div className="space-y-1.5 text-[11px]">
+                      <div className="flex justify-between text-slate-300 gap-3">
+                        <span>Total Taxable Salary:</span>
+                        <span className="font-semibold text-white">{tdsGraphData[hoveredPoint].gross}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300 gap-3">
+                        <span>Total TDS:</span>
+                        <span className="font-semibold text-purple-300">₹{Math.round(tdsGraphData[hoveredPoint].tds * 100000).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400 pt-1.5 border-t border-slate-700/80 gap-3">
+                        <span>Employees:</span>
+                        <span className="font-semibold text-slate-200">{tdsGraphData[hoveredPoint].employees}</span>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full border-4 border-transparent border-t-slate-900" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* X-Axis Labels aligned with the SVG */}
+            <div className="flex items-center pl-[88px] pr-2 pt-2.5 mt-2 border-t border-slate-100">
+              <div className="flex-1 flex justify-between text-[11px] font-semibold text-slate-500">
+                {tdsGraphData.map((d, i) => (
+                  <span key={i} className="text-center w-8 truncate">{d.period.split(' ')[0]}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Expense & Reimbursement Trend */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          {/* Header & Filters */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
+                <Wallet size={18} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-base leading-tight">Expense & Reimbursement Trend</h3>
+              </div>
+            </div>
+
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setIsExpenseFilterPopoverOpen(!isExpenseFilterPopoverOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Filter size={13} className="text-blue-600" />
+                  <span>{expenseTimeRange}</span>
+                </div>
+                <ChevronDown size={13} className={`text-slate-400 transition-transform ${isExpenseFilterPopoverOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isExpenseFilterPopoverOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsExpenseFilterPopoverOpen(false)}
+                  />
+
+                  <div className="absolute right-0 mt-2 p-3.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 w-[290px] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2.5 tracking-wider">Date Range</p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
+                        <button
+                          key={label}
+                          onClick={() => {
+                            setExpenseTimeRange(label);
+                            setIsExpenseFilterPopoverOpen(false);
+                          }}
+                          className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${
+                            expenseTimeRange === label
+                              ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Summary KPI Cards (Moved Above Graph) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Most Expensive Month</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
+                  {mostExpensiveMonth.month}
+                </p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-blue-600 shadow-xs">
+                <TrendingUp size={15} />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Least Expensive Month</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
+                  {leastExpensiveMonth.month}
+                </p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-xs">
+                <TrendingDown size={15} />
+              </div>
+            </div>
+          </div>
+
+          {/* Main Graph (fills the 50% card) */}
+          <div className="w-full bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between h-[310px]">
+            {/* Chart Area with Y-axis */}
+            <div className="flex-1 min-h-0 flex gap-2">
+              {/* Y-Axis Left (INR) */}
+              <div className="w-10 shrink-0 flex flex-col justify-between text-[10px] font-semibold text-slate-400 text-right pr-2 select-none">
+                <span>35K</span>
+                <span>28K</span>
+                <span>21K</span>
+                <span>14K</span>
+                <span>7K</span>
+                <span>0</span>
+              </div>
+
+              {/* Chart Grid & Bars */}
+              <div className="flex-1 min-h-0 relative border-l border-b border-slate-100">
+                {/* Horizontal Grid Lines */}
+                {[0, 1, 2, 3, 4, 5].map(i => (
+                  <div
+                    key={i}
+                    className="absolute w-full border-t border-slate-50"
+                    style={{ bottom: `${(i / 5) * 100}%` }}
+                  />
+                ))}
+
+                {/* Bars Columns */}
+                <div className="absolute inset-0 flex items-end">
+                  {currentExpenseData.map((d, i) => (
+                    <div
+                      key={i}
+                      onMouseEnter={() => setHoveredExpenseIndex(i)}
+                      onMouseLeave={() => setHoveredExpenseIndex(null)}
+                      className="flex-1 flex flex-col items-center justify-end h-full relative group cursor-pointer transition-colors hover:bg-slate-50/70"
+                    >
+                      {/* Bar (badges removed as requested) */}
+                      {d.amount > 0 ? (
+                        <div
+                          className={`${currentExpenseData.length === 1 ? 'w-12 sm:w-16' : currentExpenseData.length <= 4 ? 'w-8 sm:w-10' : 'w-4 sm:w-5'} bg-blue-500/85 rounded-t-sm relative transition-all ${hoveredExpenseIndex === i ? 'bg-blue-600 shadow-md shadow-blue-200' : 'hover:bg-blue-600'}`}
+                          style={{ height: `${(d.amount / maxExpenseAmount) * 100}%` }}
+                        />
+                      ) : (
+                        <div className="w-3 sm:w-4 h-0.5 bg-slate-200 rounded-full mb-0.5" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tooltip */}
+                {hoveredExpenseIndex !== null && currentExpenseData[hoveredExpenseIndex] && (
+                  <div
+                    className="absolute bg-slate-900 text-white text-xs rounded-xl p-2.5 shadow-2xl z-30 pointer-events-none min-w-[190px] transition-all duration-75"
+                    style={{
+                      left: `${((hoveredExpenseIndex + 0.5) / currentExpenseData.length) * 100}%`,
+                      top: '10px',
+                      transform: currentExpenseData.length === 1
+                        ? 'translateX(-50%)'
+                        : hoveredExpenseIndex <= 1
+                          ? 'translateX(-10%)'
+                          : hoveredExpenseIndex >= currentExpenseData.length - 2
+                            ? 'translateX(-90%)'
+                            : 'translateX(-50%)'
+                    }}
+                  >
+                    <div className="font-bold border-b border-slate-700 pb-1 mb-1 flex justify-between items-center">
+                      <span className="text-slate-200 font-bold">{currentExpenseData[hoveredExpenseIndex].month}</span>
+                    </div>
+                    <div className="space-y-1 text-[11px]">
+                      <div className="flex justify-between text-slate-300 gap-3">
+                        <span>Total Expense:</span>
+                        <span className="font-bold text-blue-300">
+                          ₹ {currentExpenseData[hoveredExpenseIndex].amount.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-300 gap-3">
+                        <span>Employees:</span>
+                        <span className="font-semibold text-white">
+                          {currentExpenseData[hoveredExpenseIndex].count}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className="absolute -bottom-1 border-4 border-transparent border-t-slate-900"
+                      style={{
+                        left: currentExpenseData.length === 1
+                          ? '50%'
+                          : hoveredExpenseIndex <= 1
+                            ? '15%'
+                            : hoveredExpenseIndex >= currentExpenseData.length - 2
+                              ? '85%'
+                              : '50%',
+                        transform: 'translateX(-50%)'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* X-Axis Labels aligned with the Bars */}
+            <div className="flex items-center pl-[48px] pr-0 pt-2.5 mt-2 border-t border-slate-100">
+              <div className="flex-1 flex justify-between text-[10px] font-semibold text-slate-500">
+                {currentExpenseData.map((d, i) => (
+                  <span key={i} className={`text-center flex-1 truncate transition-colors ${hoveredExpenseIndex === i ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                    {currentExpenseData.length === 1 ? d.month : d.month.split(' ')[0]}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex justify-center items-center gap-2 pt-1">
+            <div className="w-3 h-3 bg-blue-500/80 rounded-xs" />
+            <span className="text-xs font-semibold text-slate-500">Expense Amount (INR)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* TDS Full Report Modal */}
+      {isTdsReportOpen && (
+        <TdsFullReportModal onClose={() => setIsTdsReportOpen(false)} data={tdsGraphData} />
+      )}
     </div>
   );
 };
