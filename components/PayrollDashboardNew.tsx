@@ -23,7 +23,10 @@ import {
   DollarSign,
   FileText,
   Download,
-  X
+  X,
+  ChevronRight,
+  AlertCircle,
+  ArrowUpRight
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -216,6 +219,28 @@ const getVariablePayData = (range: string) => {
   return MONTHLY_VARIABLE_PAY;
 };
 
+const MONTHLY_PAYROLL_GROWTH = [
+  { month: 'Dec', payrollGrowth: 11.5, headcountGrowth: 7.2, payrollCost: 13800000, headcount: 395 },
+  { month: 'Jan', payrollGrowth: 12.0, headcountGrowth: 7.8, payrollCost: 15000000, headcount: 402 },
+  { month: 'Feb', payrollGrowth: 12.8, headcountGrowth: 8.0, payrollCost: 14500000, headcount: 405 },
+  { month: 'Mar', payrollGrowth: 14.5, headcountGrowth: 9.0, payrollCost: 16200000, headcount: 415 },
+  { month: 'Apr', payrollGrowth: 13.8, headcountGrowth: 8.5, payrollCost: 15500000, headcount: 418 },
+  { month: 'May', payrollGrowth: 15.2, headcountGrowth: 9.4, payrollCost: 16800000, headcount: 425 },
+  { month: 'Jun', payrollGrowth: 14.6, headcountGrowth: 8.9, payrollCost: 16200000, headcount: 428 },
+  { month: 'Jul', payrollGrowth: 16.8, headcountGrowth: 10.2, payrollCost: 18800000, headcount: 436 },
+  { month: 'Aug', payrollGrowth: 15.9, headcountGrowth: 9.7, payrollCost: 17700000, headcount: 440 },
+  { month: 'Sep', payrollGrowth: 17.5, headcountGrowth: 10.8, payrollCost: 19600000, headcount: 446 },
+  { month: 'Oct', payrollGrowth: 16.2, headcountGrowth: 10.1, payrollCost: 17600000, headcount: 450 },
+  { month: 'Nov', payrollGrowth: 18.0, headcountGrowth: 11.0, payrollCost: 18500000, headcount: 452 },
+];
+
+const getPayrollGrowthData = (range: string) => {
+  if (range === 'This Month') return MONTHLY_PAYROLL_GROWTH.slice(-3);
+  if (range === 'Last Month') return MONTHLY_PAYROLL_GROWTH.slice(-4, -1);
+  if (range === 'This Quarter' || range === 'Last Quarter') return MONTHLY_PAYROLL_GROWTH.slice(-6);
+  return MONTHLY_PAYROLL_GROWTH;
+};
+
 const YOY_GROWTH = [
   { year: '2023', payrollGrowth: 12, headcountGrowth: 8 },
   { year: '2024', payrollGrowth: 15, headcountGrowth: 10 },
@@ -257,9 +282,18 @@ const STATUTORY_BREAKDOWN = [
   { name: 'Employee State Insurance (ESI)', code: 'ESI', employer: 0.9, employee: 0.3, tag: 'Statutory', fill: '#06b6d4' },
   { name: 'Professional Tax (PT)', code: 'PT', employer: 0, employee: 0.4, tag: 'State Levy', fill: '#f59e0b' },
   { name: 'Tax Deducted at Source (TDS)', code: 'TDS', employer: 0, employee: 17.9, tag: 'Income Tax', fill: '#10b981' },
-  { name: 'Gratuity Provision', code: 'Gratuity', employer: 2.1, employee: 0, tag: 'Retiral', fill: '#8b5cf6' },
+  { name: 'Gratuity', code: 'Gratuity', employer: 2.1, employee: 0, tag: 'Retiral', fill: '#8b5cf6' },
   { name: 'Labour Welfare Fund (LWF)', code: 'LWF', employer: 0.05, employee: 0.05, tag: 'Welfare', fill: '#ec4899' },
 ];
+
+const STATUTORY_DATA_MAP: Record<string, { totalCompliance: number; employerContrib: number; employeeContrib: number; multiplier: number }> = {
+  'This Month': { totalCompliance: 3570000, employerContrib: 1005000, employeeContrib: 2565000, multiplier: 1 },
+  'Last Month': { totalCompliance: 3420000, employerContrib: 965000, employeeContrib: 2455000, multiplier: 0.96 },
+  'This Quarter': { totalCompliance: 10710000, employerContrib: 3015000, employeeContrib: 7695000, multiplier: 3 },
+  'Last Quarter': { totalCompliance: 10170000, employerContrib: 2865000, employeeContrib: 7305000, multiplier: 2.85 },
+  'This Year': { totalCompliance: 42840000, employerContrib: 12060000, employeeContrib: 30780000, multiplier: 12 },
+  'Last Year': { totalCompliance: 39270000, employerContrib: 11055000, employeeContrib: 28215000, multiplier: 11 },
+};
 
 const AUDIT_TRAIL = [
   { action: 'Net pay override approved for TF00912', by: 'HR Admin', time: '2 hours ago' },
@@ -411,55 +445,55 @@ const BONUS_SEASONALITY = [
   { month: 'Dec', bonus: 15 },
 ];
 
-const EXPENSE_TREND_DATA_MAP: Record<string, { month: string; amount: number; count: number }[]> = {
+const EXPENSE_TREND_DATA_MAP: Record<string, { month: string; amount: number; count: number; approved: number; pending: number }[]> = {
   'This Year': [
-    { month: 'May 2025', amount: 16500, count: 3 },
-    { month: 'Jun 2025', amount: 32000, count: 5 },
-    { month: 'Jul 2025', amount: 18500, count: 3 },
-    { month: 'Aug 2025', amount: 22000, count: 4 },
-    { month: 'Sep 2025', amount: 19000, count: 3 },
-    { month: 'Oct 2025', amount: 26500, count: 4 },
-    { month: 'Nov 2025', amount: 21000, count: 3 },
-    { month: 'Dec 2025', amount: 29000, count: 5 },
-    { month: 'Jan 2026', amount: 14500, count: 2 },
-    { month: 'Feb 2026', amount: 24000, count: 4 },
-    { month: 'Mar 2026', amount: 22500, count: 3 },
-    { month: 'Apr 2026', amount: 15000, count: 2 },
+    { month: 'May 2025', amount: 16500, count: 3, approved: 13500, pending: 3000 },
+    { month: 'Jun 2025', amount: 32000, count: 5, approved: 27000, pending: 5000 },
+    { month: 'Jul 2025', amount: 18500, count: 3, approved: 15500, pending: 3000 },
+    { month: 'Aug 2025', amount: 22000, count: 4, approved: 18000, pending: 4000 },
+    { month: 'Sep 2025', amount: 19000, count: 3, approved: 16000, pending: 3000 },
+    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000 },
+    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500 },
+    { month: 'Dec 2025', amount: 29000, count: 5, approved: 24500, pending: 4500 },
+    { month: 'Jan 2026', amount: 14500, count: 2, approved: 12000, pending: 2500 },
+    { month: 'Feb 2026', amount: 24000, count: 4, approved: 20000, pending: 4000 },
+    { month: 'Mar 2026', amount: 22500, count: 3, approved: 19000, pending: 3500 },
+    { month: 'Apr 2026', amount: 15000, count: 2, approved: 12500, pending: 2500 },
   ],
   'This Month': [
-    { month: 'Nov 2025', amount: 21000, count: 3 },
+    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500 },
   ],
   'Last Month': [
-    { month: 'Oct 2025', amount: 26500, count: 4 },
+    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000 },
   ],
   'This Quarter': [
-    { month: 'Oct 2025', amount: 26500, count: 4 },
-    { month: 'Nov 2025', amount: 21000, count: 3 },
-    { month: 'Dec 2025', amount: 29000, count: 5 },
+    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000 },
+    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500 },
+    { month: 'Dec 2025', amount: 29000, count: 5, approved: 24500, pending: 4500 },
   ],
   'Last Quarter': [
-    { month: 'Jul 2025', amount: 18500, count: 3 },
-    { month: 'Aug 2025', amount: 22000, count: 4 },
-    { month: 'Sep 2025', amount: 19000, count: 3 },
+    { month: 'Jul 2025', amount: 18500, count: 3, approved: 15500, pending: 3000 },
+    { month: 'Aug 2025', amount: 22000, count: 4, approved: 18000, pending: 4000 },
+    { month: 'Sep 2025', amount: 19000, count: 3, approved: 16000, pending: 3000 },
   ],
   'Last Year': [
-    { month: 'May 2024', amount: 15000, count: 2 },
-    { month: 'Jun 2024', amount: 28000, count: 4 },
-    { month: 'Jul 2024', amount: 17500, count: 3 },
-    { month: 'Aug 2024', amount: 21000, count: 3 },
-    { month: 'Sep 2024', amount: 18000, count: 3 },
-    { month: 'Oct 2024', amount: 24500, count: 4 },
-    { month: 'Nov 2024', amount: 20000, count: 3 },
-    { month: 'Dec 2024', amount: 27000, count: 5 },
-    { month: 'Jan 2025', amount: 13500, count: 2 },
-    { month: 'Feb 2025', amount: 22000, count: 3 },
-    { month: 'Mar 2025', amount: 25000, count: 4 },
-    { month: 'Apr 2025', amount: 16000, count: 2 },
+    { month: 'May 2024', amount: 15000, count: 2, approved: 12500, pending: 2500 },
+    { month: 'Jun 2024', amount: 28000, count: 4, approved: 23500, pending: 4500 },
+    { month: 'Jul 2024', amount: 17500, count: 3, approved: 14500, pending: 3000 },
+    { month: 'Aug 2024', amount: 21000, count: 3, approved: 17500, pending: 3500 },
+    { month: 'Sep 2024', amount: 18000, count: 3, approved: 15000, pending: 3000 },
+    { month: 'Oct 2024', amount: 24500, count: 4, approved: 20500, pending: 4000 },
+    { month: 'Nov 2024', amount: 20000, count: 3, approved: 16500, pending: 3500 },
+    { month: 'Dec 2024', amount: 27000, count: 5, approved: 22500, pending: 4500 },
+    { month: 'Jan 2025', amount: 13500, count: 2, approved: 11000, pending: 2500 },
+    { month: 'Feb 2025', amount: 22000, count: 3, approved: 18500, pending: 3500 },
+    { month: 'Mar 2025', amount: 25000, count: 4, approved: 21000, pending: 4000 },
+    { month: 'Apr 2025', amount: 16000, count: 2, approved: 13500, pending: 2500 },
   ],
   'Custom': [
-    { month: 'Period 1', amount: 18500, count: 3 },
-    { month: 'Period 2', amount: 24000, count: 4 },
-    { month: 'Period 3', amount: 19500, count: 3 },
+    { month: 'Period 1', amount: 18500, count: 3, approved: 15500, pending: 3000 },
+    { month: 'Period 2', amount: 24000, count: 4, approved: 20000, pending: 4000 },
+    { month: 'Period 3', amount: 19500, count: 3, approved: 16500, pending: 3000 },
   ],
 };
 
@@ -540,6 +574,307 @@ const TdsFullReportModal: React.FC<{ onClose: () => void; data: any[] }> = ({ on
   );
 };
 
+// ===================== Mock Data & Modals for LOAN And Advance & Exp. AND Reimb. =====================
+
+const MOCK_LOAN_ADVANCE_RECORDS = [
+  { id: 'LA-101', empId: 'MKR101', name: 'Priya Sharma', role: 'Senior Engineer', dept: 'Engineering', type: 'Personal Loan', originalAmt: 200000, outstanding: 120000, emi: 10000, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-102', empId: 'MKR102', name: 'Arjun Mehta', role: 'Sales Manager', dept: 'Sales', type: 'Salary Advance', originalAmt: 50000, outstanding: 25000, emi: 12500, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-103', empId: 'MKR103', name: 'Neha Kapoor', role: 'Product Analyst', dept: 'Product', type: 'Personal Loan', originalAmt: 300000, outstanding: 210000, emi: 15000, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-104', empId: 'MKR104', name: 'Rohan Desai', role: 'DevOps Engineer', dept: 'Engineering', type: 'Personal Loan', originalAmt: 150000, outstanding: 95000, emi: 9500, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-105', empId: 'MKR105', name: 'Vikram Singh', role: 'Finance Assoc.', dept: 'Finance', type: 'Salary Advance', originalAmt: 40000, outstanding: 20000, emi: 20000, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-106', empId: 'MKR106', name: 'Kavita Rao', role: 'HR Specialist', dept: 'HR', type: 'Personal Loan', originalAmt: 250000, outstanding: 180000, emi: 12000, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-107', empId: 'MKR107', name: 'Sanjay Patel', role: 'Tech Lead', dept: 'Engineering', type: 'Personal Loan', originalAmt: 500000, outstanding: 450000, emi: 25000, nextDeduction: 'Nov 2025', status: 'Active' },
+  { id: 'LA-108', empId: 'MKR108', name: 'Amit Mishra', role: 'QA Engineer', dept: 'Engineering', type: 'Salary Advance', originalAmt: 30000, outstanding: 15000, emi: 15000, nextDeduction: 'Overdue', status: 'Overdue' },
+  { id: 'LA-109', empId: 'MKR109', name: 'Sneha Reddy', role: 'UX Designer', dept: 'Design', type: 'Personal Loan', originalAmt: 180000, outstanding: 180000, emi: 10000, nextDeduction: 'Pending Approval', status: 'Pending Approval' },
+  { id: 'LA-110', empId: 'MKR110', name: 'Rahul Verma', role: 'Analyst', dept: 'Operations', type: 'Salary Advance', originalAmt: 25000, outstanding: 25000, emi: 12500, nextDeduction: 'Pending Approval', status: 'Pending Approval' },
+];
+
+const LoanAdvanceDetailsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [filterType, setFilterType] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filtered = useMemo(() => {
+    return MOCK_LOAN_ADVANCE_RECORDS.filter(r => {
+      const matchType = filterType === 'All' || r.type === filterType || r.status === filterType;
+      const matchSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.empId.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchType && matchSearch;
+    });
+  }, [filterType, searchTerm]);
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div>
+            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+              <Landmark className="text-blue-600" size={20} /> LOAN And Advance - Detailed Overview
+            </h3>
+            <p className="text-xs text-slate-500">Employee loan balances, salary advance recovery, and pending requests</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs">
+              <Download size={14} /> Export CSV
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-700 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Content */}
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+          {/* Top 4 KPI Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="p-3.5 bg-blue-50/70 rounded-xl border border-blue-100">
+              <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-1">Total Outstanding</p>
+              <p className="text-xl font-black text-blue-950">₹48,20,000</p>
+              <p className="text-[11px] text-blue-600 mt-0.5">37 active employees</p>
+            </div>
+            <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-100">
+              <p className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">Active Loans</p>
+              <p className="text-xl font-black text-indigo-950">₹38,70,000</p>
+              <p className="text-[11px] text-indigo-600 mt-0.5">24 employees</p>
+            </div>
+            <div className="p-3.5 bg-sky-50/70 rounded-xl border border-sky-100">
+              <p className="text-[10px] font-bold text-sky-700 uppercase tracking-wider mb-1">Salary Advances</p>
+              <p className="text-xl font-black text-sky-950">₹9,50,000</p>
+              <p className="text-[11px] text-sky-600 mt-0.5">13 employees</p>
+            </div>
+            <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-100">
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Next Payroll Recovery</p>
+              <p className="text-xl font-black text-emerald-950">₹3,85,000</p>
+              <p className="text-[11px] text-emerald-600 mt-0.5">Scheduled Nov 2025</p>
+            </div>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {['All', 'Personal Loan', 'Salary Advance', 'Pending Approval', 'Overdue'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilterType(f)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                    filterType === f
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Search by employee name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 w-full sm:w-64"
+            />
+          </div>
+
+          {/* Table */}
+          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">Employee</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3 text-right">Original Amount</th>
+                  <th className="px-4 py-3 text-right">Outstanding</th>
+                  <th className="px-4 py-3 text-right">Monthly Recovery</th>
+                  <th className="px-4 py-3">Cycle</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {filtered.map(row => (
+                  <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="font-bold text-slate-800">{row.name}</p>
+                      <p className="text-[10px] text-slate-400">{row.empId} • {row.dept}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                        row.type === 'Personal Loan'
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          : 'bg-sky-50 text-sky-700 border-sky-200'
+                      }`}>
+                        {row.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-600">₹{row.originalAmt.toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-900">₹{row.outstanding.toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3 text-right font-bold text-blue-700">₹{row.emi.toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3 text-slate-600">{row.nextDeduction}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        row.status === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : row.status === 'Pending Approval'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}>
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MOCK_EXPENSE_REIMB_RECORDS = [
+  { id: 'CLM-201', empId: 'MKR102', name: 'Arjun Mehta', dept: 'Sales', category: 'Client Dinner & Travel', claimDate: '12 Nov 2025', amount: 34500, status: 'Approved & Unpaid', payoutCycle: 'Nov 2025 Payroll' },
+  { id: 'CLM-202', empId: 'MKR107', name: 'Sanjay Patel', dept: 'Engineering', category: 'Conference & Flight', claimDate: '10 Nov 2025', amount: 58000, status: 'Approved & Unpaid', payoutCycle: 'Nov 2025 Payroll' },
+  { id: 'CLM-203', empId: 'MKR104', name: 'Rohan Desai', dept: 'Engineering', category: 'AWS Cloud Certification', claimDate: '14 Nov 2025', amount: 22000, status: 'Approved & Unpaid', payoutCycle: 'Nov 2025 Payroll' },
+  { id: 'CLM-204', empId: 'MKR101', name: 'Priya Sharma', dept: 'Engineering', category: 'Team Lunch / Offsite', claimDate: '15 Nov 2025', amount: 16500, status: 'Approved & Unpaid', payoutCycle: 'Nov 2025 Payroll' },
+  { id: 'CLM-205', empId: 'MKR105', name: 'Vikram Singh', dept: 'Finance', category: 'Software Subscription', claimDate: '18 Nov 2025', amount: 48000, status: 'Pending Approval', payoutCycle: 'Pending' },
+  { id: 'CLM-206', empId: 'MKR106', name: 'Kavita Rao', dept: 'HR', category: 'Campus Recruitment Travel', claimDate: '17 Nov 2025', amount: 32000, status: 'Pending Approval', payoutCycle: 'Pending' },
+  { id: 'CLM-207', empId: 'MKR109', name: 'Sneha Reddy', dept: 'Design', category: 'Design Software Assets', claimDate: '16 Nov 2025', amount: 18500, status: 'Pending Approval', payoutCycle: 'Pending' },
+  { id: 'CLM-208', empId: 'MKR103', name: 'Neha Kapoor', dept: 'Product', category: 'User Testing Incentive', claimDate: '01 Nov 2025', amount: 45000, status: 'Paid/Settled', payoutCycle: 'Oct 2025 Payroll' },
+  { id: 'CLM-209', empId: 'MKR108', name: 'Amit Mishra', dept: 'Engineering', category: 'Internet & Work From Home', claimDate: '02 Nov 2025', amount: 3000, status: 'Paid/Settled', payoutCycle: 'Oct 2025 Payroll' },
+];
+
+const ExpenseReimbDetailsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filtered = useMemo(() => {
+    return MOCK_EXPENSE_REIMB_RECORDS.filter(r => {
+      const matchStatus = filterStatus === 'All' || r.status === filterStatus;
+      const matchSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.category.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchStatus && matchSearch;
+    });
+  }, [filterStatus, searchTerm]);
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div>
+            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+              <Wallet className="text-emerald-600" size={20} /> Exp. AND Reimb. - Detailed Claims
+            </h3>
+            <p className="text-xs text-slate-500">Employee expense claims, verification status, and scheduled payroll reimbursements</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs">
+              <Download size={14} /> Export CSV
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-700 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Content */}
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+          {/* Top 4 KPI Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Outstanding</p>
+              <p className="text-xl font-black text-slate-900">₹5,86,000</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">31 affected employees</p>
+            </div>
+            <div className="p-3.5 bg-amber-50/70 rounded-xl border border-amber-100">
+              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">Pending Approval</p>
+              <p className="text-xl font-black text-amber-950">₹1,86,000</p>
+              <p className="text-[11px] text-amber-700 mt-0.5">23 claims under review</p>
+            </div>
+            <div className="p-3.5 bg-blue-50/70 rounded-xl border border-blue-100">
+              <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-1">Approved & Unpaid</p>
+              <p className="text-xl font-black text-blue-950">₹4,12,000</p>
+              <p className="text-[11px] text-blue-700 mt-0.5">14 claims awaiting payout</p>
+            </div>
+            <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-100">
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Next Payroll Payout</p>
+              <p className="text-xl font-black text-emerald-950">₹2,75,000</p>
+              <p className="text-[11px] text-emerald-600 mt-0.5">Scheduled Nov 2025</p>
+            </div>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {['All', 'Pending Approval', 'Approved & Unpaid', 'Paid/Settled'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilterStatus(f)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                    filterStatus === f
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Search by employee, category or claim ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:border-emerald-500 w-full sm:w-64"
+            />
+          </div>
+
+          {/* Table */}
+          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">Claim ID</th>
+                  <th className="px-4 py-3">Employee</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3">Payout Cycle</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {filtered.map(row => (
+                  <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3 font-mono font-bold text-slate-700">{row.id}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-bold text-slate-800">{row.name}</p>
+                      <p className="text-[10px] text-slate-400">{row.empId} • {row.dept}</p>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-700">{row.category}</td>
+                    <td className="px-4 py-3 text-slate-500">{row.claimDate}</td>
+                    <td className="px-4 py-3 text-right font-black text-slate-900">₹{row.amount.toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3 text-slate-600">{row.payoutCycle}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        row.status === 'Approved & Unpaid'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : row.status === 'Pending Approval'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}>
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ===================== Small Reusable Bits =====================
 
 const SectionHeader: React.FC<{ title: string; subtitle?: string }> = ({ title, subtitle }) => (
@@ -559,7 +894,7 @@ const Card: React.FC<{
 }> = ({ title, subtitle, icon, children, className, action }) => (
   <div className={`bg-white p-5 rounded-xl border border-slate-200 shadow-sm ${className || ''}`}>
     {title && (
-      <div className={`flex justify-between ${subtitle ? 'items-start' : 'items-center'} mb-4`}>
+      <div className={`flex justify-between ${subtitle ? 'items-start' : 'items-center'} mb-3`}>
         <div>
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
             {icon}
@@ -683,6 +1018,50 @@ const VariablePayTooltip = ({ active, payload, label }: any) => {
           <span className="font-black text-amber-600 text-sm whitespace-nowrap ml-2">
             {data.formatted || formatLakhValueAsINR(data.variable)}
           </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const PayrollGrowthTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[240px] text-xs">
+        <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5 flex items-center justify-between">
+          <span className="font-extrabold text-sm text-slate-900">{data.month ? `${data.month} 2025` : (label || data.year || 'Period')}</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Growth & Headcount</span>
+        </p>
+        <div className="space-y-2">
+          {/* Details already shown */}
+          <div className="flex justify-between items-center text-slate-700">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#4f46e5] shrink-0"></span>
+              Payroll Growth %:
+            </span>
+            <span className="font-bold text-slate-900">{data.payrollGrowth}%</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-700">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#a5b4fc] shrink-0"></span>
+              Headcount Growth %:
+            </span>
+            <span className="font-bold text-slate-900">{data.headcountGrowth}%</span>
+          </div>
+
+          {/* New details requested */}
+          <div className="border-t border-slate-100 pt-2 space-y-1.5">
+            <div className="flex justify-between items-center text-slate-700">
+              <span className="font-medium text-slate-600">Payroll Cost:</span>
+              <span className="font-black text-indigo-950">{formatINR(data.payrollCost)}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-700">
+              <span className="font-medium text-slate-600">Headcount:</span>
+              <span className="font-bold text-slate-900">{data.headcount}</span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1015,6 +1394,171 @@ const DateRangeFilterDropdown: React.FC<{
   );
 };
 
+const BUSINESS_UNITS_LIST = [
+  'All Business Units',
+  'CollabCRM',
+  '300 Minds',
+  'MindInventory',
+  'BlueWhale Tech',
+];
+
+const BU_PROFILES: Record<string, {
+  name: string;
+  ratio: number;
+  employees: number;
+  processed: number;
+  onHold: number;
+  approvedTax: number;
+  pendingTax: number;
+  notSubmittedTax: number;
+  taxApprovedPct: number;
+  taxPendingPct: number;
+  taxNotSubmittedPct: number;
+  growthPayroll: number;
+  growthHeadcount: number;
+}> = {
+  'All Business Units': {
+    name: 'All Business Units',
+    ratio: 1.0,
+    employees: 452,
+    processed: 400,
+    onHold: 52,
+    approvedTax: 352,
+    pendingTax: 68,
+    notSubmittedTax: 32,
+    taxApprovedPct: 78,
+    taxPendingPct: 15,
+    taxNotSubmittedPct: 7,
+    growthPayroll: 18,
+    growthHeadcount: 11,
+  },
+  'CollabCRM': {
+    name: 'CollabCRM',
+    ratio: 0.335,
+    employees: 152,
+    processed: 136,
+    onHold: 16,
+    approvedTax: 122,
+    pendingTax: 20,
+    notSubmittedTax: 10,
+    taxApprovedPct: 80,
+    taxPendingPct: 13,
+    taxNotSubmittedPct: 7,
+    growthPayroll: 20,
+    growthHeadcount: 13,
+  },
+  '300 Minds': {
+    name: '300 Minds',
+    ratio: 0.259,
+    employees: 118,
+    processed: 104,
+    onHold: 14,
+    approvedTax: 91,
+    pendingTax: 18,
+    notSubmittedTax: 9,
+    taxApprovedPct: 77,
+    taxPendingPct: 15,
+    taxNotSubmittedPct: 8,
+    growthPayroll: 16,
+    growthHeadcount: 9,
+  },
+  'MindInventory': {
+    name: 'MindInventory',
+    ratio: 0.222,
+    employees: 100,
+    processed: 88,
+    onHold: 12,
+    approvedTax: 76,
+    pendingTax: 17,
+    notSubmittedTax: 7,
+    taxApprovedPct: 76,
+    taxPendingPct: 17,
+    taxNotSubmittedPct: 7,
+    growthPayroll: 19,
+    growthHeadcount: 12,
+  },
+  'BlueWhale Tech': {
+    name: 'BlueWhale Tech',
+    ratio: 0.184,
+    employees: 82,
+    processed: 72,
+    onHold: 10,
+    approvedTax: 63,
+    pendingTax: 13,
+    notSubmittedTax: 6,
+    taxApprovedPct: 77,
+    taxPendingPct: 16,
+    taxNotSubmittedPct: 7,
+    growthPayroll: 15,
+    growthHeadcount: 8,
+  },
+};
+
+const BusinessUnitDropdown: React.FC<{
+  value: string;
+  onChange: (bu: string) => void;
+}> = ({ value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(prev => !prev)}
+        className={`bg-white border text-slate-700 text-xs font-bold rounded-xl px-3.5 py-2 flex items-center gap-2.5 transition-all shadow-2xs cursor-pointer ${
+          isOpen ? 'border-indigo-500 ring-2 ring-indigo-100 bg-slate-50/50' : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+        }`}
+      >
+        <Building2 size={15} className="text-indigo-600 shrink-0" />
+        <span className="font-semibold text-slate-800 text-xs">{value}</span>
+        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-600' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-[220px] bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5">Business Unit</p>
+          <div className="space-y-0.5">
+            {BUSINESS_UNITS_LIST.map((bu) => {
+              const isSelected = value === bu;
+              return (
+                <button
+                  key={bu}
+                  type="button"
+                  onClick={() => {
+                    onChange(bu);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-between transition-colors cursor-pointer ${
+                    isSelected ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="truncate">{bu}</span>
+                  {isSelected && <CheckCircle2 size={14} className="text-indigo-600 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const KpiCard: React.FC<{
   label: string;
   value: string;
@@ -1050,12 +1594,16 @@ const KpiCard: React.FC<{
 
 const KPI_METRICS_MAP: Record<string, {
   totalCost: string;
+  totalCostNum: number;
   totalCostSub: string;
   totalCostTrend: 'up' | 'down';
   netPayable: string;
+  netPayableNum: number;
   activeEmployees: string;
+  activeEmployeesNum: number;
   activeEmployeesSub: string;
   statutory: string;
+  statutoryNum: number;
   processingStatus: string;
   processingSub: string;
   processingTrend: 'up' | 'down';
@@ -1064,12 +1612,16 @@ const KPI_METRICS_MAP: Record<string, {
 }> = {
   'This Month': {
     totalCost: formatCr(18500000),
+    totalCostNum: 18500000,
     totalCostSub: '+5.2% MoM',
     totalCostTrend: 'up',
     netPayable: formatCr(14200000),
+    netPayableNum: 14200000,
     activeEmployees: '452',
+    activeEmployeesNum: 452,
     activeEmployeesSub: '+8 joined / -3 hold',
     statutory: formatL(3260000),
+    statutoryNum: 3260000,
     processingStatus: '400 / 452',
     processingSub: '50 On Hold, 2 Failed',
     processingTrend: 'down',
@@ -1078,12 +1630,16 @@ const KPI_METRICS_MAP: Record<string, {
   },
   'Last Month': {
     totalCost: formatCr(17600000),
+    totalCostNum: 17600000,
     totalCostSub: '+4.1% MoM',
     totalCostTrend: 'up',
     netPayable: formatCr(13600000),
+    netPayableNum: 13600000,
     activeEmployees: '447',
+    activeEmployeesNum: 447,
     activeEmployeesSub: '+5 joined / -2 hold',
     statutory: formatL(3120000),
+    statutoryNum: 3120000,
     processingStatus: '447 / 447',
     processingSub: 'All Disbursed',
     processingTrend: 'up',
@@ -1092,12 +1648,16 @@ const KPI_METRICS_MAP: Record<string, {
   },
   'This Quarter': {
     totalCost: formatCr(54200000),
+    totalCostNum: 54200000,
     totalCostSub: '+6.8% QoQ',
     totalCostTrend: 'up',
     netPayable: formatCr(41800000),
+    netPayableNum: 41800000,
     activeEmployees: '452',
+    activeEmployeesNum: 452,
     activeEmployeesSub: '+18 joined / -7 hold',
     statutory: formatL(9640000),
+    statutoryNum: 9640000,
     processingStatus: '1,320 / 1,350',
     processingSub: '50 On Hold, 2 Failed',
     processingTrend: 'down',
@@ -1106,12 +1666,16 @@ const KPI_METRICS_MAP: Record<string, {
   },
   'Last Quarter': {
     totalCost: formatCr(50800000),
+    totalCostNum: 50800000,
     totalCostSub: '+5.5% QoQ',
     totalCostTrend: 'up',
     netPayable: formatCr(39200000),
+    netPayableNum: 39200000,
     activeEmployees: '441',
+    activeEmployeesNum: 441,
     activeEmployeesSub: '+14 joined / -6 hold',
     statutory: formatL(9080000),
+    statutoryNum: 9080000,
     processingStatus: '1,323 / 1,323',
     processingSub: 'All Disbursed',
     processingTrend: 'up',
@@ -1120,12 +1684,16 @@ const KPI_METRICS_MAP: Record<string, {
   },
   'This Year': {
     totalCost: formatCr(214000000),
+    totalCostNum: 214000000,
     totalCostSub: '+12.4% YoY',
     totalCostTrend: 'up',
     netPayable: formatCr(165000000),
+    netPayableNum: 165000000,
     activeEmployees: '452',
+    activeEmployeesNum: 452,
     activeEmployeesSub: '+62 joined / -28 hold',
     statutory: formatCr(38200000),
+    statutoryNum: 38200000,
     processingStatus: '5,280 / 5,340',
     processingSub: '50 On Hold, 2 Failed',
     processingTrend: 'down',
@@ -1134,12 +1702,16 @@ const KPI_METRICS_MAP: Record<string, {
   },
   'Last Year': {
     totalCost: formatCr(191000000),
+    totalCostNum: 191000000,
     totalCostSub: '+9.8% YoY',
     totalCostTrend: 'up',
     netPayable: formatCr(147000000),
+    netPayableNum: 147000000,
     activeEmployees: '418',
+    activeEmployeesNum: 418,
     activeEmployeesSub: '+45 joined / -19 hold',
     statutory: formatCr(34000000),
+    statutoryNum: 34000000,
     processingStatus: '4,980 / 4,980',
     processingSub: 'All Disbursed',
     processingTrend: 'up',
@@ -1193,25 +1765,108 @@ const PayrollDashboardNew: React.FC = () => {
     setIsFilterPopoverOpen(false);
   };
 
-  const currentKpi = KPI_METRICS_MAP[timeRange] || KPI_METRICS_MAP['This Month'];
+  const currentKpiBase = KPI_METRICS_MAP[timeRange] || KPI_METRICS_MAP['This Month'];
+
+  const [selectedBu, setSelectedBu] = useState('All Business Units');
+  const currentBuProfile = BU_PROFILES[selectedBu] || BU_PROFILES['All Business Units'];
+
+  const displayKpi = useMemo(() => {
+    const base = currentKpiBase;
+    if (currentBuProfile.ratio === 1) return base;
+    return {
+      ...base,
+      totalCost: formatCr(Math.round(base.totalCostNum * currentBuProfile.ratio)),
+      netPayable: formatCr(Math.round(base.netPayableNum * currentBuProfile.ratio)),
+      activeEmployees: `${Math.round(base.activeEmployeesNum * currentBuProfile.ratio)}`,
+      statutory: formatL(Math.round(base.statutoryNum * currentBuProfile.ratio)),
+    };
+  }, [currentKpiBase, currentBuProfile]);
+
+  const currentPayrollCostData = useMemo(() => {
+    if (currentBuProfile.ratio === 1) return PAYROLL_COST_TREND;
+    return PAYROLL_COST_TREND.map(d => ({
+      ...d,
+      gross: Math.round(d.gross * currentBuProfile.ratio),
+      net: Math.round(d.net * currentBuProfile.ratio),
+      employeeDeductions: Math.round(d.employeeDeductions * currentBuProfile.ratio * 10) / 10,
+      employerDeductions: Math.round(d.employerDeductions * currentBuProfile.ratio * 10) / 10,
+      statutory: Math.round(d.statutory * currentBuProfile.ratio * 10) / 10,
+    }));
+  }, [currentBuProfile]);
+
+  const [statutoryTimeRange, setStatutoryTimeRange] = useState('This Month');
+  const currentStatutoryInfo = STATUTORY_DATA_MAP[statutoryTimeRange] || STATUTORY_DATA_MAP['This Month'];
+  const currentStatutoryList = useMemo(() => {
+    return STATUTORY_BREAKDOWN.map(s => ({
+      ...s,
+      employer: s.employer > 0 ? s.employer * currentStatutoryInfo.multiplier * currentBuProfile.ratio : 0,
+      employee: s.employee > 0 ? s.employee * currentStatutoryInfo.multiplier * currentBuProfile.ratio : 0,
+    }));
+  }, [currentStatutoryInfo, currentBuProfile]);
 
   const [buTimeRange, setBuTimeRange] = useState('This Month');
-  const [deptTimeRange, setDeptTimeRange] = useState('This Month');
   const [varPayTimeRange, setVarPayTimeRange] = useState('This Year');
+  const [growthTimeRange, setGrowthTimeRange] = useState('This Year');
   const [compRangeFilter, setCompRangeFilter] = useState('This Month');
   const [deptCostFilter, setDeptCostFilter] = useState('This Month');
 
   const currentBuData = COST_BY_BU_MAP[buTimeRange] || COST_BY_BU_MAP['This Month'];
-  const currentDept = COST_BY_DEPT_MAP[deptTimeRange] || COST_BY_DEPT_MAP['This Month'];
-  const currentVarPayData = getVariablePayData(varPayTimeRange);
-  const currentCompData = CTC_BAND_MAP[compRangeFilter] || CTC_BAND_MAP['This Month'] || CTC_BAND_DISTRIBUTION;
-  const currentDeptHeadcountCost = DEPT_HEADCOUNT_COST_MAP[deptCostFilter] || DEPT_HEADCOUNT_COST_MAP['This Month'] || DEPT_HEADCOUNT_COST;
+
+  const currentVarPayData = useMemo(() => {
+    const raw = getVariablePayData(varPayTimeRange);
+    if (currentBuProfile.ratio === 1) return raw;
+    return raw.map(d => ({
+      ...d,
+      variable: Math.round(d.variable * currentBuProfile.ratio * 10) / 10,
+    }));
+  }, [varPayTimeRange, currentBuProfile]);
+
+  const currentGrowthData = useMemo(() => {
+    const raw = getPayrollGrowthData(growthTimeRange);
+    if (currentBuProfile.ratio === 1) return raw;
+    const pFactor = currentBuProfile.growthPayroll / 18;
+    const hFactor = currentBuProfile.growthHeadcount / 11;
+    return raw.map(d => ({
+      ...d,
+      payrollGrowth: Math.round(d.payrollGrowth * pFactor),
+      headcountGrowth: Math.round(d.headcountGrowth * hFactor),
+    }));
+  }, [growthTimeRange, currentBuProfile]);
+
+  const currentTaxDeclarationData = useMemo(() => [
+    { name: 'Approved', value: currentBuProfile.taxApprovedPct, count: currentBuProfile.approvedTax, fill: '#10b981' },
+    { name: 'Proof Verification Pending', value: currentBuProfile.taxPendingPct, count: currentBuProfile.pendingTax, fill: '#f59e0b' },
+    { name: 'Not Yet Submitted', value: currentBuProfile.taxNotSubmittedPct, count: currentBuProfile.notSubmittedTax, fill: '#f43f5e' },
+  ], [currentBuProfile]);
+
+  const currentCompData = useMemo(() => {
+    const base = CTC_BAND_MAP[compRangeFilter] || CTC_BAND_MAP['This Month'] || CTC_BAND_DISTRIBUTION;
+    if (currentBuProfile.ratio === 1) return base;
+    return base.map(d => ({
+      ...d,
+      count: Math.max(1, Math.round(d.count * currentBuProfile.ratio)),
+    }));
+  }, [compRangeFilter, currentBuProfile]);
+
+  const currentDeptHeadcountCost = useMemo(() => {
+    const base = DEPT_HEADCOUNT_COST_MAP[deptCostFilter] || DEPT_HEADCOUNT_COST_MAP['This Month'] || DEPT_HEADCOUNT_COST;
+    if (currentBuProfile.ratio === 1) return base;
+    return base.map(d => ({
+      ...d,
+      headcount: Math.max(1, Math.round(d.headcount * currentBuProfile.ratio)),
+      cost: Math.round(d.cost * currentBuProfile.ratio * 10) / 10,
+    }));
+  }, [deptCostFilter, currentBuProfile]);
 
   // TDS Dashboard State
   const [tdsTimeRange, setTdsTimeRange] = useState('This Year');
   const [isTdsFilterPopoverOpen, setIsTdsFilterPopoverOpen] = useState(false);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
+
+  // Loan & Advance and Expense & Reimb Modals State
+  const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
   // Expense & Reimbursement Trend State
   const [expenseTimeRange, setExpenseTimeRange] = useState('This Year');
@@ -1298,8 +1953,16 @@ const PayrollDashboardNew: React.FC = () => {
   };
 
   const currentExpenseData = useMemo(() => {
-    return EXPENSE_TREND_DATA_MAP[expenseTimeRange] || EXPENSE_TREND_DATA_MAP['This Year'];
-  }, [expenseTimeRange]);
+    const base = EXPENSE_TREND_DATA_MAP[expenseTimeRange] || EXPENSE_TREND_DATA_MAP['This Year'];
+    if (currentBuProfile.ratio === 1) return base;
+    return base.map(d => ({
+      ...d,
+      amount: Math.round(d.amount * currentBuProfile.ratio),
+      approved: Math.round(d.approved * currentBuProfile.ratio),
+      pending: Math.round(d.pending * currentBuProfile.ratio),
+      count: Math.max(1, Math.round(d.count * currentBuProfile.ratio)),
+    }));
+  }, [expenseTimeRange, currentBuProfile]);
 
   const maxExpenseAmount = 35000;
 
@@ -1315,9 +1978,12 @@ const PayrollDashboardNew: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Payroll Dashboard</h1>
-        <p className="text-sm text-slate-500">Company-wide payroll health, compliance, and cost insights</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Payroll Dashboard</h1>
+          <p className="text-sm text-slate-500">Company-wide payroll health, compliance, and cost insights</p>
+        </div>
+        <BusinessUnitDropdown value={selectedBu} onChange={setSelectedBu} />
       </div>
 
       {/* ===================== SECTION A: Executive Summary KPI Cards ===================== */}
@@ -1391,45 +2057,38 @@ const PayrollDashboardNew: React.FC = () => {
           </div>
         </div>
 
-        {/* 5 KPI Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {/* 4 KPI Cards Grid (Avg Cost / Employee removed) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             label="Total Payroll Cost"
-            value={currentKpi.totalCost}
+            value={displayKpi.totalCost}
             icon={<Wallet size={18} className="text-indigo-600" />}
             iconBg="bg-indigo-50"
           />
           <KpiCard
             label="Net Payable"
-            value={currentKpi.netPayable}
+            value={displayKpi.netPayable}
             icon={<Landmark size={18} className="text-emerald-600" />}
             iconBg="bg-emerald-50"
           />
           <KpiCard
             label="Eligible Employees"
-            value={currentKpi.activeEmployees}
-            sub={currentKpi.activeEmployeesSub}
+            value={displayKpi.activeEmployees}
+            sub={currentKpiBase.activeEmployeesSub}
             trend="up"
             icon={<Users size={18} className="text-blue-600" />}
             iconBg="bg-blue-50"
           />
           <KpiCard
             label="Statutory Liability"
-            value={currentKpi.statutory}
+            value={displayKpi.statutory}
             icon={<ShieldCheck size={18} className="text-purple-600" />}
             iconBg="bg-purple-50"
-          />
-          <KpiCard
-            label="Avg Cost / Employee"
-            value={currentKpi.avgCost}
-            icon={<Activity size={18} className="text-rose-600" />}
-            iconBg="bg-rose-50"
           />
         </div>
       </div>
 
       {/* ===================== SECTION B: CEO / Top Management Strategic Widgets ===================== */}
-      <SectionHeader title="Strategic Overview" subtitle="For CEO & Top Management — cost trends, growth, and budget health" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card
           title="Monthly Payroll Cost"
@@ -1444,7 +2103,7 @@ const PayrollDashboardNew: React.FC = () => {
         >
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={PAYROLL_COST_TREND} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <ComposedChart data={currentPayrollCostData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
@@ -1454,83 +2113,6 @@ const PayrollDashboardNew: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <p className="text-center text-xs font-semibold text-slate-400 mt-2">12 Months</p>
-        </Card>
-
-        <Card
-          title="Cost by Business Unit"
-          icon={<Building2 size={16} className="text-indigo-600" />}
-          action={<DateRangeFilterDropdown value={buTimeRange} onChange={setBuTimeRange} />}
-        >
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={currentBuData} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} />
-                <YAxis type="category" dataKey="bu" axisLine={false} tickLine={false} tick={CHART_TICK} width={100} />
-                <RechartsTooltip content={<CostByBuTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="cost" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={18} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card
-          title="Cost by Department"
-          icon={<PieChartIcon size={16} className="text-indigo-600" />}
-          action={<DateRangeFilterDropdown value={deptTimeRange} onChange={setDeptTimeRange} />}
-        >
-          <div className="h-56 w-full flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Left: Interactive Donut Chart with Center Total */}
-            <div className="relative w-full sm:w-[46%] h-full flex items-center justify-center">
-              {/* Center label placed BEFORE chart with z-0 so tooltip is always on top */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
-                <span className="text-sm font-black text-slate-800">{currentDept.totalLabel}</span>
-              </div>
-              <ResponsiveContainer width="100%" height="100%" className="relative z-10">
-                <RechartsPieChart>
-                  <Pie
-                    data={currentDept.data}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {currentDept.data.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#ffffff" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip content={<CostByDeptTooltip />} wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }} />
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Right: Department breakdown legend with progress bars & values */}
-            <div className="w-full sm:w-[54%] flex flex-col justify-center space-y-2.5 sm:pr-2">
-              {currentDept.data.map((dept) => (
-                <div key={dept.name} className="group">
-                  <div className="flex justify-between items-center text-xs mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dept.fill }}></span>
-                      <span className="font-semibold text-slate-700">{dept.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 font-mono">
-                      <span className="font-bold text-slate-800">{dept.amount}</span>
-                      <span className="text-[11px] font-semibold text-slate-400 w-8 text-right">{dept.percentage}%</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${dept.percentage}%`, backgroundColor: dept.fill }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </Card>
 
         <Card
@@ -1551,201 +2133,145 @@ const PayrollDashboardNew: React.FC = () => {
           </div>
         </Card>
 
-        <Card title="Payroll Growth vs Headcount Growth" icon={<TrendingUp size={16} className="text-indigo-600" />}>
+        <Card
+          title="Payroll Growth vs Headcount Growth"
+          icon={<TrendingUp size={16} className="text-indigo-600" />}
+          action={<DateRangeFilterDropdown value={growthTimeRange} onChange={setGrowthTimeRange} />}
+        >
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={YOY_GROWTH} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={currentGrowthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} unit="%" />
-                <RechartsTooltip formatter={(v: any) => `${v}%`} />
-                <Bar dataKey="payrollGrowth" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Payroll Growth %" />
-                <Bar dataKey="headcountGrowth" fill="#a5b4fc" radius={[4, 4, 0, 0]} name="Headcount Growth %" />
+                <RechartsTooltip content={<PayrollGrowthTooltip />} wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }} cursor={{ fill: '#f8fafc' }} />
+                <Bar dataKey="payrollGrowth" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Payroll Growth %" maxBarSize={32} />
+                <Bar dataKey="headcountGrowth" fill="#a5b4fc" radius={[4, 4, 0, 0]} name="Headcount Growth %" maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
-      </div>
 
-      {/* ===================== SECTION C: HR Operational Widgets ===================== */}
-      <SectionHeader title="HR Operations" subtitle="Actionable items for day-to-day payroll and compliance management" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card
-          title="Payroll Run Status"
-          icon={<CheckCircle2 size={16} className="text-emerald-600" />}
-          action={
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
-              Current Cycle
-            </span>
-          }
-        >
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pb-1.5 border-b border-slate-100 mb-1">
-              <span>Cycle: <strong className="text-slate-800">Nov 2025</strong></span>
-              <span className="text-emerald-600 font-bold">400/452 Done</span>
-            </div>
-            <div className="flex justify-between items-center bg-emerald-50 rounded-lg px-3 py-2.5">
-              <span className="text-xs font-bold text-emerald-800 flex items-center gap-2"><CheckCircle2 size={14} /> Processed</span>
-              <span className="text-sm font-black text-emerald-800">400</span>
-            </div>
-            <div className="flex justify-between items-center bg-amber-50 rounded-lg px-3 py-2.5">
-              <span className="text-xs font-bold text-amber-800 flex items-center gap-2"><Clock size={14} /> On Hold</span>
-              <span className="text-sm font-black text-amber-800">52</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          title="Tax Declaration Submission Funnel"
-          subtitle="(FY 2026-27)"
-          icon={<ShieldCheck size={16} className="text-indigo-600" />}
-        >
-          <div className="flex flex-col xl:flex-row items-center gap-3">
-            {/* Donut Chart with Center Metric */}
-            <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-                <span className="text-sm font-black text-slate-800 leading-none">78%</span>
-                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tight mt-0.5">Approved</span>
+        {/* Side-by-Side under Variable Pay Summary: Payroll Run Status & Tax Declaration Submission Funnel */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 self-start">
+          <Card
+            title="Payroll Run Status"
+            icon={<CheckCircle2 size={16} className="text-emerald-600" />}
+            action={
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                Current Cycle
+              </span>
+            }
+            className="flex flex-col justify-start"
+          >
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pb-1.5 border-b border-slate-100 mb-1">
+                <span>Cycle: <strong className="text-slate-800">Nov 2025</strong></span>
+                <span className="text-emerald-600 font-bold">{currentBuProfile.processed}/{currentBuProfile.employees} Done</span>
               </div>
-              <ResponsiveContainer width="100%" height="100%" className="relative z-10">
-                <RechartsPieChart>
-                  <Pie
-                    data={TAX_DECLARATION_DATA}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={28}
-                    outerRadius={40}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {TAX_DECLARATION_DATA.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#ffffff" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip content={<TaxDeclarationTooltip />} wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }} />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+              <div className="flex justify-between items-center bg-emerald-50 rounded-lg px-2.5 py-1.5">
+                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5"><CheckCircle2 size={13} /> Processed</span>
+                <span className="text-xs font-black text-emerald-800">{currentBuProfile.processed}</span>
+              </div>
+              <div className="flex justify-between items-center bg-amber-50 rounded-lg px-2.5 py-1.5">
+                <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5"><Clock size={13} /> On Hold</span>
+                <span className="text-xs font-black text-amber-800">{currentBuProfile.onHold}</span>
+              </div>
             </div>
+          </Card>
 
-            {/* Status Breakdown */}
-            <div className="flex-1 w-full space-y-1.5">
-              <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-emerald-50/70 border border-emerald-100">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span className="text-xs font-semibold text-slate-700 truncate">Approved</span>
+          <Card
+            title="Tax Declaration Funnel"
+            subtitle="(FY 2026-27)"
+            icon={<ShieldCheck size={16} className="text-indigo-600" />}
+            className="flex flex-col justify-start"
+          >
+            <div className="flex flex-col items-center gap-2">
+              {/* Donut Chart with Center Metric */}
+              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
+                  <span className="text-xs font-black text-slate-800 leading-none">{currentBuProfile.taxApprovedPct}%</span>
+                  <span className="text-[7px] font-bold text-emerald-600 uppercase tracking-tight mt-0.5">Approved</span>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs font-bold text-emerald-700">352</span>
-                  <span className="text-[10px] text-emerald-600 ml-1 font-medium">(78%)</span>
-                </div>
+                <ResponsiveContainer width="100%" height="100%" className="relative z-10">
+                  <RechartsPieChart>
+                    <Pie
+                      data={currentTaxDeclarationData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={20}
+                      outerRadius={28}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {currentTaxDeclarationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} stroke="#ffffff" strokeWidth={2} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip content={<TaxDeclarationTooltip />} wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }} />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
               </div>
 
-              <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-amber-50/70 border border-amber-100">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-                  <span className="text-xs font-semibold text-slate-700 truncate" title="Proof Verification Pending">Pending</span>
+              {/* Status Breakdown */}
+              <div className="w-full space-y-1">
+                <div className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-emerald-50/70 border border-emerald-100">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="text-[10px] font-semibold text-slate-700 truncate">Approved</span>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-bold text-emerald-700">{currentBuProfile.approvedTax}</span>
+                    <span className="text-[9px] text-emerald-600 ml-0.5 font-medium">({currentBuProfile.taxApprovedPct}%)</span>
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs font-bold text-amber-700">68</span>
-                  <span className="text-[10px] text-amber-600 ml-1 font-medium">(15%)</span>
+
+                <div className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-amber-50/70 border border-amber-100">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                    <span className="text-[10px] font-semibold text-slate-700 truncate" title="Proof Verification Pending">Pending</span>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-bold text-amber-700">{currentBuProfile.pendingTax}</span>
+                    <span className="text-[9px] text-amber-600 ml-0.5 font-medium">({currentBuProfile.taxPendingPct}%)</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-rose-50/70 border border-rose-100">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
-                  <span className="text-xs font-semibold text-slate-700 truncate">Not Submitted</span>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs font-bold text-rose-700">32</span>
-                  <span className="text-[10px] text-rose-600 ml-1 font-medium">(7%)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          title="Loans & Advances Summary"
-          subtitle="Till Date"
-          icon={<Landmark size={16} className="text-blue-600" />}
-        >
-          <div className="space-y-3">
-            <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 flex justify-between items-center">
-              <div>
-                <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Total Outstanding</p>
-                <p className="text-base font-black text-blue-950 mt-0.5">{formatL(4820000)}</p>
-              </div>
-              <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                <Landmark size={18} />
-              </div>
-            </div>
-
-            <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-3 flex justify-between items-center">
-              <div>
-                <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Pending Approval</p>
-                <p className="text-base font-black text-amber-950 mt-0.5">6 requests</p>
-              </div>
-              <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                <Clock size={18} />
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          title="Expense & Reimbursement Claims"
-          subtitle="Till Date"
-          icon={<Wallet size={16} className="text-sky-600" />}
-        >
-          <div className="space-y-3">
-            <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-3 flex justify-between items-center">
-              <div>
-                <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Pending</p>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-base font-black text-amber-950">23 claims</span>
-                  <span className="text-xs font-semibold text-amber-700">({formatL(186000)})</span>
+                <div className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-rose-50/70 border border-rose-100">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                    <span className="text-[10px] font-semibold text-slate-700 truncate">Not Submitted</span>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-bold text-rose-700">{currentBuProfile.notSubmittedTax}</span>
+                    <span className="text-[9px] text-rose-600 ml-0.5 font-medium">({currentBuProfile.taxNotSubmittedPct}%)</span>
+                  </div>
                 </div>
               </div>
-              <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                <Clock size={18} />
-              </div>
             </div>
+          </Card>
+        </div>
 
-            <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 flex justify-between items-center">
-              <div>
-                <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Approved</p>
-                <p className="text-base font-black text-emerald-950 mt-0.5">{formatL(412000)}</p>
-              </div>
-              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                <CheckCircle2 size={18} />
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Statutory Contribution Breakdown - matching Compensation Range Distribution width (50% on lg) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+        {/* Right side under Payroll Growth: Statutory Contribution Breakdown */}
         <Card
           title="Statutory Contribution Breakdown"
-          subtitle="Employer and employee statutory compliance liabilities for the period"
           icon={<ShieldCheck size={16} className="text-purple-600" />}
+          action={<DateRangeFilterDropdown value={statutoryTimeRange} onChange={setStatutoryTimeRange} />}
           className="w-full"
         >
           {/* KPI Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
             <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3 min-w-0">
               <span className="text-[10px] xl:text-[11px] font-bold text-purple-700 uppercase tracking-tight block truncate" title="Total Statutory Compliance">Total Statutory Compliance</span>
-              <p className="text-base xl:text-lg font-black text-purple-950 mt-0.5">{formatL(3570000)}</p>
+              <p className="text-base xl:text-lg font-black text-purple-950 mt-0.5">{formatL(Math.round(currentStatutoryInfo.totalCompliance * currentBuProfile.ratio))}</p>
             </div>
             <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 min-w-0">
               <span className="text-[10px] xl:text-[11px] font-bold text-indigo-700 uppercase tracking-tight block truncate" title="Employer Contribution">Employer Contribution</span>
-              <p className="text-base xl:text-lg font-black text-indigo-950 mt-0.5">{formatL(1005000)}</p>
+              <p className="text-base xl:text-lg font-black text-indigo-950 mt-0.5">{formatL(Math.round(currentStatutoryInfo.employerContrib * currentBuProfile.ratio))}</p>
             </div>
             <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 min-w-0">
               <span className="text-[10px] xl:text-[11px] font-bold text-emerald-700 uppercase tracking-tight block truncate" title="Employee Contribution">Employee Contribution</span>
-              <p className="text-base xl:text-lg font-black text-emerald-950 mt-0.5">{formatL(2565000)}</p>
+              <p className="text-base xl:text-lg font-black text-emerald-950 mt-0.5">{formatL(Math.round(currentStatutoryInfo.employeeContrib * currentBuProfile.ratio))}</p>
             </div>
           </div>
 
@@ -1760,7 +2286,7 @@ const PayrollDashboardNew: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {STATUTORY_BREAKDOWN.map(s => (
+                {currentStatutoryList.map(s => (
                   <tr key={s.name} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-2.5 px-3 sm:px-4">
                       <div className="flex items-center gap-2">
@@ -1769,10 +2295,10 @@ const PayrollDashboardNew: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-2.5 px-3 sm:px-4 text-right font-semibold text-slate-700">
-                      {formatL(s.employer * 100000)}
+                      {s.employer > 0 ? formatL(s.employer * 100000) : '-'}
                     </td>
                     <td className="py-2.5 px-3 sm:px-4 text-right font-semibold text-slate-700">
-                      {formatL(s.employee * 100000)}
+                      {s.employee > 0 ? formatL(s.employee * 100000) : '-'}
                     </td>
                   </tr>
                 ))}
@@ -1783,7 +2309,6 @@ const PayrollDashboardNew: React.FC = () => {
       </div>
 
       {/* ===================== SECTION E: Distribution & Composition ===================== */}
-      <SectionHeader title="Distribution & Composition" subtitle="How headcount, cost, and compensation are structured across the org" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
         <Card
           title="Compensation Range Distribution"
@@ -1873,9 +2398,9 @@ const PayrollDashboardNew: React.FC = () => {
       </div>
 
       {/* 2-Column Grid: TDS Deductions & Expense Reimbursement Side-by-Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6 items-start">
         {/* Left Column: TDS Deductions Over Time */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 self-start">
           {/* Header & Filters */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div className="flex items-center gap-2.5">
@@ -2157,6 +2682,45 @@ const PayrollDashboardNew: React.FC = () => {
             </div>
           </div>
 
+          {/* Claim Lifecycle Pipeline (Added above graph and below 2 KPI cards) */}
+          <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-semibold text-slate-600">Claim Lifecycle Pipeline</span>
+            </div>
+
+            {/* Multi-segment progress bar visually distinguishing stages */}
+            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden flex">
+              {/* Pending Approval: ~12% */}
+              <div className="bg-amber-400 h-full" style={{ width: '12%' }} title="Pending Approval: ₹1,86,000 (23 claims)" />
+              {/* Approved & Unpaid: ~18% */}
+              <div className="bg-blue-500 h-full" style={{ width: '18%' }} title="Approved & Unpaid: ₹4,12,000 (14 claims)" />
+              {/* Settled: ~70% */}
+              <div className="bg-emerald-500 h-full" style={{ width: '70%' }} title="Settled: ₹18,40,000 (112 claims)" />
+            </div>
+
+            {/* Stage indicators */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span className="text-slate-600">Pending Approval:</span>
+                <span className="font-bold text-amber-800">₹1,86,000</span>
+                <span className="text-slate-400 text-[10px]">(23)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="text-slate-600">Approved & Unpaid:</span>
+                <span className="font-bold text-blue-800">₹4,12,000</span>
+                <span className="text-slate-400 text-[10px]">(14)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="text-slate-600">Settled:</span>
+                <span className="font-bold text-emerald-700">₹18,40,000</span>
+                <span className="text-slate-400 text-[10px]">(112)</span>
+              </div>
+            </div>
+          </div>
+
           {/* Main Graph (fills the 50% card) */}
           <div className="w-full bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between h-[310px]">
             {/* Chart Area with Y-axis */}
@@ -2223,16 +2787,28 @@ const PayrollDashboardNew: React.FC = () => {
                     <div className="font-bold border-b border-slate-700 pb-1 mb-1 flex justify-between items-center">
                       <span className="text-slate-200 font-bold">{currentExpenseData[hoveredExpenseIndex].month}</span>
                     </div>
-                    <div className="space-y-1 text-[11px]">
+                    <div className="space-y-1.5 text-[11px]">
                       <div className="flex justify-between text-slate-300 gap-3">
-                        <span>Total Expense:</span>
-                        <span className="font-bold text-blue-300">
-                          ₹ {currentExpenseData[hoveredExpenseIndex].amount.toLocaleString('en-IN')}
+                        <span className="flex items-center gap-1.5 text-slate-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                          Approved:
+                        </span>
+                        <span className="font-semibold text-emerald-400">
+                          ₹ {(currentExpenseData[hoveredExpenseIndex].approved ?? Math.round(currentExpenseData[hoveredExpenseIndex].amount * 0.8)).toLocaleString('en-IN')}
                         </span>
                       </div>
                       <div className="flex justify-between text-slate-300 gap-3">
+                        <span className="flex items-center gap-1.5 text-slate-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                          Pending:
+                        </span>
+                        <span className="font-semibold text-amber-300">
+                          ₹ {(currentExpenseData[hoveredExpenseIndex].pending ?? Math.round(currentExpenseData[hoveredExpenseIndex].amount * 0.2)).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-400 pt-1.5 border-t border-slate-700/80 gap-3">
                         <span>Employees:</span>
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-slate-200">
                           {currentExpenseData[hoveredExpenseIndex].count}
                         </span>
                       </div>
@@ -2275,9 +2851,97 @@ const PayrollDashboardNew: React.FC = () => {
         </div>
       </div>
 
+      {/* ===================== Loans & Advances Summary (Comprehensive KPI Card) ===================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        {/* Section: Loans & Advances Summary */}
+        <div className="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-slate-300 transition-all flex flex-col justify-between">
+          {/* Card Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 shadow-2xs">
+                <Landmark size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-base leading-tight">Loans & Advances Summary</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">(Till Date)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary Hero Section: Total Outstanding & Upcoming Payroll Deduction */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-stretch">
+            {/* Left: Total Outstanding (Col 7) */}
+            <div className="sm:col-span-7 bg-gradient-to-br from-slate-50 to-blue-50/30 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Outstanding</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs">
+                    <Users size={12} className="text-slate-500" />
+                    37 employees
+                  </span>
+                </div>
+                <p className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">₹48,20,000</p>
+              </div>
+
+              {/* Secondary breakdown embedded inside */}
+              <div className="pt-3 mt-3 border-t border-slate-200/60 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] font-medium text-slate-400 block truncate">Active Loans</span>
+                  <span className="font-bold text-slate-800 text-xs sm:text-sm">₹38,70,000</span>
+                  <span className="text-[10px] text-slate-400 ml-1">(24 emp)</span>
+                </div>
+                <div className="border-l border-slate-200/60 pl-2.5">
+                  <span className="text-[10px] font-medium text-slate-400 block truncate">Salary Advances</span>
+                  <span className="font-bold text-slate-800 text-xs sm:text-sm">₹9,50,000</span>
+                  <span className="text-[10px] text-slate-400 ml-1">(13 emp)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Upcoming Payroll Deduction (Col 5) */}
+            <div className="sm:col-span-5 bg-blue-50/60 border border-blue-100 rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Upcoming Payroll Deduction</span>
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                </div>
+                <p className="text-xl lg:text-2xl font-black text-blue-950 tracking-tight">₹3,85,000</p>
+                <p className="text-xs font-bold text-blue-600 mt-1">Nov 2025</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Row: Pending Requests Block */}
+          <div className="bg-amber-50/60 border border-amber-100/90 rounded-xl p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Pending Requests</p>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="text-base font-black text-amber-950">6 requests</span>
+                <span className="text-xs font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200/60">
+                  Loan: 4 | Advance: 2
+                </span>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold shrink-0">
+              <Clock size={16} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* TDS Full Report Modal */}
       {isTdsReportOpen && (
         <TdsFullReportModal onClose={() => setIsTdsReportOpen(false)} data={tdsGraphData} />
+      )}
+
+      {/* Loan & Advance Details Modal */}
+      {isLoanModalOpen && (
+        <LoanAdvanceDetailsModal onClose={() => setIsLoanModalOpen(false)} />
+      )}
+
+      {/* Expense & Reimbursement Details Modal */}
+      {isExpenseModalOpen && (
+        <ExpenseReimbDetailsModal onClose={() => setIsExpenseModalOpen(false)} />
       )}
     </div>
   );
