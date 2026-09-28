@@ -1,504 +1,804 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Calendar,
   TrendingUp,
   Wallet,
   FileText,
   PieChart as PieChartIcon,
-  ArrowRight,
-  ShieldCheck,
   CreditCard,
-  Building,
-  Info,
   AlertTriangle,
-  ChevronLeft,
+  ChevronDown,
+  Receipt,
   ChevronRight,
-  History,
-  Pin,
-  PinOff,
-  Clock,
-  X,
-  Eye,
-  EyeOff,
-  AlertCircle,
-  Lock
+  Heart,
+  Fuel,
+  BookOpen,
+  Plane
 } from 'lucide-react';
 import {
   BarChart,
   Bar,
+  ComposedChart,
+  Line,
   XAxis,
   YAxis,
-  Tooltip,
-  Legend,
+  Tooltip as RechartsTooltip,
   CartesianGrid,
   ResponsiveContainer
 } from 'recharts';
 
-const COLORS = {
-  netPay: '#3B82F6',
-  pf: '#F59E0B',
-  tax: '#EF4444',
-  green: '#10B981',
-  teal: '#0EA5E9',
-  purple: '#8B5CF6',
-  gray: '#94A3B8'
-};
+const REVISION_YEAR_OPTIONS = ['2024', '2025', '2026', '2027'];
 
-const trendData = [
-  { month: 'Jul', net: 72000, pf: 4000, tax: 8000 },
-  { month: 'Aug', net: 75000, pf: 4200, tax: 8500 },
-  { month: 'Sep', net: 75000, pf: 4200, tax: 8500 },
-  { month: 'Oct', net: 77000, pf: 4400, tax: 8800 },
-  { month: 'Nov', net: 78000, pf: 4600, tax: 9000 },
-  { month: 'Dec', net: 78200, pf: 4600, tax: 9200 },
+const REVISION_PRESETS = [
+  { id: 'THIS_YEAR', label: 'This Year' },
+  { id: 'LAST_2_YEARS', label: 'Last 2 Years' },
+  { id: 'LAST_3_YEARS', label: 'Last 3 Years' },
+  { id: 'ALL_TIME', label: 'All Time' },
 ];
 
-const MOCK_LOANS = [
+// Last 12 months salary breakdown data (Oct 2025 - Sep 2026)
+const salaryBreakdown12Months = [
+  { month: 'Oct', period: 'October 2025', gross: 180000, deductions: 24800, net: 155200 },
+  { month: 'Nov', period: 'November 2025', gross: 180000, deductions: 24800, net: 155200 },
+  { month: 'Dec', period: 'December 2025', gross: 180000, deductions: 24800, net: 155200 },
+  { month: 'Jan', period: 'January 2026', gross: 200000, deductions: 27550, net: 172450 },
+  { month: 'Feb', period: 'February 2026', gross: 200000, deductions: 27550, net: 172450 },
+  { month: 'Mar', period: 'March 2026', gross: 200000, deductions: 27550, net: 172450 },
+  { month: 'Apr', period: 'April 2026', gross: 215000, deductions: 29620, net: 185380 },
+  { month: 'May', period: 'May 2026', gross: 215000, deductions: 29620, net: 185380 },
+  { month: 'Jun', period: 'June 2026', gross: 215000, deductions: 29620, net: 185380 },
+  { month: 'Jul', period: 'July 2026', gross: 225000, deductions: 31000, net: 194000 },
+  { month: 'Aug', period: 'August 2026', gross: 225000, deductions: 31000, net: 194000 },
+  { month: 'Sep', period: 'September 2026', gross: 225000, deductions: 31000, net: 194000 },
+];
+
+interface RevisionItem {
+  period: string;
+  monthLabel: string;
+  year: number;
+  prevGross: number;
+  gross: number;
+  incrementAmount: number;
+  decrementAmount: number;
+  isIncrement: boolean;
+  isDecrement: boolean;
+}
+
+const ALL_REVISION_DATA: RevisionItem[] = [
   {
-    type: 'Personal Loan',
-    outstanding: 45000,
-    total: 100000,
-    progress: 55,
-    emisPaid: 6,
-    totalEmis: 12,
-    upcomingEmi: 8333,
-    dueDate: '01 Jan 2026',
-    status: 'Active'
+    period: 'January 2024',
+    monthLabel: 'Jan',
+    year: 2024,
+    prevGross: 0,
+    gross: 150000,
+    incrementAmount: 150000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
   },
   {
-    type: 'Home Renovation',
-    outstanding: 245000,
-    total: 500000,
-    progress: 51,
-    emisPaid: 24,
-    totalEmis: 60,
-    upcomingEmi: 12500,
-    dueDate: '10 Feb 2026',
-    status: 'Repaying'
+    period: 'July 2024',
+    monthLabel: 'Jul',
+    year: 2024,
+    prevGross: 150000,
+    gross: 175000,
+    incrementAmount: 25000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
+  },
+  {
+    period: 'January 2025',
+    monthLabel: 'Jan',
+    year: 2025,
+    prevGross: 175000,
+    gross: 190000,
+    incrementAmount: 15000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
+  },
+  {
+    period: 'July 2025',
+    monthLabel: 'Jul',
+    year: 2025,
+    prevGross: 190000,
+    gross: 180000,
+    incrementAmount: 0,
+    decrementAmount: 10000,
+    isIncrement: false,
+    isDecrement: true
+  },
+  {
+    period: 'January 2026',
+    monthLabel: 'Jan',
+    year: 2026,
+    prevGross: 180000,
+    gross: 200000,
+    incrementAmount: 20000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
+  },
+  {
+    period: 'April 2026',
+    monthLabel: 'Apr',
+    year: 2026,
+    prevGross: 200000,
+    gross: 215000,
+    incrementAmount: 15000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
+  },
+  {
+    period: 'July 2026',
+    monthLabel: 'Jul',
+    year: 2026,
+    prevGross: 215000,
+    gross: 225000,
+    incrementAmount: 10000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
+  },
+  {
+    period: 'October 2026',
+    monthLabel: 'Oct',
+    year: 2026,
+    prevGross: 225000,
+    gross: 235000,
+    incrementAmount: 10000,
+    decrementAmount: 0,
+    isIncrement: true,
+    isDecrement: false
   }
 ];
 
-const recentActivities = [
-  { id: 1, type: 'reimbursement', label: 'Fuel Reimbursement Approved', amount: '₹2,500', date: '2 hours ago', status: 'approved' },
-  { id: 2, type: 'payout', label: 'December Salary Credited', amount: '₹78,200', date: 'Dec 7, 2025', status: 'credited' },
-  { id: 3, type: 'tax', label: 'Form 12BB Submitted', date: 'Dec 5, 2025', status: 'signed' },
-  { id: 4, type: 'reimbursement', label: 'Mobile Claim Action Required', date: 'Dec 4, 2025', status: 'pending' },
-];
+const formatINR = (val: number) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(val);
+};
 
 interface OverviewProps {
   onNavigateToTaxPlanning?: () => void;
   onNavigateToReimbursements?: () => void;
+  onNavigateToSalaryBreakdown?: () => void;
 }
 
-const Overview: React.FC<OverviewProps> = ({ onNavigateToTaxPlanning, onNavigateToReimbursements }) => {
-  const [pinnedWidgets, setPinnedWidgets] = useState<string[]>(['payout', 'ytd', 'trends']);
-  const [hiddenWidgets, setHiddenWidgets] = useState<string[]>([]);
-  const [showAmounts, setShowAmounts] = useState(false);
-  const [attendanceStatus, setAttendanceStatus] = useState<'verified' | 'issue'>('verified');
-  const [activeLoanIndex, setActiveLoanIndex] = useState(0);
+const Overview: React.FC<OverviewProps> = ({
+  onNavigateToTaxPlanning
+}) => {
+  // Salary Revision filter dropdown state matching HR Manager Compensation -> Salary Insights (Screenshot 2)
+  const [revisionPreset, setRevisionPreset] = useState<string>('THIS_YEAR');
+  const [customRangeText, setCustomRangeText] = useState<string>('');
+  const [fromYear, setFromYear] = useState<string>('2025');
+  const [toYear, setToYear] = useState<string>('2025');
+  const [isRevisionDropdownOpen, setIsRevisionDropdownOpen] = useState(false);
+  const revisionDropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentLoan = MOCK_LOANS[activeLoanIndex];
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (revisionDropdownRef.current && !revisionDropdownRef.current.contains(e.target as Node)) {
+        setIsRevisionDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  // Password Modal State
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-
-  const togglePin = (id: string) => {
-    setPinnedWidgets(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-    );
-  };
-
-  const hideWidget = (id: string) => {
-    setHiddenWidgets(prev => [...prev, id]);
-  };
-
-  const handleToggleAmounts = () => {
-    if (showAmounts) {
-      setShowAmounts(false);
-    } else {
-      setIsPasswordModalOpen(true);
-      setPasswordInput('');
-      setPasswordError('');
+  // Filter revision data according to selection
+  const salaryTrendData = useMemo(() => {
+    const currentYear = 2026;
+    if (revisionPreset === 'THIS_YEAR') {
+      // Points for this year (matching Screenshot 3: Apr, Jul, Oct)
+      return ALL_REVISION_DATA.filter(r => r.year === currentYear && r.monthLabel !== 'Jan');
     }
-  };
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput === '1234') {
-      setShowAmounts(true);
-      setIsPasswordModalOpen(false);
-    } else {
-      setPasswordError('Incorrect password. Try 1234.');
+    if (revisionPreset === 'LAST_2_YEARS') {
+      return ALL_REVISION_DATA.filter(r => r.year >= currentYear - 1);
     }
-  };
+    if (revisionPreset === 'LAST_3_YEARS') {
+      return ALL_REVISION_DATA.filter(r => r.year >= currentYear - 2);
+    }
+    if (revisionPreset === 'ALL_TIME') {
+      return ALL_REVISION_DATA;
+    }
+    if (revisionPreset === 'CUSTOM' && customRangeText) {
+      if (customRangeText.includes('-')) {
+        const [startY, endY] = customRangeText.split('-').map(s => Number(s.trim()));
+        return ALL_REVISION_DATA.filter(r => r.year >= startY && r.year <= endY);
+      } else {
+        const y = Number(customRangeText.trim());
+        return ALL_REVISION_DATA.filter(r => r.year === y);
+      }
+    }
+    return ALL_REVISION_DATA;
+  }, [revisionPreset, customRangeText]);
+
+  const revisionFilterLabel = useMemo(() => {
+    if (revisionPreset === 'CUSTOM') {
+      return customRangeText || 'Custom Year';
+    }
+    const found = REVISION_PRESETS.find(p => p.id === revisionPreset);
+    return found ? found.label : 'This Year';
+  }, [revisionPreset, customRangeText]);
+
+  // Dynamic Payout Calculation
+  const payoutInfo = useMemo(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+
+    const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0);
+
+    const todayMidnight = new Date(currentYear, currentMonth, today.getDate());
+    const endMidnight = new Date(endOfCurrentMonth.getFullYear(), endOfCurrentMonth.getMonth(), endOfCurrentMonth.getDate());
+
+    let targetDate = endMidnight;
+    let diffDays = Math.round((endMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      const nextMonthEnd = new Date(currentYear, currentMonth + 2, 0);
+      const nextEndMidnight = new Date(nextMonthEnd.getFullYear(), nextMonthEnd.getMonth(), nextMonthEnd.getDate());
+      targetDate = nextMonthEnd;
+      diffDays = Math.round((nextEndMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    const day = targetDate.getDate();
+    const getOrdinal = (n: number) => {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    const monthName = targetDate.toLocaleString('default', { month: 'long' });
+    const formattedCreditDate = `${getOrdinal(day)} ${monthName}, ${targetDate.getFullYear()}`;
+
+    let helperText = '';
+    if (diffDays === 0) {
+      helperText = 'Crediting today';
+    } else if (diffDays === 1) {
+      helperText = 'In 1 day';
+    } else {
+      helperText = `In ${diffDays} days`;
+    }
+
+    return {
+      formattedCreditDate,
+      helperText,
+      diffDays
+    };
+  }, []);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-full mx-auto pb-10">
+    <div className="space-y-6 animate-in fade-in duration-300 max-w-full mx-auto pb-10">
 
-      {/* 2. Top row: Quick Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-
-        {/* Next Payout - Compact Design */}
-        <div className="md:col-span-5 lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-all relative overflow-hidden">
-          <div className="flex justify-between items-center">
-            <div>
-            <div className="flex justify-between items-start mb-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next Payout In</p>
-              <button
-                onClick={handleToggleAmounts}
-                className="p-1 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-600 transition-all"
-                title={showAmounts ? "Hide payout" : "Show payout"}
-              >
-                {showAmounts ? <EyeOff size={12} /> : <Eye size={12} />}
-              </button>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <h3 className="text-3xl font-black text-slate-900">{showAmounts ? '5' : '•'}</h3>
-              <span className="text-sm font-bold text-slate-500">{showAmounts ? 'Days' : '••••'}</span>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 mt-1">Salary Date: {showAmounts ? '7th January, 2026' : '•• ••••••••, ••••'}</p>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-              <Calendar size={20} />
-            </div>
+      {/* 1. TOP BANNER: Tax Deadline Approaching (Single Line Text, Renamed Button) */}
+      <div className="bg-amber-50 border border-amber-200 px-5 py-3 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 bg-white text-amber-600 rounded-lg flex items-center justify-center shrink-0 border border-amber-100 shadow-xs">
+            <AlertTriangle size={18} />
           </div>
-        </div>
-
-        {/* Loans & advances - Detailed Design */}
-        <div className="md:col-span-7 lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-all relative overflow-hidden group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                <CreditCard size={20} />
-              </div>
-              <div>
-                <div className="flex items-center justify-between w-full min-w-[220px]">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{currentLoan.type}</p>
-                  <div className="flex items-center gap-1 ml-4 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setActiveLoanIndex(prev => Math.max(0, prev - 1)); }}
-                      disabled={activeLoanIndex === 0}
-                      className="text-slate-300 hover:text-emerald-600 disabled:opacity-30 transition-colors"
-                    >
-                      <ChevronLeft size={10} strokeWidth={3} />
-                    </button>
-                    <span className="text-[9px] font-black text-slate-600 min-w-[30px] text-center">
-                      {(activeLoanIndex + 1).toString().padStart(2, '0')} / {MOCK_LOANS.length.toString().padStart(2, '0')}
-                    </span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setActiveLoanIndex(prev => Math.min(MOCK_LOANS.length - 1, prev + 1)); }}
-                      disabled={activeLoanIndex === MOCK_LOANS.length - 1}
-                      className="text-slate-400 hover:text-emerald-600 disabled:opacity-30 transition-colors"
-                    >
-                      <ChevronRight size={10} strokeWidth={3} />
-                    </button>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleToggleAmounts(); }}
-                    className="p-1 rounded-lg text-slate-200 hover:bg-slate-50 hover:text-slate-400 transition-all ml-2"
-                    title={showAmounts ? "Hide loans" : "Show loans"}
-                  >
-                    {showAmounts ? <EyeOff size={12} /> : <Eye size={12} />}
-                  </button>
-                </div>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-xl font-black text-slate-900 leading-none">{showAmounts ? `₹ ${currentLoan.outstanding.toLocaleString()}` : '₹ •••••'}</h3>
-                  <span className="text-[10px] font-bold text-slate-400">/ {showAmounts ? `₹ ${currentLoan.total.toLocaleString()}` : '₹ •••••'}</span>
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 uppercase tracking-widest">{currentLoan.status}</span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {/* Progress Bar */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-[10px] font-bold">
-                <span className="text-slate-400 uppercase tracking-wider">Repayment Progress</span>
-                <span className="text-emerald-600">{currentLoan.progress}%</span>
-              </div>
-              <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
-                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${currentLoan.progress}%` }}></div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-1">
-              {/* EMIs */}
-              <div className="p-2 bg-slate-50/50 border border-slate-100 rounded-lg">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">EMIs Paid</p>
-                <p className="text-sm font-black text-slate-900">{currentLoan.emisPaid.toString().padStart(2, '0')} <span className="text-[10px] text-slate-400 font-bold">/ {currentLoan.totalEmis}</span></p>
-              </div>
-
-              {/* Next EMI */}
-              <div className="p-2 bg-indigo-50/50 border border-indigo-100 rounded-lg">
-                <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Upcoming EMI</p>
-                <p className="text-sm font-black text-indigo-900">{showAmounts ? `₹ ${currentLoan.upcomingEmi.toLocaleString()}` : '••••'}</p>
-                <p className="text-[9px] font-bold text-indigo-400 mt-0.5">Due: {currentLoan.dueDate}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Middle row: Activity, YTD, Trends */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
-
-
-
-        {/* YTD Earnings - Redesigned (Simplified) */}
-        {!hiddenWidgets.includes('ytd') && (
-          <div className="lg:col-span-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative group">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <TrendingUp size={16} /> Annual Realization
-              </h3>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={handleToggleAmounts}
-                  className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-all"
-                  title={showAmounts ? "Hide amounts" : "Show amounts"}
-                >
-                  {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-                <PinButton active={pinnedWidgets.includes('ytd')} onClick={() => togglePin('ytd')} />
-              </div>
-            </div>
-
-            {/* Hero: Total CTC */}
-            <div className="mb-8">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total CTC Realized</p>
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
-                  {showAmounts ? '₹ 7,25,800' : '₹ ••••••'}
-                </h2>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">FY 25-26</span>
-              </div>
-            </div>
-
-            {/* Simplified Stats Grid */}
-            <div className="grid grid-cols-1 gap-4">
-              {/* Net Pay */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-blue-200 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                    <Wallet size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Net Take Home</p>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 6.83L' : '••••'}</p>
-                      <span className="text-[10px] font-bold text-slate-400">({showAmounts ? '₹ 56.9k/mo' : '••••/mo'})</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* PF */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-amber-200 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">PF Contribution</p>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 9.2k' : '••••'}</p>
-                      <span className="text-[10px] font-bold text-slate-400">({showAmounts ? '₹ 766/mo' : '••••/mo'})</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tax */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-red-200 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Tax Deducted</p>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-sm font-black text-slate-900">{showAmounts ? '₹ 33.6k' : '••••'}</p>
-                      <span className="text-[10px] font-bold text-slate-400">({showAmounts ? '₹ 2.8k/mo' : '••••/mo'})</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Trends Chart (Customizable/Hideable) - REDESIGNED */}
-        {!hiddenWidgets.includes('trends') && (
-          <div className="lg:col-span-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col relative group h-full">
-            <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-3">
-                <div className="text-slate-400"><PieChartIcon size={20} strokeWidth={2} /></div>
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Salary Trends</h3>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={handleToggleAmounts}
-                  className="w-8 h-8 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-50 flex items-center justify-center transition-all"
-                  title={showAmounts ? "Hide data" : "Show data"}
-                >
-                  {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-                <button
-                  onClick={() => togglePin('trends')}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${pinnedWidgets.includes('trends') ? 'bg-blue-50 text-blue-600' : 'text-slate-300 hover:bg-slate-50'}`}
-                >
-                  <Pin size={14} />
-                </button>
-                <button
-                  onClick={() => hideWidget('trends')}
-                  className="w-8 h-8 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-50 flex items-center justify-center transition-all"
-                  title="Hide Widget"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 min-h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }} />
-                  <Bar dataKey="net" stackId="a" fill={COLORS.netPay} barSize={28} />
-                  <Bar dataKey="pf" stackId="a" fill={COLORS.pf} barSize={28} />
-                  <Bar dataKey="tax" stackId="a" fill={COLORS.tax} radius={[6, 6, 0, 0]} barSize={28} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-6 mt-8">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.netPay }}></div>
-                <span className="text-xs font-bold text-slate-400 uppercase">NET</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.pf }}></div>
-                <span className="text-xs font-bold text-slate-400 uppercase">PF</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.tax }}></div>
-                <span className="text-xs font-bold text-slate-400 uppercase">TAX</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 4. Bottom row: Allowances, Payout Status (Quick Actions Removed) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* My Allowances - Compact & No Progress Bar */}
-        <div className="lg:col-span-12 bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-fit">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Wallet size={16} /> Reimbursement Summary
-            </h3>
-            <button
-              onClick={handleToggleAmounts}
-              className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-600 transition-all"
-              title={showAmounts ? "Hide amounts" : "Show amounts"}
-            >
-              {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
-
-            <AllowanceItem label="Medical Reimbursement" utilized={5200} limit={15000} showAmounts={showAmounts} />
-            <AllowanceItem label="Fuel & Conveyance" utilized={8000} limit={24000} showAmounts={showAmounts} />
-            <AllowanceItem label="Books & Periodicals" utilized={0} limit={6000} disabled showAmounts={showAmounts} />
-            <AllowanceItem label="LTA (Travel)" utilized={32000} limit={45000} showAmounts={showAmounts} />
-          </div>
-        </div>
-
-
-      </div>
-
-      {/* 5. Bottom banner */}
-      <div className="bg-amber-50 border border-amber-200 p-10 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm hover:shadow-md transition-all">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 bg-white text-amber-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-amber-100">
-            <AlertTriangle size={32} />
-          </div>
-          <div>
-            <h3 className="text-xl font-black text-amber-900">Tax Deadline Approaching</h3>
-            <p className="text-sm text-amber-700 mt-1 max-w-xl font-medium">
-              The tax window for FY 2025-26 closes on <span className="font-black underline">January 20th</span>. Submit your declarations now to avoid higher TDS in Jan-March payouts.
+          <div className="min-w-0 flex items-center gap-2">
+            <span className="text-sm font-black text-amber-900 whitespace-nowrap">Tax Deadline Approaching:</span>
+            <p className="text-xs text-amber-800 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+              The tax window for FY 2025-26 closes on <strong className="font-bold underline">January 20th</strong>. Submit your declarations now to avoid higher TDS deductions.
             </p>
           </div>
         </div>
-        <button onClick={onNavigateToTaxPlanning} className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all whitespace-nowrap">
-          Open Tax Planner
+        <button
+          onClick={onNavigateToTaxPlanning}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 h-9 rounded-lg font-bold text-xs shadow-xs transition-all whitespace-nowrap shrink-0 cursor-pointer"
+        >
+          Continue Tax Planning
         </button>
       </div>
 
-      {/* Password Modal */}
-      {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-800">Enter Password</h3>
-              <button onClick={() => setIsPasswordModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+      {/* ROW 1: Next Payout (Left) & Tax & Investment Summary (Right) - Width reduced by ~50% */}
+      <div className="flex flex-col lg:flex-row items-stretch gap-6">
+
+        {/* Next Payout (Compact Height & Width, No Eye Icon, Bank Credit Text Removed) */}
+        <div className="w-full sm:w-64 lg:w-72 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-all shrink-0">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next Payout</p>
+              <h3 className="text-base font-bold text-slate-800 mt-1 tracking-tight">
+                {payoutInfo.formattedCreditDate}
+              </h3>
             </div>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+              <Calendar size={16} />
+            </div>
+          </div>
 
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Password</label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500"
-                    placeholder="Enter 1234"
-                    autoFocus
-                  />
-                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                </div>
-                {passwordError && <p className="text-xs text-red-500 mt-2 font-medium">{passwordError}</p>}
-              </div>
-
-              <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-blue-100">
-                Unlock View
-              </button>
-            </form>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center">
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              {payoutInfo.helperText}
+            </span>
           </div>
         </div>
-      )}
-    </div>
-  );
-};
 
-/* --- Internal Helpers --- */
+        {/* Tax & Investment Summary (Width reduced by ~50%) */}
+        <div className="w-full sm:w-[440px] lg:w-[480px] bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-all shrink-0">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shrink-0">
+                  <Receipt size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider whitespace-nowrap">
+                    Tax & Investment Summary
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">FY 2025–26 Tax Planning Overview</p>
+                </div>
+              </div>
 
-const AllowanceItem = ({ label, utilized, limit, disabled, showAmounts }: any) => {
-  return (
-    <div className={`px-3 py-2.5 rounded-2xl border ${disabled ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-100 hover:border-blue-200 transition-all group'}`}>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate" title={label}>{label}</p>
-      <div className="flex justify-between items-baseline mt-0.5">
-        <span className="text-base font-black text-slate-900">{showAmounts ? `₹${utilized.toLocaleString()}` : '••••'}</span>
-        <span className="text-[9px] font-bold text-slate-400 tracking-tighter">{showAmounts ? `/ ₹${limit.toLocaleString()}` : '/ •••'}</span>
+              {onNavigateToTaxPlanning && (
+                <button
+                  onClick={onNavigateToTaxPlanning}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <span>View Tax Details</span>
+                  <ChevronRight size={13} />
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Tax Regime</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-black inline-block">
+                  New Regime
+                </span>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Declared Investments</span>
+                <p className="text-base font-black text-slate-900">₹ 1,50,000</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
+
+      {/* ROW 2: Salary Revision History */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <TrendingUp size={18} className="text-purple-600" />
+            Salary Revision History
+          </h3>
+
+          {/* Date Range Dropdown with Calendar icon & full modal popup - Reference Screenshot 2 */}
+          <div className="relative" ref={revisionDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsRevisionDropdownOpen(prev => !prev)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:border-purple-300 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
+            >
+              <Calendar size={14} className="text-purple-600" />
+              <span>{revisionFilterLabel}</span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isRevisionDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
+            </button>
+
+            {isRevisionDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 sm:w-[350px] bg-white rounded-xl shadow-2xl border border-slate-200 z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-slate-700 tracking-tight uppercase">Select Time Period</h4>
+                </div>
+
+                {/* Preset Buttons Grid (2 columns x 2 rows) */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {REVISION_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setRevisionPreset(preset.id);
+                        setIsRevisionDropdownOpen(false);
+                      }}
+                      className={`px-3 py-2 text-xs font-bold rounded-lg border transition-all text-center cursor-pointer ${
+                        revisionPreset === preset.id
+                          ? 'bg-[#4338ca] border-[#4338ca] text-white shadow-sm'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Year Section */}
+                <div className="pt-3 border-t border-slate-100">
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Custom Year
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 mb-3">
+                    {/* From Year */}
+                    <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">From</span>
+                      <select
+                        value={fromYear}
+                        onChange={(e) => setFromYear(e.target.value)}
+                        className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                      >
+                        {REVISION_YEAR_OPTIONS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* To Year */}
+                    <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">To</span>
+                      <select
+                        value={toYear}
+                        onChange={(e) => setToYear(e.target.value)}
+                        className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                      >
+                        {REVISION_YEAR_OPTIONS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const minY = Math.min(Number(fromYear), Number(toYear));
+                      const maxY = Math.max(Number(fromYear), Number(toYear));
+                      const formatted = minY === maxY ? `${minY}` : `${minY} - ${maxY}`;
+                      setCustomRangeText(formatted);
+                      setRevisionPreset('CUSTOM');
+                      setIsRevisionDropdownOpen(false);
+                    }}
+                    className="w-full py-2 bg-[#4338ca] hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <Calendar size={13} />
+                    <span>Apply Custom Range</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Revision Chart */}
+        <div className="h-72 w-full">
+          {salaryTrendData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={salaryTrendData} margin={{ top: 32, right: 30, left: 10, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} domain={[0, 'auto']} />
+                <RechartsTooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const row = payload[0].payload as RevisionItem;
+                      return (
+                        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[260px]">
+                          <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{row.period}</p>
+                          <div className="flex justify-between items-center gap-4 text-slate-600">
+                            <span className="whitespace-nowrap">Previous Monthly CTC:</span>
+                            <span className="font-semibold whitespace-nowrap">{formatINR(row.prevGross)}</span>
+                          </div>
+                          <div className="flex justify-between items-center gap-4 text-[#4f46e5] pt-1">
+                            <span className="whitespace-nowrap font-medium">Revised Monthly CTC:</span>
+                            <span className="font-bold whitespace-nowrap">{formatINR(row.gross)}</span>
+                          </div>
+                          {row.isDecrement ? (
+                            <div className="flex justify-between items-center gap-4 text-[#dc2626] pt-1.5 mt-1.5 border-t border-slate-100">
+                              <span className="whitespace-nowrap font-medium">Decrement:</span>
+                              <span className="font-bold whitespace-nowrap">-{formatINR(row.decrementAmount)}</span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between items-center gap-4 text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                              <span className="whitespace-nowrap font-medium">Increment:</span>
+                              <span className="font-bold whitespace-nowrap">+{formatINR(row.incrementAmount)}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="gross"
+                  stroke="#4f46e5"
+                  strokeWidth={2.5}
+                  dot={(props: any) => {
+                    const { cx, cy, payload, key } = props;
+                    if (payload.isDecrement) {
+                      const badgeLabel = `↓ -${formatINR(payload.decrementAmount)}`;
+                      const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
+                      return (
+                        <g key={key}>
+                          <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#fee2e2" stroke="#fca5a5" />
+                          <text x={cx} y={cy - 12} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                            {badgeLabel}
+                          </text>
+                          <circle cx={cx} cy={cy} r={4.5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />
+                        </g>
+                      );
+                    }
+                    if (payload.isIncrement) {
+                      const badgeLabel = `↑ +${formatINR(payload.incrementAmount)}`;
+                      const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
+                      return (
+                        <g key={key}>
+                          <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                          <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                            {badgeLabel}
+                          </text>
+                          <circle cx={cx} cy={cy} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={1.5} />
+                        </g>
+                      );
+                    }
+                    return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
+                  }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm italic py-12">
+              <TrendingUp size={28} className="text-slate-300 mb-2 stroke-1" />
+              No salary revisions in this period
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ROW 3: Outstanding Loan/Advance Summary (Left) & Salary Breakdown (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+        {/* Outstanding Loan/Advance Summary (Left, lg:col-span-6) */}
+        <div className="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-all">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard size={18} className="text-blue-600" />
+              <h3 className="font-bold text-slate-800 text-base">
+                Outstanding Loan/Advance Summary
+              </h3>
+            </div>
+
+            {/* Loan Section */}
+            <div className="mb-3.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Loan</span>
+                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                  2 loans
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-center ml-1 sm:ml-3">
+                <div className="min-w-[125px]">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Remaining Balance</div>
+                  <span className="text-xl font-black text-slate-800">₹1,73,333</span>
+                </div>
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="flex justify-between text-xs font-bold text-slate-600">
+                    <span>Amount Repaid (₹2,26,667)</span>
+                    <span>Total: ₹4,00,000</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style={{ width: '56.7%' }}></div>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold text-slate-500">
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                      EMI: <strong className="text-slate-800">₹13,333</strong> / month
+                    </span>
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                      <strong className="text-slate-800">17</strong> of 30 paid
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 my-3"></div>
+
+            {/* Salary Advance Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Salary Advance</span>
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                  2 advances
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-center ml-1 sm:ml-3">
+                <div className="min-w-[125px]">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Remaining Balance</div>
+                  <span className="text-xl font-black text-slate-800">₹20,000</span>
+                </div>
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="flex justify-between text-xs font-bold text-slate-600">
+                    <span>Amount Repaid (₹40,000)</span>
+                    <span>Total: ₹60,000</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="bg-amber-500 h-2.5 rounded-full transition-all duration-500" style={{ width: '66.7%' }}></div>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold text-slate-500">
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                      EMI: <strong className="text-slate-800">₹10,000</strong> / month
+                    </span>
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <strong className="text-slate-800">4</strong> of 6 paid
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Salary Breakdown (Right, lg:col-span-6) */}
+        <div className="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                <PieChartIcon size={16} />
+              </div>
+              <div>
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Salary Breakdown</h3>
+                <p className="text-[10px] text-slate-400 font-medium">(Last 12 months)</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={salaryBreakdown12Months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={8} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(val) => `₹${val / 1000}k`} />
+                <RechartsTooltip
+                  cursor={{ fill: '#f8fafc' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const row = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl text-xs min-w-[210px]">
+                          <p className="font-bold text-slate-800 border-b border-slate-100 pb-1.5 mb-2">{row.period}</p>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-slate-600">
+                              <span className="font-medium">Gross Salary:</span>
+                              <span className="font-bold text-slate-900">{formatINR(row.gross)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-rose-600">
+                              <span className="font-medium">Deductions:</span>
+                              <span className="font-bold">-{formatINR(row.deductions)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-blue-600 pt-1 border-t border-slate-100">
+                              <span className="font-bold">Net Pay:</span>
+                              <span className="font-black text-sm">{formatINR(row.net)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="net" stackId="a" fill="#3B82F6" barSize={16} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="deductions" stackId="a" fill="#EF4444" radius={[3, 3, 0, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex justify-center gap-6 mt-3 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#3B82F6]"></div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">NET PAY</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#EF4444]"></div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">DEDUCTIONS</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ROW 4: Expense & Reimbursement Summary (Reference Screenshot 4 - without Remaining & without percentage) */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <Wallet size={18} className="text-blue-600" />
+            Expense & Reimbursement Summary
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Medical */}
+          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Heart size={18} />
+                </div>
+                <span className="text-sm font-semibold text-slate-800">Medical</span>
+              </div>
+              <p className="text-sm font-bold text-slate-700 mb-2.5">
+                ₹5,200 of ₹15,000
+              </p>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '34.7%' }}></div>
+            </div>
+          </div>
+
+          {/* Card 2: Fuel and conveyance */}
+          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Fuel size={18} />
+                </div>
+                <span className="text-sm font-semibold text-slate-800">Fuel and conveyance</span>
+              </div>
+              <p className="text-sm font-bold text-slate-700 mb-2.5">
+                ₹8,000 of ₹24,000
+              </p>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '33.3%' }}></div>
+            </div>
+          </div>
+
+          {/* Card 3: Books and periodicals */}
+          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-50 text-slate-500 flex items-center justify-center shrink-0">
+                  <BookOpen size={18} />
+                </div>
+                <span className="text-sm font-semibold text-slate-800">Books and periodicals</span>
+              </div>
+              <p className="text-sm font-bold text-slate-700 mb-2.5">
+                ₹0 of ₹6,000
+              </p>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '0%' }}></div>
+            </div>
+          </div>
+
+          {/* Card 4: LTA (travel) */}
+          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Plane size={18} />
+                </div>
+                <span className="text-sm font-semibold text-slate-800">LTA (travel)</span>
+              </div>
+              <p className="text-sm font-bold text-slate-700 mb-2.5">
+                ₹32,000 of ₹45,000
+              </p>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: '71.1%' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };
-
-const PinButton = ({ active, onClick }: { active: boolean, onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className={`p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${active ? 'text-blue-600 bg-blue-50' : 'text-slate-300 hover:bg-slate-100'}`}
-    title={active ? "Unpin widget" : "Pin widget to top"}
-  >
-    {active ? <Pin size={12} /> : <PinOff size={12} />}
-  </button>
-);
 
 export default Overview;

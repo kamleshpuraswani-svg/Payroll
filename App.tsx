@@ -315,6 +315,7 @@ const App: React.FC = () => {
                   <Overview
                     onNavigateToTaxPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)}
                     onNavigateToReimbursements={() => setCurrentView(ViewState.EMP_REIMBURSEMENTS)}
+                    onNavigateToSalaryBreakdown={() => setCurrentView(ViewState.EMP_SALARY_BREAKDOWN)}
                   />
                 )}
                 {currentView === ViewState.EMP_PAYROLL_CORNER && (
@@ -322,6 +323,7 @@ const App: React.FC = () => {
                   <Overview
                     onNavigateToTaxPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)}
                     onNavigateToReimbursements={() => setCurrentView(ViewState.EMP_REIMBURSEMENTS)}
+                    onNavigateToSalaryBreakdown={() => setCurrentView(ViewState.EMP_SALARY_BREAKDOWN)}
                   />
                 )}
                 {currentView === ViewState.EMP_PAYSLIPS && <SalarySlips />}

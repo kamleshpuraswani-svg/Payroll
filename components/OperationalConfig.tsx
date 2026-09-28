@@ -198,8 +198,8 @@ const OperationalConfig: React.FC = () => {
         setNamingPatternSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, ''));
     };
 
-    const generateNamingPreview = (suffix: string) => {
-        return ('Payslip_' + suffix)
+    const generateNamingPreview = (suffix: string, prefix: string = 'Payslip_') => {
+        return (prefix + suffix)
             .replace('{{EmployeeName}}', 'Priya_Sharma')
             .replace('{{EmployeeID}}', 'TF00912')
             .replace('{{Month}}', 'November')
@@ -1318,6 +1318,17 @@ const OperationalConfig: React.FC = () => {
                                                 <span className="text-xs font-bold text-slate-500">.pdf</span>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Preview */}
+                                    <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-100 p-3 rounded-xl overflow-hidden">
+                                        <div className="bg-emerald-100 p-1 rounded shrink-0">
+                                            <Info size={14} className="text-emerald-700" />
+                                        </div>
+                                        <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider shrink-0">Preview:</span>
+                                        <span className="font-bold text-emerald-700 truncate font-mono text-xs">
+                                            {generateNamingPreview(namingPatternSuffix, 'TaxSlip_')}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
