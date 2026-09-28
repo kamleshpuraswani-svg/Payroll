@@ -336,10 +336,11 @@ const DATE_RANGE_PRESETS = [
   { id: 'LAST_YEAR', label: 'Last Year' },
 ];
 
-// Salary Trend widget also offers a rolling window, so annual increments stay visible regardless of calendar-year boundaries.
-const SALARY_TREND_DATE_PRESETS = [
-  ...DATE_RANGE_PRESETS,
-  { id: 'LAST_12_MONTHS', label: 'Last 12 Months' },
+const REVISION_DATE_PRESETS = [
+  { id: 'THIS_YEAR', label: 'This Year' },
+  { id: 'LAST_2_YEARS', label: 'Last 2 Years' },
+  { id: 'LAST_3_YEARS', label: 'Last 3 Years' },
+  { id: 'ALL_TIME', label: 'All Time' },
 ];
 
 const MONTH_OPTIONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -367,10 +368,6 @@ const filterSalaryRows = (rows: SalaryHistoryRow[], preset: string, customRange:
   }
   if (preset === 'LAST_YEAR') {
     return rows.filter(r => r.period.includes('2024'));
-  }
-  if (preset === 'LAST_12_MONTHS') {
-    // Rows are ordered newest-first, so the first 12 entries are the trailing 12 months.
-    return rows.slice(0, 12);
   }
   if (preset === 'CUSTOM' && customRange.trim()) {
     const rangeParts = customRange.split('-');
@@ -403,6 +400,37 @@ const filterSalaryRows = (rows: SalaryHistoryRow[], preset: string, customRange:
   return rows.filter(r => r.period.includes('2025'));
 };
 
+const filterRevisionHistoryRows = (rows: SalaryHistoryRow[], preset: string, customRange: string) => {
+  if (preset === 'THIS_YEAR') {
+    return rows.filter(r => r.period.includes('2025'));
+  }
+  if (preset === 'LAST_2_YEARS') {
+    return rows.filter(r => r.period.includes('2024') || r.period.includes('2025'));
+  }
+  if (preset === 'LAST_3_YEARS') {
+    return rows.filter(r => r.period.includes('2023') || r.period.includes('2024') || r.period.includes('2025'));
+  }
+  if (preset === 'ALL_TIME') {
+    return [...rows];
+  }
+  if (preset === 'CUSTOM' && customRange.trim()) {
+    const parts = customRange.split('-').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    if (parts.length === 2) {
+      const minYear = Math.min(parts[0], parts[1]);
+      const maxYear = Math.max(parts[0], parts[1]);
+      return rows.filter(r => {
+        const y = parseInt(r.period.split(' ')[1], 10);
+        return !isNaN(y) && y >= minYear && y <= maxYear;
+      });
+    } else if (parts.length === 1) {
+      const targetYear = parts[0].toString();
+      return rows.filter(r => r.period.includes(targetYear));
+    }
+  }
+  // Default THIS_YEAR (2025)
+  return rows.filter(r => r.period.includes('2025'));
+};
+
 const getDateRangeLabel = (preset: string, customText: string) => {
   switch (preset) {
     case 'THIS_QUARTER':
@@ -413,10 +441,25 @@ const getDateRangeLabel = (preset: string, customText: string) => {
       return 'This Year';
     case 'LAST_YEAR':
       return 'Last Year';
-    case 'LAST_12_MONTHS':
-      return 'Last 12 Months';
     case 'CUSTOM':
       return customText.trim() ? customText : 'Custom Range';
+    default:
+      return 'This Year';
+  }
+};
+
+const getRevisionRangeLabel = (preset: string, customText: string) => {
+  switch (preset) {
+    case 'THIS_YEAR':
+      return 'This Year';
+    case 'LAST_2_YEARS':
+      return 'Last 2 Years';
+    case 'LAST_3_YEARS':
+      return 'Last 3 Years';
+    case 'ALL_TIME':
+      return 'All Time';
+    case 'CUSTOM':
+      return customText.trim() ? customText : 'Custom Year';
     default:
       return 'This Year';
   }
@@ -432,6 +475,7 @@ interface DateRangePickerDropdownProps {
   dropdownRef: React.RefObject<HTMLDivElement>;
   label: string;
   presets?: { id: string; label: string }[];
+  isYearOnly?: boolean;
 }
 
 const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
@@ -443,9 +487,9 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
   onApplyCustom,
   dropdownRef,
   label,
-  presets
+  presets,
+  isYearOnly = false
 }) => {
-  const presetsToRender = presets || DATE_RANGE_PRESETS;
   const [fromMonth, setFromMonth] = useState('Jan');
   const [fromYear, setFromYear] = useState('2025');
   const [toMonth, setToMonth] = useState('Nov');
@@ -453,30 +497,46 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
 
   // Synchronize internal from/to when customRange updates or opens
   useEffect(() => {
-    if (customRange && customRange.includes('-')) {
-      const [fromPart, toPart] = customRange.split('-').map(s => s.trim());
-      if (fromPart) {
-        const [fm, fy] = fromPart.split(' ');
-        if (fm && MONTH_OPTIONS.includes(fm)) setFromMonth(fm);
+    if (isYearOnly) {
+      if (customRange && customRange.includes('-')) {
+        const [fy, ty] = customRange.split('-').map(s => s.trim());
         if (fy && YEAR_OPTIONS.includes(fy)) setFromYear(fy);
-      }
-      if (toPart) {
-        const [tm, ty] = toPart.split(' ');
-        if (tm && MONTH_OPTIONS.includes(tm)) setToMonth(tm);
         if (ty && YEAR_OPTIONS.includes(ty)) setToYear(ty);
+      } else if (customRange && customRange.trim()) {
+        const y = customRange.trim();
+        if (YEAR_OPTIONS.includes(y)) {
+          setFromYear(y);
+          setToYear(y);
+        }
       }
-    } else if (customRange && customRange.trim()) {
-      const [m, y] = customRange.trim().split(' ');
-      if (m && MONTH_OPTIONS.includes(m)) {
-        setFromMonth(m);
-        setToMonth(m);
-      }
-      if (y && YEAR_OPTIONS.includes(y)) {
-        setFromYear(y);
-        setToYear(y);
+    } else {
+      if (customRange && customRange.includes('-')) {
+        const [fromPart, toPart] = customRange.split('-').map(s => s.trim());
+        if (fromPart) {
+          const [fm, fy] = fromPart.split(' ');
+          if (fm && MONTH_OPTIONS.includes(fm)) setFromMonth(fm);
+          if (fy && YEAR_OPTIONS.includes(fy)) setFromYear(fy);
+        }
+        if (toPart) {
+          const [tm, ty] = toPart.split(' ');
+          if (tm && MONTH_OPTIONS.includes(tm)) setToMonth(tm);
+          if (ty && YEAR_OPTIONS.includes(ty)) setToYear(ty);
+        }
+      } else if (customRange && customRange.trim()) {
+        const [m, y] = customRange.trim().split(' ');
+        if (m && MONTH_OPTIONS.includes(m)) {
+          setFromMonth(m);
+          setToMonth(m);
+        }
+        if (y && YEAR_OPTIONS.includes(y)) {
+          setFromYear(y);
+          setToYear(y);
+        }
       }
     }
-  }, [customRange, isOpen]);
+  }, [customRange, isOpen, isYearOnly]);
+
+  const activePresets = presets || DATE_RANGE_PRESETS;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -500,7 +560,7 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
           
           {/* Preset Buttons Grid (2 columns x 2 rows) */}
           <div className="grid grid-cols-2 gap-2 mb-3">
-            {presetsToRender.map((preset) => (
+            {activePresets.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
@@ -516,55 +576,35 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
             ))}
           </div>
 
-          {/* Custom Month & Year Range Section */}
+          {/* Custom Range Section */}
           <div className="pt-3 border-t border-slate-100">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-              Custom Month & Year
+              {isYearOnly ? 'Custom Year' : 'Custom Month & Year'}
             </div>
             
-            <div className="grid grid-cols-2 gap-2.5 mb-3">
-              {/* From */}
-              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">From</span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <select
-                    value={fromMonth}
-                    onChange={(e) => setFromMonth(e.target.value)}
-                    className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
-                  >
-                    {MONTH_OPTIONS.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
+            {isYearOnly ? (
+              <div className="grid grid-cols-2 gap-2.5 mb-3">
+                {/* From Year */}
+                <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">From</span>
                   <select
                     value={fromYear}
                     onChange={(e) => setFromYear(e.target.value)}
-                    className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
                   >
                     {YEAR_OPTIONS.map((y) => (
                       <option key={y} value={y}>{y}</option>
                     ))}
                   </select>
                 </div>
-              </div>
 
-              {/* To */}
-              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">To</span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <select
-                    value={toMonth}
-                    onChange={(e) => setToMonth(e.target.value)}
-                    className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
-                  >
-                    {MONTH_OPTIONS.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
+                {/* To Year */}
+                <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">To</span>
                   <select
                     value={toYear}
                     onChange={(e) => setToYear(e.target.value)}
-                    className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
                   >
                     {YEAR_OPTIONS.map((y) => (
                       <option key={y} value={y}>{y}</option>
@@ -572,15 +612,74 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
                   </select>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5 mb-3">
+                {/* From */}
+                <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">From</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <select
+                      value={fromMonth}
+                      onChange={(e) => setFromMonth(e.target.value)}
+                      className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      {MONTH_OPTIONS.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={fromYear}
+                      onChange={(e) => setFromYear(e.target.value)}
+                      className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      {YEAR_OPTIONS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* To */}
+                <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">To</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <select
+                      value={toMonth}
+                      onChange={(e) => setToMonth(e.target.value)}
+                      className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      {MONTH_OPTIONS.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={toYear}
+                      onChange={(e) => setToYear(e.target.value)}
+                      className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-md px-1.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      {YEAR_OPTIONS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               type="button"
               onClick={() => {
-                const formatted = fromMonth === toMonth && fromYear === toYear
-                  ? `${fromMonth} ${fromYear}`
-                  : `${fromMonth} ${fromYear} - ${toMonth} ${toYear}`;
-                onApplyCustom(formatted);
+                if (isYearOnly) {
+                  const minY = Math.min(Number(fromYear), Number(toYear));
+                  const maxY = Math.max(Number(fromYear), Number(toYear));
+                  const formatted = minY === maxY ? `${minY}` : `${minY} - ${maxY}`;
+                  onApplyCustom(formatted);
+                } else {
+                  const formatted = fromMonth === toMonth && fromYear === toYear
+                    ? `${fromMonth} ${fromYear}`
+                    : `${fromMonth} ${fromYear} - ${toMonth} ${toYear}`;
+                  onApplyCustom(formatted);
+                }
               }}
               className="w-full py-2 bg-[#4338ca] text-white hover:bg-[#3730a3] active:scale-[0.99] font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
             >
@@ -903,7 +1002,6 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
   const [salaryTrendDatePreset, setSalaryTrendDatePreset] = useState('THIS_YEAR');
   const [salaryTrendCustomRange, setSalaryTrendCustomRange] = useState('');
-  const [salaryTrendLineStyle, setSalaryTrendLineStyle] = useState<'smooth' | 'step'>('smooth');
   const [salaryTrendDateDropdownOpen, setSalaryTrendDateDropdownOpen] = useState(false);
   const salaryTrendDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1042,21 +1140,29 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
   const maxGross = Math.max(...graphData.map(d => d.gross), 1);
 
-  // Salary Trend widget data
+  // Salary Revision History widget data
   const salaryTrendData = useMemo(() => {
-    const rows = filterSalaryRows(MOCK_HISTORY_ROWS, salaryTrendDatePreset, salaryTrendCustomRange);
-    return rows.reverse().map((d, i, arr) => {
+    const isSingleYear = salaryTrendDatePreset === 'THIS_YEAR' || (salaryTrendDatePreset === 'CUSTOM' && !salaryTrendCustomRange.includes('-'));
+    const filteredRows = filterRevisionHistoryRows(MOCK_HISTORY_ROWS, salaryTrendDatePreset, salaryTrendCustomRange);
+    const chronoRows = [...filteredRows].reverse();
+    const mapped = chronoRows.map((d, i, arr) => {
+      const prevGross = i > 0 ? arr[i - 1].gross : d.gross;
       const isIncrement = i > 0 && d.gross > arr[i - 1].gross;
-      const incrementPercent = isIncrement ? Math.round(((d.gross - arr[i - 1].gross) / arr[i - 1].gross) * 100) : 0;
+      const isDecrement = i > 0 && d.gross < arr[i - 1].gross;
       const incrementAmount = isIncrement ? d.gross - arr[i - 1].gross : 0;
+      const decrementAmount = isDecrement ? arr[i - 1].gross - d.gross : 0;
       return {
         ...d,
-        monthLabel: d.period.split(' ')[0],
+        prevGross,
+        monthLabel: isSingleYear ? d.period.split(' ')[0] : d.period,
         isIncrement,
-        incrementPercent,
-        incrementAmount
+        isDecrement,
+        incrementAmount,
+        decrementAmount
       };
     });
+    // On the X-axis and graph, show months when a revision (increment or decrement) occurred
+    return mapped.filter(item => item.isIncrement || item.isDecrement);
   }, [salaryTrendDatePreset, salaryTrendCustomRange]);
 
   // LOP Trend Filtered Data
@@ -1449,134 +1555,117 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 </div>
               </div>
 
-              {/* Salary Trend */}
+              {/* Salary Revision History */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
+                <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
                     <TrendingUp size={18} className="text-purple-600" />
-                    Salary Trend
+                    Salary Revision History
                   </h3>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {/* Line style toggle — comparison option, not final */}
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                      <button
-                        onClick={() => setSalaryTrendLineStyle('smooth')}
-                        className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all ${salaryTrendLineStyle === 'smooth' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                      >
-                        Smooth
-                      </button>
-                      <button
-                        onClick={() => setSalaryTrendLineStyle('step')}
-                        className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all ${salaryTrendLineStyle === 'step' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                      >
-                        Step
-                      </button>
-                    </div>
-                    <DateRangePickerDropdown
-                      selectedPreset={salaryTrendDatePreset}
-                      customRange={salaryTrendCustomRange}
-                      isOpen={salaryTrendDateDropdownOpen}
-                      onToggle={() => setSalaryTrendDateDropdownOpen((prev) => !prev)}
-                      onSelectPreset={(id) => {
-                        setSalaryTrendDatePreset(id);
-                        setSalaryTrendDateDropdownOpen(false);
-                      }}
-                      onApplyCustom={(val) => {
-                        setSalaryTrendCustomRange(val);
-                        setSalaryTrendDatePreset('CUSTOM');
-                        setSalaryTrendDateDropdownOpen(false);
-                      }}
-                      dropdownRef={salaryTrendDropdownRef}
-                      label={getDateRangeLabel(salaryTrendDatePreset, salaryTrendCustomRange)}
-                      presets={SALARY_TREND_DATE_PRESETS}
-                    />
-                  </div>
+                  <DateRangePickerDropdown
+                    selectedPreset={salaryTrendDatePreset}
+                    customRange={salaryTrendCustomRange}
+                    isOpen={salaryTrendDateDropdownOpen}
+                    onToggle={() => setSalaryTrendDateDropdownOpen((prev) => !prev)}
+                    onSelectPreset={(id) => {
+                      setSalaryTrendDatePreset(id);
+                      setSalaryTrendDateDropdownOpen(false);
+                    }}
+                    onApplyCustom={(val) => {
+                      setSalaryTrendCustomRange(val);
+                      setSalaryTrendDatePreset('CUSTOM');
+                      setSalaryTrendDateDropdownOpen(false);
+                    }}
+                    dropdownRef={salaryTrendDropdownRef}
+                    label={getRevisionRangeLabel(salaryTrendDatePreset, salaryTrendCustomRange)}
+                    presets={REVISION_DATE_PRESETS}
+                    isYearOnly={true}
+                  />
                 </div>
 
                 <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={salaryTrendData} margin={{ top: 24, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} />
-                      <RechartsTooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const row = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[230px]">
-                                <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{row.period}</p>
-                                <div className="flex justify-between items-center gap-4 text-[#4f46e5]">
-                                  <span className="whitespace-nowrap">Monthly CTC:</span>
-                                  <span className="font-semibold whitespace-nowrap">{formatINR(row.gross)}</span>
+                  {salaryTrendData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={salaryTrendData} margin={{ top: 32, right: 30, left: 10, bottom: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} domain={[0, 'auto']} />
+                        <RechartsTooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const row = payload[0].payload;
+                              return (
+                                <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[260px]">
+                                  <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{row.period}</p>
+                                  <div className="flex justify-between items-center gap-4 text-slate-600">
+                                    <span className="whitespace-nowrap">Previous Monthly CTC:</span>
+                                    <span className="font-semibold whitespace-nowrap">{formatINR(row.prevGross)}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center gap-4 text-[#4f46e5] pt-1">
+                                    <span className="whitespace-nowrap font-medium">Revised Monthly CTC:</span>
+                                    <span className="font-bold whitespace-nowrap">{formatINR(row.gross)}</span>
+                                  </div>
+                                  {row.isDecrement ? (
+                                    <div className="flex justify-between items-center gap-4 text-[#dc2626] pt-1.5 mt-1.5 border-t border-slate-100">
+                                      <span className="whitespace-nowrap font-medium">Decrement:</span>
+                                      <span className="font-bold whitespace-nowrap">-{formatINR(row.decrementAmount)}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-between items-center gap-4 text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                      <span className="whitespace-nowrap font-medium">Increment:</span>
+                                      <span className="font-bold whitespace-nowrap">+{formatINR(row.incrementAmount)}</span>
+                                    </div>
+                                  )}
                                 </div>
-                                {row.isIncrement && (
-                                  <div className="flex justify-between items-center gap-4 text-[#4f46e5] pt-1.5 mt-1.5 border-t border-slate-100">
-                                    <span className="whitespace-nowrap">Revised Monthly CTC:</span>
-                                    <span className="font-semibold whitespace-nowrap">{formatINR(row.gross)}</span>
-                                  </div>
-                                )}
-                                {row.isIncrement && (
-                                  <div className="flex justify-between items-center gap-4 text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
-                                    <span className="whitespace-nowrap">Monthly Increment:</span>
-                                    <span className="font-semibold whitespace-nowrap">+{formatINR(row.incrementAmount)}</span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Line
-                        type={salaryTrendLineStyle === 'step' ? 'stepAfter' : 'monotone'}
-                        dataKey="gross"
-                        stroke="#4f46e5"
-                        strokeWidth={2.5}
-                        dot={(props: any) => {
-                          const { cx, cy, payload, key } = props;
-                          if (payload.isIncrement) {
-                            const badgeLabel = `↑ +${formatINR(payload.incrementAmount)}`;
-                            const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
-                            return (
-                              <g key={key}>
-                                <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
-                                <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
-                                  {badgeLabel}
-                                </text>
-                                <circle cx={cx} cy={cy} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={1.5} />
-                              </g>
-                            );
-                          }
-                          return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
-                        }}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Revision History — explicitly lists every increment in the selected range, independent of the chart's visual variance */}
-                <div className="mt-5 pt-4 border-t border-slate-100">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Revision History</h4>
-                  {(() => {
-                    const revisions = salaryTrendData.filter((row: any) => row.isIncrement);
-                    if (revisions.length === 0) {
-                      return (
-                        <p className="text-xs text-slate-400 italic">No salary revisions in this period.</p>
-                      );
-                    }
-                    return (
-                      <div className="space-y-2">
-                        {revisions.map((row: any, idx: number) => (
-                          <div key={idx} className="flex justify-between items-center bg-slate-50 rounded-lg px-3 py-2.5 text-xs">
-                            <span className="font-bold text-slate-700">{row.period}</span>
-                            <span className="text-slate-500">Revised to <span className="font-semibold text-slate-800">{formatINR(row.gross)}</span></span>
-                            <span className="font-bold text-emerald-600">+{formatINR(row.incrementAmount)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="gross"
+                          stroke="#4f46e5"
+                          strokeWidth={2.5}
+                          dot={(props: any) => {
+                            const { cx, cy, payload, key } = props;
+                            if (payload.isDecrement) {
+                              const badgeLabel = `↓ -${formatINR(payload.decrementAmount)}`;
+                              const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
+                              return (
+                                <g key={key}>
+                                  <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#fee2e2" stroke="#fca5a5" />
+                                  <text x={cx} y={cy - 12} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                    {badgeLabel}
+                                  </text>
+                                  <circle cx={cx} cy={cy} r={4.5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />
+                                </g>
+                              );
+                            }
+                            if (payload.isIncrement) {
+                              const badgeLabel = `↑ +${formatINR(payload.incrementAmount)}`;
+                              const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
+                              return (
+                                <g key={key}>
+                                  <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                                  <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                    {badgeLabel}
+                                  </text>
+                                  <circle cx={cx} cy={cy} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={1.5} />
+                                </g>
+                              );
+                            }
+                            return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
+                          }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm italic py-12">
+                      <TrendingUp size={28} className="text-slate-300 mb-2 stroke-1" />
+                      No salary revisions in this period
+                    </div>
+                  )}
                 </div>
               </div>
 
