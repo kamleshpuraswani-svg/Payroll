@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle, Edit2, Check, MinusCircle, Settings, Users, Calculator } from 'lucide-react';
+import { ChevronUp, ChevronDown, Info, Search, X, ArrowUp, ArrowDown, GripVertical, Save, CheckCircle2, Loader2, AlertCircle, Check, MinusCircle, Settings, Users, Calculator } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface SelectedEmployee {
@@ -68,11 +68,9 @@ const OperationalConfig: React.FC = () => {
     const [expenseApprovers, setExpenseApprovers] = useState<any[]>([]);
     const [isExpenseExpanded, setIsExpenseExpanded] = useState(true);
 
-    // Payslip Naming Format state
+    // Payslip & Tax Slip Naming Format state
     const [isPayslipNamingExpanded, setIsPayslipNamingExpanded] = useState(true);
     const [namingPatternSuffix, setNamingPatternSuffix] = useState('{{EmployeeName}}_{{Month}}_{{Year}}');
-    const [isNamingEditing, setIsNamingEditing] = useState(false);
-    const [tempSuffix, setTempSuffix] = useState('');
     const [paygroups, setPaygroups] = useState<any[]>([]);
     const [selectedTarget, setSelectedTarget] = useState('default');
     const [isLoadingNaming, setIsLoadingNaming] = useState(false);
@@ -178,44 +176,28 @@ const OperationalConfig: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleEditNamingFormat = () => {
-        setTempSuffix(namingPatternSuffix);
-        setIsNamingEditing(true);
-    };
-    const handleCancelNamingFormat = () => setIsNamingEditing(false);
-    const handleSaveNamingFormat = async () => {
-        setIsNamingSaving(true);
-        try {
-            const { error } = await supabase
-                .from('operational_config')
-                .upsert({
-                    config_key: `payslip_naming_format:${selectedTarget}`,
-                    config_value: { suffix: tempSuffix },
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'config_key' });
+    const NAMING_TAGS = ['{{EmployeeName}}', '{{EmployeeID}}', '{{Month}}', '{{MonthShort}}', '{{Year}}', '{{CompanyName}}'];
 
-            if (error) throw error;
-            setNamingPatternSuffix(tempSuffix);
-            setIsNamingEditing(false);
-        } catch (err) {
-            console.error('Error saving naming format:', err);
-            alert('Failed to save naming format.');
-        } finally {
-            setIsNamingSaving(false);
-        }
-    };
     const handleTagClick = (tag: string) => {
-        if (!isNamingEditing) return;
-        let s = tempSuffix;
+        let s = namingPatternSuffix;
         if (s.includes(tag)) {
             s = s.replace(tag, '');
         } else {
-            if (tag === '{{Month}}' && s.includes('{{MonthShort}}')) { s = s.replace('{{MonthShort}}', '{{Month}}'); setTempSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, '')); return; }
-            if (tag === '{{MonthShort}}' && s.includes('{{Month}}')) { s = s.replace('{{Month}}', '{{MonthShort}}'); setTempSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, '')); return; }
+            if (tag === '{{Month}}' && s.includes('{{MonthShort}}')) { 
+                s = s.replace('{{MonthShort}}', '{{Month}}'); 
+                setNamingPatternSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, '')); 
+                return; 
+            }
+            if (tag === '{{MonthShort}}' && s.includes('{{Month}}')) { 
+                s = s.replace('{{Month}}', '{{MonthShort}}'); 
+                setNamingPatternSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, '')); 
+                return; 
+            }
             s = s ? `${s}_${tag}` : tag;
         }
-        setTempSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, ''));
+        setNamingPatternSuffix(s.replace(/__+/g, '_').replace(/^_|_$/g, ''));
     };
+
     const generateNamingPreview = (suffix: string) => {
         return ('Payslip_' + suffix)
             .replace('{{EmployeeName}}', 'Priya_Sharma')
@@ -224,11 +206,7 @@ const OperationalConfig: React.FC = () => {
             .replace('{{MonthShort}}', 'Nov')
             .replace('{{Year}}', '2025')
             .replace('{{CompanyName}}', 'TechFlow')
-            .replace('{{PayPeriod}}', '01-30_Nov_2025')
             .replace(/_+/g, '_') + '.pdf';
-    };
-    const resetNamingToDefault = () => {
-        if (isNamingEditing) setTempSuffix('{{Month}}_{{Year}}_{{EmployeeID}}');
     };
 
     const toggleEncashmentComponent = (comp: string) => {
@@ -418,6 +396,23 @@ const OperationalConfig: React.FC = () => {
                 }, { onConflict: 'config_key' });
 
             if (roundOffError) throw roundOffError;
+
+            // Save payslip & tax slip naming format
+            await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `payslip_naming_format:${selectedTarget}`,
+                    config_value: { suffix: namingPatternSuffix },
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
+
+            await supabase
+                .from('operational_config')
+                .upsert({
+                    config_key: `taxslip_naming_format:${selectedTarget}`,
+                    config_value: { suffix: namingPatternSuffix },
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'config_key' });
 
             // Save expense settings
             const { error: expSettingsError } = await supabase
@@ -1223,14 +1218,14 @@ const OperationalConfig: React.FC = () => {
             </div>
             )}
 
-            {/* Payslip Naming Format Section */}
+            {/* Payslip & Tax Slip Naming Format Section */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div
                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
                     onClick={() => setIsPayslipNamingExpanded(!isPayslipNamingExpanded)}
                 >
                     <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-slate-800">Payslip Naming Format</h3>
+                        <h3 className="font-semibold text-slate-800">Payslip & Tax Slip Naming Format</h3>
                         {isNamingSaving && <Loader2 size={16} className="text-sky-600 animate-spin" />}
                     </div>
                     <button className="text-slate-400">
@@ -1240,67 +1235,30 @@ const OperationalConfig: React.FC = () => {
 
                 {isPayslipNamingExpanded && (
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h4 className="font-bold text-slate-800 text-lg">
-                                    Payslip Format Configuration <span className="text-red-500">*</span>
-                                </h4>
-                                <p className="text-sm text-slate-500 mt-1">Configure the default naming format for payslip PDFs.</p>
-                            </div>
-                            
-                            <div className="flex items-center gap-3">
-
-                                {isNamingEditing ? (
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={handleCancelNamingFormat}
-                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm h-[42px]"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleSaveNamingFormat}
-                                            disabled={isNamingSaving}
-                                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 shadow-sm transition-colors flex items-center gap-2 h-[42px]"
-                                        >
-                                            {isNamingSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                            Save Changes
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={handleEditNamingFormat}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm flex items-center gap-2 h-[42px]"
-                                    >
-                                        <Edit2 size={16} /> Edit Format
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
                         {isLoadingNaming ? (
                             <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
                                 <Loader2 size={24} className="animate-spin text-sky-600" />
                                 <span className="text-sm font-medium">Loading naming format...</span>
                             </div>
                         ) : (
-                            <div className="space-y-6 animate-in fade-in duration-300">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-300">
+                                {/* Left: Payslip Naming Format */}
                                 <div className="space-y-4">
-                                    {/* Filename Input */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">PDF Filename Pattern</label>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wider">
+                                            Payslip Naming Format
+                                        </label>
                                         <div className="flex shadow-sm rounded-xl overflow-hidden">
                                             <div className="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 text-sm font-medium text-slate-500 flex items-center select-none">
                                                 Payslip_
                                             </div>
                                             <input
                                                 type="text"
-                                                value={isNamingEditing ? tempSuffix : namingPatternSuffix}
-                                                onChange={(e) => isNamingEditing && setTempSuffix(e.target.value)}
-                                                disabled={!isNamingEditing}
-                                                className={`flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 ${!isNamingEditing ? 'bg-slate-50 cursor-not-allowed opacity-80' : 'bg-white'}`}
+                                                value={namingPatternSuffix}
+                                                onChange={(e) => setNamingPatternSuffix(e.target.value)}
+                                                className="flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 bg-white"
                                             />
-                                            <div className="w-20 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
+                                            <div className="w-16 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
                                                 <span className="text-xs font-bold text-slate-500">.pdf</span>
                                             </div>
                                         </div>
@@ -1308,20 +1266,17 @@ const OperationalConfig: React.FC = () => {
 
                                     {/* Tag Chips */}
                                     <div className="flex flex-wrap gap-2">
-                                        {['{{EmployeeName}}', '{{EmployeeID}}', '{{Month}}', '{{MonthShort}}', '{{Year}}', '{{CompanyName}}', '{{PayPeriod}}'].map(tag => {
-                                            const currentSuffix = isNamingEditing ? tempSuffix : namingPatternSuffix;
-                                            const isSelected = currentSuffix.includes(tag);
+                                        {NAMING_TAGS.map(tag => {
+                                            const isSelected = namingPatternSuffix.includes(tag);
                                             return (
                                                 <button
                                                     key={tag}
+                                                    type="button"
                                                     onClick={() => handleTagClick(tag)}
-                                                    disabled={!isNamingEditing}
-                                                    className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1.5 ${
-                                                        !isNamingEditing
-                                                            ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed'
-                                                            : isSelected
-                                                                ? 'bg-sky-100 text-sky-700 border-sky-200 shadow-sm'
-                                                                : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300 hover:text-sky-600'
+                                                    className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1.5 cursor-pointer ${
+                                                        isSelected
+                                                            ? 'bg-sky-100 text-sky-700 border-sky-200 shadow-sm'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300 hover:text-sky-600'
                                                     }`}
                                                 >
                                                     {isSelected && <Check size={12} className="stroke-[3]" />}
@@ -1333,15 +1288,37 @@ const OperationalConfig: React.FC = () => {
 
                                     {/* Preview */}
                                     <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-100 p-3 rounded-xl overflow-hidden">
-                                        <div className="bg-emerald-100 p-1 rounded">
+                                        <div className="bg-emerald-100 p-1 rounded shrink-0">
                                             <Info size={14} className="text-emerald-700" />
                                         </div>
-                                        <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Preview:</span>
+                                        <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider shrink-0">Preview:</span>
                                         <span className="font-bold text-emerald-700 truncate font-mono text-xs">
-                                            {generateNamingPreview(isNamingEditing ? tempSuffix : namingPatternSuffix)}
+                                            {generateNamingPreview(namingPatternSuffix)}
                                         </span>
                                     </div>
+                                </div>
 
+                                {/* Right: Tax Slip Naming Format */}
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wider">
+                                            Tax Slip Naming Format
+                                        </label>
+                                        <div className="flex shadow-sm rounded-xl overflow-hidden">
+                                            <div className="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 text-sm font-medium text-slate-500 flex items-center select-none">
+                                                TaxSlip_
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={namingPatternSuffix}
+                                                onChange={(e) => setNamingPatternSuffix(e.target.value)}
+                                                className="flex-1 px-3 py-2.5 border border-l-0 border-slate-200 text-sm font-mono text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 bg-white"
+                                            />
+                                            <div className="w-16 bg-slate-100 border border-l-0 border-slate-200 flex items-center justify-center">
+                                                <span className="text-xs font-bold text-slate-500">.pdf</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

@@ -1,10 +1,8 @@
 
 import React, { useState } from 'react';
 import {
-  Download,
   Calendar,
   TrendingUp,
-  CheckCircle2,
   Wallet,
   FileText,
   PieChart as PieChartIcon,
@@ -20,7 +18,6 @@ import {
   Pin,
   PinOff,
   Clock,
-  Zap,
   X,
   Eye,
   EyeOff,
@@ -138,109 +135,14 @@ const Overview: React.FC<OverviewProps> = ({ onNavigateToTaxPlanning, onNavigate
     }
   };
 
-  const handleDownloadSlip = () => {
-    const content = `COLLABCRM SYSTEMS PVT LTD
-Salary Slip for the month of December 2025
-
-Employee Name: Priya Sharma
-Employee ID: TF00123
-Designation: Senior Engineer
-
-EARNINGS              AMOUNT
-----------------------------
-Basic Salary       : ₹ 41,667
-HRA                : ₹ 20,000
-Special Allowance  : ₹ 15,000
-Statutory Bonus    : ₹  5,000
-
-DEDUCTIONS            AMOUNT
-----------------------------
-PF Contribution    : ₹  1,800
-Professional Tax   : ₹    200
-Income Tax (TDS)   : ₹  4,000
-
-NET PAYABLE        : ₹ 78,200
-
-(This is a computer generated document)`;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Salary_Slip_Dec_2025.txt';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-full mx-auto pb-10">
 
-      {/* 2. Top row: Quick Insights & Tax Teaser */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        {/* Latest Salary Card - Compact Redesign */}
-        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <div className="flex flex-col">
-              <span className="inline-block px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-1">Dec 2025</span>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl font-black text-slate-900">{showAmounts ? '₹78,200' : '₹ ••••••'}</h3>
-                <button onClick={handleToggleAmounts} className="text-slate-300 hover:text-blue-600 transition-colors">
-                  {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-400 font-bold mt-1 flex items-center gap-1">
-                <CheckCircle2 size={10} className="text-emerald-500" /> Credited on 7th Dec
-              </p>
-            </div>
-            <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              <FileText size={16} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <button
-              onClick={handleDownloadSlip}
-              className="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[10px] flex items-center justify-center gap-2 transition-all uppercase tracking-wide shadow-lg shadow-indigo-100"
-            >
-              <Download size={12} /> Download Slip
-            </button>
-          </div>
-        </div>
-
-        {/* Tax Projection Teaser - Light Theme (Changed from Dark) */}
-        <div className="lg:col-span-2 bg-indigo-50/50 border border-indigo-100 p-4 rounded-xl shadow-sm relative overflow-hidden group cursor-pointer hover:bg-indigo-50 transition-all" onClick={onNavigateToTaxPlanning}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100/50 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform"></div>
-          <div className="relative z-10 flex flex-col justify-between h-full">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Zap size={14} className="text-indigo-500" />
-                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Est. Tax Saved</p>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleToggleAmounts(); }}
-                    className="p-1.5 rounded-lg text-indigo-300 hover:bg-indigo-100/50 hover:text-indigo-600 transition-all"
-                    title={showAmounts ? "Hide amount" : "Show amount"}
-                  >
-                    {showAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-                <h4 className="text-2xl font-black text-indigo-950">{showAmounts ? '₹ 32,400' : '₹ ••••••'}</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[9px] font-black bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-md uppercase">New Regime</span>
-                  <p className="text-[10px] font-bold text-indigo-400 tracking-tight">Active for FY 25-26</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
+      {/* 2. Top row: Quick Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
         {/* Next Payout - Compact Design */}
-        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center hover:border-blue-300 transition-all relative overflow-hidden">
+        <div className="md:col-span-5 lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-all relative overflow-hidden">
           <div className="flex justify-between items-center">
             <div>
             <div className="flex justify-between items-start mb-1">
@@ -266,7 +168,7 @@ NET PAYABLE        : ₹ 78,200
         </div>
 
         {/* Loans & advances - Detailed Design */}
-        <div className="lg:col-span-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-all relative overflow-hidden group">
+        <div className="md:col-span-7 lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-all relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
