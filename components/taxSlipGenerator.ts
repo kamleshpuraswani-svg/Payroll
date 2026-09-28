@@ -53,8 +53,9 @@ export const generateTaxSlipPDF = (month: string) => {
         body: [
             ['Name', 'John Smith Doe', 'PAN', 'ABCD1234E'],
             ['Employee Code', 'EMP-425', 'Sex', 'Male'],
-            ['Designation', 'Senior Software Engineer', 'Joining Date', '01/04/2023'],
-            ['Location', 'Mumbai', 'Tax Regime', 'OLD']
+            ['Designation', 'Senior Software Engineer', 'Department', 'Engineering'],
+            ['Location', 'Mumbai', 'Joining Date', '01/04/2023'],
+            ['PAN', 'ABCD1234E', 'Tax Regime', 'OLD']
         ],
         margin: { left: 40, right: 40 }
     });
@@ -98,7 +99,7 @@ export const generateTaxSlipPDF = (month: string) => {
             3: { halign: 'right', cellWidth: colWidths[3] },
             4: { halign: 'right', cellWidth: colWidths[4] }
         },
-        head: [['COMPONENTS', 'EARNING YTD', 'PROJECTED ANNUAL\nEARNING', 'EXEMPTED INCOME', 'TAXABLE INCOME']],
+        head: [['COMPONENTS', 'EARNING YTD', 'PROJECTED\nEARNING', 'EXEMPTED INCOME', 'TAXABLE INCOME']],
         body: [
             ['Basic', '450000.00', '900000.00', '0.00', '900000.00'],
             ['HRA', '180000.00', '360000.00', '50000.00', '310000.00'],
@@ -165,21 +166,15 @@ export const generateTaxSlipPDF = (month: string) => {
     ]);
     addSection('NET TAX', undefined, [
         ['Net Taxable Income (D-E-F-G)', '1500500.00'],
-        ['PFPERQ_Taxable_Amount', '0'],
-        ['PFPERQ_Interest_Amount', '0'],
         ['Tax on Total Income', '120500.00'],
         ['Professional Tax', '2500.00'],
-        ['Sur Charge', '500.00'],
-        ['Marginal Relief', '0.00'],
-        ['Ecess', '4820.00'],
-        ['Tax', '125820.00'],
-        ['Rebate under Section 87 A', '0.00'],
+        ['Surcharge', '500.00'],
+        ['Health & Educational Cess', '4820.00'],
+        ['Projected Tax (Annual)', '125820.00'],
+        ['Rebate under Section 87A', '0.00'],
         ['TDS deducted outside HROne', '15000.00'],
-        ['Additional Tax', '2000.00'],
-        ['Net Tax', '112820.00'],
-        ['TDS till Month', '45000.00'],
-        ['Tax deducted from previous employer', '10000.00'],
-        ['TDS to be deducted', '57820.00']
+        ['Tax Deducted (Till Date)', '45000.00'],
+        ['Remaining Tax To Be Paid', '57820.00']
     ]);
 
     // Month wise TDS banner
@@ -212,7 +207,7 @@ export const generateTaxSlipPDF = (month: string) => {
         styles: { fontSize: 9, cellPadding: 4, lineColor: [150, 150, 150], lineWidth: 0.5, halign: 'center' },
         head: [['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']],
         body: [
-            ['4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '6410.00', '6410.00']
+            ['4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '4500.00', '-', '-', '-', '-', '-', '-']
         ],
         margin: { left: 40, right: 40 }
     });

@@ -336,6 +336,12 @@ const DATE_RANGE_PRESETS = [
   { id: 'LAST_YEAR', label: 'Last Year' },
 ];
 
+// Salary Trend widget also offers a rolling window, so annual increments stay visible regardless of calendar-year boundaries.
+const SALARY_TREND_DATE_PRESETS = [
+  ...DATE_RANGE_PRESETS,
+  { id: 'LAST_12_MONTHS', label: 'Last 12 Months' },
+];
+
 const MONTH_OPTIONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const YEAR_OPTIONS = ['2026', '2025', '2024', '2023'];
 
@@ -361,6 +367,10 @@ const filterSalaryRows = (rows: SalaryHistoryRow[], preset: string, customRange:
   }
   if (preset === 'LAST_YEAR') {
     return rows.filter(r => r.period.includes('2024'));
+  }
+  if (preset === 'LAST_12_MONTHS') {
+    // Rows are ordered newest-first, so the first 12 entries are the trailing 12 months.
+    return rows.slice(0, 12);
   }
   if (preset === 'CUSTOM' && customRange.trim()) {
     const rangeParts = customRange.split('-');
@@ -403,6 +413,8 @@ const getDateRangeLabel = (preset: string, customText: string) => {
       return 'This Year';
     case 'LAST_YEAR':
       return 'Last Year';
+    case 'LAST_12_MONTHS':
+      return 'Last 12 Months';
     case 'CUSTOM':
       return customText.trim() ? customText : 'Custom Range';
     default:
@@ -419,6 +431,7 @@ interface DateRangePickerDropdownProps {
   onApplyCustom: (rangeText: string) => void;
   dropdownRef: React.RefObject<HTMLDivElement>;
   label: string;
+  presets?: { id: string; label: string }[];
 }
 
 const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
@@ -429,8 +442,10 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
   onSelectPreset,
   onApplyCustom,
   dropdownRef,
-  label
+  label,
+  presets
 }) => {
+  const presetsToRender = presets || DATE_RANGE_PRESETS;
   const [fromMonth, setFromMonth] = useState('Jan');
   const [fromYear, setFromYear] = useState('2025');
   const [toMonth, setToMonth] = useState('Nov');
@@ -485,7 +500,7 @@ const DateRangePickerDropdown: React.FC<DateRangePickerDropdownProps> = ({
           
           {/* Preset Buttons Grid (2 columns x 2 rows) */}
           <div className="grid grid-cols-2 gap-2 mb-3">
-            {DATE_RANGE_PRESETS.map((preset) => (
+            {presetsToRender.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
@@ -888,6 +903,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
   const [salaryTrendDatePreset, setSalaryTrendDatePreset] = useState('THIS_YEAR');
   const [salaryTrendCustomRange, setSalaryTrendCustomRange] = useState('');
+  const [salaryTrendLineStyle, setSalaryTrendLineStyle] = useState<'smooth' | 'step'>('smooth');
   const [salaryTrendDateDropdownOpen, setSalaryTrendDateDropdownOpen] = useState(false);
   const salaryTrendDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1435,28 +1451,46 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
               {/* Salary Trend */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
                     <TrendingUp size={18} className="text-purple-600" />
                     Salary Trend
                   </h3>
-                  <DateRangePickerDropdown
-                    selectedPreset={salaryTrendDatePreset}
-                    customRange={salaryTrendCustomRange}
-                    isOpen={salaryTrendDateDropdownOpen}
-                    onToggle={() => setSalaryTrendDateDropdownOpen((prev) => !prev)}
-                    onSelectPreset={(id) => {
-                      setSalaryTrendDatePreset(id);
-                      setSalaryTrendDateDropdownOpen(false);
-                    }}
-                    onApplyCustom={(val) => {
-                      setSalaryTrendCustomRange(val);
-                      setSalaryTrendDatePreset('CUSTOM');
-                      setSalaryTrendDateDropdownOpen(false);
-                    }}
-                    dropdownRef={salaryTrendDropdownRef}
-                    label={getDateRangeLabel(salaryTrendDatePreset, salaryTrendCustomRange)}
-                  />
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {/* Line style toggle — comparison option, not final */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => setSalaryTrendLineStyle('smooth')}
+                        className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all ${salaryTrendLineStyle === 'smooth' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Smooth
+                      </button>
+                      <button
+                        onClick={() => setSalaryTrendLineStyle('step')}
+                        className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all ${salaryTrendLineStyle === 'step' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Step
+                      </button>
+                    </div>
+                    <DateRangePickerDropdown
+                      selectedPreset={salaryTrendDatePreset}
+                      customRange={salaryTrendCustomRange}
+                      isOpen={salaryTrendDateDropdownOpen}
+                      onToggle={() => setSalaryTrendDateDropdownOpen((prev) => !prev)}
+                      onSelectPreset={(id) => {
+                        setSalaryTrendDatePreset(id);
+                        setSalaryTrendDateDropdownOpen(false);
+                      }}
+                      onApplyCustom={(val) => {
+                        setSalaryTrendCustomRange(val);
+                        setSalaryTrendDatePreset('CUSTOM');
+                        setSalaryTrendDateDropdownOpen(false);
+                      }}
+                      dropdownRef={salaryTrendDropdownRef}
+                      label={getDateRangeLabel(salaryTrendDatePreset, salaryTrendCustomRange)}
+                      presets={SALARY_TREND_DATE_PRESETS}
+                    />
+                  </div>
                 </div>
 
                 <div className="h-72 w-full">
@@ -1495,7 +1529,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                         }}
                       />
                       <Line
-                        type="monotone"
+                        type={salaryTrendLineStyle === 'step' ? 'stepAfter' : 'monotone'}
                         dataKey="gross"
                         stroke="#4f46e5"
                         strokeWidth={2.5}
@@ -1519,6 +1553,30 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
+                </div>
+
+                {/* Revision History — explicitly lists every increment in the selected range, independent of the chart's visual variance */}
+                <div className="mt-5 pt-4 border-t border-slate-100">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Revision History</h4>
+                  {(() => {
+                    const revisions = salaryTrendData.filter((row: any) => row.isIncrement);
+                    if (revisions.length === 0) {
+                      return (
+                        <p className="text-xs text-slate-400 italic">No salary revisions in this period.</p>
+                      );
+                    }
+                    return (
+                      <div className="space-y-2">
+                        {revisions.map((row: any, idx: number) => (
+                          <div key={idx} className="flex justify-between items-center bg-slate-50 rounded-lg px-3 py-2.5 text-xs">
+                            <span className="font-bold text-slate-700">{row.period}</span>
+                            <span className="text-slate-500">Revised to <span className="font-semibold text-slate-800">{formatINR(row.gross)}</span></span>
+                            <span className="font-bold text-emerald-600">+{formatINR(row.incrementAmount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

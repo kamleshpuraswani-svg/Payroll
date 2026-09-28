@@ -42,8 +42,8 @@ export const HRTaxSlipTemplate: React.FC = () => {
                                 <tr>
                                     <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">Designation</td>
                                     <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">Senior Engineer</td>
-                                    <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">Date of Joining</td>
-                                    <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">12 Jan 2023</td>
+                                    <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">Department</td>
+                                    <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">Engineering</td>
                                 </tr>
                                 <tr>
                                     <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">PAN</td>
@@ -53,7 +53,9 @@ export const HRTaxSlipTemplate: React.FC = () => {
                                 </tr>
                                 <tr>
                                     <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">Gender</td>
-                                    <td colSpan={3} className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">Female</td>
+                                    <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">Female</td>
+                                    <td className="py-2 px-3 align-top whitespace-nowrap border border-slate-200 bg-slate-50/50">Date of Joining</td>
+                                    <td className="py-2 px-3 align-top font-semibold text-slate-800 border border-slate-200">12 Jan 2023</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -70,7 +72,7 @@ export const HRTaxSlipTemplate: React.FC = () => {
                             <tr>
                                 <th className="border border-slate-200 px-4 py-2 text-left text-xs font-bold uppercase text-slate-600 bg-slate-100">Components</th>
                                 <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-600 bg-slate-100">Earnings YTD</th>
-                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-600 bg-slate-100">Projected Annual Earnings</th>
+                                <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-600 bg-slate-100">Projected Earnings</th>
                                 <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-600 bg-slate-100">Exempted Income</th>
                                 <th className="border border-slate-200 px-4 py-2 text-right text-xs font-bold uppercase text-slate-600 bg-slate-100">Taxable Income</th>
                             </tr>
@@ -256,14 +258,6 @@ export const HRTaxSlipTemplate: React.FC = () => {
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900 w-48">9,75,000.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">PFPERQ_Taxable_Amount</td>
-                                <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">PFPERQ_Interest_Amount</td>
-                                <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
-                            </tr>
-                            <tr>
                                 <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Tax on Total Income</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">1,07,500.00</td>
                             </tr>
@@ -272,23 +266,19 @@ export const HRTaxSlipTemplate: React.FC = () => {
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Sur Charge</td>
+                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Surcharge</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Marginal Relief</td>
-                                <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Ecess</td>
+                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Health & Educational Cess</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">4,300.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Tax</td>
+                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Projected Tax (Annual)</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">1,11,800.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Rebate under Section 87 A</td>
+                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Rebate under Section 87A</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
                             </tr>
                             <tr>
@@ -296,23 +286,11 @@ export const HRTaxSlipTemplate: React.FC = () => {
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">10,000.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Additional Tax</td>
-                                <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">0.00</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50 font-bold">Net Tax</td>
-                                <td className="border border-slate-200 px-4 py-2 text-right font-bold text-slate-900">1,01,800.00</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">TDS till Month</td>
+                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Tax Deducted (Till Date)</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">67,867.00</td>
                             </tr>
                             <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50">Tax deducted from previous employer</td>
-                                <td className="border border-slate-200 px-4 py-2 text-right font-semibold text-slate-900">10,000.00</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50 font-bold">TDS to be deducted</td>
+                                <td className="border border-slate-200 px-4 py-2 text-slate-700 bg-slate-50/50 font-bold">Remaining Tax To Be Paid</td>
                                 <td className="border border-slate-200 px-4 py-2 text-right font-bold text-slate-900">33,933.00</td>
                             </tr>
                         </tbody>
@@ -349,12 +327,12 @@ export const HRTaxSlipTemplate: React.FC = () => {
                                 <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
                                 <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
                                 <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
-                                <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
-                                <td className="border border-slate-200 px-2 py-2.5">8,486.00</td>
-                                <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
-                                <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
-                                <td className="border border-slate-200 px-2 py-2.5">8,483.00</td>
-                                <td className="border border-slate-200 px-2 py-2.5">8,484.00</td>
+                                <td className="border border-slate-200 px-2 py-2.5">-</td>
+                                <td className="border border-slate-200 px-2 py-2.5">-</td>
+                                <td className="border border-slate-200 px-2 py-2.5">-</td>
+                                <td className="border border-slate-200 px-2 py-2.5">-</td>
+                                <td className="border border-slate-200 px-2 py-2.5">-</td>
+                                <td className="border border-slate-200 px-2 py-2.5">-</td>
                             </tr>
                         </tbody>
                     </table>
